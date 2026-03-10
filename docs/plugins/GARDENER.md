@@ -71,21 +71,21 @@ The gardener behavior actor is a **divine actor** -- the same entity type that P
 
 ```
 lib-divine (L4) ── deity identity, economy, blessings
-    │
-    ├── Realm-tending (via Puppetmaster)        Garden-tending (via Gardener)
-    │   God's Actor monitors realm events       God's Actor monitors player drift/events
-    │   Spawns encounters, adjusts NPCs         Spawns POIs, manages transitions
-    │   Tools: watch, load_snapshot,            Tools: Gardener APIs (enter garden,
-    │          spawn_watcher, emit_perception          spawn POI, enter scenario, etc.)
-    │           │                                       │
-    │           └──── Both run on Actor Runtime (L2) ───┘
-    │                 Same ABML bytecode interpreter
-    │                 Same divine actor identity
-    │                 Dynamic character binding:
-    │                   start event brain → bind divine character → personality-driven
-    │
-    └── Any conceptual space can become physical and vice versa
-        (the god shifts focus between garden types)
+ │
+ ├── Realm-tending (via Puppetmaster) Garden-tending (via Gardener)
+ │ God's Actor monitors realm events God's Actor monitors player drift/events
+ │ Spawns encounters, adjusts NPCs Spawns POIs, manages transitions
+ │ Tools: watch, load_snapshot, Tools: Gardener APIs (enter garden,
+ │ spawn_watcher, emit_perception spawn POI, enter scenario, etc.)
+ │ │ │
+ │ └──── Both run on Actor Runtime (L2) ───┘
+ │ Same ABML bytecode interpreter
+ │ Same divine actor identity
+ │ Dynamic character binding:
+ │ start event brain → bind divine character → personality-driven
+ │
+ └── Any conceptual space can become physical and vice versa
+ (the god shifts focus between garden types)
 ```
 
 **Multi-game variability**: The gardener behavior can vary significantly between games. In Arcadia, the void/discovery experience is tended by divine actors using drift-based POI scoring and seed growth. A different game might use different deities (or non-deity actors entirely) for garden orchestration, or drive Gardener APIs directly from the game engine without an actor. The Gardener service is behavior-agnostic -- it provides primitives, not policy.
@@ -96,21 +96,21 @@ The player never leaves Gardener's domain. Transitioning from a lobby to an in-g
 
 ```
 Player connects
-    │
-    ▼
+ │
+ ▼
 Enter discovery garden ──► POIs, drift, scenario selection
-    │
-    ├── Enter lobby garden ──► Character selection, loadout, party
-    │       │
-    │       └── Enter in-game garden ──► Combat, exploration, quests
-    │               │
-    │               ├── Chain to post-game garden ──► Results, growth
-    │               │       │
-    │               │       └── Return to discovery garden (loop)
-    │               │
-    │               └── Switch character (L1/R1) ──► Entity bindings shift
-    │
-    └── Enter housing garden ──► Persistent personal space
+ │
+ ├── Enter lobby garden ──► Character selection, loadout, party
+ │ │
+ │ └── Enter in-game garden ──► Combat, exploration, quests
+ │ │
+ │ ├── Chain to post-game garden ──► Results, growth
+ │ │ │
+ │ │ └── Return to discovery garden (loop)
+ │ │
+ │ └── Switch character (L1/R1) ──► Entity bindings shift
+ │
+ └── Enter housing garden ──► Persistent personal space
 ```
 
 The current implementation models this as "enter garden → enter scenario (destroys garden)." The target architecture replaces scenario entry/destruction with garden-to-garden transitions where the gardener behavior continuously manages the player's context.
@@ -145,21 +145,21 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 
 ```
 1. Gardener behavior assigns character C to player session S
-       │
-       ▼
+ │
+ ▼
 2. Gardener calls Entity Session Registry:
-   Register(character, C, sessionId=S)
-       │
-       ▼
+ Register(character, C, sessionId=S)
+ │
+ ▼
 3. Later: Status grants a buff to character C
-       │
-       ▼
+ │
+ ▼
 4. Status queries Entity Session Registry:
-   GetSessionsForEntity(character, C) → {S}
-       │
-       ▼
+ GetSessionsForEntity(character, C) → {S}
+ │
+ ▼
 5. Status publishes client event via IClientEventPublisher
-   to session S → Connect → WebSocket → client
+ to session S → Connect → WebSocket → client
 ```
 
 **Why not DI Listeners**: The multi-node problem. Gardener and all 13+ entity-based services can't be guaranteed to run on the same node. DI Listeners only fire locally.
@@ -267,7 +267,7 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 |-------|-----------|---------|
 | `gardener.scenario-template.created` | `ScenarioTemplateCreatedEvent` | New scenario template created via `CreateTemplateAsync` |
 | `gardener.scenario-template.updated` | `ScenarioTemplateUpdatedEvent` | Template updated or deprecated via `UpdateTemplateAsync`/`DeprecateTemplateAsync` |
-| `gardener.scenario-template.deleted` | `ScenarioTemplateDeletedEvent` | Lifecycle event declared in schema; no delete endpoint exists (T31 Category B -- templates persist forever) |
+| `gardener.scenario-template.deleted` | `ScenarioTemplateDeletedEvent` | Lifecycle event declared in schema; no delete endpoint exists (Category B -- templates persist forever) |
 | `gardener.garden.entered` | `GardenerGardenEnteredEvent` | Player enters the garden via `EnterGardenAsync` |
 | `gardener.garden.left` | `GardenerGardenLeftEvent` | Player leaves the garden via `LeaveGardenAsync` |
 | `gardener.poi.spawned` | `GardenerPoiSpawnedEvent` | POI spawned by `GardenerGardenOrchestratorWorker` |
@@ -390,7 +390,7 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 
 ### Template Management (6 endpoints)
 
-Standard CRUD on scenario templates with JSON-queryable MySQL storage. Code uniqueness enforced via JSON query on creation. `ListTemplatesAsync` supports filtering by category, connectivity mode, status, deployment phase, and `includeDeprecated` (default false, per IMPLEMENTATION TENETS T31). Deployment phase filtering is done in-memory post-query because JSON array contains is not supported in queries. `DeprecateTemplateAsync` sets status to Deprecated (idempotent -- returns OK if already deprecated) and publishes update event. No delete endpoint exists -- scenario templates are T31 Category B entities (instances persist independently, so templates must remain readable forever).
+Standard CRUD on scenario templates with JSON-queryable MySQL storage. Code uniqueness enforced via JSON query on creation. `ListTemplatesAsync` supports filtering by category, connectivity mode, status, deployment phase, and `includeDeprecated` (default false, per IMPLEMENTATION TENETS). Deployment phase filtering is done in-memory post-query because JSON array contains is not supported in queries. `DeprecateTemplateAsync` sets status to Deprecated (idempotent -- returns OK if already deprecated) and publishes update event. No delete endpoint exists -- scenario templates are Category B entities (instances persist independently, so templates must remain readable forever).
 
 ### Phase Management (3 endpoints)
 
@@ -409,7 +409,7 @@ The `GardenerGardenOrchestratorWorker` spawns POIs using a weighted scoring form
 
 ```
 TotalScore = AffinityWeight * affinity + DiversityWeight * diversity
-           + NarrativeWeight * narrative + RandomWeight * random
+ + NarrativeWeight * narrative + RandomWeight * random
 ```
 
 If the player has a bond and the template is bond-preferred, score is multiplied by `BondScenarioPriority`.
@@ -428,92 +428,92 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 ```
 Player connects → Gardener triggers divine actor for garden-tending
-    │
-    ▼
+ │
+ ▼
 ┌────────────────────────────────────────────────────────────────────┐
-│  DIVINE ACTOR as GARDENER (running via L2 Actor Runtime)           │
-│                                                                    │
-│  Manages garden-to-garden transitions for this player:             │
-│                                                                    │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐           │
-│  │  Discovery   │───►│   Lobby      │───►│  In-Game     │          │
-│  │  Garden      │    │   Garden     │    │  Garden      │          │
-│  │             │    │             │    │             │            │
-│  │ POIs, drift, │    │ Char select,│    │ Combat,     │           │
-│  │ scoring      │    │ loadout     │    │ exploration │           │
-│  └─────────────┘    └─────────────┘    └──────┬──────┘           │
-│                                                │                  │
-│  Entity Session Registry updates per garden:   │ Player switches  │
-│  ┌─────────────────────────────────────────┐   │ character (L1/R1)│
-│  │ Register(seed, seedId, sessionId)       │   │      │          │
-│  │ Register(character, charA, sessionId)   │◄──┘      │          │
-│  │ Register(inventory, invId, sessionId)   │          ▼          │
-│  │ Register(collection, colId, sessionId)  │  Unregister(charA)  │
-│  │ Register(location, locId, sessionId)    │  Register(charB)    │
-│  │ ...                                     │  Update(location)   │
-│  └─────────────────────────────────────────┘                     │
+│ DIVINE ACTOR as GARDENER (running via L2 Actor Runtime) │
+│ │
+│ Manages garden-to-garden transitions for this player: │
+│ │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │
+│ │ Discovery │───►│ Lobby │───►│ In-Game │ │
+│ │ Garden │ │ Garden │ │ Garden │ │
+│ │ │ │ │ │ │ │
+│ │ POIs, drift, │ │ Char select,│ │ Combat, │ │
+│ │ scoring │ │ loadout │ │ exploration │ │
+│ └─────────────┘ └─────────────┘ └──────┬──────┘ │
+│ │ │
+│ Entity Session Registry updates per garden: │ Player switches │
+│ ┌─────────────────────────────────────────┐ │ character (L1/R1)│
+│ │ Register(seed, seedId, sessionId) │ │ │ │
+│ │ Register(character, charA, sessionId) │◄──┘ │ │
+│ │ Register(inventory, invId, sessionId) │ ▼ │
+│ │ Register(collection, colId, sessionId) │ Unregister(charA) │
+│ │ Register(location, locId, sessionId) │ Register(charB) │
+│ │ ... │ Update(location) │
+│ └─────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────────┘
-         │
-         │  Entity-based services use the registry directly:
-         ▼
+ │
+ │ Entity-based services use the registry directly:
+ ▼
 ┌────────────────────────────────────────────────────────────────────┐
-│  Status grants buff to character B                                 │
-│      │                                                             │
-│      ├── StatusService: GetSessionsForEntity(character, B) → {S}  │
-│      │   (Redis SMEMBERS, sub-millisecond)                         │
-│      │                                                             │
-│      └── StatusService: PublishToSessionsAsync({S}, event)         │
-│          → IClientEventPublisher → RabbitMQ → Connect → WebSocket  │
+│ Status grants buff to character B │
+│ │ │
+│ ├── StatusService: GetSessionsForEntity(character, B) → {S} │
+│ │ (Redis SMEMBERS, sub-millisecond) │
+│ │ │
+│ └── StatusService: PublishToSessionsAsync({S}, event) │
+│ → IClientEventPublisher → RabbitMQ → Connect → WebSocket │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Current Implementation: Void/Discovery Garden Only
 
 ```
-                        ┌──────────────────────────────┐
-                        │     EnterGardenAsync           │
-                        │  (Creates GardenInstance)    │
-                        └──────────┬───────────────────┘
-                                   │
-                                   ▼
-    ┌───────────────────────────────────────────────────────┐
-    │              GARDEN (Active Instance)                   │
-    │                                                        │
-    │  garden:{accountId} ──── ActivePoiIds ────┐            │
-    │  [Redis]               [List<Guid>]     │              │
-    │                                         ▼              │
-    │  ┌───────────────────────────────────────────┐         │
-    │  │ GardenerGardenOrchestratorWorker (tick)     │         │
-    │  │  1. Expire stale POIs                     │         │
-    │  │  2. Score eligible templates               │         │
-    │  │  3. Spawn POIs at valid positions          │         │
-    │  │     poi:{gardenId}:{poiId} [Redis]         │         │
-    │  └───────────────────────────────────────────┘         │
-    │                                                        │
-    │  Player ──UpdatePosition──► drift metrics              │
-    │  Player ──InteractWithPOI──► scenario prompt           │
-    │  Player ──DeclinePOI──► diversity history               │
-    └──────────────────┬────────────────────────────────────┘
-                       │ EnterScenarioAsync
-                       │ (deletes garden + POIs,
-                       │  creates game session)
-                       ▼
-    ┌───────────────────────────────────────────────────────┐
-    │              SCENARIO (Active Instance)                │
-    │                                                        │
-    │  scenario:{accountId} ──── GameSessionId               │
-    │  [Redis]                   [via IGameSessionClient]    │
-    │                                                        │
-    │  ┌───────────────────────────────────────────┐         │
-    │  │ GardenerScenarioLifecycleWorker (cycle)    │         │
-    │  │  Detects timeout / abandonment             │         │
-    │  │  Awards partial growth, writes history     │         │
-    │  └───────────────────────────────────────────┘         │
-    │                                                        │
-    │  CompleteScenario ──► full growth ──► history [MySQL]   │
-    │  AbandonScenario ──► partial growth ──► history [MySQL] │
-    │  ChainScenario ──► complete + new scenario (reuse GS)  │
-    └───────────────────────────────────────────────────────┘
+ ┌──────────────────────────────┐
+ │ EnterGardenAsync │
+ │ (Creates GardenInstance) │
+ └──────────┬───────────────────┘
+ │
+ ▼
+ ┌───────────────────────────────────────────────────────┐
+ │ GARDEN (Active Instance) │
+ │ │
+ │ garden:{accountId} ──── ActivePoiIds ────┐ │
+ │ [Redis] [List<Guid>] │ │
+ │ ▼ │
+ │ ┌───────────────────────────────────────────┐ │
+ │ │ GardenerGardenOrchestratorWorker (tick) │ │
+ │ │ 1. Expire stale POIs │ │
+ │ │ 2. Score eligible templates │ │
+ │ │ 3. Spawn POIs at valid positions │ │
+ │ │ poi:{gardenId}:{poiId} [Redis] │ │
+ │ └───────────────────────────────────────────┘ │
+ │ │
+ │ Player ──UpdatePosition──► drift metrics │
+ │ Player ──InteractWithPOI──► scenario prompt │
+ │ Player ──DeclinePOI──► diversity history │
+ └──────────────────┬────────────────────────────────────┘
+ │ EnterScenarioAsync
+ │ (deletes garden + POIs,
+ │ creates game session)
+ ▼
+ ┌───────────────────────────────────────────────────────┐
+ │ SCENARIO (Active Instance) │
+ │ │
+ │ scenario:{accountId} ──── GameSessionId │
+ │ [Redis] [via IGameSessionClient] │
+ │ │
+ │ ┌───────────────────────────────────────────┐ │
+ │ │ GardenerScenarioLifecycleWorker (cycle) │ │
+ │ │ Detects timeout / abandonment │ │
+ │ │ Awards partial growth, writes history │ │
+ │ └───────────────────────────────────────────┘ │
+ │ │
+ │ CompleteScenario ──► full growth ──► history [MySQL] │
+ │ AbandonScenario ──► partial growth ──► history [MySQL] │
+ │ ChainScenario ──► complete + new scenario (reuse GS) │
+ └───────────────────────────────────────────────────────┘
 ```
 
 ## Stubs & Unimplemented Features
@@ -536,7 +536,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 1. **MinGrowthPhase filtering**: The `GetEligibleTemplatesAsync` method in `GardenerGardenOrchestratorWorker` has a MinGrowthPhase check block (lines 457-465) with an empty body -- the comment says "For now, include all templates where the player has any growth phase." Growth phases are opaque strings without ordinal comparison, so phase ordering would need a lookup table.
 
-2. **scenario-template.deleted event**: Declared in the events schema via `x-lifecycle` but no delete endpoint exists (T31 Category B -- templates persist forever). The lifecycle event is generated but never published.
+2. **scenario-template.deleted event**: Declared in the events schema via `x-lifecycle` but no delete endpoint exists (Category B -- templates persist forever). The lifecycle event is generated but never published.
 
 3. **Puppetmaster notification**: `EnterScenarioAsync` resolves `IPuppetmasterClient` and logs intent to notify about behavior documents, but does not actually call any Puppetmaster API. The notification is a log-only stub.
 
@@ -560,7 +560,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 2. **Multi-participant history**: `WriteScenarioHistoryAsync` only writes a history record for the primary participant. Secondary participants in bond scenarios do not get individual history records. This means cooldown checking and scenario diversity scoring are inaccurate for non-primary bond participants.
 
-3. ~~**Template delete endpoint**~~: Removed -- scenario templates are T31 Category B entities. Templates persist forever; no delete endpoint is appropriate.
+3. ~~**Template delete endpoint**~~: Removed -- scenario templates are Category B entities. Templates persist forever; no delete endpoint is appropriate.
 
 4. **Content flywheel connection**: Scenarios complete and award growth, but there's no mechanism to feed scenario outcomes back into future content generation. No events are consumed by Storyline, no archive data is generated from scenario history. Per VISION.md, this is a load-bearing connection: "more play produces more content, which produces more play." Gardener generates play but doesn't yet contribute to the content side of the flywheel.
 
@@ -646,7 +646,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 5. **Background worker and API lock coordination**: The `GardenerGardenOrchestratorWorker` processes gardens without distributed locks (for throughput), while API endpoints acquire locks for the same garden instances. Resolution: last-write-wins is accepted for the worker (see Intentional Quirk #8). The worker's unlocked operations (POI expiry, spawning) have benign race consequences, and per-garden locks would throttle throughput at scale. API endpoints continue to use locks for user-initiated mutations where correctness matters (scenario entry, garden creation).
 
-6. **Plan document superseded**: The original implementation plan (`docs/plans/GARDENER.md`) was superseded by this deep dive and has been deleted. The plan had several inaccuracies: stated 25 endpoints (actual: 23 after T31 Category B delete removal), specified event-based growth awards (actual: direct API via `ISeedClient.RecordGrowthBatchAsync`), listed 5 broadcast event subscriptions (actual: 3 events + DI listener), and named `game-session.ended` (actual: `game-session.deleted`). This deep dive is the authoritative reference.
+6. **Plan document superseded**: The original implementation plan (`docs/plans/GARDENER.md`) was superseded by this deep dive and has been deleted. The plan had several inaccuracies: stated 25 endpoints (actual: 23 after Category B delete removal), specified event-based growth awards (actual: direct API via `ISeedClient.RecordGrowthBatchAsync`), listed 5 broadcast event subscriptions (actual: 3 events + DI listener), and named `game-session.ended` (actual: `game-session.deleted`). This deep dive is the authoritative reference.
 
 ## Work Tracking
 
@@ -688,7 +688,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 ### P3 -- Documentation & Cleanup
 
 - [x] **Design #6**: Implementation plan (`docs/plans/GARDENER.md`) superseded by this deep dive and deleted
-- [x] **Stub #2**: Removed -- scenario templates are T31 Category B entities (instances persist independently, templates persist forever). No delete endpoint. The `scenario-template.deleted` lifecycle event is declared in schema but never published.
+- [x] **Stub #2**: Removed -- scenario templates are Category B entities (instances persist independently, templates persist forever). No delete endpoint. The `scenario-template.deleted` lifecycle event is declared in schema but never published.
 - [ ] **Extension #7**: Document multi-seed-type deployment pattern (multiple Gardener instances with different `GARDENER_SEED_TYPE_CODE`)
 - [ ] **Design #8**: Design divine gardener behavior document structure (base/default behavior, per-game customization, ABML action handlers for Gardener APIs)
 - [ ] **Design #9**: Design garden type abstraction (registry, behavioral patterns, entity association rules)

@@ -103,7 +103,7 @@ public sealed class SaveSlotMetadata
 
     /// <summary>
     /// Builds the state store key from typed components.
-    /// Handles EntityType and Guid conversion internally per FOUNDATION TENETS (T6).
+    /// Handles EntityType and Guid conversion internally per FOUNDATION TENETS.
     /// </summary>
     internal static string BuildStateKey(string gameId, EntityType ownerType, Guid ownerId, string slotName)
         => $"{KeyPrefix}:{gameId}:{ownerType.ToString().ToLowerInvariant()}:{ownerId}:{slotName}";

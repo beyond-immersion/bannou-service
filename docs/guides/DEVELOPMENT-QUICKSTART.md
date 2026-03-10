@@ -50,7 +50,7 @@ make up-compose
 curl http://localhost:8080/health
 ```
 
-**That's it.** Bannou is running with all 69 services, Redis, RabbitMQ, and MySQL.
+**That's it.** Bannou is running with all 76+ services, Redis, RabbitMQ, and MySQL.
 
 ### What `install-dev-tools.sh` installs
 

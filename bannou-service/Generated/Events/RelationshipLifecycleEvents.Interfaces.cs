@@ -17,6 +17,6 @@ public partial class RelationshipCreatedEvent : ILifecycleCreatedEvent { }
 public partial class RelationshipUpdatedEvent : ILifecycleUpdatedEvent { }
 public partial class RelationshipDeletedEvent : ILifecycleDeletedEvent { }
 
-public partial class RelationshipTypeCreatedEvent : ILifecycleCreatedEvent { }
-public partial class RelationshipTypeUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class RelationshipTypeDeletedEvent : ILifecycleDeletedEvent { }
+public partial class RelationshipTypeCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class RelationshipTypeUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class RelationshipTypeDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }

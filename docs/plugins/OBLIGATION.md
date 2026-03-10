@@ -241,55 +241,55 @@ Recording and querying knowing obligation violations.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                   Obligation Data Flow                               │
-│                                                                     │
-│  Contract Service (L1)                                              │
-│  ┌─────────────────────────────────────────────┐                    │
-│  │ contract.activated / terminated / fulfilled  │                    │
-│  │ / expired events                             │                    │
-│  └──────────────────────┬──────────────────────┘                    │
-│                         ▼                                           │
-│  ┌─────────────────────────────────────────────┐                    │
-│  │ ObligationServiceEvents                     │                    │
-│  │ Rebuilds/clears obligation cache per party  │                    │
-│  └──────────────────────┬──────────────────────┘                    │
-│                         ▼                                           │
-│  obligation-cache (Redis)          obligation-action-mappings (MySQL)│
-│  ┌────────────────────────┐       ┌──────────────────────────┐      │
-│  │ {characterId}           │       │ mapping:{tag}             │      │
-│  │ ├── obligations[]       │       │ ├── tag                   │      │
-│  │ │   ├── contractId      │       │ ├── violationTypes[]      │      │
-│  │ │   ├── clauseCode      │       │ └── description           │      │
-│  │ │   ├── violationType   │       └──────────────┬─────────────┘      │
-│  │ │   └── basePenalty     │                      │                    │
-│  │ ├── violationCostMap{}  │    (tag resolution)  │                    │
-│  │ └── lastRefreshedAt     │◄─────────────────────┘                    │
-│  └─────────┬──────────────┘                                            │
-│            │                                                           │
-│            ▼                                                           │
-│  ObligationProviderFactory ─── IVariableProviderFactory                │
-│  ┌──────────────────────────────────────────────────┐                  │
-│  │ ${obligations.active_count}                       │                  │
-│  │ ${obligations.has_obligations}                     │                  │
-│  │ ${obligations.contract_count}                      │                  │
-│  │ ${obligations.violation_cost.<type>}               │ ──► Actor (L2)  │
-│  │ ${obligations.highest_penalty_type}                │     ABML/GOAP   │
-│  │ ${obligations.total_obligation_cost}               │                  │
-│  └──────────────────────────────────────────────────┘                  │
-│                                                                       │
-│  obligation-violations (MySQL)     obligation-idempotency (Redis)     │
-│  ┌────────────────────────┐       ┌──────────────────────────┐        │
-│  │ violation:{violationId} │       │ {idempotencyKey}          │        │
-│  │ ├── characterId         │       │ → violationId (TTL-based) │        │
-│  │ ├── contractId          │       └──────────────────────────┘        │
-│  │ ├── violationType       │                                           │
-│  │ ├── actionTag           │  ──► obligation.violation.reported event  │
-│  │ ├── motivationScore     │      (downstream: personality drift,     │
-│  │ └── violationCost       │       encounter memory)                  │
-│  └────────────────────────┘                                           │
-│                                                                       │
-│  obligation-lock (Redis)                                              │
-│  └── cache:{characterId}  -- Serializes concurrent cache rebuilds     │
+│ Obligation Data Flow │
+│ │
+│ Contract Service (L1) │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ contract.activated / terminated / fulfilled │ │
+│ │ / expired events │ │
+│ └──────────────────────┬──────────────────────┘ │
+│ ▼ │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ ObligationServiceEvents │ │
+│ │ Rebuilds/clears obligation cache per party │ │
+│ └──────────────────────┬──────────────────────┘ │
+│ ▼ │
+│ obligation-cache (Redis) obligation-action-mappings (MySQL)│
+│ ┌────────────────────────┐ ┌──────────────────────────┐ │
+│ │ {characterId} │ │ mapping:{tag} │ │
+│ │ ├── obligations[] │ │ ├── tag │ │
+│ │ │ ├── contractId │ │ ├── violationTypes[] │ │
+│ │ │ ├── clauseCode │ │ └── description │ │
+│ │ │ ├── violationType │ └──────────────┬─────────────┘ │
+│ │ │ └── basePenalty │ │ │
+│ │ ├── violationCostMap{} │ (tag resolution) │ │
+│ │ └── lastRefreshedAt │◄─────────────────────┘ │
+│ └─────────┬──────────────┘ │
+│ │ │
+│ ▼ │
+│ ObligationProviderFactory ─── IVariableProviderFactory │
+│ ┌──────────────────────────────────────────────────┐ │
+│ │ ${obligations.active_count} │ │
+│ │ ${obligations.has_obligations} │ │
+│ │ ${obligations.contract_count} │ │
+│ │ ${obligations.violation_cost.<type>} │ ──► Actor (L2) │
+│ │ ${obligations.highest_penalty_type} │ ABML/GOAP │
+│ │ ${obligations.total_obligation_cost} │ │
+│ └──────────────────────────────────────────────────┘ │
+│ │
+│ obligation-violations (MySQL) obligation-idempotency (Redis) │
+│ ┌────────────────────────┐ ┌──────────────────────────┐ │
+│ │ violation:{violationId} │ │ {idempotencyKey} │ │
+│ │ ├── characterId │ │ → violationId (TTL-based) │ │
+│ │ ├── contractId │ └──────────────────────────┘ │
+│ │ ├── violationType │ │
+│ │ ├── actionTag │ ──► obligation.violation.reported event │
+│ │ ├── motivationScore │ (downstream: personality drift, │
+│ │ └── violationCost │ encounter memory) │
+│ └────────────────────────┘ │
+│ │
+│ obligation-lock (Redis) │
+│ └── cache:{characterId} -- Serializes concurrent cache rebuilds │
 └───────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -299,7 +299,7 @@ Recording and querying knowing obligation violations.
 
 All 11 API endpoints are fully implemented. The following supporting integrations have scaffolding but are not yet wired:
 
-1. **Norm resolution config properties (stub scaffolding)**: `NormResolutionMode` and `NormUncertaintyVariance` are defined in the configuration schema and generated into `ObligationServiceConfiguration`, but `_configuration.NormResolutionMode` and `_configuration.NormUncertaintyVariance` are never referenced in service code. These are pre-positioned for the planned faction norm integration (Hearsay-filtered costs / Faction direct query fallback). Acceptable per T21 stub scaffolding exception.
+1. **Norm resolution config properties (stub scaffolding)**: `NormResolutionMode` and `NormUncertaintyVariance` are defined in the configuration schema and generated into `ObligationServiceConfiguration`, but `_configuration.NormResolutionMode` and `_configuration.NormUncertaintyVariance` are never referenced in service code. These are pre-positioned for the planned faction norm integration (Hearsay-filtered costs / Faction direct query fallback). Acceptable per tenets stub scaffolding exception.
 
 2. **Event template registration not wired**: `ObligationEventTemplates.RegisterAll(IEventTemplateRegistry)` is generated from the `x-event-template` on `ObligationViolationReportedEvent` but is never called in `OnRunningAsync`. The `obligation_violation_reported` event template is not available at runtime for ABML `emit_event` actions. Needs a call in `OnRunningAsync` once the event template registry is available.
 
@@ -379,20 +379,20 @@ All 11 API endpoints are fully implemented. The following supporting integration
 
 - **Multi-channel obligation costs (authority-tagged)**: When faction sovereignty is implemented (see [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning)), obligation costs should be tagged by authority channel based on the source faction's `authorityLevel`:
 
-    | Channel | Source | Semantics | Consequence |
-    |---------|--------|-----------|-------------|
-    | **Legal** | Sovereign/Delegated faction norms | One per violation type (most specific sovereign wins within territory) | Guards, arrest, trial, imprisonment, fines |
-    | **Social** | Influence faction norms | One per violation type (most specific influence faction wins) | Reputation damage, gossip, encounter memories, relationship penalties |
-    | **Personal** | Direct contract behavioral clauses | Always stack (multiple contracts possible) | Contract breach, formal consequences per contract terms |
+ | Channel | Source | Semantics | Consequence |
+ |---------|--------|-----------|-------------|
+ | **Legal** | Sovereign/Delegated faction norms | One per violation type (most specific sovereign wins within territory) | Guards, arrest, trial, imprisonment, fines |
+ | **Social** | Influence faction norms | One per violation type (most specific influence faction wins) | Reputation damage, gossip, encounter memories, relationship penalties |
+ | **Personal** | Direct contract behavioral clauses | Always stack (multiple contracts possible) | Contract breach, formal consequences per contract terms |
 
-    The obligation manifest entry becomes: `{ violationType, basePenalty, weightedPenalty, authorityLevel: Legal|Social|Personal, sourceFactionId?, sourceContractId? }`.
+ The obligation manifest entry becomes: `{ violationType, basePenalty, weightedPenalty, authorityLevel: Legal|Social|Personal, sourceFactionId?, sourceContractId? }`.
 
-    The GOAP planner sees the **total cost** (sum across channels) for action evaluation. But the `evaluate_consequences` cognition stage and post-violation feedback use the channel breakdown to trigger appropriate consequences:
-    - **Legal violation** → publishes event consumed by sovereign faction's enforcement system (guard NPCs react)
-    - **Social violation** → publishes event consumed by encounter/reputation systems (witnesses gossip)
-    - **Personal violation** → triggers contract breach via existing `BreachReportEnabled` mechanism
+ The GOAP planner sees the **total cost** (sum across channels) for action evaluation. But the `evaluate_consequences` cognition stage and post-violation feedback use the channel breakdown to trigger appropriate consequences:
+ - **Legal violation** → publishes event consumed by sovereign faction's enforcement system (guard NPCs react)
+ - **Social violation** → publishes event consumed by encounter/reputation systems (witnesses gossip)
+ - **Personal violation** → triggers contract breach via existing `BreachReportEnabled` mechanism
 
-    **Backward-compatible**: If no sovereign exists (faction sovereignty not yet implemented for a deployment), everything is social/personal as it is today. The legal channel only activates when a sovereign faction exists with norms for that violation type. This is a prerequisite for lib-arbitration (see [Arbitration deep dive](ARBITRATION.md)).
+ **Backward-compatible**: If no sovereign exists (faction sovereignty not yet implemented for a deployment), everything is social/personal as it is today. The legal channel only activates when a sovereign faction exists with norms for that violation type. This is a prerequisite for lib-arbitration (see [Arbitration deep dive](ARBITRATION.md)).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/605 -->
 
 ---

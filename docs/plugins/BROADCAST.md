@@ -11,7 +11,7 @@
 
 ## Overview
 
-Platform streaming integration and RTMP output management service (L3 AppFeatures) for linking external streaming platforms (Twitch, YouTube, custom RTMP), ingesting real audience data, and broadcasting server-side content. The bridge between Bannou's internal world and external streaming platforms -- everything that touches a third-party streaming service goes through lib-broadcast. Game-agnostic: which platforms are enabled and how sentiment categories map to game emotions are configured via environment variables and API calls. Internal-only for sentiment/broadcast management; webhook endpoints are internet-facing for platform callbacks (justified T15 exception -- platform callbacks, not browser-facing).
+Platform streaming integration and RTMP output management service (L3 AppFeatures) for linking external streaming platforms (Twitch, YouTube, custom RTMP), ingesting real audience data, and broadcasting server-side content. The bridge between Bannou's internal world and external streaming platforms -- everything that touches a third-party streaming service goes through lib-broadcast. Game-agnostic: which platforms are enabled and how sentiment categories map to game emotions are configured via environment variables and API calls. Internal-only for sentiment/broadcast management; webhook endpoints are internet-facing for platform callbacks (justified exception -- platform callbacks, not browser-facing).
 
 ---
 
@@ -33,24 +33,24 @@ lib-broadcast processes raw platform events (chat messages, subscriptions, raids
 
 ```
 SentimentPulse:
-  eventId: Guid                      # Required event identifier (per event schema convention)
-  streamSessionId: Guid              # The lib-showtime in-game session (if linked)
-  platformSessionId: Guid            # The lib-broadcast platform session
-  timestamp: DateTime                # When this pulse was assembled
-  intervalSeconds: int               # Configured pulse interval
-  approximateViewerCount: int        # Platform-reported viewer count (approximate)
-  sentiments: SentimentEntry[]       # The batch
+ eventId: Guid # Required event identifier (per event schema convention)
+ streamSessionId: Guid # The lib-showtime in-game session (if linked)
+ platformSessionId: Guid # The lib-broadcast platform session
+ timestamp: DateTime # When this pulse was assembled
+ intervalSeconds: int # Configured pulse interval
+ approximateViewerCount: int # Platform-reported viewer count (approximate)
+ sentiments: SentimentEntry[] # The batch
 ```
 
 Each entry in the batch:
 
 ```
 SentimentEntry:
-  category: SentimentCategory         # Enum: Excited, Supportive, Critical, Curious,
-                                      #        Surprised, Amused, Bored, Hostile
-  intensity: float                    # 0.0 to 1.0 (strength of sentiment)
-  trackingId: Guid?                   # null = anonymous, non-null = "important" viewer
-  viewerType: TrackedViewerType?      # null = anonymous, non-null = role category
+ category: SentimentCategory # Enum: Excited, Supportive, Critical, Curious,
+ # Surprised, Amused, Bored, Hostile
+ intensity: float # 0.0 to 1.0 (strength of sentiment)
+ trackingId: Guid? # null = anonymous, non-null = "important" viewer
+ viewerType: TrackedViewerType? # null = anonymous, non-null = role category
 ```
 
 ### Tracked Viewers ("Important" Sentiments)
@@ -101,10 +101,10 @@ When the primary video source fails, lib-broadcast cascades through configured f
 
 ```
 Primary Video (backgroundVideoUrl)
-  └─ Failed → Fallback Stream (fallbackStreamUrl)
-       └─ Failed → Fallback Image (fallbackImageUrl)
-            └─ Failed → Default Background (BROADCAST_DEFAULT_BACKGROUND_VIDEO)
-                 └─ Failed → Black Video (lavfi color=black)
+ └─ Failed → Fallback Stream (fallbackStreamUrl)
+ └─ Failed → Fallback Image (fallbackImageUrl)
+ └─ Failed → Default Background (BROADCAST_DEFAULT_BACKGROUND_VIDEO)
+ └─ Failed → Black Video (lavfi color=black)
 ```
 
 Each fallback transition is reported via `x-lifecycle` `OutputUpdatedEvent` with `changedFields: ["videoSource"]` so consumers (lib-showtime L4) can react to degraded broadcast quality.
@@ -159,9 +159,9 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 | `FfmpegPath` | `BROADCAST_FFMPEG_PATH` | string | `/usr/bin/ffmpeg` | | Path to FFmpeg binary |
 | `DefaultBackgroundVideo` | `BROADCAST_DEFAULT_BACKGROUND_VIDEO` | string | `/opt/bannou/backgrounds/default.mp4` | | Default video background for audio-only outputs |
 | `MaxConcurrentOutputs` | `BROADCAST_MAX_CONCURRENT_OUTPUTS` | int | `10` | `minimum: 1`, `maximum: 100` | Maximum simultaneous FFmpeg output processes |
-| `OutputAudioCodec` | `BROADCAST_OUTPUT_AUDIO_CODEC` | AudioCodec | `Aac` | enum | Audio codec for RTMP output. Enum: `Aac`, `Mp3`, `Opus`. Per FOUNDATION TENETS (T18 licensing), only LGPL-compliant codecs are valid enum values. |
+| `OutputAudioCodec` | `BROADCAST_OUTPUT_AUDIO_CODEC` | AudioCodec | `Aac` | enum | Audio codec for RTMP output. Enum: `Aac`, `Mp3`, `Opus`. Per FOUNDATION TENETS (licensing), only LGPL-compliant codecs are valid enum values. |
 | `OutputAudioBitrate` | `BROADCAST_OUTPUT_AUDIO_BITRATE` | string | `128k` | | Audio bitrate for RTMP output |
-| `OutputVideoCodec` | `BROADCAST_OUTPUT_VIDEO_CODEC` | VideoCodec | `LibVpx` | enum | Video codec for RTMP output. Enum: `LibVpx`, `LibVpxVp9`. Per FOUNDATION TENETS (T18 licensing), only LGPL-compliant codecs are valid -- GPL codecs (`libx264`, `libx265`) are excluded from the enum entirely, enforcing compliance at the schema level. |
+| `OutputVideoCodec` | `BROADCAST_OUTPUT_VIDEO_CODEC` | VideoCodec | `LibVpx` | enum | Video codec for RTMP output. Enum: `LibVpx`, `LibVpxVp9`. Per FOUNDATION TENETS (licensing), only LGPL-compliant codecs are valid -- GPL codecs (`libx264`, `libx265`) are excluded from the enum entirely, enforcing compliance at the schema level. |
 | `OutputRestartOnFailure` | `BROADCAST_OUTPUT_RESTART_ON_FAILURE` | bool | `true` | | Auto-restart FFmpeg on crash |
 | `OutputHealthCheckIntervalSeconds` | `BROADCAST_OUTPUT_HEALTH_CHECK_INTERVAL_SECONDS` | int | `10` | `minimum: 1`, `maximum: 3600` | FFmpeg health check frequency |
 | `RtmpProbeTimeoutSeconds` | `BROADCAST_RTMP_PROBE_TIMEOUT_SECONDS` | int | `5` | `minimum: 1`, `maximum: 60` | FFprobe timeout for RTMP URL validation |
@@ -180,69 +180,69 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                    Broadcast Service: The Privacy Boundary                    │
+│ Broadcast Service: The Privacy Boundary │
 ├──────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  EXTERNAL WORLD (PII, text, usernames)                                   │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐                │
-│  │  Twitch   │  │ YouTube  │  │  Custom  │  │  Game    │                │
-│  │  EventSub │  │ Webhooks │  │  RTMP    │  │ Cameras  │                │
-│  └─────┬────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘                │
-│        │            │              │              │                       │
-│  ══════╪════════════╪══════════════╪══════════════╪═══════════════════   │
-│  ║     ▼            ▼              ▼              ▼                  ║   │
-│  ║  lib-broadcast (L3)                                                  ║   │
-│  ║  ┌────────────────────────────────────────────────────────────┐   ║   │
-│  ║  │ Platform Webhook Handlers (x-controller-only, T15 exempt) │   ║   │
-│  ║  │   Twitch: HMAC signature validation                         │   ║   │
-│  ║  │   YouTube: verification token validation                    │   ║   │
-│  ║  │   Custom: configurable HMAC validation                      │   ║   │
-│  ║  │ Camera API Endpoints (/broadcast/camera/announce|retire)    │   ║   │
-│  ║  └─────────────────────┬──────────────────────────────────────┘   ║   │
-│  ║                        │ raw events                               ║   │
-│  ║                        ▼                                          ║   │
-│  ║  ┌────────────────────────────────────────────────────────────┐   ║   │
-│  ║  │ ISentimentProcessor                                         │   ║   │
-│  ║  │   chat text → sentiment category + intensity                │   ║   │
-│  ║  │   subscriptions → Excited/Supportive sentiment              │   ║   │
-│  ║  │   raids → Excited sentiment (RaidLeader tracked)            │   ║   │
-│  ║  │   emotes → mapped to sentiment categories                   │   ║   │
-│  ║  │                                                             │   ║   │
-│  ║  │   Redis-backed: hashedPlatformUserId → trackingId           │   ║   │
-│  ║  │   (session-scoped TTL, non-reversible, T9-compliant)        │   ║   │
-│  ║  └─────────────────────┬──────────────────────────────────────┘   ║   │
-│  ║                        │ anonymous sentiments                     ║   │
-│  ║                        ▼                                          ║   │
-│  ║  ┌──────────────────────────┐   ┌─────────────────────────────┐  ║   │
-│  ║  │ Sentiment Buffer (Redis) │──▶│ SentimentBatchPublisher      │  ║   │
-│  ║  │ TTL-based cleanup        │   │ Every 15s: drain → publish   │  ║   │
-│  ║  └──────────────────────────┘   └──────────────┬──────────────┘  ║   │
-│  ║                                                 │                 ║   │
-│  ║  ┌────────────────────────────────────────────────────────────┐   ║   │
-│  ║  │ IBroadcastCoordinator (Singleton — local process cache)    │   ║   │
-│  ║  │   ConcurrentDictionary<Guid, BroadcastContext>             │   ║   │
-│  ║  │   NON-AUTHORITATIVE — Redis broadcast-outputs is truth     │   ║   │
-│  ║  │   Startup reconciliation: reads Redis, rebuilds handles    │   ║   │
-│  ║  │   FFmpeg process lifecycle (start/stop/restart)            │   ║   │
-│  ║  │   RTMP URL validation via FFprobe                          │   ║   │
-│  ║  │   Fallback cascade (primary→stream→image→default→black)    │   ║   │
-│  ║  │   Stream key masking in all outputs                        │   ║   │
-│  ║  └────────────────────────────────────────────────────────────┘   ║   │
-│  ╚═══════════════════════════════════════════════════════════════════╝   │
-│        │                                                                 │
-│  INTERNAL WORLD (anonymous sentiment values, no PII)                     │
-│        │                                                                 │
-│        ▼                                                                 │
-│  broadcast.audience.pulse events                                            │
-│  (SentimentCategory enum + float intensity + optional opaque GUID)       │
-│                                                                          │
-│  Consumed by:                                                            │
-│  ┌──────────────────────────────────────────────────────────────┐       │
-│  │ lib-showtime (L4) -- blends real sentiments with simulated  │       │
-│  │                        audience members to create the         │       │
-│  │                        in-game streaming metagame             │       │
-│  └──────────────────────────────────────────────────────────────┘       │
-│                                                                          │
+│ │
+│ EXTERNAL WORLD (PII, text, usernames) │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│ │ Twitch │ │ YouTube │ │ Custom │ │ Game │ │
+│ │ EventSub │ │ Webhooks │ │ RTMP │ │ Cameras │ │
+│ └─────┬────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ │
+│ │ │ │ │ │
+│ ══════╪════════════╪══════════════╪══════════════╪═══════════════════ │
+│ ║ ▼ ▼ ▼ ▼ ║ │
+│ ║ lib-broadcast (L3) ║ │
+│ ║ ┌────────────────────────────────────────────────────────────┐ ║ │
+│ ║ │ Platform Webhook Handlers (x-controller-only, exempt) │ ║ │
+│ ║ │ Twitch: HMAC signature validation │ ║ │
+│ ║ │ YouTube: verification token validation │ ║ │
+│ ║ │ Custom: configurable HMAC validation │ ║ │
+│ ║ │ Camera API Endpoints (/broadcast/camera/announce|retire) │ ║ │
+│ ║ └─────────────────────┬──────────────────────────────────────┘ ║ │
+│ ║ │ raw events ║ │
+│ ║ ▼ ║ │
+│ ║ ┌────────────────────────────────────────────────────────────┐ ║ │
+│ ║ │ ISentimentProcessor │ ║ │
+│ ║ │ chat text → sentiment category + intensity │ ║ │
+│ ║ │ subscriptions → Excited/Supportive sentiment │ ║ │
+│ ║ │ raids → Excited sentiment (RaidLeader tracked) │ ║ │
+│ ║ │ emotes → mapped to sentiment categories │ ║ │
+│ ║ │ │ ║ │
+│ ║ │ Redis-backed: hashedPlatformUserId → trackingId │ ║ │
+│ ║ │ (session-scoped TTL, non-reversible, tenet-compliant) │ ║ │
+│ ║ └─────────────────────┬──────────────────────────────────────┘ ║ │
+│ ║ │ anonymous sentiments ║ │
+│ ║ ▼ ║ │
+│ ║ ┌──────────────────────────┐ ┌─────────────────────────────┐ ║ │
+│ ║ │ Sentiment Buffer (Redis) │──▶│ SentimentBatchPublisher │ ║ │
+│ ║ │ TTL-based cleanup │ │ Every 15s: drain → publish │ ║ │
+│ ║ └──────────────────────────┘ └──────────────┬──────────────┘ ║ │
+│ ║ │ ║ │
+│ ║ ┌────────────────────────────────────────────────────────────┐ ║ │
+│ ║ │ IBroadcastCoordinator (Singleton — local process cache) │ ║ │
+│ ║ │ ConcurrentDictionary<Guid, BroadcastContext> │ ║ │
+│ ║ │ NON-AUTHORITATIVE — Redis broadcast-outputs is truth │ ║ │
+│ ║ │ Startup reconciliation: reads Redis, rebuilds handles │ ║ │
+│ ║ │ FFmpeg process lifecycle (start/stop/restart) │ ║ │
+│ ║ │ RTMP URL validation via FFprobe │ ║ │
+│ ║ │ Fallback cascade (primary→stream→image→default→black) │ ║ │
+│ ║ │ Stream key masking in all outputs │ ║ │
+│ ║ └────────────────────────────────────────────────────────────┘ ║ │
+│ ╚═══════════════════════════════════════════════════════════════════╝ │
+│ │ │
+│ INTERNAL WORLD (anonymous sentiment values, no PII) │
+│ │ │
+│ ▼ │
+│ broadcast.audience.pulse events │
+│ (SentimentCategory enum + float intensity + optional opaque GUID) │
+│ │
+│ Consumed by: │
+│ ┌──────────────────────────────────────────────────────────────┐ │
+│ │ lib-showtime (L4) -- blends real sentiments with simulated │ │
+│ │ audience members to create the │ │
+│ │ in-game streaming metagame │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+│ │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -254,15 +254,15 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 
 ### Phase 1: Schema & Generation
 - Create broadcast-api.yaml schema with all endpoints (22 endpoints across 6 groups -- includes 2 camera endpoints)
-- **T32 MANDATORY**: All user-facing endpoints (`x-permissions: [user]`) must NOT accept `accountId` in request bodies. Use `webSocketSessionId` and resolve account server-side. This applies to: link, unlink, list, start, stop, associate, status, list sessions. The implementation map pseudo-code currently uses `body.accountId` — the schema must use session-resolved identity instead.
+- **MANDATORY**: All user-facing endpoints (`x-permissions: [user]`) must NOT accept `accountId` in request bodies. Use `webSocketSessionId` and resolve account server-side. This applies to: link, unlink, list, start, stop, associate, status, list sessions. The implementation map pseudo-code currently uses `body.accountId` — the schema must use session-resolved identity instead.
 - ~~**Topic naming**: `x-lifecycle` entity names for BroadcastOutput should use `output` (not `broadcast-output`) to produce `broadcast.output.created/updated/deleted` rather than the redundant `broadcast.broadcast-output.*`.~~: **FIXED** (2026-03-05) - Updated implementation map to use `broadcast.output.*` topics and `OutputCreatedEvent`/`OutputUpdatedEvent`/`OutputDeletedEvent` type names throughout. Deep dive event reference also corrected.
 - Declare `x-service-layer: AppFeatures` at schema root (default is GameFeatures -- wrong layer without this)
-- Declare `x-references` block for lib-resource cleanup of non-account entity references; for account-owned data, subscribe to `account.deleted` per T28's Account Deletion Cleanup Obligation
+- Declare `x-references` block for lib-resource cleanup of non-account entity references; for account-owned data, subscribe to `account.deleted` per tenets's Account Deletion Cleanup Obligation
 - Create broadcast-events.yaml schema using `x-lifecycle` with `topic_prefix: broadcast` for PlatformLink, PlatformSession, and Output entities; plus 1 custom event (`broadcast.audience.pulse`)
 - Define consumed event models inline in `broadcast-events.yaml` (voice events, session events -- cannot `$ref` other service event files per FOUNDATION TENETS)
 - Create broadcast-configuration.yaml schema (36 configuration properties with validation ranges)
 - Create broadcast-client-events.yaml (5 client events: output started/stopped/source-changed, session started/ended)
-- Define `AudioCodec` and `VideoCodec` enums in configuration schema (LGPL-compliant codecs only per T18)
+- Define `AudioCodec` and `VideoCodec` enums in configuration schema (LGPL-compliant codecs only per tenets)
 - Generate service code
 - Verify build succeeds
 
@@ -317,10 +317,10 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 5. ~~**Platform-specific enrichment**~~: **ADDRESSED BY DESIGN** (2026-03-05) - The v1 architecture already accommodates platform-specific enrichment through three mechanisms: (a) the `ISentimentProcessor` DI interface accepts distinct method signatures per event type (`ProcessChatMessageAsync`, `ProcessSubscriptionEventAsync`, `ProcessSuperChatAsync`, `ProcessGenericWebhookAsync`), so adding Twitch Prediction/Poll processing requires only new methods on the interface and new `IF type ==` dispatch branches in the webhook handler -- localized changes with no pipeline restructuring; (b) YouTube Super Chat amounts already flow to the processor via `ProcessSuperChatAsync(platformSessionId, amount, senderId)`, and the `SentimentEntry.intensity` float (0.0-1.0) provides the output range for amount-influenced scoring; (c) if Predictions/Polls warranted new sentiment categories beyond the existing 8-value enum, that is an intentionally rare schema extension per Intentional Quirk #1. No architectural changes needed -- platform-specific enrichment is a natural consequence of the per-event-type dispatch pattern and the swappable `ISentimentProcessor` interface.
 
 <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/570 -->
-6. **Broadcast recording**: FFmpeg can simultaneously output to both RTMP and a local file. Recorded broadcasts could be uploaded to the Asset service for archival. Useful for highlight reels and content flywheel integration. The v1 architecture largely accommodates this with localized changes (FFmpeg tee muxer, `BroadcastModel` recording fields, Asset L3-to-L3 dependency with graceful degradation). **Requires design decisions before implementation** on: (a) consent distinction between live broadcasting and persistent recording for VoiceRoom sources, (b) upload lifecycle orchestration (when/how to upload to Asset), (c) local storage management configuration, and (d) recording format/codec selection under T18 licensing constraints -- see [GitHub Issue #570](https://github.com/beyond-immersion/bannou-service/issues/570).
+6. **Broadcast recording**: FFmpeg can simultaneously output to both RTMP and a local file. Recorded broadcasts could be uploaded to the Asset service for archival. Useful for highlight reels and content flywheel integration. The v1 architecture largely accommodates this with localized changes (FFmpeg tee muxer, `BroadcastModel` recording fields, Asset L3-to-L3 dependency with graceful degradation). **Requires design decisions before implementation** on: (a) consent distinction between live broadcasting and persistent recording for VoiceRoom sources, (b) upload lifecycle orchestration (when/how to upload to Asset), (c) local storage management configuration, and (d) recording format/codec selection under licensing constraints -- see [GitHub Issue #570](https://github.com/beyond-immersion/bannou-service/issues/570).
 
 <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/572 -->
-7. **Custom sentiment models**: Per-game-service sentiment processing rules (different games care about different emotional categories). Configurable via a sentiment model store rather than hardcoded categories. **Requires design decisions before implementation**: the v1 `ISentimentProcessor` interface already supports swapping *processing logic* (how text maps to categories), but this extension asks for different *output categories* per game, which directly conflicts with Intentional Quirk #1's fixed 8-value `SentimentCategory` enum. Key questions: (a) should `SentimentCategory` become opaque strings (T14 Category B) instead of a fixed enum (Category C), (b) how would lib-showtime (L4) handle unknown categories in its deterministic audience behavior mapping, (c) whether per-game weighting within the existing 8 categories is sufficient (in which case `ISentimentProcessor` already covers it), (d) storage mechanism for category vocabularies (state store vs configuration per T21) -- see [GitHub Issue #572](https://github.com/beyond-immersion/bannou-service/issues/572).
+7. **Custom sentiment models**: Per-game-service sentiment processing rules (different games care about different emotional categories). Configurable via a sentiment model store rather than hardcoded categories. **Requires design decisions before implementation**: the v1 `ISentimentProcessor` interface already supports swapping *processing logic* (how text maps to categories), but this extension asks for different *output categories* per game, which directly conflicts with Intentional Quirk #1's fixed 8-value `SentimentCategory` enum. Key questions: (a) should `SentimentCategory` become opaque strings (Category B) instead of a fixed enum (Category C), (b) how would lib-showtime (L4) handle unknown categories in its deterministic audience behavior mapping, (c) whether per-game weighting within the existing 8 categories is sufficient (in which case `ISentimentProcessor` already covers it), (d) storage mechanism for category vocabularies (state store vs configuration per tenets) -- see [GitHub Issue #572](https://github.com/beyond-immersion/bannou-service/issues/572).
 
 <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/576 -->
 8. **Director-coordinated broadcast priority**: During directed events, Director signals broadcast priority levels indicating event importance (0 = no broadcast, 1-10 = priority). Broadcast uses this to prioritize camera selection, source quality, and RTMP output allocation when multiple events compete for broadcast resources. Requires a priority-aware source selection mechanism and potentially a broadcast scheduling API that Director can call to reserve broadcast capacity ahead of planned events. **Requires design decisions before implementation**: Director's `DirectedEvent` model already has `broadcastPriority` (0-10) and references `IBroadcastClient` as a soft dependency, but the v1 Broadcast architecture has no corresponding APIs, state models, or allocation logic. Key design questions: (a) preemption vs. first-access when higher-priority events compete for `MaxConcurrentOutputs` slots, (b) reservation API design (ahead-of-time capacity holds vs. on-demand allocation at event activation), (c) priority conflict resolution when multiple directed events have equal priority, (d) automated camera selection semantics vs. manual camera assignment per output, (e) source quality differentiation (FFmpeg argument variation per priority level), (f) state model changes to `BroadcastModel` for priority tracking. See [DIRECTOR.md](DIRECTOR.md) Broadcast & Showtime Integration section -- see [GitHub Issue #576](https://github.com/beyond-immersion/bannou-service/issues/576).
@@ -344,11 +344,11 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **Sentiment categories are an enum, not opaque strings**: Unlike most Bannou extensibility patterns (seed type codes, collection type codes), sentiment categories are a fixed enum (`Excited`, `Supportive`, `Critical`, `Curious`, `Surprised`, `Amused`, `Bored`, `Hostile`). This is intentional -- lib-showtime (L4) needs to map sentiments to audience behavior deterministically. Adding a new sentiment category requires schema changes, which is acceptable because it's a rare, deliberate extension. No deprecation lifecycle needed (T31 Category C -- enum values with no stored instances referencing them by ID).
+1. **Sentiment categories are an enum, not opaque strings**: Unlike most Bannou extensibility patterns (seed type codes, collection type codes), sentiment categories are a fixed enum (`Excited`, `Supportive`, `Critical`, `Curious`, `Surprised`, `Amused`, `Bored`, `Hostile`). This is intentional -- lib-showtime (L4) needs to map sentiments to audience behavior deterministically. Adding a new sentiment category requires schema changes, which is acceptable because it's a rare, deliberate extension. No deprecation lifecycle needed (Category C -- enum values with no stored instances referencing them by ID).
 
 2. **Tracking ID mapping is Redis-backed, not in-memory**: The `hashedPlatformUserId → trackingId` mapping is stored in the `broadcast-sessions` Redis store with session-scoped TTL, not in a per-instance `ConcurrentDictionary`. This ensures cross-instance tracking consistency (the same viewer gets the same tracking ID regardless of which instance processes their events) while preserving privacy properties: the mapping is ephemeral (destroyed when the session ends via TTL or explicit delete), uses a hashed non-reversible key, and has no relationship to the original platform user ID. Per IMPLEMENTATION TENETS (multi-instance safety).
 
-3. **Webhook endpoints are internet-facing (justified T15 exception)**: Unlike most Bannou services (POST-only, internal), the webhook endpoints receive callbacks from Twitch/YouTube via NGINX. They validate platform-specific signatures (Twitch HMAC, YouTube verification token) and route events internally. These are the only internet-facing endpoints in lib-broadcast. Declared with `x-permissions: []` (not exposed to WebSocket clients) and `x-controller-only: true` (HMAC validation requires raw body access before model binding).
+3. **Webhook endpoints are internet-facing (justified exception)**: Unlike most Bannou services (POST-only, internal), the webhook endpoints receive callbacks from Twitch/YouTube via NGINX. They validate platform-specific signatures (Twitch HMAC, YouTube verification token) and route events internally. These are the only internet-facing endpoints in lib-broadcast. Declared with `x-permissions: []` (not exposed to WebSocket clients) and `x-controller-only: true` (HMAC validation requires raw body access before model binding).
 
 4. **FFmpeg as a separate process**: FFmpeg runs as a separate OS process, not a linked library. This is a deliberate license compliance decision (LGPL process isolation) and also provides fault isolation -- a crashing FFmpeg process doesn't bring down the Bannou service.
 
@@ -358,11 +358,11 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 
 7. **Platform link tokens are encrypted at rest**: OAuth access tokens and refresh tokens are encrypted with `TokenEncryptionKey` before storage in MySQL. If the encryption key is lost, all platform links must be re-established. There is no key rotation mechanism in v1 -- this is a known limitation, not a bug.
 
-8. **IBroadcastCoordinator is a local process cache, not authoritative state**: The `ConcurrentDictionary<Guid, BroadcastContext>` in `IBroadcastCoordinator` holds local FFmpeg process handles for the current instance only. It is NOT the source of truth -- the `broadcast-outputs` Redis store is authoritative. On startup, the coordinator reads Redis and reconciles: broadcasts owned by this instance have process handles rebuilt; broadcasts owned by crashed instances are marked as failed. This per-instance supervision pattern is T9-compliant because the coordinator never holds state that other instances need. Per IMPLEMENTATION TENETS (multi-instance safety).
+8. **IBroadcastCoordinator is a local process cache, not authoritative state**: The `ConcurrentDictionary<Guid, BroadcastContext>` in `IBroadcastCoordinator` holds local FFmpeg process handles for the current instance only. It is NOT the source of truth -- the `broadcast-outputs` Redis store is authoritative. On startup, the coordinator reads Redis and reconciles: broadcasts owned by this instance have process handles rebuilt; broadcasts owned by crashed instances are marked as failed. This per-instance supervision pattern is tenet-compliant because the coordinator never holds state that other instances need. Per IMPLEMENTATION TENETS (multi-instance safety).
 
-9. **Camera sources are registered via API, not events**: Game engine cameras register via `/broadcast/camera/announce` (with TTL heartbeat) rather than publishing `camera.stream.started` events. This avoids creating orphaned event topics with no Bannou publisher service (per FOUNDATION TENETS -- T27 cross-service communication discipline).
+9. **Camera sources are registered via API, not events**: Game engine cameras register via `/broadcast/camera/announce` (with TTL heartbeat) rather than publishing `camera.stream.started` events. This avoids creating orphaned event topics with no Bannou publisher service (per FOUNDATION TENETS -- cross-service communication discipline).
 
-10. **Platform link deletion cascades session records**: When a platform link is hard-deleted (unlink), all `PlatformSessionModel` records in Redis referencing that link are also deleted. Session records are instance data with no cross-service references, so cascade delete is appropriate per IMPLEMENTATION TENETS (T31 -- no deprecation for instance data).
+10. **Platform link deletion cascades session records**: When a platform link is hard-deleted (unlink), all `PlatformSessionModel` records in Redis referencing that link are also deleted. Session records are instance data with no cross-service references, so cascade delete is appropriate per IMPLEMENTATION TENETS (-- no deprecation for instance data).
 
 11. **Sentiment processing starts with keyword/emoji matching**: The v1 `ISentimentProcessor` implementation uses keyword matching and emoji-to-category mapping rather than NLP. This is intentionally simple -- fast, no external dependencies, and sufficient for the 8 fixed sentiment categories. The `ISentimentProcessor` interface allows swapping to a lightweight NLP model in the future without changing the rest of the pipeline (see Potential Extensions #1). The 15-second batching window provides latency tolerance if a more expensive classifier is used later.
 
@@ -393,7 +393,7 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 - **2026-03-05**: Audited Potential Extension #3 (multi-platform simultaneous broadcasting) — marked as addressed by design. The v1 output management architecture has a 1:N source-to-output relationship: each BroadcastModel is one FFmpeg process to one RTMP endpoint, with no uniqueness constraint on sources. Multiple StartOutput calls with the same source and different RTMP URLs create independent outputs. MaxConcurrentOutputs provides resource protection.
 - **2026-03-05**: Audited Potential Extension #4 (broadcast overlay composition) — marked as addressed by design. The v1 FFmpeg usage is deliberately passthrough-only; overlays are a client/OBS concern. If server-side overlays were later desired, changes would be localized to IBroadcastCoordinator and BroadcastModel with no cross-service coupling, since all required data (viewer count, sentiment) already exists within lib-broadcast.
 - **2026-03-05**: Audited Potential Extension #5 (platform-specific enrichment) — marked as addressed by design. The `ISentimentProcessor` interface already uses distinct method signatures per event type (chat, subscription, super chat, generic webhook). Twitch Predictions/Polls require only new interface methods and webhook dispatch branches. YouTube Super Chat amounts already flow to the processor. `SentimentEntry.intensity` (0.0-1.0 float) provides the output range for amount-influenced scoring. No pipeline or architectural changes needed.
-- **2026-03-05**: Audited Potential Extension #6 (broadcast recording) — created [GitHub Issue #570](https://github.com/beyond-immersion/bannou-service/issues/570) for unresolved design questions. The v1 architecture largely accommodates recording (FFmpeg tee muxer, localized IBroadcastCoordinator/BroadcastModel changes, Asset L3→L3 valid dependency). However, four design questions remain: (1) consent distinction between live broadcasting and persistent recording for VoiceRoom sources, (2) upload lifecycle orchestration, (3) local storage management configuration, (4) recording format/codec selection under T18. Annotated PE#6 in deep dive with NEEDS_DESIGN marker.
-- **2026-03-05**: Audited Potential Extension #7 (custom sentiment models) — created [GitHub Issue #572](https://github.com/beyond-immersion/bannou-service/issues/572) for unresolved design questions. The `ISentimentProcessor` DI interface already supports swapping processing logic (PE#1 addressed), but PE#7 asks for different output categories per game, which conflicts with Intentional Quirk #1's fixed 8-value `SentimentCategory` enum. Key design tension: fixed enum (Category C per T14) vs opaque strings (Category B) and cross-service impact on lib-showtime's deterministic audience behavior mapping. Annotated PE#7 in deep dive with NEEDS_DESIGN marker.
+- **2026-03-05**: Audited Potential Extension #6 (broadcast recording) — created [GitHub Issue #570](https://github.com/beyond-immersion/bannou-service/issues/570) for unresolved design questions. The v1 architecture largely accommodates recording (FFmpeg tee muxer, localized IBroadcastCoordinator/BroadcastModel changes, Asset L3→L3 valid dependency). However, four design questions remain: (1) consent distinction between live broadcasting and persistent recording for VoiceRoom sources, (2) upload lifecycle orchestration, (3) local storage management configuration, (4) recording format/codec selection under. Annotated PE#6 in deep dive with NEEDS_DESIGN marker.
+- **2026-03-05**: Audited Potential Extension #7 (custom sentiment models) — created [GitHub Issue #572](https://github.com/beyond-immersion/bannou-service/issues/572) for unresolved design questions. The `ISentimentProcessor` DI interface already supports swapping processing logic (PE#1 addressed), but PE#7 asks for different output categories per game, which conflicts with Intentional Quirk #1's fixed 8-value `SentimentCategory` enum. Key design tension: fixed enum (Category C per tenets) vs opaque strings (Category B) and cross-service impact on lib-showtime's deterministic audience behavior mapping. Annotated PE#7 in deep dive with NEEDS_DESIGN marker.
 - **2026-03-05**: Audited Potential Extension #8 (Director-coordinated broadcast priority) — created [GitHub Issue #576](https://github.com/beyond-immersion/bannou-service/issues/576) for unresolved design questions. Director's `DirectedEvent` model already has `broadcastPriority` (0-10) and references `IBroadcastClient` as a soft dependency, but the v1 Broadcast architecture has no priority-aware APIs, state models, or allocation logic. Six design questions remain: preemption vs. first-access model, reservation API design, priority conflict resolution, automated camera selection semantics, source quality differentiation, and `BroadcastModel` state changes for priority tracking. Annotated PE#8 in deep dive with NEEDS_DESIGN marker.
-- **2026-03-08**: Removed duplicate "Dependencies (Events Consumed)" operational section from deep dive per template migration checklist (Rule 6). Unique content (Source column, T28 compliance note) preserved in implementation map's Events Consumed table before removal.
+- **2026-03-08**: Removed duplicate "Dependencies (Events Consumed)" operational section from deep dive per template migration checklist (Rule 6). Unique content (Source column, compliance note) preserved in implementation map's Events Consumed table before removal.

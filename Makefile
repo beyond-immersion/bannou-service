@@ -328,7 +328,7 @@ external-image: ## Show which image the external bannou container is using
 clean-build-artifacts: ## Remove bin/obj directories and build-output.txt (improves grep results)
 	@echo "🧹 Cleaning build artifacts (bin/obj directories)..."
 	@rm -f build-output.txt 2>/dev/null || true
-	@find . -type d \( -name "bin" -o -name "obj" \) \
+	@find . -type d \( -name "bin" -o -name "obj" -o -name "__pycache__" -o -name "TestResults" \) \
 		-not -path "./.git/*" \
 		-not -path "./node_modules/*" \
 		-exec rm -rf {} + 2>/dev/null || true

@@ -126,9 +126,9 @@ Session connected/disconnected/reconnected/heartbeat received via `ISessionActiv
 POST /permission/capabilities | Roles: []
 
 ```
-READ permission:"session:{sessionId}:permissions"                  -> 404 if null or empty
+READ permission:"session:{sessionId}:permissions" -> 404 if null or empty
 FOREACH key in permissions (excluding "version", "generated_at" metadata keys)
-  // Deserialize value as List<string> endpoint names
+ // Deserialize value as List<string> endpoint names
 RETURN (200, CapabilityResponse { permissions, generatedAt })
 ```
 
@@ -138,15 +138,15 @@ POST /permission/validate | Roles: []
 ```
 READ permission:"session:{sessionId}:permissions"
 IF permissions null OR serviceId not present
-  RETURN (403, reason: "No permissions registered")
+ RETURN (403, reason: "No permissions registered")
 // Deserialize endpoint list for requested service
 IF endpoint in allowed list
-  RETURN (200)
+ RETURN (200)
 ELSE
-  RETURN (403, reason: "Endpoint not in allowed list")
+ RETURN (403, reason: "Endpoint not in allowed list")
 ```
 
-// T8: 200 = allowed, 403 = denied. Status code communicates result.
+// 200 = allowed, 403 = denied. Status code communicates result.
 
 ### RegisterServicePermissions
 POST /permission/register-service | Roles: []
@@ -156,24 +156,24 @@ POST /permission/register-service | Roles: []
 READ permission:"permission_hash:{serviceId}"
 READ permission:registered_services CONTAINS serviceId
 IF hash matches AND service already registered
-  RETURN (200, RegistrationResponse {})                            // Idempotent skip
+ RETURN (200, RegistrationResponse {}) // Idempotent skip
 
 FOREACH state in body.permissions
-  FOREACH role in state.permissions
-    READ permission:"permissions:{serviceId}:{state}:{role}"       // Existing endpoints
-    WRITE permission:"permissions:{serviceId}:{state}:{role}" <- merged endpoint set
+ FOREACH role in state.permissions
+ READ permission:"permissions:{serviceId}:{state}:{role}" // Existing endpoints
+ WRITE permission:"permissions:{serviceId}:{state}:{role}" <- merged endpoint set
 
 WRITE permission:"service-states:{serviceId}" <- HashSet of state names
 WRITE permission:"permission_versions:{serviceId}" <- { version }
 WRITE permission:"service-registered:{serviceId}" <- ServiceRegistrationInfo { timestamp }
-WRITE permission:registered_services ADD serviceId                 // Atomic SADD
+WRITE permission:registered_services ADD serviceId // Atomic SADD
 
 // Fan-out recompilation to all active sessions
 READ permission:active_sessions -> sessionIds
 FOREACH sessionId in sessionIds (parallel, bounded by MaxConcurrentRecompilations)
-  // see helper: RecompileSessionPermissions
+ // see helper: RecompileSessionPermissions
 
-WRITE permission:"permission_hash:{serviceId}" <- newHash         // After recompilation completes
+WRITE permission:"permission_hash:{serviceId}" <- newHash // After recompilation completes
 RETURN (200, RegistrationResponse {})
 ```
 
@@ -182,12 +182,12 @@ POST /permission/update-session-state | Roles: []
 
 ```
 LOCK permission-lock:"{sessionId}" timeout=SessionLockTimeoutSeconds
-                                                                   -> 409 if lock fails
-  READ permission:"session:{sessionId}:states"                     // null -> new empty dict
-  WRITE permission:active_sessions ADD sessionId
-  // Set states[serviceId] = newState
-  WRITE permission:"session:{sessionId}:states" <- updated [TTL: SessionDataTtlSeconds]
-  // see helper: RecompileSessionPermissions (with in-memory states)
+ -> 409 if lock fails
+ READ permission:"session:{sessionId}:states" // null -> new empty dict
+ WRITE permission:active_sessions ADD sessionId
+ // Set states[serviceId] = newState
+ WRITE permission:"session:{sessionId}:states" <- updated [TTL: SessionDataTtlSeconds]
+ // see helper: RecompileSessionPermissions (with in-memory states)
 RETURN (200, SessionUpdateResponse { permissionsChanged, newPermissions })
 ```
 
@@ -196,12 +196,12 @@ POST /permission/update-session-role | Roles: []
 
 ```
 LOCK permission-lock:"{sessionId}" timeout=SessionLockTimeoutSeconds
-                                                                   -> 409 if lock fails
-  READ permission:"session:{sessionId}:states"                     // null -> new empty dict
-  WRITE permission:active_sessions ADD sessionId
-  // Set states["role"] = newRole
-  WRITE permission:"session:{sessionId}:states" <- updated [TTL: SessionDataTtlSeconds]
-  // see helper: RecompileSessionPermissions (with in-memory states)
+ -> 409 if lock fails
+ READ permission:"session:{sessionId}:states" // null -> new empty dict
+ WRITE permission:active_sessions ADD sessionId
+ // Set states["role"] = newRole
+ WRITE permission:"session:{sessionId}:states" <- updated [TTL: SessionDataTtlSeconds]
+ // see helper: RecompileSessionPermissions (with in-memory states)
 RETURN (200, SessionUpdateResponse { permissionsChanged, newPermissions })
 ```
 
@@ -211,20 +211,20 @@ POST /permission/clear-session-state | Roles: []
 ```
 READ permission:"session:{sessionId}:states"
 IF states null or empty
-  RETURN (200, SessionUpdateResponse { permissionsChanged: false })
+ RETURN (200, SessionUpdateResponse { permissionsChanged: false })
 
-IF serviceId null or empty                                         // Clear ALL states
-  WRITE permission:"session:{sessionId}:states" <- {} [TTL: SessionDataTtlSeconds]
-  // see helper: RecompileSessionPermissions (with empty states)
+IF serviceId null or empty // Clear ALL states
+ WRITE permission:"session:{sessionId}:states" <- {} [TTL: SessionDataTtlSeconds]
+ // see helper: RecompileSessionPermissions (with empty states)
 ELSE
-  IF serviceId not in states
-    RETURN (200, SessionUpdateResponse { permissionsChanged: false })
-  IF body.states filter provided and non-empty
-    IF current state not in filter
-      RETURN (200, SessionUpdateResponse { permissionsChanged: false })
-  // Remove serviceId from states dict
-  WRITE permission:"session:{sessionId}:states" <- updated [TTL: SessionDataTtlSeconds]
-  // see helper: RecompileSessionPermissions (with updated states)
+ IF serviceId not in states
+ RETURN (200, SessionUpdateResponse { permissionsChanged: false })
+ IF body.states filter provided and non-empty
+ IF current state not in filter
+ RETURN (200, SessionUpdateResponse { permissionsChanged: false })
+ // Remove serviceId from states dict
+ WRITE permission:"session:{sessionId}:states" <- updated [TTL: SessionDataTtlSeconds]
+ // see helper: RecompileSessionPermissions (with updated states)
 
 RETURN (200, SessionUpdateResponse { permissionsChanged, newPermissions })
 ```
@@ -235,9 +235,9 @@ RETURN (200, SessionUpdateResponse { permissionsChanged, newPermissions })
 POST /permission/get-session-info | Roles: []
 
 ```
-READ permission:"session:{sessionId}:states"        (parallel)
-READ permission:"session:{sessionId}:permissions"    (parallel)
-IF states null or empty                                            -> 404
+READ permission:"session:{sessionId}:states" (parallel)
+READ permission:"session:{sessionId}:permissions" (parallel)
+IF states null or empty -> 404
 // Role from states["role"], fallback to RoleHierarchy[0]
 // Parse permissions map (skip "version", "generated_at" metadata keys)
 RETURN (200, SessionInfo { role, states, permissions, version, lastUpdated })
@@ -249,12 +249,12 @@ POST /permission/services/list | Roles: [admin]
 ```
 READ permission:registered_services -> serviceIds
 FOREACH serviceId in serviceIds
-  READ permission:"service-registered:{serviceId}"
-  READ permission:"service-states:{serviceId}" -> registeredStates
-  // Count unique endpoints across all states x roles
-  FOREACH state in registeredStates
-    FOREACH role in RoleHierarchy
-      READ permission:"permissions:{serviceId}:{state}:{role}"
+ READ permission:"service-registered:{serviceId}"
+ READ permission:"service-states:{serviceId}" -> registeredStates
+ // Count unique endpoints across all states x roles
+ FOREACH state in registeredStates
+ FOREACH role in RoleHierarchy
+ READ permission:"permissions:{serviceId}:{state}:{role}"
 RETURN (200, RegisteredServicesResponse { services, timestamp })
 ```
 
@@ -273,15 +273,15 @@ Two overloads: one reads states from Redis, one accepts in-memory states dict.
 READ permission:registered_services -> registeredServices
 
 FOREACH serviceId in registeredServices
-  // relevantStates = ["default"] + session states
-  // Cross-service states qualified as "{otherServiceId}:{stateValue}"
-  FOREACH state in relevantStates
-    FOREACH role in RoleHierarchy
-      READ permission:"permissions:{serviceId}:{state}:{role}"
-      // Track maxRoleByEndpoint[endpoint] = highest role index granting access
-  // Allow endpoints where session role priority >= max required role
+ // relevantStates = ["default"] + session states
+ // Cross-service states qualified as "{otherServiceId}:{stateValue}"
+ FOREACH state in relevantStates
+ FOREACH role in RoleHierarchy
+ READ permission:"permissions:{serviceId}:{state}:{role}"
+ // Track maxRoleByEndpoint[endpoint] = highest role index granting access
+ // Allow endpoints where session role priority >= max required role
 
-READ permission:"session:{sessionId}:permissions"                  // For version increment
+READ permission:"session:{sessionId}:permissions" // For version increment
 WRITE permission:"session:{sessionId}:permissions" <- compiled [TTL: SessionDataTtlSeconds]
 // see helper: PublishCapabilityUpdate
 ```
@@ -296,8 +296,8 @@ PUBLISH permission.capability-update { sessionId, version, updateType: Full, ful
 
 // Push client event to session channel (gated by active connection)
 IF not skipActiveConnectionsCheck
-  READ permission:active_connections CONTAINS sessionId
-  IF not connected -> return                                       // Skip client push
+ READ permission:active_connections CONTAINS sessionId
+ IF not connected -> return // Skip client push
 PUSH SessionCapabilitiesEvent to sessionId { sessionId, permissions, reason, version }
 ```
 
@@ -310,7 +310,7 @@ PUSH SessionCapabilitiesEvent to sessionId { sessionId, permissions, reason, ver
 Trigger: New session connection (Connect → ISessionActivityListener)
 
 ```
-READ permission:"session:{sessionId}:states"                       // Existing or null
+READ permission:"session:{sessionId}:states" // Existing or null
 // Determine highest priority role from session roles via RoleHierarchy
 // Parse authorizations (format "stubName:state")
 WRITE permission:"session:{sessionId}:states" <- merged [TTL: SessionDataTtlSeconds]
@@ -326,8 +326,8 @@ Trigger: Session disconnect (Connect → ISessionActivityListener)
 ```
 WRITE permission:active_connections REMOVE sessionId
 IF not reconnectable
-  WRITE permission:active_sessions REMOVE sessionId
-  // Delegates to ClearSessionStateAsync (clears all states, recompiles)
+ WRITE permission:active_sessions REMOVE sessionId
+ // Delegates to ClearSessionStateAsync (clears all states, recompiles)
 // If reconnectable: Redis EXPIRE aligned to Connect's reconnection window
 ```
 
@@ -358,10 +358,10 @@ Trigger: `session.updated` event from Auth service
 
 ```
 // Determine highest priority role from evt.Roles via RoleHierarchy
-CALL UpdateSessionRoleAsync({ sessionId, newRole })                // Acquires lock, recompiles
+CALL UpdateSessionRoleAsync({ sessionId, newRole }) // Acquires lock, recompiles
 FOREACH authorization in evt.Authorizations
-  // Parse "stubName:state" format
-  CALL UpdateSessionStateAsync({ sessionId, serviceId, newState }) // Acquires lock per auth, recompiles
+ // Parse "stubName:state" format
+ CALL UpdateSessionStateAsync({ sessionId, serviceId, newState }) // Acquires lock per auth, recompiles
 ```
 
 // Each call triggers a separate lock acquisition, recompilation, and capability push.

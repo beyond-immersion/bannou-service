@@ -105,7 +105,7 @@ Generic save/load system (L4 GameFeatures) for game state persistence with polym
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
-| `account.deleted` | `AccountDeletedEvent` | `HandleAccountDeletedAsync` — Deletes all save slots, versions, hot cache entries, and associated assets owned by the deleted account. Required by T28 (Account Deletion Cleanup Obligation) because Save-Load supports `ownerType: Account`. |
+| `account.deleted` | `AccountDeletedEvent` | `HandleAccountDeletedAsync` — Deletes all save slots, versions, hot cache entries, and associated assets owned by the deleted account. Required by (Account Deletion Cleanup Obligation) because Save-Load supports `ownerType: Account`. |
 
 ---
 
@@ -284,175 +284,175 @@ Service lifetime is **Scoped** (per-request). Two background services run contin
 Delta Chain System
 ====================
 
-  Version 1 (Full Snapshot)      Version 2 (Delta)          Version 3 (Delta)
-  ┌─────────────────────┐      ┌─────────────────────┐    ┌─────────────────────┐
-  │ IsDelta: false      │      │ IsDelta: true       │    │ IsDelta: true       │
-  │ BaseVersion: null   │ <─── │ BaseVersion: 1      │ <──│ BaseVersion: 2      │
-  │ Data: {full JSON}   │      │ Data: [JSON Patch]  │    │ Data: [JSON Patch]  │
-  │ Algorithm: null     │      │ Algorithm: JSON_PATCH│    │ Algorithm: JSON_PATCH│
-  └─────────────────────┘      └─────────────────────┘    └─────────────────────┘
+ Version 1 (Full Snapshot) Version 2 (Delta) Version 3 (Delta)
+ ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
+ │ IsDelta: false │ │ IsDelta: true │ │ IsDelta: true │
+ │ BaseVersion: null │ <─── │ BaseVersion: 1 │ <──│ BaseVersion: 2 │
+ │ Data: {full JSON} │ │ Data: [JSON Patch] │ │ Data: [JSON Patch] │
+ │ Algorithm: null │ │ Algorithm: JSON_PATCH│ │ Algorithm: JSON_PATCH│
+ └─────────────────────┘ └─────────────────────┘ └─────────────────────┘
 
-  Load Version 3:
-    1. Walk chain: V3 -> V2 -> V1 (base found)
-    2. Load V1 full data
-    3. Apply V2 patch to V1 -> intermediate
-    4. Apply V3 patch to intermediate -> final data
+ Load Version 3:
+ 1. Walk chain: V3 -> V2 -> V1 (base found)
+ 2. Load V1 full data
+ 3. Apply V2 patch to V1 -> intermediate
+ 4. Apply V3 patch to intermediate -> final data
 
-  CollapseDeltas(slotId, versionNumber=3):
-    1. Reconstruct full data for V3 (as above)
-    2. Store as new Version 4 (IsDelta: false)
-    3. Original V1, V2, V3 remain (cleanup removes them later)
+ CollapseDeltas(slotId, versionNumber=3):
+ 1. Reconstruct full data for V3 (as above)
+ 2. Store as new Version 4 (IsDelta: false)
+ 3. Original V1, V2, V3 remain (cleanup removes them later)
 
 
 Slot / Version Hierarchy
 ==========================
 
-  Owner (Account/Character/Session/Realm)
-   │
-   ├── Game: "arcadia"
-   │    ├── Slot: "autosave-1" (Category: AUTO_SAVE, MaxVersions: 5)
-   │    │    ├── Version 1: { hash: abc, size: 1024, pinned: false }
-   │    │    ├── Version 2: { hash: def, size: 1100, pinned: false }
-   │    │    ├── Version 3: { hash: ghi, size: 980, pinned: true, checkpoint: "boss-fight" }
-   │    │    ├── Version 4: { hash: jkl, size: 1200, isDelta: true, base: 3 }
-   │    │    └── Version 5: { hash: mno, size: 1150, isDelta: true, base: 4 }
-   │    │
-   │    ├── Slot: "manual-save-1" (Category: MANUAL_SAVE, MaxVersions: 10)
-   │    │    └── Version 1: { hash: pqr, size: 5000 }
-   │    │
-   │    └── Slot: "quicksave" (Category: QUICK_SAVE, MaxVersions: 1)
-   │         └── Version 1: { hash: stu, size: 800, compression: NONE }
-   │
-   └── Game: "fantasia"
-        └── Slot: "world-state" (Category: STATE_SNAPSHOT, MaxVersions: 3)
-             └── ...
+ Owner (Account/Character/Session/Realm)
+ │
+ ├── Game: "arcadia"
+ │ ├── Slot: "autosave-1" (Category: AUTO_SAVE, MaxVersions: 5)
+ │ │ ├── Version 1: { hash: abc, size: 1024, pinned: false }
+ │ │ ├── Version 2: { hash: def, size: 1100, pinned: false }
+ │ │ ├── Version 3: { hash: ghi, size: 980, pinned: true, checkpoint: "boss-fight" }
+ │ │ ├── Version 4: { hash: jkl, size: 1200, isDelta: true, base: 3 }
+ │ │ └── Version 5: { hash: mno, size: 1150, isDelta: true, base: 4 }
+ │ │
+ │ ├── Slot: "manual-save-1" (Category: MANUAL_SAVE, MaxVersions: 10)
+ │ │ └── Version 1: { hash: pqr, size: 5000 }
+ │ │
+ │ └── Slot: "quicksave" (Category: QUICK_SAVE, MaxVersions: 1)
+ │ └── Version 1: { hash: stu, size: 800, compression: NONE }
+ │
+ └── Game: "fantasia"
+ └── Slot: "world-state" (Category: STATE_SNAPSHOT, MaxVersions: 3)
+ └── ...
 
-  Key: slot:{gameId}:{ownerType}:{ownerId}:{slotName}
+ Key: slot:{gameId}:{ownerType}:{ownerId}:{slotName}
 
 
 Save / Load Flow (Async Upload)
 ==================================
 
-  Client                 SaveLoadService              Redis                    Background Worker      Asset Service
-    │                         │                         │                           │                      │
-    │  POST /save-load/save   │                         │                           │                      │
-    │ ───────────────────────>│                         │                           │                      │
-    │                         │  Acquire slot lock      │                           │                      │
-    │                         │ ───────────────────────>│                           │                      │
-    │                         │  <── lock acquired ─────│                           │                      │
-    │                         │                         │                           │                      │
-    │                         │  Compress + Hash data   │                           │                      │
-    │                         │                         │                           │                      │
-    │                         │  Save version manifest  │                           │                      │
-    │                         │ ───────────────────────>│ (save-load-versions)      │                      │
-    │                         │                         │                           │                      │
-    │                         │  Store in hot cache     │                           │                      │
-    │                         │ ───────────────────────>│ (save-load-cache)         │                      │
-    │                         │                         │                           │                      │
-    │                         │  Queue for upload       │                           │                      │
-    │                         │ ───────────────────────>│ (save-load-pending + set) │                      │
-    │                         │                         │                           │                      │
-    │  <── 200 OK ────────────│  (immediate response)   │                           │                      │
-    │  { uploadPending: true }│                         │                           │                      │
-    │                         │                         │                           │                      │
-    │                         │                         │  Poll pending set         │                      │
-    │                         │                         │ <─────────────────────────│                      │
-    │                         │                         │                           │                      │
-    │                         │                         │                           │  RequestUpload       │
-    │                         │                         │                           │ ────────────────────>│
-    │                         │                         │                           │  <── presigned URL ──│
-    │                         │                         │                           │                      │
-    │                         │                         │                           │  PUT data to URL     │
-    │                         │                         │                           │ ────────────────────>│
-    │                         │                         │                           │  <── 200 OK ─────────│
-    │                         │                         │                           │                      │
-    │                         │                         │                           │  CompleteUpload      │
-    │                         │                         │                           │ ────────────────────>│
-    │                         │                         │                           │  <── assetId ────────│
-    │                         │                         │                           │                      │
-    │                         │                         │  Update manifest.AssetId  │                      │
-    │                         │                         │ <─────────────────────────│                      │
-    │                         │                         │  Delete pending entry     │                      │
-    │                         │                         │ <─────────────────────────│                      │
+ Client SaveLoadService Redis Background Worker Asset Service
+ │ │ │ │ │
+ │ POST /save-load/save │ │ │ │
+ │ ───────────────────────>│ │ │ │
+ │ │ Acquire slot lock │ │ │
+ │ │ ───────────────────────>│ │ │
+ │ │ <── lock acquired ─────│ │ │
+ │ │ │ │ │
+ │ │ Compress + Hash data │ │ │
+ │ │ │ │ │
+ │ │ Save version manifest │ │ │
+ │ │ ───────────────────────>│ (save-load-versions) │ │
+ │ │ │ │ │
+ │ │ Store in hot cache │ │ │
+ │ │ ───────────────────────>│ (save-load-cache) │ │
+ │ │ │ │ │
+ │ │ Queue for upload │ │ │
+ │ │ ───────────────────────>│ (save-load-pending + set) │ │
+ │ │ │ │ │
+ │ <── 200 OK ────────────│ (immediate response) │ │ │
+ │ { uploadPending: true }│ │ │ │
+ │ │ │ │ │
+ │ │ │ Poll pending set │ │
+ │ │ │ <─────────────────────────│ │
+ │ │ │ │ │
+ │ │ │ │ RequestUpload │
+ │ │ │ │ ────────────────────>│
+ │ │ │ │ <── presigned URL ──│
+ │ │ │ │ │
+ │ │ │ │ PUT data to URL │
+ │ │ │ │ ────────────────────>│
+ │ │ │ │ <── 200 OK ─────────│
+ │ │ │ │ │
+ │ │ │ │ CompleteUpload │
+ │ │ │ │ ────────────────────>│
+ │ │ │ │ <── assetId ────────│
+ │ │ │ │ │
+ │ │ │ Update manifest.AssetId │ │
+ │ │ │ <─────────────────────────│ │
+ │ │ │ Delete pending entry │ │
+ │ │ │ <─────────────────────────│ │
 
 
 Migration Pipeline
 ====================
 
-  RegisterSchema("arcadia", "1.0", schema, prev: null, patch: null)
-  RegisterSchema("arcadia", "1.1", schema, prev: "1.0", patch: [...])
-  RegisterSchema("arcadia", "2.0", schema, prev: "1.1", patch: [...])
+ RegisterSchema("arcadia", "1.0", schema, prev: null, patch: null)
+ RegisterSchema("arcadia", "1.1", schema, prev: "1.0", patch: [...])
+ RegisterSchema("arcadia", "2.0", schema, prev: "1.1", patch: [...])
 
-  Version Graph (adjacency):
-    1.0 ──> 1.1 ──> 2.0
+ Version Graph (adjacency):
+ 1.0 ──> 1.1 ──> 2.0
 
-  MigrateSave(slot, targetVersion: "2.0"):
-    1. Load version manifest -> SchemaVersion: "1.0"
-    2. SchemaMigrator.FindMigrationPathAsync("arcadia", "1.0", "2.0")
-       └── BFS: ["1.0", "1.1", "2.0"]
-    3. For each step:
-       a. Load schema definition for target version
-       b. Apply MigrationPatchJson (JSON Patch RFC 6902)
-    4. Store migrated data as new version (SchemaVersion: "2.0")
-    5. Publish SaveMigratedEvent
+ MigrateSave(slot, targetVersion: "2.0"):
+ 1. Load version manifest -> SchemaVersion: "1.0"
+ 2. SchemaMigrator.FindMigrationPathAsync("arcadia", "1.0", "2.0")
+ └── BFS: ["1.0", "1.1", "2.0"]
+ 3. For each step:
+ a. Load schema definition for target version
+ b. Apply MigrationPatchJson (JSON Patch RFC 6902)
+ 4. Store migrated data as new version (SchemaVersion: "2.0")
+ 5. Publish SaveMigratedEvent
 
 
 Export / Import Format (ZIP Archive)
 ======================================
 
-  export_{ownerId}_{timestamp}.zip
-  ├── manifest.json
-  │   {
-  │     "gameId": "arcadia",
-  │     "ownerId": "...",
-  │     "ownerType": "ACCOUNT",
-  │     "exportedAt": "2025-01-01T...",
-  │     "formatVersion": 1,
-  │     "slots": [
-  │       {
-  │         "slotId": "...",
-  │         "slotName": "manual-save-1",
-  │         "category": "MANUAL_SAVE",
-  │         "versionNumber": 5,
-  │         "schemaVersion": "1.1",
-  │         "contentHash": "abc123...",
-  │         "sizeBytes": 50000,
-  │         "createdAt": "...",
-  │         "metadata": { ... }
-  │       },
-  │       ...
-  │     ]
-  │   }
-  ├── manual-save-1/
-  │   └── data.bin          (uncompressed save data)
-  ├── autosave-1/
-  │   └── data.bin
-  └── ...
+ export_{ownerId}_{timestamp}.zip
+ ├── manifest.json
+ │ {
+ │ "gameId": "arcadia",
+ │ "ownerId": "...",
+ │ "ownerType": "ACCOUNT",
+ │ "exportedAt": "2025-01-01T...",
+ │ "formatVersion": 1,
+ │ "slots": [
+ │ {
+ │ "slotId": "...",
+ │ "slotName": "manual-save-1",
+ │ "category": "MANUAL_SAVE",
+ │ "versionNumber": 5,
+ │ "schemaVersion": "1.1",
+ │ "contentHash": "abc123...",
+ │ "sizeBytes": 50000,
+ │ "createdAt": "...",
+ │ "metadata": { ... }
+ │ },
+ │ ...
+ │ ]
+ │ }
+ ├── manual-save-1/
+ │ └── data.bin (uncompressed save data)
+ ├── autosave-1/
+ │ └── data.bin
+ └── ...
 
-  Import Conflict Resolution:
-    SKIP       -> existing slot kept, import entry ignored
-    OVERWRITE  -> existing slot deleted, import creates fresh
-    RENAME     -> import creates with modified slot name
+ Import Conflict Resolution:
+ SKIP -> existing slot kept, import entry ignored
+ OVERWRITE -> existing slot deleted, import creates fresh
+ RENAME -> import creates with modified slot name
 
 
 Circuit Breaker State Machine
 ================================
 
-  ┌────────────────────────────────────────────────────────────┐
-  │                                                            │
-  │  CLOSED ──(N consecutive failures)──> OPEN                 │
-  │    ^                                    │                  │
-  │    │                                    │ (wait ResetSeconds)
-  │    │                                    v                  │
-  │    └──(success in half-open)── HALF_OPEN                   │
-  │                                    │                       │
-  │                                    │ (failure in half-open) │
-  │                                    └──> OPEN               │
-  │                                                            │
-  └────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────┐
+ │ │
+ │ CLOSED ──(N consecutive failures)──> OPEN │
+ │ ^ │ │
+ │ │ │ (wait ResetSeconds)
+ │ │ v │
+ │ └──(success in half-open)── HALF_OPEN │
+ │ │ │
+ │ │ (failure in half-open) │
+ │ └──> OPEN │
+ │ │
+ └────────────────────────────────────────────────────────────┘
 
-  State stored in Redis (save-load-pending store, key "circuit:storage")
-  Multi-instance coordination via distributed state
+ State stored in Redis (save-load-pending store, key "circuit:storage")
+ Multi-instance coordination via distributed state
 ```
 
 ---
@@ -558,20 +558,20 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **Auto-collapse during cleanup** - Implemented in VersionCleanupManager.CollapseExcessiveDeltaChainsAsync; CleanupService now calls this when AutoCollapseEnabled is true. (2026-02-01)
 - **Hardening pass (phase 1)** - Comprehensive tenet compliance audit and fixes (2026-03-07):
-  - Schema: Flattened events, PascalCase enums, extracted named enum types, additionalProperties:false, NRT nullable compliance, validation keywords, configuration bounds, T8 filler removal
-  - Code: StorageCircuitBreaker string→enum, DeltaProcessor string→enum, top-level try-catch removal, Guid.Empty sentinel elimination, UploadStatus PascalCase, DeltaProcessor.GetOperationCount nullable return, telemetry spans on all 26 async methods, Pattern C event topics
-  - Event topics fixed to Pattern C format (`save-load.{entity}.{action}`), lifecycle topics to `save-load.save-slot.{action}`
+ - Schema: Flattened events, PascalCase enums, extracted named enum types, additionalProperties:false, NRT nullable compliance, validation keywords, configuration bounds, filler removal
+ - Code: StorageCircuitBreaker string→enum, DeltaProcessor string→enum, top-level try-catch removal, Guid.Empty sentinel elimination, UploadStatus PascalCase, DeltaProcessor.GetOperationCount nullable return, telemetry spans on all 26 async methods, Pattern C event topics
+ - Event topics fixed to Pattern C format (`save-load.{entity}.{action}`), lifecycle topics to `save-load.save-slot.{action}`
 - **Hardening pass (phase 2)** - Production readiness audit and fixes (2026-03-09):
-  - T28: Added `account.deleted` event handler with full cascade cleanup (slots, versions, hot cache, assets)
-  - T4: Converted IAssetClient to L3 soft dependency in SaveLoadService, CleanupService, and SaveUploadWorker
-  - T30: Removed StartActivity spans from 26 primary interface methods (controller already wraps); re-added to 4 internal helpers
-  - T6: Renamed all key builders to `Build*Key` with `internal static` visibility and `const` prefix; extracted `RateLimitKeys.BuildRateLimitKey`
-  - T21: Replaced comma-delimited `ThumbnailAllowedFormats` with typed boolean config properties; added magic-byte format validation
-  - T29: Added T29-compliant descriptions to all 5 metadata `additionalProperties` fields
-  - Schema: Fixed NRT compliance, added maxItems to array requests, added gameId to version-addressing requests, added additionalProperties:true to JSON Schema objects, added nullable:true to JsonPatchOperation.value
-  - Config: Added per-category compression overrides, validation constraints on AssetBucket
-  - Background workers: Added try-catch around startup delay for clean shutdown
-  - Tests: Updated 100 unit tests for Build*Key rename, all passing
+ - Added `account.deleted` event handler with full cascade cleanup (slots, versions, hot cache, assets)
+ - Converted IAssetClient to L3 soft dependency in SaveLoadService, CleanupService, and SaveUploadWorker
+ - Removed StartActivity spans from 26 primary interface methods (controller already wraps); re-added to 4 internal helpers
+ - Renamed all key builders to `Build*Key` with `internal static` visibility and `const` prefix; extracted `RateLimitKeys.BuildRateLimitKey`
+ - Replaced comma-delimited `ThumbnailAllowedFormats` with typed boolean config properties; added magic-byte format validation
+ - Added tenet-compliant descriptions to all 5 metadata `additionalProperties` fields
+ - Schema: Fixed NRT compliance, added maxItems to array requests, added gameId to version-addressing requests, added additionalProperties:true to JSON Schema objects, added nullable:true to JsonPatchOperation.value
+ - Config: Added per-category compression overrides, validation constraints on AssetBucket
+ - Background workers: Added try-catch around startup delay for clean shutdown
+ - Tests: Updated 100 unit tests for Build*Key rename, all passing
 
 ### Needs Design Review
 
@@ -583,10 +583,10 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Phase 3 Hardening (2026-03-09)
 
-- **T26 No Sentinel Values** - Eliminated all sentinel value patterns across SaveLoadService.cs and helpers: `> 0` on nullable int fields → `.HasValue`, `== 0`/`== default` → `!.HasValue`, `?? 0` → explicit null checks. Fixed `FindVersionByCheckpointAsync` return type from `int` (returning 0 as sentinel) to `int?` (returning null). Fixed `MigrateSaveRequest.versionNumber` sentinel pattern in SaveMigrationHandler.
-- **T21 Configuration-First** - Replaced 4 hardcoded tunables with config properties: 2 lock timeouts (`SlotMetadataLockTimeoutSeconds`, `SlotWriteLockTimeoutSeconds`), export URL expiry (`ExportUrlExpiryMinutes`), max migration steps (`MaxMigrationSteps`). All with validation bounds in schema.
-- **T8 Return Pattern** - Removed `dryRun` echoed request field from `AdminCleanupResponse`.
-- **T8 SlotName in upload events** - Added `SlotName` as required property on `PendingUploadEntry`; fixed `SaveUploadWorker` to use actual slot name instead of `SlotId.ToString()` for asset upload `SlotName` field. Fixed 7 total PendingUploadEntry creation sites across SaveLoadService, VersionCleanupManager, and SaveExportImportManager.
-- **T4/SERVICE-HIERARCHY L3 soft dependency** - Converted `IAssetClient` from constructor injection to `IServiceProvider.GetService<IAssetClient>()` with graceful degradation in all 4 helper services (`VersionDataLoader`, `VersionCleanupManager`, `SaveExportImportManager`, `SaveMigrationHandler`).
-- **T6 Typed BuildStateKey overload** - Added typed `BuildStateKey(string gameId, EntityType ownerType, Guid ownerId, string slotName)` overload to `SaveSlotMetadata`. Updated all ~15 call sites across `SaveLoadService.cs`, `SaveExportImportManager.cs`, and `SaveMigrationHandler.cs` to use typed overload, eliminating inline `.ToString().ToLowerInvariant()` conversions.
+- **No Sentinel Values** - Eliminated all sentinel value patterns across SaveLoadService.cs and helpers: `> 0` on nullable int fields → `.HasValue`, `== 0`/`== default` → `!.HasValue`, `?? 0` → explicit null checks. Fixed `FindVersionByCheckpointAsync` return type from `int` (returning 0 as sentinel) to `int?` (returning null). Fixed `MigrateSaveRequest.versionNumber` sentinel pattern in SaveMigrationHandler.
+- **Configuration-First** - Replaced 4 hardcoded tunables with config properties: 2 lock timeouts (`SlotMetadataLockTimeoutSeconds`, `SlotWriteLockTimeoutSeconds`), export URL expiry (`ExportUrlExpiryMinutes`), max migration steps (`MaxMigrationSteps`). All with validation bounds in schema.
+- **Return Pattern** - Removed `dryRun` echoed request field from `AdminCleanupResponse`.
+- **SlotName in upload events** - Added `SlotName` as required property on `PendingUploadEntry`; fixed `SaveUploadWorker` to use actual slot name instead of `SlotId.ToString()` for asset upload `SlotName` field. Fixed 7 total PendingUploadEntry creation sites across SaveLoadService, VersionCleanupManager, and SaveExportImportManager.
+- **SERVICE-HIERARCHY L3 soft dependency** - Converted `IAssetClient` from constructor injection to `IServiceProvider.GetService<IAssetClient>()` with graceful degradation in all 4 helper services (`VersionDataLoader`, `VersionCleanupManager`, `SaveExportImportManager`, `SaveMigrationHandler`).
+- **Typed BuildStateKey overload** - Added typed `BuildStateKey(string gameId, EntityType ownerType, Guid ownerId, string slotName)` overload to `SaveSlotMetadata`. Updated all ~15 call sites across `SaveLoadService.cs`, `SaveExportImportManager.cs`, and `SaveMigrationHandler.cs` to use typed overload, eliminating inline `.ToString().ToLowerInvariant()` conversions.
 - **Tests**: All 100 unit tests updated and passing.

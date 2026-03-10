@@ -13,7 +13,7 @@ The Account plugin is an internal-only CRUD service (L1 AppFoundation) for manag
 
 ## Achievement {#achievement}
 
-**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/ACHIEVEMENT.md](plugins/ACHIEVEMENT.md) | **Map**: [docs/maps/ACHIEVEMENT.md](maps/ACHIEVEMENT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/ACHIEVEMENT.md](plugins/ACHIEVEMENT.md) | **Map**: [docs/maps/ACHIEVEMENT.md](maps/ACHIEVEMENT.md)
 
 The Achievement plugin (L4 GameFeatures) provides a multi-entity achievement and trophy system with progressive/binary unlock types, prerequisite chains, rarity calculations, and platform synchronization (Steam, Xbox, PlayStation). Achievements are scoped to game services, support event-driven auto-unlock from Analytics and Leaderboard events, and include a background service for periodic rarity recalculation.
 
@@ -81,7 +81,7 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 
 ## Character Encounter {#character-encounter}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml` | **Endpoints**: 21 | **Deep Dive**: [docs/plugins/CHARACTER-ENCOUNTER.md](plugins/CHARACTER-ENCOUNTER.md)
+**Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/CHARACTER-ENCOUNTER.md](plugins/CHARACTER-ENCOUNTER.md)
 
 Character encounter tracking service (L4 GameFeatures) for memorable interactions between characters, enabling NPC memory, dialogue triggers, grudges/alliances, and quest hooks. Manages encounters (shared interaction records) with per-participant perspectives, time-based memory decay, weighted sentiment aggregation, and configurable encounter type codes. Features automatic pruning per-character and per-pair limits, and provides `${encounters.*}` ABML variables to the Actor service's behavior system via the Variable Provider Factory pattern.
 
@@ -105,13 +105,13 @@ Machine-readable personality traits and combat preferences (L4 GameFeatures) for
 
 ## Chat {#chat}
 
-**Version**: 1.0.0 | **Schema**: `schemas/chat-api.yaml` | **Endpoints**: 32 | **Deep Dive**: [docs/plugins/CHAT.md](plugins/CHAT.md) | **Map**: [docs/maps/CHAT.md](maps/CHAT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/chat-api.yaml` | **Endpoints**: 33 | **Deep Dive**: [docs/plugins/CHAT.md](plugins/CHAT.md) | **Map**: [docs/maps/CHAT.md](maps/CHAT.md)
 
 The Chat service (L1 AppFoundation) provides universal typed message channel primitives for real-time communication. Room types determine valid message formats (text, sentiment, emoji, custom-validated payloads), with rooms optionally governed by Contract instances for lifecycle management. Supports ephemeral (Redis TTL) and persistent (MySQL) message storage, participant moderation (kick/ban/mute), rate limiting via atomic Redis counters, typing indicators via Redis sorted set with server-side expiry, and automatic idle room cleanup. Three built-in room types (text, sentiment, emoji) are registered on startup. Internal-only, never internet-facing.
 
 ## Collection {#collection}
 
-**Version**: 1.0.0 | **Schema**: `schemas/collection-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/COLLECTION.md](plugins/COLLECTION.md) | **Map**: [docs/maps/COLLECTION.md](maps/COLLECTION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/collection-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/COLLECTION.md](plugins/COLLECTION.md) | **Map**: [docs/maps/COLLECTION.md](maps/COLLECTION.md)
 
 The Collection service (L2 GameFoundation) manages universal content unlock and archive systems for collectible content: voice galleries, scene archives, music libraries, bestiaries, recipe books, and custom types. Follows the "items in inventories" pattern: entry templates define what can be collected, collection instances create inventory containers per owner, and granting an entry creates an item instance in that container. Unlike License (which orchestrates contracts for LP deduction), Collection uses direct grants without contract delegation. Features dynamic content selection based on unlocked entries and area theme configurations. Collection types are opaque strings (not enums), allowing new types without schema changes. Dispatches unlock notifications to registered `ICollectionUnlockListener` implementations via DI for guaranteed in-process delivery (e.g., Seed growth pipeline). Internal-only, never internet-facing.
 
@@ -123,7 +123,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 
 ## Contract {#contract}
 
-**Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml` | **Endpoints**: 31 | **Deep Dive**: [docs/plugins/CONTRACT.md](plugins/CONTRACT.md) | **Map**: [docs/maps/CONTRACT.md](maps/CONTRACT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml` | **Endpoints**: 32 | **Deep Dive**: [docs/plugins/CONTRACT.md](plugins/CONTRACT.md) | **Map**: [docs/maps/CONTRACT.md](maps/CONTRACT.md)
 
 Binding agreement management (L1 AppFoundation) between entities with milestone-based progression, consent flows, and prebound API execution on state transitions. Contracts are reactive: external systems report condition fulfillment via API calls; contracts store state, emit events, and execute callbacks. Templates define structure (party roles, milestones, terms, enforcement mode); instances track consent, sequential progression, and breach handling. Used as infrastructure by lib-quest (quest objectives map to contract milestones) and lib-escrow (asset-backed contracts via guardian locking).
 
@@ -135,7 +135,7 @@ Recipe-based crafting orchestration service (L4 GameFeatures) for production wor
 
 ## Currency {#currency}
 
-**Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Endpoints**: 34 | **Deep Dive**: [docs/plugins/CURRENCY.md](plugins/CURRENCY.md) | **Map**: [docs/maps/CURRENCY.md](maps/CURRENCY.md)
+**Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Endpoints**: 35 | **Deep Dive**: [docs/plugins/CURRENCY.md](plugins/CURRENCY.md) | **Map**: [docs/maps/CURRENCY.md](maps/CURRENCY.md)
 
 Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features three background workers: autogain for passive income, currency expiration for removing expired balances, and hold expiration for auto-releasing stale authorization holds. Transaction history has configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
 
@@ -213,7 +213,7 @@ GameSession is to players what Inventory is to items: a **container primitive**.
 
 ## Gardener {#gardener}
 
-**Version**: 1.0.0 | **Schema**: `schemas/gardener-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/GARDENER.md](plugins/GARDENER.md)
+**Version**: 1.0.0 | **Schema**: `schemas/gardener-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/GARDENER.md](plugins/GARDENER.md)
 
 Player experience orchestration service (L4 GameFeatures) and the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. A "garden" is an abstract conceptual space (lobby, in-game, housing, void/discovery) that a player inhabits, with Gardener managing their gameplay context, entity associations, and event routing. Provides the APIs and infrastructure that divine actors (running via Puppetmaster on the L2 Actor runtime) use to manipulate player experiences -- behavior-agnostic, providing primitives not policy. Currently implements the void/discovery garden type only; the broader garden concept (multiple types, garden-to-garden transitions) is the architectural target. Internal-only, never internet-facing.
 
@@ -231,13 +231,13 @@ Container and item placement management (L2 GameFoundation) for games. Handles c
 
 ## Item {#item}
 
-**Version**: 1.0.0 | **Schema**: `schemas/item-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/ITEM.md](plugins/ITEM.md) | **Map**: [docs/maps/ITEM.md](maps/ITEM.md)
+**Version**: 1.0.0 | **Schema**: `schemas/item-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/ITEM.md](plugins/ITEM.md) | **Map**: [docs/maps/ITEM.md](maps/ITEM.md)
 
 Dual-model item management (L2 GameFoundation) with templates (definitions/prototypes) and instances (individual occurrences). Templates define item properties (code, game scope, quantity model, stats, effects, rarity); instances represent actual items in the game world with quantity, durability, custom stats, and binding state. Supports multiple quantity models (discrete stacks, continuous weights, unique items). Designed to pair with lib-inventory for container placement management.
 
 ## Leaderboard {#leaderboard}
 
-**Version**: 1.0.0 | **Schema**: `schemas/leaderboard-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/LEADERBOARD.md](plugins/LEADERBOARD.md)
+**Version**: 1.0.0 | **Schema**: `schemas/leaderboard-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/LEADERBOARD.md](plugins/LEADERBOARD.md)
 
 Real-time leaderboard management (L4 GameFeatures) built on Redis Sorted Sets. Supports polymorphic entity types (Account, Character, Guild, Actor, Custom), multiple score update modes, seasonal rotation with archival, and automatic score ingestion from Analytics events. Definitions are scoped per game service with configurable sort order and entity type restrictions. Provides percentile calculations, neighbor queries, and batch score submission.
 
@@ -249,7 +249,7 @@ Structured world knowledge ontology (L4 GameFeatures) that defines what things A
 
 ## License {#license}
 
-**Version**: 1.0.0 | **Schema**: `schemas/license-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/LICENSE.md](plugins/LICENSE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/license-api.yaml` | **Endpoints**: 21 | **Deep Dive**: [docs/plugins/LICENSE.md](plugins/LICENSE.md)
 
 The License service (L4 GameFeatures) provides grid-based progression boards (skill trees, license boards, tech trees) inspired by Final Fantasy XII's License Board system. It is a thin orchestration layer that combines Inventory (containers for license items), Items (license nodes as item instances), and Contracts (unlock behavior via prebound API execution) to manage entity progression across a grid. Boards support polymorphic ownership via `ownerType` + `ownerId` — characters, accounts, guilds, and locations can all own boards. Internal-only, never internet-facing. See [GitHub Issue #281](https://github.com/beyond-immersion/bannou-service/issues/281) for the original design specification.
 
@@ -339,11 +339,11 @@ The Puppetmaster service (L4 GameFeatures) orchestrates dynamic behaviors, regio
 
 ## Quest {#quest}
 
-**Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Endpoints**: 18 | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md) | **Map**: [docs/maps/QUEST.md](maps/QUEST.md)
+**Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md) | **Map**: [docs/maps/QUEST.md](maps/QUEST.md)
 
 The Quest service (L2 GameFoundation) provides objective-based gameplay progression as a thin orchestration layer over lib-contract. Translates game-flavored quest semantics (objectives, rewards, quest givers) into Contract infrastructure (milestones, prebound APIs, parties), leveraging Contract's state machine and cleanup orchestration while presenting a player-friendly API. Agnostic to prerequisite sources: L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` for validation without Quest depending on them. Exposes quest data to the Actor service via the Variable Provider Factory pattern for ABML behavior expressions.
 
-**Deprecation Lifecycle (T31 Category B)**: Quest definitions are Category B entities — instances persist independently, so definitions must remain readable forever. Deprecation is one-way (no undeprecate), there is no delete endpoint, and acceptance of deprecated definitions is rejected. Contract templates are structurally immutable once created (trust guarantee); only quest metadata (name, description, category, difficulty, tags) can be updated.
+**Deprecation Lifecycle (T31 Category B)**: Quest definitions are Category B entities — instances persist independently, so definitions must remain readable forever. Deprecation is one-way (no undeprecate), there is no delete endpoint, and acceptance of deprecated definitions is rejected with `BadRequest` (instance creation guard). Uses triple-field deprecation model: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?). Deprecation is idempotent (returns OK when already deprecated). `ListQuestDefinitions` includes `includeDeprecated` parameter (default: `false`). Deprecation is communicated via `quest.definition.updated` with `changedFields` containing deprecation fields (no dedicated deprecation event per T31). Contract templates are structurally immutable once created (trust guarantee); only quest metadata (name, description, category, difficulty, tags) can be updated.
 
 ## Realm {#realm}
 
@@ -427,7 +427,7 @@ Unified entity effects query layer (L4 GameFeatures) aggregating temporary contr
 
 ## Storyline {#storyline}
 
-**Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Endpoints**: 15 | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md) | **Map**: [docs/maps/STORYLINE.md](maps/STORYLINE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md) | **Map**: [docs/maps/STORYLINE.md](maps/STORYLINE.md)
 
 The Storyline service (L4 GameFeatures) wraps the `storyline-theory` and `storyline-storyteller` SDKs to provide HTTP endpoints for seeded narrative generation from compressed archives. Plans describe narrative arcs with phases, actions, and entity requirements -- callers (gods/regional watchers) decide whether to instantiate them. Also manages scenario definitions (reusable narrative templates with trigger conditions, mutations, and quest hooks) with a full CRUD lifecycle, condition-based discovery, fit scoring, and execution with distributed locking and cooldown enforcement. Provides character compression data for archival via `x-compression-callback`. Internal-only, requires the `developer` role for all endpoints.
 
@@ -490,7 +490,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 76
-- **Total endpoints**: 903
+- **Total endpoints**: 915
 
 ---
 

@@ -107,6 +107,21 @@ public static class AchievementPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/achievement/definition/clean-deprecated",
+            Method = ServiceEndpointMethod.Post,
+            Description = "cleanDeprecatedAchievementDefinitions",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/achievement/progress/get",
             Method = ServiceEndpointMethod.Post,
             Description = "getAchievementProgress",

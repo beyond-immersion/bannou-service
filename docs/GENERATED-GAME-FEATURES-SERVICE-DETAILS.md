@@ -7,7 +7,7 @@ Services in the **Game Features (L4)** layer.
 
 ## Achievement {#achievement}
 
-**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/ACHIEVEMENT.md](plugins/ACHIEVEMENT.md) | **Map**: [docs/maps/ACHIEVEMENT.md](maps/ACHIEVEMENT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/ACHIEVEMENT.md](plugins/ACHIEVEMENT.md) | **Map**: [docs/maps/ACHIEVEMENT.md](maps/ACHIEVEMENT.md)
 
 The Achievement plugin (L4 GameFeatures) provides a multi-entity achievement and trophy system with progressive/binary unlock types, prerequisite chains, rarity calculations, and platform synchronization (Steam, Xbox, PlayStation). Achievements are scoped to game services, support event-driven auto-unlock from Analytics and Leaderboard events, and include a background service for periodic rarity recalculation.
 
@@ -43,7 +43,7 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 
 ## Character Encounter {#character-encounter}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml` | **Endpoints**: 21 | **Deep Dive**: [docs/plugins/CHARACTER-ENCOUNTER.md](plugins/CHARACTER-ENCOUNTER.md)
+**Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/CHARACTER-ENCOUNTER.md](plugins/CHARACTER-ENCOUNTER.md)
 
 Character encounter tracking service (L4 GameFeatures) for memorable interactions between characters, enabling NPC memory, dialogue triggers, grudges/alliances, and quest hooks. Manages encounters (shared interaction records) with per-participant perspectives, time-based memory decay, weighted sentiment aggregation, and configurable encounter type codes. Features automatic pruning per-character and per-pair limits, and provides `${encounters.*}` ABML variables to the Actor service's behavior system via the Variable Provider Factory pattern.
 
@@ -125,7 +125,7 @@ The Faction service (L4 GameFeatures) models factions as seed-based living entit
 
 ## Gardener {#gardener}
 
-**Version**: 1.0.0 | **Schema**: `schemas/gardener-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/GARDENER.md](plugins/GARDENER.md)
+**Version**: 1.0.0 | **Schema**: `schemas/gardener-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/GARDENER.md](plugins/GARDENER.md)
 
 Player experience orchestration service (L4 GameFeatures) and the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. A "garden" is an abstract conceptual space (lobby, in-game, housing, void/discovery) that a player inhabits, with Gardener managing their gameplay context, entity associations, and event routing. Provides the APIs and infrastructure that divine actors (running via Puppetmaster on the L2 Actor runtime) use to manipulate player experiences -- behavior-agnostic, providing primitives not policy. Currently implements the void/discovery garden type only; the broader garden concept (multiple types, garden-to-garden transitions) is the architectural target. Internal-only, never internet-facing.
 
@@ -137,7 +137,7 @@ Social information propagation and belief formation service (L4 GameFeatures) fo
 
 ## Leaderboard {#leaderboard}
 
-**Version**: 1.0.0 | **Schema**: `schemas/leaderboard-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/LEADERBOARD.md](plugins/LEADERBOARD.md)
+**Version**: 1.0.0 | **Schema**: `schemas/leaderboard-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/LEADERBOARD.md](plugins/LEADERBOARD.md)
 
 Real-time leaderboard management (L4 GameFeatures) built on Redis Sorted Sets. Supports polymorphic entity types (Account, Character, Guild, Actor, Custom), multiple score update modes, seasonal rotation with archival, and automatic score ingestion from Analytics events. Definitions are scoped per game service with configurable sort order and entity type restrictions. Provides percentile calculations, neighbor queries, and batch score submission.
 
@@ -149,7 +149,7 @@ Structured world knowledge ontology (L4 GameFeatures) that defines what things A
 
 ## License {#license}
 
-**Version**: 1.0.0 | **Schema**: `schemas/license-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/LICENSE.md](plugins/LICENSE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/license-api.yaml` | **Endpoints**: 21 | **Deep Dive**: [docs/plugins/LICENSE.md](plugins/LICENSE.md)
 
 The License service (L4 GameFeatures) provides grid-based progression boards (skill trees, license boards, tech trees) inspired by Final Fantasy XII's License Board system. It is a thin orchestration layer that combines Inventory (containers for license items), Items (license nodes as item instances), and Contracts (unlock behavior via prebound API execution) to manage entity progression across a grid. Boards support polymorphic ownership via `ownerType` + `ownerId` — characters, accounts, guilds, and locations can all own boards. Internal-only, never internet-facing. See [GitHub Issue #281](https://github.com/beyond-immersion/bannou-service/issues/281) for the original design specification.
 
@@ -239,7 +239,7 @@ Unified entity effects query layer (L4 GameFeatures) aggregating temporary contr
 
 ## Storyline {#storyline}
 
-**Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Endpoints**: 15 | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md) | **Map**: [docs/maps/STORYLINE.md](maps/STORYLINE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md) | **Map**: [docs/maps/STORYLINE.md](maps/STORYLINE.md)
 
 The Storyline service (L4 GameFeatures) wraps the `storyline-theory` and `storyline-storyteller` SDKs to provide HTTP endpoints for seeded narrative generation from compressed archives. Plans describe narrative arcs with phases, actions, and entity requirements -- callers (gods/regional watchers) decide whether to instantiate them. Also manages scenario definitions (reusable narrative templates with trigger conditions, mutations, and quest hooks) with a full CRUD lifecycle, condition-based discovery, fit scoring, and execution with distributed locking and cooldown enforcement. Provides character compression data for archival via `x-compression-callback`. Internal-only, requires the `developer` role for all endpoints.
 
@@ -264,7 +264,7 @@ Time-based automated production service (L4 GameFeatures) for continuous backgro
 ## Summary
 
 - **Services in layer**: 42
-- **Endpoints in layer**: 348
+- **Endpoints in layer**: 354
 
 ---
 

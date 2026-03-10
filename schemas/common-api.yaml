@@ -269,6 +269,84 @@ components:
           items:
             $ref: '#/components/schemas/ResourceArchiveBase'
 
+    # ==========================================================================
+    # Deprecation Fields (T31)
+    # ==========================================================================
+
+    DeprecationFields:
+      type: object
+      description: |
+        Standard deprecation fields for template and definition entities (T31).
+        Compose into response models via allOf. Both Category A (world-building
+        definitions with undeprecate/delete) and Category B (content templates,
+        deprecate-only) use the same three-field model.
+      required:
+        - isDeprecated
+      properties:
+        isDeprecated:
+          type: boolean
+          description: Whether this entity is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the entity was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+
+    CleanDeprecatedRequest:
+      type: object
+      description: |
+        Shared request for Category B deprecation cleanup sweep. Iterates all
+        deprecated entities of the target type and removes those with zero remaining
+        instances, subject to an optional grace period. Used by all Category B
+        services via their clean-deprecated endpoint.
+      additionalProperties: false
+      properties:
+        gracePeriodDays:
+          type: integer
+          default: 0
+          minimum: 0
+          description: >
+            Minimum days since deprecation before cleanup is eligible.
+            0 = immediate cleanup of any deprecated entity with zero instances.
+        dryRun:
+          type: boolean
+          default: false
+          description: >
+            If true, report what would be cleaned without actually deleting.
+            Useful for admin panel preview before committing to cleanup.
+
+    CleanDeprecatedResponse:
+      type: object
+      description: |
+        Result summary from a Category B deprecation cleanup sweep.
+        Returned by all Category B clean-deprecated endpoints.
+      additionalProperties: false
+      required:
+        - cleaned
+        - remaining
+        - errors
+      properties:
+        cleaned:
+          type: integer
+          description: Number of deprecated entities removed (or eligible, if dryRun)
+        remaining:
+          type: integer
+          description: Number of deprecated entities still having active instances or within grace period
+        errors:
+          type: integer
+          description: Number of entities that failed during cleanup processing
+        cleanedIds:
+          type: array
+          description: IDs of successfully cleaned (or eligible) entities
+          items:
+            type: string
+            format: uuid
+
     CapabilityUpdateType:
       type: string
       enum:

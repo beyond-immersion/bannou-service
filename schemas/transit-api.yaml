@@ -1428,6 +1428,8 @@ components:
     # ── Entity Models ────────────────────────────────────────────────────
 
     TransitMode:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: A transit mode defining movement capabilities (e.g., walking, horseback, wagon)
@@ -1442,7 +1444,6 @@ components:
         - requirements
         - fatigueRatePerGameHour
         - noiseLevelNormalized
-        - isDeprecated
         - createdAt
         - modifiedAt
       properties:
@@ -1515,18 +1516,6 @@ components:
           items:
             type: string
             format: uuid
-        isDeprecated:
-          type: boolean
-          description: Whether this mode is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When deprecation occurred. Null if not deprecated.
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Why this mode was deprecated. Null if not deprecated.
         tags:
           type: array
           nullable: true

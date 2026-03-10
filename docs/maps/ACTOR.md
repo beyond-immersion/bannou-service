@@ -141,7 +141,7 @@ All pool-node event handlers skip processing when `DeploymentMode == Bannou`.
 | `IMessageBus` | Event publishing, pool commands |
 | `IEventConsumer` | Event handler registration |
 | `IMeshInvocationClient` | Remote pool node forwarding |
-| `IResourceClient` | Character reference tracking (T28) |
+| `IResourceClient` | Character reference tracking |
 | `ICharacterClient` | Realm lookup on spawn (L2 same-layer) |
 | `ITelemetryProvider` | Span instrumentation |
 | `IActorRegistry` | In-memory tracking of locally running ActorRunner instances (ConcurrentDictionary) |
@@ -194,13 +194,13 @@ POST /actor/template/create | Roles: [developer]
 
 ```
 IF body.Category is null/whitespace OR body.BehaviorRef is null/whitespace
-  RETURN (400, null)
-READ actor-templates:category:{body.Category}                -> 409 if exists (duplicate)
+ RETURN (400, null)
+READ actor-templates:category:{body.Category} -> 409 if exists (duplicate)
 WRITE actor-templates:{templateId} <- ActorTemplateData from request
-  // tickIntervalMs, autoSaveIntervalSeconds, maxInstancesPerNode use config defaults if <= 0
+ // tickIntervalMs, autoSaveIntervalSeconds, maxInstancesPerNode use config defaults if <= 0
 WRITE actor-templates:category:{body.Category} <- same template data
 READ actor-templates:_all_template_ids [with ETag]
-  // UpdateTemplateIndexAsync: add templateId, retry up to 3x on ETag mismatch
+ // UpdateTemplateIndexAsync: add templateId, retry up to 3x on ETag mismatch
 ETAG-WRITE actor-templates:_all_template_ids <- updated list
 PUBLISH actor.template.created { TemplateId, Category, BehaviorRef, CreatedAt }
 RETURN (200, ActorTemplateResponse)
@@ -211,11 +211,11 @@ POST /actor/template/get | Roles: [admin]
 
 ```
 IF body.TemplateId has value
-  READ actor-templates:{body.TemplateId}                     -> 404 if null
+ READ actor-templates:{body.TemplateId} -> 404 if null
 ELSE IF body.Category is non-empty
-  READ actor-templates:category:{body.Category}              -> 404 if null
+ READ actor-templates:category:{body.Category} -> 404 if null
 ELSE
-  RETURN (400, null)                                         // neither provided
+ RETURN (400, null) // neither provided
 RETURN (200, ActorTemplateResponse)
 ```
 
@@ -223,8 +223,8 @@ RETURN (200, ActorTemplateResponse)
 POST /actor/template/list | Roles: [admin]
 
 ```
-READ actor-templates:_all_template_ids                       // default empty list if null
-READ actor-templates:bulk({allIds})                          // bulk load all templates
+READ actor-templates:_all_template_ids // default empty list if null
+READ actor-templates:bulk({allIds}) // bulk load all templates
 // In-memory: OrderBy(CreatedAt), Skip(body.Offset), Take(body.Limit)
 RETURN (200, ListActorTemplatesResponse { Templates, Total: allCount })
 ```
@@ -233,10 +233,10 @@ RETURN (200, ListActorTemplatesResponse { Templates, Total: allCount })
 POST /actor/template/update | Roles: [developer]
 
 ```
-READ actor-templates:{body.TemplateId} [with ETag]           -> 404 if null
+READ actor-templates:{body.TemplateId} [with ETag] -> 404 if null
 // Selective field update: only change fields where request value differs from current
 // Track changedFields list
-ETAG-WRITE actor-templates:{body.TemplateId} <- updated template  -> 409 if ETag mismatch
+ETAG-WRITE actor-templates:{body.TemplateId} <- updated template -> 409 if ETag mismatch
 WRITE actor-templates:category:{template.Category} <- updated template
 PUBLISH actor.template.updated { TemplateId, Category, BehaviorRef, CreatedAt, ChangedFields }
 RETURN (200, ActorTemplateResponse)
@@ -246,15 +246,15 @@ RETURN (200, ActorTemplateResponse)
 POST /actor/template/delete | Roles: [developer]
 
 ```
-READ actor-templates:{body.TemplateId}                       -> 404 if null
+READ actor-templates:{body.TemplateId} -> 404 if null
 IF body.ForceStopActors
-  FOREACH runner in registry.GetByTemplateId(body.TemplateId)
-    // Per-actor errors caught and logged (not fatal)
-    runner.StopAsync() + runner.DisposeAsync() + registry.TryRemove()
+ FOREACH runner in registry.GetByTemplateId(body.TemplateId)
+ // Per-actor errors caught and logged (not fatal)
+ runner.StopAsync() + runner.DisposeAsync() + registry.TryRemove()
 DELETE actor-templates:{body.TemplateId}
 DELETE actor-templates:category:{template.Category}
 READ actor-templates:_all_template_ids [with ETag]
-  // UpdateTemplateIndexAsync: remove templateId, retry up to 3x on ETag mismatch
+ // UpdateTemplateIndexAsync: remove templateId, retry up to 3x on ETag mismatch
 ETAG-WRITE actor-templates:_all_template_ids <- updated list
 PUBLISH actor.template.deleted { TemplateId, Category, BehaviorRef, CreatedAt, DeletedReason }
 RETURN (200, DeleteActorTemplateResponse { StoppedActorCount })
@@ -264,27 +264,27 @@ RETURN (200, DeleteActorTemplateResponse { StoppedActorCount })
 POST /actor/spawn | Roles: [developer]
 
 ```
-READ actor-templates:{body.TemplateId}                       -> 404 if null
+READ actor-templates:{body.TemplateId} -> 404 if null
 // actorId = body.ActorId ?? "{category}-{Guid:N}"
 // ResolveRealmIdAsync: body.RealmId ?? CALL ICharacterClient.GetCharacterAsync(characterId).RealmId
 IF characterId set AND realmId unresolvable
-  RETURN (400, null)
+ RETURN (400, null)
 IF bannou mode
-  IF registry.Contains(actorId)
-    RETURN (409, null)
-  // Create ActorRunner via factory, register in ActorRegistry, start with timeout
-  // On start failure: remove from registry, dispose
-  IF characterId set
-    CALL IResourceClient.RegisterReferenceAsync(...)
-  // ActorRunner.StartAsync publishes actor.instance.started
-  // ActorRunner.StartAsync publishes actor.instance.character-bound (if characterId set)
+ IF registry.Contains(actorId)
+ RETURN (409, null)
+ // Create ActorRunner via factory, register in ActorRegistry, start with timeout
+ // On start failure: remove from registry, dispose
+ IF characterId set
+ CALL IResourceClient.RegisterReferenceAsync(...)
+ // ActorRunner.StartAsync publishes actor.instance.started
+ // ActorRunner.StartAsync publishes actor.instance.character-bound (if characterId set)
 ELSE (pool mode)
-  READ actor-assignments:{actorId}                           -> 409 if exists
-  CALL ActorPoolManager.AcquireNodeForActorAsync(category)   -> 503 if no capacity
-  IF characterId set
-    CALL IResourceClient.RegisterReferenceAsync(...)
-  WRITE actor-assignments:{actorId} <- ActorAssignment via ActorPoolManager
-  PUBLISH actor.node.{poolNode.AppId}.spawn { SpawnActorCommand }
+ READ actor-assignments:{actorId} -> 409 if exists
+ CALL ActorPoolManager.AcquireNodeForActorAsync(category) -> 503 if no capacity
+ IF characterId set
+ CALL IResourceClient.RegisterReferenceAsync(...)
+ WRITE actor-assignments:{actorId} <- ActorAssignment via ActorPoolManager
+ PUBLISH actor.node.{poolNode.AppId}.spawn { SpawnActorCommand }
 PUBLISH actor.instance.created { ActorId, TemplateId, CharacterId, NodeId, Status, StartedAt }
 RETURN (200, ActorInstanceResponse)
 ```
@@ -296,24 +296,24 @@ POST /actor/get | Roles: [admin]
 // Three-level lookup:
 // 1. Local registry
 IF registry.TryGet(body.ActorId) -> runner found
-  RETURN (200, ActorInstanceResponse from runner snapshot)
+ RETURN (200, ActorInstanceResponse from runner snapshot)
 // 2. Pool assignment store
 IF pool mode
-  READ actor-assignments:{body.ActorId}
-  IF found -> RETURN (200, ActorInstanceResponse from assignment)
+ READ actor-assignments:{body.ActorId}
+ IF found -> RETURN (200, ActorInstanceResponse from assignment)
 // 3. Auto-spawn: scan templates for matching IdPattern regex
 READ actor-templates:_all_template_ids
 READ actor-templates:bulk({allIds})
 FOREACH template WHERE AutoSpawn.Enabled
-  // Compiled+cached Regex with 100ms timeout
-  IF template.AutoSpawn.IdPattern matches body.ActorId
-    // Extract CharacterId from regex capture group if configured
-    // Check MaxInstances against registry + pool assignments
-    CALL SpawnActorAsync(template, body.ActorId, characterId)
-    IF spawn returns 200
-      RETURN (200, ActorInstanceResponse from spawn result)
-    ELSE
-      RETURN (404, null)                                     // auto-spawn failure hidden from caller
+ // Compiled+cached Regex with 100ms timeout
+ IF template.AutoSpawn.IdPattern matches body.ActorId
+ // Extract CharacterId from regex capture group if configured
+ // Check MaxInstances against registry + pool assignments
+ CALL SpawnActorAsync(template, body.ActorId, characterId)
+ IF spawn returns 200
+ RETURN (200, ActorInstanceResponse from spawn result)
+ ELSE
+ RETURN (404, null) // auto-spawn failure hidden from caller
 RETURN (404, null)
 ```
 
@@ -322,22 +322,22 @@ POST /actor/stop | Roles: [developer]
 
 ```
 IF bannou mode
-  IF NOT registry.TryGet(body.ActorId)
-    RETURN (404, null)
-  runner.StopAsync(body.Graceful) with timeout from config.ActorOperationTimeoutSeconds
-  runner.DisposeAsync()
-  registry.TryRemove(body.ActorId)
-  IF runner had CharacterId
-    CALL IResourceClient.UnregisterReferenceAsync(...)
-  PUBLISH actor.instance.deleted { ActorId, TemplateId, CharacterId, NodeId, Status, StartedAt, DeletedReason }
-  RETURN (200, StopActorResponse { FinalStatus: runner.Status })
+ IF NOT registry.TryGet(body.ActorId)
+ RETURN (404, null)
+ runner.StopAsync(body.Graceful) with timeout from config.ActorOperationTimeoutSeconds
+ runner.DisposeAsync()
+ registry.TryRemove(body.ActorId)
+ IF runner had CharacterId
+ CALL IResourceClient.UnregisterReferenceAsync(...)
+ PUBLISH actor.instance.deleted { ActorId, TemplateId, CharacterId, NodeId, Status, StartedAt, DeletedReason }
+ RETURN (200, StopActorResponse { FinalStatus: runner.Status })
 ELSE (pool mode)
-  READ actor-assignments:{body.ActorId}                      -> 404 if null
-  IF assignment had CharacterId
-    CALL IResourceClient.UnregisterReferenceAsync(...)
-  DELETE actor-assignments:{body.ActorId} via ActorPoolManager
-  PUBLISH actor.node.{assignment.NodeAppId}.stop { StopActorCommand }
-  RETURN (200, StopActorResponse { FinalStatus: Stopping })  // optimistic — actual stop is async
+ READ actor-assignments:{body.ActorId} -> 404 if null
+ IF assignment had CharacterId
+ CALL IResourceClient.UnregisterReferenceAsync(...)
+ DELETE actor-assignments:{body.ActorId} via ActorPoolManager
+ PUBLISH actor.node.{assignment.NodeAppId}.stop { StopActorCommand }
+ RETURN (200, StopActorResponse { FinalStatus: Stopping }) // optimistic — actual stop is async
 ```
 
 ### BindActorCharacter
@@ -345,23 +345,23 @@ POST /actor/bind-character | Roles: [developer]
 
 ```
 IF bannou mode
-  IF NOT registry.TryGet(body.ActorId)
-    RETURN (404, null)
-  runner.BindCharacterAsync(body.CharacterId)
-    // Guard: already bound -> InvalidOperationException -> 400
-    // Sets CharacterId, establishes per-character RabbitMQ subscription
-    // PUBLISH actor.instance.character-bound { ActorId, CharacterId, RealmId }
-  CALL IResourceClient.RegisterReferenceAsync(...)
-  RETURN (200, ActorInstanceResponse)
+ IF NOT registry.TryGet(body.ActorId)
+ RETURN (404, null)
+ runner.BindCharacterAsync(body.CharacterId)
+ // Guard: already bound -> InvalidOperationException -> 400
+ // Sets CharacterId, establishes per-character RabbitMQ subscription
+ // PUBLISH actor.instance.character-bound { ActorId, CharacterId, RealmId }
+ CALL IResourceClient.RegisterReferenceAsync(...)
+ RETURN (200, ActorInstanceResponse)
 ELSE (pool mode)
-  READ actor-assignments:{body.ActorId}                      -> 404 if null
-  IF assignment.CharacterId already set
-    RETURN (400, null)
-  // UpdateActorCharacterAsync: ETag update with PoolConcurrencyMaxRetries retries
-  WRITE actor-assignments:{body.ActorId} <- updated with CharacterId
-  CALL IResourceClient.RegisterReferenceAsync(...)
-  PUBLISH actor.node.{assignment.NodeAppId}.bind-character { BindActorCharacterCommand }
-  RETURN (200, ActorInstanceResponse)
+ READ actor-assignments:{body.ActorId} -> 404 if null
+ IF assignment.CharacterId already set
+ RETURN (400, null)
+ // UpdateActorCharacterAsync: ETag update with PoolConcurrencyMaxRetries retries
+ WRITE actor-assignments:{body.ActorId} <- updated with CharacterId
+ CALL IResourceClient.RegisterReferenceAsync(...)
+ PUBLISH actor.node.{assignment.NodeAppId}.bind-character { BindActorCharacterCommand }
+ RETURN (200, ActorInstanceResponse)
 ```
 
 ### CleanupByCharacter
@@ -370,16 +370,16 @@ POST /actor/cleanup-by-character | Roles: [developer]
 ```
 // Called by lib-resource cascade when character is deleted
 IF bannou mode
-  FOREACH runner in registry.GetAllRunners() WHERE runner.CharacterId == body.CharacterId
-    // Per-actor errors caught and logged (not fatal)
-    runner.StopAsync(graceful: true) with timeout
-    runner.DisposeAsync()
-    registry.TryRemove(runner.ActorId)
+ FOREACH runner in registry.GetAllRunners() WHERE runner.CharacterId == body.CharacterId
+ // Per-actor errors caught and logged (not fatal)
+ runner.StopAsync(graceful: true) with timeout
+ runner.DisposeAsync()
+ registry.TryRemove(runner.ActorId)
 ELSE (pool mode)
-  // Scan actor index, read assignments individually
-  FOREACH assignment in poolManager.GetAssignmentsByCharacterAsync(body.CharacterId)
-    PUBLISH actor.node.{assignment.NodeAppId}.stop { StopActorCommand }
-    DELETE actor-assignments:{assignment.ActorId} via ActorPoolManager
+ // Scan actor index, read assignments individually
+ FOREACH assignment in poolManager.GetAssignmentsByCharacterAsync(body.CharacterId)
+ PUBLISH actor.node.{assignment.NodeAppId}.stop { StopActorCommand }
+ DELETE actor-assignments:{assignment.ActorId} via ActorPoolManager
 // Does NOT call UnregisterCharacterReferenceAsync — character is already being deleted
 RETURN (200, CleanupByCharacterResponse { ActorsCleanedUp, ActorIds })
 ```
@@ -389,12 +389,12 @@ POST /actor/list | Roles: [admin]
 
 ```
 IF pool mode AND body.NodeId is set
-  // Delegate to ActorPoolManager.ListActorsByNodeAsync
-  // Reads actor index, then individual assignments from Redis
+ // Delegate to ActorPoolManager.ListActorsByNodeAsync
+ // Reads actor index, then individual assignments from Redis
 ELSE
-  IF body.NodeId is set AND body.NodeId != config.LocalModeNodeId
-    RETURN (200, ListActorsResponse { Actors: [], Total: 0 })  // wrong node
-  // Get all runners from in-memory registry
+ IF body.NodeId is set AND body.NodeId != config.LocalModeNodeId
+ RETURN (200, ListActorsResponse { Actors: [], Total: 0 }) // wrong node
+ // Get all runners from in-memory registry
 // Apply in-memory filters: Category, Status, CharacterId
 // Skip(body.Offset), Take(body.Limit)
 RETURN (200, ListActorsResponse { Actors, Total })
@@ -406,8 +406,8 @@ POST /actor/inject-perception | Roles: [developer]
 ```
 // Local-only — no pool-mode forwarding
 IF NOT registry.TryGet(body.ActorId)
-  RETURN (404, null)
-runner.InjectPerception(body.Perception)                     // synchronous Channel.Writer.TryWrite
+ RETURN (404, null)
+runner.InjectPerception(body.Perception) // synchronous Channel.Writer.TryWrite
 RETURN (200, InjectPerceptionResponse { QueueDepth })
 ```
 
@@ -416,15 +416,15 @@ POST /actor/query-options | Roles: []
 
 ```
 IF NOT registry.TryGet(body.ActorId)
-  IF pool mode
-    READ actor-assignments:{body.ActorId}
-    IF found -> RETURN (400, null)                           // actor on remote node, can't query locally
-  RETURN (404, null)
+ IF pool mode
+ READ actor-assignments:{body.ActorId}
+ IF found -> RETURN (400, null) // actor on remote node, can't query locally
+ RETURN (404, null)
 IF body.Freshness == Fresh AND body.Context != null
-  // Inject options_query perception into actor
-  runner.InjectPerception(optionsQueryPerception)
-  // Wait approximately one tick
-  Task.Delay(config.DefaultTickIntervalMs)
+ // Inject options_query perception into actor
+ runner.InjectPerception(optionsQueryPerception)
+ // Wait approximately one tick
+ Task.Delay(config.DefaultTickIntervalMs)
 // Read actor state snapshot from runner in-memory state
 // Extract options from memories where key == "{queryType}_options"
 // Build CharacterContext from character-related state (if CharacterId set)
@@ -437,14 +437,14 @@ POST /actor/encounter/start | Roles: [developer]
 ```
 // FindActorAsync: check local registry, then pool assignments
 IF actor not found
-  RETURN (404, null)
+ RETURN (404, null)
 IF actor on remote pool node
-  CALL IMeshInvocationClient.InvokeMethodAsync(nodeId, "actor/encounter/start", body)
-  RETURN result
+ CALL IMeshInvocationClient.InvokeMethodAsync(nodeId, "actor/encounter/start", body)
+ RETURN result
 IF runner already has active encounter
-  RETURN (409, null)
+ RETURN (409, null)
 runner.StartEncounter(body.EncounterId, body.EncounterType, body.Participants, body.InitialData)
-  // Fire-and-forget: PUBLISH actor.encounter.started { ActorId, EncounterId, EncounterType, Participants }
+ // Fire-and-forget: PUBLISH actor.encounter.started { ActorId, EncounterId, EncounterType, Participants }
 RETURN (200, StartEncounterResponse)
 ```
 
@@ -454,15 +454,15 @@ POST /actor/encounter/update-phase | Roles: [developer]
 ```
 // FindActorAsync: check local registry, then pool assignments
 IF actor not found
-  RETURN (404, null)
+ RETURN (404, null)
 IF actor on remote pool node
-  CALL IMeshInvocationClient.InvokeMethodAsync(nodeId, "actor/encounter/phase/update", body)
-  RETURN result
+ CALL IMeshInvocationClient.InvokeMethodAsync(nodeId, "actor/encounter/phase/update", body)
+ RETURN result
 // Read current encounter snapshot
 IF no active encounter
-  RETURN (404, null)
+ RETURN (404, null)
 runner.SetEncounterPhase(body.Phase)
-  // Fire-and-forget: PUBLISH actor.encounter.phase-changed { ActorId, EncounterId, PreviousPhase, NewPhase }
+ // Fire-and-forget: PUBLISH actor.encounter.phase-changed { ActorId, EncounterId, PreviousPhase, NewPhase }
 RETURN (200, UpdateEncounterPhaseResponse { ActorId, PreviousPhase, CurrentPhase })
 ```
 
@@ -472,15 +472,15 @@ POST /actor/encounter/end | Roles: [developer]
 ```
 // FindActorAsync: check local registry, then pool assignments
 IF actor not found
-  RETURN (404, null)
+ RETURN (404, null)
 IF actor on remote pool node
-  CALL IMeshInvocationClient.InvokeMethodAsync(nodeId, "actor/encounter/end", body)
-  RETURN result
+ CALL IMeshInvocationClient.InvokeMethodAsync(nodeId, "actor/encounter/end", body)
+ RETURN result
 // Read current encounter snapshot
 IF no active encounter
-  RETURN (404, null)
+ RETURN (404, null)
 runner.EndEncounter()
-  // Fire-and-forget: PUBLISH actor.encounter.ended { ActorId, EncounterId, DurationSeconds, FinalPhase }
+ // Fire-and-forget: PUBLISH actor.encounter.ended { ActorId, EncounterId, DurationSeconds, FinalPhase }
 RETURN (200, EndEncounterResponse { ActorId, EncounterId, DurationMs })
 ```
 
@@ -490,13 +490,13 @@ POST /actor/encounter/get | Roles: [admin]
 ```
 // FindActorAsync: check local registry, then pool assignments
 IF actor not found
-  RETURN (404, null)
+ RETURN (404, null)
 IF actor on remote pool node
-  CALL IMeshInvocationClient.InvokeMethodAsync(nodeId, "actor/encounter/get", body)
-  RETURN result
+ CALL IMeshInvocationClient.InvokeMethodAsync(nodeId, "actor/encounter/get", body)
+ RETURN result
 // Read encounter state from runner snapshot
 RETURN (200, GetEncounterResponse { ActorId, Encounter: encounterState? })
-  // Encounter is null if no active encounter (200, not 404)
+ // Encounter is null if no active encounter (200, not 404)
 ```
 
 ---
@@ -511,11 +511,11 @@ RETURN (200, GetEncounterResponse { ActorId, Encounter: encounterState? })
 
 ```
 FOREACH node in poolManager.GetUnhealthyNodesAsync(HeartbeatTimeout)
-  PUBLISH actor.pool-node.unhealthy { NodeId, AppId, Reason, LastHeartbeat, ActorCount }
-  CALL poolManager.RemoveNodeAsync(nodeId)
-    // Reads assignments for node, deletes each, deletes node state, updates node index
+ PUBLISH actor.pool-node.unhealthy { NodeId, AppId, Reason, LastHeartbeat, ActorCount }
+ CALL poolManager.RemoveNodeAsync(nodeId)
+ // Reads assignments for node, deletes each, deletes node state, updates node index
 IF unhealthyNodes found AND healthyNodes < config.MinPoolNodes
-  TryPublishErrorAsync("InsufficientPoolNodes")
+ TryPublishErrorAsync("InsufficientPoolNodes")
 ```
 
 ### ActorPoolNodeWorker
@@ -543,7 +543,7 @@ PUBLISH actor.instance.completed { ActorId, ExitReason: ExternalStop, LoopIterat
 // On shutdown:
 // Stop all local runners
 IF remainingActors > 0
-  PUBLISH actor.pool-node.draining { NodeId, RemainingActors, EstimatedDrainTimeSeconds }
+ PUBLISH actor.pool-node.draining { NodeId, RemainingActors, EstimatedDrainTimeSeconds }
 ```
 
 ### HeartbeatEmitter
@@ -553,5 +553,5 @@ IF remainingActors > 0
 
 ```
 EVERY HeartbeatIntervalSeconds:
-  PUBLISH actor.pool-node.heartbeat { NodeId, AppId, CurrentLoad: registry.Count, Capacity }
+ PUBLISH actor.pool-node.heartbeat { NodeId, AppId, CurrentLoad: registry.Count, Capacity }
 ```

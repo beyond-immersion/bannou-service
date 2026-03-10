@@ -112,6 +112,7 @@ info:
 x-lifecycle:
   topic_prefix: contract
   ContractTemplate:
+    deprecation: true
     model:
       templateId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the contract template" }
       code: { type: string, required: true, description: "Unique template code (lowercase, underscores)" }
@@ -123,9 +124,6 @@ x-lifecycle:
       defaultEnforcementMode: { $ref: 'contract-api.yaml#/components/schemas/EnforcementMode', required: true, description: "Default enforcement mode for instances" }
       transferable: { type: boolean, required: true, description: "Whether contracts can be transferred" }
       isActive: { type: boolean, required: true, description: "Whether template is active" }
-      isDeprecated: { type: boolean, required: true, description: "Whether template is deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the template was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
       createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
     sensitive: []
 

@@ -31,9 +31,9 @@ components:
       - destroyable
       - hasDurability
       - isActive
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -90,19 +90,7 @@ components:
         isActive: &id016
           type: boolean
           description: "Whether template is currently active"
-        isDeprecated: &id017
-          type: boolean
-          description: "Whether template is deprecated"
-        deprecatedAt: &id018
-          type: string
-          format: date-time
-          nullable: true
-          description: "When the template was deprecated"
-        deprecationReason: &id019
-          type: string
-          nullable: true
-          description: "Reason for deprecation"
-        migrationTargetId: &id020
+        migrationTargetId: &id017
           type: string
           format: uuid
           nullable: true
@@ -115,6 +103,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the item template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this item template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the item template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     ItemTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -139,9 +140,9 @@ components:
       - destroyable
       - hasDurability
       - isActive
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -164,10 +165,7 @@ components:
         hasDurability: *id014
         maxDurability: *id015
         isActive: *id016
-        isDeprecated: *id017
-        deprecatedAt: *id018
-        deprecationReason: *id019
-        migrationTargetId: *id020
+        migrationTargetId: *id017
         createdAt:
           type: string
           format: date-time
@@ -176,6 +174,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the item template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this item template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the item template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -205,9 +216,9 @@ components:
       - destroyable
       - hasDurability
       - isActive
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -229,10 +240,7 @@ components:
         hasDurability: *id014
         maxDurability: *id015
         isActive: *id016
-        isDeprecated: *id017
-        deprecatedAt: *id018
-        deprecationReason: *id019
-        migrationTargetId: *id020
+        migrationTargetId: *id017
         createdAt:
           type: string
           format: date-time
@@ -241,6 +249,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the item template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this item template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the item template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true
@@ -267,70 +288,70 @@ components:
           type: string
           default: item.instance.created
           description: 'Event type identifier: item.instance.created'
-        instanceId: &id021
+        instanceId: &id018
           type: string
           format: uuid
           description: "Unique identifier for this item instance"
-        templateId: &id022
+        templateId: &id019
           type: string
           format: uuid
           description: "Reference to the item template"
-        containerId: &id023
+        containerId: &id020
           type: string
           format: uuid
           nullable: true
           description: "Container holding this item (ownership derived from container). Null when removed from all containers."
-        realmId: &id024
+        realmId: &id021
           type: string
           format: uuid
           description: "Realm this instance exists in"
-        quantity: &id025
+        quantity: &id022
           type: number
           format: double
           description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)"
-        slotIndex: &id026
+        slotIndex: &id023
           type: integer
           nullable: true
           description: "Slot position in slot-based containers"
-        slotX: &id027
+        slotX: &id024
           type: integer
           nullable: true
           description: "X position in grid-based containers"
-        slotY: &id028
+        slotY: &id025
           type: integer
           nullable: true
           description: "Y position in grid-based containers"
-        rotated: &id029
+        rotated: &id026
           type: boolean
           nullable: true
           description: "Whether item is rotated in grid-based containers"
-        currentDurability: &id030
+        currentDurability: &id027
           type: integer
           nullable: true
           description: "Current durability value"
-        boundToId: &id031
+        boundToId: &id028
           type: string
           format: uuid
           nullable: true
           description: "Character ID this item is bound to (if soulbound)"
-        boundAt: &id032
+        boundAt: &id029
           type: string
           format: date-time
           nullable: true
           description: "When the item was bound to a character"
-        customName: &id033
+        customName: &id030
           type: string
           nullable: true
           description: "Player-assigned custom name for this instance"
-        originType: &id034
+        originType: &id031
           $ref: ../item-api.yaml#/components/schemas/ItemOriginType
           description: "How this item instance was created"
-        originId: &id035
+        originId: &id032
           type: string
           format: uuid
           nullable: true
           description: "Source entity ID for the origin (e.g., crafting recipe, vendor)"
-        modifiedAt: &id036
+        modifiedAt: &id033
           type: string
           format: date-time
           nullable: true
@@ -366,22 +387,22 @@ components:
           type: string
           default: item.instance.updated
           description: 'Event type identifier: item.instance.updated'
-        instanceId: *id021
-        templateId: *id022
-        containerId: *id023
-        realmId: *id024
-        quantity: *id025
-        slotIndex: *id026
-        slotX: *id027
-        slotY: *id028
-        rotated: *id029
-        currentDurability: *id030
-        boundToId: *id031
-        boundAt: *id032
-        customName: *id033
-        originType: *id034
-        originId: *id035
-        modifiedAt: *id036
+        instanceId: *id018
+        templateId: *id019
+        containerId: *id020
+        realmId: *id021
+        quantity: *id022
+        slotIndex: *id023
+        slotX: *id024
+        slotY: *id025
+        rotated: *id026
+        currentDurability: *id027
+        boundToId: *id028
+        boundAt: *id029
+        customName: *id030
+        originType: *id031
+        originId: *id032
+        modifiedAt: *id033
         createdAt:
           type: string
           format: date-time
@@ -417,22 +438,22 @@ components:
           type: string
           default: item.instance.deleted
           description: 'Event type identifier: item.instance.deleted'
-        instanceId: *id021
-        templateId: *id022
-        containerId: *id023
-        realmId: *id024
-        quantity: *id025
-        slotIndex: *id026
-        slotX: *id027
-        slotY: *id028
-        rotated: *id029
-        currentDurability: *id030
-        boundToId: *id031
-        boundAt: *id032
-        customName: *id033
-        originType: *id034
-        originId: *id035
-        modifiedAt: *id036
+        instanceId: *id018
+        templateId: *id019
+        containerId: *id020
+        realmId: *id021
+        quantity: *id022
+        slotIndex: *id023
+        slotX: *id024
+        slotY: *id025
+        rotated: *id026
+        currentDurability: *id027
+        boundToId: *id028
+        boundAt: *id029
+        customName: *id030
+        originType: *id031
+        originId: *id032
+        modifiedAt: *id033
         createdAt:
           type: string
           format: date-time

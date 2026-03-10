@@ -37,48 +37,48 @@ A blueprint defines a repeatable production transformation. It specifies what go
 
 ```
 ProductionBlueprint:
-  blueprintId: Guid
-  gameServiceId: Guid
-  code: string                         # Unique within game service (e.g., "forge_iron_sword", "mine_iron", "grow_wheat")
+ blueprintId: Guid
+ gameServiceId: Guid
+ code: string # Unique within game service (e.g., "forge_iron_sword", "mine_iron", "grow_wheat")
 
-  # Classification
-  category: string                     # "crafting", "mining", "farming", "manufacturing", "training", etc.
-  tags: [string]                       # For filtering (e.g., ["blacksmithing", "weapons", "iron"])
+ # Classification
+ category: string # "crafting", "mining", "farming", "manufacturing", "training", etc.
+ tags: [string] # For filtering (e.g., ["blacksmithing", "weapons", "iron"])
 
-  # Input specification (consumed per unit of production)
-  inputs:
-    - itemTemplateCode: string         # Required material
-      quantityPerUnit: decimal         # Amount consumed per unit produced
-  # Note: empty inputs = time-only production (mining, training, passive generation)
+ # Input specification (consumed per unit of production)
+ inputs:
+ - itemTemplateCode: string # Required material
+ quantityPerUnit: decimal # Amount consumed per unit produced
+ # Note: empty inputs = time-only production (mining, training, passive generation)
 
-  # Output specification (produced per unit)
-  outputs:
-    - itemTemplateCode: string         # Produced item
-      quantityPerUnit: decimal         # Amount produced per unit
-      qualitySource: string            # "fixed", "worker_average", "blueprint_default"
-      fixedQuality: decimal?           # Quality value when qualitySource is "fixed"
+ # Output specification (produced per unit)
+ outputs:
+ - itemTemplateCode: string # Produced item
+ quantityPerUnit: decimal # Amount produced per unit
+ qualitySource: string # "fixed", "worker_average", "blueprint_default"
+ fixedQuality: decimal? # Quality value when qualitySource is "fixed"
 
-  # Recipe reference (alternative to explicit inputs/outputs)
-  recipeCode: string?                  # If set, inputs/outputs derived from lib-craft recipe
-  recipeGameServiceId: Guid?           # Game service owning the recipe (for cross-game-service references)
+ # Recipe reference (alternative to explicit inputs/outputs)
+ recipeCode: string? # If set, inputs/outputs derived from lib-craft recipe
+ recipeGameServiceId: Guid? # Game service owning the recipe (for cross-game-service references)
 
-  # Time
-  baseGameSecondsPerUnit: int          # Game-time seconds per unit at base rate (1 worker, no bonuses)
+ # Time
+ baseGameSecondsPerUnit: int # Game-time seconds per unit at base rate (1 worker, no bonuses)
 
-  # Worker constraints
-  minWorkers: int                      # Minimum workers to operate (default: 1, 0 = autonomous)
-  maxWorkers: int                      # Maximum workers (default: 0 = unlimited)
-  workerTypes: [string]?               # Valid worker entity types (null = any)
+ # Worker constraints
+ minWorkers: int # Minimum workers to operate (default: 1, 0 = autonomous)
+ maxWorkers: int # Maximum workers (default: 0 = unlimited)
+ workerTypes: [string]? # Valid worker entity types (null = any)
 
-  # Optional constraints
-  requiresStationType: string?         # Must be near a station of this type (via lib-craft station registry)
-  requiresLocationId: Guid?            # Must be at a specific location
+ # Optional constraints
+ requiresStationType: string? # Must be near a station of this type (via lib-craft station registry)
+ requiresLocationId: Guid? # Must be at a specific location
 
-  # Metadata
-  isActive: bool
-  isDeprecated: bool
-  deprecatedAt: DateTimeOffset?
-  deprecationReason: string?
+ # Metadata
+ isActive: bool
+ isDeprecated: bool
+ deprecatedAt: DateTimeOffset?
+ deprecationReason: string?
 ```
 
 **Key design decisions**:
@@ -99,41 +99,41 @@ A task is a running instance of a blueprint, bound to specific inventories and w
 
 ```
 ProductionTask:
-  taskId: Guid
-  blueprintId: Guid
-  realmId: Guid                        # For game-time lookup from lib-worldstate
+ taskId: Guid
+ blueprintId: Guid
+ realmId: Guid # For game-time lookup from lib-worldstate
 
-  # Ownership
-  ownerType: string                    # "character", "npc", "faction", "location", "account"
-  ownerId: Guid
+ # Ownership
+ ownerType: string # "character", "npc", "faction", "location", "account"
+ ownerId: Guid
 
-  # Inventories
-  sourceInventoryId: Guid              # Consume materials from here
-  destinationInventoryId: Guid         # Place outputs here
+ # Inventories
+ sourceInventoryId: Guid # Consume materials from here
+ destinationInventoryId: Guid # Place outputs here
 
-  # Production target
-  targetQuantity: int?                 # null = indefinite (run until paused or out of materials)
+ # Production target
+ targetQuantity: int? # null = indefinite (run until paused or out of materials)
 
-  # Current state (lazy-evaluated)
-  lastProcessedGameTime: long          # Game-seconds-since-epoch at last materialization
-  fractionalProgress: decimal          # Partial unit progress (0.0-1.0), carries across materializations
-  totalProduced: long                  # Lifetime count of units materialized
-  totalConsumed: object                # Lifetime count per input item consumed
+ # Current state (lazy-evaluated)
+ lastProcessedGameTime: long # Game-seconds-since-epoch at last materialization
+ fractionalProgress: decimal # Partial unit progress (0.0-1.0), carries across materializations
+ totalProduced: long # Lifetime count of units materialized
+ totalConsumed: object # Lifetime count per input item consumed
 
-  # Rate (derived from workers)
-  currentEffectiveRate: decimal        # Units per game-second (recomputed on worker changes)
+ # Rate (derived from workers)
+ currentEffectiveRate: decimal # Units per game-second (recomputed on worker changes)
 
-  # Status
-  status: string                       # See status table below
-  statusReason: string?                # Human-readable reason for current status
-  pausedAtGameTime: long?              # Game-time when task was paused (null if running)
-  createdAtGameTime: long              # Game-time when task was created
-  completedAtGameTime: long?           # Game-time when task completed (reached target)
+ # Status
+ status: string # See status table below
+ statusReason: string? # Human-readable reason for current status
+ pausedAtGameTime: long? # Game-time when task was paused (null if running)
+ createdAtGameTime: long # Game-time when task was created
+ completedAtGameTime: long? # Game-time when task completed (reached target)
 
-  # Snapshot (from blueprint or recipe at creation time)
-  snapshotInputs: [...]                # Inputs locked at task creation
-  snapshotOutputs: [...]               # Outputs locked at task creation
-  snapshotBaseGameSecondsPerUnit: int  # Base time locked at task creation
+ # Snapshot (from blueprint or recipe at creation time)
+ snapshotInputs: [...] # Inputs locked at task creation
+ snapshotOutputs: [...] # Outputs locked at task creation
+ snapshotBaseGameSecondsPerUnit: int # Base time locked at task creation
 ```
 
 **Task statuses**:
@@ -154,27 +154,27 @@ Workers are entity references assigned to a task. Each worker contributes to the
 
 ```
 WorkerAssignment:
-  taskId: Guid
-  workerId: Guid
-  workerType: string                   # "character", "npc", "actor"
-  assignedAtGameTime: long             # Game-time when worker was assigned
-  rateContribution: decimal            # This worker's rate contribution (default: 1.0)
-  proficiencyMultiplier: decimal       # Multiplier from worker's skill level (default: 1.0)
+ taskId: Guid
+ workerId: Guid
+ workerType: string # "character", "npc", "actor"
+ assignedAtGameTime: long # Game-time when worker was assigned
+ rateContribution: decimal # This worker's rate contribution (default: 1.0)
+ proficiencyMultiplier: decimal # Multiplier from worker's skill level (default: 1.0)
 ```
 
 **Rate computation**:
 
 ```
 effectiveRate = sum(worker.rateContribution * worker.proficiencyMultiplier)
-              / blueprint.baseGameSecondsPerUnit
+ / blueprint.baseGameSecondsPerUnit
 
 Example:
-  baseGameSecondsPerUnit = 3600 (1 game-hour per unit)
-  Worker A: rateContribution=1.0, proficiencyMultiplier=1.0 → contributes 1.0
-  Worker B: rateContribution=1.0, proficiencyMultiplier=1.5 → contributes 1.5
-  Total contribution = 2.5
-  effectiveRate = 2.5 / 3600 = 0.000694 units per game-second
-  At 24:1 ratio: ~60 units per real-hour (each unit takes ~1 real-minute)
+ baseGameSecondsPerUnit = 3600 (1 game-hour per unit)
+ Worker A: rateContribution=1.0, proficiencyMultiplier=1.0 → contributes 1.0
+ Worker B: rateContribution=1.0, proficiencyMultiplier=1.5 → contributes 1.5
+ Total contribution = 2.5
+ effectiveRate = 2.5 / 3600 = 0.000694 units per game-second
+ At 24:1 ratio: ~60 units per real-hour (each unit takes ~1 real-minute)
 ```
 
 **Proficiency multiplier**: When a worker is assigned, Workshop optionally queries lib-seed (if the blueprint has a proficiency domain configured) for the worker's proficiency seed growth depth, and computes a multiplier. A master blacksmith produces faster than an apprentice. If lib-seed or proficiency data is unavailable, the multiplier defaults to 1.0.
@@ -185,11 +185,11 @@ Every rate change (worker added, worker removed, manual rate adjustment) creates
 
 ```
 RateSegment:
-  taskId: Guid
-  segmentIndex: int                    # Monotonically increasing per task
-  startGameTime: long                  # Game-seconds-since-epoch when this rate became effective
-  effectiveRate: decimal               # Units per game-second during this segment
-  workerCount: int                     # Worker count at start of segment (for display)
+ taskId: Guid
+ segmentIndex: int # Monotonically increasing per task
+ startGameTime: long # Game-seconds-since-epoch when this rate became effective
+ effectiveRate: decimal # Units per game-second during this segment
+ workerCount: int # Worker count at start of segment (for display)
 ```
 
 Rate segments are append-only. When a worker joins or leaves:
@@ -205,64 +205,64 @@ Production is not simulated in real-time. When a task's status is queried or the
 
 ```
 MaterializeProduction(task, currentGameTime):
-  gameSecondsElapsed = currentGameTime - task.lastProcessedGameTime
-  if gameSecondsElapsed <= 0: return
+ gameSecondsElapsed = currentGameTime - task.lastProcessedGameTime
+ if gameSecondsElapsed <= 0: return
 
-  # Integrate production over rate segments
-  pendingUnits = task.fractionalProgress
-  for each segment overlapping [task.lastProcessedGameTime, currentGameTime]:
-    segmentGameSeconds = min(segment.end, currentGameTime)
-                       - max(segment.start, task.lastProcessedGameTime)
-    pendingUnits += segmentGameSeconds * segment.effectiveRate
+ # Integrate production over rate segments
+ pendingUnits = task.fractionalProgress
+ for each segment overlapping [task.lastProcessedGameTime, currentGameTime]:
+ segmentGameSeconds = min(segment.end, currentGameTime)
+ - max(segment.start, task.lastProcessedGameTime)
+ pendingUnits += segmentGameSeconds * segment.effectiveRate
 
-  wholeUnits = floor(pendingUnits)
-  remainingFraction = pendingUnits - wholeUnits
+ wholeUnits = floor(pendingUnits)
+ remainingFraction = pendingUnits - wholeUnits
 
-  if wholeUnits == 0:
-    task.fractionalProgress = remainingFraction
-    task.lastProcessedGameTime = currentGameTime
-    return
+ if wholeUnits == 0:
+ task.fractionalProgress = remainingFraction
+ task.lastProcessedGameTime = currentGameTime
+ return
 
-  # Check material availability (cap by what source inventory has)
-  availableMaterials = checkSourceInventory(task.sourceInventoryId, task.snapshotInputs)
-  maxFromMaterials = minUnitsProducibleFrom(availableMaterials, task.snapshotInputs)
-  # If inputs are empty (time-only production), maxFromMaterials = unlimited
+ # Check material availability (cap by what source inventory has)
+ availableMaterials = checkSourceInventory(task.sourceInventoryId, task.snapshotInputs)
+ maxFromMaterials = minUnitsProducibleFrom(availableMaterials, task.snapshotInputs)
+ # If inputs are empty (time-only production), maxFromMaterials = unlimited
 
-  # Check destination capacity
-  destinationCapacity = checkDestinationCapacity(task.destinationInventoryId, task.snapshotOutputs)
-  maxFromCapacity = maxUnitsPlaceable(destinationCapacity, task.snapshotOutputs)
+ # Check destination capacity
+ destinationCapacity = checkDestinationCapacity(task.destinationInventoryId, task.snapshotOutputs)
+ maxFromCapacity = maxUnitsPlaceable(destinationCapacity, task.snapshotOutputs)
 
-  actualUnits = min(wholeUnits, maxFromMaterials, maxFromCapacity)
+ actualUnits = min(wholeUnits, maxFromMaterials, maxFromCapacity)
 
-  if actualUnits == 0:
-    # Can't produce anything -- pause with reason
-    if maxFromMaterials == 0:
-      task.status = "paused:no_materials"
-    elif maxFromCapacity == 0:
-      task.status = "paused:no_space"
-    task.fractionalProgress = remainingFraction
-    task.lastProcessedGameTime = currentGameTime
-    return
+ if actualUnits == 0:
+ # Can't produce anything -- pause with reason
+ if maxFromMaterials == 0:
+ task.status = "paused:no_materials"
+ elif maxFromCapacity == 0:
+ task.status = "paused:no_space"
+ task.fractionalProgress = remainingFraction
+ task.lastProcessedGameTime = currentGameTime
+ return
 
-  # Materialize: consume inputs, create outputs
-  consumeMaterials(task.sourceInventoryId, task.snapshotInputs, actualUnits)
-  createOutputs(task.destinationInventoryId, task.snapshotOutputs, actualUnits, quality)
+ # Materialize: consume inputs, create outputs
+ consumeMaterials(task.sourceInventoryId, task.snapshotInputs, actualUnits)
+ createOutputs(task.destinationInventoryId, task.snapshotOutputs, actualUnits, quality)
 
-  task.totalProduced += actualUnits
-  task.fractionalProgress = remainingFraction + (wholeUnits - actualUnits)
-    # ^ If we couldn't produce all pending units, the excess stays as fractional
-    # Wait -- actually if we're paused (no materials/space), we shouldn't
-    # accumulate more than we can produce. Cap fractional at 1.0 to prevent
-    # unlimited backlog.
-  task.fractionalProgress = min(remainingFraction, 1.0)
-  task.lastProcessedGameTime = currentGameTime
+ task.totalProduced += actualUnits
+ task.fractionalProgress = remainingFraction + (wholeUnits - actualUnits)
+ # ^ If we couldn't produce all pending units, the excess stays as fractional
+ # Wait -- actually if we're paused (no materials/space), we shouldn't
+ # accumulate more than we can produce. Cap fractional at 1.0 to prevent
+ # unlimited backlog.
+ task.fractionalProgress = min(remainingFraction, 1.0)
+ task.lastProcessedGameTime = currentGameTime
 
-  # Check target
-  if task.targetQuantity != null && task.totalProduced >= task.targetQuantity:
-    task.status = "completed"
+ # Check target
+ if task.targetQuantity != null && task.totalProduced >= task.targetQuantity:
+ task.status = "completed"
 
-  # Publish event
-  publish("workshop.production.materialized", { taskId, units: actualUnits })
+ # Publish event
+ publish("workshop.production.materialized", { taskId, units: actualUnits })
 ```
 
 **Key behavior**: If a task runs for 10 game-days but the source inventory only had materials for 3 units, only 3 units are produced. The task pauses with `no_materials`. It does NOT accumulate 10 days of "debt" that suddenly materializes when materials are restocked. Fractional progress is capped at 1.0 to prevent backlog accumulation during paused periods.
@@ -273,22 +273,22 @@ A `BackgroundService` that periodically processes pending production tasks.
 
 ```
 WorkshopMaterializationWorkerService:
-  Runs every MaterializationIntervalSeconds (default: 30 real seconds)
+ Runs every MaterializationIntervalSeconds (default: 30 real seconds)
 
-  Algorithm:
-  1. Load all tasks with status "running" or "paused:no_materials" or "paused:no_space"
-  2. Group by ownerId (fair scheduling)
-  3. Round-robin through owners:
-     a. For each owner, process up to MaxTasksPerOwnerPerTick tasks
-     b. For each task: call MaterializeProduction(task, currentGameTime)
-     c. If task was paused:no_materials, check if materials are now available → resume
-     d. If task was paused:no_space, check if space is now available → resume
-  4. Track processing time per owner for monitoring
+ Algorithm:
+ 1. Load all tasks with status "running" or "paused:no_materials" or "paused:no_space"
+ 2. Group by ownerId (fair scheduling)
+ 3. Round-robin through owners:
+ a. For each owner, process up to MaxTasksPerOwnerPerTick tasks
+ b. For each task: call MaterializeProduction(task, currentGameTime)
+ c. If task was paused:no_materials, check if materials are now available → resume
+ d. If task was paused:no_space, check if space is now available → resume
+ 4. Track processing time per owner for monitoring
 
-  Fair scheduling guarantee:
-  - Each owner gets at most MaxTasksPerOwnerPerTick tasks processed per cycle
-  - An owner with 100 tasks doesn't block an owner with 1 task
-  - Processing order within an owner: oldest task first (FIFO)
+ Fair scheduling guarantee:
+ - Each owner gets at most MaxTasksPerOwnerPerTick tasks processed per cycle
+ - An owner with 100 tasks doesn't block an owner with 1 task
+ - Processing order within an owner: oldest task first (FIFO)
 ```
 
 **Two materialization paths** (same pattern as Currency autogain):
@@ -555,61 +555,61 @@ Blueprints are owned here. Item creation and destruction are lib-item (L2). Cont
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
-│                        Lazy Evaluation with Rate Segments                    │
-│                                                                            │
-│  Timeline (game-time):                                                     │
-│  ─────────────────────────────────────────────────────────────────────→    │
-│  T0          T1          T2          T3          T4 (now)                  │
-│  │           │           │           │           │                         │
-│  │ Segment 0 │ Segment 1 │ Segment 2 │ Segment 3 │                        │
-│  │ rate=0.001│ rate=0.002│ rate=0.003│ rate=0.002│                        │
-│  │ 1 worker  │ 2 workers │ 3 workers │ 2 workers │                        │
-│  │           │           │           │(1 left)   │                        │
-│  │           │           │           │           │                         │
-│  lastProcessed                                   ▲                         │
-│  = T1                                            │ MaterializeProduction() │
-│                                                  │ called now              │
-│  Computation:                                                              │
-│  ┌──────────────────────────────────────────────────────┐                 │
-│  │ Segment 1: (T2 - T1) * 0.002 = 7200s * 0.002 = 14.4 │                 │
-│  │ Segment 2: (T3 - T2) * 0.003 = 3600s * 0.003 = 10.8 │                 │
-│  │ Segment 3: (T4 - T3) * 0.002 = 1800s * 0.002 =  3.6 │                 │
-│  │                                                        │                 │
-│  │ pendingUnits = fractionalProgress + 14.4 + 10.8 + 3.6 │                 │
-│  │              = 0.2 + 28.8                              │                 │
-│  │              = 29.0                                    │                 │
-│  │                                                        │                 │
-│  │ wholeUnits = 29                                        │                 │
-│  │ remainingFraction = 0.0                                │                 │
-│  │                                                        │                 │
-│  │ Materials available for: 25 units (bottleneck: iron)   │                 │
-│  │ Destination capacity for: 40 units (plenty of space)   │                 │
-│  │                                                        │                 │
-│  │ actualUnits = min(29, 25, 40) = 25                     │                 │
-│  │                                                        │                 │
-│  │ → Consume 25 units' worth of materials from source     │                 │
-│  │ → Create 25 output items in destination                │                 │
-│  │ → task.totalProduced += 25                             │                 │
-│  │ → task.fractionalProgress = min(0.0, 1.0) = 0.0       │                 │
-│  │ → task.status = "paused:no_materials" (ran out)        │                 │
-│  │ → task.lastProcessedGameTime = T4                      │                 │
-│  └──────────────────────────────────────────────────────┘                 │
-│                                                                            │
-│  Worker Rate Change Flow:                                                  │
-│  ┌──────────────────────────────────────────────────────┐                 │
-│  │ AssignWorker(taskId, workerId):                        │                 │
-│  │   1. Acquire lock: workshop:lock:worker:{taskId}       │                 │
-│  │   2. MaterializeProduction(task, now)  ← flush first   │                 │
-│  │   3. Add worker, compute new rate                      │                 │
-│  │   4. Append RateSegment(startTime=now, rate=newRate)   │                 │
-│  │   5. Update task.currentEffectiveRate                  │                 │
-│  │   6. Release lock                                      │                 │
-│  │                                                        │                 │
-│  │ This ensures all production before the rate change     │                 │
-│  │ is computed at the old rate, and production after is    │                 │
-│  │ computed at the new rate. No lost or double-counted     │                 │
-│  │ production.                                            │                 │
-│  └──────────────────────────────────────────────────────┘                 │
+│ Lazy Evaluation with Rate Segments │
+│ │
+│ Timeline (game-time): │
+│ ─────────────────────────────────────────────────────────────────────→ │
+│ (now) │
+│ │ │ │ │ │ │
+│ │ Segment 0 │ Segment 1 │ Segment 2 │ Segment 3 │ │
+│ │ rate=0.001│ rate=0.002│ rate=0.003│ rate=0.002│ │
+│ │ 1 worker │ 2 workers │ 3 workers │ 2 workers │ │
+│ │ │ │ │(1 left) │ │
+│ │ │ │ │ │ │
+│ lastProcessed ▲ │
+│ = │ MaterializeProduction() │
+│ │ called now │
+│ Computation: │
+│ ┌──────────────────────────────────────────────────────┐ │
+│ │ Segment 1: (-) * 0.002 = 7200s * 0.002 = 14.4 │ │
+│ │ Segment 2: (-) * 0.003 = 3600s * 0.003 = 10.8 │ │
+│ │ Segment 3: (-) * 0.002 = 1800s * 0.002 = 3.6 │ │
+│ │ │ │
+│ │ pendingUnits = fractionalProgress + 14.4 + 10.8 + 3.6 │ │
+│ │ = 0.2 + 28.8 │ │
+│ │ = 29.0 │ │
+│ │ │ │
+│ │ wholeUnits = 29 │ │
+│ │ remainingFraction = 0.0 │ │
+│ │ │ │
+│ │ Materials available for: 25 units (bottleneck: iron) │ │
+│ │ Destination capacity for: 40 units (plenty of space) │ │
+│ │ │ │
+│ │ actualUnits = min(29, 25, 40) = 25 │ │
+│ │ │ │
+│ │ → Consume 25 units' worth of materials from source │ │
+│ │ → Create 25 output items in destination │ │
+│ │ → task.totalProduced += 25 │ │
+│ │ → task.fractionalProgress = min(0.0, 1.0) = 0.0 │ │
+│ │ → task.status = "paused:no_materials" (ran out) │ │
+│ │ → task.lastProcessedGameTime = │ │
+│ └──────────────────────────────────────────────────────┘ │
+│ │
+│ Worker Rate Change Flow: │
+│ ┌──────────────────────────────────────────────────────┐ │
+│ │ AssignWorker(taskId, workerId): │ │
+│ │ 1. Acquire lock: workshop:lock:worker:{taskId} │ │
+│ │ 2. MaterializeProduction(task, now) ← flush first │ │
+│ │ 3. Add worker, compute new rate │ │
+│ │ 4. Append RateSegment(startTime=now, rate=newRate) │ │
+│ │ 5. Update task.currentEffectiveRate │ │
+│ │ 6. Release lock │ │
+│ │ │ │
+│ │ This ensures all production before the rate change │ │
+│ │ is computed at the old rate, and production after is │ │
+│ │ computed at the new rate. No lost or double-counted │ │
+│ │ production. │ │
+│ └──────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -720,51 +720,51 @@ Implements `IVariableProviderFactory` (via `WorkshopProviderFactory`) providing 
 
 ```yaml
 flows:
-  manage_workshop:
-    # NPC blacksmith manages their forge production line
-    - cond:
-        # My forge is paused because I ran out of iron
-        - when: "${workshop.task.forge_iron_sword.status == 'paused:no_materials'}"
-          then:
-            - call: go_to_market
-            - call: buy_iron_ingots
-            - set: { shopping_reason: "restock_forge" }
+ manage_workshop:
+ # NPC blacksmith manages their forge production line
+ - cond:
+ # My forge is paused because I ran out of iron
+ - when: "${workshop.task.forge_iron_sword.status == 'paused:no_materials'}"
+ then:
+ - call: go_to_market
+ - call: buy_iron_ingots
+ - set: { shopping_reason: "restock_forge" }
 
-        # My output chest is full -- go sell some swords
-        - when: "${workshop.task.forge_iron_sword.status == 'paused:no_space'}"
-          then:
-            - call: collect_from_output_chest
-            - call: go_to_market
-            - call: sell_swords
+ # My output chest is full -- go sell some swords
+ - when: "${workshop.task.forge_iron_sword.status == 'paused:no_space'}"
+ then:
+ - call: collect_from_output_chest
+ - call: go_to_market
+ - call: sell_swords
 
-        # Everything is running smoothly
-        - when: "${workshop.task.forge_iron_sword.status == 'running'}"
-          then:
-            - cond:
-                # But I could work faster with an apprentice
-                - when: "${workshop.task.forge_iron_sword.worker_count < 2
-                          && disposition.drive.has_drive.master_craft}"
-                  then:
-                    - call: look_for_apprentice
-                - otherwise:
-                    - call: do_other_work
+ # Everything is running smoothly
+ - when: "${workshop.task.forge_iron_sword.status == 'running'}"
+ then:
+ - cond:
+ # But I could work faster with an apprentice
+ - when: "${workshop.task.forge_iron_sword.worker_count < 2
+ && disposition.drive.has_drive.master_craft}"
+ then:
+ - call: look_for_apprentice
+ - otherwise:
+ - call: do_other_work
 
-  economic_decisions:
-    # NPC evaluates whether to start new production
-    - cond:
-        # I have capacity for more tasks
-        - when: "${workshop.active_task_count < 3
-                  && craft.proficiency.blacksmithing > 5}"
-          then:
-            # Check what sells well at market
-            - call: evaluate_market_demand
-            - call: start_production_if_profitable
+ economic_decisions:
+ # NPC evaluates whether to start new production
+ - cond:
+ # I have capacity for more tasks
+ - when: "${workshop.active_task_count < 3
+ && craft.proficiency.blacksmithing > 5}"
+ then:
+ # Check what sells well at market
+ - call: evaluate_market_demand
+ - call: start_production_if_profitable
 
-        # All my tasks are running and I'm not needed
-        - when: "${workshop.total_producing > 0
-                  && !workshop.any_paused_no_materials}"
-          then:
-            - call: pursue_personal_goals  # Follow drives
+ # All my tasks are running and I'm not needed
+ - when: "${workshop.total_producing > 0
+ && !workshop.any_paused_no_materials}"
+ then:
+ - call: pursue_personal_goals # Follow drives
 ```
 
 ---

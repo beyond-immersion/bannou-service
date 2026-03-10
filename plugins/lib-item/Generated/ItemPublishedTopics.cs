@@ -23,6 +23,9 @@ public static class ItemPublishedTopics
     /// <summary>Published when an item template is updated (including deprecation via changedFields).</summary>
     public const string ItemTemplateUpdated = "item.template.updated";
 
+    /// <summary>Unused Category B infrastructure — templates are never deleted. Publisher method exists in generated code but is never called.</summary>
+    public const string ItemTemplateDeleted = "item.template.deleted";
+
     /// <summary>Published when a new item instance is created.</summary>
     public const string ItemInstanceCreated = "item.instance.created";
 

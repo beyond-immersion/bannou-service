@@ -184,171 +184,171 @@ Service lifetime is **Scoped** (per-request). Static `ConcurrentDictionary` fiel
 Authority Lifecycle
 =====================
 
-  Game Server (Authority)              Mapping Service                   Consumers
-       │                                    │                              │
-       ├── CreateChannel ──────────────────►│                              │
-       │   (regionId, kind, takeover)       │                              │
-       │                                    ├── Generate channelId          │
-       │                                    │   (SHA-256 of region:kind)    │
-       │                                    ├── Store ChannelRecord         │
-       │                                    ├── Store AuthorityRecord       │
-       │                                    ├── Subscribe(map.ingest.{id})  │
-       │◄── AuthorityGrant ────────────────│                              │
-       │   (token, ingestTopic, expiry)     ├── Publish authority.granted ──►
-       │                                    │                              │
-       │                                    │                              │
-       │  ┌─── Heartbeat Loop ────┐        │                              │
-       │  │ Every ~30s:           │        │                              │
-       ├──┤ AuthorityHeartbeat ───┼───────►│                              │
-       │  │ (channelId, token)    │        ├── Extend ExpiresAt            │
-       │◄─┤ {valid, newExpiry}    │────────│                              │
-       │  └───────────────────────┘        │                              │
-       │                                    │                              │
-       │── Publish to ingest topic ────────►│                              │
-       │   (via RabbitMQ, high-throughput)  ├── Validate authority          │
-       │                                    ├── Process payloads            │
-       │                                    ├── Update spatial indexes      │
-       │                                    ├── Publish map.*.updated ──────►
-       │                                    ├── Publish map.*.objects ──────►
-       │                                    │                              │
-       │── ReleaseAuthority ───────────────►│                              │
-       │   (channelId, token)               ├── Delete AuthorityRecord     │
-       │                                    ├── Dispose subscription        │
-       │◄── {released: true} ──────────────│── Publish authority.released ►│
-       │                                    │                              │
+ Game Server (Authority) Mapping Service Consumers
+ │ │ │
+ ├── CreateChannel ──────────────────►│ │
+ │ (regionId, kind, takeover) │ │
+ │ ├── Generate channelId │
+ │ │ (SHA-256 of region:kind) │
+ │ ├── Store ChannelRecord │
+ │ ├── Store AuthorityRecord │
+ │ ├── Subscribe(map.ingest.{id}) │
+ │◄── AuthorityGrant ────────────────│ │
+ │ (token, ingestTopic, expiry) ├── Publish authority.granted ──►
+ │ │ │
+ │ │ │
+ │ ┌─── Heartbeat Loop ────┐ │ │
+ │ │ Every ~30s: │ │ │
+ ├──┤ AuthorityHeartbeat ───┼───────►│ │
+ │ │ (channelId, token) │ ├── Extend ExpiresAt │
+ │◄─┤ {valid, newExpiry} │────────│ │
+ │ └───────────────────────┘ │ │
+ │ │ │
+ │── Publish to ingest topic ────────►│ │
+ │ (via RabbitMQ, high-throughput) ├── Validate authority │
+ │ ├── Process payloads │
+ │ ├── Update spatial indexes │
+ │ ├── Publish map.*.updated ──────►
+ │ ├── Publish map.*.objects ──────►
+ │ │ │
+ │── ReleaseAuthority ───────────────►│ │
+ │ (channelId, token) ├── Delete AuthorityRecord │
+ │ ├── Dispose subscription │
+ │◄── {released: true} ──────────────│── Publish authority.released ►│
+ │ │ │
 
 
 Non-Authority Handling
 ========================
 
-  Unauthorized Publisher         Mapping Service           Alert Consumers
-       │                             │                         │
-       ├── PublishMapUpdate ────────►│                         │
-       │   (invalid/no token)        │                         │
-       │                             ├── ValidateAuthority()   │
-       │                             │   → FAILS               │
-       │                             │                         │
-       │                      ┌──────┼── Check channel.NonAuthorityHandling
-       │                      │      │                         │
-       │   reject_silent:     │      │                         │
-       │◄─ 401 (no event) ───┤      │                         │
-       │                      │      │                         │
-       │   reject_and_alert:  │      │                         │
-       │◄─ 401 ──────────────┤──────┼── Publish warning ─────►│
-       │                      │      │                         │
-       │   accept_and_alert:  │      │                         │
-       │◄─ 200 (processed) ──┤──────┼── Publish warning ─────►│
-       │                      └──────┤── Process payload       │
-       │                             │                         │
+ Unauthorized Publisher Mapping Service Alert Consumers
+ │ │ │
+ ├── PublishMapUpdate ────────►│ │
+ │ (invalid/no token) │ │
+ │ ├── ValidateAuthority() │
+ │ │ → FAILS │
+ │ │ │
+ │ ┌──────┼── Check channel.NonAuthorityHandling
+ │ │ │ │
+ │ reject_silent: │ │ │
+ │◄─ 401 (no event) ───┤ │ │
+ │ │ │ │
+ │ reject_and_alert: │ │ │
+ │◄─ 401 ──────────────┤──────┼── Publish warning ─────►│
+ │ │ │ │
+ │ accept_and_alert: │ │ │
+ │◄─ 200 (processed) ──┤──────┼── Publish warning ─────►│
+ │ └──────┤── Process payload │
+ │ │ │
 
 
 Spatial Index & Query
 =======================
 
-  World Space (DefaultSpatialCellSize = 64 units)
-  ┌────────┬────────┬────────┐
-  │(0,0,0) │(1,0,0) │(2,0,0) │  Each cell: 64x64x64 units
-  │  obj_A │  obj_B │        │
-  ├────────┼────────┼────────┤
-  │(0,1,0) │(1,1,0) │(2,1,0) │
-  │        │obj_C   │  obj_D │
-  │        │obj_E   │        │
-  └────────┴────────┴────────┘
+ World Space (DefaultSpatialCellSize = 64 units)
+ ┌────────┬────────┬────────┐
+ │(0,0,0) │(1,0,0) │(2,0,0) │ Each cell: 64x64x64 units
+ │ obj_A │ obj_B │ │
+ ├────────┼────────┼────────┤
+ │(0,1,0) │(1,1,0) │(2,1,0) │
+ │ │obj_C │ obj_D │
+ │ │obj_E │ │
+ └────────┴────────┴────────┘
 
-  QueryPoint(position=(80,70,0), radius=50):
-    1. Compute bounds: min=(30,20,-50), max=(130,120,50)
-    2. GetCellsForBounds → cells (0,0,0),(1,0,0),(2,0,0),(0,1,0),(1,1,0),(2,1,0)
-    3. Load object IDs from each cell's spatial index
-    4. Deduplicate (HashSet)
-    5. Post-filter by Euclidean distance from center
-    → Returns: obj_B, obj_C, obj_E (within radius)
+ QueryPoint(position=(80,70,0), radius=50):
+ 1. Compute bounds: min=(30,20,-50), max=(130,120,50)
+ 2. GetCellsForBounds → cells (0,0,0),(1,0,0),(2,0,0),(0,1,0),(1,1,0),(2,1,0)
+ 3. Load object IDs from each cell's spatial index
+ 4. Deduplicate (HashSet)
+ 5. Post-filter by Euclidean distance from center
+ → Returns: obj_B, obj_C, obj_E (within radius)
 
-  QueryBounds(bounds):
-    1. GetCellsForBounds → overlapping cells
-    2. Load objects from each cell
-    3. Verify BoundsContainsPoint or BoundsIntersect
-    → Returns: objects within bounds, up to maxObjects
+ QueryBounds(bounds):
+ 1. GetCellsForBounds → overlapping cells
+ 2. Load objects from each cell
+ 3. Verify BoundsContainsPoint or BoundsIntersect
+ → Returns: objects within bounds, up to maxObjects
 
 
 Affordance Scoring
 ====================
 
-  QueryAffordance(type=Ambush, regionId, bounds, minScore=0.3)
-       │
-       ├── GetKindsForAffordanceType(Ambush)
-       │   → [static_geometry, dynamic_objects, navigation]
-       │
-       ├── Gather candidates from spatial indexes
-       │   (up to MaxAffordanceCandidates=1000)
-       │
-       ├── For each candidate:
-       │   ├── Base score: 0.5
-       │   ├── cover_rating property? → score += cr * 0.3
-       │   ├── sightlines property?   → score += min(sl * 0.05, 0.2)
-       │   ├── Actor size modifier:
-       │   │   Tiny=1.2, Small=1.1, Medium=1.0, Large=0.9, Huge=0.8
-       │   ├── Stealth rating?        → score *= (1.0 + stealth * 0.2)
-       │   └── Clamp to [0.0, 1.0]
-       │
-       ├── Filter: score >= minScore (0.3)
-       ├── Sort descending by score
-       ├── Take maxResults
-       │
-       └── Return AffordanceLocation[] with:
-           - position/bounds
-           - score (0.0-1.0)
-           - features (cover_rating, sightlines, concealment)
-           - objectIds
+ QueryAffordance(type=Ambush, regionId, bounds, minScore=0.3)
+ │
+ ├── GetKindsForAffordanceType(Ambush)
+ │ → [static_geometry, dynamic_objects, navigation]
+ │
+ ├── Gather candidates from spatial indexes
+ │ (up to MaxAffordanceCandidates=1000)
+ │
+ ├── For each candidate:
+ │ ├── Base score: 0.5
+ │ ├── cover_rating property? → score += cr * 0.3
+ │ ├── sightlines property? → score += min(sl * 0.05, 0.2)
+ │ ├── Actor size modifier:
+ │ │ Tiny=1.2, Small=1.1, Medium=1.0, Large=0.9, Huge=0.8
+ │ ├── Stealth rating? → score *= (1.0 + stealth * 0.2)
+ │ └── Clamp to [0.0, 1.0]
+ │
+ ├── Filter: score >= minScore (0.3)
+ ├── Sort descending by score
+ ├── Take maxResults
+ │
+ └── Return AffordanceLocation[] with:
+ - position/bounds
+ - score (0.0-1.0)
+ - features (cover_rating, sightlines, concealment)
+ - objectIds
 
 
 Event Aggregation Buffer
 ==========================
 
-  Rapid Object Changes              EventAggregationBuffer           Message Bus
-       │                                    │                           │
-  t=0  ├── change_1 ──────────────────────►│ pendingChanges=[1]        │
-  t=20 ├── change_2 ──────────────────────►│ pendingChanges=[1,2]      │
-  t=50 ├── change_3 ──────────────────────►│ pendingChanges=[1,2,3]    │
-       │                                    │                           │
-  t=100│               ┌── Timer fires ────┤                           │
-       │               │ (windowMs=100)     │                           │
-       │               │                    ├── Flush all pending ──────►
-       │               │                    │   MapObjectsChangedEvent   │
-       │               │                    │   (3 changes, latest ver) │
-       │               └────────────────────┤                           │
-       │                                    ├── Remove buffer from dict │
-       │                                    ├── Dispose timer           │
-       │                                    │                           │
+ Rapid Object Changes EventAggregationBuffer Message Bus
+ │ │ │
+ t=0 ├── change_1 ──────────────────────►│ pendingChanges=[1] │
+ t=20 ├── change_2 ──────────────────────►│ pendingChanges=[1,2] │
+ t=50 ├── change_3 ──────────────────────►│ pendingChanges=[1,2,3] │
+ │ │ │
+ t=100│ ┌── Timer fires ────┤ │
+ │ │ (windowMs=100) │ │
+ │ │ ├── Flush all pending ──────►
+ │ │ │ MapObjectsChangedEvent │
+ │ │ │ (3 changes, latest ver) │
+ │ └────────────────────┤ │
+ │ ├── Remove buffer from dict │
+ │ ├── Dispose timer │
+ │ │ │
 
-  Result: 3 rapid changes → 1 coalesced event (vs 3 separate events)
+ Result: 3 rapid changes → 1 coalesced event (vs 3 separate events)
 
 
 Authoring Workflow
 ====================
 
-  Level Designer                  Mapping Service
-       │                               │
-       ├── Checkout(regionId, kind) ───►│
-       │                               ├── Check existing lock
-       │                               │   ├── Active? → 409 Conflict
-       │                               │   └── Expired or none? → proceed
-       │                               ├── Store CheckoutRecord
-       │◄── {authorityToken, expiry} ──│   (MaxCheckoutDuration=30min)
-       │                               │
-       │  (edit map data offline)      │
-       │                               │
-       ├── Commit(token) ─────────────►│
-       │                               ├── Validate token
-       │                               ├── Increment version
-       │                               ├── Delete checkout lock
-       │◄── {version} ────────────────│
-       │                               │
-       │  -- OR --                     │
-       │                               │
-       ├── Release(token) ────────────►│
-       │                               ├── Validate token
-       │                               ├── Delete lock (no version bump)
-       │◄── {released: true} ─────────│
+ Level Designer Mapping Service
+ │ │
+ ├── Checkout(regionId, kind) ───►│
+ │ ├── Check existing lock
+ │ │ ├── Active? → 409 Conflict
+ │ │ └── Expired or none? → proceed
+ │ ├── Store CheckoutRecord
+ │◄── {authorityToken, expiry} ──│ (MaxCheckoutDuration=30min)
+ │ │
+ │ (edit map data offline) │
+ │ │
+ ├── Commit(token) ─────────────►│
+ │ ├── Validate token
+ │ ├── Increment version
+ │ ├── Delete checkout lock
+ │◄── {version} ────────────────│
+ │ │
+ │ -- OR -- │
+ │ │
+ ├── Release(token) ────────────►│
+ │ ├── Validate token
+ │ ├── Delete lock (no version bump)
+ │◄── {released: true} ─────────│
 ```
 
 ---
@@ -392,8 +392,8 @@ Authoring Workflow
 
 ### Bugs
 
-1. **T29 violation: `MapObject.data` marked opaque but AffordanceScorer reads 15+ hardcoded keys**: `AffordanceScorer.ScoreAffordance()` and `ExtractFeatures()` read `cover_rating`, `elevation`, `sightlines`, `concealment`, `protection`, `capacity`, `visibility_range`, `view_target`, `approach_direction`, `width`, `defensibility`, `exit_count`, `traversability`, `comfort`, `accessibility` via `TryGetProperty`. Additionally, `CustomAffordance.requires` hardcodes `objectTypes` as a special key with `min` sub-key. Schema claims "No Bannou plugin reads specific keys." Should define typed affordance data schema for the known spatial properties.
-   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/464 -->
+1. **violation: `MapObject.data` marked opaque but AffordanceScorer reads 15+ hardcoded keys**: `AffordanceScorer.ScoreAffordance()` and `ExtractFeatures()` read `cover_rating`, `elevation`, `sightlines`, `concealment`, `protection`, `capacity`, `visibility_range`, `view_target`, `approach_direction`, `width`, `defensibility`, `exit_count`, `traversability`, `comfort`, `accessibility` via `TryGetProperty`. Additionally, `CustomAffordance.requires` hardcodes `objectTypes` as a special key with `min` sub-key. Schema claims "No Bannou plugin reads specific keys." Should define typed affordance data schema for the known spatial properties.
+ <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/464 -->
 
 2. **Version counter race condition**: `IncrementVersionAsync` performs a non-atomic read-increment-write on the version counter. Two concurrent publishes could read the same version and both write version+1, producing duplicate version numbers. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode where unauthorized publishes are processed concurrently with authorized ones.
 
@@ -431,7 +431,7 @@ Authoring Workflow
 
 5. **Definition index is a single key**: All definition IDs are stored in one `List<Guid>`. With hundreds of definitions, this key becomes large and every CRUD operation requires loading/saving the entire list. A Redis SET or secondary index would scale better.
 
-6. **Per-kind TTL conventions**: Durable kinds (terrain, static_geometry, navigation, ownership) use `null` TTL meaning no expiry. Ephemeral kinds (combat_effects at 30s, visual_effects at 60s) auto-expire from Redis. T26 violation note: the original design used `-1` as a sentinel for "no TTL" — this should be nullable (`int?`) where `null` means no expiry. If an ephemeral object's spatial index entry outlives the object, queries will find the index entry but the object load returns null (safely filtered out, but wastes a round-trip).
+6. **Per-kind TTL conventions**: Durable kinds (terrain, static_geometry, navigation, ownership) use `null` TTL meaning no expiry. Ephemeral kinds (combat_effects at 30s, visual_effects at 60s) auto-expire from Redis. violation note: the original design used `-1` as a sentinel for "no TTL" — this should be nullable (`int?`) where `null` means no expiry. If an ephemeral object's spatial index entry outlives the object, queries will find the index entry but the object load returns null (safely filtered out, but wastes a round-trip).
 
 7. **ExtractFeatures returns null for single-feature results**: The method always adds `objectType` to the features dictionary, then returns `null` if `features.Count <= 1`. When no relevant data properties are found, the result is always null.
 

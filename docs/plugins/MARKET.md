@@ -75,47 +75,47 @@ The auction house is a time-bounded, bid-driven exchange mechanism mediated by e
 
 ```
 Seller lists item
-    |
-    +--> Listing fee deducted (Currency debit -- sink)
-    +--> Item moved to escrow (Escrow deposit)
-    +--> Listing saved with start price, optional buyout, duration
-    |
-    +--> ACTIVE
-    |       |
-    |       +--> Bid placed
-    |       |       +--> Previous bidder's hold released (Currency hold release)
-    |       |       +--> New bid amount reserved (Currency hold create)
-    |       |       +--> Listing updated (currentBid, currentBidderId, bidCount)
-    |       |       +--> Event: market.bid.placed
-    |       |
-    |       +--> Buyout executed (if buyout price set)
-    |       |       +--> Buyer pays buyout price (Currency debit)
-    |       |       +--> Transaction fee deducted from payment (sink)
-    |       |       +--> Seller receives net amount (Currency credit, bypassEarnCap)
-    |       |       +--> Item released from escrow to buyer (Escrow release)
-    |       |       +--> All active bid holds released
-    |       |       +--> Event: market.auction.sold
-    |       |
-    |       +--> Cancelled (only if no bids)
-    |       |       +--> Item returned from escrow (Escrow refund)
-    |       |       +--> Listing fee NOT refunded (deliberate sink)
-    |       |       +--> Event: market.auction.cancelled
-    |       |
-    |       +--> Duration expires
-    |               |
-    |               +--> Has bids? --> Settlement
-    |               |       +--> Winning bidder's hold captured (Currency hold capture)
-    |               |       +--> Transaction fee deducted (sink)
-    |               |       +--> Seller receives net amount (Currency credit)
-    |               |       +--> Item released to winner (Escrow release)
-    |               |       +--> Event: market.auction.sold
-    |               |
-    |               +--> No bids? --> Expired
-    |                       +--> Item returned from escrow (Escrow refund)
-    |                       +--> Event: market.auction.expired
-    |
-    +--> Price history updated on settlement/buyout
-    +--> Event: market.price.changed (if average price shifted meaningfully)
+ |
+ +--> Listing fee deducted (Currency debit -- sink)
+ +--> Item moved to escrow (Escrow deposit)
+ +--> Listing saved with start price, optional buyout, duration
+ |
+ +--> ACTIVE
+ | |
+ | +--> Bid placed
+ | | +--> Previous bidder's hold released (Currency hold release)
+ | | +--> New bid amount reserved (Currency hold create)
+ | | +--> Listing updated (currentBid, currentBidderId, bidCount)
+ | | +--> Event: market.bid.placed
+ | |
+ | +--> Buyout executed (if buyout price set)
+ | | +--> Buyer pays buyout price (Currency debit)
+ | | +--> Transaction fee deducted from payment (sink)
+ | | +--> Seller receives net amount (Currency credit, bypassEarnCap)
+ | | +--> Item released from escrow to buyer (Escrow release)
+ | | +--> All active bid holds released
+ | | +--> Event: market.auction.sold
+ | |
+ | +--> Cancelled (only if no bids)
+ | | +--> Item returned from escrow (Escrow refund)
+ | | +--> Listing fee NOT refunded (deliberate sink)
+ | | +--> Event: market.auction.cancelled
+ | |
+ | +--> Duration expires
+ | |
+ | +--> Has bids? --> Settlement
+ | | +--> Winning bidder's hold captured (Currency hold capture)
+ | | +--> Transaction fee deducted (sink)
+ | | +--> Seller receives net amount (Currency credit)
+ | | +--> Item released to winner (Escrow release)
+ | | +--> Event: market.auction.sold
+ | |
+ | +--> No bids? --> Expired
+ | +--> Item returned from escrow (Escrow refund)
+ | +--> Event: market.auction.expired
+ |
+ +--> Price history updated on settlement/buyout
+ +--> Event: market.price.changed (if average price shifted meaningfully)
 ```
 
 ### Bid Reservation via Currency Holds
@@ -153,21 +153,21 @@ Vendor catalogs are NPC-managed storefronts. Unlike auctions (which are between 
 
 ```
 VendorCatalog
-    |
-    +--> Owned by a Character (NPC) -- via characterId
-    +--> Scoped to a Realm
-    +--> Catalog type determines pricing behavior
-    |       +--> Static: prices fixed at creation
-    |       +--> Dynamic: prices adjust by formula
-    |       +--> PersonalityDriven: Actor GOAP sets prices
-    |
-    +--> Contains VendorItems
-            |
-            +--> Item template reference (what's for sale)
-            +--> Prices (multi-currency support)
-            +--> Stock (current, max, restock config)
-            +--> Requirements (gating -- reputation, level, etc.)
-            +--> Buyback configuration (what vendor pays for this item)
+ |
+ +--> Owned by a Character (NPC) -- via characterId
+ +--> Scoped to a Realm
+ +--> Catalog type determines pricing behavior
+ | +--> Static: prices fixed at creation
+ | +--> Dynamic: prices adjust by formula
+ | +--> PersonalityDriven: Actor GOAP sets prices
+ |
+ +--> Contains VendorItems
+ |
+ +--> Item template reference (what's for sale)
+ +--> Prices (multi-currency support)
+ +--> Stock (current, max, restock config)
+ +--> Requirements (gating -- reputation, level, etc.)
+ +--> Buyback configuration (what vendor pays for this item)
 ```
 
 ### Buy/Sell Flow
@@ -206,24 +206,24 @@ For personality-driven vendors, the flow is:
 
 ```
 NPC Actor (running ABML behavior)
-    |
-    +--> Queries ${market.my_catalog} for current stock levels
-    +--> Queries ${market.price_history} for recent sale prices
-    +--> Queries ${personality.greed} for pricing disposition
-    +--> Queries ${economy.supply.*} for regional supply data
-    |
-    +--> GOAP evaluates goals:
-    |       +--> maintain_wealth: ensure profit margin
-    |       +--> restock_shop: acquire depleted items
-    |       +--> attract_customers: competitive pricing
-    |
-    +--> GOAP selects action:
-    |       +--> adjust_prices: call /market/vendor/item/update-price
-    |       +--> restock: call /market/vendor/item/restock
-    |       +--> close_shop: set catalog status to closed
-    |
-    +--> lib-market records the price change
-    +--> Next customer sees updated prices
+ |
+ +--> Queries ${market.my_catalog} for current stock levels
+ +--> Queries ${market.price_history} for recent sale prices
+ +--> Queries ${personality.greed} for pricing disposition
+ +--> Queries ${economy.supply.*} for regional supply data
+ |
+ +--> GOAP evaluates goals:
+ | +--> maintain_wealth: ensure profit margin
+ | +--> restock_shop: acquire depleted items
+ | +--> attract_customers: competitive pricing
+ |
+ +--> GOAP selects action:
+ | +--> adjust_prices: call /market/vendor/item/update-price
+ | +--> restock: call /market/vendor/item/restock
+ | +--> close_shop: set catalog status to closed
+ |
+ +--> lib-market records the price change
+ +--> Next customer sees updated prices
 ```
 
 ### Vendor Restock Mechanics
@@ -249,19 +249,19 @@ lib-market maintains aggregate price data for NPC economic intelligence and divi
 
 ```
 PriceHistoryEntry:
-    templateId: uuid        # What item
-    realmId: uuid           # Where
-    marketDefinitionId: uuid # Which market
-    periodStart: timestamp  # Time bucket start
-    periodEnd: timestamp    # Time bucket end
-    granularity: enum       # Hour | Day | Week
-    averagePrice: decimal   # Mean sale price in the period
-    medianPrice: decimal    # Median sale price
-    minPrice: decimal       # Lowest sale price
-    maxPrice: decimal       # Highest sale price
-    volume: integer         # Number of transactions
-    totalValue: decimal     # Sum of all transaction values
-    currencyDefinitionId: uuid # Which currency these prices are in
+ templateId: uuid # What item
+ realmId: uuid # Where
+ marketDefinitionId: uuid # Which market
+ periodStart: timestamp # Time bucket start
+ periodEnd: timestamp # Time bucket end
+ granularity: enum # Hour | Day | Week
+ averagePrice: decimal # Mean sale price in the period
+ medianPrice: decimal # Median sale price
+ minPrice: decimal # Lowest sale price
+ maxPrice: decimal # Highest sale price
+ volume: integer # Number of transactions
+ totalValue: decimal # Sum of all transaction values
+ currencyDefinitionId: uuid # Which currency these prices are in
 ```
 
 Price history is updated on every successful auction settlement and vendor sale. The background worker aggregates raw transactions into time-bucketed entries at configurable granularity.
@@ -395,7 +395,7 @@ Every polymorphic "type" or "kind" field in the Market domain falls into one of 
 
 | Field | Model(s) | Cat | Values / Source | Rationale |
 |-------|----------|-----|-----------------|-----------|
-| `MarketEntityType` | `AuctionListingModel` (seller), `AuctionBidModel` (bidder), settlement (buyer) | A | *(see DC#9 below)* | Identifies what kind of entity is transacting. Needs T14 classification resolution -- see Design Considerations. |
+| `MarketEntityType` | `AuctionListingModel` (seller), `AuctionBidModel` (bidder), settlement (buyer) | A | *(see DC#9 below)* | Identifies what kind of entity is transacting. Needs classification resolution -- see Design Considerations. |
 | `catalogType` | `VendorCatalogModel` | C | `Static`, `Dynamic`, `PersonalityDriven` | Finite pricing modes the vendor subsystem implements. Service-owned enum (`CatalogType`). |
 | `ListingStatus` | `AuctionListingModel` | C | `Active`, `Sold`, `Cancelled`, `Expired` | Finite auction lifecycle states. Service-owned enum (`ListingStatus`). |
 | `MarketDefinitionStatus` | `MarketDefinitionModel` | C | `Active`, `Suspended`, `Closed` | Finite market lifecycle states. Service-owned enum. |
@@ -449,14 +449,14 @@ Listings use custom events (not x-lifecycle) because listing lifecycle transitio
 **x-event-subscriptions** (for `market-events.yaml`):
 ```yaml
 x-event-subscriptions:
-  - topic: currency.hold.expired
-    event: CurrencyHoldExpiredEvent
-    handler: HandleHoldExpired
+ - topic: currency.hold.expired
+ event: CurrencyHoldExpiredEvent
+ handler: HandleHoldExpired
 ```
 
 **x-event-publications**: All 17 published events above (6 x-lifecycle + 11 custom) must be listed in the `x-event-publications` block in `market-events.yaml`.
 
-### Resource Cleanup (T28)
+### Resource Cleanup
 
 | Target Resource | Source Type | Field | On Delete | Cleanup Endpoint | Payload Template |
 |----------------|-------------|-------|-----------|-----------------|------------------|
@@ -621,137 +621,137 @@ Market identity (auction houses, vendor catalogs, market locations) is owned her
 
 ```
 +-----------------------------------------------------------------------+
-|                    Market Service Composability                         |
+| Market Service Composability |
 +-----------------------------------------------------------------------+
-|                                                                        |
-|  lib-market (L4) -- "Where exchange happens"                           |
-|  +------------------+  +------------------+  +------------------+     |
-|  | MarketDefinition |  | AuctionListing   |  | VendorCatalog    |     |
-|  | (where, rules,   |  | (what's for sale,|  | (NPC shop,       |     |
-|  |  fees)           |  |  bids, timing)   |  |  stock, prices)  |     |
-|  +--------+---------+  +--------+---------+  +--------+---------+     |
-|           |                      |                      |              |
-|           +----------+-----------+----------+-----------+              |
-|                      |                      |                          |
-|                      v                      v                          |
-|  +-------------------------------------------------------------+     |
-|  | Existing Primitives (L0/L1/L2)                                |     |
-|  |                                                                |     |
-|  |  Currency ---- listing fees (sink), bid holds, payments,       |     |
-|  |                vendor wallets, seller proceeds                 |     |
-|  |  Item -------- item validation, instance creation              |     |
-|  |  Inventory --- item movement (seller -> escrow -> buyer,       |     |
-|  |                vendor <-> customer)                            |     |
-|  |  Character --- NPC vendor existence validation                 |     |
-|  |  Location ---- market location validation                      |     |
-|  |  Resource ---- cleanup coordination on entity deletion         |     |
-|  +-------------------------------------------------------------+     |
-|           |                                                            |
-|           v  soft dependencies (L4)                                    |
-|  +-------------------------------------------------------------+     |
-|  | Optional Features (L4, graceful degradation)                  |     |
-|  |                                                                |     |
-|  |  Escrow ------- item custody during active auction listings    |     |
-|  |  Analytics ---- economic velocity event publishing             |     |
-|  +-------------------------------------------------------------+     |
-|                                                                        |
-|  Background Workers                                                    |
-|  +-------------------+ +-------------------+ +---------------------+  |
-|  | SettlementService | | RestockService    | | PriceAggregation    |  |
-|  | Expired listings  | | Periodic vendor   | | Raw transactions    |  |
-|  | -> settle/return  | | stock replenish   | | -> time-bucketed    |  |
-|  +-------------------+ +-------------------+ | price history       |  |
-|                                                +---------------------+  |
+| |
+| lib-market (L4) -- "Where exchange happens" |
+| +------------------+ +------------------+ +------------------+ |
+| | MarketDefinition | | AuctionListing | | VendorCatalog | |
+| | (where, rules, | | (what's for sale,| | (NPC shop, | |
+| | fees) | | bids, timing) | | stock, prices) | |
+| +--------+---------+ +--------+---------+ +--------+---------+ |
+| | | | |
+| +----------+-----------+----------+-----------+ |
+| | | |
+| v v |
+| +-------------------------------------------------------------+ |
+| | Existing Primitives (L0/L1/L2) | |
+| | | |
+| | Currency ---- listing fees (sink), bid holds, payments, | |
+| | vendor wallets, seller proceeds | |
+| | Item -------- item validation, instance creation | |
+| | Inventory --- item movement (seller -> escrow -> buyer, | |
+| | vendor <-> customer) | |
+| | Character --- NPC vendor existence validation | |
+| | Location ---- market location validation | |
+| | Resource ---- cleanup coordination on entity deletion | |
+| +-------------------------------------------------------------+ |
+| | |
+| v soft dependencies (L4) |
+| +-------------------------------------------------------------+ |
+| | Optional Features (L4, graceful degradation) | |
+| | | |
+| | Escrow ------- item custody during active auction listings | |
+| | Analytics ---- economic velocity event publishing | |
+| +-------------------------------------------------------------+ |
+| |
+| Background Workers |
+| +-------------------+ +-------------------+ +---------------------+ |
+| | SettlementService | | RestockService | | PriceAggregation | |
+| | Expired listings | | Periodic vendor | | Raw transactions | |
+| | -> settle/return | | stock replenish | | -> time-bucketed | |
+| +-------------------+ +-------------------+ | price history | |
+| +---------------------+ |
 +-----------------------------------------------------------------------+
 
 
 Auction Flow (Happy Path)
 ===========================
 
-  Seller                    lib-market                   Escrow / Currency
-    |                           |                              |
-    |-- CreateListing -------->|                              |
-    |   (item, startPrice,     |-- Debit listing fee ------->|
-    |    buyoutPrice, duration) |   (Currency, SINK)           |
-    |                          |-- Create escrow ----------->|
-    |                          |-- Deposit item to escrow -->|
-    |                          |                              |
-    |<-- listing + escrowRef --|                              |
-    |                          |                              |
-  Bidder A                     |                              |
-    |-- PlaceBid (100g) ----->|                              |
-    |                          |-- Create hold (100g) ------>|
-    |<-- bid confirmed -------|                              |
-    |                          |                              |
-  Bidder B                     |                              |
-    |-- PlaceBid (120g) ----->|                              |
-    |                          |-- Release A's hold -------->|
-    |                          |-- Create hold (120g) ------>|
-    |<-- bid confirmed -------|                              |
-    |                          |                              |
-  [Listing expires]           |                              |
-    |              Settlement Worker                          |
-    |                          |-- Capture B's hold (120g)->|
-    |                          |   (Currency debit)          |
-    |                          |-- Deduct 5% fee (6g SINK)->|
-    |                          |-- Credit seller (114g) --->|
-    |                          |   (bypassEarnCap)           |
-    |                          |-- Release item to buyer -->|
-    |                          |   (Escrow release)          |
-    |                          |                              |
-  Seller gets 114g            Bidder B gets item              |
-  Bidder A's hold released    6g removed from circulation    |
+ Seller lib-market Escrow / Currency
+ | | |
+ |-- CreateListing -------->| |
+ | (item, startPrice, |-- Debit listing fee ------->|
+ | buyoutPrice, duration) | (Currency, SINK) |
+ | |-- Create escrow ----------->|
+ | |-- Deposit item to escrow -->|
+ | | |
+ |<-- listing + escrowRef --| |
+ | | |
+ Bidder A | |
+ |-- PlaceBid (100g) ----->| |
+ | |-- Create hold (100g) ------>|
+ |<-- bid confirmed -------| |
+ | | |
+ Bidder B | |
+ |-- PlaceBid (120g) ----->| |
+ | |-- Release A's hold -------->|
+ | |-- Create hold (120g) ------>|
+ |<-- bid confirmed -------| |
+ | | |
+ [Listing expires] | |
+ | Settlement Worker |
+ | |-- Capture B's hold (120g)->|
+ | | (Currency debit) |
+ | |-- Deduct 5% fee (6g SINK)->|
+ | |-- Credit seller (114g) --->|
+ | | (bypassEarnCap) |
+ | |-- Release item to buyer -->|
+ | | (Escrow release) |
+ | | |
+ Seller gets 114g Bidder B gets item |
+ Bidder A's hold released 6g removed from circulation |
 
 
 NPC Vendor Economic Cycle
 ===========================
 
-  NPC Actor (GOAP Brain)          lib-market          lib-currency
-        |                            |                      |
-        |-- Query ${market.*} ----->|                      |
-        |   "What's my stock?"      |                      |
-        |<-- stock levels ----------|                      |
-        |                            |                      |
-        |-- GOAP: "Need to restock iron swords"            |
-        |                            |                      |
-        |-- Buy from supplier NPC --|                      |
-        |   (another vendor/market)  |-- Debit vendor ---->|
-        |                            |-- Credit supplier -->|
-        |                            |                      |
-        |-- SetStock(iron_sword) -->|                      |
-        |   price: based on cost    |                      |
-        |   + personality.greed     |                      |
-        |                            |                      |
-  Customer (Player/NPC)             |                      |
-        |-- Buy(iron_sword) ------>|                      |
-        |                           |-- Debit customer --->|
-        |                           |-- Credit vendor ---->|
-        |                           |-- Create item ------>|
-        |                           |-- Decrement stock    |
-        |<-- itemInstanceId --------|                      |
-        |                            |                      |
-  [Price aggregation worker runs]   |                      |
-        |                           |-- Update price hist  |
-        |                           |-- Avg shifted >5%?   |
-        |                           |   publish price.changed
-        |                            |                      |
-  Economic Deity (God Actor)        |                      |
-        |-- Observes price.changed --|                      |
-        |   via analytics events     |                      |
-        |-- Decides: "Iron too      |                      |
-        |   expensive, spawn new    |                      |
-        |   iron mine event"        |                      |
-        |                            |                      |
-  [New mine -> more iron -> vendors  |                      |
-   acquire cheaper iron -> prices    |                      |
-   adjust naturally via NPC GOAP]    |                      |
+ NPC Actor (GOAP Brain) lib-market lib-currency
+ | | |
+ |-- Query ${market.*} ----->| |
+ | "What's my stock?" | |
+ |<-- stock levels ----------| |
+ | | |
+ |-- GOAP: "Need to restock iron swords" |
+ | | |
+ |-- Buy from supplier NPC --| |
+ | (another vendor/market) |-- Debit vendor ---->|
+ | |-- Credit supplier -->|
+ | | |
+ |-- SetStock(iron_sword) -->| |
+ | price: based on cost | |
+ | + personality.greed | |
+ | | |
+ Customer (Player/NPC) | |
+ |-- Buy(iron_sword) ------>| |
+ | |-- Debit customer --->|
+ | |-- Credit vendor ---->|
+ | |-- Create item ------>|
+ | |-- Decrement stock |
+ |<-- itemInstanceId --------| |
+ | | |
+ [Price aggregation worker runs] | |
+ | |-- Update price hist |
+ | |-- Avg shifted >5%? |
+ | | publish price.changed
+ | | |
+ Economic Deity (God Actor) | |
+ |-- Observes price.changed --| |
+ | via analytics events | |
+ |-- Decides: "Iron too | |
+ | expensive, spawn new | |
+ | iron mine event" | |
+ | | |
+ [New mine -> more iron -> vendors | |
+ acquire cheaper iron -> prices | |
+ adjust naturally via NPC GOAP] | |
 ```
 
 ---
 
 ## Tenet Compliance Notes
 
-### T25: String Fields Requiring Enum Definitions (PascalCase)
+### String Fields Requiring Enum Definitions (PascalCase)
 
 When creating `market-api.yaml`, the following fields MUST be defined as proper enum types with PascalCase values:
 
@@ -768,27 +768,27 @@ When creating `market-api.yaml`, the following fields MUST be defined as proper 
 | Supply signal | Variable provider | `Scarce`, `Normal`, `Abundant` | `SupplySignal` |
 | Bid status | `AuctionBidModel` | `Active`, `Outbid`, `Won`, `Released`, `Expired` | `BidStatus` |
 
-### T4 / T2: Dependency Classification (Corrected)
+### / Dependency Classification (Corrected)
 
-Character (L2) and Location (L2) were originally listed as soft dependencies with graceful degradation. Per T4 and SERVICE-HIERARCHY.md: when L4 is enabled, ALL of L2 must be running. L2 dependencies MUST be hard (constructor injection, crash at startup if missing). These have been moved to the hard dependencies table in this document.
+Character (L2) and Location (L2) were originally listed as soft dependencies with graceful degradation. Per and SERVICE-HIERARCHY.md: when L4 is enabled, ALL of L2 must be running. L2 dependencies MUST be hard (constructor injection, crash at startup if missing). These have been moved to the hard dependencies table in this document.
 
 Only Escrow (L4) and Analytics (L4) remain as soft dependencies, which is correct -- L4-to-L4 dependencies require graceful degradation.
 
-### T31: Deprecation Lifecycle
+### Deprecation Lifecycle
 
-MarketDefinition is a configuration entity (per T31: "You update or remove configuration, you don't deprecate it"). Active listings, vendors, and price history referencing a deleted definition are cleaned up via cascade on deletion. No deprecation/undeprecation endpoints needed. Listings use custom lifecycle events (not x-lifecycle) because their transitions carry domain-specific semantics (sold vs expired vs cancelled). VendorCatalog uses x-lifecycle for standard CRUD events.
+MarketDefinition is a configuration entity (per "You update or remove configuration, you don't deprecate it"). Active listings, vendors, and price history referencing a deleted definition are cleaned up via cascade on deletion. No deprecation/undeprecation endpoints needed. Listings use custom lifecycle events (not x-lifecycle) because their transitions carry domain-specific semantics (sold vs expired vs cancelled). VendorCatalog uses x-lifecycle for standard CRUD events.
 
-### T28: Resource Cleanup (Compliant)
+### Resource Cleanup (Compliant)
 
 This document correctly defines cleanup endpoints for character, realm, and game-service entity types with CASCADE policy via lib-resource. No gaps identified.
 
-### T27: Event Flow Direction (Compliant)
+### Event Flow Direction (Compliant)
 
-All consumed events flow in the correct direction: Market (L4) subscribes to `currency.hold.expired` from Currency (L2). Higher-layer consuming lower-layer events is the correct T27 pattern.
+All consumed events flow in the correct direction: Market (L4) subscribes to `currency.hold.expired` from Currency (L2). Higher-layer consuming lower-layer events is the correct pattern.
 
 All published events are consumed by same-layer or observing services (Analytics L4, divine actors via events). No lower-layer services are listed as consumers.
 
-### T16: Event Topic Naming (Pattern C)
+### Event Topic Naming (Pattern C)
 
 Market is a multi-entity service. All event topics use Pattern C (`market.{entity}.{action}`). The `x-lifecycle` block uses `topic_prefix: market` to generate correct Pattern C topics for `MarketDefinition` and `VendorCatalog` entities.
 
@@ -930,9 +930,9 @@ Before lib-market implementation:
 
 8. **Market definition immutability for active listings**: Changing fee rates on a market definition while listings are active creates ambiguity about which rate applies at settlement. Option A: new rates apply only to new listings. Option B: settlement uses the rate at listing creation (stored on the listing). Recommend Option B (store fee rate snapshot on listing creation).
 
-9. **MarketEntityType T14 classification** *(from audit)*: The `MarketEntityType` enum identifies seller/bidder/buyer entity types with values `Character`, `Guild`, `Npc`, `System`. Per T14 decision tree: `Npc` is not a distinct EntityType in Bannou (NPCs are Characters). `System` exists in EntityType but `Npc` does not. Options: (a) Use `$ref: EntityType` and represent NPCs as `Character` -- cleanest T14 answer. (b) Keep a service-specific `MarketParticipantType` enum because the `Npc` distinction is functionally meaningful (e.g., fee exemptions, stock behavior) -- this is a T14 Test 3 exception (non-entity role) that must be explicitly justified.
+9. **MarketEntityType classification** *(from audit)*: The `MarketEntityType` enum identifies seller/bidder/buyer entity types with values `Character`, `Guild`, `Npc`, `System`. Per decision tree: `Npc` is not a distinct EntityType in Bannou (NPCs are Characters). `System` exists in EntityType but `Npc` does not. Options: (a) Use `$ref: EntityType` and represent NPCs as `Character` -- cleanest answer. (b) Keep a service-specific `MarketParticipantType` enum because the `Npc` distinction is functionally meaningful (e.g., fee exemptions, stock behavior) -- this is a Test 3 exception (non-entity role) that must be explicitly justified.
 
-10. **x-permissions for player-facing endpoints** *(from audit)*: Currently all auction/vendor/price endpoints are specified as `x-permissions: []` (service-to-service only). If any endpoints should be directly accessible via WebSocket (player browsing auctions, placing bids from game client), those endpoints must use `x-permissions: [{role: user}]` and per T32 must accept `webSocketSessionId` instead of entity IDs for caller identity (resolved to account/character server-side). The current spec assumes all player actions flow through game engine/Actor -- if direct WebSocket access is needed, this must be revisited.
+10. **x-permissions for player-facing endpoints** *(from audit)*: Currently all auction/vendor/price endpoints are specified as `x-permissions: []` (service-to-service only). If any endpoints should be directly accessible via WebSocket (player browsing auctions, placing bids from game client), those endpoints must use `x-permissions: [{role: user}]` and per tenets must accept `webSocketSessionId` instead of entity IDs for caller identity (resolved to account/character server-side). The current spec assumes all player actions flow through game engine/Actor -- if direct WebSocket access is needed, this must be revisited.
 
 11. **Vendor wallet EntityType** *(from audit)*: Currency's wallet API uses `EntityType` enum for `ownerType`. The removed `VendorWalletOwnerType` config used string `"vendor"` which is not a valid EntityType. Options: (a) Use `EntityType.Character` since vendor NPCs are characters. (b) Add a `Vendor` value to EntityType if vendors need distinct wallet identity. This ties to DC#9 -- if NPCs are just Characters, their wallets use `EntityType.Character`.
 

@@ -3,7 +3,7 @@
 # This script is part of Bannou's code generation pipeline.
 # DO NOT MODIFY without EXPLICIT user instructions to change code generation.
 #
-# Changes to generation scripts silently break builds across ALL 48 services.
+# Changes to generation scripts silently break builds across ALL 76+ services.
 # An agent once changed namespace strings across 4 scripts in a single commit,
 # breaking every service. If you believe a change is needed:
 #   1. STOP and explain what you think is wrong
@@ -30,6 +30,12 @@ Event Pattern:
 - All events have: full model data (sensitive fields omitted), createdAt, updatedAt
 - UpdatedEvent adds: changedFields (string[])
 - DeletedEvent adds: deletedReason (string?)
+
+Deprecation (optional):
+- If deprecation: true is set on an entity, three fields are auto-injected:
+  isDeprecated (bool, required), deprecatedAt (datetime, nullable), deprecationReason (string, nullable)
+- If these fields exist in the model, they are stripped and replaced by the auto-injected versions
+- IDeprecatableEntity interface is added to the companion C# partial classes
 
 Topic Pattern:
 - Without topic_prefix: {entity}.{action} (Pattern A, e.g., account.created)
@@ -145,10 +151,12 @@ def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict
     - timestamp: ISO 8601 datetime (inherited from BaseServiceEvent)
 
     If resource_mapping is provided, x-resource-mapping extension is added to each event.
+    If deprecation is true, isDeprecated/deprecatedAt/deprecationReason are auto-injected.
 
     Args:
         entity: Entity name in PascalCase (e.g., "Account")
-        config: Configuration dict with 'model', optional 'sensitive', and optional 'resource_mapping' keys
+        config: Configuration dict with 'model', optional 'sensitive', 'resource_mapping',
+                and optional 'deprecation' (bool) keys
         topic_prefix: Optional service namespace prefix for Pattern C topics (e.g., "transit", "worldstate")
 
     Returns:
@@ -157,6 +165,7 @@ def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict
     model = config.get('model', {})
     sensitive = set(config.get('sensitive', []))
     resource_mapping = config.get('resource_mapping', None)
+    has_deprecation = config.get('deprecation', False)
 
     # Find primary key (field marked with primary: true)
     primary_key = None
@@ -216,6 +225,14 @@ def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict
         if auto_field in model_required_fields:
             model_required_fields.remove(auto_field)
 
+    # Strip deprecation fields from model props when deprecation: true — auto-injected below
+    # (same pattern as createdAt/updatedAt: strip manual definitions, inject standardized versions)
+    if has_deprecation:
+        for deprecation_field in ('isDeprecated', 'deprecatedAt', 'deprecationReason'):
+            model_props.pop(deprecation_field, None)
+            if deprecation_field in model_required_fields:
+                model_required_fields.remove(deprecation_field)
+
     # Human-readable entity name for descriptions (e.g., "AchievementDefinition" -> "achievement definition")
     entity_lower = re.sub('([a-z])([A-Z])', r'\1 \2', entity).lower()
 
@@ -244,11 +261,32 @@ def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict
             },
         }
 
+        # Auto-injected deprecation fields (IDeprecatableEntity interface contract)
+        if has_deprecation:
+            props['isDeprecated'] = {
+                'type': 'boolean',
+                'description': f'Whether this {entity_lower} is deprecated'
+            }
+            props['deprecatedAt'] = {
+                'type': 'string',
+                'format': 'date-time',
+                'nullable': True,
+                'description': f'When the {entity_lower} was deprecated (null if not deprecated)'
+            }
+            props['deprecationReason'] = {
+                'type': 'string',
+                'nullable': True,
+                'maxLength': 500,
+                'description': f'Reason for deprecation (null if not deprecated)'
+            }
+
         if extra_props:
             props.update(extra_props)
 
         # Required fields: base class fields + eventName + model required + auto-injected + extras
         required = ['eventName', 'eventId', 'timestamp'] + model_required_fields.copy() + ['createdAt', 'updatedAt']
+        if has_deprecation:
+            required.append('isDeprecated')
         if extra_required:
             required.extend(extra_required)
 
@@ -318,7 +356,7 @@ def generate_lifecycle_events_file(
     service_title: str,
     lifecycle_defs: Dict[str, Any],
     output_path: Path
-) -> List[str]:
+) -> Tuple[List[str], set]:
     """
     Generate a complete lifecycle events schema file.
 
@@ -329,7 +367,7 @@ def generate_lifecycle_events_file(
         output_path: Path to write the generated file
 
     Returns:
-        List of entity names that had events generated
+        Tuple of (list of entity names, set of deprecatable entity names)
     """
     # Extract topic_prefix configuration (not an entity definition)
     topic_prefix = None
@@ -339,6 +377,7 @@ def generate_lifecycle_events_file(
     # Build all event schemas
     all_schemas = {}
     generated_entities = []
+    deprecatable_entities = set()
 
     for entity_name, config in lifecycle_defs.items():
         # Skip configuration keys that aren't entity definitions
@@ -347,6 +386,8 @@ def generate_lifecycle_events_file(
         events = generate_events(entity_name, config, topic_prefix=topic_prefix)
         all_schemas.update(events)
         generated_entities.append(entity_name)
+        if config.get('deprecation', False):
+            deprecatable_entities.add(entity_name)
 
     # Build the complete OpenAPI document
     doc = {
@@ -373,7 +414,7 @@ def generate_lifecycle_events_file(
     with open(output_path, 'w') as f:
         yaml.dump(doc, f)
 
-    return generated_entities
+    return generated_entities, deprecatable_entities
 
 
 def to_pascal_case(service_name: str) -> str:
@@ -384,6 +425,7 @@ def to_pascal_case(service_name: str) -> str:
 def generate_lifecycle_interfaces_file(
     service_name: str,
     entities: List[str],
+    deprecatable_entities: set,
     output_path: Path
 ) -> None:
     """
@@ -391,12 +433,15 @@ def generate_lifecycle_interfaces_file(
     event interface implementations.
 
     The NSwag-generated partial classes already have the required properties
-    (CreatedAt, UpdatedAt, ChangedFields, DeletedReason). This file adds the
+    (CreatedAt, UpdatedAt, ChangedFields, DeletedReason, and optionally
+    IsDeprecated/DeprecatedAt/DeprecationReason). This file adds the
     interface declarations so they implement ILifecycleCreatedEvent, etc.
+    Entities with deprecation: true also get IDeprecatableEntity.
 
     Args:
         service_name: Service name in kebab-case (e.g., "game-session")
         entities: List of entity names in PascalCase (e.g., ["GameSession"])
+        deprecatable_entities: Set of entity names that have deprecation: true
         output_path: Path to write the generated C# file
     """
     lines = [
@@ -418,9 +463,10 @@ def generate_lifecycle_interfaces_file(
     ]
 
     for entity in entities:
-        lines.append(f'public partial class {entity}CreatedEvent : ILifecycleCreatedEvent {{ }}')
-        lines.append(f'public partial class {entity}UpdatedEvent : ILifecycleUpdatedEvent {{ }}')
-        lines.append(f'public partial class {entity}DeletedEvent : ILifecycleDeletedEvent {{ }}')
+        deprecation_suffix = ', IDeprecatableEntity' if entity in deprecatable_entities else ''
+        lines.append(f'public partial class {entity}CreatedEvent : ILifecycleCreatedEvent{deprecation_suffix} {{ }}')
+        lines.append(f'public partial class {entity}UpdatedEvent : ILifecycleUpdatedEvent{deprecation_suffix} {{ }}')
+        lines.append(f'public partial class {entity}DeletedEvent : ILifecycleDeletedEvent{deprecation_suffix} {{ }}')
         lines.append('')
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -479,7 +525,7 @@ def main():
             service_pascal = to_pascal_case(service_name)
             output_file = generated_dir / f'{service_name}-lifecycle-events.yaml'
 
-            entities = generate_lifecycle_events_file(
+            entities, deprecatable = generate_lifecycle_events_file(
                 service_name,
                 service_title,
                 lifecycle_defs,
@@ -488,7 +534,7 @@ def main():
 
             # Generate companion C# file with interface implementations
             cs_output_file = cs_generated_dir / f'{service_pascal}LifecycleEvents.Interfaces.cs'
-            generate_lifecycle_interfaces_file(service_name, entities, cs_output_file)
+            generate_lifecycle_interfaces_file(service_name, entities, deprecatable, cs_output_file)
 
             generated_files.append((output_file.name, entities))
             print(f"  Generated/{output_file.name}: Generated events for {', '.join(entities)}")

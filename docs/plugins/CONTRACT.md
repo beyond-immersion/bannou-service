@@ -86,226 +86,226 @@ Binding agreement management (L1 AppFoundation) between entities with milestone-
 Contract State Machine
 ========================
 
-  CREATE         PROPOSE        CONSENT (all)
-    │               │               │
-    ▼               ▼               ▼
- ┌──────┐     ┌──────────┐    ┌─────────┐
+ CREATE PROPOSE CONSENT (all)
+ │ │ │
+ ▼ ▼ ▼
+ ┌──────┐ ┌──────────┐ ┌─────────┐
  │ Draft │────►│ Proposed │───►│ Pending │ (if effectiveFrom > now)
- └──────┘     └──────────┘    └─────────┘
-                    │               │
-                    │ all consent   │ effectiveFrom reached
-                    │ + no future   │
-                    │ effectiveFrom │
-                    ▼               ▼
-               ┌─────────┐    ┌─────────┐
-               │  Active  │◄───│ Pending │
-               └─────────┘    └─────────┘
-                    │
-                    │ all required
-                    │ milestones complete
-                    ▼
-               ┌───────────┐     EXECUTE
-               │ Fulfilled │────────────► Distributions applied
-               └───────────┘
+ └──────┘ └──────────┘ └─────────┘
+ │ │
+ │ all consent │ effectiveFrom reached
+ │ + no future │
+ │ effectiveFrom │
+ ▼ ▼
+ ┌─────────┐ ┌─────────┐
+ │ Active │◄───│ Pending │
+ └─────────┘ └─────────┘
+ │
+ │ all required
+ │ milestones complete
+ ▼
+ ┌───────────┐ EXECUTE
+ │ Fulfilled │────────────► Distributions applied
+ └───────────┘
 
-    Consent timeout (lazy check):
-    Proposed ──(DefaultConsentTimeoutDays expired)──► Expired
+ Consent timeout (lazy check):
+ Proposed ──(DefaultConsentTimeoutDays expired)──► Expired
 
-    Party request:
-    Draft/Proposed/Active ──(TerminateContractInstance)──► Terminated
+ Party request:
+ Draft/Proposed/Active ──(TerminateContractInstance)──► Terminated
 
 
 Milestone Progression
 ========================
 
-  Template Milestones: [M1, M2, M3]  (M1.Required=true, M2.Required=true, M3.Required=false)
+ Template Milestones: [M1, M2, M3] (M1.Required=true, M2.Required=true, M3.Required=false)
 
-  Contract Activation
-       │
-       ▼
-  M1: Pending ──(activate)──► Active
-       │
-       ├── CompleteMilestone(M1)
-       │    ├── onComplete APIs executed (batched)
-       │    ├── M1 → Completed
-       │    └── M2 → Active (next activated)
-       │
-       └── FailMilestone(M1)
-            ├── M1.Required=true → Failed (triggeredBreach=true)
-            └── onExpire APIs executed
+ Contract Activation
+ │
+ ▼
+ M1: Pending ──(activate)──► Active
+ │
+ ├── CompleteMilestone(M1)
+ │ ├── onComplete APIs executed (batched)
+ │ ├── M1 → Completed
+ │ └── M2 → Active (next activated)
+ │
+ └── FailMilestone(M1)
+ ├── M1.Required=true → Failed (triggeredBreach=true)
+ └── onExpire APIs executed
 
-  M2: Active
-       │
-       ├── CompleteMilestone(M2)
-       │    ├── All required complete? → Contract: Active → Fulfilled
-       │    └── M3 → Active
-       │
-       └── FailMilestone(M2)
-            └── M2.Required=true → Failed
+ M2: Active
+ │
+ ├── CompleteMilestone(M2)
+ │ ├── All required complete? → Contract: Active → Fulfilled
+ │ └── M3 → Active
+ │
+ └── FailMilestone(M2)
+ └── M2.Required=true → Failed
 
-  M3: Active (optional)
-       │
-       └── FailMilestone(M3)
-            └── M3.Required=false → Skipped (no breach)
+ M3: Active (optional)
+ │
+ └── FailMilestone(M3)
+ └── M3.Required=false → Skipped (no breach)
 
 
 Milestone Deadline Enforcement
 ================================
 
-  Background Service (ContractExpirationService):
-       │
-       ├── Every MilestoneDeadlineCheckIntervalSeconds (default 300s)
-       ├── Load all contracts from status-idx:active
-       ├── For each contract:
-       │    ├── Acquire milestone-check:{contractId} lock (30s)
-       │    └── For each Active milestone with Deadline:
-       │         ├── Compute absoluteDeadline = ActivatedAt + ParseIsoDuration(Deadline)
-       │         └── If now > absoluteDeadline → invoke GetMilestoneAsync (triggers lazy enforcement)
-       │
-       └── Lazy enforcement also triggers on:
-            ├── GetMilestoneAsync (per-milestone check)
-            └── GetContractInstanceStatusAsync (all milestones)
+ Background Service (ContractExpirationService):
+ │
+ ├── Every MilestoneDeadlineCheckIntervalSeconds (default 300s)
+ ├── Load all contracts from status-idx:active
+ ├── For each contract:
+ │ ├── Acquire milestone-check:{contractId} lock (30s)
+ │ └── For each Active milestone with Deadline:
+ │ ├── Compute absoluteDeadline = ActivatedAt + ParseIsoDuration(Deadline)
+ │ └── If now > absoluteDeadline → invoke GetMilestoneAsync (triggers lazy enforcement)
+ │
+ └── Lazy enforcement also triggers on:
+ ├── GetMilestoneAsync (per-milestone check)
+ └── GetContractInstanceStatusAsync (all milestones)
 
 
 Consent Flow
 ========================
 
-  ProposeContractInstance
-       │
-       ▼
-  Parties: [A: Pending, B: Pending, C: Pending]
-       │
-       ├── ConsentToContract(A) → [A: Consented, B: Pending, C: Pending]
-       │    └── Publishes consent-received (remaining=2)
-       │
-       ├── ConsentToContract(B) → [A: Consented, B: Consented, C: Pending]
-       │    └── Publishes consent-received (remaining=1)
-       │
-       └── ConsentToContract(C) → [A: Consented, B: Consented, C: Consented]
-            ├── Publishes consent-received (remaining=0)
-            ├── Publishes contract.accepted
-            ├── If effectiveFrom <= now: Status → Active, publishes contract.activated
-            └── If effectiveFrom > now: Status → Pending
+ ProposeContractInstance
+ │
+ ▼
+ Parties: [A: Pending, B: Pending, C: Pending]
+ │
+ ├── ConsentToContract(A) → [A: Consented, B: Pending, C: Pending]
+ │ └── Publishes consent-received (remaining=2)
+ │
+ ├── ConsentToContract(B) → [A: Consented, B: Consented, C: Pending]
+ │ └── Publishes consent-received (remaining=1)
+ │
+ └── ConsentToContract(C) → [A: Consented, B: Consented, C: Consented]
+ ├── Publishes consent-received (remaining=0)
+ ├── Publishes contract.accepted
+ ├── If effectiveFrom <= now: Status → Active, publishes contract.activated
+ └── If effectiveFrom > now: Status → Pending
 
-  Lazy Expiration:
-       Any consent attempt after (ProposedAt + DefaultConsentTimeoutDays)
-       → Contract transitions to Expired, returns BadRequest
+ Lazy Expiration:
+ Any consent attempt after (ProposedAt + DefaultConsentTimeoutDays)
+ → Contract transitions to Expired, returns BadRequest
 
-  Guardian Enforcement:
-       If contract.GuardianId is set → ConsentToContract returns Forbidden
+ Guardian Enforcement:
+ If contract.GuardianId is set → ConsentToContract returns Forbidden
 
 
 Guardian Custody & Escrow Integration
 ========================================
 
-  Escrow creates agreement with boundContractId
-       │
-       ▼
-  LockContract(guardianId=escrowId)
-       ├── Validates template.Transferable=true
-       ├── Validates not already locked (Conflict)
-       ├── Sets GuardianId, GuardianType, LockedAt
-       └── Locked contracts CANNOT be:
-            • Consented to (Forbidden)
-            • Terminated (Forbidden)
+ Escrow creates agreement with boundContractId
+ │
+ ▼
+ LockContract(guardianId=escrowId)
+ ├── Validates template.Transferable=true
+ ├── Validates not already locked (Conflict)
+ ├── Sets GuardianId, GuardianType, LockedAt
+ └── Locked contracts CANNOT be:
+ • Consented to (Forbidden)
+ • Terminated (Forbidden)
 
-  SetContractTemplateValues(...)
-       └── Provides runtime values for clause execution
-            (e.g., wallet IDs, amounts, currency codes)
+ SetContractTemplateValues(...)
+ └── Provides runtime values for clause execution
+ (e.g., wallet IDs, amounts, currency codes)
 
-  CheckAssetRequirements(...)
-       └── Queries actual balances via clause type handlers
+ CheckAssetRequirements(...)
+ └── Queries actual balances via clause type handlers
 
-  ExecuteContract(...)
-       ├── Requires Fulfilled status
-       ├── Fees execute FIRST (deducted from source wallets)
-       ├── Distributions execute SECOND
-       └── Idempotent (returns cached result on re-call)
+ ExecuteContract(...)
+ ├── Requires Fulfilled status
+ ├── Fees execute FIRST (deducted from source wallets)
+ ├── Distributions execute SECOND
+ └── Idempotent (returns cached result on re-call)
 
-  UnlockContract(guardianId=escrowId)
-       └── Verifies caller is current guardian (Forbidden otherwise)
+ UnlockContract(guardianId=escrowId)
+ └── Verifies caller is current guardian (Forbidden otherwise)
 
 
 Clause Execution Pipeline
 ============================
 
-  ExecuteContract(contractId)
-       │
-       ├── Load template → parse typed Clauses property
-       │
-       ├── Separate by type:
-       │    ├── fee clauses      → Execute first (order preserved)
-       │    └── distribution/    → Execute second
-       │        currency_transfer/
-       │        item_transfer
-       │
-       ├── For each clause:
-       │    │
-       │    ├── Resolve clause type → find ExecutionHandler
-       │    │    ├── "fee" → uses "fee" clause type (service=currency, endpoint=/currency/transfer)
-       │    │    ├── "distribution" → infers currency_transfer or item_transfer
-       │    │    │    based on presence of source_container property
-       │    │    ├── "currency_transfer" → registered handler
-       │    │    └── "item_transfer" → registered handler
-       │    │
-       │    ├── Build payload:
-       │    │    ├── Resolve {{TemplateKey}} in source/destination wallets/containers
-       │    │    ├── ParseClauseAmount:
-       │    │    │    ├── "flat" → literal amount
-       │    │    │    ├── "percentage" → floor(base_amount * amount / 100)
-       │    │    │    └── "remainder" → queries source wallet balance at execution time
-       │    │    └── Serialize payload for handler endpoint
-       │    │
-       │    ├── Execute via ServiceNavigator
-       │    │    ├── Success (200) → record distribution (Succeeded=true)
-       │    │    └── Failure → publish contract.prebound-api.failed, record failure (Succeeded=false)
-       │    │
-       │    └── Record DistributionRecordModel (always, including failures)
-       │
-       └── Save execution state (ExecutedAt, ExecutionIdempotencyKey, ExecutionDistributions)
+ ExecuteContract(contractId)
+ │
+ ├── Load template → parse typed Clauses property
+ │
+ ├── Separate by type:
+ │ ├── fee clauses → Execute first (order preserved)
+ │ └── distribution/ → Execute second
+ │ currency_transfer/
+ │ item_transfer
+ │
+ ├── For each clause:
+ │ │
+ │ ├── Resolve clause type → find ExecutionHandler
+ │ │ ├── "fee" → uses "fee" clause type (service=currency, endpoint=/currency/transfer)
+ │ │ ├── "distribution" → infers currency_transfer or item_transfer
+ │ │ │ based on presence of source_container property
+ │ │ ├── "currency_transfer" → registered handler
+ │ │ └── "item_transfer" → registered handler
+ │ │
+ │ ├── Build payload:
+ │ │ ├── Resolve {{TemplateKey}} in source/destination wallets/containers
+ │ │ ├── ParseClauseAmount:
+ │ │ │ ├── "flat" → literal amount
+ │ │ │ ├── "percentage" → floor(base_amount * amount / 100)
+ │ │ │ └── "remainder" → queries source wallet balance at execution time
+ │ │ └── Serialize payload for handler endpoint
+ │ │
+ │ ├── Execute via ServiceNavigator
+ │ │ ├── Success (200) → record distribution (Succeeded=true)
+ │ │ └── Failure → publish contract.prebound-api.failed, record failure (Succeeded=false)
+ │ │
+ │ └── Record DistributionRecordModel (always, including failures)
+ │
+ └── Save execution state (ExecutedAt, ExecutionIdempotencyKey, ExecutionDistributions)
 
 
 Breach Handling
 =================
 
-  ReportBreach(contractId, breachingEntityId, breachType)
-       │
-       ├── Check terms.GracePeriodForCure (ISO 8601 via XmlConvert.ToTimeSpan)
-       │    ├── Present → Status: Cure_period, CureDeadline = now + duration
-       │    └── Absent → Status: Detected
-       │
-       ├── Save breach record (BREACH_PREFIX + breachId)
-       ├── Link breachId to contract.BreachIds
-       ├── Check breach threshold → auto-terminate if exceeded
-       └── Publish contract.breach.detected
+ ReportBreach(contractId, breachingEntityId, breachType)
+ │
+ ├── Check terms.GracePeriodForCure (ISO 8601 via XmlConvert.ToTimeSpan)
+ │ ├── Present → Status: Cure_period, CureDeadline = now + duration
+ │ └── Absent → Status: Detected
+ │
+ ├── Save breach record (BREACH_PREFIX + breachId)
+ ├── Link breachId to contract.BreachIds
+ ├── Check breach threshold → auto-terminate if exceeded
+ └── Publish contract.breach.detected
 
-  CureBreach(breachId, cureEvidence)
-       │
-       ├── Validate Status: Detected or Cure_period
-       ├── Mark Cured with timestamp
-       └── Publish contract.breach.cured
+ CureBreach(breachId, cureEvidence)
+ │
+ ├── Validate Status: Detected or Cure_period
+ ├── Mark Cured with timestamp
+ └── Publish contract.breach.cured
 
-  GetContractInstanceStatus includes:
-       └── Active breaches = BreachIds where status in [Detected, Cure_period]
+ GetContractInstanceStatus includes:
+ └── Active breaches = BreachIds where status in [Detected, Cure_period]
 
 
 Prebound API Batched Execution
 =================================
 
-  ExecutePreboundApisBatchedAsync(apis, batchSize=10)
-       │
-       ├── Batch 1: apis[0..9] → Task.WhenAll (parallel)
-       ├── Batch 2: apis[10..19] → Task.WhenAll (parallel)
-       └── ...
+ ExecutePreboundApisBatchedAsync(apis, batchSize=10)
+ │
+ ├── Batch 1: apis[0..9] → Task.WhenAll (parallel)
+ ├── Batch 2: apis[10..19] → Task.WhenAll (parallel)
+ └── ...
 
-  Each API:
-       ├── CancellationTokenSource with PreboundApiTimeoutMs
-       ├── BuildContractContext (contract.id, parties, terms, metadata)
-       ├── ExecutePreboundApiAsync via ServiceNavigator
-       │    ├── SubstitutionFailed → publish failed event
-       │    ├── ResponseValidation rules → publish validation-failed event
-       │    └── Success → publish executed event
-       └── Exception → publish failed event (non-fatal, continues)
+ Each API:
+ ├── CancellationTokenSource with PreboundApiTimeoutMs
+ ├── BuildContractContext (contract.id, parties, terms, metadata)
+ ├── ExecutePreboundApiAsync via ServiceNavigator
+ │ ├── SubstitutionFailed → publish failed event
+ │ ├── ResponseValidation rules → publish validation-failed event
+ │ └── Success → publish executed event
+ └── Exception → publish failed event (non-fatal, continues)
 ```
 
 ---
@@ -423,7 +423,7 @@ When a clause execution fails:
 
 5. **Template terms merge is configurable**: `MergeTerms` behavior is controlled by `TermsMergeMode` configuration. Default is `shallow` (single-level merge, dictionary values replaced by key) or `deep` (recursive merge of nested dictionaries). See `CONTRACT_TERMS_MERGE_MODE` environment variable.
 
-6. **Template deprecation is T31 Category B**: Contract templates use the full T31 triple-field deprecation model (`IsDeprecated`/`DeprecatedAt`/`DeprecationReason`). Deprecation is one-way (no undeprecate), idempotent (returns OK when already deprecated), and prevents new instance creation (`ProposeContractInstance` rejects deprecated templates with BadRequest). No delete endpoint exists — templates persist forever for existing instances that reference them by `templateId`. The `DeprecateContractTemplate` endpoint accepts an optional `reason` parameter. Deprecation is communicated via `contract.template.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per T31). `ListContractTemplates` includes `includeDeprecated` parameter (default: `false`).
+6. **Template deprecation is Category B**: Contract templates use the full triple-field deprecation model (`IsDeprecated`/`DeprecatedAt`/`DeprecationReason`). Deprecation is one-way (no undeprecate), idempotent (returns OK when already deprecated), and prevents new instance creation (`ProposeContractInstance` rejects deprecated templates with BadRequest). No delete endpoint exists — templates persist forever for existing instances that reference them by `templateId`. The `DeprecateContractTemplate` endpoint accepts an optional `reason` parameter. Deprecation is communicated via `contract.template.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per tenets). `ListContractTemplates` includes `includeDeprecated` parameter (default: `false`).
 
 7. **Instance delete has no validation beyond developer role**: The `deleteContractInstance` endpoint only requires the `developer` role and verifies the contract is in a terminal state (Fulfilled, Terminated, Expired, or Declined). It does not validate party identity, check for active escrow references, or confirm that dependent systems have finished processing. This is intentional for now -- the developer role restriction limits access to administrative use cases where the caller is trusted.
 

@@ -32,6 +32,7 @@ info:
 # Output: schemas/Generated/species-lifecycle-events.yaml
 x-lifecycle:
   Species:
+    deprecation: true
     model:
       speciesId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the species" }
       code: { type: string, required: true, description: "Machine-readable code for the species" }
@@ -39,9 +40,6 @@ x-lifecycle:
       description: { type: string, nullable: true, description: "Detailed description of the species characteristics and lore" }
       category: { type: string, nullable: true, description: "Category grouping for the species" }
       isPlayable: { type: boolean, required: true, description: "Whether players can create characters of this species" }
-      isDeprecated: { type: boolean, required: true, description: "Whether this species is deprecated and should not be used for new characters" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the species was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Explanation for why the species was deprecated" }
       baseLifespan: { type: integer, nullable: true, description: "Average lifespan in years for this species" }
       maturityAge: { type: integer, nullable: true, description: "Age at which members of this species reach maturity" }
       traitModifiers: { type: object, additionalProperties: true, nullable: true, description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention." }

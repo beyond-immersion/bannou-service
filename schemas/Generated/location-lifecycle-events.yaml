@@ -23,11 +23,11 @@ components:
       - name
       - locationType
       - depth
-      - isDeprecated
       - boundsPrecision
       - coordinateMode
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -62,33 +62,21 @@ components:
         depth: &id008
           type: integer
           description: "Depth level in the location hierarchy (0 for root locations)"
-        isDeprecated: &id009
-          type: boolean
-          description: "Whether this location has been marked as deprecated"
-        deprecatedAt: &id010
-          type: string
-          format: date-time
-          nullable: true
-          description: "Timestamp when the location was deprecated"
-        deprecationReason: &id011
-          type: string
-          nullable: true
-          description: "Explanation for why the location was deprecated"
-        bounds: &id012
+        bounds: &id009
           $ref: ../common-api.yaml#/components/schemas/BoundingBox3D
           nullable: true
           description: "Optional spatial extent in world coordinates"
-        boundsPrecision: &id013
+        boundsPrecision: &id010
           $ref: ../location-api.yaml#/components/schemas/BoundsPrecision
           description: "Precision level of spatial bounds"
-        coordinateMode: &id014
+        coordinateMode: &id011
           $ref: ../location-api.yaml#/components/schemas/CoordinateMode
           description: "How this location's coordinate system relates to its parent"
-        localOrigin: &id015
+        localOrigin: &id012
           $ref: ../common-api.yaml#/components/schemas/Position3D
           nullable: true
           description: "Origin point for local or inherited coordinate systems"
-        metadata: &id016
+        metadata: &id013
           type: object
           additionalProperties: true
           nullable: true
@@ -101,6 +89,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the location was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this location is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the location was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     LocationUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -117,11 +118,11 @@ components:
       - name
       - locationType
       - depth
-      - isDeprecated
       - boundsPrecision
       - coordinateMode
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -136,14 +137,11 @@ components:
         locationType: *id006
         parentLocationId: *id007
         depth: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
-        bounds: *id012
-        boundsPrecision: *id013
-        coordinateMode: *id014
-        localOrigin: *id015
-        metadata: *id016
+        bounds: *id009
+        boundsPrecision: *id010
+        coordinateMode: *id011
+        localOrigin: *id012
+        metadata: *id013
         createdAt:
           type: string
           format: date-time
@@ -152,6 +150,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the location was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this location is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the location was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -173,11 +184,11 @@ components:
       - name
       - locationType
       - depth
-      - isDeprecated
       - boundsPrecision
       - coordinateMode
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -191,14 +202,11 @@ components:
         locationType: *id006
         parentLocationId: *id007
         depth: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
-        bounds: *id012
-        boundsPrecision: *id013
-        coordinateMode: *id014
-        localOrigin: *id015
-        metadata: *id016
+        bounds: *id009
+        boundsPrecision: *id010
+        coordinateMode: *id011
+        localOrigin: *id012
+        metadata: *id013
         createdAt:
           type: string
           format: date-time
@@ -207,6 +215,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the location was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this location is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the location was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

@@ -13,6 +13,6 @@ using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Events;
 
-public partial class LocationCreatedEvent : ILifecycleCreatedEvent { }
-public partial class LocationUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class LocationDeletedEvent : ILifecycleDeletedEvent { }
+public partial class LocationCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class LocationUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class LocationDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }

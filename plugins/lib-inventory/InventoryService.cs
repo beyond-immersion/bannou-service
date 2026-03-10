@@ -88,7 +88,7 @@ public partial class InventoryService : IInventoryService
         _containerStringStore = factory.GetStore<string>(StateStoreDefinitions.InventoryContainerStore);
         _containerCache = factory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerCache);
 
-        // Configuration already provides typed enum (T25 compliant)
+        // Configuration already provides typed enum (IMPLEMENTATION TENETS compliant)
         _defaultWeightContribution = _configuration.DefaultWeightContribution;
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer ?? throw new ArgumentNullException(nameof(eventConsumer)));

@@ -43,27 +43,27 @@ The Account plugin is an internal-only CRUD service (L1 AppFoundation) for manag
 
 ```
 account-{id} ──────────────────────────────────────────┐
-  ├─ AccountId (Guid)                                   │
-  ├─ Email? ──► email-index-{email} ──► account ID     │  (nullable: OAuth/Steam
-  ├─ PasswordHash?                                      │   accounts may have no email)
-  ├─ DisplayName                                        │ Same store,
-  ├─ IsVerified                                         │ different
-  ├─ Roles[]                                            │ key prefixes
-  ├─ MfaEnabled, MfaSecret?, MfaRecoveryCodes?          │
-  ├─ Metadata{}  (client-only opaque data per T29)      │
-  └─ CreatedAtUnix / UpdatedAtUnix / DeletedAtUnix      │
-                                                        │
+ ├─ AccountId (Guid) │
+ ├─ Email? ──► email-index-{email} ──► account ID │ (nullable: OAuth/Steam
+ ├─ PasswordHash? │ accounts may have no email)
+ ├─ DisplayName │ Same store,
+ ├─ IsVerified │ different
+ ├─ Roles[] │ key prefixes
+ ├─ MfaEnabled, MfaSecret?, MfaRecoveryCodes? │
+ ├─ Metadata{} (client-only opaque data per tenets) │
+ └─ CreatedAtUnix / UpdatedAtUnix / DeletedAtUnix │
+ │
 auth-methods-{id}: [ AuthMethodInfo, ... ] ─────────────┤
-  ├─ MethodId (Guid)                                    │
-  ├─ Provider ──► provider-index-{provider}:{extId}     │
-  ├─ ExternalId    ──► account ID                       │
-  └─ LinkedAt                                           │
-                                                        │
-Listing: JsonQueryPagedAsync with $.AccountId exists    │
-         discriminator queries account records directly │
-                                                        │
-On Delete: email-index removed (if exists),             │
-           provider-index + auth-methods removed ◄──────┘
+ ├─ MethodId (Guid) │
+ ├─ Provider ──► provider-index-{provider}:{extId} │
+ ├─ ExternalId ──► account ID │
+ └─ LinkedAt │
+ │
+Listing: JsonQueryPagedAsync with $.AccountId exists │
+ discriminator queries account records directly │
+ │
+On Delete: email-index removed (if exists), │
+ provider-index + auth-methods removed ◄──────┘
 ```
 
 ## Stubs & Unimplemented Features
@@ -99,9 +99,9 @@ On Delete: email-index removed (if exists),             │
 
 8. **Provider index ownership validation with stale detection**: When adding an auth method, `AddAuthMethodAsync` checks if another account already owns the provider:externalId combination. If the owning account is soft-deleted (stale index from incomplete cleanup), the orphaned index is overwritten with a log message. Only returns `Conflict` if the owning account is still active.
 
-9. **Soft-delete is NOT deprecation**: Account deletion uses a soft-delete pattern (`DeletedAt` timestamp) for practical data retention and audit purposes. This is distinct from the deprecation lifecycle defined in IMPLEMENTATION TENETS (T31). Accounts are identity instances, not definitions or templates referenced by other entities -- they fall squarely in T31's "immediate hard delete" category. The soft-delete exists for data retention policy compliance and to support stale index detection (quirk #8), not as a deprecation-before-delete workflow.
+9. **Soft-delete is NOT deprecation**: Account deletion uses a soft-delete pattern (`DeletedAt` timestamp) for practical data retention and audit purposes. This is distinct from the deprecation lifecycle defined in IMPLEMENTATION TENETS. Accounts are identity instances, not definitions or templates referenced by other entities -- they fall squarely in's "immediate hard delete" category. The soft-delete exists for data retention policy compliance and to support stale index detection (quirk #8), not as a deprecation-before-delete workflow.
 
-10. **Metadata field is client-only per FOUNDATION TENETS (T29)**: The `Metadata` dictionary on `AccountModel` uses `additionalProperties: true` and is strictly client-opaque pass-through storage. No Bannou plugin reads specific keys from account metadata by convention. The service stores and returns it unchanged without inspection.
+10. **Metadata field is client-only per FOUNDATION TENETS**: The `Metadata` dictionary on `AccountModel` uses `additionalProperties: true` and is strictly client-opaque pass-through storage. No Bannou plugin reads specific keys from account metadata by convention. The service stores and returns it unchanged without inspection.
 
 ### Design Considerations (Requires Planning)
 

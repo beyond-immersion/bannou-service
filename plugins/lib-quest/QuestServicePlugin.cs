@@ -157,7 +157,7 @@ public class QuestServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Registers resource cleanup callbacks with lib-resource for T28 character deletion cleanup.
+    /// Registers resource cleanup callbacks with lib-resource for character deletion cleanup per FOUNDATION TENETS.
     /// Uses the schema-generated <see cref="QuestService.RegisterResourceCleanupCallbacksAsync"/> method.
     /// </summary>
     private async Task RegisterCleanupCallbacksAsync()

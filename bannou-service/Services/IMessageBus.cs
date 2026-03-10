@@ -14,13 +14,13 @@ namespace BeyondImmersion.BannouService.Services;
 /// <b>WARNING - CLIENT EVENTS:</b> This interface is for service-to-service events ONLY.
 /// To push events to WebSocket clients, use <see cref="ClientEvents.IClientEventPublisher"/> instead.
 /// Using IMessageBus for client events will silently fail - events go to the wrong exchange.
-/// See TENETS.md T17: Client Event Schema Pattern.
+/// See IMPLEMENTATION TENETS: Client Event Schema Pattern.
 /// </para>
 /// <para>
 /// <b>WARNING - TYPED EVENTS ONLY:</b> The TEvent type parameter must be a typed event class
 /// defined in a schema. Anonymous objects (<c>new { ... }</c>) are FORBIDDEN and will throw
 /// <c>System.ArgumentException: Message types must not be anonymous types</c> at runtime.
-/// See TENETS.md T5: Event-Driven Architecture.
+/// See FOUNDATION TENETS: Event-Driven Architecture.
 /// </para>
 /// <para>
 /// This interface provides the abstraction layer over the messaging backend (MassTransit/RabbitMQ).

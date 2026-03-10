@@ -48,14 +48,14 @@ public static class ChatEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(ChatPublishedTopics.ChatRoomTypeCreated, eventData, cancellationToken);
 
-    /// <summary>Published when a room type is updated.</summary>
+    /// <summary>Published when a room type is updated, including deprecation via changedFields.</summary>
     public static Task<bool> PublishChatRoomTypeUpdatedAsync(
         this IMessageBus messageBus,
         ChatRoomTypeUpdatedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(ChatPublishedTopics.ChatRoomTypeUpdated, eventData, cancellationToken);
 
-    /// <summary>Published when a room type is deleted.</summary>
+    /// <summary>Unused Category B infrastructure — room types are never deleted. Publisher method exists in generated code but is never called.</summary>
     public static Task<bool> PublishChatRoomTypeDeletedAsync(
         this IMessageBus messageBus,
         ChatRoomTypeDeletedEvent eventData,

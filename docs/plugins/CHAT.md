@@ -74,46 +74,46 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 Room Lifecycle & Storage Bifurcation
 =====================================
 
-                   CreateRoom
-                      │
-              ┌───────┴───────┐
-              │  MySQL (room)  │
-              │  Redis (cache) │
-              └───────┬───────┘
-                      │
-          ┌───────────┼───────────┐
-          │           │           │
-     JoinRoom    SendMessage    Contract Event
-          │           │           │
-     ┌────┴────┐  ┌───┴────┐  ┌──┴──────────────────────┐
-     │ Redis   │  │ Check  │  │ FindRoomsByContractId    │
-     │ Hash    │  │ Format │  │ (query, limit 100)       │
-     │ {room}: │  └───┬────┘  └──┬──────────────────────┘
-     │ {sess}  │      │          │
-     └────┬────┘  ┌───┴────────┐ │  ContractRoomAction:
-          │       │            │ ├─ Lock    → status=Locked
-     Permission   │ Persistent │ ├─ Archive → Resource.Compress
-     State:       │ room?      │ ├─ Delete  → notify + wipe
-     "in_room"    │            │ └─ Continue → no-op
-                  │   Yes  No  │
-                  │    │    │  │
-              ┌───┘    │    │  │
-              │   MySQL│ Redis │
-              │   msg  │ msg   │
-              │   store│ +TTL  │
-              └────────┴───────┘
-                      │
-              Idle Cleanup Worker
-              (periodic scan)
-                      │
-              ┌───────┴───────┐
-              │ Contract room?│
-              │   → skip      │
-              │ Persistent?   │
-              │   → archive   │
-              │ Ephemeral?    │
-              │   → delete    │
-              └───────────────┘
+ CreateRoom
+ │
+ ┌───────┴───────┐
+ │ MySQL (room) │
+ │ Redis (cache) │
+ └───────┬───────┘
+ │
+ ┌───────────┼───────────┐
+ │ │ │
+ JoinRoom SendMessage Contract Event
+ │ │ │
+ ┌────┴────┐ ┌───┴────┐ ┌──┴──────────────────────┐
+ │ Redis │ │ Check │ │ FindRoomsByContractId │
+ │ Hash │ │ Format │ │ (query, limit 100) │
+ │ {room}: │ └───┬────┘ └──┬──────────────────────┘
+ │ {sess} │ │ │
+ └────┬────┘ ┌───┴────────┐ │ ContractRoomAction:
+ │ │ │ ├─ Lock → status=Locked
+ Permission │ Persistent │ ├─ Archive → Resource.Compress
+ State: │ room? │ ├─ Delete → notify + wipe
+ "in_room" │ │ └─ Continue → no-op
+ │ Yes No │
+ │ │ │ │
+ ┌───┘ │ │ │
+ │ MySQL│ Redis │
+ │ msg │ msg │
+ │ store│ +TTL │
+ └────────┴───────┘
+ │
+ Idle Cleanup Worker
+ (periodic scan)
+ │
+ ┌───────┴───────┐
+ │ Contract room?│
+ │ → skip │
+ │ Persistent? │
+ │ → archive │
+ │ Ephemeral? │
+ │ → delete │
+ └───────────────┘
 ```
 
 ---
@@ -203,9 +203,9 @@ No Chat changes are needed for this integration path -- the transport layer is r
 
 15. **SendMessageBatch publishes per-message service events**: `SendMessageBatch` publishes a `ChatMessageSentEvent` for each successfully sent message in the batch, matching `SendMessage` behavior exactly. This ensures downstream consumers see all messages regardless of send path. RabbitMQ handles the per-message event volume efficiently even for large batches.
 
-### Deprecation Lifecycle (T31 Category B)
+### Deprecation Lifecycle (Category B)
 
-Room types are **Category B entities** — rooms reference room types by code, and existing rooms must continue to function after a room type is deprecated. Per T31:
+Room types are **Category B entities** — rooms reference room types by code, and existing rooms must continue to function after a room type is deprecated. Per:
 
 - **Deprecation is one-way**: Once deprecated, a room type cannot be undeprecated. No undeprecate endpoint exists.
 - **No delete endpoint**: Room type definitions persist forever. Only deprecation is supported (see quirk #6).
@@ -213,7 +213,7 @@ Room types are **Category B entities** — rooms reference room types by code, a
 - **Storage model**: Room type definitions use triple-field deprecation: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?).
 - **Idempotent deprecation**: Deprecating an already-deprecated room type returns `OK` (not `Conflict`).
 - **List filtering**: `ListRoomTypes` includes `includeDeprecated` parameter (default: `false`).
-- **Events**: Deprecation is communicated via `chat.room-type.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per T31).
+- **Events**: Deprecation is communicated via `chat.room-type.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per tenets).
 
 ### Design Considerations (Requires Planning)
 

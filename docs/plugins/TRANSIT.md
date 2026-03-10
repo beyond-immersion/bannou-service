@@ -83,26 +83,26 @@ Transit defines `ITransitCostModifierProvider` in `bannou-service/Providers/`, f
 ### How Transit Completes Geography
 
 ```
-LOCATION SERVICE (L2)                    TRANSIT SERVICE (L2)
-Containment Hierarchy                    Connectivity Graph
+LOCATION SERVICE (L2) TRANSIT SERVICE (L2)
+Containment Hierarchy Connectivity Graph
 
-Realm: Arcadia                          Connection: Eldoria ←→ Iron Mines
-  └─ Region: Heartlands                   distance: 120 km
-      ├─ City: Eldoria                     terrain: mountain_road
-      │   ├─ District: Market              modes: [walking, horseback, wagon]
-      │   └─ District: Docks              seasonal: {winter: closed}
-      ├─ Village: Riverside
-      │   └─ Building: Inn               Connection: Eldoria ←→ Riverside
-      └─ Landmark: Iron Mines              distance: 30 km
-                                           terrain: river_path
-                                           modes: [walking, horseback, river_boat]
-                                           seasonal: {all: open}
+Realm: Arcadia Connection: Eldoria ←→ Iron Mines
+ └─ Region: Heartlands distance: 120 km
+ ├─ City: Eldoria terrain: mountain_road
+ │ ├─ District: Market modes: [walking, horseback, wagon]
+ │ └─ District: Docks seasonal: {winter: closed}
+ ├─ Village: Riverside
+ │ └─ Building: Inn Connection: Eldoria ←→ Riverside
+ └─ Landmark: Iron Mines distance: 30 km
+ terrain: river_path
+ modes: [walking, horseback, river_boat]
+ seasonal: {all: open}
 
-                                         Connection: Riverside ←→ Iron Mines
-                                           distance: 80 km
-                                           terrain: forest_trail
-                                           modes: [walking, horseback]
-                                           seasonal: {all: open}
+ Connection: Riverside ←→ Iron Mines
+ distance: 80 km
+ terrain: forest_trail
+ modes: [walking, horseback]
+ seasonal: {all: open}
 ```
 
 Location provides the **what** (places exist). Transit provides the **how** (places connect). Together they form a complete spatial model that supports both containment queries ("what buildings are in Eldoria?") and connectivity queries ("how do I get from Eldoria to the Iron Mines?").
@@ -111,35 +111,35 @@ Location provides the **what** (places exist). Transit provides the **how** (pla
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    TRANSIT MODES (Registry)                       │
-│  "walking": speed 5, capacity 1, terrain [any]                      │
-│  "horseback": speed 25, capacity 2, terrain [road,trail,plain]      │
-│     terrain_mods: {road: 1.2, trail: 0.8, forest: 0.5, mountain: 0.3}│
-│  "wagon": speed 10, capacity 500, terrain [road], requires [item]   │
-│  "river_boat": speed 15, capacity 100, terrain [river]              │
-│  "ocean_vessel": speed 20, capacity 2000, terrain [ocean]           │
-│     valid_entities: [caravan, army], cargo_penalty: 0.1              │
-│  "flying_mount": speed 40, capacity 2, terrain [any]                │
+│ TRANSIT MODES (Registry) │
+│ "walking": speed 5, capacity 1, terrain [any] │
+│ "horseback": speed 25, capacity 2, terrain [road,trail,plain] │
+│ terrain_mods: {road: 1.2, trail: 0.8, forest: 0.5, mountain: 0.3}│
+│ "wagon": speed 10, capacity 500, terrain [road], requires [item] │
+│ "river_boat": speed 15, capacity 100, terrain [river] │
+│ "ocean_vessel": speed 20, capacity 2000, terrain [ocean] │
+│ valid_entities: [caravan, army], cargo_penalty: 0.1 │
+│ "flying_mount": speed 40, capacity 2, terrain [any] │
 └─────────────────────┬───────────────────────────────────────────┘
-                      │ defines capabilities
-                      ▼
+ │ defines capabilities
+ ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    CONNECTIONS (Graph Edges)                      │
-│  Eldoria → Iron Mines: 120km, mountain_road, [walk,horse,wagon]  │
-│  Eldoria → Riverside: 30km, river_path, [walk,horse,river_boat]  │
-│  Riverside → Iron Mines: 80km, forest_trail, [walk,horse]        │
-│  Docks → Harbor Island: 15km, ocean, [ocean_vessel]              │
+│ CONNECTIONS (Graph Edges) │
+│ Eldoria → Iron Mines: 120km, mountain_road, [walk,horse,wagon] │
+│ Eldoria → Riverside: 30km, river_path, [walk,horse,river_boat] │
+│ Riverside → Iron Mines: 80km, forest_trail, [walk,horse] │
+│ Docks → Harbor Island: 15km, ocean, [ocean_vessel] │
 └─────────────────────┬───────────────────────────────────────────┘
-                      │ traversed by
-                      ▼
+ │ traversed by
+ ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    JOURNEYS (Active Transits)                     │
-│  Journey #1: Merchant Galen, horseback                           │
-│    Eldoria → Riverside → Iron Mines                              │
-│    Departed: Game-Day 142, Hour 8                                │
-│    Current: Riverside (waypoint reached)                          │
-│    ETA Iron Mines: Game-Day 143, Hour 4                          │
-│    Status: in_transit                                             │
+│ JOURNEYS (Active Transits) │
+│ Journey #1: Merchant Galen, horseback │
+│ Eldoria → Riverside → Iron Mines │
+│ Departed: Game-Day 142, Hour 8 │
+│ Current: Riverside (waypoint reached) │
+│ ETA Iron Mines: Game-Day 143, Hour 4 │
+│ Status: in_transit │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -149,31 +149,31 @@ Route calculation is a **pure computation endpoint** -- no state mutation. Given
 
 ```
 /transit/route/calculate
-  Input:  Eldoria → Iron Mines, mode: any, worldstate: winter
+ Input: Eldoria → Iron Mines, mode: any, worldstate: winter
 
-  Graph search:
-    Path 1: Eldoria →(mountain_road)→ Iron Mines
-            120km, mountain_road, winter: CLOSED → skip
+ Graph search:
+ Path 1: Eldoria →(mountain_road)→ Iron Mines
+ 120km, mountain_road, winter: CLOSED → skip
 
-    Path 2: Eldoria →(river_path)→ Riverside →(forest_trail)→ Iron Mines
-            30km + 80km = 110km
-            walking: 110km / 5 km/gh = 22 game-hours
-            horseback: (30 / 25×0.8) + (80 / 25×0.5) = 1.5 + 6.4 = 7.9 game-hours
-              (terrain modifiers: river_path ×0.8, forest_trail ×0.5)
-            river_boat (leg 1 only): 30/15 + (80 / 25×0.5) = 2.0 + 6.4 = 8.4 game-hours
+ Path 2: Eldoria →(river_path)→ Riverside →(forest_trail)→ Iron Mines
+ 30km + 80km = 110km
+ walking: 110km / 5 km/gh = 22 game-hours
+ horseback: (30 / 25×0.8) + (80 / 25×0.5) = 1.5 + 6.4 = 7.9 game-hours
+ (terrain modifiers: river_path ×0.8, forest_trail ×0.5)
+ river_boat (leg 1 only): 30/15 + (80 / 25×0.5) = 2.0 + 6.4 = 8.4 game-hours
 
-  Output: [
-    { route: [Eldoria, Riverside, Iron Mines], mode: horseback,
-      hours: 7.9, distance: 110, legs: 2, risk: 0.15 },
-    { route: [Eldoria, Riverside, Iron Mines], mode: walking,
-      hours: 22.0, distance: 110, legs: 2, risk: 0.08 },
-  ]
+ Output: [
+ { route: [Eldoria, Riverside, Iron Mines], mode: horseback,
+ hours: 7.9, distance: 110, legs: 2, risk: 0.15 },
+ { route: [Eldoria, Riverside, Iron Mines], mode: walking,
+ hours: 22.0, distance: 110, legs: 2, risk: 0.08 },
+ ]
 
-  Note: Mountain road direct route unavailable in winter.
-  Horseback has terrain modifiers: {road: 1.2, trail: 0.8, forest: 0.5, mountain: 0.3}
-  In summer, the mountain road would appear as:
-    { route: [Eldoria, Iron Mines], mode: wagon,
-      hours: 12.0, distance: 120, legs: 1, risk: 0.2 }
+ Note: Mountain road direct route unavailable in winter.
+ Horseback has terrain modifiers: {road: 1.2, trail: 0.8, forest: 0.5, mountain: 0.3}
+ In summer, the mountain road would appear as:
+ { route: [Eldoria, Iron Mines], mode: wagon,
+ hours: 12.0, distance: 120, legs: 1, risk: 0.2 }
 ```
 
 Route calculation does NOT factor in DI cost modifiers (those are entity-specific). It returns objective travel data. The variable provider applies entity-specific modifiers when GOAP evaluates the results.
@@ -223,7 +223,7 @@ Per-leg route segment. Key fields: `connectionId`, `fromLocationId`/`toLocationI
 
 ### TransitInterruption
 
-Interruption record within a journey. Fields: `legIndex`, `gameTime`, `reason` (e.g. "bandit_attack", "storm", "breakdown", "encounter"), `durationGameHours` (min 0 — 0 if resolved immediately, e.g. instantly repelled attack), `resolved` (boolean — NOT T8 filler: an interruption can be resolved with 0 duration, so this flag is stored entity state distinguishing active interruptions from resolved ones, not derivable from `durationGameHours`).
+Interruption record within a journey. Fields: `legIndex`, `gameTime`, `reason` (e.g. "bandit_attack", "storm", "breakdown", "encounter"), `durationGameHours` (min 0 — 0 if resolved immediately, e.g. instantly repelled attack), `resolved` (boolean — NOT filler: an interruption can be resolved with 0 duration, so this flag is stored entity state distinguishing active interruptions from resolved ones, not derivable from `durationGameHours`).
 
 ### TransitRouteOption (Not Persisted)
 
@@ -265,8 +265,8 @@ Sub-model: `terrainType` (Category B content code), `multiplier` (min 0.01 — s
 | journey `status` | C (System State) | Service-specific enum (`preparing`, `in_transit`, `at_waypoint`, `arrived`, `interrupted`, `abandoned`) | Finite journey lifecycle state machine; system-owned transitions |
 | journey leg `status` | C (System State) | Service-specific enum (`pending`, `in_progress`, `completed`, `skipped`) | Finite leg lifecycle state machine; system-owned transitions |
 | `source` (discovery) | B (Content Code) | Opaque string | How a connection was discovered (e.g., "travel", "guide", "hearsay", "map", "quest_reward"). Game-configurable, extensible without schema changes |
-| `maximumEntitySizeCategory` (mode requirements) | B (Content Code) | Opaque string | Entity size categories (e.g., "small", "medium", "large") are game-defined at deployment time per IMPLEMENTATION TENETS T14 Test 1. False positive — not a system enum |
-| `resolved` (TransitInterruption) | — (Stored State) | boolean | NOT T8 filler. An interruption can be resolved with 0 durationGameHours (immediately repelled). The `resolved` flag is stored entity state distinguishing active interruptions from resolved ones, not derivable from other fields |
+| `maximumEntitySizeCategory` (mode requirements) | B (Content Code) | Opaque string | Entity size categories (e.g., "small", "medium", "large") are game-defined at deployment time per IMPLEMENTATION TENETS Test 1. False positive — not a system enum |
+| `resolved` (TransitInterruption) | — (Stored State) | boolean | NOT filler. An interruption can be resolved with 0 durationGameHours (immediately repelled). The `resolved` flag is stored entity state distinguishing active interruptions from resolved ones, not derivable from other fields |
 | mode `isDeprecated` / `deprecatedAt` / `deprecationReason` | C (System State) | Standard triple-field deprecation model (`boolean`, `timestamp?`, `string?`) | Category A per IMPLEMENTATION TENETS: connections store `compatibleModes` and journeys store `primaryModeCode`/`legModes` referencing mode codes → deprecate/undeprecate/delete required |
 
 ---
@@ -308,34 +308,34 @@ Full schema in `schemas/transit-configuration.yaml`.
 ### Journey State Machine
 
 ```
-                    ┌─────────────┐
-                    │  preparing  │
-                    └──────┬──────┘
-                           │ /journey/depart
-                           ▼
-    ┌──────────┐    ┌─────────────┐    ┌─────────────┐
-    │abandoned │◄───│ in_transit  │───►│at_waypoint  │
-    └──────────┘    └──────┬──────┘    └──────┬──────┘
-         ▲          /abandon│  │ /interrupt     │ /advance
-         │                  │  ▼                │ (next leg)
-         │          ┌──────────────┐            │
-         ├──────────│ interrupted  │            │
-         │          └──────┬───────┘            │
-         │                 │ /resume            │
-         │                 └──►in_transit       │
-         │                                      │
-         │    /arrive (force)                   │ /advance
-         │    ┌─────────────┐                   │ (final leg)
-         └────│  arrived    │◄──────────────────┘
-              └─────────────┘
+ ┌─────────────┐
+ │ preparing │
+ └──────┬──────┘
+ │ /journey/depart
+ ▼
+ ┌──────────┐ ┌─────────────┐ ┌─────────────┐
+ │abandoned │◄───│ in_transit │───►│at_waypoint │
+ └──────────┘ └──────┬──────┘ └──────┬──────┘
+ ▲ /abandon│ │ /interrupt │ /advance
+ │ │ ▼ │ (next leg)
+ │ ┌──────────────┐ │
+ ├──────────│ interrupted │ │
+ │ └──────┬───────┘ │
+ │ │ /resume │
+ │ └──►in_transit │
+ │ │
+ │ /arrive (force) │ /advance
+ │ ┌─────────────┐ │ (final leg)
+ └────│ arrived │◄──────────────────┘
+ └─────────────┘
 
 Status transitions:
-  preparing    → in_transit (depart) | abandoned (abandon)
-  in_transit   → at_waypoint (advance) | arrived (advance final/arrive)
-               | interrupted (interrupt) | abandoned (abandon)
-  at_waypoint  → in_transit (advance next leg) | arrived (arrive)
-               | abandoned (abandon)
-  interrupted  → in_transit (resume) | abandoned (abandon)
+ preparing → in_transit (depart) | abandoned (abandon)
+ in_transit → at_waypoint (advance) | arrived (advance final/arrive)
+ | interrupted (interrupt) | abandoned (abandon)
+ at_waypoint → in_transit (advance next leg) | arrived (arrive)
+ | abandoned (abandon)
+ interrupted → in_transit (resume) | abandoned (abandon)
 ```
 
 Note: All transitions publish corresponding journey events. The `arrive` endpoint
@@ -433,23 +433,23 @@ services.AddSingleton<IVariableProviderFactory, TransitVariableProviderFactory>(
 # GOAP evaluates travel options as part of "buy_raw_materials" action
 
 goap_action: travel_to_iron_mines
-  preconditions:
-    has_raw_materials: "== false"
-    ${transit.nearest.iron_mines.hours}: "< 48"    # Reachable within 2 game-days
-  effects:
-    at_location: "iron_mines"
-  cost: |
-    base_travel_cost (2.0)
-    + ${transit.nearest.iron_mines.hours} * time_weight (0.1)
-    + ${transit.mode.${transit.nearest.iron_mines.best_mode}.preference_cost} * fear_weight (3.0)
-    = total GOAP cost for this action
+ preconditions:
+ has_raw_materials: "== false"
+ ${transit.nearest.iron_mines.hours}: "< 48" # Reachable within 2 game-days
+ effects:
+ at_location: "iron_mines"
+ cost: |
+ base_travel_cost (2.0)
+ + ${transit.nearest.iron_mines.hours} * time_weight (0.1)
+ + ${transit.mode.${transit.nearest.iron_mines.best_mode}.preference_cost} * fear_weight (3.0)
+ = total GOAP cost for this action
 
 # If the blacksmith is afraid of horses (preference_cost = 0.7)
 # and horseback is the fastest mode:
-#   cost = 2.0 + 4.4 * 0.1 + 0.7 * 3.0 = 4.54
+# cost = 2.0 + 4.4 * 0.1 + 0.7 * 3.0 = 4.54
 #
 # If walking (preference_cost = 0.0) is the alternative:
-#   cost = 2.0 + 22.0 * 0.1 + 0.0 * 3.0 = 4.20
+# cost = 2.0 + 22.0 * 0.1 + 0.0 * 3.0 = 4.20
 #
 # GOAP prefers walking despite taking 5x longer, because the fear cost outweighs time.
 # Unless the blacksmith is DESPERATE for iron (goal urgency multiplier > fear).
@@ -479,36 +479,36 @@ namespace BeyondImmersion.BannouService.Providers;
 /// </remarks>
 public interface ITransitCostModifierProvider
 {
-    /// <summary>Provider name for logging and debugging (e.g., "weather", "disposition").</summary>
-    string ProviderName { get; }
+ /// <summary>Provider name for logging and debugging (e.g., "weather", "disposition").</summary>
+ string ProviderName { get; }
 
-    /// <summary>
-    /// Get the cost modifier for a specific entity, mode, and connection.
-    /// Returns a modifier that affects GOAP preference cost.
-    /// </summary>
-    Task<TransitCostModifier> GetModifierAsync(
-        Guid entityId,
-        string entityType,
-        string modeCode,
-        Guid connectionId,
-        CancellationToken ct);
+ /// <summary>
+ /// Get the cost modifier for a specific entity, mode, and connection.
+ /// Returns a modifier that affects GOAP preference cost.
+ /// </summary>
+ Task<TransitCostModifier> GetModifierAsync(
+ Guid entityId,
+ string entityType,
+ string modeCode,
+ Guid connectionId,
+ CancellationToken ct);
 }
 
 /// <summary>
 /// A cost modifier returned by an ITransitCostModifierProvider.
 /// </summary>
 public record TransitCostModifier(
-    /// <summary>Additive preference cost (0.0 = no effect, positive = aversion).</summary>
-    decimal PreferenceCostDelta,
+ /// <summary>Additive preference cost (0.0 = no effect, positive = aversion).</summary>
+ decimal PreferenceCostDelta,
 
-    /// <summary>Speed multiplier (1.0 = no effect, 0.5 = half speed, 1.5 = 50% faster).</summary>
-    decimal SpeedMultiplier,
+ /// <summary>Speed multiplier (1.0 = no effect, 0.5 = half speed, 1.5 = 50% faster).</summary>
+ decimal SpeedMultiplier,
 
-    /// <summary>Risk additive (0.0 = no effect, positive = more dangerous).</summary>
-    decimal RiskDelta,
+ /// <summary>Risk additive (0.0 = no effect, positive = more dangerous).</summary>
+ decimal RiskDelta,
 
-    /// <summary>Human-readable reason for this modifier.</summary>
-    string Reason
+ /// <summary>Human-readable reason for this modifier.</summary>
+ string Reason
 );
 ```
 
@@ -563,30 +563,30 @@ A complete worked example of how Transit connects with the behavioral stack:
 
 ```
 CHARACTER HISTORY (L4):
-  Backstory element: {type: "TRAUMA", code: "trampled_by_horse", intensity: 0.8}
-    ↓ feeds
+ Backstory element: {type: "TRAUMA", code: "trampled_by_horse", intensity: 0.8}
+ ↓ feeds
 DISPOSITION (L4):
-  Synthesizes feeling toward transit mode "horseback":
-  Sources: trauma(0.8) × personality.neuroticism(0.6) = base_dread(0.48)
-  Modifier: reinforced by recent near-miss → total dread = 0.72
-    ↓ implements ITransitCostModifierProvider
+ Synthesizes feeling toward transit mode "horseback":
+ Sources: trauma(0.8) × personality.neuroticism(0.6) = base_dread(0.48)
+ Modifier: reinforced by recent near-miss → total dread = 0.72
+ ↓ implements ITransitCostModifierProvider
 TRANSIT (L2):
-  check-availability for this character + "horseback":
-    available: true (has riding skill, has horse item)
-    preferenceCost: 0.72 (from disposition provider)
-    effectiveSpeed: 25 km/gh (no physical limitation)
-    ↓ exposes via variable provider
+ check-availability for this character + "horseback":
+ available: true (has riding skill, has horse item)
+ preferenceCost: 0.72 (from disposition provider)
+ effectiveSpeed: 25 km/gh (no physical limitation)
+ ↓ exposes via variable provider
 ACTOR (L2):
-  GOAP planning evaluates "travel to iron mines":
-    Option A (horseback): time_cost(4.4h) + preference_cost(0.72×3) = 4.60
-    Option B (wagon):     time_cost(12h)  + preference_cost(0.0×3)  = 3.20
-    Option C (walking):   time_cost(22h)  + preference_cost(0.0×3)  = 4.20
+ GOAP planning evaluates "travel to iron mines":
+ Option A (horseback): time_cost(4.4h) + preference_cost(0.72×3) = 4.60
+ Option B (wagon): time_cost(12h) + preference_cost(0.0×3) = 3.20
+ Option C (walking): time_cost(22h) + preference_cost(0.0×3) = 4.20
 
-    GOAP selects: wagon (lowest total cost)
+ GOAP selects: wagon (lowest total cost)
 
-    But if iron is urgently needed (goal urgency multiplier = 2.0):
-    Option A: 4.60 vs urgency bonus 8.0 → net: -3.40 (viable despite fear)
-    → Reluctantly rides horse in emergency
+ But if iron is urgently needed (goal urgency multiplier = 2.0):
+ Option A: 4.60 vs urgency bonus 8.0 → net: -3.40 (viable despite fear)
+ → Reluctantly rides horse in emergency
 ```
 
 ### Character (L2), Species (L2), Item (L2), Inventory (L2) -- Hard Dependencies

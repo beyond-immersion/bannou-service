@@ -72,272 +72,272 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 Binary Protocol Header Layout
 =================================
 
-  REQUEST MESSAGE (31 bytes + payload):
-  ┌──────────┬─────────┬──────────┬──────────────────┬──────────────┬─────────────┐
-  │ Flags    │ Channel │ Sequence │ Service GUID     │ Message ID   │ JSON Payload│
-  │ (1 byte) │ (2)     │ (4)      │ (16)             │ (8)          │ (variable)  │
-  └──────────┴─────────┴──────────┴──────────────────┴──────────────┴─────────────┘
-  Byte:  0      1-2       3-6         7-22               23-30          31+
+ REQUEST MESSAGE (31 bytes + payload):
+ ┌──────────┬─────────┬──────────┬──────────────────┬──────────────┬─────────────┐
+ │ Flags │ Channel │ Sequence │ Service GUID │ Message ID │ JSON Payload│
+ │ (1 byte) │ (2) │ (4) │ (16) │ (8) │ (variable) │
+ └──────────┴─────────┴──────────┴──────────────────┴──────────────┴─────────────┘
+ Byte: 0 1-2 3-6 7-22 23-30 31+
 
-  RESPONSE MESSAGE (16 bytes + payload):
-  ┌──────────┬─────────┬──────────┬──────────────┬──────────────┬─────────────┐
-  │ Flags    │ Channel │ Sequence │ Message ID   │ ResponseCode │ JSON Payload│
-  │ (1 byte) │ (2)     │ (4)      │ (8)          │ (1)          │ (variable)  │
-  └──────────┴─────────┴──────────┴──────────────┴──────────────┴─────────────┘
-  Byte:  0      1-2       3-6         7-14            15              16+
+ RESPONSE MESSAGE (16 bytes + payload):
+ ┌──────────┬─────────┬──────────┬──────────────┬──────────────┬─────────────┐
+ │ Flags │ Channel │ Sequence │ Message ID │ ResponseCode │ JSON Payload│
+ │ (1 byte) │ (2) │ (4) │ (8) │ (1) │ (variable) │
+ └──────────┴─────────┴──────────┴──────────────┴──────────────┴─────────────┘
+ Byte: 0 1-2 3-6 7-14 15 16+
 
 
 Message Flags (byte 0, bit field)
 ====================================
 
-  0x00 = None      (JSON, service request, standard priority, expects response)
-  0x01 = Binary    (Binary payload, not JSON)
-  0x02 = Encrypted (Payload is encrypted)
-  0x04 = Compressed (Payload is gzip compressed)
-  0x08 = HighPriority (Skip to front of queues)
-  0x10 = Event     (Fire-and-forget, no response expected)
-  0x20 = Client    (Route to another WebSocket client, not a service)
-  0x40 = Response  (Response to an RPC, not a new request)
-  0x80 = Meta      (Request metadata about endpoint, Channel encodes MetaType)
+ 0x00 = None (JSON, service request, standard priority, expects response)
+ 0x01 = Binary (Binary payload, not JSON)
+ 0x02 = Encrypted (Payload is encrypted)
+ 0x04 = Compressed (Payload is gzip compressed)
+ 0x08 = HighPriority (Skip to front of queues)
+ 0x10 = Event (Fire-and-forget, no response expected)
+ 0x20 = Client (Route to another WebSocket client, not a service)
+ 0x40 = Response (Response to an RPC, not a new request)
+ 0x80 = Meta (Request metadata about endpoint, Channel encodes MetaType)
 
 
 GUID Salting Security Model
 ==============================
 
-  Client A connects:
-       │
-       ├── GenerateServiceGuid("session-A", "account:POST:/account/get", "server-salt")
-       │   = SHA256("service:account:POST:/account/get|session:session-A|salt:server-salt")
-       │   = GUID abc123... (version 5 UUID)
-       │
-       └── Client A uses GUID abc123 to call /account/get
+ Client A connects:
+ │
+ ├── GenerateServiceGuid("session-A", "account:POST:/account/get", "server-salt")
+ │ = SHA256("service:account:POST:/account/get|session:session-A|salt:server-salt")
+ │ = GUID abc123... (version 5 UUID)
+ │
+ └── Client A uses GUID abc123 to call /account/get
 
-  Client B connects:
-       │
-       ├── GenerateServiceGuid("session-B", "account:POST:/account/get", "server-salt")
-       │   = SHA256("service:account:POST:/account/get|session:session-B|salt:server-salt")
-       │   = GUID xyz789... (DIFFERENT from Client A!)
-       │
-       └── Client B uses GUID xyz789 to call /account/get
+ Client B connects:
+ │
+ ├── GenerateServiceGuid("session-B", "account:POST:/account/get", "server-salt")
+ │ = SHA256("service:account:POST:/account/get|session:session-B|salt:server-salt")
+ │ = GUID xyz789... (DIFFERENT from Client A!)
+ │
+ └── Client B uses GUID xyz789 to call /account/get
 
-  Security: Client B cannot use abc123 to impersonate Client A's session.
+ Security: Client B cannot use abc123 to impersonate Client A's session.
 
-  UUID Version Encoding:
-    Version 5 = Service endpoint GUIDs
-    Version 6 = Client-to-client routing GUIDs (bidirectional, order-independent)
-    Version 7 = Session shortcut GUIDs
+ UUID Version Encoding:
+ Version 5 = Service endpoint GUIDs
+ Version 6 = Client-to-client routing GUIDs (bidirectional, order-independent)
+ Version 7 = Session shortcut GUIDs
 
 
 WebSocket Connection Lifecycle
 ================================
 
-  Client                    Connect Service                  Auth      Permission
-    │                            │                            │            │
-    ├──WebSocket Upgrade────────►│                            │            │
-    │                            ├──ValidateToken────────────►│            │
-    │                            │◄──Token Valid──────────────┤            │
-    │                            │                            │            │
-    │                            ├──Store ConnectionState (Redis)          │
-    │                            ├──Subscribe RabbitMQ (CONNECT_SESSION_X) │
-    │                            ├──Publish session.connected─────────────►│
-    │                            │                            │            │
-    │                            │  (no manifest sent yet)    │            │
-    │                            │                            │            │
-    │                            │◄──SessionCapabilitiesEvent──────────────┤
-    │                            │   (permissions dict)       │            │
-    │                            ├──Generate client-salted GUIDs           │
-    │◄──Capability Manifest──────┤ (with all available APIs)  │            │
-    │                            │                            │            │
-    │──Binary Message (GUID)────►│                            │            │
-    │                            ├──Lookup GUID in mappings                │
-    │                            ├──Route to target service (via mesh)     │
-    │◄──Binary Response──────────┤                            │            │
-    │                            │                            │            │
-    │──Disconnect────────────────│                            │            │
-    │                            ├──Publish session.disconnected           │
-    │                            ├──Remove from account index              │
-    │                            ├──Cancel RabbitMQ consumer               │
-    │                            ├──Generate reconnection token            │
-    │                            ├──Store token in Redis (5 min TTL)       │
-    │◄──disconnect_notification──┤ (with reconnection token)  │            │
-    │                            │                            │            │
+ Client Connect Service Auth Permission
+ │ │ │ │
+ ├──WebSocket Upgrade────────►│ │ │
+ │ ├──ValidateToken────────────►│ │
+ │ │◄──Token Valid──────────────┤ │
+ │ │ │ │
+ │ ├──Store ConnectionState (Redis) │
+ │ ├──Subscribe RabbitMQ (CONNECT_SESSION_X) │
+ │ ├──Publish session.connected─────────────►│
+ │ │ │ │
+ │ │ (no manifest sent yet) │ │
+ │ │ │ │
+ │ │◄──SessionCapabilitiesEvent──────────────┤
+ │ │ (permissions dict) │ │
+ │ ├──Generate client-salted GUIDs │
+ │◄──Capability Manifest──────┤ (with all available APIs) │ │
+ │ │ │ │
+ │──Binary Message (GUID)────►│ │ │
+ │ ├──Lookup GUID in mappings │
+ │ ├──Route to target service (via mesh) │
+ │◄──Binary Response──────────┤ │ │
+ │ │ │ │
+ │──Disconnect────────────────│ │ │
+ │ ├──Publish session.disconnected │
+ │ ├──Remove from account index │
+ │ ├──Cancel RabbitMQ consumer │
+ │ ├──Generate reconnection token │
+ │ ├──Store token in Redis (5 min TTL) │
+ │◄──disconnect_notification──┤ (with reconnection token) │ │
+ │ │ │ │
 
 
 Message Routing Decision Tree
 ================================
 
-  Receive Binary Message
-       │
-       ├── Parse 31-byte header
-       │
-       ├── Is Response flag set? ─── Yes ──► Check _pendingRPCs[MessageId]
-       │                                          │
-       │                                          ├── Found → ForwardRPCResponseAsync (publish to service)
-       │                                          └── Not found → discard
-       │
-       ├── Is Meta flag set? ─── Yes ──► Transform path to "/meta/{suffix}"
-       │                                  Route as GET to companion endpoint
-       │
-       ├── MessageRouter.AnalyzeMessage()
-       │        │
-       │        ├── Invalid → Send error response
-       │        └── Valid → Check rate limit
-       │                       │
-       │                       ├── Exceeded → Send TooManyRequests
-       │                       └── Allowed → Route by type:
-       │
-       ├── RouteType.Service ──► RouteToServiceAsync()
-       │        │                    ├── Parse endpoint key (service:METHOD:/path)
-       │        │                    ├── Create scope, get IServiceNavigator
-       │        │                    ├── ExecuteRawApiAsync (zero-copy byte forwarding)
-       │        │                    └── Send binary response to client
-       │
-       ├── RouteType.SessionShortcut ──► Rewrite GUID + inject payload
-       │        │                         └── Then RouteToServiceAsync()
-       │
-       ├── RouteType.Client ──► RouteToClientAsync()
-       │        │                    ├── Check EnableClientToClientRouting
-       │        │                    ├── Lookup target peer via _connectionManager
-       │        │                    └── Forward message zero-copy
-       │
-       └── RouteType.Broadcast ──► RouteToBroadcastAsync()
-                │                    ├── Reject in External mode
-                │                    ├── Get all sessions except sender
-                │                    └── Send to all in parallel
+ Receive Binary Message
+ │
+ ├── Parse 31-byte header
+ │
+ ├── Is Response flag set? ─── Yes ──► Check _pendingRPCs[MessageId]
+ │ │
+ │ ├── Found → ForwardRPCResponseAsync (publish to service)
+ │ └── Not found → discard
+ │
+ ├── Is Meta flag set? ─── Yes ──► Transform path to "/meta/{suffix}"
+ │ Route as GET to companion endpoint
+ │
+ ├── MessageRouter.AnalyzeMessage()
+ │ │
+ │ ├── Invalid → Send error response
+ │ └── Valid → Check rate limit
+ │ │
+ │ ├── Exceeded → Send TooManyRequests
+ │ └── Allowed → Route by type:
+ │
+ ├── RouteType.Service ──► RouteToServiceAsync()
+ │ │ ├── Parse endpoint key (service:METHOD:/path)
+ │ │ ├── Create scope, get IServiceNavigator
+ │ │ ├── ExecuteRawApiAsync (zero-copy byte forwarding)
+ │ │ └── Send binary response to client
+ │
+ ├── RouteType.SessionShortcut ──► Rewrite GUID + inject payload
+ │ │ └── Then RouteToServiceAsync()
+ │
+ ├── RouteType.Client ──► RouteToClientAsync()
+ │ │ ├── Check EnableClientToClientRouting
+ │ │ ├── Lookup target peer via _connectionManager
+ │ │ └── Forward message zero-copy
+ │
+ └── RouteType.Broadcast ──► RouteToBroadcastAsync()
+ │ ├── Reject in External mode
+ │ ├── Get all sessions except sender
+ │ └── Send to all in parallel
 
 
 Reconnection Window Flow
 ===========================
 
-  Client disconnects (unexpected):
-       │
-       ├── Publish session.disconnected (Reconnectable=true)
-       ├── Remove session from account index
-       ├── Clean up entity session bindings (IEntitySessionRegistry)
-       ├── Remove connection from manager (subsume-safe check)
-       ├── Cancel RabbitMQ consumer (queue persists, buffers messages)
-       ├── Generate reconnection token (GUID)
-       ├── Store in Redis: reconnect:{token} -> sessionId (TTL=300s)
-       ├── InitiateReconnectionWindowAsync (preserve ConnectionStateData)
-       ├── Send disconnect_notification to client (with reconnectionToken)
-       │
-       └── Close WebSocket gracefully
+ Client disconnects (unexpected):
+ │
+ ├── Publish session.disconnected (Reconnectable=true)
+ ├── Remove session from account index
+ ├── Clean up entity session bindings (IEntitySessionRegistry)
+ ├── Remove connection from manager (subsume-safe check)
+ ├── Cancel RabbitMQ consumer (queue persists, buffers messages)
+ ├── Generate reconnection token (GUID)
+ ├── Store in Redis: reconnect:{token} -> sessionId (TTL=300s)
+ ├── InitiateReconnectionWindowAsync (preserve ConnectionStateData)
+ ├── Send disconnect_notification to client (with reconnectionToken)
+ │
+ └── Close WebSocket gracefully
 
-  Client reconnects within window:
-       │
-       ├── Send reconnection token in WebSocket upgrade request
-       ├── ValidateReconnectionTokenAsync → get sessionId
-       ├── RestoreSessionFromReconnectionAsync:
-       │      Clear DisconnectedAt, ReconnectionExpiresAt
-       │      Restore active session state
-       ├── Reload service mappings from Redis
-       ├── Resubscribe RabbitMQ queue
-       ├── Publish session.reconnected
-       ├── Deliver buffered RabbitMQ messages
-       │
-       └── Client receives updated capability manifest
+ Client reconnects within window:
+ │
+ ├── Send reconnection token in WebSocket upgrade request
+ ├── ValidateReconnectionTokenAsync → get sessionId
+ ├── RestoreSessionFromReconnectionAsync:
+ │ Clear DisconnectedAt, ReconnectionExpiresAt
+ │ Restore active session state
+ ├── Reload service mappings from Redis
+ ├── Resubscribe RabbitMQ queue
+ ├── Publish session.reconnected
+ ├── Deliver buffered RabbitMQ messages
+ │
+ └── Client receives updated capability manifest
 
 
 Session Shortcut Architecture
 ================================
 
-  Game Session creates shortcut for player:
-       │
-       ├── Service publishes ShortcutPublishedEvent to CONNECT_SESSION_{sessionId}
-       │   (via IClientEventPublisher)
-       │
-       ├── Connect receives event → HandleShortcutPublishedAsync()
-       │      ├── Generate shortcut GUID: version 7, SHA256(name+session+source+salt)
-       │      ├── Store in ConnectionState.SessionShortcuts with:
-       │      │      RouteGuid, TargetService, TargetEndpoint, Payload (pre-bound), TTL
-       │      └── Rebuild & send capability manifest (shortcut appears as API entry)
-       │
-       └── Client sends message with shortcut GUID:
-              │
-              ├── MessageRouter detects version 7 GUID → RouteType.SessionShortcut
-              ├── Rewrite message: replace GUID with target service GUID
-              ├── Inject pre-bound payload (ignoring client payload)
-              └── Route to target service as normal
+ Game Session creates shortcut for player:
+ │
+ ├── Service publishes ShortcutPublishedEvent to CONNECT_SESSION_{sessionId}
+ │ (via IClientEventPublisher)
+ │
+ ├── Connect receives event → HandleShortcutPublishedAsync()
+ │ ├── Generate shortcut GUID: version 7, SHA256(name+session+source+salt)
+ │ ├── Store in ConnectionState.SessionShortcuts with:
+ │ │ RouteGuid, TargetService, TargetEndpoint, Payload (pre-bound), TTL
+ │ └── Rebuild & send capability manifest (shortcut appears as API entry)
+ │
+ └── Client sends message with shortcut GUID:
+ │
+ ├── MessageRouter detects version 7 GUID → RouteType.SessionShortcut
+ ├── Rewrite message: replace GUID with target service GUID
+ ├── Inject pre-bound payload (ignoring client payload)
+ └── Route to target service as normal
 
 
 Client Event Delivery Pipeline
 =================================
 
-  ┌──────────────────────────────────────────────────────────────────┐
-  │ Any Service                                                      │
-  │   await _clientEventPublisher.PublishAsync(sessionId, event)     │
-  └─────────────────────────────┬────────────────────────────────────┘
-                                │
-  ┌─────────────────────────────▼────────────────────────────────────┐
-  │ RabbitMQ (bannou-client-events exchange)                         │
-  │   Queue: CONNECT_SESSION_{sessionId}                             │
-  └─────────────────────────────┬────────────────────────────────────┘
-                                │
-  ┌─────────────────────────────▼────────────────────────────────────┐
-  │ Connect Service (HandleClientEventAsync)                         │
-  │   ├── TryHandleInternalEventAsync?                               │
-  │   │      ├── permission.session_capabilities → ProcessCapabilities│
-  │   │      ├── session.shortcut_published → Add shortcut           │
-  │   │      └── session.shortcut_revoked → Remove shortcut          │
-  │   │                                                              │
-  │   ├── ClientEventNormalizer.NormalizeEventPayload()              │
-  │   │      ├── Validate event_name against whitelist               │
-  │   │      └── Fix name mangling (NSwag "_" → "." normalization)   │
-  │   │                                                              │
-  │   └── Create BinaryMessage(Event flag) → SendMessageAsync        │
-  │         ├── Client connected → deliver                           │
-  │         └── Client disconnected → throw → NACK → requeue        │
-  └──────────────────────────────────────────────────────────────────┘
+ ┌──────────────────────────────────────────────────────────────────┐
+ │ Any Service │
+ │ await _clientEventPublisher.PublishAsync(sessionId, event) │
+ └─────────────────────────────┬────────────────────────────────────┘
+ │
+ ┌─────────────────────────────▼────────────────────────────────────┐
+ │ RabbitMQ (bannou-client-events exchange) │
+ │ Queue: CONNECT_SESSION_{sessionId} │
+ └─────────────────────────────┬────────────────────────────────────┘
+ │
+ ┌─────────────────────────────▼────────────────────────────────────┐
+ │ Connect Service (HandleClientEventAsync) │
+ │ ├── TryHandleInternalEventAsync? │
+ │ │ ├── permission.session_capabilities → ProcessCapabilities│
+ │ │ ├── session.shortcut_published → Add shortcut │
+ │ │ └── session.shortcut_revoked → Remove shortcut │
+ │ │ │
+ │ ├── ClientEventNormalizer.NormalizeEventPayload() │
+ │ │ ├── Validate event_name against whitelist │
+ │ │ └── Fix name mangling (NSwag "_" → "." normalization) │
+ │ │ │
+ │ └── Create BinaryMessage(Event flag) → SendMessageAsync │
+ │ ├── Client connected → deliver │
+ │ └── Client disconnected → throw → NACK → requeue │
+ └──────────────────────────────────────────────────────────────────┘
 
 
 Multi-Node Broadcast Mesh
 ============================
 
-  Instance A (Both)          Instance B (Both)          Instance C (Receive)
-  ┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐
-  │ Connect Service   │◄─ws─►│ Connect Service   │◄─ws──│ Connect Service   │
-  │ InterNodeBroadcast│       │ InterNodeBroadcast│       │ InterNodeBroadcast│
-  │ Manager           │       │ Manager           │       │ Manager           │
-  └──────────────────┘       └──────────────────┘       └──────────────────┘
-        │                          │                          │
-        ▼                          ▼                          ▼
-  broadcast-registry (Redis Sorted Set)
-  ┌──────────────────────────────────────────────────────┐
-  │ {instanceA, url, Both}  score: 1740000000            │
-  │ {instanceB, url, Both}  score: 1740000000            │
-  │ {instanceC, url, Recv}  score: 1740000000            │
-  └──────────────────────────────────────────────────────┘
+ Instance A (Both) Instance B (Both) Instance C (Receive)
+ ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
+ │ Connect Service │◄─ws─►│ Connect Service │◄─ws──│ Connect Service │
+ │ InterNodeBroadcast│ │ InterNodeBroadcast│ │ InterNodeBroadcast│
+ │ Manager │ │ Manager │ │ Manager │
+ └──────────────────┘ └──────────────────┘ └──────────────────┘
+ │ │ │
+ ▼ ▼ ▼
+ broadcast-registry (Redis Sorted Set)
+ ┌──────────────────────────────────────────────────────┐
+ │ {instanceA, url, Both} score: 1740000000 │
+ │ {instanceB, url, Both} score: 1740000000 │
+ │ {instanceC, url, Recv} score: 1740000000 │
+ └──────────────────────────────────────────────────────┘
 
-  Compatibility matrix (who connects to whom):
-  ┌──────────────────┬──────┬──────┬──────┬──────┐
-  │ My Mode \ Peer   │ None │ Send │ Recv │ Both │
-  ├──────────────────┼──────┼──────┼──────┼──────┤
-  │ None             │  ✗   │  ✗   │  ✗   │  ✗   │
-  │ Send             │  ✗   │  ✗   │  ✓   │  ✓   │
-  │ Receive          │  ✗   │  ✓   │  ✗   │  ✓   │
-  │ Both             │  ✗   │  ✓   │  ✓   │  ✓   │
-  └──────────────────┴──────┴──────┴──────┴──────┘
+ Compatibility matrix (who connects to whom):
+ ┌──────────────────┬──────┬──────┬──────┬──────┐
+ │ My Mode \ Peer │ None │ Send │ Recv │ Both │
+ ├──────────────────┼──────┼──────┼──────┼──────┤
+ │ None │ ✗ │ ✗ │ ✗ │ ✗ │
+ │ Send │ ✗ │ ✗ │ ✓ │ ✓ │
+ │ Receive │ ✗ │ ✓ │ ✗ │ ✓ │
+ │ Both │ ✗ │ ✓ │ ✓ │ ✓ │
+ └──────────────────┴──────┴──────┴──────┴──────┘
 
-  Broadcast relay flow:
-  Client ──broadcast──► Instance A ──relay──► Instance B ──deliver──► B's clients
-                              │
-                              └──────relay──► Instance C ──deliver──► C's clients
+ Broadcast relay flow:
+ Client ──broadcast──► Instance A ──relay──► Instance B ──deliver──► B's clients
+ │
+ └──────relay──► Instance C ──deliver──► C's clients
 
 
 Connection Mode Behavior Matrix
 ==================================
 
-  ┌─────────────────┬───────────┬───────────┬───────────────────────────┐
-  │ Behavior        │ External  │ Relayed   │ Internal                  │
-  ├─────────────────┼───────────┼───────────┼───────────────────────────┤
-  │ Authentication  │ JWT token │ JWT token │ service-token or none     │
-  │ Broadcast       │ Blocked   │ Allowed   │ Allowed                   │
-  │ Capabilities    │ Full flow │ Full flow │ Minimal (no manifest)     │
-  │ Client events   │ Full      │ Full      │ Binary protocol only      │
-  │ Message loop    │ Full      │ Full      │ Simplified (binary only)  │
-  │ Text messages   │ Error(14) │ Error(14) │ Ignored                   │
-  │ Reconnection    │ Full      │ Full      │ No reconnection window    │
-  └─────────────────┴───────────┴───────────┴───────────────────────────┘
+ ┌─────────────────┬───────────┬───────────┬───────────────────────────┐
+ │ Behavior │ External │ Relayed │ Internal │
+ ├─────────────────┼───────────┼───────────┼───────────────────────────┤
+ │ Authentication │ JWT token │ JWT token │ service-token or none │
+ │ Broadcast │ Blocked │ Allowed │ Allowed │
+ │ Capabilities │ Full flow │ Full flow │ Minimal (no manifest) │
+ │ Client events │ Full │ Full │ Binary protocol only │
+ │ Message loop │ Full │ Full │ Simplified (binary only) │
+ │ Text messages │ Error(14) │ Error(14) │ Ignored │
+ │ Reconnection │ Full │ Full │ No reconnection window │
+ └─────────────────┴───────────┴───────────┴───────────────────────────┘
 ```
 
 ---
@@ -359,7 +359,7 @@ No outstanding stubs. All previously-tracked items (encrypted flag, compressed f
 
 ### Bugs (Fix Immediately)
 
-1. **Orphaned configuration: `CompanionRoomMode`**: Defined in `connect-configuration.yaml` and generated into `ConnectServiceConfiguration`, but `_configuration.CompanionRoomMode` is never referenced anywhere in service code. T21 violation — resolution requires implementing the companion room integration feature ([Issue #382](https://github.com/beyond-immersion/bannou-service/issues/382)) or removing the dead config. See Potential Extensions above for the design approach.
+1. **Orphaned configuration: `CompanionRoomMode`**: Defined in `connect-configuration.yaml` and generated into `ConnectServiceConfiguration`, but `_configuration.CompanionRoomMode` is never referenced anywhere in service code. violation — resolution requires implementing the companion room integration feature ([Issue #382](https://github.com/beyond-immersion/bannou-service/issues/382)) or removing the dead config. See Potential Extensions above for the design approach.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/382 -->
 
 ### Intentional Quirks

@@ -29,14 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Cross-Cutting: Telemetry Instrumentation
 
-- **T30 compliance across L2-L4**: Added `ITelemetryProvider` with `StartActivity` spans to all async methods in Transit, Worldstate, Quest, Asset, Voice, Orchestrator, Game Session, Collection, Subscription, Seed, Location, Realm, Relationship, Currency, Inventory, Item, and first six L4 plugins
+- **Telemetry compliance across L2-L4**: Added `ITelemetryProvider` with `StartActivity` spans to all async methods in Transit, Worldstate, Quest, Asset, Voice, Orchestrator, Game Session, Collection, Subscription, Seed, Location, Realm, Relationship, Currency, Inventory, Item, and first six L4 plugins
 
 #### Cross-Cutting: Production Hardening
 
 - **StateStore reference normalization**: Migrated all services to use generated `StateStoreDefinitions` constant properties instead of string literals
-- **Deprecation lifecycle normalization**: Standardized deprecation patterns (T31) across all services with triple-field model (`IsDeprecated`, `DeprecatedAt`, `DeprecationReason`)
-- **Sentinel value elimination**: Replaced `Guid.Empty` and empty string sentinels with nullable types (T26) across Quest, Game Session, Inventory, Item, Currency, and others
-- **Type safety enforcement**: Replaced string fields with proper enum/Guid types (T25) in Currency, Inventory, Item, Game Session, and Collection
+- **Deprecation lifecycle normalization**: Standardized deprecation patterns (IMPLEMENTATION TENETS) across all services with triple-field model (`IsDeprecated`, `DeprecatedAt`, `DeprecationReason`)
+- **Sentinel value elimination**: Replaced `Guid.Empty` and empty string sentinels with nullable types (IMPLEMENTATION TENETS) across Quest, Game Session, Inventory, Item, Currency, and others
+- **Type safety enforcement**: Replaced string fields with proper enum/Guid types (IMPLEMENTATION TENETS) in Currency, Inventory, Item, Game Session, and Collection
 
 #### Game Session (L2) Hardening
 
@@ -89,11 +89,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Location**: `${location.*}` variable provider, presence tracking, hardened to L3 (92%→97%)
 - **Character**: Schema NRT compliance, telemetry spans, MySQL JSON queries (90%→97%)
 - **Realm**: ETag concurrency, distributed merge lock, full event coverage (95%→100%)
-- **Game Service**: Resource cleanup on delete, T9/T21/T26/T28/T30 compliant (93%→100%)
+- **Game Service**: Resource cleanup on delete, FOUNDATION/IMPLEMENTATION TENETS compliant (93%→100%)
 - **Relationship**: Telemetry, constructor caching, deprecation lifecycle, sentinel elimination (90%→95%)
-- **Inventory**: T8/T25/T26/T29/T30 compliant, 93 tests (80%→85%)
-- **Item**: T7/T8/T25/T29/T30 compliant, 70 tests (88%→92%)
-- **Currency**: 7 bugs fixed, T25/T30 compliant (78%→85%)
+- **Inventory**: FOUNDATION/IMPLEMENTATION TENETS compliant, 93 tests (80%→85%)
+- **Item**: FOUNDATION/IMPLEMENTATION TENETS compliant, 70 tests (88%→92%)
+- **Currency**: 7 bugs fixed, IMPLEMENTATION TENETS compliant (78%→85%)
 - **Actor**: Transit and Worldstate variable providers integrated, event topic normalization (65%→90%)
 
 #### Documentation
@@ -368,10 +368,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### TENETS v8.0 (4 new tenets)
 
-- **T27**: Cross-Service Communication Discipline (direct API for higher-to-lower; DI interfaces for lower-to-higher; events for broadcast only)
-- **T28**: Resource-Managed Cleanup (dependent data cleanup via lib-resource only; never subscribe to lifecycle events for destruction)
-- **T29**: No Metadata Bag Contracts (`additionalProperties: true` is never a data contract between services)
-- **T30**: Telemetry Span Instrumentation (all async methods get `StartActivity` spans)
+- **Cross-Service Communication Discipline**: Cross-Service Communication Discipline (direct API for higher-to-lower; DI interfaces for lower-to-higher; events for broadcast only)
+- **Resource-Managed Cleanup**: Resource-Managed Cleanup (dependent data cleanup via lib-resource only; never subscribe to lifecycle events for destruction)
+- **No Metadata Bag Contracts**: No Metadata Bag Contracts (`additionalProperties: true` is never a data contract between services)
+- **Telemetry Span Instrumentation**: Telemetry Span Instrumentation (all async methods get `StartActivity` spans)
 
 ### Changed
 
@@ -396,7 +396,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `additionalProperties: true` misuse audit and systematic correction across multiple schemas
 - CustomTerms type fixes to use proper types instead of strings
 - AWS/MinIO configuration fixes for S3 SDK integration
-- Contract: `ClauseValidationCacheStalenessSeconds` dead config removed (T21 violation)
+- Contract: `ClauseValidationCacheStalenessSeconds` dead config removed (IMPLEMENTATION TENETS violation)
 - Contract: `MaxActiveContractsPerEntity` now actually counts active contracts
 - Contract: `ParseClauseAmount` fails on missing `base_amount` instead of silently returning 0
 - Escrow: Fixed unreachable `Releasing` state in state machine
@@ -422,7 +422,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Permission registration event system (replaced by DI Provider interfaces)
 - Actor L4 event subscriptions for cache invalidation (belongs to provider owners)
 - Auth subscription management endpoints (moved to dedicated Subscription service)
-- Dead configuration properties across multiple services (T21 compliance)
+- Dead configuration properties across multiple services (IMPLEMENTATION TENETS compliance)
 - ABML merger test fixtures relocated from `bannou-service/Abml/fixtures/`
 - `.claude/settings.json`
 
@@ -482,9 +482,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Time-based memory decay applied lazily
   - Weighted sentiment aggregation
 - **TENETS v6.0**: Major documentation restructuring
-  - New T25 (Type Safety): ALL models must use proper types (enums, GUIDs) - no string representations
-  - T21 expanded: No dead configuration, no hardcoded tunables
-  - T0 added: Never reference tenet numbers in source code
+  - New tenet (Type Safety): ALL models must use proper types (enums, GUIDs) - no string representations
+  - Configuration-First tenet expanded: No dead configuration, no hardcoded tunables
+  - Tenet added: Never reference tenet numbers in source code
 - **SCHEMA-RULES.md**: Comprehensive schema authoring reference (899 lines)
   - 10-step generation pipeline with dependencies
   - Extension attributes documentation

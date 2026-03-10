@@ -67,7 +67,7 @@ public enum HttpMethodTypes
 /// </para>
 /// <para>
 /// All service methods return <c>(StatusCodes, TResponse?)</c> tuples.
-/// See TENETS.md T8: Return Pattern for usage requirements.
+/// See IMPLEMENTATION TENETS: Return Pattern for usage requirements.
 /// </para>
 /// <para>
 /// <b>WARNING - DO NOT ADD NEW STATUS CODES WITHOUT EXPLICIT APPROVAL.</b>

@@ -602,7 +602,7 @@ Does persistent data in OTHER services/entities store this entity's ID?
 
 These are foundational definitions that other entities reference by ID. Deletion would orphan or corrupt downstream data. The transition period gives operators and automated systems time to migrate references.
 
-**Current Category A entities**: Species, Realm, Relationship Type, Seed Type, Location, Faction.
+**Current Category A entities**: Species, Realm, Relationship Type, Seed Type, Location, Faction, Status Template, Transit Mode.
 
 **Lifecycle**: `Active` → `Deprecated` → (optional `Merge`) → `Delete`
 
@@ -639,18 +639,17 @@ All three fields are MANDATORY for Category A. `DeprecationReason` provides audi
 
 These are templates/definitions where instances persist independently. The template must remain readable forever because historical instances reference it. Deprecation prevents new instances while preserving the template as a read-only archive.
 
-**Current Category B entities**: Item Template, Quest Definition, Chat Room Type, Gardener Scenario Template, Storyline Scenario Definition.
+**Current Category B entities**: Item Template, Quest Definition, Chat Room Type, Gardener Scenario Template, Storyline Scenario Definition, Achievement Definition, Contract Template, Currency Definition, Character-Encounter EncounterType, Collection Entry Template, License Board Template, Leaderboard Definition.
 
-**Lifecycle**: `Active` → `Deprecated` (terminal — no delete endpoint today)
+**Lifecycle**: `Active` → `Deprecated` → (clean-deprecated sweep removes when zero instances remain)
 
 **Required endpoints**:
 - `POST /{entity}/deprecate` — marks deprecated, publishes `*.updated` event
+- `POST /{entity}/clean-deprecated` — sweep operation that removes deprecated entities with zero remaining instances (see Clean-Deprecated Pattern below)
 - NO undeprecate endpoint (the "no new instances" guarantee is part of the system's contract)
-- NO delete endpoint (template persists forever — see Future: Safe Deletion below)
+- NO per-entity delete endpoint (deletion is via the clean-deprecated sweep only)
 
-**Unused lifecycle events**: Because `x-lifecycle` auto-generates `*.created`, `*.updated`, and `*.deleted` event types for the entity, Category B entities will have a `*.deleted` event type defined in the generated schema that is never published. This is expected and correct — the event type exists as infrastructure for the future safe deletion pattern described below. Do not remove these event types from the schema; do not treat their existence as an error or count them as "published events."
-
-**Future: Safe Deletion**: Category B entities will eventually support a guarded permanent deletion endpoint that requires ALL instances referencing the template to have been removed first. The template must already be deprecated, and the service must verify zero live references before allowing deletion — only then is the `*.deleted` event published. Until this pattern is implemented, Category B entities have no delete path and the `*.deleted` lifecycle event remains unused.
+**Lifecycle events**: `x-lifecycle` auto-generates `*.created`, `*.updated`, and `*.deleted` event types. The `*.deleted` event is published by the clean-deprecated sweep when a deprecated entity with zero instances is permanently removed.
 
 **Required storage**: Either the triple-field model (matching Category A) OR a status enum when the entity has additional lifecycle states beyond active/deprecated:
 
@@ -699,25 +698,42 @@ Every Category B entity MUST satisfy ALL of the following. Use `lib-item` (Item 
 | B13 | Deprecation is idempotent — return `OK` if already deprecated | Do NOT return Conflict; the caller's intent is satisfied |
 | B14 | Deprecation publishes `*.updated` event with `changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"]` | Do NOT create a dedicated `*.deprecated` event |
 | B15 | Instance creation checks `IsDeprecated` and returns `BadRequest` if true | This is the entire purpose of Category B deprecation |
-| B16 | `*.deleted` publisher method exists (generated) but is never called | Structural test must exclude this; do not remove from schema |
+| B16 | `*.deleted` publisher method exists (generated) and is called by clean-deprecated | Published when clean sweep permanently removes a deprecated entity |
+
+#### Clean-Deprecated Endpoint Checklist (`{service}-api.yaml`)
+
+| # | Requirement | Notes |
+|---|-------------|-------|
+| B17 | `POST /{service}/{entity}/clean-deprecated` endpoint | Uses shared `CleanDeprecatedRequest` / `CleanDeprecatedResponse` from `common-api.yaml` |
+| B18 | Endpoint has `x-permissions: [role: admin]` | Cleanup deletes data — admin-level operation |
+| B19 | Description mentions Category B cleanup sweep, grace period, dry-run, idempotent | Standard description: "Category B cleanup sweep (per IMPLEMENTATION TENETS)..." |
+
+#### Clean-Deprecated Implementation Checklist
+
+| # | Requirement | Notes |
+|---|-------------|-------|
+| B20 | Implementation uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/` | Provides standardized per-item error isolation, grace period evaluation, dry-run support, and logging |
+| B21 | Service provides delegates for: get deprecated entities, get entity ID, get deprecated-at, check active instances, delete-and-publish | These are inherently service-specific — the helper orchestrates, the service provides substance |
+| B22 | Delete-and-publish delegate removes entity from all stores/indexes AND publishes `*.deleted` event | The previously-unused `*.deleted` lifecycle event is now published here |
 
 #### Current Category B Entities (Exhaustive)
 
-All Category B entities are B1–B16 compliant as of 2026-03-09. See GitHub Issue #611 for the standardization audit trail.
+All Category B entities are B1–B22 compliant as of 2026-03-09. See GitHub Issue #611 for the standardization audit trail.
 
 | Entity | Service | Layer | Reference Quality |
 |--------|---------|-------|-------------------|
 | Item Template | Item | L2 | **Gold standard** — reference implementation |
 | Collection Entry Template | Collection | L2 | **Gold standard** — reference implementation |
-| Quest Definition | Quest | L2 | Compliant (B1–B16) |
-| Chat Room Type | Chat | L1 | Compliant (B1–B16) |
-| Gardener Scenario Template | Gardener | L4 | Compliant (B1–B16) |
-| Storyline Scenario Definition | Storyline | L4 | Compliant (B1–B16) |
-| Contract Template | Contract | L1 | Compliant (B1–B16) |
-| Currency Definition | Currency | L2 | Compliant (B1–B16) |
-| Character-Encounter EncounterType | Character-Encounter | L4 | Compliant (B1–B16) |
-| License Board Template | License | L4 | Compliant (B1–B16) |
-| Leaderboard Definition | Leaderboard | L4 | Compliant (B1–B16) |
+| Quest Definition | Quest | L2 | Schema compliant (B1–B19); implementation pending (B20–B22) |
+| Chat Room Type | Chat | L1 | Schema compliant (B1–B19); implementation pending (B20–B22) |
+| Gardener Scenario Template | Gardener | L4 | Schema compliant (B1–B19); implementation pending (B20–B22) |
+| Storyline Scenario Definition | Storyline | L4 | Schema compliant (B1–B19); implementation pending (B20–B22) |
+| Contract Template | Contract | L1 | Schema compliant (B1–B19); implementation pending (B20–B22) |
+| Currency Definition | Currency | L2 | Schema compliant (B1–B19); implementation pending (B20–B22) |
+| Character-Encounter EncounterType | Character-Encounter | L4 | Schema compliant (B1–B19); implementation pending (B20–B22) |
+| License Board Template | License | L4 | Schema compliant (B1–B19); implementation pending (B20–B22) |
+| Leaderboard Definition | Leaderboard | L4 | Schema compliant (B1–B19); implementation pending (B20–B22) |
+| Achievement Definition | Achievement | L4 | Schema compliant (B1–B19); implementation pending (B20–B22) |
 
 ### What Does NOT Get Deprecation
 

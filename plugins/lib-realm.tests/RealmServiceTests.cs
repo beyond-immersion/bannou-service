@@ -627,7 +627,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Act
         var status = await service.DeleteRealmAsync(request);
 
-        // Assert — per FOUNDATION TENETS T31: reject delete with BadRequest if not deprecated
+        // Assert — per IMPLEMENTATION TENETS: reject delete with BadRequest if not deprecated
         Assert.Equal(StatusCodes.BadRequest, status);
 
         // Verify no delete occurred

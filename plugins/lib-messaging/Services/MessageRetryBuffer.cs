@@ -252,7 +252,7 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
     /// Uses fire-and-forget pattern with proper error handling via ProcessRetryBufferAsync.
     /// </summary>
     /// <remarks>
-    /// IMPLEMENTATION TENETS (T23): Timer callbacks cannot be async directly.
+    /// IMPLEMENTATION TENETS: Timer callbacks cannot be async directly.
     /// We use fire-and-forget with discard operator, but all exceptions are
     /// handled inside ProcessRetryBufferAsync to prevent process crashes.
     /// </remarks>
@@ -358,7 +358,7 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
                         message.MessageId,
                         messageAge);
 
-                    // IMPLEMENTATION TENETS (T7): Publish error event for monitoring/alerting
+                    // IMPLEMENTATION TENETS: Publish error event for monitoring/alerting
                     // Poison messages are unexpected infrastructure failures that operators need to know about
                     if (_messageBus != null)
                     {

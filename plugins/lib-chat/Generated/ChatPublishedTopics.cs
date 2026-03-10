@@ -29,10 +29,10 @@ public static class ChatPublishedTopics
     /// <summary>Published when a new room type is registered.</summary>
     public const string ChatRoomTypeCreated = "chat.room-type.created";
 
-    /// <summary>Published when a room type is updated.</summary>
+    /// <summary>Published when a room type is updated, including deprecation via changedFields.</summary>
     public const string ChatRoomTypeUpdated = "chat.room-type.updated";
 
-    /// <summary>Published when a room type is deleted.</summary>
+    /// <summary>Unused Category B infrastructure — room types are never deleted. Publisher method exists in generated code but is never called.</summary>
     public const string ChatRoomTypeDeleted = "chat.room-type.deleted";
 
     /// <summary>Published when a participant joins a chat room.</summary>

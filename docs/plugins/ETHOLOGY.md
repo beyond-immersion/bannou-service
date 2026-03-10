@@ -34,10 +34,10 @@ For non-character entities -- wolves, bears, monsters, dungeon creatures, wildli
 
 ```yaml
 variables:
-  hunger_threshold: 0.7     # Same for every creature
-  fear_threshold: 0.5       # Same for every creature
-  territory_radius: 50.0    # Same for every creature
-  aggression_level: 0.3     # Same for every creature
+ hunger_threshold: 0.7 # Same for every creature
+ fear_threshold: 0.5 # Same for every creature
+ territory_radius: 50.0 # Same for every creature
+ aggression_level: 0.3 # Same for every creature
 ```
 
 Every wolf is identical. Every bear is identical. A wolf and a bear sharing the same behavior document have the same defaults. The only differentiation mechanism is which ABML document loads (via the variant chain), not what values feed into that document.
@@ -58,23 +58,23 @@ Every species with behavioral actors has an archetype definition:
 
 ```
 BehavioralArchetype:
-  archetypeId:       Guid
-  gameServiceId:     Guid          # Game service scope
-  speciesCode:       string        # Links to Species service entity
-  archetypeCode:     string        # Unique code within game scope (e.g., "wolf", "cave-bear")
-  displayName:       string
-  description:       string
-  category:          string        # "predator", "prey", "apex", "scavenger", "ambient", "pack", "solitary", "custom"
-  axes:              ArchetypeAxis[]  # Behavioral axis definitions with base values
-  activityPattern:   ActivityPattern    # Diurnal, Nocturnal, Crepuscular, Cathemeral (service-specific enum, PascalCase)
-  dietType:          DietType          # Carnivore, Herbivore, Omnivore, Detritivore (service-specific enum, PascalCase)
-  socialStructure:   SocialStructure   # Solitary, Pair, Pack, Herd, Swarm, Colony (service-specific enum, PascalCase)
-  noiseAmplitude:    float         # Max individual noise offset (default 0.1, range 0.0-0.3)
-  isDeprecated:      bool
-  deprecatedAt:      DateTime?
-  deprecationReason: string?
-  createdAt:         DateTime
-  updatedAt:         DateTime
+ archetypeId: Guid
+ gameServiceId: Guid # Game service scope
+ speciesCode: string # Links to Species service entity
+ archetypeCode: string # Unique code within game scope (e.g., "wolf", "cave-bear")
+ displayName: string
+ description: string
+ category: string # "predator", "prey", "apex", "scavenger", "ambient", "pack", "solitary", "custom"
+ axes: ArchetypeAxis[] # Behavioral axis definitions with base values
+ activityPattern: ActivityPattern # Diurnal, Nocturnal, Crepuscular, Cathemeral (service-specific enum, PascalCase)
+ dietType: DietType # Carnivore, Herbivore, Omnivore, Detritivore (service-specific enum, PascalCase)
+ socialStructure: SocialStructure # Solitary, Pair, Pack, Herd, Swarm, Colony (service-specific enum, PascalCase)
+ noiseAmplitude: float # Max individual noise offset (default 0.1, range 0.0-0.3)
+ isDeprecated: bool
+ deprecatedAt: DateTime?
+ deprecationReason: string?
+ createdAt: DateTime
+ updatedAt: DateTime
 ```
 
 ### Behavioral Axes
@@ -83,12 +83,12 @@ Axes are the core data structure -- named behavioral dimensions with float value
 
 ```
 ArchetypeAxis:
-  axisCode:       string      # "aggression", "territoriality", "curiosity", etc.
-  displayName:    string      # "Aggression"
-  baseValue:      float       # Species-level default (0.0-1.0)
-  minValue:       float       # Lower bound after overrides + noise (default 0.0)
-  maxValue:       float       # Upper bound after overrides + noise (default 1.0)
-  description:    string      # "How readily this entity initiates hostile action"
+ axisCode: string # "aggression", "territoriality", "curiosity", etc.
+ displayName: string # "Aggression"
+ baseValue: float # Species-level default (0.0-1.0)
+ minValue: float # Lower bound after overrides + noise (default 0.0)
+ maxValue: float # Upper bound after overrides + noise (default 1.0)
+ description: string # "How readily this entity initiates hostile action"
 ```
 
 Axis codes are **opaque strings** (not enums), following the same extensibility pattern as seed type codes, collection type codes, and lifecycle stage codes. These are Arcadia conventions, not constraints:
@@ -110,34 +110,34 @@ A game with different needs defines entirely different axes. A survival horror m
 
 ```
 Wolf (predator, pack):
-  aggression:     0.7     # Aggressive, especially in packs
-  territoriality: 0.8     # Strongly territorial
-  curiosity:      0.4     # Moderately curious
-  fear_threshold: 0.5     # Mid-range -- fights or flees depending on odds
-  sociality:      0.9     # Highly social, pack-oriented
-  persistence:    0.7     # Persistent in pursuit
-  vigilance:      0.6     # Alert but not hypervigilant
-  docility:       0.2     # Difficult to tame
+ aggression: 0.7 # Aggressive, especially in packs
+ territoriality: 0.8 # Strongly territorial
+ curiosity: 0.4 # Moderately curious
+ fear_threshold: 0.5 # Mid-range -- fights or flees depending on odds
+ sociality: 0.9 # Highly social, pack-oriented
+ persistence: 0.7 # Persistent in pursuit
+ vigilance: 0.6 # Alert but not hypervigilant
+ docility: 0.2 # Difficult to tame
 
 Deer (prey, herd):
-  aggression:     0.1     # Almost never aggressive (males in rut: override)
-  territoriality: 0.2     # Weak territorial instinct
-  curiosity:      0.5     # Moderately curious
-  fear_threshold: 0.2     # Very skittish -- flees at low threat
-  sociality:      0.7     # Herd animal
-  persistence:    0.3     # Gives up quickly when pursued
-  vigilance:      0.8     # Highly vigilant
-  docility:       0.4     # Somewhat tameable
+ aggression: 0.1 # Almost never aggressive (males in rut: override)
+ territoriality: 0.2 # Weak territorial instinct
+ curiosity: 0.5 # Moderately curious
+ fear_threshold: 0.2 # Very skittish -- flees at low threat
+ sociality: 0.7 # Herd animal
+ persistence: 0.3 # Gives up quickly when pursued
+ vigilance: 0.8 # Highly vigilant
+ docility: 0.4 # Somewhat tameable
 
 Cave Bear (apex, solitary):
-  aggression:     0.6     # Aggressive when threatened, not actively predatory
-  territoriality: 0.9     # Extremely territorial about den
-  curiosity:      0.3     # Low curiosity -- suspicious of novelty
-  fear_threshold: 0.8     # Very brave -- rarely flees
-  sociality:      0.1     # Solitary except during mating
-  persistence:    0.5     # Moderate chase persistence
-  vigilance:      0.4     # Moderate (apex has fewer threats)
-  docility:       0.1     # Nearly impossible to tame
+ aggression: 0.6 # Aggressive when threatened, not actively predatory
+ territoriality: 0.9 # Extremely territorial about den
+ curiosity: 0.3 # Low curiosity -- suspicious of novelty
+ fear_threshold: 0.8 # Very brave -- rarely flees
+ sociality: 0.1 # Solitary except during mating
+ persistence: 0.5 # Moderate chase persistence
+ vigilance: 0.4 # Moderate (apex has fewer threats)
+ docility: 0.1 # Nearly impossible to tame
 ```
 
 ---
@@ -150,22 +150,22 @@ Environmental overrides modify archetype base values for specific realms and loc
 
 ```
 EnvironmentalOverride:
-  overrideId:      Guid
-  gameServiceId:   Guid
-  archetypeCode:   string        # Which archetype this modifies
-  scopeType:       OverrideScopeType  # Realm or Location (service-specific enum)
-  scopeId:         Guid          # RealmId or LocationId
-  reason:          string        # "harsh_climate", "plentiful_food", "heavy_predation", etc.
-  axisModifiers:   AxisModifier[]
-  isActive:        bool          # Can be disabled without deletion
-  createdAt:       DateTime
-  updatedAt:       DateTime
+ overrideId: Guid
+ gameServiceId: Guid
+ archetypeCode: string # Which archetype this modifies
+ scopeType: OverrideScopeType # Realm or Location (service-specific enum)
+ scopeId: Guid # RealmId or LocationId
+ reason: string # "harsh_climate", "plentiful_food", "heavy_predation", etc.
+ axisModifiers: AxisModifier[]
+ isActive: bool # Can be disabled without deletion
+ createdAt: DateTime
+ updatedAt: DateTime
 ```
 
 ```
 AxisModifier:
-  axisCode:        string        # Which axis to modify
-  modifier:        float         # Additive modifier (can be negative)
+ axisCode: string # Which axis to modify
+ modifier: float # Additive modifier (can be negative)
 ```
 
 ### Override Resolution
@@ -176,8 +176,8 @@ When computing an entity's nature values, overrides are resolved hierarchically:
 1. Start with species archetype base values
 2. Apply realm-level overrides (if any exist for this archetype + realm)
 3. Apply location-level overrides (if any exist for this archetype + location)
-   - Location overrides stack ON TOP of realm overrides (additive)
-   - More specific scope wins for the same axis (location replaces realm modifier for that axis)
+ - Location overrides stack ON TOP of realm overrides (additive)
+ - More specific scope wins for the same axis (location replaces realm modifier for that axis)
 4. Apply individual noise (deterministic hash from entity ID + axis code)
 5. Clamp all values to [minValue, maxValue] range per axis
 ```
@@ -186,26 +186,26 @@ When computing an entity's nature values, overrides are resolved hierarchically:
 
 ```
 Wolf in Ironpeak Mountains (harsh, high-altitude realm):
-  Base archetype:        aggression = 0.7
-  Realm override:        aggression +0.15  (harsh climate breeds aggression)
-  Location override:     (none for this location)
-  Individual noise:      aggression +0.03  (this wolf is slightly above average)
-  Final:                 aggression = 0.88
+ Base archetype: aggression = 0.7
+ Realm override: aggression +0.15 (harsh climate breeds aggression)
+ Location override: (none for this location)
+ Individual noise: aggression +0.03 (this wolf is slightly above average)
+ Final: aggression = 0.88
 
 Wolf in Verdant Meadows (gentle, resource-rich realm):
-  Base archetype:        aggression = 0.7
-  Realm override:        aggression -0.2   (plentiful food reduces aggression)
-  Location override:     (none)
-  Individual noise:      aggression -0.05  (this wolf is slightly below average)
-  Final:                 aggression = 0.45
+ Base archetype: aggression = 0.7
+ Realm override: aggression -0.2 (plentiful food reduces aggression)
+ Location override: (none)
+ Individual noise: aggression -0.05 (this wolf is slightly below average)
+ Final: aggression = 0.45
 
 Deer near Wolf Den (location-specific override):
-  Base archetype:        vigilance = 0.8
-  Realm override:        (none)
-  Location override:     vigilance +0.15   (proximity to predator den)
-                         fear_threshold -0.1 (more skittish near predators)
-  Individual noise:      vigilance +0.02
-  Final:                 vigilance = 0.97, fear_threshold = 0.12
+ Base archetype: vigilance = 0.8
+ Realm override: (none)
+ Location override: vigilance +0.15 (proximity to predator den)
+ fear_threshold -0.1 (more skittish near predators)
+ Individual noise: vigilance +0.02
+ Final: vigilance = 0.97, fear_threshold = 0.12
 ```
 
 ### Why Location-Level Matters
@@ -215,17 +215,17 @@ Location overrides enable **emergent ecological storytelling**. A deity actor (S
 ```yaml
 # Regional watcher behavior: after a wolf pack moves into the forest
 flows:
-  ecosystem_adjustment:
-    - action: register_ethology_override
-        archetype_code: "deer"
-        scope_type: "location"
-        scope_id: "${watch_region.location_id}"
-        axis_modifiers:
-          - axis: "vigilance"
-            modifier: 0.15
-          - axis: "fear_threshold"
-            modifier: -0.1
-        reason: "wolf_pack_established"
+ ecosystem_adjustment:
+ - action: register_ethology_override
+ archetype_code: "deer"
+ scope_type: "location"
+ scope_id: "${watch_region.location_id}"
+ axis_modifiers:
+ - axis: "vigilance"
+ modifier: 0.15
+ - axis: "fear_threshold"
+ modifier: -0.1
+ reason: "wolf_pack_established"
 ```
 
 The deer in that area become more vigilant and skittish -- not because someone scripted it, but because the ecosystem simulation produced it. This is the "emergent over authored" principle applied to ecology.
@@ -242,14 +242,14 @@ Individual noise provides per-entity variation without per-entity storage:
 
 ```
 noise(entityId, axisCode, amplitude) =
-  hash(entityId + axisCode) normalized to [-amplitude, +amplitude]
+ hash(entityId + axisCode) normalized to [-amplitude, +amplitude]
 
 Where:
-  - entityId: the entity's Guid (character, actor, creature instance)
-  - axisCode: the behavioral axis being computed
-  - amplitude: the archetype's noiseAmplitude setting (default 0.1)
-  - hash: deterministic hash function (e.g., MurmurHash3 on concatenated bytes)
-  - normalization: hash output mapped to [-amplitude, +amplitude] range
+ - entityId: the entity's Guid (character, actor, creature instance)
+ - axisCode: the behavioral axis being computed
+ - amplitude: the archetype's noiseAmplitude setting (default 0.1)
+ - hash: deterministic hash function (e.g., MurmurHash3 on concatenated bytes)
+ - normalization: hash output mapped to [-amplitude, +amplitude] range
 ```
 
 **Properties**:
@@ -285,27 +285,27 @@ When `NatureProviderFactory.CreateAsync()` receives an entity ID, it must determ
 
 ```
 Resolution Flow:
-  1. Query archetype for the entity's species code
-     - Species code comes from the actor template's metadata
-     - If no archetype exists for this species: return empty provider (graceful degradation)
+ 1. Query archetype for the entity's species code
+ - Species code comes from the actor template's metadata
+ - If no archetype exists for this species: return empty provider (graceful degradation)
 
-  2. Check if Heritage provider data is available:
-     - Attempt to read from the lifecycle cache (heritage phenotype)
-     - If Heritage data exists AND is non-empty:
-       → Use Heritage phenotype values for axes that have personality/aptitude mappings
-       → Fall back to archetype base + overrides + noise for axes WITHOUT Heritage mappings
-     - If Heritage data is unavailable:
-       → Use full archetype resolution (base + overrides + noise)
+ 2. Check if Heritage provider data is available:
+ - Attempt to read from the lifecycle cache (heritage phenotype)
+ - If Heritage data exists AND is non-empty:
+ → Use Heritage phenotype values for axes that have personality/aptitude mappings
+ → Fall back to archetype base + overrides + noise for axes WITHOUT Heritage mappings
+ - If Heritage data is unavailable:
+ → Use full archetype resolution (base + overrides + noise)
 
-  3. Apply environmental overrides:
-     - Heritage-sourced values are NOT overridden (genetics > environment for characters)
-     - Archetype-sourced values ARE overridden by realm/location modifiers
+ 3. Apply environmental overrides:
+ - Heritage-sourced values are NOT overridden (genetics > environment for characters)
+ - Archetype-sourced values ARE overridden by realm/location modifiers
 
-  4. Apply individual noise:
-     - Heritage-sourced values: NO noise applied (Heritage already provides individual variation)
-     - Archetype-sourced values: noise applied as normal
+ 4. Apply individual noise:
+ - Heritage-sourced values: NO noise applied (Heritage already provides individual variation)
+ - Archetype-sourced values: noise applied as normal
 
-  5. Return computed NatureProfile as IVariableProvider
+ 5. Return computed NatureProfile as IVariableProvider
 ```
 
 ### Why Characters Need This Too
@@ -353,61 +353,61 @@ Implements `IVariableProviderFactory` (via `NatureProviderFactory`). Loads from 
 
 ```yaml
 flows:
-  creature_decision:
-    - cond:
-        # Territorial species -- defend territory aggressively
-        - when: "${nature.territoriality > 0.7
-                  && perception.intruder_in_territory}"
-          then:
-            - call: territorial_defense
-            - set:
-                response_intensity: "${nature.aggression * nature.persistence}"
+ creature_decision:
+ - cond:
+ # Territorial species -- defend territory aggressively
+ - when: "${nature.territoriality > 0.7
+ && perception.intruder_in_territory}"
+ then:
+ - call: territorial_defense
+ - set:
+ response_intensity: "${nature.aggression * nature.persistence}"
 
-        # Prey species -- flee early
-        - when: "${nature.fear_threshold < 0.3
-                  && perception.threat_detected}"
-          then:
-            - call: flee_response
-            - set:
-                flee_urgency: "${1.0 - nature.fear_threshold}"
+ # Prey species -- flee early
+ - when: "${nature.fear_threshold < 0.3
+ && perception.threat_detected}"
+ then:
+ - call: flee_response
+ - set:
+ flee_urgency: "${1.0 - nature.fear_threshold}"
 
-        # Curious creature encountering novelty
-        - when: "${nature.curiosity > 0.6
-                  && perception.novel_stimulus
-                  && !perception.threat_detected}"
-          then:
-            - call: investigate_stimulus
+ # Curious creature encountering novelty
+ - when: "${nature.curiosity > 0.6
+ && perception.novel_stimulus
+ && !perception.threat_detected}"
+ then:
+ - call: investigate_stimulus
 
-  pack_behavior:
-    - cond:
-        # Highly social -- seek group
-        - when: "${nature.sociality > 0.7
-                  && !perception.pack_nearby}"
-          then:
-            - call: seek_pack_members
-            - set:
-                loneliness: "${nature.sociality * 0.8}"
+ pack_behavior:
+ - cond:
+ # Highly social -- seek group
+ - when: "${nature.sociality > 0.7
+ && !perception.pack_nearby}"
+ then:
+ - call: seek_pack_members
+ - set:
+ loneliness: "${nature.sociality * 0.8}"
 
-        # Alpha behavior -- this individual is more aggressive than pack average
-        - when: "${nature.aggression > 0.8
-                  && nature.sociality > 0.5
-                  && perception.pack_nearby}"
-          then:
-            - call: assert_dominance
+ # Alpha behavior -- this individual is more aggressive than pack average
+ - when: "${nature.aggression > 0.8
+ && nature.sociality > 0.5
+ && perception.pack_nearby}"
+ then:
+ - call: assert_dominance
 
-  # Same variable works for characters too
-  character_combat_style:
-    - cond:
-        # Character inherits aggressive nature from heritage/species
-        - when: "${nature.aggression > 0.7
-                  && nature.fear_threshold > 0.6}"
-          then:
-            - call: aggressive_combat_opener
-        # Cautious nature -- wait and observe
-        - when: "${nature.aggression < 0.3
-                  && nature.vigilance > 0.6}"
-          then:
-            - call: defensive_stance
+ # Same variable works for characters too
+ character_combat_style:
+ - cond:
+ # Character inherits aggressive nature from heritage/species
+ - when: "${nature.aggression > 0.7
+ && nature.fear_threshold > 0.6}"
+ then:
+ - call: aggressive_combat_opener
+ # Cautious nature -- wait and observe
+ - when: "${nature.aggression < 0.3
+ && nature.vigilance > 0.6}"
+ then:
+ - call: defensive_stance
 ```
 
 ---
@@ -533,14 +533,14 @@ Lifecycle events are auto-generated via `x-lifecycle` in `ethology-events.yaml` 
 |-------|---------|--------|
 | `species.deprecated` | `HandleSpeciesDeprecatedAsync` | **Informational only (not cleanup).** When a species is deprecated, log a warning if active archetypes reference it. Do NOT auto-deprecate the archetype -- archetypes may outlive species deprecation for migration purposes. This is a live state reaction (logging), not dependent data destruction, so event subscription is acceptable per FOUNDATION TENETS. |
 
-**Events NOT consumed** (cleanup via lib-resource instead, per FOUNDATION TENETS T28):
+**Events NOT consumed** (cleanup via lib-resource instead, per FOUNDATION TENETS):
 - `species.deleted` -- handled by x-references cleanup endpoint `/ethology/cleanup-by-species`
 - `location.deleted` -- handled by x-references cleanup endpoint `/ethology/cleanup-by-location`
 - `location.deprecated` -- no action needed; overrides for deprecated locations remain active until location is deleted via lib-resource cleanup
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
-Dependent data cleanup uses lib-resource exclusively (per FOUNDATION TENETS T28). Event-based cleanup is forbidden for data destruction.
+Dependent data cleanup uses lib-resource exclusively (per FOUNDATION TENETS). Event-based cleanup is forbidden for data destruction.
 
 **x-references entries** (declared in `ethology-api.yaml`):
 
@@ -613,7 +613,7 @@ Dependent data cleanup uses lib-resource exclusively (per FOUNDATION TENETS T28)
 
 All endpoints `x-permissions: [{role: developer}]`.
 
-- **RegisterArchetype** (`/ethology/archetype/register`): Creates a new behavioral archetype for a species within a game service. Validates species exists via `ISpeciesClient`. Validates archetype code uniqueness within game scope. Validates axis codes are unique within the archetype. Rejects creation if species is deprecated (cross-service deprecation check per IMPLEMENTATION TENETS T31). Publishes `ethology.archetype.created`.
+- **RegisterArchetype** (`/ethology/archetype/register`): Creates a new behavioral archetype for a species within a game service. Validates species exists via `ISpeciesClient`. Validates archetype code uniqueness within game scope. Validates axis codes are unique within the archetype. Rejects creation if species is deprecated (cross-service deprecation check per IMPLEMENTATION TENETS). Publishes `ethology.archetype.created`.
 
 - **GetArchetype** (`/ethology/archetype/get`): Returns full archetype definition by ID.
 
@@ -623,7 +623,7 @@ All endpoints `x-permissions: [{role: developer}]`.
 
 - **UpdateArchetype** (`/ethology/archetype/update`): Partial update of archetype definition. Can modify axis base values, add/remove axes, change noise amplitude, update metadata. Changed axes invalidate all cached nature profiles for entities using this archetype. Publishes `ethology.archetype.updated` with changed fields.
 
-- **ListArchetypes** (`/ethology/archetype/list`): Paged list of archetypes within a game service. Filterable by category. Accepts `includeDeprecated: boolean` (default: `false`) per IMPLEMENTATION TENETS T31 -- deprecated archetypes excluded from results by default but accessible when explicitly requested.
+- **ListArchetypes** (`/ethology/archetype/list`): Paged list of archetypes within a game service. Filterable by category. Accepts `includeDeprecated: boolean` (default: `false`) per IMPLEMENTATION TENETS -- deprecated archetypes excluded from results by default but accessible when explicitly requested.
 
 - **DeprecateArchetype** (`/ethology/archetype/deprecate`): Marks archetype deprecated with reason (triple-field model: `isDeprecated`, `deprecatedAt`, `deprecationReason`). Idempotent -- returns OK if already deprecated. **Category A entity** (overrides reference archetypeCode). Existing entities continue using cached data. Creating new overrides for a deprecated archetype is rejected with BadRequest. Publishes `ethology.archetype.updated` with changedFields containing deprecation fields.
 
@@ -631,7 +631,7 @@ All endpoints `x-permissions: [{role: developer}]`.
 
 - **DeleteArchetype** (`/ethology/archetype/delete`): Permanent removal (Category A). MUST reject with BadRequest if not deprecated first. Checks lib-resource for references (environmental overrides). If references exist, executes cleanup via lib-resource with ALL_REQUIRED policy (cascades to remove all overrides for this archetype). If cleanup fails, returns Conflict. Publishes `ethology.archetype.deleted`.
 
-- **SeedArchetypes** (`/ethology/archetype/seed`): Bulk creation/update of archetypes from configuration. Idempotent with `updateExisting` flag. Used during world initialization to define all species behavioral baselines at once. Acquires per-archetype distributed locks (lock key: `archetype:{archetypeCode}`) to ensure multi-instance safety per IMPLEMENTATION TENETS T9.
+- **SeedArchetypes** (`/ethology/archetype/seed`): Bulk creation/update of archetypes from configuration. Idempotent with `updateExisting` flag. Used during world initialization to define all species behavioral baselines at once. Acquires per-archetype distributed locks (lock key: `archetype:{archetypeCode}`) to ensure multi-instance safety per IMPLEMENTATION TENETS.
 
 ### Override Management (6 endpoints)
 
@@ -661,7 +661,7 @@ All nature query endpoints `x-permissions: []` (service-to-service only via lib-
 
 ### Cleanup Endpoints (3 endpoints)
 
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS T28). All cleanup endpoints `x-permissions: []` (service-to-service only -- called by lib-resource during coordinated deletion).
+Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). All cleanup endpoints `x-permissions: []` (service-to-service only -- called by lib-resource during coordinated deletion).
 
 - **CleanupByRealm** (`/ethology/cleanup-by-realm`): Removes all realm-scoped overrides for the deleted realm. Location-scoped overrides within the realm are also removed (cleanup ensures no orphans).
 
@@ -679,79 +679,79 @@ When a dungeon spawns a creature, the creature needs behavioral defaults. lib-et
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    NATURE RESOLUTION PIPELINE                          │
-│                                                                      │
-│  INPUT: entityId, speciesCode, realmId, locationId                   │
-│                                                                      │
-│  STEP 1: ARCHETYPE LOOKUP                                            │
-│  ┌──────────────────────────────────────────────────────┐           │
-│  │ Query: ethology-archetypes by speciesCode + gameId    │           │
-│  │                                                        │           │
-│  │ Wolf Archetype:                                        │           │
-│  │   aggression:     0.70                                │           │
-│  │   territoriality: 0.80                                │           │
-│  │   curiosity:      0.40                                │           │
-│  │   fear_threshold: 0.50                                │           │
-│  │   sociality:      0.90                                │           │
-│  └───────────────────────┬──────────────────────────────┘           │
-│                           │                                           │
-│  STEP 2: ENVIRONMENTAL OVERRIDES                                     │
-│  ┌───────────────────────▼──────────────────────────────┐           │
-│  │ Realm: "Ironpeak Mountains"                           │           │
-│  │   aggression:     +0.15  (harsh climate)              │           │
-│  │   fear_threshold: +0.10  (survival of the bold)       │           │
-│  │                                                        │           │
-│  │ Location: "Wolf Den Ridge"                            │           │
-│  │   territoriality: +0.10  (established den)            │           │
-│  │                                                        │           │
-│  │ After overrides:                                       │           │
-│  │   aggression:     0.85                                │           │
-│  │   territoriality: 0.90                                │           │
-│  │   curiosity:      0.40  (no override)                 │           │
-│  │   fear_threshold: 0.60                                │           │
-│  │   sociality:      0.90  (no override)                 │           │
-│  └───────────────────────┬──────────────────────────────┘           │
-│                           │                                           │
-│  STEP 3: HERITAGE CHECK (characters only)                            │
-│  ┌───────────────────────▼──────────────────────────────┐           │
-│  │ Is this a character with Heritage data?                │           │
-│  │                                                        │           │
-│  │ YES: Heritage phenotype replaces mapped axes           │           │
-│  │   aggression: 0.72 (from heritage, not archetype)     │           │
-│  │   curiosity:  0.55 (from heritage)                    │           │
-│  │   Other axes: keep archetype + override values        │           │
-│  │   Skip noise for heritage-sourced axes                │           │
-│  │                                                        │           │
-│  │ NO (creature): keep all archetype + override values   │           │
-│  │   Apply noise to all axes                              │           │
-│  └───────────────────────┬──────────────────────────────┘           │
-│                           │                                           │
-│  STEP 4: INDIVIDUAL NOISE                                            │
-│  ┌───────────────────────▼──────────────────────────────┐           │
-│  │ For each non-heritage axis:                            │           │
-│  │   noise = hash(entityId + axisCode) → [-0.10, +0.10] │           │
-│  │                                                        │           │
-│  │ Entity "wolf-7a3f":                                   │           │
-│  │   aggression:     +0.03                               │           │
-│  │   territoriality: -0.05                               │           │
-│  │   curiosity:      +0.08                               │           │
-│  │   fear_threshold: -0.02                               │           │
-│  │   sociality:      +0.01                               │           │
-│  └───────────────────────┬──────────────────────────────┘           │
-│                           │                                           │
-│  STEP 5: CLAMP & OUTPUT                                              │
-│  ┌───────────────────────▼──────────────────────────────┐           │
-│  │ Final values (clamped to [min, max]):                  │           │
-│  │   aggression:     0.88                                │           │
-│  │   territoriality: 0.85                                │           │
-│  │   curiosity:      0.48                                │           │
-│  │   fear_threshold: 0.58                                │           │
-│  │   sociality:      0.91                                │           │
-│  │                                                        │           │
-│  │ → Stored in ethology-cache as NatureManifest           │           │
-│  │ → Returned to Actor as IVariableProvider               │           │
-│  │ → Available as ${nature.*} in ABML expressions         │           │
-│  └──────────────────────────────────────────────────────┘           │
+│ NATURE RESOLUTION PIPELINE │
+│ │
+│ INPUT: entityId, speciesCode, realmId, locationId │
+│ │
+│ STEP 1: ARCHETYPE LOOKUP │
+│ ┌──────────────────────────────────────────────────────┐ │
+│ │ Query: ethology-archetypes by speciesCode + gameId │ │
+│ │ │ │
+│ │ Wolf Archetype: │ │
+│ │ aggression: 0.70 │ │
+│ │ territoriality: 0.80 │ │
+│ │ curiosity: 0.40 │ │
+│ │ fear_threshold: 0.50 │ │
+│ │ sociality: 0.90 │ │
+│ └───────────────────────┬──────────────────────────────┘ │
+│ │ │
+│ STEP 2: ENVIRONMENTAL OVERRIDES │
+│ ┌───────────────────────▼──────────────────────────────┐ │
+│ │ Realm: "Ironpeak Mountains" │ │
+│ │ aggression: +0.15 (harsh climate) │ │
+│ │ fear_threshold: +0.10 (survival of the bold) │ │
+│ │ │ │
+│ │ Location: "Wolf Den Ridge" │ │
+│ │ territoriality: +0.10 (established den) │ │
+│ │ │ │
+│ │ After overrides: │ │
+│ │ aggression: 0.85 │ │
+│ │ territoriality: 0.90 │ │
+│ │ curiosity: 0.40 (no override) │ │
+│ │ fear_threshold: 0.60 │ │
+│ │ sociality: 0.90 (no override) │ │
+│ └───────────────────────┬──────────────────────────────┘ │
+│ │ │
+│ STEP 3: HERITAGE CHECK (characters only) │
+│ ┌───────────────────────▼──────────────────────────────┐ │
+│ │ Is this a character with Heritage data? │ │
+│ │ │ │
+│ │ YES: Heritage phenotype replaces mapped axes │ │
+│ │ aggression: 0.72 (from heritage, not archetype) │ │
+│ │ curiosity: 0.55 (from heritage) │ │
+│ │ Other axes: keep archetype + override values │ │
+│ │ Skip noise for heritage-sourced axes │ │
+│ │ │ │
+│ │ NO (creature): keep all archetype + override values │ │
+│ │ Apply noise to all axes │ │
+│ └───────────────────────┬──────────────────────────────┘ │
+│ │ │
+│ STEP 4: INDIVIDUAL NOISE │
+│ ┌───────────────────────▼──────────────────────────────┐ │
+│ │ For each non-heritage axis: │ │
+│ │ noise = hash(entityId + axisCode) → [-0.10, +0.10] │ │
+│ │ │ │
+│ │ Entity "wolf-7a3f": │ │
+│ │ aggression: +0.03 │ │
+│ │ territoriality: -0.05 │ │
+│ │ curiosity: +0.08 │ │
+│ │ fear_threshold: -0.02 │ │
+│ │ sociality: +0.01 │ │
+│ └───────────────────────┬──────────────────────────────┘ │
+│ │ │
+│ STEP 5: CLAMP & OUTPUT │
+│ ┌───────────────────────▼──────────────────────────────┐ │
+│ │ Final values (clamped to [min, max]): │ │
+│ │ aggression: 0.88 │ │
+│ │ territoriality: 0.85 │ │
+│ │ curiosity: 0.48 │ │
+│ │ fear_threshold: 0.58 │ │
+│ │ sociality: 0.91 │ │
+│ │ │ │
+│ │ → Stored in ethology-cache as NatureManifest │ │
+│ │ → Returned to Actor as IVariableProvider │ │
+│ │ → Available as ${nature.*} in ABML expressions │ │
+│ └──────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -759,47 +759,47 @@ When a dungeon spawns a creature, the creature needs behavioral defaults. lib-et
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    PACK OF WOLVES IN IRONPEAK                          │
-│                                                                      │
-│  Same species, same realm, same location -- different individuals.   │
-│  All values from archetype (0.7) + realm override (+0.15) + noise.   │
-│                                                                      │
-│  Wolf A (entity-id: 7a3f...)        Wolf B (entity-id: b2c8...)      │
-│  ┌───────────────────────┐         ┌───────────────────────┐        │
-│  │ aggression:  0.88     │         │ aggression:  0.82     │        │
-│  │ territory:   0.85     │         │ territory:   0.92     │        │
-│  │ fear_thresh: 0.58     │         │ fear_thresh: 0.63     │        │
-│  │ sociality:   0.91     │         │ sociality:   0.87     │        │
-│  │                       │         │                       │        │
-│  │ → More aggressive     │         │ → More territorial    │        │
-│  │ → Less territorial    │         │ → Slightly braver     │        │
-│  │ → Pack-oriented       │         │ → Still social        │        │
-│  └───────────────────────┘         └───────────────────────┘        │
-│                                                                      │
-│  Wolf C (entity-id: 4e91...)        Wolf D (entity-id: d5a2...)      │
-│  ┌───────────────────────┐         ┌───────────────────────┐        │
-│  │ aggression:  0.79     │         │ aggression:  0.90     │        │
-│  │ territory:   0.88     │         │ territory:   0.83     │        │
-│  │ fear_thresh: 0.54     │         │ fear_thresh: 0.68     │        │
-│  │ sociality:   0.93     │         │ sociality:   0.84     │        │
-│  │                       │         │                       │        │
-│  │ → Least aggressive    │         │ → MOST aggressive     │        │
-│  │ → More pack-loyal     │         │ → Bravest of the pack │        │
-│  │ → More skittish       │         │ → Less social         │        │
-│  └───────────────────────┘         └───────────────────────┘        │
-│                                                                      │
-│  Behavior implications:                                              │
-│  - Wolf D is likely the alpha (highest aggression + fear threshold)  │
-│  - Wolf C is the most pack-oriented but least assertive              │
-│  - Wolf A and B are mid-pack with different specializations          │
-│  - All are MORE aggressive than the species base (0.7) due to the   │
-│    Ironpeak realm override (+0.15). Ironpeak breeds tough wolves.   │
-│  - The SAME species in Verdant Meadows would be LESS aggressive     │
-│    (realm override: -0.2), creating regionally distinct populations. │
-│                                                                      │
-│  Zero per-entity storage. All computed from:                         │
-│    archetype (MySQL, cached) + override (MySQL, cached) +            │
-│    hash(entityId + axisCode) → deterministic noise                   │
+│ PACK OF WOLVES IN IRONPEAK │
+│ │
+│ Same species, same realm, same location -- different individuals. │
+│ All values from archetype (0.7) + realm override (+0.15) + noise. │
+│ │
+│ Wolf A (entity-id: 7a3f...) Wolf B (entity-id: b2c8...) │
+│ ┌───────────────────────┐ ┌───────────────────────┐ │
+│ │ aggression: 0.88 │ │ aggression: 0.82 │ │
+│ │ territory: 0.85 │ │ territory: 0.92 │ │
+│ │ fear_thresh: 0.58 │ │ fear_thresh: 0.63 │ │
+│ │ sociality: 0.91 │ │ sociality: 0.87 │ │
+│ │ │ │ │ │
+│ │ → More aggressive │ │ → More territorial │ │
+│ │ → Less territorial │ │ → Slightly braver │ │
+│ │ → Pack-oriented │ │ → Still social │ │
+│ └───────────────────────┘ └───────────────────────┘ │
+│ │
+│ Wolf C (entity-id: 4e91...) Wolf D (entity-id: d5a2...) │
+│ ┌───────────────────────┐ ┌───────────────────────┐ │
+│ │ aggression: 0.79 │ │ aggression: 0.90 │ │
+│ │ territory: 0.88 │ │ territory: 0.83 │ │
+│ │ fear_thresh: 0.54 │ │ fear_thresh: 0.68 │ │
+│ │ sociality: 0.93 │ │ sociality: 0.84 │ │
+│ │ │ │ │ │
+│ │ → Least aggressive │ │ → MOST aggressive │ │
+│ │ → More pack-loyal │ │ → Bravest of the pack │ │
+│ │ → More skittish │ │ → Less social │ │
+│ └───────────────────────┘ └───────────────────────┘ │
+│ │
+│ Behavior implications: │
+│ - Wolf D is likely the alpha (highest aggression + fear threshold) │
+│ - Wolf C is the most pack-oriented but least assertive │
+│ - Wolf A and B are mid-pack with different specializations │
+│ - All are MORE aggressive than the species base (0.7) due to the │
+│ Ironpeak realm override (+0.15). Ironpeak breeds tough wolves. │
+│ - The SAME species in Verdant Meadows would be LESS aggressive │
+│ (realm override: -0.2), creating regionally distinct populations. │
+│ │
+│ Zero per-entity storage. All computed from: │
+│ archetype (MySQL, cached) + override (MySQL, cached) + │
+│ hash(entityId + axisCode) → deterministic noise │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -911,21 +911,21 @@ The question arises: why not add behavioral defaults to Species, or model this a
 
 The pipeline with Ethology:
 ```
-Species (what type)  ──────────────────────────────────────────────────┐
-Ethology (how it behaves by nature)  ──────────────────────────────────┤
-Heritage (individual genetic variation, characters only)  ─────────────┤
-                                                                       ▼
-                                                          ACTOR BEHAVIOR SYSTEM
-                                                          ${nature.*} available
-                                                          for ALL entity types
-                                                                       │
-                        ┌──────────────────┬───────────────┬──────────┘
-                        ▼                  ▼               ▼
-                  Creature ABML       Character ABML   Dungeon ABML
-                  (nature only)       (nature +        (nature +
-                                       heritage +       dungeon
-                                       personality +    genetic library)
-                                       disposition)
+Species (what type) ──────────────────────────────────────────────────┐
+Ethology (how it behaves by nature) ──────────────────────────────────┤
+Heritage (individual genetic variation, characters only) ─────────────┤
+ ▼
+ ACTOR BEHAVIOR SYSTEM
+ ${nature.*} available
+ for ALL entity types
+ │
+ ┌──────────────────┬───────────────┬──────────┘
+ ▼ ▼ ▼
+ Creature ABML Character ABML Dungeon ABML
+ (nature only) (nature + (nature +
+ heritage + dungeon
+ personality + genetic library)
+ disposition)
 ```
 
 Ethology provides the universal NATURE layer. Heritage refines it for characters. Personality/Disposition/History layer NURTURE on top. The result: creatures have species-appropriate individuality, characters have genetic individuality on top of that, and the same `${nature.*}` variables work in ABML expressions regardless of entity type.
@@ -964,7 +964,7 @@ Ethology provides the universal NATURE layer. Heritage refines it for characters
 
 1. **Scale of nature resolution at 100,000+ creatures**: With aggressive caching (resolved archetype TTL of 5 minutes, entity manifest TTL of 60 seconds), the actual MySQL queries are infrequent. The noise computation is pure CPU (single hash per axis) with no I/O. The bottleneck is cache memory, not computation. At 20 axes per archetype and 100,000 entities, the cache stores ~100,000 manifests of ~200 bytes each = ~20MB. Acceptable for Redis.
 
-2. **Species code source for non-character entities**: Characters have a `speciesId` field. Actors have template metadata. But how does the nature provider know which species code to use for a given entity ID? The actor template's metadata must include a `speciesCode` field. This is an Actor/Puppetmaster configuration concern, not an Ethology concern, but it must be documented as a requirement. **T29 concern**: If `speciesCode` is stored in actor template `additionalProperties` metadata and Ethology reads it by convention, this is a metadata bag contract violation (see GH issue #308 for the systemic `additionalProperties: true` problem). The correct pattern is for Actor templates to have a typed `speciesCode` field in their schema, or for the caller (NatureProviderFactory) to receive the species code as a parameter from the Actor runtime rather than reading it from metadata.
+2. **Species code source for non-character entities**: Characters have a `speciesId` field. Actors have template metadata. But how does the nature provider know which species code to use for a given entity ID? The actor template's metadata must include a `speciesCode` field. This is an Actor/Puppetmaster configuration concern, not an Ethology concern, but it must be documented as a requirement. **concern**: If `speciesCode` is stored in actor template `additionalProperties` metadata and Ethology reads it by convention, this is a metadata bag contract violation (see GH issue #308 for the systemic `additionalProperties: true` problem). The correct pattern is for Actor templates to have a typed `speciesCode` field in their schema, or for the caller (NatureProviderFactory) to receive the species code as a parameter from the Actor runtime rather than reading it from metadata.
 
 3. **Heritage phenotype axis mapping**: The mapping between Heritage trait codes (e.g., `physical_strength`) and Ethology axis codes (e.g., `aggression`) needs to be data-driven. This mapping lives in the Heritage trait template's `personalityMapping` or `aptitudeMapping` fields, or in a new `natureMapping` field added to the `HeritableTraitTemplate`. Character-Lifecycle owns this mapping; Ethology consumes it.
 

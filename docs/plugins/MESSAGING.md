@@ -154,43 +154,43 @@ These settings apply to the **MessageRetryBuffer** (publish failures). After `Re
 Messaging Architecture
 ========================
 
-                              ┌──────────────────────┐
-                              │    RabbitMQ Broker    │
-                              │                      │
-                              │  Exchange: "bannou"  │
-                              │  DLX: "bannou-dlx"   │
-                              └──────────┬───────────┘
-                                         │
-              ┌──────────────────────────┼──────────────────────────┐
-              │                          │                          │
-    ┌─────────▼─────────┐    ┌──────────▼──────────┐    ┌─────────▼─────────┐
-    │  RabbitMQMessageBus │    │RabbitMQMessageSubscriber│    │ MessageRetryBuffer │
-    │  (IMessageBus)      │    │ (IMessageSubscriber)    │    │                    │
-    │                     │    │                         │    │ Buffers failed     │
-    │ TryPublishAsync()   │    │ Static subscriptions    │    │ publishes          │
-    │ TryPublishRawAsync()│    │ Dynamic subscriptions   │    │ Crash-fast if      │
-    │ TryPublishErrorAsync│    │ Raw subscriptions       │    │ buffer exceeds     │
-    └─────────────────────┘    └──────────┬─────────────┘    │ limits             │
-              ▲                           │                   └───────┬────────────┘
-              │                           ▼                           │ (on exhaustion)
-              │               ┌───────────────────────┐               ▼
-              │               │NativeEventConsumerBackend│    ┌──────────────────────┐
-              │               │ (IHostedService)        │    │DeadLetterConsumer    │
-              │               │                         │    │Service (IHostedService)│
-              │               │ Bridges RabbitMQ to     │    │                      │
-              │               │ IEventConsumer fan-out  │    │ Reads DLX queue      │
-              │               │ (per-plugin handlers)   │    │ Logs + error events  │
-              │               └─────────────────────────┘    │ Acks after processing│
-              │                                              └──────────────────────┘
-    ┌─────────┴─────────┐         ┌──────────────────────┐
-    │ RabbitMQConnection │         │  RabbitMQMessageTap   │
-    │ Manager            │         │  (IMessageTap)        │
-    │                    │         │                       │
-    │ Single connection  │         │ Creates taps that     │
-    │ Channel pool (100) │         │ forward events from   │
-    │ Max 1000 channels  │         │ source to destination │
-    │ Auto-recovery      │         │                       │
-    └────────────────────┘         └───────────────────────┘
+ ┌──────────────────────┐
+ │ RabbitMQ Broker │
+ │ │
+ │ Exchange: "bannou" │
+ │ DLX: "bannou-dlx" │
+ └──────────┬───────────┘
+ │
+ ┌──────────────────────────┼──────────────────────────┐
+ │ │ │
+ ┌─────────▼─────────┐ ┌──────────▼──────────┐ ┌─────────▼─────────┐
+ │ RabbitMQMessageBus │ │RabbitMQMessageSubscriber│ │ MessageRetryBuffer │
+ │ (IMessageBus) │ │ (IMessageSubscriber) │ │ │
+ │ │ │ │ │ Buffers failed │
+ │ TryPublishAsync() │ │ Static subscriptions │ │ publishes │
+ │ TryPublishRawAsync()│ │ Dynamic subscriptions │ │ Crash-fast if │
+ │ TryPublishErrorAsync│ │ Raw subscriptions │ │ buffer exceeds │
+ └─────────────────────┘ └──────────┬─────────────┘ │ limits │
+ ▲ │ └───────┬────────────┘
+ │ ▼ │ (on exhaustion)
+ │ ┌───────────────────────┐ ▼
+ │ │NativeEventConsumerBackend│ ┌──────────────────────┐
+ │ │ (IHostedService) │ │DeadLetterConsumer │
+ │ │ │ │Service (IHostedService)│
+ │ │ Bridges RabbitMQ to │ │ │
+ │ │ IEventConsumer fan-out │ │ Reads DLX queue │
+ │ │ (per-plugin handlers) │ │ Logs + error events │
+ │ └─────────────────────────┘ │ Acks after processing│
+ │ └──────────────────────┘
+ ┌─────────┴─────────┐ ┌──────────────────────┐
+ │ RabbitMQConnection │ │ RabbitMQMessageTap │
+ │ Manager │ │ (IMessageTap) │
+ │ │ │ │
+ │ Single connection │ │ Creates taps that │
+ │ Channel pool (100) │ │ forward events from │
+ │ Max 1000 channels │ │ source to destination │
+ │ Auto-recovery │ │ │
+ └────────────────────┘ └───────────────────────┘
 ```
 
 ---
@@ -198,7 +198,7 @@ Messaging Architecture
 ## Stubs & Unimplemented Features
 
 None. All previously listed stubs have been resolved:
-- **Lifecycle events**: Correctly rejected — messaging IS the event infrastructure; self-referential events would be circular and noisy. Observability is handled by T30 telemetry spans on all async methods.
+- **Lifecycle events**: Correctly rejected — messaging IS the event infrastructure; self-referential events would be circular and noisy. Observability is handled by telemetry spans on all async methods.
 - **ListTopics MessageCount**: Removed from schema — "topic message count" is not a coherent RabbitMQ concept (topics are routing keys, not queues). The field always returned 0, which is actively misleading. Queue depth monitoring belongs in RabbitMQ Management API or Prometheus exporters.
 
 ---
@@ -219,10 +219,10 @@ No bugs identified.
 ### Intentional Quirks (Documented Behavior)
 
 1. **Aggressive retry with crash-fast buffer philosophy**: When `TryPublishAsync` fails to deliver to RabbitMQ (connection down, channel error, etc.), the message is **not lost** - it's buffered in `MessageRetryBuffer` and `TryPublishAsync` returns `true` (because delivery WILL be retried). The buffer is processed every `RetryBufferIntervalSeconds` (default 5s). If RabbitMQ stays down too long, the node **intentionally crashes** via `IProcessTerminator.TerminateProcess()`:
-   - Buffer exceeds `RetryBufferMaxSize` (default 500,000 messages)
-   - Oldest message exceeds `RetryBufferMaxAgeSeconds` (default 600s / 10 minutes)
+ - Buffer exceeds `RetryBufferMaxSize` (default 500,000 messages)
+ - Oldest message exceeds `RetryBufferMaxAgeSeconds` (default 600s / 10 minutes)
 
-   **Why crash?** Crashing makes the failure visible in monitoring, triggers orchestrator restart, and prevents silent data loss or unbounded memory growth. True event loss only occurs if the node dies (power failure, OOM kill) before the buffer flushes.
+ **Why crash?** Crashing makes the failure visible in monitoring, triggers orchestrator restart, and prevents silent data loss or unbounded memory growth. True event loss only occurs if the node dies (power failure, OOM kill) before the buffer flushes.
 
 2. **Backpressure on buffer fill**: When the retry buffer reaches `RetryBufferBackpressureThreshold` (default 80%), new publishes are rejected (`TryPublishAsync` returns `false`). This prevents memory exhaustion and gives the buffer time to drain. Callers should handle `false` returns appropriately.
 

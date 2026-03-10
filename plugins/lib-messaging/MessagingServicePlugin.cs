@@ -33,7 +33,7 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
 
         // Get configuration to read RabbitMQ settings
         // Cache the provider to avoid multiple builds and ensure consistent config
-        // IMPLEMENTATION TENETS (T24): Use using statement for proper disposal
+        // IMPLEMENTATION TENETS: Use using statement for proper disposal
         using var tempProvider = services.BuildServiceProvider();
         _cachedConfig = tempProvider.GetRequiredService<MessagingServiceConfiguration>();
         var config = _cachedConfig;

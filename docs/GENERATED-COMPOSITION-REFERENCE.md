@@ -57,8 +57,8 @@ L1: App Foundation (7 plugins)     Account, Auth, Chat, Connect, Permission, Con
 L2: Game Foundation (17 plugins)   Character, Realm, Species, Location, Currency, Item, Inventory,
                                    Actor, Quest, Seed, Collection, Transit, Worldstate, and more
 L3: App Features (6 plugins)       Asset, Orchestrator, Documentation, Website, Voice, Broadcast
-L4: Game Features (41 plugins)     Behavior, Puppetmaster, Matchmaking, Escrow, Faction, Divine,
-                                   Dungeon, Craft, Trade, Workshop, Music, Storyline, and 29 more
+L4: Game Features (42+ plugins)    Behavior, Puppetmaster, Matchmaking, Escrow, Faction, Divine,
+                                   Dungeon, Craft, Trade, Workshop, Music, Storyline, and 30 more
 L5: Extensions (developer-created) Game-specific vocabulary, simplified APIs, genre kits
 ```
 
@@ -381,21 +381,21 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Telemetry | L0 | OpenTelemetry distributed tracing and metrics via ITelemetryProvider (optional, NullTelemetryProvider fallback) | 2 |
 | Account | L1 | Internal user account CRUD (never internet-facing; external access via Auth only) | 18 |
 | Auth | L1 | Internet-facing authentication (email, OAuth, Steam, JWT, MFA, session management) | 19 |
-| Chat | L1 | Universal typed message channel primitives with ephemeral and persistent storage | 32 |
+| Chat | L1 | Universal typed message channel primitives with ephemeral and persistent storage | 33 |
 | Connect | L1 | WebSocket edge gateway with zero-copy binary routing, client-salted GUIDs, and multi-node relay | 7 |
-| Contract | L1 | Binding agreements with milestone progression, consent flows, and prebound API execution | 31 |
+| Contract | L1 | Binding agreements with milestone progression, consent flows, and prebound API execution | 32 |
 | Permission | L1 | RBAC capability manifest compilation from service x state x role permission matrices | 8 |
 | Resource | L1 | Cross-layer reference tracking, cleanup coordination (CASCADE/RESTRICT/DETACH), and hierarchical compression | 17 |
 | Actor | L2 | NPC behavior execution runtime (ABML, GOAP, perception queues, variable providers, dynamic character binding) | 17 |
 | Character | L2 | Game world character management with realm partitioning and system realm support | 12 |
-| Collection | L2 | Universal content unlock and archive system with DI-dispatched unlock listeners | 22 |
-| Currency | L2 | Multi-currency economy (wallets, transfers, exchange rates, holds, escrow integration) | 34 |
+| Collection | L2 | Universal content unlock and archive system with DI-dispatched unlock listeners | 23 |
+| Currency | L2 | Multi-currency economy (wallets, transfers, exchange rates, holds, escrow integration) | 35 |
 | Game Service | L2 | Registry of available games/applications with stub-name lookup | 5 |
 | Game Session | L2 | Multiplayer session containers (lobby/matchmade) with reservation tokens and shortcut publishing | 11 |
 | Inventory | L2 | Container and item placement with constraint models (slot/weight/grid/volumetric/unlimited) | 16 |
-| Item | L2 | Dual-model items -- templates (definitions) and instances (occurrences) with quantity models and binding | 16 |
+| Item | L2 | Dual-model items -- templates (definitions) and instances (occurrences) with quantity models and binding | 17 |
 | Location | L2 | Hierarchical location tree within realms (cities, regions, buildings, rooms) with depth tracking | 25 |
-| Quest | L2 | Objective-based progression as thin orchestration over Contract with prerequisite provider extensibility | 18 |
+| Quest | L2 | Objective-based progression as thin orchestration over Contract with prerequisite provider extensibility | 19 |
 | Realm | L2 | Top-level persistent world management with deprecation lifecycle and seed-from-configuration | 13 |
 | Relationship | L2 | Entity-to-entity relationships with type taxonomy, bidirectional uniqueness, and ABML variable provider | 21 |
 | Seed | L2 | Generic progressive growth primitive with polymorphic ownership and phase-gated capabilities | 24 |
@@ -409,13 +409,13 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Orchestrator | L3 | Deployment orchestration (Docker/Swarm/Portainer/K8s) with processing pools and routing broadcasts | 23 |
 | Voice | L3 | Voice room coordination with P2P mesh, Kamailio SFU, and automatic tier upgrade | 11 |
 | Website | L3 | Public-facing browser CMS (news, profiles, downloads) using REST patterns — currently stubbed | 14 |
-| Achievement | L4 | Achievement/trophy system with progressive/binary types, rarity calculation, and platform sync | 12 |
+| Achievement | L4 | Achievement/trophy system with progressive/binary types, rarity calculation, and platform sync | 13 |
 | Affix | L4 | Item modifier definition and procedural generation for equipment customization | — |
 | Agency | L4 | Guardian spirit progressive agency and UX manifest engine for player capability unlocking | — |
 | Analytics | L4 | Event aggregation, Glicko-2 skill ratings, and milestone detection (event-only observer) | 9 |
 | Arbitration | L4 | Dispute resolution orchestration composing Contract/Faction primitives for jurisdictional rulings | — |
 | Behavior | L4 | ABML compiler (YAML to bytecode), A*-based GOAP planner, and 5-stage cognition pipeline | 6 |
-| Character Encounter | L4 | NPC encounter memory with per-participant perspectives, time-decay, and sentiment aggregation | 21 |
+| Character Encounter | L4 | NPC encounter memory with per-participant perspectives, time-decay, and sentiment aggregation | 22 |
 | Character History | L4 | Historical event participation and machine-readable backstory for behavior system consumption | 12 |
 | Character Lifecycle | L4 | Generational cycle orchestration (aging, marriage, procreation, death, genetic inheritance) | — |
 | Character Personality | L4 | Personality traits (bipolar axes) and combat preferences with probabilistic evolution | 12 |
@@ -428,11 +428,11 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Escrow | L4 | Full-custody multi-party asset exchange with 13-state FSM (currency/items/contracts) | 22 |
 | Ethology | L4 | Species-level behavioral archetype registry with hierarchical overrides and individual noise | — |
 | Faction | L4 | Seed-based faction growth with norms, enforcement tiers, territory, guild hierarchy, and political bonds | 31 |
-| Gardener | L4 | Player experience orchestration (garden lifecycle, void/discovery, divine actor integration) | 23 |
+| Gardener | L4 | Player experience orchestration (garden lifecycle, void/discovery, divine actor integration) | 24 |
 | Hearsay | L4 | Social information propagation and NPC belief formation (what NPCs think they know vs. reality) | — |
-| Leaderboard | L4 | Redis Sorted Set leaderboards with seasonal rotation, polymorphic entities, and Analytics ingestion | 12 |
+| Leaderboard | L4 | Redis Sorted Set leaderboards with seasonal rotation, polymorphic entities, and Analytics ingestion | 13 |
 | Lexicon | L4 | Structured world knowledge ontology with concept decomposition and strategy implications | — |
-| License | L4 | Grid-based progression boards (skill trees) orchestrating Inventory, Items, and Contracts | 20 |
+| License | L4 | Grid-based progression boards (skill trees) orchestrating Inventory, Items, and Contracts | 21 |
 | Loot | L4 | Loot table management with weighted drops, contextual modifiers, and pity thresholds | — |
 | Mapping | L4 | Spatial data management with authority-based channels, 3D indexing, and design-time authoring | 19 |
 | Market | L4 | Marketplace orchestration (auctions, NPC vendors, price discovery) composing Escrow/Currency/Item | — |
@@ -447,12 +447,12 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Scene | L4 | Hierarchical scene documents as node trees with checkout/commit workflow and version history | 19 |
 | Showtime | L4 | In-game streaming metagame (simulated audiences, hype trains, streamer career progression) | — |
 | Status | L4 | Unified entity effects query layer aggregating contract statuses and seed capabilities | 19 |
-| Storyline | L4 | Seeded narrative generation from compressed archives via storyline-theory/storyteller SDKs | 15 |
+| Storyline | L4 | Seeded narrative generation from compressed archives via storyline-theory/storyteller SDKs | 16 |
 | Trade | L4 | Economic logistics -- goods movement over game-time, border policies, supply/demand dynamics | — |
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**76 services, 903 endpoints**
+**76 services, 915 endpoints**
 
 For full per-service details: `docs/GENERATED-*-SERVICE-DETAILS.md`
 

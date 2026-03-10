@@ -84,7 +84,7 @@ Example modules for the combat domain:
 | RequiredCapability | string | Seed capability path that gates this influence |
 | DepthThreshold | float | Minimum seed depth to enable |
 | PerceptionType | string | Actor perception type this maps to (e.g., `spirit_combat_nudge`) |
-| ComplianceFactors | array of `{axisCode: string, weight: float}` | Personality/disposition axes that affect character acceptance. Typed array, NOT `additionalProperties: true` — Agency reads specific keys (T29). |
+| ComplianceFactors | array of `{axisCode: string, weight: float}` | Personality/disposition axes that affect character acceptance. Typed array, NOT `additionalProperties: true` — Agency reads specific keys. |
 | Intensity | float | How strongly this nudge pushes the character (0.0 gentle suggestion, 1.0 forceful command) |
 
 Example influences:
@@ -101,25 +101,25 @@ Example influences:
 
 ```json
 {
-  "seedId": "...",
-  "computedAt": "2026-02-14T12:00:00Z",
-  "domains": {
-    "combat": {
-      "overallFidelity": 0.65,
-      "modules": [
-        { "code": "combat/intention", "enabled": true, "fidelityLevel": 5 },
-        { "code": "combat/stance_selector", "enabled": true, "fidelityLevel": 3 },
-        { "code": "combat/timing_windows", "enabled": true, "fidelityLevel": 1 },
-        { "code": "combat/combo_direction", "enabled": false },
-        { "code": "combat/style_mastery", "enabled": false }
-      ],
-      "influences": [
-        { "code": "combat/approach", "available": true },
-        { "code": "combat/retreat", "available": true },
-        { "code": "combat/use_stance", "available": true }
-      ]
-    }
-  }
+ "seedId": "...",
+ "computedAt": "2026-02-14T12:00:00Z",
+ "domains": {
+ "combat": {
+ "overallFidelity": 0.65,
+ "modules": [
+ { "code": "combat/intention", "enabled": true, "fidelityLevel": 5 },
+ { "code": "combat/stance_selector", "enabled": true, "fidelityLevel": 3 },
+ { "code": "combat/timing_windows", "enabled": true, "fidelityLevel": 1 },
+ { "code": "combat/combo_direction", "enabled": false },
+ { "code": "combat/style_mastery", "enabled": false }
+ ],
+ "influences": [
+ { "code": "combat/approach", "available": true },
+ { "code": "combat/retreat", "available": true },
+ { "code": "combat/use_stance", "available": true }
+ ]
+ }
+ }
 }
 ```
 
@@ -136,33 +136,33 @@ All formula coefficients are configurable: `ComplianceResentmentWeight` (default
 
 ```
 1. Game designers create domains, modules, and influence types via API
-   (or seed from configuration on startup)
+ (or seed from configuration on startup)
 
 2. Player connects -> Gardener determines their active seed
 
 3. Agency computes UX manifest:
-   For each registered module:
-     - Get seed's depth for module's RequiredCapability
-     - If depth >= DepthThreshold: module enabled
-     - Compute fidelity level from FidelityCurve
-   For each registered influence:
-     - Get seed's depth for influence's RequiredCapability
-     - If depth >= DepthThreshold: influence available
+ For each registered module:
+ - Get seed's depth for module's RequiredCapability
+ - If depth >= DepthThreshold: module enabled
+ - Compute fidelity level from FidelityCurve
+ For each registered influence:
+ - Get seed's depth for influence's RequiredCapability
+ - If depth >= DepthThreshold: influence available
 
 4. Manifest cached in Redis, published as agency.manifest.updated event
 
 5. Gardener receives event, pushes manifest to client
-   via Entity Session Registry / Connect per-session RabbitMQ queue
+ via Entity Session Registry / Connect per-session RabbitMQ queue
 
 6. Client loads/unloads UX modules based on manifest
 
 7. When player sends a nudge:
-   - Connect routes to Gardener
-   - Gardener calls Agency to validate influence against manifest
-   - If valid, Gardener god-actor (see BEHAVIORAL-BOOTSTRAP.md) modulates and forwards
-   - Actor injects perception into character's cognition pipeline
-   - Character's ABML evaluates against ${spirit.*} compliance variables
-   - Character complies or resists
+ - Connect routes to Gardener
+ - Gardener calls Agency to validate influence against manifest
+ - If valid, Gardener god-actor (see BEHAVIORAL-BOOTSTRAP.md) modulates and forwards
+ - Actor injects perception into character's cognition pipeline
+ - Character's ABML evaluates against ${spirit.*} compliance variables
+ - Character complies or resists
 ```
 
 ### The Progressive UX Gradient
@@ -252,35 +252,35 @@ Registered via `IVariableProviderFactory` as `SpiritProviderFactory`. Consumed b
 ```yaml
 # Character evaluates a spirit combat nudge
 perception_handler:
-  type: spirit_combat_nudge
-  evaluation:
-    # Base compliance check
-    - condition: "${spirit.compliance_base} > 0.3"
-      weight: 1.0
-    # Not being spammed
-    - condition: "${spirit.influence.frequency} < 4.0"
-      weight: 0.5
-    # Nudge aligns with personality (aggressive character accepts attack nudges)
-    - condition: "nudge_alignment(${personality.*}, nudge.compliance_factors) > 0.0"
-      weight: 0.8
-    # Not building up resistance from overuse
-    - condition: "${spirit.influence.resistance_buildup} < 0.7"
-      weight: 0.6
-  on_accept:
-    - execute_nudged_action
-    - update: spirit.influence.last_accepted = true
-  on_resist:
-    - continue_autonomous_action
-    - update: spirit.influence.last_accepted = false
-    - publish: actor.spirit-nudge.resisted
-    # Actor (L2) publishes to its own namespace; Agency (L4) subscribes and
-    # re-publishes as agency.influence.resisted (hierarchy-safe relay)
-    # Resistance may increase resentment (via Disposition)
-    # NOTE: Disposition's actual recording API shape must be confirmed during
-    # implementation — the endpoint may accept structured feeling records rather
-    # than raw axis+delta pairs. Coordinate with Disposition's schema design.
-    - call: /disposition/feeling/record
-      with: { targetType: "Character", targetId: guardian_character_id, axis: "resentment", delta: 0.02 }
+ type: spirit_combat_nudge
+ evaluation:
+ # Base compliance check
+ - condition: "${spirit.compliance_base} > 0.3"
+ weight: 1.0
+ # Not being spammed
+ - condition: "${spirit.influence.frequency} < 4.0"
+ weight: 0.5
+ # Nudge aligns with personality (aggressive character accepts attack nudges)
+ - condition: "nudge_alignment(${personality.*}, nudge.compliance_factors) > 0.0"
+ weight: 0.8
+ # Not building up resistance from overuse
+ - condition: "${spirit.influence.resistance_buildup} < 0.7"
+ weight: 0.6
+ on_accept:
+ - execute_nudged_action
+ - update: spirit.influence.last_accepted = true
+ on_resist:
+ - continue_autonomous_action
+ - update: spirit.influence.last_accepted = false
+ - publish: actor.spirit-nudge.resisted
+ # Actor (L2) publishes to its own namespace; Agency (L4) subscribes and
+ # re-publishes as agency.influence.resisted (hierarchy-safe relay)
+ # Resistance may increase resentment (via Disposition)
+ # NOTE: Disposition's actual recording API shape must be confirmed during
+ # implementation — the endpoint may accept structured feeling records rather
+ # than raw axis+delta pairs. Coordinate with Disposition's schema design.
+ - call: /disposition/feeling/record
+ with: { targetType: "Character", targetId: guardian_character_id, axis: "resentment", delta: 0.02 }
 ```
 
 ---
@@ -293,7 +293,7 @@ perception_handler:
 
 The `disposition.guardian.shifted` trigger is necessary because `${spirit.compliance_base}` depends on Disposition's guardian feelings (trust, resentment, familiarity). When guardian feelings change (e.g., after repeated forced overrides or positive compliance), the compliance base changes, which affects which influences are effectively available and how the character responds to nudges. Without this subscription, compliance variables would go stale until the next seed growth event.
 
-**Multi-instance safety**: Debounce timers MUST be Redis-based (e.g., Redis key with TTL per seed), not in-memory. In-memory timers are per-instance and would cause duplicate recomputation across nodes (T9).
+**Multi-instance safety**: Debounce timers MUST be Redis-based (e.g., Redis key with TTL per seed), not in-memory. In-memory timers are per-instance and would cause duplicate recomputation across nodes.
 
 **Process**:
 1. Receive seed capability change event or disposition guardian shift event
@@ -363,21 +363,21 @@ The `disposition.guardian.shifted` trigger is necessary because `${spirit.compli
 
 2. ~~**Missing x-permissions on all 22 endpoints**~~: **FIXED** (2026-03-08) - Implementation map specifies roles for all 22 endpoints: `developer` for admin CRUD (domain/module/influence management, seed-config, recompute), `user` for runtime queries (manifest get/diff/history, influence evaluate/execute).
 
-3. ~~**ComplianceFactors schema must be typed**~~: **FIXED** (2026-03-08) - ComplianceFactors defined as typed array of `{axisCode: string, weight: float}` objects. Agency reads specific keys per T29; `additionalProperties: true` pattern avoided.
+3. ~~**ComplianceFactors schema must be typed**~~: **FIXED** (2026-03-08) - ComplianceFactors defined as typed array of `{axisCode: string, weight: float}` objects. Agency reads specific keys per tenets; `additionalProperties: true` pattern avoided.
 
 4. ~~**Actor→Agency event hierarchy violation**~~: **FIXED** (2026-03-08) - Actor (L2) now publishes `actor.spirit-nudge.resisted` to its own namespace; Agency (L4) subscribes and relays as `agency.influence.resisted`. Hierarchy-safe event relay pattern.
 
-5. **Missing lib-resource integration for seed-keyed data.** `agency-manifest-history` (MySQL) is persistent data keyed by seedId. Must implement `ISeededResourceProvider` and declare `x-references` with `target: seed, onDelete: cascade` per T28.
+5. **Missing lib-resource integration for seed-keyed data.** `agency-manifest-history` (MySQL) is persistent data keyed by seedId. Must implement `ISeededResourceProvider` and declare `x-references` with `target: seed, onDelete: cascade` per tenets.
 
 **Warnings (address during schema creation):**
 
-6. **ManifestRecomputeWorker debouncing must use Redis**, not in-memory timers. Per-instance timers cause duplicate recomputation across nodes (T9).
+6. **ManifestRecomputeWorker debouncing must use Redis**, not in-memory timers. Per-instance timers cause duplicate recomputation across nodes.
 
 7. ~~**Compliance formula magic numbers**~~: **FIXED** (2026-03-08) - All formula coefficients (`ComplianceResentmentWeight`, `ComplianceFamiliarityScale`, `ComplianceFamiliarityFloor`, `DefaultComplianceBase`) documented as configurable properties in deep dive and referenced throughout implementation map pseudo-code.
 
 8. ~~**Rolling window for influence frequency**~~: **FIXED** (2026-03-08) - `InfluenceFrequencyWindowMinutes` configurable property documented in deep dive (default 5 minutes) and referenced in implementation map pseudo-code for rolling window calculation.
 
-9. **Influence frequency counters must use Redis** (sorted sets or atomic counters), not in-memory state, for multi-instance safety (T9).
+9. **Influence frequency counters must use Redis** (sorted sets or atomic counters), not in-memory state, for multi-instance safety.
 
 10. ~~**Custom events must use flat structure**~~: **FIXED** (2026-03-08) - Original finding was incorrect. SCHEMA-RULES.md explicitly requires custom events to use `allOf` composition with `BaseServiceEvent` (line 962: "Custom service events MUST use `allOf` composition with `BaseServiceEvent`"). The `allOf` pattern produces C# inheritance, `IBannouEvent` implementation, and `EventName` for message tap forwarding. `eventId` and `timestamp` are inherited from `BaseServiceEvent` and must NOT be redefined as properties (only listed in `required`).
 
@@ -399,7 +399,7 @@ The `disposition.guardian.shifted` trigger is necessary because `${spirit.compli
 
 19. ~~**Inconsistent create/delete naming**~~: **FIXED** (2026-03-08) - Standardized to `create/delete` throughout deep dive and implementation map. Agency's entities are Category A definitions with full CRUD lifecycle (not type registrations), matching the established pattern (item templates, quest definitions, currency definitions).
 
-20. **Telemetry spans** required on all async helpers per T30 (add `ITelemetryProvider` to DI services).
+20. **Telemetry spans** required on all async helpers per tenets (add `ITelemetryProvider` to DI services).
 
 21. **Game service cleanup**: game-service-scoped definitions become orphaned if a game service is deleted. Consider lib-resource integration for game-service-keyed data.
 
@@ -415,7 +415,7 @@ The `disposition.guardian.shifted` trigger is necessary because `${spirit.compli
 
 5. **Rate limiting is per-seed, not per-session.** `InfluenceRateLimitPerSecond` applies to the seed (guardian spirit), not the WebSocket session. If a player reconnects rapidly, the rate limit persists because it's tracked against the seed ID in Redis, not the session.
 
-6. **Deprecation lifecycle.** Domains, modules, and influence types are **Category A** definition entities per T31: they are world-building definitions that need deprecation→delete lifecycle with reason tracking, idempotent deprecation, and `includeDeprecated` on list endpoints. Manifests are computed output (not entities) and do not need deprecation.
+6. **Deprecation lifecycle.** Domains, modules, and influence types are **Category A** definition entities per tenets: they are world-building definitions that need deprecation→delete lifecycle with reason tracking, idempotent deprecation, and `includeDeprecated` on list endpoints. Manifests are computed output (not entities) and do not need deprecation.
 
 ### Design Considerations (Requires Planning)
 

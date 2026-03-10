@@ -115,8 +115,8 @@ This plugin does not consume external events.
 POST /state/get | Roles: []
 
 ```
-IF NOT factory.HasStore(storeName)              -> 404
-READ {storeName}:{key} [with ETag]              -> 404 if null
+IF NOT factory.HasStore(storeName) -> 404
+READ {storeName}:{key} [with ETag] -> 404 if null
 RETURN (200, GetStateResponse { value, etag })
 ```
 
@@ -124,22 +124,22 @@ RETURN (200, GetStateResponse { value, etag })
 POST /state/save | Roles: []
 
 ```
-IF NOT factory.HasStore(storeName)              -> 404
+IF NOT factory.HasStore(storeName) -> 404
 IF options?.etag is non-empty
-  ETAG-WRITE {storeName}:{key} <- value         -> 409 if ETag mismatch
-  RETURN (200, SaveStateResponse { etag })
+ ETAG-WRITE {storeName}:{key} <- value -> 409 if ETag mismatch
+ RETURN (200, SaveStateResponse { etag })
 ELSE
-  WRITE {storeName}:{key} <- value with options
-  RETURN (200, SaveStateResponse { etag })
+ WRITE {storeName}:{key} <- value with options
+ RETURN (200, SaveStateResponse { etag })
 ```
 
 ### DeleteState
 POST /state/delete | Roles: []
 
 ```
-IF NOT factory.HasStore(storeName)              -> 404
+IF NOT factory.HasStore(storeName) -> 404
 DELETE {storeName}:{key}
-// Idempotent: returns 200 whether key existed or not (T8: status code communicates result)
+// Idempotent: returns 200 whether key existed or not (status code communicates result)
 RETURN (200)
 ```
 
@@ -147,31 +147,31 @@ RETURN (200)
 POST /state/query | Roles: []
 
 ```
-IF NOT factory.HasStore(storeName)              -> 404
+IF NOT factory.HasStore(storeName) -> 404
 IF backend is MySQL/SQLite
-  // Only first sort field is used; additional fields silently ignored
-  QUERY {storeName} WHERE conditions ORDER BY sort[0] PAGED(page, pageSize)
-  RETURN (200, QueryStateResponse { results, totalCount, page, pageSize })
+ // Only first sort field is used; additional fields silently ignored
+ QUERY {storeName} WHERE conditions ORDER BY sort[0] PAGED(page, pageSize)
+ RETURN (200, QueryStateResponse { results, totalCount, page, pageSize })
 ELSE IF backend is Redis with search enabled
-  // FT.SEARCH on indexName (default: "{storeName}-idx")
-  QUERY {storeName} WHERE query PAGED(page * pageSize, pageSize)
-  RETURN (200, QueryStateResponse { results, totalCount, page, pageSize })
+ // FT.SEARCH on indexName (default: "{storeName}-idx")
+ QUERY {storeName} WHERE query PAGED(page * pageSize, pageSize)
+ RETURN (200, QueryStateResponse { results, totalCount, page, pageSize })
 ELSE
-  // Redis without search — query not supported
-  RETURN (400, null)
+ // Redis without search — query not supported
+ RETURN (400, null)
 ```
 
 ### BulkGetState
 POST /state/bulk-get | Roles: []
 
 ```
-IF NOT factory.HasStore(storeName)              -> 404
+IF NOT factory.HasStore(storeName) -> 404
 READ {storeName}:[keys] (bulk)
 FOREACH key in request.keys
-  IF key in bulk results
-    item { key, found: true, value, etag }
-  ELSE
-    item { key, found: false }
+ IF key in bulk results
+ item { key, found: true, value, etag }
+ ELSE
+ item { key, found: false }
 RETURN (200, BulkGetStateResponse { items })
 ```
 
@@ -179,7 +179,7 @@ RETURN (200, BulkGetStateResponse { items })
 POST /state/bulk-save | Roles: []
 
 ```
-IF NOT factory.HasStore(storeName)              -> 404
+IF NOT factory.HasStore(storeName) -> 404
 WRITE {storeName}:[items] (bulk) <- items with options
 RETURN (200, BulkSaveStateResponse { results: [{ key, etag }] })
 ```
@@ -188,7 +188,7 @@ RETURN (200, BulkSaveStateResponse { results: [{ key, etag }] })
 POST /state/bulk-exists | Roles: []
 
 ```
-IF NOT factory.HasStore(storeName)              -> 404
+IF NOT factory.HasStore(storeName) -> 404
 READ {storeName}:[keys] (exists check)
 // Returns only keys that exist; absent keys omitted from response
 RETURN (200, BulkExistsStateResponse { existingKeys })
@@ -198,7 +198,7 @@ RETURN (200, BulkExistsStateResponse { existingKeys })
 POST /state/bulk-delete | Roles: []
 
 ```
-IF NOT factory.HasStore(storeName)              -> 404
+IF NOT factory.HasStore(storeName) -> 404
 DELETE {storeName}:[keys] (bulk)
 RETURN (200, BulkDeleteStateResponse { deletedCount })
 ```
@@ -208,14 +208,14 @@ POST /state/list-stores | Roles: []
 
 ```
 IF backendFilter provided
-  storeNames = factory.GetStoreNames(backendFilter)
+ storeNames = factory.GetStoreNames(backendFilter)
 ELSE
-  storeNames = factory.GetStoreNames()
+ storeNames = factory.GetStoreNames()
 FOREACH name in storeNames
-  backend = factory.GetBackendType(name)
-  IF includeStats
-    keyCount = factory.GetKeyCountAsync(name)
-    // Redis: null (SCAN too slow), MySQL/SQLite: COUNT(*), InMemory: O(1)
+ backend = factory.GetBackendType(name)
+ IF includeStats
+ keyCount = factory.GetKeyCountAsync(name)
+ // Redis: null (SCAN too slow), MySQL/SQLite: COUNT(*), InMemory: O(1)
 RETURN (200, ListStoresResponse { stores: [{ name, backend, keyCount? }] })
 ```
 

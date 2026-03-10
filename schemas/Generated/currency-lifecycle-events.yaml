@@ -23,9 +23,9 @@ components:
       - scope
       - precision
       - isActive
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -50,19 +50,7 @@ components:
         isActive: &id006
           type: boolean
           description: "Whether the definition is active"
-        isDeprecated: &id007
-          type: boolean
-          description: "Whether the definition is deprecated"
-        deprecatedAt: &id008
-          type: string
-          format: date-time
-          nullable: true
-          description: "When the definition was deprecated"
-        deprecationReason: &id009
-          type: string
-          nullable: true
-          description: "Reason for deprecation"
-        modifiedAt: &id010
+        modifiedAt: &id007
           type: string
           format: date-time
           nullable: true
@@ -75,6 +63,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the currency definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this currency definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the currency definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     CurrencyDefinitionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -91,9 +92,9 @@ components:
       - scope
       - precision
       - isActive
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -106,10 +107,7 @@ components:
         scope: *id004
         precision: *id005
         isActive: *id006
-        isDeprecated: *id007
-        deprecatedAt: *id008
-        deprecationReason: *id009
-        modifiedAt: *id010
+        modifiedAt: *id007
         createdAt:
           type: string
           format: date-time
@@ -118,6 +116,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the currency definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this currency definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the currency definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -139,9 +150,9 @@ components:
       - scope
       - precision
       - isActive
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -153,10 +164,7 @@ components:
         scope: *id004
         precision: *id005
         isActive: *id006
-        isDeprecated: *id007
-        deprecatedAt: *id008
-        deprecationReason: *id009
-        modifiedAt: *id010
+        modifiedAt: *id007
         createdAt:
           type: string
           format: date-time
@@ -165,6 +173,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the currency definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this currency definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the currency definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true
@@ -190,23 +211,23 @@ components:
           type: string
           default: currency.wallet.created
           description: 'Event type identifier: currency.wallet.created'
-        walletId: &id011
+        walletId: &id008
           type: string
           format: uuid
           description: "Unique wallet identifier"
-        ownerId: &id012
+        ownerId: &id009
           type: string
           format: uuid
           description: "Owner entity ID"
-        ownerType: &id013
+        ownerType: &id010
           $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Owner entity type"
-        realmId: &id014
+        realmId: &id011
           type: string
           format: uuid
           nullable: true
           description: "Realm ID for realm-scoped wallets"
-        status: &id015
+        status: &id012
           $ref: ../currency-api.yaml#/components/schemas/WalletStatus
           description: "Wallet status"
         createdAt:
@@ -239,11 +260,11 @@ components:
           type: string
           default: currency.wallet.updated
           description: 'Event type identifier: currency.wallet.updated'
-        walletId: *id011
-        ownerId: *id012
-        ownerType: *id013
-        realmId: *id014
-        status: *id015
+        walletId: *id008
+        ownerId: *id009
+        ownerType: *id010
+        realmId: *id011
+        status: *id012
         createdAt:
           type: string
           format: date-time
@@ -278,11 +299,11 @@ components:
           type: string
           default: currency.wallet.deleted
           description: 'Event type identifier: currency.wallet.deleted'
-        walletId: *id011
-        ownerId: *id012
-        ownerType: *id013
-        realmId: *id014
-        status: *id015
+        walletId: *id008
+        ownerId: *id009
+        ownerType: *id010
+        realmId: *id011
+        status: *id012
         createdAt:
           type: string
           format: date-time

@@ -66,7 +66,7 @@
 | IHttpClientFactory | — | Hard | OAuth provider HTTP calls and CloudFlare KV API (injected into helper services) |
 
 **Notes:**
-- Auth subscribes to `account.deleted` for session invalidation per T28's Account Deletion Cleanup Obligation. Sessions are ephemeral, TTL-bounded state — no data integrity violation occurs if the event is missed (sessions time out naturally). Auth is L1→L1, making this the simplest case of the account cleanup pattern.
+- Auth subscribes to `account.deleted` for session invalidation per FOUNDATION TENETS's Account Deletion Cleanup Obligation. Sessions are ephemeral, TTL-bounded state — no data integrity violation occurs if the event is missed (sessions time out naturally). Auth is L1→L1, making this the simplest case of the account cleanup pattern.
 - Auth is a leaf service at L1: calls only Account (L1) via service mesh. No L2+ dependencies.
 - IEntitySessionRegistry is a shared DI interface hosted by Connect, not a generated service client.
 
@@ -154,24 +154,24 @@
 POST /auth/login | Roles: [anonymous]
 
 ```
-IF body.Email or body.Password is empty                   -> 400
+IF body.Email or body.Password is empty -> 400
 // Rate limiting via Redis counter
-READ counter login-attempts:{normalizedEmail}             -> 401 if >= MaxLoginAttempts
-  PUBLISH auth.login.failed { reason: RateLimited }
-CALL IAccountClient.GetAccountByEmailAsync(email)         -> 401 if 404 (ApiException)
-  PUBLISH auth.login.failed { reason: AccountNotFound }
-  INCREMENT login-attempts:{normalizedEmail} (TTL: LoginLockoutMinutes * 60)
-IF account.PasswordHash is empty                          -> 401
+READ counter login-attempts:{normalizedEmail} -> 401 if >= MaxLoginAttempts
+ PUBLISH auth.login.failed { reason: RateLimited }
+CALL IAccountClient.GetAccountByEmailAsync(email) -> 401 if 404 (ApiException)
+ PUBLISH auth.login.failed { reason: AccountNotFound }
+ INCREMENT login-attempts:{normalizedEmail} (TTL: LoginLockoutMinutes * 60)
+IF account.PasswordHash is empty -> 401
 IF !BCrypt.Verify(password, hash)
-  INCREMENT login-attempts:{normalizedEmail}
-  PUBLISH auth.login.failed { reason: InvalidCredentials, accountId, attemptCount }
-  PUSH auth.suspicious-login to account sessions (only when accountId known)
-  RETURN (401, null)
+ INCREMENT login-attempts:{normalizedEmail}
+ PUBLISH auth.login.failed { reason: InvalidCredentials, accountId, attemptCount }
+ PUSH auth.suspicious-login to account sessions (only when accountId known)
+ RETURN (401, null)
 DELETE counter login-attempts:{normalizedEmail}
 IF account.MfaEnabled
-  // see helper: MfaService.CreateMfaChallengeAsync
-  WRITE auth:mfa-challenge-{token} <- MfaChallengeData { accountId } (TTL: MfaChallengeTtlMinutes * 60)
-  RETURN (200, LoginResponse { requiresMfa: true, mfaChallengeToken })
+ // see helper: MfaService.CreateMfaChallengeAsync
+ WRITE auth:mfa-challenge-{token} <- MfaChallengeData { accountId } (TTL: MfaChallengeTtlMinutes * 60)
+ RETURN (200, LoginResponse { requiresMfa: true, mfaChallengeToken })
 // No MFA — generate tokens
 // see helper: TokenService.GenerateAccessTokenAsync
 WRITE auth:session:{sessionKey} <- SessionDataModel (TTL: SessionTokenTtlDays * 86400)
@@ -187,12 +187,12 @@ RETURN (200, LoginResponse { accountId, accessToken, refreshToken, expiresIn, co
 POST /auth/register | Roles: [anonymous]
 
 ```
-IF body.Username or body.Password is empty                -> 400
+IF body.Username or body.Password is empty -> 400
 // Hash password
 BCrypt.HashPassword(body.Password, workFactor: config.BcryptWorkFactor)
 CALL IAccountClient.CreateAccountAsync(email, displayName, passwordHash)
-  -> 409 if email exists (ApiException)
-  -> 400 if invalid data (ApiException)
+ -> 409 if email exists (ApiException)
+ -> 400 if invalid data (ApiException)
 // see helper: TokenService.GenerateAccessTokenAsync
 WRITE auth:session:{sessionKey} <- SessionDataModel (TTL: SessionTokenTtlDays * 86400)
 WRITE auth:session-id-index:{sessionId} <- sessionKey (TTL: session TTL + 300)
@@ -206,10 +206,10 @@ RETURN (200, RegisterResponse { accountId, accessToken, refreshToken, connectUrl
 GET /auth/oauth/{provider}/init | Roles: [anonymous] | x-controller-only (302 redirect)
 
 ```
-// Manual controller endpoint — browser-facing OAuth redirect (T15 exception)
+// Manual controller endpoint — browser-facing OAuth redirect (exception)
 // see helper: OAuthProviderService.GetAuthorizationUrl
 // Builds provider-specific authorization URL with client ID, redirect URI, state param
-IF authUrl is null                                        -> 500 (provider not configured)
+IF authUrl is null -> 500 (provider not configured)
 RETURN (200, InitOAuthResponse { authorizationUrl })
 // Controller wraps as 302 redirect to authorizationUrl
 ```
@@ -218,26 +218,26 @@ RETURN (200, InitOAuthResponse { authorizationUrl })
 POST /auth/oauth/{provider}/callback | Roles: [anonymous]
 
 ```
-IF body.Code is empty                                     -> 400
+IF body.Code is empty -> 400
 IF config.MockProviders
-  // see helper: OAuthProviderService.GetMockUserInfoAsync
-  // Returns deterministic mock user info, skips real provider calls
+ // see helper: OAuthProviderService.GetMockUserInfoAsync
+ // Returns deterministic mock user info, skips real provider calls
 IF provider is Discord/Google/Twitch
-  // see helper: OAuthProviderService.Exchange{Provider}CodeAsync
-  // HTTP call to provider API: exchange code for access token, fetch user info
-  IF userInfo is null                                     -> 401
+ // see helper: OAuthProviderService.Exchange{Provider}CodeAsync
+ // HTTP call to provider API: exchange code for access token, fetch user info
+ IF userInfo is null -> 401
 // see helper: OAuthProviderService.FindOrCreateOAuthAccountAsync
 READ auth:oauth-link:{provider}:{providerId}
 IF exists
-  CALL IAccountClient.GetAccountAsync(accountId)
+ CALL IAccountClient.GetAccountAsync(accountId)
 ELSE
-  CALL IAccountClient.GetAccountByAuthMethodAsync({provider}:{providerId})
-  IF not found
-    CALL IAccountClient.CreateAccountAsync(email, displayName)
-    // isNewAccount = true
-  WRITE auth:oauth-link:{provider}:{providerId} <- accountId
-  WRITE auth:account-oauth-links:{accountId} <- append link key
-IF account is null                                        -> 500
+ CALL IAccountClient.GetAccountByAuthMethodAsync({provider}:{providerId})
+ IF not found
+ CALL IAccountClient.CreateAccountAsync(email, displayName)
+ // isNewAccount = true
+ WRITE auth:oauth-link:{provider}:{providerId} <- accountId
+ WRITE auth:account-oauth-links:{accountId} <- append link key
+IF account is null -> 500
 // see helper: TokenService.GenerateAccessTokenAsync
 WRITE auth:session:{sessionKey} <- SessionDataModel (TTL: SessionTokenTtlDays * 86400)
 WRITE auth:session-id-index:{sessionId} <- sessionKey (TTL: session TTL + 300)
@@ -246,7 +246,7 @@ WRITE auth:refresh_token:{refreshToken} <- accountId (TTL: SessionTokenTtlDays *
 PUBLISH auth.oauth.successful { accountId, provider, providerUserId, sessionId, isNewAccount }
 PUSH auth.device-login to account sessions { loginSessionId }
 IF isNewAccount
-  PUSH auth.external-account-linked to account sessions { provider }
+ PUSH auth.external-account-linked to account sessions { provider }
 RETURN (200, AuthResponse { accountId, accessToken, refreshToken, expiresIn, connectUrl })
 ```
 
@@ -254,13 +254,13 @@ RETURN (200, AuthResponse { accountId, accessToken, refreshToken, expiresIn, con
 POST /auth/steam/verify | Roles: [anonymous]
 
 ```
-IF body.Ticket is empty                                   -> 400
+IF body.Ticket is empty -> 400
 IF config.MockProviders
-  // see helper: OAuthProviderService.GetMockSteamUserInfoAsync
-IF SteamApiKey or SteamAppId not configured               -> 500
+ // see helper: OAuthProviderService.GetMockSteamUserInfoAsync
+IF SteamApiKey or SteamAppId not configured -> 500
 // see helper: OAuthProviderService.ValidateSteamTicketAsync
 // HTTP call to Steam Web API ISteamUserAuth/AuthenticateUserTicket
-IF steamId is empty                                       -> 401
+IF steamId is empty -> 401
 // see helper: OAuthProviderService.FindOrCreateOAuthAccountAsync (provider=Steam)
 // Same find-or-create flow as CompleteOAuth, email=null for Steam
 WRITE auth:oauth-link:Steam:{steamId} <- accountId
@@ -273,7 +273,7 @@ WRITE auth:refresh_token:{refreshToken} <- accountId (TTL: SessionTokenTtlDays *
 PUBLISH auth.steam.successful { accountId, steamId, sessionId, isNewAccount }
 PUSH auth.device-login to account sessions { loginSessionId }
 IF isNewAccount
-  PUSH auth.external-account-linked to account sessions { provider: Steam }
+ PUSH auth.external-account-linked to account sessions { provider: Steam }
 RETURN (200, AuthResponse { accountId, accessToken, refreshToken, expiresIn, connectUrl })
 ```
 
@@ -282,10 +282,10 @@ POST /auth/refresh | Roles: [user]
 
 ```
 // jwt parameter intentionally unused — refresh token alone is the credential
-IF body.RefreshToken is empty                             -> 400
+IF body.RefreshToken is empty -> 400
 // see helper: TokenService.ValidateRefreshTokenAsync
-READ auth:refresh_token:{body.RefreshToken}               -> 403 if null
-CALL IAccountClient.GetAccountAsync(accountId)            -> 401 if 404 (ApiException)
+READ auth:refresh_token:{body.RefreshToken} -> 403 if null
+CALL IAccountClient.GetAccountAsync(accountId) -> 401 if 404 (ApiException)
 // see helper: TokenService.GenerateAccessTokenAsync (new session)
 WRITE auth:session:{sessionKey} <- SessionDataModel (TTL: SessionTokenTtlDays * 86400)
 WRITE auth:session-id-index:{sessionId} <- sessionKey (TTL: session TTL + 300)
@@ -301,13 +301,13 @@ RETURN (200, AuthResponse { accountId, accessToken, refreshToken, expiresIn, con
 POST /auth/validate | Roles: [user]
 
 ```
-IF jwt is empty                                           -> 401
+IF jwt is empty -> 401
 // see helper: TokenService.ValidateTokenAsync
 // Verifies JWT signature (issuer, audience, expiry)
 // Extracts session_key claim from JWT
-READ auth:session:{sessionKey}                            -> 401 if null
-IF session.Roles is null (data corruption)                -> 401
-IF session expired                                        -> 401
+READ auth:session:{sessionKey} -> 401 if null
+IF session.Roles is null (data corruption) -> 401
+IF session expired -> 401
 // Update LastActiveAt and refresh TTL
 WRITE auth:session:{sessionKey} <- session (TTL: remaining seconds)
 RETURN (200, ValidateTokenResponse { accountId, sessionKey, roles, authorizations, remainingTime })
@@ -317,27 +317,27 @@ RETURN (200, ValidateTokenResponse { accountId, sessionKey, roles, authorization
 POST /auth/logout | Roles: [user]
 
 ```
-IF jwt is empty                                           -> 401
-CALL self.ValidateTokenAsync(jwt)                         -> 401 if invalid
+IF jwt is empty -> 401
+CALL self.ValidateTokenAsync(jwt) -> 401 if invalid
 IF body.AllSessions == true
-  // see helper: SessionService.GetSessionKeysForAccountAsync
-  READ SET auth:account-sessions:{accountId}
-  FOREACH sessionKey in sessionKeys
-    READ auth:session:{sessionKey}
-    // Collect JTI for edge revocation
-    DELETE auth:session:{sessionKey}
-    DELETE auth:session-id-index:{sessionId}
-  DELETE SET auth:account-sessions:{accountId}
+ // see helper: SessionService.GetSessionKeysForAccountAsync
+ READ SET auth:account-sessions:{accountId}
+ FOREACH sessionKey in sessionKeys
+ READ auth:session:{sessionKey}
+ // Collect JTI for edge revocation
+ DELETE auth:session:{sessionKey}
+ DELETE auth:session-id-index:{sessionId}
+ DELETE SET auth:account-sessions:{accountId}
 ELSE
-  // Single session logout
-  READ auth:session:{sessionKey}
-  DELETE auth:session:{sessionKey}
-  REMOVE auth:account-sessions:{accountId} <- sessionKey (Redis Set SREM)
+ // Single session logout
+ READ auth:session:{sessionKey}
+ DELETE auth:session:{sessionKey}
+ REMOVE auth:account-sessions:{accountId} <- sessionKey (Redis Set SREM)
 // Edge revocation (best-effort, if enabled)
 IF EdgeRevocationEnabled and JTIs collected
-  FOREACH (jti, ttl) in sessionsToRevoke
-    WRITE edge:token:{jti} <- TokenRevocationEntry (TTL: remaining JWT lifetime)
-    // Push to CloudFlare/OpenResty providers
+ FOREACH (jti, ttl) in sessionsToRevoke
+ WRITE edge:token:{jti} <- TokenRevocationEntry (TTL: remaining JWT lifetime)
+ // Push to CloudFlare/OpenResty providers
 PUBLISH session.invalidated { accountId, sessionIds, reason: Logout }
 PUSH auth.session-terminated to account sessions { terminatedSessionId, reason: Logout }
 RETURN (200)
@@ -347,14 +347,14 @@ RETURN (200)
 POST /auth/sessions/list | Roles: [user]
 
 ```
-IF jwt is empty                                           -> 401
-CALL self.ValidateTokenAsync(jwt)                         -> 401 if invalid
+IF jwt is empty -> 401
+CALL self.ValidateTokenAsync(jwt) -> 401 if invalid
 // see helper: SessionService.GetAccountSessionsAsync
 READ SET auth:account-sessions:{accountId}
 FOREACH sessionKey in set
-  READ auth:session:{sessionKey}
-  IF null -> remove stale key from set (lazy cleanup)
-  ELSE -> build SessionInfo (sessionId, createdAt, lastActive, deviceInfo)
+ READ auth:session:{sessionKey}
+ IF null -> remove stale key from set (lazy cleanup)
+ ELSE -> build SessionInfo (sessionId, createdAt, lastActive, deviceInfo)
 RETURN (200, SessionsResponse { sessions })
 ```
 
@@ -363,18 +363,18 @@ POST /auth/sessions/terminate | Roles: [user]
 
 ```
 // see helper: SessionService.FindSessionKeyBySessionIdAsync
-READ auth:session-id-index:{body.SessionId}               -> 404 if null
+READ auth:session-id-index:{body.SessionId} -> 404 if null
 READ auth:session:{sessionKey}
 DELETE auth:session:{sessionKey}
 IF sessionData != null
-  REMOVE auth:account-sessions:{accountId} <- sessionKey (Redis Set SREM)
+ REMOVE auth:account-sessions:{accountId} <- sessionKey (Redis Set SREM)
 DELETE auth:session-id-index:{body.SessionId}
 // Edge revocation (best-effort, if enabled)
 IF EdgeRevocationEnabled and sessionData.Jti != null
-  WRITE edge:token:{jti} <- TokenRevocationEntry (TTL: remaining JWT lifetime)
+ WRITE edge:token:{jti} <- TokenRevocationEntry (TTL: remaining JWT lifetime)
 IF sessionData != null
-  PUBLISH session.invalidated { accountId, [sessionKey], reason: AdminAction }
-  PUSH auth.session-terminated to account sessions { terminatedSessionId, reason: AdminAction }
+ PUBLISH session.invalidated { accountId, [sessionKey], reason: AdminAction }
+ PUSH auth.session-terminated to account sessions { terminatedSessionId, reason: AdminAction }
 RETURN (200)
 ```
 
@@ -383,18 +383,18 @@ POST /auth/revocation-list | Roles: [admin]
 
 ```
 IF !EdgeRevocationService.IsEnabled
-  RETURN (200, RevocationListResponse { revokedTokens: [], revokedAccounts: [] })
+ RETURN (200, RevocationListResponse { revokedTokens: [], revokedAccounts: [] })
 // see helper: EdgeRevocationService.GetRevocationListAsync
 IF body.IncludeTokens
-  READ edge:token-index
-  FOREACH jti in index (limited by body.Limit)
-    READ edge:token:{jti}
-    // Skip null entries (expired)
+ READ edge:token-index
+ FOREACH jti in index (limited by body.Limit)
+ READ edge:token:{jti}
+ // Skip null entries (expired)
 IF body.IncludeAccounts
-  READ edge:account-index
-  FOREACH accountId in index (limited by body.Limit)
-    READ edge:account:{accountId}
-    // Skip null entries (expired)
+ READ edge:account-index
+ FOREACH accountId in index (limited by body.Limit)
+ READ edge:account:{accountId}
+ // Skip null entries (expired)
 RETURN (200, RevocationListResponse { revokedTokens, revokedAccounts })
 ```
 
@@ -402,16 +402,16 @@ RETURN (200, RevocationListResponse { revokedTokens, revokedAccounts })
 POST /auth/password/reset | Roles: [anonymous]
 
 ```
-IF body.Email is empty                                    -> 400
+IF body.Email is empty -> 400
 CALL IAccountClient.GetAccountByEmailAsync(email)
-  // 404 is silently swallowed — always returns 200 (enumeration protection)
+ // 404 is silently swallowed — always returns 200 (enumeration protection)
 IF account found AND account.Email is non-empty
-  // see helper: TokenService.GenerateSecureToken
-  WRITE auth:password-reset:{token} <- PasswordResetData { accountId, email, expiresAt }
-    (TTL: PasswordResetTokenTtlMinutes * 60)
-  // Fire-and-forget email — failures logged but never affect response
-  // see helper: IEmailService.SendAsync
-  // Throws InvalidOperationException if PasswordResetBaseUrl is null
+ // see helper: TokenService.GenerateSecureToken
+ WRITE auth:password-reset:{token} <- PasswordResetData { accountId, email, expiresAt }
+ (TTL: PasswordResetTokenTtlMinutes * 60)
+ // Fire-and-forget email — failures logged but never affect response
+ // see helper: IEmailService.SendAsync
+ // Throws InvalidOperationException if PasswordResetBaseUrl is null
 RETURN (200)
 // Always 200 regardless of account existence
 ```
@@ -420,18 +420,18 @@ RETURN (200)
 POST /auth/password/confirm | Roles: [anonymous]
 
 ```
-IF body.Token or body.NewPassword is empty                -> 400
-READ auth:password-reset:{body.Token}                     -> 400 if null
+IF body.Token or body.NewPassword is empty -> 400
+READ auth:password-reset:{body.Token} -> 400 if null
 IF resetData.ExpiresAt < now
-  DELETE auth:password-reset:{body.Token}                 -> 400
+ DELETE auth:password-reset:{body.Token} -> 400
 BCrypt.HashPassword(body.NewPassword, workFactor: config.BcryptWorkFactor)
 CALL IAccountClient.UpdatePasswordHashAsync(accountId, passwordHash)
 DELETE auth:password-reset:{body.Token}
 // Invalidate all sessions for security
 // see helper: SessionService.InvalidateAllSessionsForAccountAsync
 FOREACH session in account sessions
-  DELETE auth:session:{sessionKey}
-  DELETE auth:session-id-index:{sessionId}
+ DELETE auth:session:{sessionKey}
+ DELETE auth:session-id-index:{sessionId}
 DELETE SET auth:account-sessions:{accountId}
 PUBLISH session.invalidated { accountId, sessionIds, reason: SecurityRevocation }
 // Edge revocation (if enabled)
@@ -457,16 +457,16 @@ POST /auth/mfa/setup | Roles: [user]
 
 ```
 // see helper: TokenService.ValidateTokenAsync
-IF jwt invalid                                            -> 401
-CALL IAccountClient.GetAccountAsync(accountId)            -> 404 if not found
-IF account.MfaEnabled                                     -> 409
+IF jwt invalid -> 401
+CALL IAccountClient.GetAccountAsync(accountId) -> 404 if not found
+IF account.MfaEnabled -> 409
 // see helper: MfaService
 // Generate TOTP secret (Base32), 10 recovery codes (xxxx-xxxx format)
 // Encrypt secret with AES-256-GCM (key from MfaEncryptionKey config)
 // Hash recovery codes with BCrypt
 // Build otpauth:// URI for QR code
 WRITE auth:mfa-setup-{token} <- MfaSetupData { accountId, encryptedSecret, hashedRecoveryCodes }
-  (TTL: MfaChallengeTtlMinutes * 60)
+ (TTL: MfaChallengeTtlMinutes * 60)
 RETURN (200, MfaSetupResponse { setupToken, totpUri, recoveryCodes })
 ```
 
@@ -475,14 +475,14 @@ POST /auth/mfa/enable | Roles: [user]
 
 ```
 // see helper: TokenService.ValidateTokenAsync
-IF jwt invalid                                            -> 401
+IF jwt invalid -> 401
 // Consume setup token (single-use)
 // see helper: MfaService.ConsumeMfaSetupAsync
-READ auth:mfa-setup-{body.SetupToken}                     -> 400 if null
+READ auth:mfa-setup-{body.SetupToken} -> 400 if null
 DELETE auth:mfa-setup-{body.SetupToken}
-IF setupData.AccountId != caller accountId                -> 400
+IF setupData.AccountId != caller accountId -> 400
 // Decrypt secret, validate TOTP code
-IF !MfaService.ValidateTotp(secret, body.TotpCode)        -> 400
+IF !MfaService.ValidateTotp(secret, body.TotpCode) -> 400
 // Persist MFA to account
 CALL IAccountClient.UpdateMfaAsync(accountId, enabled: true, secret, recoveryCodes)
 PUBLISH auth.mfa.enabled { accountId }
@@ -495,16 +495,16 @@ POST /auth/mfa/disable | Roles: [user]
 
 ```
 // see helper: TokenService.ValidateTokenAsync
-IF jwt invalid                                            -> 401
-CALL IAccountClient.GetAccountAsync(accountId)            -> 404 if not found
-IF !account.MfaEnabled                                    -> 404
-IF neither TotpCode nor RecoveryCode provided             -> 400
+IF jwt invalid -> 401
+CALL IAccountClient.GetAccountAsync(accountId) -> 404 if not found
+IF !account.MfaEnabled -> 404
+IF neither TotpCode nor RecoveryCode provided -> 400
 IF body.TotpCode provided
-  // Decrypt secret, validate TOTP
-  IF invalid                                              -> 400
+ // Decrypt secret, validate TOTP
+ IF invalid -> 400
 ELSE IF body.RecoveryCode provided
-  // Verify against BCrypt-hashed codes
-  IF invalid                                              -> 400
+ // Verify against BCrypt-hashed codes
+ IF invalid -> 400
 CALL IAccountClient.UpdateMfaAsync(accountId, enabled: false, secret: null, codes: null)
 PUBLISH auth.mfa.disabled { accountId, disabledBy: Self }
 PUSH auth.mfa-disabled to account sessions { disabledBy: Self }
@@ -515,8 +515,8 @@ RETURN (200)
 POST /auth/mfa/admin-disable | Roles: [admin]
 
 ```
-CALL IAccountClient.GetAccountAsync(body.AccountId)       -> 404 if not found
-IF !account.MfaEnabled                                    -> 404
+CALL IAccountClient.GetAccountAsync(body.AccountId) -> 404 if not found
+IF !account.MfaEnabled -> 404
 // Admin override — no TOTP verification required
 CALL IAccountClient.UpdateMfaAsync(accountId, enabled: false, secret: null, codes: null)
 PUBLISH auth.mfa.disabled { accountId, disabledBy: Admin, adminReason }
@@ -530,22 +530,22 @@ POST /auth/mfa/verify | Roles: [anonymous]
 ```
 // Consume challenge token (single-use — deleted BEFORE verification)
 // see helper: MfaService.ConsumeMfaChallengeAsync
-READ auth:mfa-challenge-{body.ChallengeToken}             -> 401 if null
+READ auth:mfa-challenge-{body.ChallengeToken} -> 401 if null
 DELETE auth:mfa-challenge-{body.ChallengeToken}
-CALL IAccountClient.GetAccountAsync(accountId)            -> 500 if 404 (should not happen)
-IF neither TotpCode nor RecoveryCode provided             -> 400
+CALL IAccountClient.GetAccountAsync(accountId) -> 500 if 404 (should not happen)
+IF neither TotpCode nor RecoveryCode provided -> 400
 IF body.TotpCode provided
-  // Decrypt secret, validate TOTP
-  IF invalid
-    PUBLISH auth.mfa.failed { accountId, method: Totp, reason: InvalidCode }
-    RETURN (400, null)
+ // Decrypt secret, validate TOTP
+ IF invalid
+ PUBLISH auth.mfa.failed { accountId, method: Totp, reason: InvalidCode }
+ RETURN (400, null)
 ELSE IF body.RecoveryCode provided
-  // Verify against BCrypt-hashed codes
-  IF invalid
-    PUBLISH auth.mfa.failed { accountId, method: RecoveryCode, reason: InvalidCode }
-    RETURN (400, null)
-  // Remove used recovery code, update account (retry up to 3x on 409 Conflict)
-  CALL IAccountClient.UpdateMfaAsync(accountId, enabled: true, secret, remainingCodes)
+ // Verify against BCrypt-hashed codes
+ IF invalid
+ PUBLISH auth.mfa.failed { accountId, method: RecoveryCode, reason: InvalidCode }
+ RETURN (400, null)
+ // Remove used recovery code, update account (retry up to 3x on 409 Conflict)
+ CALL IAccountClient.UpdateMfaAsync(accountId, enabled: true, secret, remainingCodes)
 // MFA verified — generate full tokens
 // see helper: TokenService.GenerateAccessTokenAsync
 WRITE auth:session:{sessionKey} <- SessionDataModel (TTL: SessionTokenTtlDays * 86400)

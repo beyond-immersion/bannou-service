@@ -154,24 +154,25 @@ paths:
         : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
         \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CurrencyDefinitionResponse\"\
-        ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Currency definition details\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"definitionId\",\n                \"code\",\n                \"name\",\n                \"scope\"\
-        ,\n                \"precision\",\n                \"transferable\",\n                \"tradeable\",\n           \
-        \     \"autogainEnabled\",\n                \"expires\",\n                \"linkedToItem\",\n                \"isBaseCurrency\"\
-        ,\n                \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"uuid\",\n                    \"description\": \"Unique definition identifier\"\n\
-        \                },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Unique currency code\"\n                },\n                \"name\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n                \"\
-        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Detailed description\"\n                },\n                \"scope\": {\n          \
-        \          \"$ref\": \"#/$defs/CurrencyScope\",\n                    \"description\": \"Realm availability scope\"\
-        \n                },\n                \"realmsAvailable\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Available
-        realm IDs\"\n                },\n                \"precision\": {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\"\
+        ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"allOf\": [\n                {\n    \
+        \                \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n    \
+        \        \"description\": \"Currency definition details\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"definitionId\",\n                \"code\",\n                \"name\",\n \
+        \               \"scope\",\n                \"precision\",\n                \"transferable\",\n                \"\
+        tradeable\",\n                \"autogainEnabled\",\n                \"expires\",\n                \"linkedToItem\"\
+        ,\n                \"isBaseCurrency\",\n                \"isActive\",\n                \"createdAt\"\n           \
+        \ ],\n            \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique definition identifier\"\
+        \n                },\n                \"code\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Unique currency code\"\n                },\n                \"name\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n      \
+        \          \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Detailed description\"\n                },\n                \"scope\": {\n\
+        \                    \"$ref\": \"#/$defs/CurrencyScope\",\n                    \"description\": \"Realm availability
+        scope\"\n                },\n                \"realmsAvailable\": {\n                    \"type\": \"array\",\n  \
+        \                  \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    },\n                    \"nullable\": true,\n                    \"description\":
+        \"Available realm IDs\"\n                },\n                \"precision\": {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\"\
         ,\n                    \"description\": \"Decimal precision\"\n                },\n                \"transferable\"\
         : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether transferable between
         wallets\"\n                },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n    \
@@ -226,33 +227,28 @@ paths:
         : \"Icon asset ID\"\n                },\n                \"displayFormat\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Display format string\"\n     \
         \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether definition is active\"\n                },\n                \"isDeprecated\": {\n       \
-        \             \"type\": \"boolean\",\n                    \"description\": \"Whether definition is deprecated (Category
-        B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When the definition was deprecated\"\n                },\n                \"deprecationReason\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Reason for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"CurrencyScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Scope of currency availability across realms\",\n \
-        \           \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
-        \n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How the currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n             \
-        \   \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n  \
-        \              \"DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the
-        wallet cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n           \
-        \     \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n       \
-        \         \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n    \
-        \        \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
-        \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
-        \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
+        description\": \"Whether definition is active\"\n                },\n                \"createdAt\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n        \"\
+        CurrencyScope\": {\n            \"type\": \"string\",\n            \"description\": \"Scope of currency availability
+        across realms\",\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n     \
+        \           \"MultiRealm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How the currency handles decimal values (immutable after creation)\",\n\
+        \            \"enum\": [\n                \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\"\
+        ,\n                \"Decimal8\",\n                \"DecimalFull\",\n                \"BigInteger\"\n            ]\n\
+        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
+        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
+        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
+        \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
+        is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
+        \                \"EndOfSeason\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"How currency is linked to inventory items\",\n            \"enum\":
+        [\n                \"None\",\n                \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new currency definition\",\n    \"description\": \"Creates a new
         currency type with its behavior rules. Code, precision, and scope\\nare immutable after creation. Only one base currency
         per scope is allowed.\\n\",\n    \"tags\": [\n        \"Currency Definition\"\n    ],\n    \"deprecated\": false,\n\
@@ -294,24 +290,25 @@ paths:
         \   \"description\": \"Currency code (provide this or definitionId)\"\n                }\n            }\n        }\n\
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CurrencyDefinitionResponse\"\
-        ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Currency definition details\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"definitionId\",\n                \"code\",\n                \"name\",\n                \"scope\"\
-        ,\n                \"precision\",\n                \"transferable\",\n                \"tradeable\",\n           \
-        \     \"autogainEnabled\",\n                \"expires\",\n                \"linkedToItem\",\n                \"isBaseCurrency\"\
-        ,\n                \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"uuid\",\n                    \"description\": \"Unique definition identifier\"\n\
-        \                },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Unique currency code\"\n                },\n                \"name\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n                \"\
-        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Detailed description\"\n                },\n                \"scope\": {\n          \
-        \          \"$ref\": \"#/$defs/CurrencyScope\",\n                    \"description\": \"Realm availability scope\"\
-        \n                },\n                \"realmsAvailable\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Available
-        realm IDs\"\n                },\n                \"precision\": {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\"\
+        ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"allOf\": [\n                {\n    \
+        \                \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n    \
+        \        \"description\": \"Currency definition details\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"definitionId\",\n                \"code\",\n                \"name\",\n \
+        \               \"scope\",\n                \"precision\",\n                \"transferable\",\n                \"\
+        tradeable\",\n                \"autogainEnabled\",\n                \"expires\",\n                \"linkedToItem\"\
+        ,\n                \"isBaseCurrency\",\n                \"isActive\",\n                \"createdAt\"\n           \
+        \ ],\n            \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique definition identifier\"\
+        \n                },\n                \"code\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Unique currency code\"\n                },\n                \"name\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n      \
+        \          \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Detailed description\"\n                },\n                \"scope\": {\n\
+        \                    \"$ref\": \"#/$defs/CurrencyScope\",\n                    \"description\": \"Realm availability
+        scope\"\n                },\n                \"realmsAvailable\": {\n                    \"type\": \"array\",\n  \
+        \                  \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    },\n                    \"nullable\": true,\n                    \"description\":
+        \"Available realm IDs\"\n                },\n                \"precision\": {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\"\
         ,\n                    \"description\": \"Decimal precision\"\n                },\n                \"transferable\"\
         : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether transferable between
         wallets\"\n                },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n    \
@@ -366,33 +363,28 @@ paths:
         : \"Icon asset ID\"\n                },\n                \"displayFormat\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Display format string\"\n     \
         \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether definition is active\"\n                },\n                \"isDeprecated\": {\n       \
-        \             \"type\": \"boolean\",\n                    \"description\": \"Whether definition is deprecated (Category
-        B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When the definition was deprecated\"\n                },\n                \"deprecationReason\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Reason for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"CurrencyScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Scope of currency availability across realms\",\n \
-        \           \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
-        \n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How the currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n             \
-        \   \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n  \
-        \              \"DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the
-        wallet cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n           \
-        \     \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n       \
-        \         \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n    \
-        \        \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
-        \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
-        \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
+        description\": \"Whether definition is active\"\n                },\n                \"createdAt\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n        \"\
+        CurrencyScope\": {\n            \"type\": \"string\",\n            \"description\": \"Scope of currency availability
+        across realms\",\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n     \
+        \           \"MultiRealm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How the currency handles decimal values (immutable after creation)\",\n\
+        \            \"enum\": [\n                \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\"\
+        ,\n                \"Decimal8\",\n                \"DecimalFull\",\n                \"BigInteger\"\n            ]\n\
+        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
+        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
+        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
+        \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
+        is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
+        \                \"EndOfSeason\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"How currency is linked to inventory items\",\n            \"enum\":
+        [\n                \"None\",\n                \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get currency definition by ID or code\",\n    \"description\": \"Retrieves
         a currency definition by its unique ID or code.\\nAt least one of definitionId or code must be provided.\\n\",\n \
         \   \"tags\": [\n        \"Currency Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCurrencyDefinition\"\
@@ -444,102 +436,97 @@ paths:
         \  \"definitions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
         \          \"$ref\": \"#/$defs/CurrencyDefinitionResponse\"\n                    },\n                    \"description\"\
         : \"Currency definitions matching filter\"\n                }\n            }\n        },\n        \"CurrencyDefinitionResponse\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Currency definition details\",\n          \
-        \  \"additionalProperties\": false,\n            \"required\": [\n                \"definitionId\",\n            \
-        \    \"code\",\n                \"name\",\n                \"scope\",\n                \"precision\",\n          \
-        \      \"transferable\",\n                \"tradeable\",\n                \"autogainEnabled\",\n                \"\
-        expires\",\n                \"linkedToItem\",\n                \"isBaseCurrency\",\n                \"isActive\",\n\
-        \                \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
-        \                \"definitionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Unique definition identifier\"\n                },\n             \
-        \   \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique currency
-        code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n       \
-        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description\"\n                },\n                \"scope\": {\n                    \"$ref\": \"#/$defs/CurrencyScope\"\
-        ,\n                    \"description\": \"Realm availability scope\"\n                },\n                \"realmsAvailable\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Available realm IDs\"\n                },\n                \"precision\"\
-        : {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\",\n                    \"description\": \"Decimal
-        precision\"\n                },\n                \"transferable\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether transferable between wallets\"\n                },\n             \
-        \   \"tradeable\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether usable
-        in trades\"\n                },\n                \"allowNegative\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Whether negative balance allowed
-        (null uses plugin default)\"\n                },\n                \"perWalletCap\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"Maximum per-wallet balance\"\n                },\n                \"capOverflowBehavior\"\
-        : {\n                    \"$ref\": \"#/$defs/CapOverflowBehavior\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Overflow behavior when cap exceeded\"\n                },\n                \"\
-        globalSupplyCap\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Global supply cap\"\n              \
-        \  },\n                \"dailyEarnCap\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Daily earn cap\"\n\
-        \                },\n                \"weeklyEarnCap\": {\n                    \"type\": \"number\",\n           \
-        \         \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Weekly earn cap\"\n                },\n                \"earnCapResetTime\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Earn cap reset time\"\n       \
-        \         },\n                \"autogainEnabled\": {\n                    \"type\": \"boolean\",\n               \
-        \     \"description\": \"Whether autogain is enabled\"\n                },\n                \"autogainMode\": {\n\
-        \                    \"$ref\": \"#/$defs/AutogainMode\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Autogain calculation mode\"\n                },\n                \"autogainAmount\": {\n\
+        : {\n            \"allOf\": [\n                {\n                    \"type\": \"object\"\n                }\n  \
+        \          ],\n            \"type\": \"object\",\n            \"description\": \"Currency definition details\",\n\
+        \            \"additionalProperties\": false,\n            \"required\": [\n                \"definitionId\",\n  \
+        \              \"code\",\n                \"name\",\n                \"scope\",\n                \"precision\",\n\
+        \                \"transferable\",\n                \"tradeable\",\n                \"autogainEnabled\",\n       \
+        \         \"expires\",\n                \"linkedToItem\",\n                \"isBaseCurrency\",\n                \"\
+        isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"definitionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique definition identifier\"\n                },\n                \"code\": {\n               \
+        \     \"type\": \"string\",\n                    \"description\": \"Unique currency code\"\n                },\n \
+        \               \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Detailed description\"\n              \
+        \  },\n                \"scope\": {\n                    \"$ref\": \"#/$defs/CurrencyScope\",\n                  \
+        \  \"description\": \"Realm availability scope\"\n                },\n                \"realmsAvailable\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"format\": \"uuid\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Available realm IDs\"\n                },\n                \"precision\":
+        {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\",\n                    \"description\": \"Decimal precision\"\
+        \n                },\n                \"transferable\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether transferable between wallets\"\n                },\n                \"tradeable\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether usable in trades\"\
+        \n                },\n                \"allowNegative\": {\n                    \"type\": \"boolean\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Whether negative balance allowed (null uses
+        plugin default)\"\n                },\n                \"perWalletCap\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum per-wallet balance\"\n                },\n                \"capOverflowBehavior\": {\n               \
+        \     \"$ref\": \"#/$defs/CapOverflowBehavior\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Overflow behavior when cap exceeded\"\n                },\n                \"globalSupplyCap\": {\n\
         \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Autogain amount per interval\"\n                },\n             \
-        \   \"autogainInterval\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Autogain interval duration\"\n                },\n                \"autogainCap\"\
+        : true,\n                    \"description\": \"Global supply cap\"\n                },\n                \"dailyEarnCap\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Autogain balance cap\"\n                },\n           \
-        \     \"expires\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether currency
-        can expire\"\n                },\n                \"expirationPolicy\": {\n                    \"$ref\": \"#/$defs/ExpirationPolicy\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Expiration policy\"\n         \
-        \       },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Fixed
-        expiration date\"\n                },\n                \"expirationDuration\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Expiration duration\"\n\
-        \                },\n                \"seasonId\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Season
-        ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether linked to inventory item\"\n                },\n               \
-        \ \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Linked item template ID\"\n   \
-        \             },\n                \"linkageMode\": {\n                    \"$ref\": \"#/$defs/ItemLinkageMode\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Item linkage mode\"\n           \
-        \     },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\":
-        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
-        \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When exchange rate
-        was last updated\"\n                },\n                \"iconAssetId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Icon asset ID\"\n                },\n                \"displayFormat\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Display format string\"\n     \
-        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether definition is active\"\n                },\n                \"isDeprecated\": {\n       \
-        \             \"type\": \"boolean\",\n                    \"description\": \"Whether definition is deprecated (Category
-        B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When the definition was deprecated\"\n                },\n                \"deprecationReason\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Reason for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"CurrencyScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Scope of currency availability across realms\",\n \
-        \           \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
-        \n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How the currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n             \
-        \   \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n  \
-        \              \"DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the
-        wallet cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n           \
-        \     \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n       \
-        \         \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n    \
-        \        \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
+        nullable\": true,\n                    \"description\": \"Daily earn cap\"\n                },\n                \"\
+        weeklyEarnCap\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Weekly earn cap\"\n                },\n\
+        \                \"earnCapResetTime\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Earn cap reset time\"\n                },\n                \"autogainEnabled\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether autogain is enabled\"\
+        \n                },\n                \"autogainMode\": {\n                    \"$ref\": \"#/$defs/AutogainMode\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Autogain calculation mode\"\n \
+        \               },\n                \"autogainAmount\": {\n                    \"type\": \"number\",\n           \
+        \         \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Autogain amount per interval\"\n                },\n                \"autogainInterval\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Autogain interval
+        duration\"\n                },\n                \"autogainCap\": {\n                    \"type\": \"number\",\n  \
+        \                  \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Autogain balance cap\"\n                },\n                \"expires\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether currency can expire\"\n                },\n                \"expirationPolicy\"\
+        : {\n                    \"$ref\": \"#/$defs/ExpirationPolicy\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Expiration policy\"\n                },\n                \"expirationDate\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Fixed expiration date\"\n                },\n          \
+        \      \"expirationDuration\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Expiration duration\"\n                },\n                \"seasonId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Season ID for expiration\"\n                },\n                \"\
+        linkedToItem\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether linked
+        to inventory item\"\n                },\n                \"linkedItemTemplateId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Linked item template ID\"\n                },\n                \"linkageMode\": {\n    \
+        \                \"$ref\": \"#/$defs/ItemLinkageMode\",\n                    \"nullable\": true,\n               \
+        \     \"description\": \"Item linkage mode\"\n                },\n                \"isBaseCurrency\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this is the base currency\"\n\
+        \                },\n                \"exchangeRateToBase\": {\n                    \"type\": \"number\",\n      \
+        \              \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Exchange rate to base currency\"\n                },\n                \"exchangeRateUpdatedAt\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When exchange rate was last updated\"\n                },\n      \
+        \          \"iconAssetId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Icon asset ID\"\n             \
+        \   },\n                \"displayFormat\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Display format string\"\n                },\n                \"isActive\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether definition is active\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification timestamp\"\
+        \n                }\n            }\n        },\n        \"CurrencyScope\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Scope of currency availability across realms\",\n            \"enum\": [\n       \
+        \         \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\n            ]\n       \
+        \ },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"How the
+        currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n                \"Integer\"\
+        ,\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n                \"\
+        DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the wallet
+        cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n                \"\
+        CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n      \
+        \      \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n             \
+        \   \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n      \
+        \      \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n          \
+        \  \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
         \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
         \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
@@ -627,24 +614,25 @@ paths:
         ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        }\n\
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CurrencyDefinitionResponse\"\
-        ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Currency definition details\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"definitionId\",\n                \"code\",\n                \"name\",\n                \"scope\"\
-        ,\n                \"precision\",\n                \"transferable\",\n                \"tradeable\",\n           \
-        \     \"autogainEnabled\",\n                \"expires\",\n                \"linkedToItem\",\n                \"isBaseCurrency\"\
-        ,\n                \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"uuid\",\n                    \"description\": \"Unique definition identifier\"\n\
-        \                },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Unique currency code\"\n                },\n                \"name\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n                \"\
-        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Detailed description\"\n                },\n                \"scope\": {\n          \
-        \          \"$ref\": \"#/$defs/CurrencyScope\",\n                    \"description\": \"Realm availability scope\"\
-        \n                },\n                \"realmsAvailable\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Available
-        realm IDs\"\n                },\n                \"precision\": {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\"\
+        ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"allOf\": [\n                {\n    \
+        \                \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n    \
+        \        \"description\": \"Currency definition details\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"definitionId\",\n                \"code\",\n                \"name\",\n \
+        \               \"scope\",\n                \"precision\",\n                \"transferable\",\n                \"\
+        tradeable\",\n                \"autogainEnabled\",\n                \"expires\",\n                \"linkedToItem\"\
+        ,\n                \"isBaseCurrency\",\n                \"isActive\",\n                \"createdAt\"\n           \
+        \ ],\n            \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique definition identifier\"\
+        \n                },\n                \"code\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Unique currency code\"\n                },\n                \"name\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n      \
+        \          \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Detailed description\"\n                },\n                \"scope\": {\n\
+        \                    \"$ref\": \"#/$defs/CurrencyScope\",\n                    \"description\": \"Realm availability
+        scope\"\n                },\n                \"realmsAvailable\": {\n                    \"type\": \"array\",\n  \
+        \                  \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    },\n                    \"nullable\": true,\n                    \"description\":
+        \"Available realm IDs\"\n                },\n                \"precision\": {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\"\
         ,\n                    \"description\": \"Decimal precision\"\n                },\n                \"transferable\"\
         : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether transferable between
         wallets\"\n                },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n    \
@@ -699,33 +687,28 @@ paths:
         : \"Icon asset ID\"\n                },\n                \"displayFormat\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Display format string\"\n     \
         \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether definition is active\"\n                },\n                \"isDeprecated\": {\n       \
-        \             \"type\": \"boolean\",\n                    \"description\": \"Whether definition is deprecated (Category
-        B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When the definition was deprecated\"\n                },\n                \"deprecationReason\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Reason for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"CurrencyScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Scope of currency availability across realms\",\n \
-        \           \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
-        \n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How the currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n             \
-        \   \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n  \
-        \              \"DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the
-        wallet cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n           \
-        \     \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n       \
-        \         \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n    \
-        \        \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
-        \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
-        \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
+        description\": \"Whether definition is active\"\n                },\n                \"createdAt\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n        \"\
+        CurrencyScope\": {\n            \"type\": \"string\",\n            \"description\": \"Scope of currency availability
+        across realms\",\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n     \
+        \           \"MultiRealm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How the currency handles decimal values (immutable after creation)\",\n\
+        \            \"enum\": [\n                \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\"\
+        ,\n                \"Decimal8\",\n                \"DecimalFull\",\n                \"BigInteger\"\n            ]\n\
+        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
+        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
+        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
+        \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
+        is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
+        \                \"EndOfSeason\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"How currency is linked to inventory items\",\n            \"enum\":
+        [\n                \"None\",\n                \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update mutable fields of a currency definition\",\n    \"description\"\
         : \"Updates mutable fields of a currency definition. Code, precision, and scope\\nare immutable after creation and
         cannot be changed.\\n\",\n    \"tags\": [\n        \"Currency Definition\"\n    ],\n    \"deprecated\": false,\n \
@@ -768,24 +751,25 @@ paths:
         \   \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for
         deprecation (audit context for Category B entities)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CurrencyDefinitionResponse\"\
-        ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Currency definition details\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"definitionId\",\n                \"code\",\n                \"name\",\n                \"scope\"\
-        ,\n                \"precision\",\n                \"transferable\",\n                \"tradeable\",\n           \
-        \     \"autogainEnabled\",\n                \"expires\",\n                \"linkedToItem\",\n                \"isBaseCurrency\"\
-        ,\n                \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"uuid\",\n                    \"description\": \"Unique definition identifier\"\n\
-        \                },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Unique currency code\"\n                },\n                \"name\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n                \"\
-        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Detailed description\"\n                },\n                \"scope\": {\n          \
-        \          \"$ref\": \"#/$defs/CurrencyScope\",\n                    \"description\": \"Realm availability scope\"\
-        \n                },\n                \"realmsAvailable\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Available
-        realm IDs\"\n                },\n                \"precision\": {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\"\
+        ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"allOf\": [\n                {\n    \
+        \                \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n    \
+        \        \"description\": \"Currency definition details\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"definitionId\",\n                \"code\",\n                \"name\",\n \
+        \               \"scope\",\n                \"precision\",\n                \"transferable\",\n                \"\
+        tradeable\",\n                \"autogainEnabled\",\n                \"expires\",\n                \"linkedToItem\"\
+        ,\n                \"isBaseCurrency\",\n                \"isActive\",\n                \"createdAt\"\n           \
+        \ ],\n            \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique definition identifier\"\
+        \n                },\n                \"code\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Unique currency code\"\n                },\n                \"name\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Human-readable name\"\n                },\n      \
+        \          \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Detailed description\"\n                },\n                \"scope\": {\n\
+        \                    \"$ref\": \"#/$defs/CurrencyScope\",\n                    \"description\": \"Realm availability
+        scope\"\n                },\n                \"realmsAvailable\": {\n                    \"type\": \"array\",\n  \
+        \                  \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    },\n                    \"nullable\": true,\n                    \"description\":
+        \"Available realm IDs\"\n                },\n                \"precision\": {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\"\
         ,\n                    \"description\": \"Decimal precision\"\n                },\n                \"transferable\"\
         : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether transferable between
         wallets\"\n                },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n    \
@@ -840,38 +824,70 @@ paths:
         : \"Icon asset ID\"\n                },\n                \"displayFormat\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Display format string\"\n     \
         \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether definition is active\"\n                },\n                \"isDeprecated\": {\n       \
-        \             \"type\": \"boolean\",\n                    \"description\": \"Whether definition is deprecated (Category
-        B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When the definition was deprecated\"\n                },\n                \"deprecationReason\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Reason for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"CurrencyScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Scope of currency availability across realms\",\n \
-        \           \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
-        \n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How the currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n             \
-        \   \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n  \
-        \              \"DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the
-        wallet cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n           \
-        \     \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n       \
-        \         \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n    \
-        \        \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
-        \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
-        \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
+        description\": \"Whether definition is active\"\n                },\n                \"createdAt\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n        \"\
+        CurrencyScope\": {\n            \"type\": \"string\",\n            \"description\": \"Scope of currency availability
+        across realms\",\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n     \
+        \           \"MultiRealm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How the currency handles decimal values (immutable after creation)\",\n\
+        \            \"enum\": [\n                \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\"\
+        ,\n                \"Decimal8\",\n                \"DecimalFull\",\n                \"BigInteger\"\n            ]\n\
+        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
+        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
+        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
+        \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
+        is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
+        \                \"EndOfSeason\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"How currency is linked to inventory items\",\n            \"enum\":
+        [\n                \"None\",\n                \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a currency definition (Category B \\u2014 one-way, no delete)\"\
         ,\n    \"description\": \"Deprecates a currency definition. Existing wallets continue to function\\nbut no new wallets
         can be created for this currency.\\nCategory B entity: deprecation is one-way (no undeprecate), no delete endpoint.\\
         nIdempotent: returns OK if already deprecated.\\n\",\n    \"tags\": [\n        \"Currency Definition\"\n    ],\n \
         \   \"deprecated\": false,\n    \"operationId\": \"deprecateCurrencyDefinition\"\n}"
+  /currency/definition/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedCurrencyDefinitions
+      tags:
+      - Currency Definition
+      summary: Clean deprecated currency definitions with zero remaining wallets
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        currency definitions and permanently removes those with zero remaining wallets,
+        subject to an optional grace period. Publishes currency-definition.deleted events
+        for each removed definition. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean deprecated currency definitions with zero remaining wallets\",\n\
+        \    \"description\": \"Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\\ncurrency definitions
+        and permanently removes those with zero remaining wallets,\\nsubject to an optional grace period. Publishes currency-definition.deleted
+        events\\nfor each removed definition. Idempotent and safe to call at any frequency.\\nSupports dry-run mode for admin
+        panel preview.\\n\",\n    \"tags\": [\n        \"Currency Definition\"\n    ],\n    \"deprecated\": false,\n    \"\
+        operationId\": \"cleanDeprecatedCurrencyDefinitions\"\n}"
   /currency/wallet/create:
     post:
       operationId: createWallet
@@ -2403,102 +2419,97 @@ paths:
         \                  \"description\": \"Updated currency definition\"\n                },\n                \"previousRate\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
         description\": \"Previous exchange rate\"\n                }\n            }\n        },\n        \"CurrencyDefinitionResponse\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Currency definition details\",\n          \
-        \  \"additionalProperties\": false,\n            \"required\": [\n                \"definitionId\",\n            \
-        \    \"code\",\n                \"name\",\n                \"scope\",\n                \"precision\",\n          \
-        \      \"transferable\",\n                \"tradeable\",\n                \"autogainEnabled\",\n                \"\
-        expires\",\n                \"linkedToItem\",\n                \"isBaseCurrency\",\n                \"isActive\",\n\
-        \                \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
-        \                \"definitionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Unique definition identifier\"\n                },\n             \
-        \   \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique currency
-        code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n       \
-        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description\"\n                },\n                \"scope\": {\n                    \"$ref\": \"#/$defs/CurrencyScope\"\
-        ,\n                    \"description\": \"Realm availability scope\"\n                },\n                \"realmsAvailable\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Available realm IDs\"\n                },\n                \"precision\"\
-        : {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\",\n                    \"description\": \"Decimal
-        precision\"\n                },\n                \"transferable\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether transferable between wallets\"\n                },\n             \
-        \   \"tradeable\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether usable
-        in trades\"\n                },\n                \"allowNegative\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Whether negative balance allowed
-        (null uses plugin default)\"\n                },\n                \"perWalletCap\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"Maximum per-wallet balance\"\n                },\n                \"capOverflowBehavior\"\
-        : {\n                    \"$ref\": \"#/$defs/CapOverflowBehavior\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Overflow behavior when cap exceeded\"\n                },\n                \"\
-        globalSupplyCap\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Global supply cap\"\n              \
-        \  },\n                \"dailyEarnCap\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Daily earn cap\"\n\
-        \                },\n                \"weeklyEarnCap\": {\n                    \"type\": \"number\",\n           \
-        \         \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Weekly earn cap\"\n                },\n                \"earnCapResetTime\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Earn cap reset time\"\n       \
-        \         },\n                \"autogainEnabled\": {\n                    \"type\": \"boolean\",\n               \
-        \     \"description\": \"Whether autogain is enabled\"\n                },\n                \"autogainMode\": {\n\
-        \                    \"$ref\": \"#/$defs/AutogainMode\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Autogain calculation mode\"\n                },\n                \"autogainAmount\": {\n\
+        : {\n            \"allOf\": [\n                {\n                    \"type\": \"object\"\n                }\n  \
+        \          ],\n            \"type\": \"object\",\n            \"description\": \"Currency definition details\",\n\
+        \            \"additionalProperties\": false,\n            \"required\": [\n                \"definitionId\",\n  \
+        \              \"code\",\n                \"name\",\n                \"scope\",\n                \"precision\",\n\
+        \                \"transferable\",\n                \"tradeable\",\n                \"autogainEnabled\",\n       \
+        \         \"expires\",\n                \"linkedToItem\",\n                \"isBaseCurrency\",\n                \"\
+        isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"definitionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique definition identifier\"\n                },\n                \"code\": {\n               \
+        \     \"type\": \"string\",\n                    \"description\": \"Unique currency code\"\n                },\n \
+        \               \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Detailed description\"\n              \
+        \  },\n                \"scope\": {\n                    \"$ref\": \"#/$defs/CurrencyScope\",\n                  \
+        \  \"description\": \"Realm availability scope\"\n                },\n                \"realmsAvailable\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"format\": \"uuid\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Available realm IDs\"\n                },\n                \"precision\":
+        {\n                    \"$ref\": \"#/$defs/CurrencyPrecision\",\n                    \"description\": \"Decimal precision\"\
+        \n                },\n                \"transferable\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether transferable between wallets\"\n                },\n                \"tradeable\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether usable in trades\"\
+        \n                },\n                \"allowNegative\": {\n                    \"type\": \"boolean\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Whether negative balance allowed (null uses
+        plugin default)\"\n                },\n                \"perWalletCap\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum per-wallet balance\"\n                },\n                \"capOverflowBehavior\": {\n               \
+        \     \"$ref\": \"#/$defs/CapOverflowBehavior\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Overflow behavior when cap exceeded\"\n                },\n                \"globalSupplyCap\": {\n\
         \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Autogain amount per interval\"\n                },\n             \
-        \   \"autogainInterval\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Autogain interval duration\"\n                },\n                \"autogainCap\"\
+        : true,\n                    \"description\": \"Global supply cap\"\n                },\n                \"dailyEarnCap\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Autogain balance cap\"\n                },\n           \
-        \     \"expires\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether currency
-        can expire\"\n                },\n                \"expirationPolicy\": {\n                    \"$ref\": \"#/$defs/ExpirationPolicy\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Expiration policy\"\n         \
-        \       },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Fixed
-        expiration date\"\n                },\n                \"expirationDuration\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Expiration duration\"\n\
-        \                },\n                \"seasonId\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Season
-        ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether linked to inventory item\"\n                },\n               \
-        \ \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Linked item template ID\"\n   \
-        \             },\n                \"linkageMode\": {\n                    \"$ref\": \"#/$defs/ItemLinkageMode\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Item linkage mode\"\n           \
-        \     },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\":
-        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
-        \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When exchange rate
-        was last updated\"\n                },\n                \"iconAssetId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Icon asset ID\"\n                },\n                \"displayFormat\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Display format string\"\n     \
-        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether definition is active\"\n                },\n                \"isDeprecated\": {\n       \
-        \             \"type\": \"boolean\",\n                    \"description\": \"Whether definition is deprecated (Category
-        B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When the definition was deprecated\"\n                },\n                \"deprecationReason\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Reason for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
-        \n                },\n                \"modifiedAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Last modification timestamp\"\n                }\n            }\n        },\n        \"CurrencyScope\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Scope of currency availability across realms\",\n \
-        \           \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\
-        \n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How the currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n             \
-        \   \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n  \
-        \              \"DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the
-        wallet cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n           \
-        \     \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n       \
-        \         \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n    \
-        \        \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
+        nullable\": true,\n                    \"description\": \"Daily earn cap\"\n                },\n                \"\
+        weeklyEarnCap\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Weekly earn cap\"\n                },\n\
+        \                \"earnCapResetTime\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Earn cap reset time\"\n                },\n                \"autogainEnabled\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether autogain is enabled\"\
+        \n                },\n                \"autogainMode\": {\n                    \"$ref\": \"#/$defs/AutogainMode\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Autogain calculation mode\"\n \
+        \               },\n                \"autogainAmount\": {\n                    \"type\": \"number\",\n           \
+        \         \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Autogain amount per interval\"\n                },\n                \"autogainInterval\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Autogain interval
+        duration\"\n                },\n                \"autogainCap\": {\n                    \"type\": \"number\",\n  \
+        \                  \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Autogain balance cap\"\n                },\n                \"expires\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether currency can expire\"\n                },\n                \"expirationPolicy\"\
+        : {\n                    \"$ref\": \"#/$defs/ExpirationPolicy\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Expiration policy\"\n                },\n                \"expirationDate\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Fixed expiration date\"\n                },\n          \
+        \      \"expirationDuration\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Expiration duration\"\n                },\n                \"seasonId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Season ID for expiration\"\n                },\n                \"\
+        linkedToItem\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether linked
+        to inventory item\"\n                },\n                \"linkedItemTemplateId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Linked item template ID\"\n                },\n                \"linkageMode\": {\n    \
+        \                \"$ref\": \"#/$defs/ItemLinkageMode\",\n                    \"nullable\": true,\n               \
+        \     \"description\": \"Item linkage mode\"\n                },\n                \"isBaseCurrency\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this is the base currency\"\n\
+        \                },\n                \"exchangeRateToBase\": {\n                    \"type\": \"number\",\n      \
+        \              \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Exchange rate to base currency\"\n                },\n                \"exchangeRateUpdatedAt\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When exchange rate was last updated\"\n                },\n      \
+        \          \"iconAssetId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Icon asset ID\"\n             \
+        \   },\n                \"displayFormat\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Display format string\"\n                },\n                \"isActive\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether definition is active\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification timestamp\"\
+        \n                }\n            }\n        },\n        \"CurrencyScope\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Scope of currency availability across realms\",\n            \"enum\": [\n       \
+        \         \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\n            ]\n       \
+        \ },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"How the
+        currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n                \"Integer\"\
+        ,\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n                \"\
+        DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the wallet
+        cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n                \"\
+        CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n      \
+        \      \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n             \
+        \   \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n      \
+        \      \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n          \
+        \  \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
         \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
         \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
@@ -4021,6 +4032,8 @@ components:
           maxLength: 500
           description: Reason for deprecation (audit context for Category B entities)
     CurrencyDefinitionResponse:
+      allOf:
+      - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Currency definition details
       additionalProperties: false
@@ -4037,7 +4050,6 @@ components:
       - linkedToItem
       - isBaseCurrency
       - isActive
-      - isDeprecated
       - createdAt
       properties:
         definitionId:
@@ -4184,18 +4196,6 @@ components:
         isActive:
           type: boolean
           description: Whether definition is active
-        isDeprecated:
-          type: boolean
-          description: Whether definition is deprecated (Category B — one-way)
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the definition was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time

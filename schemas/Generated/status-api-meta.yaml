@@ -128,21 +128,22 @@ paths:
         \     \"Independent\",\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StatusTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Status template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"statusTemplateId\",\n                \"gameServiceId\",\n                \"code\",\n          \
-        \      \"displayName\",\n                \"description\",\n                \"category\",\n                \"stackable\"\
-        ,\n                \"maxStacks\",\n                \"stackBehavior\",\n                \"itemTemplateId\",\n     \
-        \           \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n    \
-        \            \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Unique status template identifier\"\n                },\n        \
-        \        \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Game service this template is scoped to\"\n                },\n        \
-        \        \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n       \
-        \             \"description\": \"Unique status code within this game service\"\n                },\n             \
-        \   \"displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n     \
-        \               \"description\": \"Human-readable display name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
+        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"allOf\": [\n                {\n        \
+        \            \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n        \
+        \    \"description\": \"Status template with all fields\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"statusTemplateId\",\n                \"gameServiceId\",\n               \
+        \ \"code\",\n                \"displayName\",\n                \"description\",\n                \"category\",\n \
+        \               \"stackable\",\n                \"maxStacks\",\n                \"stackBehavior\",\n             \
+        \   \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n          \
+        \      \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique status template identifier\"\n                },\n              \
+        \  \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"Game service this template is scoped to\"\n                },\n            \
+        \    \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n           \
+        \         \"description\": \"Unique status code within this game service\"\n                },\n                \"\
+        displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n           \
+        \         \"description\": \"Human-readable display name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
         : \"Detailed description of this status effect\"\n                },\n                \"category\": {\n          \
         \          \"$ref\": \"#/$defs/StatusCategory\",\n                    \"description\": \"Classification of this status
         effect\"\n                },\n                \"stackable\": {\n                    \"type\": \"boolean\",\n     \
@@ -159,24 +160,17 @@ paths:
         : true,\n                    \"description\": \"Default duration in seconds (null for permanent statuses)\"\n    \
         \            },\n                \"iconAssetId\": {\n                    \"type\": \"string\",\n                 \
         \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Asset identifier
-        for this status effect's icon\"\n                },\n                \"isDeprecated\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether this template is deprecated and unavailable for new
-        grants\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When this template was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Why this template was deprecated (null if not deprecated)\"\n    \
-        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"description\": \"When this template was created\"\n          \
-        \      },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this template
-        was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Classification of status effects for filtering and cleanse targeting.\\
-        n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect (poison,
-        slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription benefit\\
-        n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability (used
-        in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n     \
-        \           \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
+        for this status effect's icon\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Classification of status effects for filtering
+        and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
+        effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
+        benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
@@ -221,21 +215,22 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Status template identifier\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StatusTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Status template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"statusTemplateId\",\n                \"gameServiceId\",\n                \"code\",\n          \
-        \      \"displayName\",\n                \"description\",\n                \"category\",\n                \"stackable\"\
-        ,\n                \"maxStacks\",\n                \"stackBehavior\",\n                \"itemTemplateId\",\n     \
-        \           \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n    \
-        \            \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Unique status template identifier\"\n                },\n        \
-        \        \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Game service this template is scoped to\"\n                },\n        \
-        \        \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n       \
-        \             \"description\": \"Unique status code within this game service\"\n                },\n             \
-        \   \"displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n     \
-        \               \"description\": \"Human-readable display name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
+        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"allOf\": [\n                {\n        \
+        \            \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n        \
+        \    \"description\": \"Status template with all fields\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"statusTemplateId\",\n                \"gameServiceId\",\n               \
+        \ \"code\",\n                \"displayName\",\n                \"description\",\n                \"category\",\n \
+        \               \"stackable\",\n                \"maxStacks\",\n                \"stackBehavior\",\n             \
+        \   \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n          \
+        \      \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique status template identifier\"\n                },\n              \
+        \  \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"Game service this template is scoped to\"\n                },\n            \
+        \    \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n           \
+        \         \"description\": \"Unique status code within this game service\"\n                },\n                \"\
+        displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n           \
+        \         \"description\": \"Human-readable display name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
         : \"Detailed description of this status effect\"\n                },\n                \"category\": {\n          \
         \          \"$ref\": \"#/$defs/StatusCategory\",\n                    \"description\": \"Classification of this status
         effect\"\n                },\n                \"stackable\": {\n                    \"type\": \"boolean\",\n     \
@@ -252,24 +247,17 @@ paths:
         : true,\n                    \"description\": \"Default duration in seconds (null for permanent statuses)\"\n    \
         \            },\n                \"iconAssetId\": {\n                    \"type\": \"string\",\n                 \
         \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Asset identifier
-        for this status effect's icon\"\n                },\n                \"isDeprecated\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether this template is deprecated and unavailable for new
-        grants\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When this template was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Why this template was deprecated (null if not deprecated)\"\n    \
-        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"description\": \"When this template was created\"\n          \
-        \      },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this template
-        was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Classification of status effects for filtering and cleanse targeting.\\
-        n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect (poison,
-        slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription benefit\\
-        n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability (used
-        in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n     \
-        \           \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
+        for this status effect's icon\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Classification of status effects for filtering
+        and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
+        effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
+        benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
@@ -315,21 +303,22 @@ paths:
         \     \"maxLength\": 128,\n                    \"description\": \"Unique status code within this game service\"\n\
         \                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StatusTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Status template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"statusTemplateId\",\n                \"gameServiceId\",\n                \"code\",\n          \
-        \      \"displayName\",\n                \"description\",\n                \"category\",\n                \"stackable\"\
-        ,\n                \"maxStacks\",\n                \"stackBehavior\",\n                \"itemTemplateId\",\n     \
-        \           \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n    \
-        \            \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Unique status template identifier\"\n                },\n        \
-        \        \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Game service this template is scoped to\"\n                },\n        \
-        \        \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n       \
-        \             \"description\": \"Unique status code within this game service\"\n                },\n             \
-        \   \"displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n     \
-        \               \"description\": \"Human-readable display name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
+        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"allOf\": [\n                {\n        \
+        \            \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n        \
+        \    \"description\": \"Status template with all fields\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"statusTemplateId\",\n                \"gameServiceId\",\n               \
+        \ \"code\",\n                \"displayName\",\n                \"description\",\n                \"category\",\n \
+        \               \"stackable\",\n                \"maxStacks\",\n                \"stackBehavior\",\n             \
+        \   \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n          \
+        \      \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique status template identifier\"\n                },\n              \
+        \  \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"Game service this template is scoped to\"\n                },\n            \
+        \    \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n           \
+        \         \"description\": \"Unique status code within this game service\"\n                },\n                \"\
+        displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n           \
+        \         \"description\": \"Human-readable display name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
         : \"Detailed description of this status effect\"\n                },\n                \"category\": {\n          \
         \          \"$ref\": \"#/$defs/StatusCategory\",\n                    \"description\": \"Classification of this status
         effect\"\n                },\n                \"stackable\": {\n                    \"type\": \"boolean\",\n     \
@@ -346,24 +335,17 @@ paths:
         : true,\n                    \"description\": \"Default duration in seconds (null for permanent statuses)\"\n    \
         \            },\n                \"iconAssetId\": {\n                    \"type\": \"string\",\n                 \
         \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Asset identifier
-        for this status effect's icon\"\n                },\n                \"isDeprecated\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether this template is deprecated and unavailable for new
-        grants\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When this template was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Why this template was deprecated (null if not deprecated)\"\n    \
-        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"description\": \"When this template was created\"\n          \
-        \      },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this template
-        was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Classification of status effects for filtering and cleanse targeting.\\
-        n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect (poison,
-        slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription benefit\\
-        n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability (used
-        in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n     \
-        \           \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
+        for this status effect's icon\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Classification of status effects for filtering
+        and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
+        effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
+        benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
@@ -432,63 +414,56 @@ paths:
         the filter\"\n                },\n                \"page\": {\n                    \"type\": \"integer\",\n      \
         \              \"description\": \"Current page number\"\n                },\n                \"pageSize\": {\n   \
         \                 \"type\": \"integer\",\n                    \"description\": \"Number of items per page\"\n    \
-        \            }\n            }\n        },\n        \"StatusTemplateResponse\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Status template with all fields\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"statusTemplateId\",\n                \"gameServiceId\",\n        \
-        \        \"code\",\n                \"displayName\",\n                \"description\",\n                \"category\"\
-        ,\n                \"stackable\",\n                \"maxStacks\",\n                \"stackBehavior\",\n          \
-        \      \"itemTemplateId\",\n                \"isDeprecated\",\n                \"createdAt\"\n            ],\n   \
-        \         \"properties\": {\n                \"statusTemplateId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"description\": \"Unique status template identifier\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this template is scoped to\"\
-        \n                },\n                \"code\": {\n                    \"type\": \"string\",\n                   \
-        \ \"maxLength\": 128,\n                    \"description\": \"Unique status code within this game service\"\n    \
-        \            },\n                \"displayName\": {\n                    \"type\": \"string\",\n                 \
-        \   \"maxLength\": 256,\n                    \"description\": \"Human-readable display name\"\n                },\n\
-        \                \"description\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
-        : 2000,\n                    \"description\": \"Detailed description of this status effect\"\n                },\n\
-        \                \"category\": {\n                    \"$ref\": \"#/$defs/StatusCategory\",\n                    \"\
-        description\": \"Classification of this status effect\"\n                },\n                \"stackable\": {\n  \
-        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether this status can stack\"\n\
-        \                },\n                \"maxStacks\": {\n                    \"type\": \"integer\",\n              \
-        \      \"minimum\": 1,\n                    \"description\": \"Maximum number of stacks\"\n                },\n  \
-        \              \"stackBehavior\": {\n                    \"$ref\": \"#/$defs/StackBehavior\",\n                  \
-        \  \"description\": \"How multiple applications interact\"\n                },\n                \"contractTemplateId\"\
+        \            }\n            }\n        },\n        \"StatusTemplateResponse\": {\n            \"allOf\": [\n     \
+        \           {\n                    \"type\": \"object\"\n                }\n            ],\n            \"type\":
+        \"object\",\n            \"description\": \"Status template with all fields\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"statusTemplateId\",\n                \"gameServiceId\",\n\
+        \                \"code\",\n                \"displayName\",\n                \"description\",\n                \"\
+        category\",\n                \"stackable\",\n                \"maxStacks\",\n                \"stackBehavior\",\n\
+        \                \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
+        \                \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique status template identifier\"\n                },\n    \
+        \            \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Game service this template is scoped to\"\n                },\n        \
+        \        \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n       \
+        \             \"description\": \"Unique status code within this game service\"\n                },\n             \
+        \   \"displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n     \
+        \               \"description\": \"Human-readable display name\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
+        : \"Detailed description of this status effect\"\n                },\n                \"category\": {\n          \
+        \          \"$ref\": \"#/$defs/StatusCategory\",\n                    \"description\": \"Classification of this status
+        effect\"\n                },\n                \"stackable\": {\n                    \"type\": \"boolean\",\n     \
+        \               \"description\": \"Whether this status can stack\"\n                },\n                \"maxStacks\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"Maximum number of stacks\"\n                },\n                \"stackBehavior\": {\n                    \"$ref\"\
+        : \"#/$defs/StackBehavior\",\n                    \"description\": \"How multiple applications interact\"\n      \
+        \          },\n                \"contractTemplateId\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
+        template for lifecycle management (null if not contract-managed)\"\n                },\n                \"itemTemplateId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Contract template for lifecycle management (null if not
-        contract-managed)\"\n                },\n                \"itemTemplateId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Item template used when granting
-        this status\"\n                },\n                \"defaultDurationSeconds\": {\n                    \"type\": \"\
-        integer\",\n                    \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Default duration in seconds (null for permanent statuses)\"\n                },\n                \"iconAssetId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Asset identifier for this status effect's icon\"\n     \
-        \           },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether this template is deprecated and unavailable for new grants\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this template was
-        deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n            \
-        \        \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Why this template was deprecated (null if not deprecated)\"\n            \
-        \    },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When this template was created\"\n                },\n  \
-        \              \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When this template was last updated\"\
-        \n                }\n            }\n        },\n        \"StatusCategory\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Classification of status effects for filtering and cleanse targeting.\\n- buff: positive
-        temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect (poison, slow, weakness)\\
-        n- death: death penalty or incapacitation state\\n- subscription: account-level subscription benefit\\n- event: time-limited
-        event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability (used in unified queries)\\n\"\
-        ,\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n                \"Death\",\n \
-        \               \"Subscription\",\n                \"Event\",\n                \"Passive\"\n            ]\n      \
-        \  },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"How multiple
-        applications of the same status template interact.\\n- refresh_duration: resets timer, preserves or increments stack
-        count\\n- independent: each application is a separate item with own timer\\n- increase_intensity: stacks increase
-        effect magnitude, shared timer reset\\n- replace: new application replaces existing entirely\\n- ignore: cannot apply
-        if already present\\n\",\n            \"enum\": [\n                \"RefreshDuration\",\n                \"Independent\"\
-        ,\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\n            ]\n\
-        \        }\n    }\n}"
+        description\": \"Item template used when granting this status\"\n                },\n                \"defaultDurationSeconds\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Default duration in seconds (null for permanent statuses)\"\n    \
+        \            },\n                \"iconAssetId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Asset identifier
+        for this status effect's icon\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Classification of status effects for filtering
+        and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
+        effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
+        benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
+        \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
+        or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
+        stacks increase effect magnitude, shared timer reset\\n- replace: new application replaces existing entirely\\n- ignore:
+        cannot apply if already present\\n\",\n            \"enum\": [\n                \"RefreshDuration\",\n           \
+        \     \"Independent\",\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List status templates\",\n    \"description\": \"Paginated list of status
         templates filtered by game service with optional category filter.\",\n    \"tags\": [\n        \"StatusTemplate\"\n\
         \    ],\n    \"deprecated\": false,\n    \"operationId\": \"listStatusTemplates\"\n}"
@@ -561,21 +536,22 @@ paths:
         \     \"Independent\",\n                \"IncreaseIntensity\",\n                \"Replace\",\n                \"Ignore\"\
         \n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StatusTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Status template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"statusTemplateId\",\n                \"gameServiceId\",\n                \"code\",\n          \
-        \      \"displayName\",\n                \"description\",\n                \"category\",\n                \"stackable\"\
-        ,\n                \"maxStacks\",\n                \"stackBehavior\",\n                \"itemTemplateId\",\n     \
-        \           \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n    \
-        \            \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Unique status template identifier\"\n                },\n        \
-        \        \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Game service this template is scoped to\"\n                },\n        \
-        \        \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n       \
-        \             \"description\": \"Unique status code within this game service\"\n                },\n             \
-        \   \"displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n     \
-        \               \"description\": \"Human-readable display name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
+        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"allOf\": [\n                {\n        \
+        \            \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n        \
+        \    \"description\": \"Status template with all fields\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"statusTemplateId\",\n                \"gameServiceId\",\n               \
+        \ \"code\",\n                \"displayName\",\n                \"description\",\n                \"category\",\n \
+        \               \"stackable\",\n                \"maxStacks\",\n                \"stackBehavior\",\n             \
+        \   \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n          \
+        \      \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique status template identifier\"\n                },\n              \
+        \  \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"Game service this template is scoped to\"\n                },\n            \
+        \    \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n           \
+        \         \"description\": \"Unique status code within this game service\"\n                },\n                \"\
+        displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n           \
+        \         \"description\": \"Human-readable display name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
         : \"Detailed description of this status effect\"\n                },\n                \"category\": {\n          \
         \          \"$ref\": \"#/$defs/StatusCategory\",\n                    \"description\": \"Classification of this status
         effect\"\n                },\n                \"stackable\": {\n                    \"type\": \"boolean\",\n     \
@@ -592,24 +568,17 @@ paths:
         : true,\n                    \"description\": \"Default duration in seconds (null for permanent statuses)\"\n    \
         \            },\n                \"iconAssetId\": {\n                    \"type\": \"string\",\n                 \
         \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Asset identifier
-        for this status effect's icon\"\n                },\n                \"isDeprecated\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether this template is deprecated and unavailable for new
-        grants\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When this template was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Why this template was deprecated (null if not deprecated)\"\n    \
-        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"description\": \"When this template was created\"\n          \
-        \      },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this template
-        was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Classification of status effects for filtering and cleanse targeting.\\
-        n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect (poison,
-        slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription benefit\\
-        n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability (used
-        in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n     \
-        \           \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
+        for this status effect's icon\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Classification of status effects for filtering
+        and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
+        effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
+        benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
@@ -752,21 +721,22 @@ paths:
         \  \"maxLength\": 500,\n                    \"description\": \"Why this template is being deprecated\"\n         \
         \       }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StatusTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Status template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"statusTemplateId\",\n                \"gameServiceId\",\n                \"code\",\n          \
-        \      \"displayName\",\n                \"description\",\n                \"category\",\n                \"stackable\"\
-        ,\n                \"maxStacks\",\n                \"stackBehavior\",\n                \"itemTemplateId\",\n     \
-        \           \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n    \
-        \            \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Unique status template identifier\"\n                },\n        \
-        \        \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Game service this template is scoped to\"\n                },\n        \
-        \        \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n       \
-        \             \"description\": \"Unique status code within this game service\"\n                },\n             \
-        \   \"displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n     \
-        \               \"description\": \"Human-readable display name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
+        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"allOf\": [\n                {\n        \
+        \            \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n        \
+        \    \"description\": \"Status template with all fields\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"statusTemplateId\",\n                \"gameServiceId\",\n               \
+        \ \"code\",\n                \"displayName\",\n                \"description\",\n                \"category\",\n \
+        \               \"stackable\",\n                \"maxStacks\",\n                \"stackBehavior\",\n             \
+        \   \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n          \
+        \      \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique status template identifier\"\n                },\n              \
+        \  \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"Game service this template is scoped to\"\n                },\n            \
+        \    \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n           \
+        \         \"description\": \"Unique status code within this game service\"\n                },\n                \"\
+        displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n           \
+        \         \"description\": \"Human-readable display name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
         : \"Detailed description of this status effect\"\n                },\n                \"category\": {\n          \
         \          \"$ref\": \"#/$defs/StatusCategory\",\n                    \"description\": \"Classification of this status
         effect\"\n                },\n                \"stackable\": {\n                    \"type\": \"boolean\",\n     \
@@ -783,24 +753,17 @@ paths:
         : true,\n                    \"description\": \"Default duration in seconds (null for permanent statuses)\"\n    \
         \            },\n                \"iconAssetId\": {\n                    \"type\": \"string\",\n                 \
         \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Asset identifier
-        for this status effect's icon\"\n                },\n                \"isDeprecated\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether this template is deprecated and unavailable for new
-        grants\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When this template was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Why this template was deprecated (null if not deprecated)\"\n    \
-        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"description\": \"When this template was created\"\n          \
-        \      },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this template
-        was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Classification of status effects for filtering and cleanse targeting.\\
-        n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect (poison,
-        slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription benefit\\
-        n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability (used
-        in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n     \
-        \           \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
+        for this status effect's icon\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Classification of status effects for filtering
+        and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
+        effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
+        benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
@@ -848,21 +811,22 @@ paths:
         : \"uuid\",\n                    \"description\": \"Status template to undeprecate\"\n                }\n        \
         \    }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StatusTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Status template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"statusTemplateId\",\n                \"gameServiceId\",\n                \"code\",\n          \
-        \      \"displayName\",\n                \"description\",\n                \"category\",\n                \"stackable\"\
-        ,\n                \"maxStacks\",\n                \"stackBehavior\",\n                \"itemTemplateId\",\n     \
-        \           \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n    \
-        \            \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Unique status template identifier\"\n                },\n        \
-        \        \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Game service this template is scoped to\"\n                },\n        \
-        \        \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n       \
-        \             \"description\": \"Unique status code within this game service\"\n                },\n             \
-        \   \"displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n     \
-        \               \"description\": \"Human-readable display name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
+        ,\n    \"$defs\": {\n        \"StatusTemplateResponse\": {\n            \"allOf\": [\n                {\n        \
+        \            \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n        \
+        \    \"description\": \"Status template with all fields\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"statusTemplateId\",\n                \"gameServiceId\",\n               \
+        \ \"code\",\n                \"displayName\",\n                \"description\",\n                \"category\",\n \
+        \               \"stackable\",\n                \"maxStacks\",\n                \"stackBehavior\",\n             \
+        \   \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n          \
+        \      \"statusTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique status template identifier\"\n                },\n              \
+        \  \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"Game service this template is scoped to\"\n                },\n            \
+        \    \"code\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 128,\n           \
+        \         \"description\": \"Unique status code within this game service\"\n                },\n                \"\
+        displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 256,\n           \
+        \         \"description\": \"Human-readable display name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"description\"\
         : \"Detailed description of this status effect\"\n                },\n                \"category\": {\n          \
         \          \"$ref\": \"#/$defs/StatusCategory\",\n                    \"description\": \"Classification of this status
         effect\"\n                },\n                \"stackable\": {\n                    \"type\": \"boolean\",\n     \
@@ -879,24 +843,17 @@ paths:
         : true,\n                    \"description\": \"Default duration in seconds (null for permanent statuses)\"\n    \
         \            },\n                \"iconAssetId\": {\n                    \"type\": \"string\",\n                 \
         \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Asset identifier
-        for this status effect's icon\"\n                },\n                \"isDeprecated\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether this template is deprecated and unavailable for new
-        grants\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When this template was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Why this template was deprecated (null if not deprecated)\"\n    \
-        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"description\": \"When this template was created\"\n          \
-        \      },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this template
-        was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Classification of status effects for filtering and cleanse targeting.\\
-        n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary effect (poison,
-        slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription benefit\\
-        n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability (used
-        in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n     \
-        \           \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
+        for this status effect's icon\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"StatusCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Classification of status effects for filtering
+        and cleanse targeting.\\n- buff: positive temporary effect (strength boost, speed increase)\\n- debuff: negative temporary
+        effect (poison, slow, weakness)\\n- death: death penalty or incapacitation state\\n- subscription: account-level subscription
+        benefit\\n- event: time-limited event effect (festival bonus, seasonal)\\n- passive: seed-derived passive capability
+        (used in unified queries)\\n\",\n            \"enum\": [\n                \"Buff\",\n                \"Debuff\",\n\
+        \                \"Death\",\n                \"Subscription\",\n                \"Event\",\n                \"Passive\"\
         \n            ]\n        },\n        \"StackBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"How multiple applications of the same status template interact.\\n- refresh_duration: resets timer, preserves
         or increments stack count\\n- independent: each application is a separate item with own timer\\n- increase_intensity:
@@ -2057,6 +2014,8 @@ components:
           format: uuid
           description: Status template to delete (must be deprecated first)
     StatusTemplateResponse:
+      allOf:
+      - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Status template with all fields
       additionalProperties: false
@@ -2071,7 +2030,6 @@ components:
       - maxStacks
       - stackBehavior
       - itemTemplateId
-      - isDeprecated
       - createdAt
       properties:
         statusTemplateId:
@@ -2126,19 +2084,6 @@ components:
           format: uuid
           nullable: true
           description: Asset identifier for this status effect's icon
-        isDeprecated:
-          type: boolean
-          description: Whether this template is deprecated and unavailable for new grants
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When this template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          maxLength: 500
-          nullable: true
-          description: Why this template was deprecated (null if not deprecated)
         createdAt:
           type: string
           format: date-time

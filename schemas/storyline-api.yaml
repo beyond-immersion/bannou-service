@@ -266,6 +266,35 @@ paths:
         '404':
           description: Scenario not found
 
+  /storyline/scenario/clean-deprecated:
+    post:
+      operationId: CleanDeprecatedScenarioDefinitions
+      tags:
+      - Scenario Definitions
+      summary: Clean deprecated scenario definitions with zero remaining instances
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        scenario definitions and permanently removes those with zero remaining active
+        storyline instances, subject to an optional grace period. Publishes
+        scenario-definition.deleted events for each removed definition.
+        Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+
   # =========================================================================
   # Scenario Discovery
   # =========================================================================
@@ -1139,6 +1168,8 @@ components:
     # =========================================================================
 
     ScenarioDefinition:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: A scenario definition template that can be triggered when conditions are met
@@ -1229,20 +1260,6 @@ components:
             type: string
           nullable: true
           description: Classification tags for filtering
-        isDeprecated:
-          type: boolean
-          default: false
-          description: Whether scenario definition is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the scenario definition was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -1601,6 +1618,8 @@ components:
           description: Total matching scenarios
 
     ScenarioDefinitionSummary:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: Summary of a scenario definition
@@ -1628,19 +1647,6 @@ components:
         enabled:
           type: boolean
           description: Whether enabled
-        isDeprecated:
-          type: boolean
-          description: Whether deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation
         conditionCount:
           type: integer
           description: Number of trigger conditions

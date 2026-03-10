@@ -13,9 +13,9 @@ using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Events;
 
-public partial class LicenseBoardTemplateCreatedEvent : ILifecycleCreatedEvent { }
-public partial class LicenseBoardTemplateUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class LicenseBoardTemplateDeletedEvent : ILifecycleDeletedEvent { }
+public partial class LicenseBoardTemplateCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class LicenseBoardTemplateUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class LicenseBoardTemplateDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
 
 public partial class LicenseBoardCreatedEvent : ILifecycleCreatedEvent { }
 public partial class LicenseBoardUpdatedEvent : ILifecycleUpdatedEvent { }

@@ -175,7 +175,7 @@ Client events are published via `IEntitySessionRegistry.PublishToEntitySessionsA
 |---------|----------|------|
 | `ILogger<CurrencyService>` | Scoped | Structured logging |
 | `CurrencyServiceConfiguration` | Singleton | All 23 config properties (see Configuration section) |
-| `IStateStoreFactory` | Singleton | Constructor-cached into 13 typed store fields (5 typed model stores + 6 string index stores + 1 idempotency store + 1 balance cache + 1 hold cache) per T4/T6 |
+| `IStateStoreFactory` | Singleton | Constructor-cached into 13 typed store fields (5 typed model stores + 6 string index stores + 1 idempotency store + 1 balance cache + 1 hold cache) per tenets |
 | `IDistributedLockProvider` | Singleton | Balance locks (`currency-balance`), hold locks (`currency-hold`), wallet locks (`currency-wallet`), index locks (`currency-index`), autogain locks (`currency-autogain`) |
 | `ITelemetryProvider` | Singleton | Telemetry span instrumentation for all async helper methods |
 | `IMessageBus` | Scoped | Event publishing and error events |
@@ -185,7 +185,7 @@ Client events are published via `IEntitySessionRegistry.PublishToEntitySessionsA
 | `CurrencyExpirationTaskService` | Hosted (Singleton) | Background worker that scans and expires balances with elapsed expiration policies |
 | `HoldExpirationTaskService` | Hosted (Singleton) | Background worker that auto-releases authorization holds past their ExpiresAt timestamp |
 
-Service lifetime is **Scoped** (per-request). All state store references are constructor-cached per T4/T6 (factory is used in constructor only, not stored as a field). Background service is a hosted singleton.
+Service lifetime is **Scoped** (per-request). All state store references are constructor-cached per tenets (factory is used in constructor only, not stored as a field). Background service is a hosted singleton.
 
 ---
 
@@ -197,7 +197,7 @@ Service lifetime is **Scoped** (per-request). All state store references are con
 - **GetCurrencyDefinition** (`/currency/definition/get`): Resolves by ID (direct lookup) or code (via `def-code:` index). Returns full definition response with all fields.
 - **ListCurrencyDefinitions** (`/currency/definition/list`): Loads all definition IDs from `all-defs`. Iterates and loads each. Filters by `scope`, `isBaseCurrency`, `realmId` (global currencies always pass realm filter), and `includeDeprecated` (default: `false`). No pagination - returns all matching definitions.
 - **UpdateCurrencyDefinition** (`/currency/definition/update`): Loads by ID. Applies partial updates to mutable fields (name, description, transferable, tradeable, allowNegative, caps, autogain settings, exchange rate, icon, displayFormat). Exchange rate update also sets `ExchangeRateUpdatedAt`. Publishes `currency.definition.updated`.
-- **DeprecateCurrencyDefinition** (`/currency/definition/deprecate`): Sets `IsDeprecated=true`, `DeprecatedAt=now`, `DeprecationReason` from optional `reason` parameter. Idempotent — returns OK when already deprecated. Publishes `currency.definition.updated` with `changedFields` containing deprecation fields. No dedicated deprecation event per T31.
+- **DeprecateCurrencyDefinition** (`/currency/definition/deprecate`): Sets `IsDeprecated=true`, `DeprecatedAt=now`, `DeprecationReason` from optional `reason` parameter. Idempotent — returns OK when already deprecated. Publishes `currency.definition.updated` with `changedFields` containing deprecation fields. No dedicated deprecation event per tenets.
 
 ### Wallet Operations (6 endpoints)
 
@@ -257,198 +257,198 @@ Service lifetime is **Scoped** (per-request). All state store references are con
 Wallet Lifecycle
 ==================
 
-  CreateWallet(ownerId, ownerType, realmId?)
-       |
-       +---> [Active]
-                |
-       FreezeWallet(reason)
-                |
-                v
-            [Frozen]  <--- All credit/debit/transfer operations return 422
-                |
-       UnfreezeWallet()
-                |
-                v
-            [Active]
-                |
-       CloseWallet(transferRemainingTo)
-                |
-                +--- For each positive balance:
-                |       InternalCreditAsync(destination, amount, bypass_earn_cap)
-                |
-                v
-            [Closed]  <--- Terminal state, no further operations
+ CreateWallet(ownerId, ownerType, realmId?)
+ |
+ +---> [Active]
+ |
+ FreezeWallet(reason)
+ |
+ v
+ [Frozen] <--- All credit/debit/transfer operations return 422
+ |
+ UnfreezeWallet()
+ |
+ v
+ [Active]
+ |
+ CloseWallet(transferRemainingTo)
+ |
+ +--- For each positive balance:
+ | InternalCreditAsync(destination, amount, bypass_earn_cap)
+ |
+ v
+ [Closed] <--- Terminal state, no further operations
 
 
 Transaction Flow (Credit with Cap Enforcement)
 =================================================
 
-  CreditCurrencyAsync(walletId, currencyDefId, amount, idempotencyKey)
-       |
-       +--- Check idempotency key (Redis, TTL=3600s)
-       |    +-- Duplicate? -> return Conflict
-       |
-       +--- Validate wallet exists & not frozen
-       +--- Validate currency definition exists
-       |
-       +--- Acquire distributed lock: "currency-balance:{walletId}:{currencyDefId}"
-       |    +-- Timeout 30s -> return Conflict
-       |
-       +--- Reset earn caps if period elapsed (daily/weekly)
-       |
-       +--- Earn Cap Check (if !bypassEarnCap):
-       |    +-- DailyEarnCap: remaining = cap - dailyEarned
-       |    +-- WeeklyEarnCap: remaining = cap - weeklyEarned
-       |    +-- Limited? -> publish earn-cap.reached, reduce amount
-       |    +-- Amount=0 after cap? -> return 422
-       |
-       +--- Wallet Cap Check (if perWalletCap set):
-       |    +-- newBalance > cap?
-       |         +-- Behavior=Reject -> return 422
-       |         +-- Behavior=CapAndLose -> truncate, publish wallet-cap.reached
-       |
-       +--- balance.Amount += creditAmount
-       +--- balance.DailyEarned += creditAmount
-       +--- balance.WeeklyEarned += creditAmount
-       +--- SaveBalance (MySQL + Redis cache)
-       |
-       +--- RecordTransaction (MySQL + wallet/ref indexes)
-       +--- RecordIdempotency (Redis, TTL)
-       +--- Publish currency.credited
-       |
-       +--- Release lock (via using statement)
-       |
-       v
-  Return (transaction, newBalance, capInfo)
+ CreditCurrencyAsync(walletId, currencyDefId, amount, idempotencyKey)
+ |
+ +--- Check idempotency key (Redis, TTL=3600s)
+ | +-- Duplicate? -> return Conflict
+ |
+ +--- Validate wallet exists & not frozen
+ +--- Validate currency definition exists
+ |
+ +--- Acquire distributed lock: "currency-balance:{walletId}:{currencyDefId}"
+ | +-- Timeout 30s -> return Conflict
+ |
+ +--- Reset earn caps if period elapsed (daily/weekly)
+ |
+ +--- Earn Cap Check (if !bypassEarnCap):
+ | +-- DailyEarnCap: remaining = cap - dailyEarned
+ | +-- WeeklyEarnCap: remaining = cap - weeklyEarned
+ | +-- Limited? -> publish earn-cap.reached, reduce amount
+ | +-- Amount=0 after cap? -> return 422
+ |
+ +--- Wallet Cap Check (if perWalletCap set):
+ | +-- newBalance > cap?
+ | +-- Behavior=Reject -> return 422
+ | +-- Behavior=CapAndLose -> truncate, publish wallet-cap.reached
+ |
+ +--- balance.Amount += creditAmount
+ +--- balance.DailyEarned += creditAmount
+ +--- balance.WeeklyEarned += creditAmount
+ +--- SaveBalance (MySQL + Redis cache)
+ |
+ +--- RecordTransaction (MySQL + wallet/ref indexes)
+ +--- RecordIdempotency (Redis, TTL)
+ +--- Publish currency.credited
+ |
+ +--- Release lock (via using statement)
+ |
+ v
+ Return (transaction, newBalance, capInfo)
 
 
 Transfer with Deadlock Prevention
 ====================================
 
-  TransferCurrencyAsync(sourceWalletId, targetWalletId, currencyDefId, amount)
-       |
-       +--- Validate both wallets exist & not frozen
-       +--- Validate currency is transferable
-       |
-       +--- Compute lock keys:
-       |      sourceLockKey = "{sourceWalletId}:{currencyDefId}"
-       |      targetLockKey = "{targetWalletId}:{currencyDefId}"
-       |
-       +--- Sort keys lexicographically:
-       |      firstLockKey = min(source, target)    <-- Deterministic order
-       |      secondLockKey = max(source, target)   <-- prevents deadlock
-       |
-       +--- Acquire lock 1: "currency-balance:{firstLockKey}"
-       +--- Acquire lock 2: "currency-balance:{secondLockKey}"
-       |
-       +--- Check source balance >= amount
-       +--- Apply wallet cap on target
-       +--- Modify both balances atomically
-       |
-       +--- Record transaction (source+target snapshots)
-       +--- Publish currency.transferred
-       |
-       v
-  Both locks released via using statements
+ TransferCurrencyAsync(sourceWalletId, targetWalletId, currencyDefId, amount)
+ |
+ +--- Validate both wallets exist & not frozen
+ +--- Validate currency is transferable
+ |
+ +--- Compute lock keys:
+ | sourceLockKey = "{sourceWalletId}:{currencyDefId}"
+ | targetLockKey = "{targetWalletId}:{currencyDefId}"
+ |
+ +--- Sort keys lexicographically:
+ | firstLockKey = min(source, target) <-- Deterministic order
+ | secondLockKey = max(source, target) <-- prevents deadlock
+ |
+ +--- Acquire lock 1: "currency-balance:{firstLockKey}"
+ +--- Acquire lock 2: "currency-balance:{secondLockKey}"
+ |
+ +--- Check source balance >= amount
+ +--- Apply wallet cap on target
+ +--- Modify both balances atomically
+ |
+ +--- Record transaction (source+target snapshots)
+ +--- Publish currency.transferred
+ |
+ v
+ Both locks released via using statements
 
 
 Authorization Hold Pattern (Reserve / Capture / Release)
 ==========================================================
 
-  CreateHold(walletId, currencyDefId, amount, expiresAt)
-       |
-       +--- effectiveBalance = balance.Amount - SUM(active holds)
-       +--- effectiveBalance >= amount? -> proceed
-       |
-       +--- Save hold: status=Active
-       +--- [Hold] reserves funds (reduces effectiveBalance but not actual balance)
-       |
-       +-----------+-----------+
-       |           |           |
-  CaptureHold  ReleaseHold  [Expired]
-       |           |           |
-       v           v           v
-  Debit actual   No balance  Auto-release
-  amount from    change -    via hold
-  wallet         funds free  expiration
-       |           |
-       v           v
-  status=        status=
-  Captured       Released
+ CreateHold(walletId, currencyDefId, amount, expiresAt)
+ |
+ +--- effectiveBalance = balance.Amount - SUM(active holds)
+ +--- effectiveBalance >= amount? -> proceed
+ |
+ +--- Save hold: status=Active
+ +--- [Hold] reserves funds (reduces effectiveBalance but not actual balance)
+ |
+ +-----------+-----------+
+ | | |
+ CaptureHold ReleaseHold [Expired]
+ | | |
+ v v v
+ Debit actual No balance Auto-release
+ amount from change - via hold
+ wallet funds free expiration
+ | |
+ v v
+ status= status=
+ Captured Released
 
 
 Conversion System (Base Currency Pivot)
 ==========================================
 
-  Currency A ---- ExchangeRateToBase=2.5 ----> [BASE]
-  Currency B ---- ExchangeRateToBase=0.1 ----> [BASE]
+ Currency A ---- ExchangeRateToBase=2.5 ----> [BASE]
+ Currency B ---- ExchangeRateToBase=0.1 ----> [BASE]
 
-  Convert 100 A -> B:
-    effectiveRate = fromRate / toRate = 2.5 / 0.1 = 25.0
-    toAmount = 100 * 25.0 = 2500 B
+ Convert 100 A -> B:
+ effectiveRate = fromRate / toRate = 2.5 / 0.1 = 25.0
+ toAmount = 100 * 25.0 = 2500 B
 
-  ExecuteConversion:
-    0. Pre-validate: target wallet cap on B (Reject behavior only)
-    1. Debit  100 A  (type=Conversion_debit)
-    2. Credit 2500 B (type=Conversion_credit, BypassEarnCap=true)
-       If credit fails: compensating credit 100 A (key="{key}:compensate")
-    Both idempotent via sub-keys: "{key}:debit", "{key}:credit"
+ ExecuteConversion:
+ 0. Pre-validate: target wallet cap on B (Reject behavior only)
+ 1. Debit 100 A (type=Conversion_debit)
+ 2. Credit 2500 B (type=Conversion_credit, BypassEarnCap=true)
+ If credit fails: compensating credit 100 A (key="{key}:compensate")
+ Both idempotent via sub-keys: "{key}:debit", "{key}:credit"
 
 
 Autogain Background Task (CurrencyAutogainTaskService)
 ========================================================
 
-  [Mode: "lazy"]                          [Mode: "task"]
-  Autogain calculated on              Background worker processes
-  GetBalance/BatchGetBalances          all eligible wallets proactively
-  requests only                              |
-                                             |
-                                   +------- Loop (every AutogainTaskIntervalMs) ------+
-                                   |                                                  |
-                                   |  1. Load all-defs from state store               |
-                                   |  2. Filter: autogainEnabled=true                 |
-                                   |  3. For each autogain currency:                  |
-                                   |     a. Load bal-currency:{defId} reverse index   |
-                                   |     b. Process wallets in batches                |
-                                   |        (AutogainBatchSize per batch)             |
-                                   |     c. For each balance:                         |
-                                   |        - Acquire lock "currency-autogain"        |
-                                   |        - Calculate periods elapsed               |
-                                   |        - Apply gain (simple or compound)         |
-                                   |        - Enforce autogain cap                    |
-                                   |        - Save balance                            |
-                                   |        - Publish autogain.calculated             |
-                                   |                                                  |
-                                   +--------------------------------------------------+
+ [Mode: "lazy"] [Mode: "task"]
+ Autogain calculated on Background worker processes
+ GetBalance/BatchGetBalances all eligible wallets proactively
+ requests only |
+ |
+ +------- Loop (every AutogainTaskIntervalMs) ------+
+ | |
+ | 1. Load all-defs from state store |
+ | 2. Filter: autogainEnabled=true |
+ | 3. For each autogain currency: |
+ | a. Load bal-currency:{defId} reverse index |
+ | b. Process wallets in batches |
+ | (AutogainBatchSize per batch) |
+ | c. For each balance: |
+ | - Acquire lock "currency-autogain" |
+ | - Calculate periods elapsed |
+ | - Apply gain (simple or compound) |
+ | - Enforce autogain cap |
+ | - Save balance |
+ | - Publish autogain.calculated |
+ | |
+ +--------------------------------------------------+
 
-  Autogain Modes:
-    Simple:   gain = periodsElapsed * autogainAmount
-    Compound: gain = balance * ((1 + rate)^periods - 1)
+ Autogain Modes:
+ Simple: gain = periodsElapsed * autogainAmount
+ Compound: gain = balance * ((1 + rate)^periods - 1)
 
-  Cap enforcement:
-    balance >= cap -> gain = 0
-    balance + gain > cap -> gain = cap - balance
+ Cap enforcement:
+ balance >= cap -> gain = 0
+ balance + gain > cap -> gain = cap - balance
 
 
 Escrow Integration Flow
 =========================
 
-  lib-escrow                        lib-currency
-      |                                  |
-      |-- EscrowDeposit(amount) -------->|
-      |   (debit wallet for escrow)      |-- DebitCurrency(Escrow_deposit)
-      |                                  |      ref: "escrow", escrowId
-      |                                  |
-      |      [Escrow holds custody]      |
-      |                                  |
-      |-- EscrowRelease(amount) -------->|
-      |   (credit recipient)             |-- CreditCurrency(Escrow_release)
-      |                                  |      bypassEarnCap=true
-      |       OR                         |
-      |                                  |
-      |-- EscrowRefund(amount) --------->|
-      |   (credit depositor back)        |-- CreditCurrency(Escrow_refund)
-      |                                  |      bypassEarnCap=true
+ lib-escrow lib-currency
+ | |
+ |-- EscrowDeposit(amount) -------->|
+ | (debit wallet for escrow) |-- DebitCurrency(Escrow_deposit)
+ | | ref: "escrow", escrowId
+ | |
+ | [Escrow holds custody] |
+ | |
+ |-- EscrowRelease(amount) -------->|
+ | (credit recipient) |-- CreditCurrency(Escrow_release)
+ | | bypassEarnCap=true
+ | OR |
+ | |
+ |-- EscrowRefund(amount) --------->|
+ | (credit depositor back) |-- CreditCurrency(Escrow_refund)
+ | | bypassEarnCap=true
 ```
 
 ---
@@ -516,9 +516,9 @@ Escrow Integration Flow
 
 7. **Conversion has transient cross-currency balance inconsistency**: `ExecuteConversionAsync` uses a two-step saga: debit source currency (under `currency-balance:{walletId}:{fromCurrencyId}` lock), then credit target currency (under `currency-balance:{walletId}:{toCurrencyId}` lock). Between the debit completing and the credit completing, a concurrent `GetBalance` would see the source reduced but the target not yet increased, making the wallet's total cross-currency value appear temporarily lower. This is NOT a double-spending risk — each individual balance operation is fully serialized under its own distributed lock, so no currency can be spent twice. The window is sub-millisecond (between one async call returning and the next starting). If the credit fails, a compensating credit with idempotency key `{key}:compensate` reverses the debit. This is inherent to the saga pattern without distributed transactions and is the correct architectural trade-off.
 
-### Deprecation Lifecycle (T31 Category B)
+### Deprecation Lifecycle (Category B)
 
-Currency definitions are **Category B entities** — wallets and balances reference definitions by ID, and existing balances must continue to function after a definition is deprecated. Per T31:
+Currency definitions are **Category B entities** — wallets and balances reference definitions by ID, and existing balances must continue to function after a definition is deprecated. Per:
 
 - **Deprecation is one-way**: Once deprecated, a currency definition cannot be undeprecated. No undeprecate endpoint exists.
 - **No delete endpoint**: Currency definitions persist forever. Only deprecation is supported.
@@ -526,7 +526,7 @@ Currency definitions are **Category B entities** — wallets and balances refere
 - **Storage model**: Currency definitions use triple-field deprecation: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?).
 - **Idempotent deprecation**: Deprecating an already-deprecated definition returns `OK` (not `Conflict`).
 - **List filtering**: `ListCurrencyDefinitions` includes `includeDeprecated` parameter (default: `false`).
-- **Events**: Deprecation is communicated via `currency.definition.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per T31).
+- **Events**: Deprecation is communicated via `currency.definition.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per tenets).
 
 ### Design Considerations
 
@@ -559,5 +559,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **2026-03-08**: Issue [#222](https://github.com/beyond-immersion/bannou-service/issues/222) (partial) — Currency expiration background worker (`CurrencyExpirationTaskService`). Transaction cleanup from #222 remains pending.
 - **2026-03-08**: Issue [#222](https://github.com/beyond-immersion/bannou-service/issues/222) (partial) — Hold expiration background worker (`HoldExpirationTaskService`).
-- **2026-03-08**: Account deletion wallet cleanup — Added `account.deleted` event handler with CASCADE deletion of all account-owned wallets, balances, holds, transactions, and indexes. Per T28 Account Deletion Cleanup Obligation. Issue [#556](https://github.com/beyond-immersion/bannou-service/issues/556) partially addressed (account path only; character/guild paths remain).
+- **2026-03-08**: Account deletion wallet cleanup — Added `account.deleted` event handler with CASCADE deletion of all account-owned wallets, balances, holds, transactions, and indexes. Per Account Deletion Cleanup Obligation. Issue [#556](https://github.com/beyond-immersion/bannou-service/issues/556) partially addressed (account path only; character/guild paths remain).
 - **2026-02-27**: Issue [#494](https://github.com/beyond-immersion/bannou-service/issues/494) - Client events for real-time wallet updates. Three client events published via IEntitySessionRegistry at all balance mutation and wallet lifecycle points.

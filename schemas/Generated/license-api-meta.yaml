@@ -117,15 +117,16 @@ paths:
         ,\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n        }\n\
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Board template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"name\",\n           \
-        \     \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n                \"boardContractTemplateId\"\
-        ,\n                \"adjacencyMode\",\n                \"allowedOwnerTypes\",\n                \"isActive\",\n   \
-        \             \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n  \
-        \              \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"uuid\",\n                    \"description\": \"Unique board template identifier\"\n                },\n       \
-        \         \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Board template with all fields\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"\
+        name\",\n                \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n   \
+        \             \"boardContractTemplateId\",\n                \"adjacencyMode\",\n                \"allowedOwnerTypes\"\
+        ,\n                \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n \
+        \               \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique board template identifier\"\n                },\n     \
+        \           \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Game service this template belongs to\"\n                },\n          \
         \      \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display name\"\
         \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
@@ -143,28 +144,22 @@ paths:
         : \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n                   \
         \ },\n                    \"description\": \"Owner types allowed to create boards from this template\"\n         \
         \       },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the template is active (can create new board instances)\"\n                },\n                \"isDeprecated\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this template has
-        been deprecated (Category B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"When the template was deprecated\"\n                },\n         \
-        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Reason for deprecation (audit context)\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When the template was created\"\n                },\n                \"updatedAt\"\
+        : \"Whether the template is active (can create new board instances)\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When the template was last updated\"\n           \
-        \     }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n \
-        \                   \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n         \
-        \       \"y\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
-        \      \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        },\n\
-        \        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency
-        mode for a board template.\\n- FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal
-        (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\
-        \n            ]\n        }\n    }\n}"
+        \   \"description\": \"When the template was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When the template was last updated\"\n                }\n        \
+        \    }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                   \
+        \ \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\
+        n- FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\\
+        n\",\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n       \
+        \ }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new board template\",\n    \"description\": \"Create a board template
         with grid dimensions, starting nodes, adjacency mode,\\nand a reference to the contract template that controls unlock
         behavior.\\nBoard templates are scoped to a game service.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n\
@@ -201,15 +196,16 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Board template identifier\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Board template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"name\",\n           \
-        \     \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n                \"boardContractTemplateId\"\
-        ,\n                \"adjacencyMode\",\n                \"allowedOwnerTypes\",\n                \"isActive\",\n   \
-        \             \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n  \
-        \              \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"uuid\",\n                    \"description\": \"Unique board template identifier\"\n                },\n       \
-        \         \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Board template with all fields\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"\
+        name\",\n                \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n   \
+        \             \"boardContractTemplateId\",\n                \"adjacencyMode\",\n                \"allowedOwnerTypes\"\
+        ,\n                \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n \
+        \               \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique board template identifier\"\n                },\n     \
+        \           \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Game service this template belongs to\"\n                },\n          \
         \      \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display name\"\
         \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
@@ -227,28 +223,22 @@ paths:
         : \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n                   \
         \ },\n                    \"description\": \"Owner types allowed to create boards from this template\"\n         \
         \       },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the template is active (can create new board instances)\"\n                },\n                \"isDeprecated\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this template has
-        been deprecated (Category B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"When the template was deprecated\"\n                },\n         \
-        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Reason for deprecation (audit context)\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When the template was created\"\n                },\n                \"updatedAt\"\
+        : \"Whether the template is active (can create new board instances)\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When the template was last updated\"\n           \
-        \     }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n \
-        \                   \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n         \
-        \       \"y\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
-        \      \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        },\n\
-        \        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency
-        mode for a board template.\\n- FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal
-        (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\
-        \n            ]\n        }\n    }\n}"
+        \   \"description\": \"When the template was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When the template was last updated\"\n                }\n        \
+        \    }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                   \
+        \ \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\
+        n- FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\\
+        n\",\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n       \
+        \ }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a board template by ID\",\n    \"description\": \"Retrieves a board
         template by its unique identifier.\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getBoardTemplate\"\n}"
@@ -298,55 +288,49 @@ paths:
         \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Cursor for next page. Null if no more results.\"\n                },\n                \"hasMore\": {\n       \
         \             \"type\": \"boolean\",\n                    \"description\": \"Whether more results exist beyond this
-        page\"\n                }\n            }\n        },\n        \"BoardTemplateResponse\": {\n            \"type\":
-        \"object\",\n            \"description\": \"Board template with all fields\",\n            \"additionalProperties\"\
+        page\"\n                }\n            }\n        },\n        \"BoardTemplateResponse\": {\n            \"allOf\"\
+        : [\n                {\n                    \"type\": \"object\"\n                }\n            ],\n            \"\
+        type\": \"object\",\n            \"description\": \"Board template with all fields\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"boardTemplateId\",\n                \"gameServiceId\",\n\
         \                \"name\",\n                \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\"\
         ,\n                \"boardContractTemplateId\",\n                \"adjacencyMode\",\n                \"allowedOwnerTypes\"\
-        ,\n                \"isActive\",\n                \"isDeprecated\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"description\": \"Unique board template identifier\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this template belongs to\"\n\
-        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Display name\"\n                },\n                \"description\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description\"\
-        \n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n             \
-        \       \"description\": \"Width of the board grid (columns)\"\n                },\n                \"gridHeight\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Height of the board grid (rows)\"\
-        \n                },\n                \"startingNodes\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"$ref\": \"#/$defs/GridPosition\"\n                    },\n     \
-        \               \"description\": \"Grid positions where unlocking can begin without adjacency\"\n                },\n\
-        \                \"boardContractTemplateId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"description\": \"Contract template that controls unlock behavior\"\n  \
-        \              },\n                \"adjacencyMode\": {\n                    \"$ref\": \"#/$defs/AdjacencyMode\",\n\
-        \                    \"description\": \"Grid traversal mode for this template\"\n                },\n            \
-        \    \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
-        \                  \"type\": \"object\"\n                    },\n                    \"description\": \"Owner types
-        allowed to create boards from this template\"\n                },\n                \"isActive\": {\n             \
-        \       \"type\": \"boolean\",\n                    \"description\": \"Whether the template is active (can create
-        new board instances)\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"\
-        boolean\",\n                    \"description\": \"Whether this template has been deprecated (Category B \\u2014 one-way)\"\
-        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the template was deprecated\"\n                },\n                \"deprecationReason\": {\n           \
-        \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Reason for deprecation (audit context)\"\n                },\n                \"createdAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        When the template was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When the template was last updated\"\n                }\n            }\n        },\n\
-        \        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position on the
-        board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
-        \        \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\": {\n\
-        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n                  \
-        \  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Vertical grid
-        coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\": {\n        \
-        \    \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\n-
-        FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\n\"\
-        ,\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n        }\n\
-        \    }\n}"
+        ,\n                \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n \
+        \               \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique board template identifier\"\n                },\n     \
+        \           \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Game service this template belongs to\"\n                },\n          \
+        \      \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display name\"\
+        \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Human-readable description\"\n              \
+        \  },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Width of the board grid (columns)\"\n                },\n                \"gridHeight\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"description\": \"Height of the board grid (rows)\"\n           \
+        \     },\n                \"startingNodes\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/GridPosition\"\n                    },\n                    \"description\"\
+        : \"Grid positions where unlocking can begin without adjacency\"\n                },\n                \"boardContractTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Contract template that controls unlock behavior\"\n                },\n                \"adjacencyMode\"\
+        : {\n                    \"$ref\": \"#/$defs/AdjacencyMode\",\n                    \"description\": \"Grid traversal
+        mode for this template\"\n                },\n                \"allowedOwnerTypes\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n                   \
+        \ },\n                    \"description\": \"Owner types allowed to create boards from this template\"\n         \
+        \       },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether the template is active (can create new board instances)\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When the template was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When the template was last updated\"\n                }\n        \
+        \    }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                   \
+        \ \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\
+        n- FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\\
+        n\",\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n       \
+        \ }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List board templates for a game service\",\n    \"description\": \"Paginated
         list of board templates filtered by game service ID.\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"listBoardTemplates\"\n}"
@@ -394,15 +378,16 @@ paths:
         \      \"description\": \"Updated allowed owner types. Narrowing checks for existing boards with removed types.\"\n\
         \                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Board template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"name\",\n           \
-        \     \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n                \"boardContractTemplateId\"\
-        ,\n                \"adjacencyMode\",\n                \"allowedOwnerTypes\",\n                \"isActive\",\n   \
-        \             \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n  \
-        \              \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"uuid\",\n                    \"description\": \"Unique board template identifier\"\n                },\n       \
-        \         \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Board template with all fields\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"\
+        name\",\n                \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n   \
+        \             \"boardContractTemplateId\",\n                \"adjacencyMode\",\n                \"allowedOwnerTypes\"\
+        ,\n                \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n \
+        \               \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique board template identifier\"\n                },\n     \
+        \           \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Game service this template belongs to\"\n                },\n          \
         \      \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display name\"\
         \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
@@ -420,28 +405,22 @@ paths:
         : \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n                   \
         \ },\n                    \"description\": \"Owner types allowed to create boards from this template\"\n         \
         \       },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the template is active (can create new board instances)\"\n                },\n                \"isDeprecated\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this template has
-        been deprecated (Category B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"When the template was deprecated\"\n                },\n         \
-        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Reason for deprecation (audit context)\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When the template was created\"\n                },\n                \"updatedAt\"\
+        : \"Whether the template is active (can create new board instances)\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When the template was last updated\"\n           \
-        \     }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n \
-        \                   \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n         \
-        \       \"y\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
-        \      \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        },\n\
-        \        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency
-        mode for a board template.\\n- FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal
-        (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\
-        \n            ]\n        }\n    }\n}"
+        \   \"description\": \"When the template was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When the template was last updated\"\n                }\n        \
+        \    }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                   \
+        \ \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\
+        n- FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\\
+        n\",\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n       \
+        \ }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a board template\",\n    \"description\": \"Update mutable fields
         of a board template. Grid dimensions, starting nodes,\\nand contract template are immutable after creation.\\n\",\n\
         \    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateBoardTemplate\"\
@@ -453,9 +432,10 @@ paths:
       - BoardTemplate
       summary: Deprecate a board template
       description: |
-        Deprecate a board template (Category B — one-way, no undeprecate, no delete).
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
         Existing board instances continue to function; new board creation from this
-        template is rejected. Idempotent: returns OK if already deprecated.
+        template is rejected.
       x-permissions:
       - role: developer
         states: {}
@@ -484,15 +464,16 @@ paths:
         \             \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation (audit context for
         Category B entities)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Board template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"name\",\n           \
-        \     \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n                \"boardContractTemplateId\"\
-        ,\n                \"adjacencyMode\",\n                \"allowedOwnerTypes\",\n                \"isActive\",\n   \
-        \             \"isDeprecated\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n  \
-        \              \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"uuid\",\n                    \"description\": \"Unique board template identifier\"\n                },\n       \
-        \         \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n    \"$defs\": {\n        \"BoardTemplateResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Board template with all fields\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"boardTemplateId\",\n                \"gameServiceId\",\n                \"\
+        name\",\n                \"gridWidth\",\n                \"gridHeight\",\n                \"startingNodes\",\n   \
+        \             \"boardContractTemplateId\",\n                \"adjacencyMode\",\n                \"allowedOwnerTypes\"\
+        ,\n                \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n \
+        \               \"boardTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique board template identifier\"\n                },\n     \
+        \           \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Game service this template belongs to\"\n                },\n          \
         \      \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display name\"\
         \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
@@ -510,33 +491,64 @@ paths:
         : \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n                   \
         \ },\n                    \"description\": \"Owner types allowed to create boards from this template\"\n         \
         \       },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the template is active (can create new board instances)\"\n                },\n                \"isDeprecated\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this template has
-        been deprecated (Category B \\u2014 one-way)\"\n                },\n                \"deprecatedAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"When the template was deprecated\"\n                },\n         \
-        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Reason for deprecation (audit context)\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When the template was created\"\n                },\n                \"updatedAt\"\
+        : \"Whether the template is active (can create new board instances)\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When the template was last updated\"\n           \
-        \     }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n \
-        \                   \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n         \
-        \       \"y\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
-        \      \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        },\n\
-        \        \"AdjacencyMode\": {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency
-        mode for a board template.\\n- FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal
-        (all 8 surrounding cells)\\n\",\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\
-        \n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a board template\",\n    \"description\": \"Deprecate a board
-        template (Category B \\u2014 one-way, no undeprecate, no delete).\\nExisting board instances continue to function;
-        new board creation from this\\ntemplate is rejected. Idempotent: returns OK if already deprecated.\\n\",\n    \"tags\"\
-        : [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deprecateBoardTemplate\"\
+        \   \"description\": \"When the template was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When the template was last updated\"\n                }\n        \
+        \    }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                   \
+        \ \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"AdjacencyMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Grid traversal adjacency mode for a board template.\\
+        n- FourWay: Orthogonal only (up, down, left, right)\\n- EightWay: Orthogonal + diagonal (all 8 surrounding cells)\\\
+        n\",\n            \"enum\": [\n                \"FourWay\",\n                \"EightWay\"\n            ]\n       \
+        \ }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a board template\",\n    \"description\": \"Category B deprecation
+        (per IMPLEMENTATION TENETS): one-way, no undeprecate,\\nno delete. Idempotent \\u2014 returns OK if already deprecated.\\
+        nExisting board instances continue to function; new board creation from this\\ntemplate is rejected.\\n\",\n    \"\
+        tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deprecateBoardTemplate\"\
         \n}"
+  /license/board-template/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedBoardTemplates
+      tags:
+      - BoardTemplate
+      summary: Clean deprecated board templates with zero remaining boards
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        board templates and permanently removes those with zero remaining board instances,
+        subject to an optional grace period. Publishes board-template.deleted events for
+        each removed template. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean deprecated board templates with zero remaining boards\",\n    \"\
+        description\": \"Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\\nboard templates and
+        permanently removes those with zero remaining board instances,\\nsubject to an optional grace period. Publishes board-template.deleted
+        events for\\neach removed template. Idempotent and safe to call at any frequency.\\nSupports dry-run mode for admin
+        panel preview.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"cleanDeprecatedBoardTemplates\"\n}"
   /license/definition/add:
     post:
       operationId: addLicenseDefinition
@@ -957,6 +969,7 @@ paths:
         exists (one board per template per owner). For character owners, validates the character
         exists and resolves realm context. Creates an inventory container (slot_only,
         maxSlots = gridWidth * gridHeight) to hold unlocked license items.
+        Rejects with 400 if template is deprecated.
       x-permissions:
       - role: user
         states: {}
@@ -974,7 +987,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/BoardResponse'
         '400':
-          description: Invalid request (inactive template)
+          description: Invalid request (inactive or deprecated template)
         '404':
           description: Character, game service, or board template not found
         '409':
@@ -1022,8 +1035,8 @@ paths:
         a board instance for an owner from a board template. Validates the owner type\\nis in the template's allowedOwnerTypes,
         game service matches, and no duplicate board\\nexists (one board per template per owner). For character owners, validates
         the character\\nexists and resolves realm context. Creates an inventory container (slot_only,\\nmaxSlots = gridWidth
-        * gridHeight) to hold unlocked license items.\\n\",\n    \"tags\": [\n        \"Board\"\n    ],\n    \"deprecated\"\
-        : false,\n    \"operationId\": \"createBoard\"\n}"
+        * gridHeight) to hold unlocked license items.\\nRejects with 400 if template is deprecated.\\n\",\n    \"tags\": [\n\
+        \        \"Board\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createBoard\"\n}"
   /license/board/get:
     post:
       operationId: getBoard
@@ -1904,6 +1917,8 @@ components:
           nullable: true
           description: Number of items per page. Uses service default if not specified.
     BoardTemplateResponse:
+      allOf:
+      - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Board template with all fields
       additionalProperties: false
@@ -1918,7 +1933,6 @@ components:
       - adjacencyMode
       - allowedOwnerTypes
       - isActive
-      - isDeprecated
       - createdAt
       properties:
         boardTemplateId:
@@ -1962,18 +1976,6 @@ components:
         isActive:
           type: boolean
           description: Whether the template is active (can create new board instances)
-        isDeprecated:
-          type: boolean
-          description: Whether this template has been deprecated (Category B — one-way)
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the template was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Reason for deprecation (audit context)
         createdAt:
           type: string
           format: date-time

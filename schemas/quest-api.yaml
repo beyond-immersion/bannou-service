@@ -160,6 +160,33 @@ paths:
         '404':
           description: Quest definition not found
 
+  /quest/definition/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedQuestDefinitions
+      tags: [Definitions]
+      summary: Clean deprecated quest definitions with zero remaining instances
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        quest definitions and permanently removes those with zero remaining active quest
+        instances, subject to an optional grace period. Publishes quest-definition.deleted
+        events for each removed definition. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+
   # === INSTANCE ENDPOINTS ===
   /quest/accept:
     post:
@@ -722,10 +749,12 @@ components:
           description: Faction code for REPUTATION rewards
 
     QuestDefinitionResponse:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Complete quest definition including objectives, prerequisites, and rewards
       additionalProperties: false
-      required: [definitionId, contractTemplateId, code, name, category, difficulty, repeatable, maxQuestors, objectives, isDeprecated, createdAt, gameServiceId]
+      required: [definitionId, contractTemplateId, code, name, category, difficulty, repeatable, maxQuestors, objectives, createdAt, gameServiceId]
       properties:
         definitionId:
           type: string
@@ -792,19 +821,6 @@ components:
           items:
             type: string
           description: Tags
-        isDeprecated:
-          type: boolean
-          description: Whether this quest definition is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the quest definition was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time

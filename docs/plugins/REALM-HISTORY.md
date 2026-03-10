@@ -136,40 +136,40 @@ Service lifetime is **Scoped** (per-request). The helper classes are instantiate
 Dual-Index Storage Pattern
 ============================
 
-  RecordParticipation(realmId=R1, eventId=E1)
-       │
-       ├──► realm-participation-{id}     → ParticipationData
-       │
-       ├──► realm-participation-index-R1 → [..., id]  (append)
-       │
-       └──► realm-participation-event-E1 → [..., id]  (append)
+ RecordParticipation(realmId=R1, eventId=E1)
+ │
+ ├──► realm-participation-{id} → ParticipationData
+ │
+ ├──► realm-participation-index-R1 → [..., id] (append)
+ │
+ └──► realm-participation-event-E1 → [..., id] (append)
 
 
-  GetParticipation(realmId=R1)
-       │
-       └──► JsonQueryPagedAsync (bypasses index)
-                │
-                Conditions: $.ParticipationId EXISTS
-                            $.RealmId = R1
-                            $.EventCategory = War  (optional)
-                            $.Impact >= 0.5        (optional)
-                SortBy: $.EventDateUnix DESC
-                │
-                ▼
-            Server-side filtered + paginated results
+ GetParticipation(realmId=R1)
+ │
+ └──► JsonQueryPagedAsync (bypasses index)
+ │
+ Conditions: $.ParticipationId EXISTS
+ $.RealmId = R1
+ $.EventCategory = War (optional)
+ $.Impact >= 0.5 (optional)
+ SortBy: $.EventDateUnix DESC
+ │
+ ▼
+ Server-side filtered + paginated results
 
 
-  GetEventParticipants(eventId=E1)
-       │
-       └──► JsonQueryPagedAsync (bypasses index)
-                │
-                Conditions: $.ParticipationId EXISTS
-                            $.EventId = E1
-                            $.Role = Defender  (optional)
-                SortBy: $.Impact DESC
-                │
-                ▼
-            Server-side filtered + paginated results
+ GetEventParticipants(eventId=E1)
+ │
+ └──► JsonQueryPagedAsync (bypasses index)
+ │
+ Conditions: $.ParticipationId EXISTS
+ $.EventId = E1
+ $.Role = Defender (optional)
+ SortBy: $.Impact DESC
+ │
+ ▼
+ Server-side filtered + paginated results
 ```
 
 ---
@@ -223,18 +223,18 @@ None identified.
 ## Work Tracking
 
 ### Pending Design Review
-- **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)
+- **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates type safety)
 - **2026-02-06**: [#306](https://github.com/beyond-immersion/bannou-service/issues/306) - Single-document storage for lore elements (evaluate whether document storage is problematic for large lore collections; shared pattern with character-history via BackstoryStorageHelper)
 - **2026-02-02**: [#266](https://github.com/beyond-immersion/bannou-service/issues/266) - Event-level aggregation (API design decisions needed: metrics, role breakdowns, filtering, new endpoint vs enhancement)
 - **2026-02-02**: [#270](https://github.com/beyond-immersion/bannou-service/issues/270) - Timeline visualization (may already be satisfied by existing `GetRealmParticipation` endpoint which returns chronologically-sorted data)
 
 ### Design Decisions (Deferred from Hardening)
 1. **Config validation constraints**: `MaxLoreElements` (1–10000) and `IndexLockTimeoutSeconds` (1–300) added during hardening. No tenet mandates specific ranges — these are reasonable guardrails. Review if operational experience suggests different bounds.
-2. **`relatedEntityType` as string vs EntityType enum**: Lore element `relatedEntityType` is a plain string. T14/T25 would suggest using `EntityType` enum for known entity references, but since lore can reference non-entity concepts (geographic features, abstract ideas), string is defensible. Requires design decision on whether to constrain to entity types or keep flexible.
+2. **`relatedEntityType` as string vs EntityType enum**: Lore element `relatedEntityType` is a plain string. would suggest using `EntityType` enum for known entity references, but since lore can reference non-entity concepts (geographic features, abstract ideas), string is defensible. Requires design decision on whether to constrain to entity types or keep flexible.
 3. **Archive `loreElements`/`participations` nullable modeling**: Made nullable during hardening to align with NRT compliance (these arrays are null when `hasLore`/`hasParticipations` is false). The `has*` boolean + nullable array pattern is intentional for archive serialization clarity.
 
 ### Completed
-- **2026-03-07**: Hardening pass — PascalCase enum migration (RealmEventCategory, RealmEventRole, RealmLoreElementType), T8 filler property removal (realmId from RealmLoreResponse and RealmHistoryArchive, success/errorMessage from responses), 409 schema description fix (lock contention, not deduplication), NRT nullable array compliance, config validation constraints, compression callback priority fix (0→10), private method XML docs, capture-pattern test migration, lock failure tests, resource reference verification tests, summarize limit tests (40 total unit tests)
+- **2026-03-07**: Hardening pass — PascalCase enum migration (RealmEventCategory, RealmEventRole, RealmLoreElementType), filler property removal (realmId from RealmLoreResponse and RealmHistoryArchive, success/errorMessage from responses), 409 schema description fix (lock contention, not deduplication), NRT nullable array compliance, config validation constraints, compression callback priority fix (0→10), private method XML docs, capture-pattern test migration, lock failure tests, resource reference verification tests, summarize limit tests (40 total unit tests)
 - **2026-02-06**: [#307](https://github.com/beyond-immersion/bannou-service/issues/307) - Add concurrency control to DualIndexHelper index updates
 - **2026-02-06**: [#309](https://github.com/beyond-immersion/bannou-service/issues/309) - Resolve NotFound vs empty-list inconsistency
 - **2026-02-02**: [#272](https://github.com/beyond-immersion/bannou-service/issues/272) - Index cleanup on orphaned events or realm deletion

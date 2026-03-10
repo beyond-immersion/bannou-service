@@ -2,7 +2,7 @@ namespace BeyondImmersion.BannouService.Quest;
 
 /// <summary>
 /// Internal model for quest definition storage.
-/// Uses proper C# types per IMPLEMENTATION TENETS T25/T26.
+/// Uses proper C# types per IMPLEMENTATION TENETS.
 /// </summary>
 internal class QuestDefinitionModel
 {
@@ -145,7 +145,7 @@ internal class PrerequisiteDefinitionModel
 /// <summary>
 /// Internal result for a failed prerequisite check.
 /// Used only within CheckPrerequisitesAsync for counting and logging failures.
-/// Not exposed in API responses (T8: errors return null payload).
+/// Not exposed in API responses (IMPLEMENTATION TENETS: errors return null payload).
 /// </summary>
 internal class PrerequisiteFailure
 {

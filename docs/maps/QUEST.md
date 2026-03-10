@@ -70,7 +70,7 @@
 | lib-state (IDistributedLockProvider) | L0 | Hard | Character lock during quest acceptance |
 | lib-messaging (IMessageBus) | L0 | Hard | Publishing 5 quest lifecycle events |
 | lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation on async helpers |
-| lib-resource (IResourceClient) | L1 | Hard | Character reference registration/unregistration (T28), cleanup callback registration |
+| lib-resource (IResourceClient) | L1 | Hard | Character reference registration/unregistration, cleanup callback registration |
 | lib-contract (IContractClient) | L1 | Hard | Template/instance CRUD, consent, milestone completion, termination |
 | lib-character (ICharacterClient) | L2 | Hard | Character existence validation on quest acceptance |
 | lib-currency (ICurrencyClient) | L2 | Hard | CURRENCY_AMOUNT prerequisite validation, wallet resolution for rewards |
@@ -79,7 +79,7 @@
 | IEnumerable\<IPrerequisiteProviderFactory\> | L4 via DI | Collection | Dynamic prerequisite providers (character_level, reputation, etc.) |
 
 **Notes:**
-- `IResourceClient` (L1) is a hard constructor dependency: used for reference registration/unregistration (T28 cleanup) and at startup for compression/cleanup callback registration.
+- `IResourceClient` (L1) is a hard constructor dependency: used for reference registration/unregistration (cleanup) and at startup for compression/cleanup callback registration.
 - `IEventTemplateRegistry` resolved via `GetService<T>()` at startup for ABML event template registration; graceful degradation if absent.
 - `QuestProviderFactory` implements `IVariableProviderFactory` for Actor `${quest.*}` ABML variables (L2-to-L2 provider pattern for consistency with L4 data sources).
 
@@ -115,12 +115,12 @@
 
 ```
 QUERY _instanceStore WHERE ContractInstanceId == evt.ContractId
-IF null -> return                                // not quest-related
+IF null -> return // not quest-related
 READ _progressStore:"prog:{questInstanceId}:{milestoneCode}" [with ETag]
 IF null or already complete -> return
 // Set CurrentCount = RequiredCount, IsComplete = true
 ETAG-WRITE _progressStore:"prog:{questInstanceId}:{milestoneCode}"
-  -> retry up to MaxConcurrencyRetries
+ -> retry up to MaxConcurrencyRetries
 PUBLISH "quest.objective.progressed" { questInstanceId, questCode, objectiveCode, currentCount, requiredCount, isComplete: true }
 ```
 
@@ -139,7 +139,7 @@ QUERY _instanceStore WHERE ContractInstanceId == evt.ContractId
 IF null or not Active -> return
 // Delegates to FailOrAbandonQuestAsync
 // Determines Abandoned vs Failed via string heuristic on evt.Reason
-//   ("abandoned" or "player" in reason -> Abandoned, else Failed)
+// ("abandoned" or "player" in reason -> Abandoned, else Failed)
 ```
 
 ---
@@ -153,7 +153,7 @@ IF null or not Active -> return
 | `IStateStoreFactory` | Acquires 6 state stores in constructor (not stored as field) |
 | `IMessageBus` | Event publishing |
 | `IEventConsumer` | Event subscription registration (passed to RegisterEventConsumers) |
-| `IResourceClient` | Character reference tracking (T28 cleanup), compression/cleanup callback registration |
+| `IResourceClient` | Character reference tracking (cleanup), compression/cleanup callback registration |
 | `IContractClient` | Contract template/instance CRUD, consent, milestones |
 | `ICharacterClient` | Character existence validation |
 | `ICurrencyClient` | Currency prerequisite checks and wallet resolution |
@@ -205,7 +205,7 @@ QUERY _definitionStore WHERE Code == normalizedCode
 -> 409 if definition with same code exists
 
 // BuildContractTemplateRequest: milestones from objectives,
-//   reward prebound APIs attached to last required objective's OnComplete
+// reward prebound APIs attached to last required objective's OnComplete
 CALL IContractClient.CreateContractTemplateAsync(templateRequest)
 -> 409 if ApiException(409)
 -> 503 if null response
@@ -219,15 +219,15 @@ POST /quest/definition/get | Roles: [user]
 
 ```
 IF body.definitionId provided
-  READ _definitionCache:"def:{definitionId}"
-  IF cache miss
-    QUERY _definitionStore WHERE DefinitionId == definitionId
-    IF found
-      WRITE _definitionCache:"def:{definitionId}" <- definition (TTL: DefinitionCacheTtlSeconds)
+ READ _definitionCache:"def:{definitionId}"
+ IF cache miss
+ QUERY _definitionStore WHERE DefinitionId == definitionId
+ IF found
+ WRITE _definitionCache:"def:{definitionId}" <- definition (TTL: DefinitionCacheTtlSeconds)
 ELSE IF body.code provided
-  QUERY _definitionStore WHERE Code == normalizedCode
+ QUERY _definitionStore WHERE Code == normalizedCode
 ELSE
-  RETURN (400, null)                             // neither ID nor code
+ RETURN (400, null) // neither ID nor code
 
 -> 404 if null
 RETURN (200, QuestDefinitionResponse)
@@ -238,8 +238,8 @@ POST /quest/definition/list | Roles: [user]
 
 ```
 QUERY _definitionStore WHERE
-  (gameServiceId filter) AND (category filter) AND
-  (difficulty filter) AND (includeDeprecated OR !IsDeprecated)
+ (gameServiceId filter) AND (category filter) AND
+ (difficulty filter) AND (includeDeprecated OR !IsDeprecated)
 // In-memory tag filter: any-match semantics (at least one matching tag)
 // In-memory pagination: Skip(offset).Take(limit)
 RETURN (200, ListQuestDefinitionsResponse { definitions, total })
@@ -249,12 +249,12 @@ RETURN (200, ListQuestDefinitionsResponse { definitions, total })
 POST /quest/definition/update | Roles: [developer]
 
 ```
-READ _definitionStore:"def:{definitionId}" [with ETag]       -> 404 if null
+READ _definitionStore:"def:{definitionId}" [with ETag] -> 404 if null
 // Update mutable fields only: Name, Description, Category, Difficulty, Tags
 // Structural fields (objectives, rewards, prerequisites) are immutable
 ETAG-WRITE _definitionStore:"def:{definitionId}"
-  -> retry up to MaxConcurrencyRetries                       -> 409 if exhausted
-DELETE _definitionCache:"def:{definitionId}"                  // cache invalidation
+ -> retry up to MaxConcurrencyRetries -> 409 if exhausted
+DELETE _definitionCache:"def:{definitionId}" // cache invalidation
 RETURN (200, QuestDefinitionResponse)
 ```
 
@@ -262,13 +262,13 @@ RETURN (200, QuestDefinitionResponse)
 POST /quest/definition/deprecate | Roles: [developer]
 
 ```
-READ _definitionStore:"def:{definitionId}" [with ETag]       -> 404 if null
+READ _definitionStore:"def:{definitionId}" [with ETag] -> 404 if null
 IF already deprecated
-  RETURN (200, QuestDefinitionResponse)                      // idempotent
+ RETURN (200, QuestDefinitionResponse) // idempotent
 // Set IsDeprecated = true, DeprecatedAt = UtcNow, DeprecationReason = body.reason
 ETAG-WRITE _definitionStore:"def:{definitionId}"
-  -> retry up to MaxConcurrencyRetries                       -> 409 if exhausted
-DELETE _definitionCache:"def:{definitionId}"                  // cache invalidation
+ -> retry up to MaxConcurrencyRetries -> 409 if exhausted
+DELETE _definitionCache:"def:{definitionId}" // cache invalidation
 PUBLISH quest.definition.updated { definitionId, code, ..., changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"] }
 RETURN (200, QuestDefinitionResponse)
 ```
@@ -279,59 +279,59 @@ POST /quest/accept | Roles: [user]
 ```
 // Resolve definition by ID (cache -> MySQL) or Code (MySQL only)
 IF body.definitionId
-  // GetDefinitionModelAsync: cache read-through
-  READ _definitionCache:"def:{definitionId}"
-  IF cache miss
-    QUERY _definitionStore WHERE DefinitionId == definitionId
-    IF found: WRITE _definitionCache:"def:{definitionId}" (TTL: DefinitionCacheTtlSeconds)
+ // GetDefinitionModelAsync: cache read-through
+ READ _definitionCache:"def:{definitionId}"
+ IF cache miss
+ QUERY _definitionStore WHERE DefinitionId == definitionId
+ IF found: WRITE _definitionCache:"def:{definitionId}" (TTL: DefinitionCacheTtlSeconds)
 ELSE IF body.code
-  QUERY _definitionStore WHERE Code == normalizedCode
+ QUERY _definitionStore WHERE Code == normalizedCode
 -> 404 if definition null
 -> 400 if definition.IsDeprecated
 
-CALL ICharacterClient.GetCharacterAsync(questorCharacterId)  -> 400 if not found
+CALL ICharacterClient.GetCharacterAsync(questorCharacterId) -> 400 if not found
 
 LOCK "quest:lock:char:{questorCharacterId}" (QuestInstance store, LockExpirySeconds)
-                                                             -> 409 if lock fails
-  READ _characterIndex:"char:{questorCharacterId}"
-  -> 400 if ActiveQuestIds.Count >= MaxActiveQuestsPerCharacter
+ -> 409 if lock fails
+ READ _characterIndex:"char:{questorCharacterId}"
+ -> 400 if ActiveQuestIds.Count >= MaxActiveQuestsPerCharacter
 
-  IF definition.Repeatable
-    READ _cooldownStore:"cd:{characterId}:{questCode}"       -> 409 if cooldown active
+ IF definition.Repeatable
+ READ _cooldownStore:"cd:{characterId}:{questCode}" -> 409 if cooldown active
 
-  FOREACH activeQuestId in index.ActiveQuestIds
-    QUERY _instanceStore WHERE QuestInstanceId == activeQuestId
-      AND DefinitionId == definition.DefinitionId            -> 409 if duplicate found
+ FOREACH activeQuestId in index.ActiveQuestIds
+ QUERY _instanceStore WHERE QuestInstanceId == activeQuestId
+ AND DefinitionId == definition.DefinitionId -> 409 if duplicate found
 
-  // CheckPrerequisitesAsync (per prerequisite in definition)
-  FOREACH prerequisite in definition.Prerequisites
-    IF QUEST_COMPLETED: check index.CompletedQuestCodes
-    IF CURRENCY_AMOUNT: CALL ICurrencyClient (balance check)
-    IF ITEM_OWNED: CALL IItemClient.GetItemTemplateAsync + CALL IInventoryClient.HasItemsAsync
-    ELSE: CALL matching IPrerequisiteProviderFactory.CheckAsync
-  -> 400 if any fail (FailFast stops on first; CheckAll evaluates all per config)
+ // CheckPrerequisitesAsync (per prerequisite in definition)
+ FOREACH prerequisite in definition.Prerequisites
+ IF QUEST_COMPLETED: check index.CompletedQuestCodes
+ IF CURRENCY_AMOUNT: CALL ICurrencyClient (balance check)
+ IF ITEM_OWNED: CALL IItemClient.GetItemTemplateAsync + CALL IInventoryClient.HasItemsAsync
+ ELSE: CALL matching IPrerequisiteProviderFactory.CheckAsync
+ -> 400 if any fail (FailFast stops on first; CheckAll evaluates all per config)
 
-  CALL IContractClient.CreateContractInstanceAsync(...)      -> 503 if fails
-  CALL IContractClient.ConsentToContractAsync(...)           -> 503 if fails
+ CALL IContractClient.CreateContractInstanceAsync(...) -> 503 if fails
+ CALL IContractClient.ConsentToContractAsync(...) -> 503 if fails
 
-  // ResolveTemplateValuesAsync (best-effort, failures logged)
-  IF currency rewards: CALL ICurrencyClient.GetOrCreateWalletAsync -> questor_wallet_id
-  IF item rewards: CALL IInventoryClient.GetOrCreateContainerAsync -> questor_container_id
-  CALL IContractClient.SetContractTemplateValuesAsync(...)   // best-effort
+ // ResolveTemplateValuesAsync (best-effort, failures logged)
+ IF currency rewards: CALL ICurrencyClient.GetOrCreateWalletAsync -> questor_wallet_id
+ IF item rewards: CALL IInventoryClient.GetOrCreateContainerAsync -> questor_container_id
+ CALL IContractClient.SetContractTemplateValuesAsync(...) // best-effort
 
-  WRITE _instanceStore:"inst:{questInstanceId}" <- QuestInstanceModel
-  CALL IResourceClient.RegisterReferenceAsync(character, questInstanceId)  // T28 cleanup tracking
-  FOREACH objective in definition.Objectives
-    WRITE _progressStore:"prog:{instanceId}:{objectiveCode}" <- ObjectiveProgressModel
-      (TTL: ProgressCacheTtlSeconds)
+ WRITE _instanceStore:"inst:{questInstanceId}" <- QuestInstanceModel
+ CALL IResourceClient.RegisterReferenceAsync(character, questInstanceId) // cleanup tracking
+ FOREACH objective in definition.Objectives
+ WRITE _progressStore:"prog:{instanceId}:{objectiveCode}" <- ObjectiveProgressModel
+ (TTL: ProgressCacheTtlSeconds)
 
-  // UpdateCharacterIndexAsync (ETag retry)
-  READ _characterIndex:"char:{questorCharacterId}" [with ETag]
-  // Add questInstanceId to ActiveQuestIds
-  ETAG-WRITE _characterIndex:"char:{questorCharacterId}"
-    -> retry up to MaxConcurrencyRetries
+ // UpdateCharacterIndexAsync (ETag retry)
+ READ _characterIndex:"char:{questorCharacterId}" [with ETag]
+ // Add questInstanceId to ActiveQuestIds
+ ETAG-WRITE _characterIndex:"char:{questorCharacterId}"
+ -> retry up to MaxConcurrencyRetries
 
-  PUBLISH "quest.accepted" { questInstanceId, definitionId, questCode, questorCharacterIds, gameServiceId }
+ PUBLISH "quest.accepted" { questInstanceId, definitionId, questCode, questorCharacterIds, gameServiceId }
 
 RETURN (200, QuestInstanceResponse)
 ```
@@ -340,19 +340,19 @@ RETURN (200, QuestInstanceResponse)
 POST /quest/abandon | Roles: [user]
 
 ```
-READ _instanceStore:"inst:{questInstanceId}" [with ETag]     -> 404 if null
+READ _instanceStore:"inst:{questInstanceId}" [with ETag] -> 404 if null
 -> 409 if not Active
 -> 400 if questorCharacterId not in QuestorCharacterIds
 // Set Status = Abandoned, CompletedAt = UtcNow
 ETAG-WRITE _instanceStore:"inst:{questInstanceId}"
-  -> retry up to MaxConcurrencyRetries                       -> 409 if exhausted
+ -> retry up to MaxConcurrencyRetries -> 409 if exhausted
 
 // UpdateCharacterIndexAsync: remove from ActiveQuestIds
 READ _characterIndex:"char:{questorCharacterId}" [with ETag]
 ETAG-WRITE _characterIndex:"char:{questorCharacterId}"
-  -> retry up to MaxConcurrencyRetries
+ -> retry up to MaxConcurrencyRetries
 
-CALL IContractClient.TerminateContractInstanceAsync(...)     // best-effort
+CALL IContractClient.TerminateContractInstanceAsync(...) // best-effort
 PUBLISH "quest.abandoned" { questInstanceId, questCode, abandoningCharacterId }
 RETURN (200, QuestInstanceResponse)
 ```
@@ -361,9 +361,9 @@ RETURN (200, QuestInstanceResponse)
 POST /quest/get | Roles: [user]
 
 ```
-READ _instanceStore:"inst:{questInstanceId}"                 -> 404 if null
+READ _instanceStore:"inst:{questInstanceId}" -> 404 if null
 // MapToInstanceResponseAsync: loads definition via cache read-through,
-//   reads all objective progress from _progressStore
+// reads all objective progress from _progressStore
 RETURN (200, QuestInstanceResponse)
 ```
 
@@ -383,25 +383,25 @@ POST /quest/list-available | Roles: [user]
 
 ```
 QUERY _definitionStore WHERE !IsDeprecated
-  AND (gameServiceId filter) AND (questGiverCharacterId filter)
+ AND (gameServiceId filter) AND (questGiverCharacterId filter)
 READ _characterIndex:"char:{characterId}"
 
 // Build activeDefinitionIds set from character index
 FOREACH activeQuestId in index.ActiveQuestIds
-  READ _instanceStore:"inst:{activeQuestId}"
+ READ _instanceStore:"inst:{activeQuestId}"
 
 FOREACH definition in definitions
-  // Filter: not already active
-  IF definition.DefinitionId in activeDefinitionIds -> skip
-  // Filter: not completed (if non-repeatable)
-  IF !definition.Repeatable AND questCode in index.CompletedQuestCodes -> skip
-  // Filter: not on cooldown (if repeatable)
-  IF definition.Repeatable
-    READ _cooldownStore:"cd:{characterId}:{questCode}"
-    IF cooldown active -> skip
-  // Filter: prerequisites met (see AcceptQuest CheckPrerequisitesAsync)
-  // May CALL ICurrencyClient, IItemClient, IInventoryClient, IPrerequisiteProviderFactory
-  IF any prerequisite fails -> skip
+ // Filter: not already active
+ IF definition.DefinitionId in activeDefinitionIds -> skip
+ // Filter: not completed (if non-repeatable)
+ IF !definition.Repeatable AND questCode in index.CompletedQuestCodes -> skip
+ // Filter: not on cooldown (if repeatable)
+ IF definition.Repeatable
+ READ _cooldownStore:"cd:{characterId}:{questCode}"
+ IF cooldown active -> skip
+ // Filter: prerequisites met (see AcceptQuest CheckPrerequisitesAsync)
+ // May CALL ICurrencyClient, IItemClient, IInventoryClient, IPrerequisiteProviderFactory
+ IF any prerequisite fails -> skip
 
 RETURN (200, ListAvailableQuestsResponse { available })
 ```
@@ -413,18 +413,18 @@ POST /quest/log | Roles: [user]
 READ _characterIndex:"char:{characterId}"
 
 FOREACH activeQuestId in index.ActiveQuestIds
-  READ _instanceStore:"inst:{questId}"
-  // Load definition via cache read-through
-  // Apply optional category filter
-  FOREACH objective in definition.Objectives
-    READ _progressStore:"prog:{questId}:{objectiveCode}"
-  // Apply RevealBehavior filter:
-  //   Always -> show, OnProgress -> show if currentCount > 0,
-  //   OnComplete -> show if isComplete, Never -> hide
-  // Calculate overallProgress from required (non-optional) objectives
+ READ _instanceStore:"inst:{questId}"
+ // Load definition via cache read-through
+ // Apply optional category filter
+ FOREACH objective in definition.Objectives
+ READ _progressStore:"prog:{questId}:{objectiveCode}"
+ // Apply RevealBehavior filter:
+ // Always -> show, OnProgress -> show if currentCount > 0,
+ // OnComplete -> show if isComplete, Never -> hide
+ // Calculate overallProgress from required (non-optional) objectives
 
 // CompletedCount from index.CompletedQuestCodes.Count
-QUERY _instanceStore WHERE characterId AND Status == Failed  // for failedCount
+QUERY _instanceStore WHERE characterId AND Status == Failed // for failedCount
 
 RETURN (200, QuestLogResponse { activeQuests, completedCount, failedCount })
 ```
@@ -433,23 +433,23 @@ RETURN (200, QuestLogResponse { activeQuests, completedCount, failedCount })
 POST /quest/objective/progress | Roles: [user]
 
 ```
-READ _instanceStore:"inst:{questInstanceId}"                 -> 404 if null
+READ _instanceStore:"inst:{questInstanceId}" -> 404 if null
 -> 400 if not Active
 
 READ _progressStore:"prog:{questInstanceId}:{objectiveCode}" [with ETag]
-                                                             -> 404 if null
+ -> 404 if null
 IF already complete
-  RETURN (200, ObjectiveProgressResponse { milestoneCompleted: false })
-IF body.trackedEntityId in progress.TrackedEntityIds         // deduplication
-  RETURN (200, ObjectiveProgressResponse { milestoneCompleted: false })
+ RETURN (200, ObjectiveProgressResponse { milestoneCompleted: false })
+IF body.trackedEntityId in progress.TrackedEntityIds // deduplication
+ RETURN (200, ObjectiveProgressResponse { milestoneCompleted: false })
 
 // Increment currentCount by body.incrementBy, cap at requiredCount
 // Add trackedEntityId to TrackedEntityIds if provided
 ETAG-WRITE _progressStore:"prog:{questInstanceId}:{objectiveCode}"
-  -> retry up to MaxConcurrencyRetries                       -> 409 if exhausted
+ -> retry up to MaxConcurrencyRetries -> 409 if exhausted
 
 IF milestone just completed (transition from incomplete to complete)
-  CALL IContractClient.CompleteMilestoneAsync(...)           // best-effort
+ CALL IContractClient.CompleteMilestoneAsync(...) // best-effort
 
 PUBLISH "quest.objective.progressed" { questInstanceId, questCode, objectiveCode, currentCount, requiredCount, isComplete }
 RETURN (200, ObjectiveProgressResponse { milestoneCompleted })
@@ -459,19 +459,19 @@ RETURN (200, ObjectiveProgressResponse { milestoneCompleted })
 POST /quest/objective/complete | Roles: [admin]
 
 ```
-READ _instanceStore:"inst:{questInstanceId}"                 -> 404 if null
+READ _instanceStore:"inst:{questInstanceId}" -> 404 if null
 // Note: does NOT check Active status — can force-complete on any status
 
 READ _progressStore:"prog:{questInstanceId}:{objectiveCode}" [with ETag]
-                                                             -> 404 if null
+ -> 404 if null
 IF already complete
-  RETURN (200, ObjectiveProgressResponse { milestoneCompleted: false })
+ RETURN (200, ObjectiveProgressResponse { milestoneCompleted: false })
 
 // Set CurrentCount = RequiredCount, IsComplete = true
 ETAG-WRITE _progressStore:"prog:{questInstanceId}:{objectiveCode}"
-  -> retry up to MaxConcurrencyRetries                       -> 409 if exhausted
+ -> retry up to MaxConcurrencyRetries -> 409 if exhausted
 
-CALL IContractClient.CompleteMilestoneAsync(...)             // best-effort
+CALL IContractClient.CompleteMilestoneAsync(...) // best-effort
 // Note: publishes NO event (unlike ReportObjectiveProgress)
 RETURN (200, ObjectiveProgressResponse { milestoneCompleted: true })
 ```
@@ -480,7 +480,7 @@ RETURN (200, ObjectiveProgressResponse { milestoneCompleted: true })
 POST /quest/objective/get | Roles: [user]
 
 ```
-READ _instanceStore:"inst:{questInstanceId}"                 -> 404 if null
+READ _instanceStore:"inst:{questInstanceId}" -> 404 if null
 READ _progressStore:"prog:{questInstanceId}:{objectiveCode}" -> 404 if null
 RETURN (200, ObjectiveProgressResponse { milestoneCompleted: false })
 ```
@@ -502,24 +502,24 @@ POST /quest/internal/quest-completed | Roles: []
 ```
 // Prebound API callback from Contract fulfillment
 QUERY _instanceStore WHERE ContractInstanceId == body.contractInstanceId
-IF null -> RETURN (200)                                      // not quest-related
+IF null -> RETURN (200) // not quest-related
 
 // CompleteQuestAsync helper
 READ _instanceStore:"inst:{questInstanceId}" [with ETag]
 IF null or not Active -> RETURN (200)
 // Set Status = Completed, CompletedAt = UtcNow
 ETAG-WRITE _instanceStore:"inst:{questInstanceId}"
-  -> retry up to MaxConcurrencyRetries
+ -> retry up to MaxConcurrencyRetries
 
 // UpdateCharacterIndexAsync
 READ _characterIndex:"char:{characterId}" [with ETag]
 // Remove from ActiveQuestIds, add questCode to CompletedQuestCodes
 ETAG-WRITE _characterIndex:"char:{characterId}"
-  -> retry up to MaxConcurrencyRetries
+ -> retry up to MaxConcurrencyRetries
 
 IF definition.Repeatable
-  WRITE _cooldownStore:"cd:{characterId}:{questCode}" <- CooldownEntry
-    (TTL: definition.CooldownSeconds)
+ WRITE _cooldownStore:"cd:{characterId}:{questCode}" <- CooldownEntry
+ (TTL: definition.CooldownSeconds)
 
 PUBLISH "quest.completed" { questInstanceId, definitionId, questCode, questorCharacterIds, gameServiceId }
 RETURN (200)
@@ -533,14 +533,14 @@ POST /quest/get-compress-data | Roles: [developer]
 READ _characterIndex:"char:{characterId}"
 
 FOREACH activeQuestId in index.ActiveQuestIds
-  READ _instanceStore:"inst:{questId}"
-  // Load definition via cache read-through
-  FOREACH objective in definition.Objectives
-    READ _progressStore:"prog:{questId}:{objectiveCode}"
+ READ _instanceStore:"inst:{questId}"
+ // Load definition via cache read-through
+ FOREACH objective in definition.Objectives
+ READ _progressStore:"prog:{questId}:{objectiveCode}"
 
 // Build category breakdown from completed quest codes
 FOREACH questCode in index.CompletedQuestCodes
-  QUERY _definitionStore WHERE Code == questCode             // MySQL per code
+ QUERY _definitionStore WHERE Code == questCode // MySQL per code
 
 RETURN (200, QuestArchive { characterId, activeQuests, completedQuests, questCategories })
 ```
@@ -549,35 +549,35 @@ RETURN (200, QuestArchive { characterId, activeQuests, completedQuests, questCat
 POST /quest/delete-by-character | Roles: [] (service-to-service only)
 
 ```
-// Called by lib-resource during character deletion cleanup (T28 CASCADE)
+// Called by lib-resource during character deletion cleanup (CASCADE)
 READ _characterIndex:"char:{characterId}"
 
 // Query ALL instances by character (MySQL) — index only tracks active quests,
 // but completed/abandoned instances also hold registered references
 QUERY _instanceStore WHERE QuestorCharacterIds CONTAINS characterId
 
-FOREACH instance in allInstances                      // per-item try-catch
-  IF status == Active
-    READ _instanceStore:"inst:{questInstanceId}" [with ETag]
-    // Set Status = Abandoned, CompletedAt = UtcNow
-    ETAG-WRITE _instanceStore:"inst:{questInstanceId}"
+FOREACH instance in allInstances // per-item try-catch
+ IF status == Active
+ READ _instanceStore:"inst:{questInstanceId}" [with ETag]
+ // Set Status = Abandoned, CompletedAt = UtcNow
+ ETAG-WRITE _instanceStore:"inst:{questInstanceId}"
 
-    // Best-effort contract termination
-    TRY CALL IContractClient.TerminateContractInstanceAsync(...)
-    CATCH ApiException -> log warning, continue
+ // Best-effort contract termination
+ TRY CALL IContractClient.TerminateContractInstanceAsync(...)
+ CATCH ApiException -> log warning, continue
 
-    PUBLISH "quest.abandoned" { questInstanceId, questCode, abandoningCharacterId: characterId }
+ PUBLISH "quest.abandoned" { questInstanceId, questCode, abandoningCharacterId: characterId }
 
-    // Delete objective progress for this instance
-    FOREACH objective in definition.Objectives
-      DELETE _progressStore:"prog:{questInstanceId}:{objectiveCode}"
+ // Delete objective progress for this instance
+ FOREACH objective in definition.Objectives
+ DELETE _progressStore:"prog:{questInstanceId}:{objectiveCode}"
 
-  // Unregister character reference for ALL instances (active, completed, abandoned)
-  TRY CALL IResourceClient.UnregisterReferenceAsync(...)
-  CATCH ApiException -> log warning, continue
+ // Unregister character reference for ALL instances (active, completed, abandoned)
+ TRY CALL IResourceClient.UnregisterReferenceAsync(...)
+ CATCH ApiException -> log warning, continue
 
-FOREACH questCode in index.CompletedQuestCodes        // per-item try-catch
-  DELETE _cooldownStore:"cd:{characterId}:{questCode}"
+FOREACH questCode in index.CompletedQuestCodes // per-item try-catch
+ DELETE _cooldownStore:"cd:{characterId}:{questCode}"
 
 DELETE _characterIndex:"char:{characterId}"
 

@@ -123,61 +123,61 @@ Service lifetime is **Scoped** (per-request). No background services.
 Composition Pipeline (Generate endpoint)
 ==========================================
 
-  GenerateCompositionRequest
-       │
-       ├── StyleId → BuiltInStyles.GetById() → StyleDefinition
-       │                                         │
-       │                                         ├── ModeDistribution
-       │                                         ├── IntervalPreferences
-       │                                         └── DefaultTempo/Meter
-       │
-       ├── Mood/Narrative → BuildStorytellerRequest
-       │    │
-       │    ├── bright    → simple_arc + Joyful
-       │    ├── dark      → tension_and_release + Tense
-       │    ├── neutral   → journey_and_return + Neutral
-       │    ├── melancholic → simple_arc + Melancholic
-       │    └── triumphant → tension_and_release + Climax→Resolution
-       │
-       ▼
-  Storyteller.Compose(request)
-       │
-       ├── Narrative template (sections, intents)
-       ├── Contour guidance (per section)
-       └── Density guidance (per section)
-       │
-       ▼
-  ProgressionGenerator.Generate(key, bars * chordsPerBar)
-       │
-       ▼
-  VoiceLeader.Voice(chords, voiceCount: 4)
-       │
-       ▼
-  MelodyGenerator.Generate(progression, key, options)
-       │ options.Contour = Storyteller contour
-       │ options.Density = Storyteller density
-       │
-       ▼
-  MidiJsonRenderer.RenderComposition(melody, voicings, tempo, meter, key, ...)
-       │
-       ▼
-  GenerateCompositionResponse
-       ├── MidiJson (tracks, events, ticksPerBeat)
-       ├── Metadata (key, tempo, bars, seed)
-       ├── NarrativeUsed (template ID)
-       ├── EmotionalJourney (section → emotion)
-       └── TensionCurve (per-bar tension values)
+ GenerateCompositionRequest
+ │
+ ├── StyleId → BuiltInStyles.GetById() → StyleDefinition
+ │ │
+ │ ├── ModeDistribution
+ │ ├── IntervalPreferences
+ │ └── DefaultTempo/Meter
+ │
+ ├── Mood/Narrative → BuildStorytellerRequest
+ │ │
+ │ ├── bright → simple_arc + Joyful
+ │ ├── dark → tension_and_release + Tense
+ │ ├── neutral → journey_and_return + Neutral
+ │ ├── melancholic → simple_arc + Melancholic
+ │ └── triumphant → tension_and_release + Climax→Resolution
+ │
+ ▼
+ Storyteller.Compose(request)
+ │
+ ├── Narrative template (sections, intents)
+ ├── Contour guidance (per section)
+ └── Density guidance (per section)
+ │
+ ▼
+ ProgressionGenerator.Generate(key, bars * chordsPerBar)
+ │
+ ▼
+ VoiceLeader.Voice(chords, voiceCount: 4)
+ │
+ ▼
+ MelodyGenerator.Generate(progression, key, options)
+ │ options.Contour = Storyteller contour
+ │ options.Density = Storyteller density
+ │
+ ▼
+ MidiJsonRenderer.RenderComposition(melody, voicings, tempo, meter, key, ...)
+ │
+ ▼
+ GenerateCompositionResponse
+ ├── MidiJson (tracks, events, ticksPerBeat)
+ ├── Metadata (key, tempo, bars, seed)
+ ├── NarrativeUsed (template ID)
+ ├── EmotionalJourney (section → emotion)
+ └── TensionCurve (per-bar tension values)
 
 
 EmotionalState Dimensions
 ===========================
 
-  EmotionalState(tension, brightness, energy, warmth, stability, valence)
-                   │          │         │        │         │         │
-                [0,1]      [0,1]     [0,1]    [0,1]     [0,1]     [0,1]
-                   │          │         │        │         │         │
-              Dissonance  Major/   Tempo/   Timbre  Rhythmic  Happy/
-              Level       Minor    Density  warmth  regularity Sad
+ EmotionalState(tension, brightness, energy, warmth, stability, valence)
+ │ │ │ │ │ │
+ [0,1] [0,1] [0,1] [0,1] [0,1] [0,1]
+ │ │ │ │ │ │
+ Dissonance Major/ Tempo/ Timbre Rhythmic Happy/
+ Level Minor Density warmth regularity Sad
 ```
 
 ---
@@ -185,24 +185,24 @@ EmotionalState Dimensions
 ## Stubs & Unimplemented Features
 
 1. **CreateStyle not persisted**: `CreateStyleAsync` returns the style as if created but does not save to the `music-styles` MySQL store or the in-memory `BuiltInStyles` collection. Custom styles are lost after the response. See Design Consideration #1 below - tracked in [#188](https://github.com/beyond-immersion/bannou-service/issues/188).
-   <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/188 -->
+ <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/188 -->
 2. **music-styles store declared but unused**: The MySQL store for styles exists in `state-stores.yaml` but is never accessed. All styles come from hardcoded `BuiltInStyles`. See Design Consideration #1 below - tracked in [#188](https://github.com/beyond-immersion/bannou-service/issues/188).
-   <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/188 -->
+ <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/188 -->
 
 ---
 
 ## Potential Extensions
 
 1. **Persistent custom styles**: Implement CreateStyle to store in MySQL, merge with BuiltInStyles on load. Tracked in [#188](https://github.com/beyond-immersion/bannou-service/issues/188).
-   <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/188 -->
+ <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/188 -->
 2. **Multi-instrument arrangement**: Extend MIDI-JSON output to support multiple instrument tracks with orchestration rules.
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/202 -->
+ <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/202 -->
 3. **Real-time streaming**: Generate and stream MIDI events for live performance scenarios.
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/203 -->
+ <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/203 -->
 4. **Style mixing**: Blend parameters from multiple styles for hybrid compositions. Four candidate blending strategies: weighted average (interpolate style parameters), alternation (switch styles by phrase/section), layered (different styles for melody vs harmony), and evolution (transition between styles over composition duration). Should also support per-component blend ratios (e.g., 80% Celtic melody + 60% Jazz harmony). Tracked in [#204](https://github.com/beyond-immersion/bannou-service/issues/204).
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/204 -->
+ <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/204 -->
 5. **Composer Layer (personality-driven generation)**: A third SDK layer above MusicStoryteller enabling persistent musical personalities ("virtual composers") with stylistic signatures, preference evolution, and ABML behavior integration. See full design in [#431](https://github.com/beyond-immersion/bannou-service/issues/431).
-   <!-- AUDIT:NEEDS_DESIGN:2026-02-14:https://github.com/beyond-immersion/bannou-service/issues/431 -->
+ <!-- AUDIT:NEEDS_DESIGN:2026-02-14:https://github.com/beyond-immersion/bannou-service/issues/431 -->
 
 ---
 
@@ -225,17 +225,17 @@ None identified.
 ### Design Considerations (Requires Planning)
 
 1. **Unused state store (music-styles)**: The MySQL store is defined in `state-stores.yaml` but never accessed. All styles come from hardcoded `BuiltInStyles`. Either implement CreateStyle persistence or remove the store from schema.
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/188 -->
+ <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/188 -->
 
 2. ~~**Hardcoded tunables throughout**~~: **FIXED** (2026-01-31) - All hardcoded tunables moved to configuration schema. Added 12 new configuration properties in `music-configuration.yaml`: `DefaultTicksPerBeat`, `DefaultChordsPerBar`, `DefaultVoiceCount`, `DefaultBeatsPerChord`, `DefaultMelodySyncopation`, `DefaultMelodyDensity`, and 6 emotional state defaults. Service now reads from `_configuration` instead of magic numbers.
 
 3. ~~**MusicServicePlugin scope lifecycle**~~: **FIXED** (2026-01-31) - Removed dead code from plugin. MusicService doesn't implement IBannouService, so the entire lifecycle resolution pattern was no-ops. Simplified plugin to minimal implementation: empty ConfigureServices, empty ConfigureApplication, no-op lifecycle methods. Plugin went from 141 lines to 60 lines of clean, honest code.
 
 4. **No event publishing for compositions**: Generated compositions are not tracked. No analytics on what styles/moods are popular, no composition history per user.
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/205 -->
+ <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/205 -->
 
 5. **No rate limiting on generation**: Composition generation is CPU-intensive (Storyteller + Theory + Rendering). No protection against burst requests exhausting compute resources.
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/206 -->
+ <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/206 -->
 
 6. **x-sdk-type migration scope**: 16 `x-sdk-type` annotations in `music-api.yaml` reference the MusicTheory SDK. The `x-sdk-type` mechanism is designed for the Core SDK only. These annotations work today but represent a legacy pattern that may need migration to `$ref`-based shared types or inline definitions if the generation pipeline changes. Low urgency — no functional impact.
 
@@ -255,15 +255,15 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed (2026-03-06) — Hardening Pass
 
 - **Schema enum compliance**: Extracted 9 named PascalCase enum schemas from 11 inline lowercase enums (`Mood`, `CadenceType`, `CadenceStrength`, `ContourShape`, `TensionProfile`, `ChordQuality`, `KeyMode`, `FunctionalAnalysis`, `ValidationErrorType`). All use `$ref` references.
-- **T8 filler removal**: Removed `generationTimeMs` from `GenerateCompositionResponse` and all associated `Stopwatch` code.
-- **T25 type safety**: Changed `compositionId` from `string` to `Guid` (`format: uuid`).
+- **filler removal**: Removed `generationTimeMs` from `GenerateCompositionResponse` and all associated `Stopwatch` code.
+- **type safety**: Changed `compositionId` from `string` to `Guid` (`format: uuid`).
 - **NRT value type compliance**: Added `nullable: true` to `tempo`, added missing `required` entries for `warmth`/`stability`/`valence` on `EmotionalStateSnapshot` and `noteCount` on `MelodyAnalysis`.
-- **T0 tenet references**: Replaced all `(T21 compliant)` comments with `(per IMPLEMENTATION TENETS)` in service code, config schema, and tests.
+- **tenet references**: Replaced all `(compliant)` comments with `(per IMPLEMENTATION TENETS)` in service code, config schema, and tests.
 - **Config descriptions**: Collapsed 4 multi-line YAML descriptions to single-line format (contour/density config properties).
-- **Cache log level**: Changed cache lookup failure from `LogDebug` to `LogWarning` (transient infrastructure failure per T10).
+- **Cache log level**: Changed cache lookup failure from `LogDebug` to `LogWarning` (transient infrastructure failure per tenets).
 - **Unused using**: Removed `System.Runtime.CompilerServices` import.
 - **MelodyAnalysis.Contour**: Changed from `string` to `$ref: ContourShape` enum type.
-- **T21 progression length default**: Extracted hardcoded `8` to `DefaultProgressionLength` config property. Made `length` nullable in schema (was required with sentinel `> 0` check).
+- **progression length default**: Extracted hardcoded `8` to `DefaultProgressionLength` config property. Made `length` nullable in schema (was required with sentinel `> 0` check).
 
 ### Pending Design
 

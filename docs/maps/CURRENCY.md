@@ -213,16 +213,16 @@
 POST /currency/definition/create | Roles: [admin]
 
 ```
-READ definitions:def-code:{code}                   -> 409 if exists (code uniqueness)
+READ definitions:def-code:{code} -> 409 if exists (code uniqueness)
 IF isBaseCurrency
-  READ definitions:base-currency:{scope}           -> 409 if exists (one base per scope)
-WRITE definitions:def:{definitionId}               <- new CurrencyDefinitionModel from request
-WRITE definitions:def-code:{code}                  <- definitionId
-LOCK index:all-defs                                // AddToListAsync with retries
-  READ definitions:all-defs
-  WRITE definitions:all-defs                       <- append definitionId
+ READ definitions:base-currency:{scope} -> 409 if exists (one base per scope)
+WRITE definitions:def:{definitionId} <- new CurrencyDefinitionModel from request
+WRITE definitions:def-code:{code} <- definitionId
+LOCK index:all-defs // AddToListAsync with retries
+ READ definitions:all-defs
+ WRITE definitions:all-defs <- append definitionId
 IF isBaseCurrency
-  WRITE definitions:base-currency:{scope}          <- "{definitionId}:{code}"
+ WRITE definitions:base-currency:{scope} <- "{definitionId}:{code}"
 PUBLISH currency.definition.created { definitionId, code, name, scope, precision, isActive }
 RETURN (200, CurrencyDefinitionResponse)
 ```
@@ -233,8 +233,8 @@ POST /currency/definition/get | Roles: []
 ```
 // ResolveCurrencyDefinitionAsync: by code or by ID
 IF code provided
-  READ definitions:def-code:{code}                 -> 404 if null
-READ definitions:def:{definitionId}                -> 404 if null
+ READ definitions:def-code:{code} -> 404 if null
+READ definitions:def:{definitionId} -> 404 if null
 RETURN (200, CurrencyDefinitionResponse)
 ```
 
@@ -242,10 +242,10 @@ RETURN (200, CurrencyDefinitionResponse)
 POST /currency/definition/list | Roles: []
 
 ```
-READ definitions:all-defs                          // JSON list of all definition IDs
+READ definitions:all-defs // JSON list of all definition IDs
 FOREACH definitionId in list
-  READ definitions:def:{definitionId}              // skip nulls
-  // Filter in-memory: scope, isBaseCurrency, realmId, includeDeprecated (default: false)
+ READ definitions:def:{definitionId} // skip nulls
+ // Filter in-memory: scope, isBaseCurrency, realmId, includeDeprecated (default: false)
 RETURN (200, ListCurrencyDefinitionsResponse)
 ```
 
@@ -253,12 +253,12 @@ RETURN (200, ListCurrencyDefinitionsResponse)
 POST /currency/definition/update | Roles: [developer]
 
 ```
-READ definitions:def:{definitionId}                -> 404 if null
+READ definitions:def:{definitionId} -> 404 if null
 // Apply partial updates to mutable fields (name, description, caps, autogain, etc.)
 // Immutable: code, scope, precision, isBaseCurrency
 IF exchangeRateToBase changed
-  // Set ExchangeRateUpdatedAt (no separate exchange-rate.updated event)
-WRITE definitions:def:{definitionId}               <- mutated model (no ETag)
+ // Set ExchangeRateUpdatedAt (no separate exchange-rate.updated event)
+WRITE definitions:def:{definitionId} <- mutated model (no ETag)
 PUBLISH currency.definition.updated { definitionId, code, name, scope, precision, modifiedAt }
 RETURN (200, CurrencyDefinitionResponse)
 ```
@@ -267,10 +267,10 @@ RETURN (200, CurrencyDefinitionResponse)
 POST /currency/definition/deprecate | Roles: [developer]
 
 ```
-READ definitions:def:{definitionId}                -> 404 if null
-IF definition.IsDeprecated == true                 -> 200 (idempotent, per IMPLEMENTATION TENETS)
+READ definitions:def:{definitionId} -> 404 if null
+IF definition.IsDeprecated == true -> 200 (idempotent, per IMPLEMENTATION TENETS)
 // Sets IsDeprecated=true, DeprecatedAt=now, DeprecationReason from request.reason
-WRITE definitions:def:{definitionId}               <- updated CurrencyDefinitionModel
+WRITE definitions:def:{definitionId} <- updated CurrencyDefinitionModel
 PUBLISH currency.definition.updated { definitionId, code, changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"] }
 RETURN (200, CurrencyDefinitionResponse)
 ```
@@ -280,9 +280,9 @@ POST /currency/wallet/create | Roles: []
 
 ```
 // ownerKey = "{ownerId}:{ownerType}" or "{ownerId}:{ownerType}:{realmId}"
-READ wallets:wallet-owner:{ownerKey}               -> 409 if exists (one wallet per owner)
-WRITE wallets:wallet:{walletId}                    <- new WalletModel { Status = Active }
-WRITE wallets:wallet-owner:{ownerKey}              <- walletId
+READ wallets:wallet-owner:{ownerKey} -> 409 if exists (one wallet per owner)
+WRITE wallets:wallet:{walletId} <- new WalletModel { Status = Active }
+WRITE wallets:wallet-owner:{ownerKey} <- walletId
 PUBLISH currency.wallet.created { walletId, ownerId, ownerType, realmId, status }
 RETURN (200, WalletResponse)
 ```
@@ -293,14 +293,14 @@ POST /currency/wallet/get | Roles: []
 ```
 // ResolveWalletAsync: by walletId or by ownerId+ownerType+realmId
 IF owner lookup
-  READ wallets:wallet-owner:{ownerKey}             -> 404 if null
-READ wallets:wallet:{walletId}                     -> 404 if null
+ READ wallets:wallet-owner:{ownerKey} -> 404 if null
+READ wallets:wallet:{walletId} -> 404 if null
 // GetAllBalancesForWalletAsync
-READ balances:bal-wallet:{walletId}                // list of currencyDefIds
+READ balances:bal-wallet:{walletId} // list of currencyDefIds
 FOREACH currencyDefId
-  READ balances:bal:{walletId}:{currencyDefId}
-  READ definitions:def:{currencyDefId}             // for currencyCode
-  // GetTotalHeldAmountAsync: reads hold index + holds (with cache)
+ READ balances:bal:{walletId}:{currencyDefId}
+ READ definitions:def:{currencyDefId} // for currencyCode
+ // GetTotalHeldAmountAsync: reads hold index + holds (with cache)
 RETURN (200, WalletWithBalancesResponse)
 ```
 
@@ -310,23 +310,23 @@ POST /currency/wallet/get-or-create | Roles: []
 ```
 READ wallets:wallet-owner:{ownerKey}
 IF found
-  // Load wallet + balances (same as GetWallet)
-  RETURN (200, GetOrCreateWalletResponse { wallet, balances })
+ // Load wallet + balances (same as GetWallet)
+ RETURN (200, GetOrCreateWalletResponse { wallet, balances })
 // Delegate to CreateWalletAsync
-IF create returns 409                              // race condition
-  // Re-read wallet-owner index and return existing
+IF create returns 409 // race condition
+ // Re-read wallet-owner index and return existing
 RETURN (201, GetOrCreateWalletResponse { wallet, balances })
-// T8: 201 Created vs 200 OK distinguishes which path was taken
+// 201 Created vs 200 OK distinguishes which path was taken
 ```
 
 ### FreezeWallet
 POST /currency/wallet/freeze | Roles: [admin]
 
 ```
-READ wallets:wallet:{walletId} [with ETag]         -> 404 if null
-IF status == Frozen                                -> 409
+READ wallets:wallet:{walletId} [with ETag] -> 404 if null
+IF status == Frozen -> 409
 // Set status = Frozen, frozenReason, frozenAt
-ETAG-WRITE wallets:wallet:{walletId}               -> 409 if ETag mismatch
+ETAG-WRITE wallets:wallet:{walletId} -> 409 if ETag mismatch
 PUBLISH currency.wallet.frozen { walletId, ownerId, reason }
 PUSH CurrencyWalletFrozenClientEvent to owner sessions
 RETURN (200, WalletResponse)
@@ -336,10 +336,10 @@ RETURN (200, WalletResponse)
 POST /currency/wallet/unfreeze | Roles: [admin]
 
 ```
-READ wallets:wallet:{walletId} [with ETag]         -> 404 if null
-IF status != Frozen                                -> 400
+READ wallets:wallet:{walletId} [with ETag] -> 404 if null
+IF status != Frozen -> 400
 // Set status = Active, clear frozen fields
-ETAG-WRITE wallets:wallet:{walletId}               -> 409 if ETag mismatch
+ETAG-WRITE wallets:wallet:{walletId} -> 409 if ETag mismatch
 PUBLISH currency.wallet.unfrozen { walletId, ownerId }
 PUSH CurrencyWalletUnfrozenClientEvent to owner sessions
 RETURN (200, WalletResponse)
@@ -349,21 +349,21 @@ RETURN (200, WalletResponse)
 POST /currency/wallet/close | Roles: [admin]
 
 ```
-READ wallets:wallet:{walletId} [with ETag]         -> 404 if null
-IF status == Closed                                -> 400
-READ wallets:wallet:{transferRemainingTo}           -> 404 if null
-LOCK wallet:{walletId}                             -> 409 if fails
-  // GetAllBalancesForWalletAsync
-  READ balances:bal-wallet:{walletId}
-  FOREACH currencyDefId
-    READ balances:bal:{walletId}:{currencyDefId}
-    // GetTotalHeldAmountAsync
-    IF heldAmount > 0                              -> 400 (active holds exist)
-  FOREACH balance with Amount > 0
-    // InternalCreditAsync -> delegates to CreditCurrencyAsync with BypassEarnCap
-    // Each credit acquires its own balance-level lock, publishes currency.credited
-  // Set status = Closed
-  ETAG-WRITE wallets:wallet:{walletId}             -> 409 if ETag mismatch
+READ wallets:wallet:{walletId} [with ETag] -> 404 if null
+IF status == Closed -> 400
+READ wallets:wallet:{transferRemainingTo} -> 404 if null
+LOCK wallet:{walletId} -> 409 if fails
+ // GetAllBalancesForWalletAsync
+ READ balances:bal-wallet:{walletId}
+ FOREACH currencyDefId
+ READ balances:bal:{walletId}:{currencyDefId}
+ // GetTotalHeldAmountAsync
+ IF heldAmount > 0 -> 400 (active holds exist)
+ FOREACH balance with Amount > 0
+ // InternalCreditAsync -> delegates to CreditCurrencyAsync with BypassEarnCap
+ // Each credit acquires its own balance-level lock, publishes currency.credited
+ // Set status = Closed
+ ETAG-WRITE wallets:wallet:{walletId} -> 409 if ETag mismatch
 PUBLISH currency.wallet.closed { walletId, ownerId, balancesTransferredTo }
 RETURN (200, CloseWalletResponse { transferredBalances })
 ```
@@ -372,20 +372,20 @@ RETURN (200, CloseWalletResponse { transferredBalances })
 POST /currency/balance/get | Roles: [user]
 
 ```
-READ wallets:wallet:{walletId}                     -> 404 if null
-READ definitions:def:{currencyDefinitionId}        -> 404 if null
+READ wallets:wallet:{walletId} -> 404 if null
+READ definitions:def:{currencyDefinitionId} -> 404 if null
 // GetOrCreateBalanceAsync: check cache, fallback MySQL, create empty if absent
 READ balance-cache:bal:{walletId}:{currencyDefId}
 IF cache miss
-  READ balances:bal:{walletId}:{currencyDefId}
-  IF null -> create empty balance
+ READ balances:bal:{walletId}:{currencyDefId}
+ IF null -> create empty balance
 IF autogainEnabled
-  // ApplyAutogainIfNeededAsync
-  LOCK balance:{walletId}:{currencyDefId}          // skip if lock unavailable
-    // Re-read balance under lock, calculate periods, apply gain
-    WRITE balances:bal:{walletId}:{currencyDefId}
-    PUBLISH currency.autogain.calculated { walletId, periodsApplied, amountGained }
-    PUSH CurrencyBalanceChangedClientEvent to owner sessions
+ // ApplyAutogainIfNeededAsync
+ LOCK balance:{walletId}:{currencyDefId} // skip if lock unavailable
+ // Re-read balance under lock, calculate periods, apply gain
+ WRITE balances:bal:{walletId}:{currencyDefId}
+ PUBLISH currency.autogain.calculated { walletId, periodsApplied, amountGained }
+ PUSH CurrencyBalanceChangedClientEvent to owner sessions
 // ResetEarnCapsIfNeeded (in-memory only, NOT persisted)
 // GetTotalHeldAmountAsync
 RETURN (200, GetBalanceResponse { amount, lockedAmount, effectiveAmount, earnCapInfo, autogainInfo })
@@ -396,11 +396,11 @@ POST /currency/balance/batch-get | Roles: [user]
 
 ```
 FOREACH query in queries (sequential)
-  // GetOrCreateBalanceAsync (cache then MySQL)
-  // GetDefinitionByIdAsync
-  IF autogainEnabled
-    // GetWalletByIdAsync, ApplyAutogainIfNeededAsync
-  // GetTotalHeldAmountAsync
+ // GetOrCreateBalanceAsync (cache then MySQL)
+ // GetDefinitionByIdAsync
+ IF autogainEnabled
+ // GetWalletByIdAsync, ApplyAutogainIfNeededAsync
+ // GetTotalHeldAmountAsync
 RETURN (200, BatchGetBalancesResponse { balances })
 ```
 
@@ -408,33 +408,33 @@ RETURN (200, BatchGetBalancesResponse { balances })
 POST /currency/credit | Roles: []
 
 ```
-READ idempotency:{idempotencyKey}                  -> 409 if exists
-READ wallets:wallet:{walletId}                     -> 404 if null, 400 if frozen
-READ definitions:def:{currencyDefinitionId}        -> 404 if null
-LOCK balance:{walletId}:{currencyDefId}            -> 409 if fails
-  // GetOrCreateBalanceAsync
-  // ResetEarnCapsIfNeeded
-  IF !bypassEarnCap AND earn cap applies
-    // Apply daily/weekly earn cap, reduce creditAmount
-    IF capped
-      PUBLISH currency.earn-cap.reached { capType, capAmount, attemptedAmount, limitedAmount }
-    IF creditAmount <= 0 after cap                 -> 400
-  IF perWalletCap
-    IF Reject AND newBalance > cap                 -> 400
-    IF CapAndLose AND newBalance > cap
-      // Truncate creditAmount
-      PUBLISH currency.wallet-cap.reached { capAmount, overflowBehavior, amountLost }
-  // balance.Amount += creditAmount, update earn tracking counters
-  WRITE balances:bal:{walletId}:{currencyDefId}    <- updated balance
-  WRITE balance-cache:bal:{walletId}:{currencyDefId}
-  // RecordTransactionAsync
-  WRITE transactions:tx:{transactionId}            <- new TransactionModel
-  LOCK index:tx-wallet:{walletId}
-    // AddToListAsync
-  IF referenceType provided
-    LOCK index:tx-ref:{refType}:{refId}
-      // AddToListAsync
-  WRITE idempotency:{idempotencyKey}               <- transactionId (TTL)
+READ idempotency:{idempotencyKey} -> 409 if exists
+READ wallets:wallet:{walletId} -> 404 if null, 400 if frozen
+READ definitions:def:{currencyDefinitionId} -> 404 if null
+LOCK balance:{walletId}:{currencyDefId} -> 409 if fails
+ // GetOrCreateBalanceAsync
+ // ResetEarnCapsIfNeeded
+ IF !bypassEarnCap AND earn cap applies
+ // Apply daily/weekly earn cap, reduce creditAmount
+ IF capped
+ PUBLISH currency.earn-cap.reached { capType, capAmount, attemptedAmount, limitedAmount }
+ IF creditAmount <= 0 after cap -> 400
+ IF perWalletCap
+ IF Reject AND newBalance > cap -> 400
+ IF CapAndLose AND newBalance > cap
+ // Truncate creditAmount
+ PUBLISH currency.wallet-cap.reached { capAmount, overflowBehavior, amountLost }
+ // balance.Amount += creditAmount, update earn tracking counters
+ WRITE balances:bal:{walletId}:{currencyDefId} <- updated balance
+ WRITE balance-cache:bal:{walletId}:{currencyDefId}
+ // RecordTransactionAsync
+ WRITE transactions:tx:{transactionId} <- new TransactionModel
+ LOCK index:tx-wallet:{walletId}
+ // AddToListAsync
+ IF referenceType provided
+ LOCK index:tx-ref:{refType}:{refId}
+ // AddToListAsync
+ WRITE idempotency:{idempotencyKey} <- transactionId (TTL)
 PUBLISH currency.credited { transactionId, walletId, ownerId, amount, transactionType, newBalance, earnCapApplied, walletCapApplied }
 PUSH CurrencyBalanceChangedClientEvent to owner sessions
 RETURN (200, CreditCurrencyResponse { transaction, newBalance, earnCapApplied, walletCapApplied })
@@ -444,19 +444,19 @@ RETURN (200, CreditCurrencyResponse { transaction, newBalance, earnCapApplied, w
 POST /currency/debit | Roles: []
 
 ```
-READ idempotency:{idempotencyKey}                  -> 409 if exists
-READ wallets:wallet:{walletId}                     -> 404 if null, 400 if frozen
-READ definitions:def:{currencyDefinitionId}        -> 404 if null
-LOCK balance:{walletId}:{currencyDefId}            -> 409 if fails
-  // GetOrCreateBalanceAsync
-  IF !allowNegative
-    // GetTotalHeldAmountAsync
-    IF effectiveBalance < amount                   -> 400 (insufficient funds)
-  // balance.Amount -= amount
-  WRITE balances:bal:{walletId}:{currencyDefId}    <- updated balance
-  WRITE balance-cache:bal:{walletId}:{currencyDefId}
-  // RecordTransactionAsync (same pattern as CreditCurrency)
-  WRITE idempotency:{idempotencyKey}               <- transactionId (TTL)
+READ idempotency:{idempotencyKey} -> 409 if exists
+READ wallets:wallet:{walletId} -> 404 if null, 400 if frozen
+READ definitions:def:{currencyDefinitionId} -> 404 if null
+LOCK balance:{walletId}:{currencyDefId} -> 409 if fails
+ // GetOrCreateBalanceAsync
+ IF !allowNegative
+ // GetTotalHeldAmountAsync
+ IF effectiveBalance < amount -> 400 (insufficient funds)
+ // balance.Amount -= amount
+ WRITE balances:bal:{walletId}:{currencyDefId} <- updated balance
+ WRITE balance-cache:bal:{walletId}:{currencyDefId}
+ // RecordTransactionAsync (same pattern as CreditCurrency)
+ WRITE idempotency:{idempotencyKey} <- transactionId (TTL)
 PUBLISH currency.debited { transactionId, walletId, ownerId, amount, transactionType, newBalance }
 PUSH CurrencyBalanceChangedClientEvent to owner sessions (negative delta)
 RETURN (200, DebitCurrencyResponse { transaction, newBalance })
@@ -466,28 +466,28 @@ RETURN (200, DebitCurrencyResponse { transaction, newBalance })
 POST /currency/transfer | Roles: []
 
 ```
-READ idempotency:{idempotencyKey}                  -> 409 if exists
-READ wallets:wallet:{sourceWalletId}               -> 404 if null, 400 if frozen
-READ wallets:wallet:{targetWalletId}               -> 404 if null, 400 if frozen
-READ definitions:def:{currencyDefinitionId}        -> 404 if null, 400 if not transferable
+READ idempotency:{idempotencyKey} -> 409 if exists
+READ wallets:wallet:{sourceWalletId} -> 404 if null, 400 if frozen
+READ wallets:wallet:{targetWalletId} -> 404 if null, 400 if frozen
+READ definitions:def:{currencyDefinitionId} -> 404 if null, 400 if not transferable
 // Deterministic lock ordering: sort keys lexicographically to prevent deadlock
-LOCK balance:{firstLockKey}                        -> 409 if fails
-  LOCK balance:{secondLockKey}                     -> 409 if fails
-    // GetOrCreateBalanceAsync (source)
-    // GetTotalHeldAmountAsync (source)
-    IF effectiveBalance < amount                   -> 400
-    // GetOrCreateBalanceAsync (target)
-    IF perWalletCap AND Reject AND overflow        -> 400
-    IF perWalletCap AND CapAndLose AND overflow
-      // Truncate creditAmount
-      PUBLISH currency.wallet-cap.reached { ... }
-    // Update both balances
-    WRITE balances:bal:{sourceWalletId}:{currencyDefId}
-    WRITE balance-cache:bal:{sourceWalletId}:{currencyDefId}
-    WRITE balances:bal:{targetWalletId}:{currencyDefId}
-    WRITE balance-cache:bal:{targetWalletId}:{currencyDefId}
-    // RecordTransactionAsync (single tx with source+target snapshots)
-    WRITE idempotency:{idempotencyKey}             <- transactionId (TTL)
+LOCK balance:{firstLockKey} -> 409 if fails
+ LOCK balance:{secondLockKey} -> 409 if fails
+ // GetOrCreateBalanceAsync (source)
+ // GetTotalHeldAmountAsync (source)
+ IF effectiveBalance < amount -> 400
+ // GetOrCreateBalanceAsync (target)
+ IF perWalletCap AND Reject AND overflow -> 400
+ IF perWalletCap AND CapAndLose AND overflow
+ // Truncate creditAmount
+ PUBLISH currency.wallet-cap.reached { ... }
+ // Update both balances
+ WRITE balances:bal:{sourceWalletId}:{currencyDefId}
+ WRITE balance-cache:bal:{sourceWalletId}:{currencyDefId}
+ WRITE balances:bal:{targetWalletId}:{currencyDefId}
+ WRITE balance-cache:bal:{targetWalletId}:{currencyDefId}
+ // RecordTransactionAsync (single tx with source+target snapshots)
+ WRITE idempotency:{idempotencyKey} <- transactionId (TTL)
 PUBLISH currency.transferred { transactionId, sourceWalletId, targetWalletId, amount }
 PUSH CurrencyBalanceChangedClientEvent to source owner (negative delta)
 PUSH CurrencyBalanceChangedClientEvent to target owner (positive delta)
@@ -498,15 +498,15 @@ RETURN (200, TransferCurrencyResponse { transaction, sourceNewBalance, targetNew
 POST /currency/batch-credit | Roles: []
 
 ```
-READ idempotency:{idempotencyKey}                  -> 409 if batch already submitted
+READ idempotency:{idempotencyKey} -> 409 if batch already submitted
 FOREACH operation (sequential, index i)
-  READ idempotency:{idempotencyKey}:{i}
-  IF already complete
-    READ transactions:tx:{existingTxId}            // return prior result
-  ELSE
-    // Delegate to CreditCurrencyAsync with sub-key "{idempotencyKey}:{i}"
-    // Each credit acquires its own locks/idempotency independently
-WRITE idempotency:{idempotencyKey}                 <- new Guid (TTL)
+ READ idempotency:{idempotencyKey}:{i}
+ IF already complete
+ READ transactions:tx:{existingTxId} // return prior result
+ ELSE
+ // Delegate to CreditCurrencyAsync with sub-key "{idempotencyKey}:{i}"
+ // Each credit acquires its own locks/idempotency independently
+WRITE idempotency:{idempotencyKey} <- new Guid (TTL)
 RETURN (200, BatchCreditResponse { results })
 // Individual failures reflected in results[i].success / results[i].error
 ```
@@ -515,14 +515,14 @@ RETURN (200, BatchCreditResponse { results })
 POST /currency/batch-debit | Roles: []
 
 ```
-READ idempotency:{idempotencyKey}                  -> 409 if batch already submitted
+READ idempotency:{idempotencyKey} -> 409 if batch already submitted
 FOREACH operation (sequential, index i)
-  READ idempotency:{idempotencyKey}:{i}
-  IF already complete
-    READ transactions:tx:{existingTxId}
-  ELSE
-    // Delegate to DebitCurrencyAsync with sub-key "{idempotencyKey}:{i}"
-WRITE idempotency:{idempotencyKey}                 <- new Guid (TTL)
+ READ idempotency:{idempotencyKey}:{i}
+ IF already complete
+ READ transactions:tx:{existingTxId}
+ ELSE
+ // Delegate to DebitCurrencyAsync with sub-key "{idempotencyKey}:{i}"
+WRITE idempotency:{idempotencyKey} <- new Guid (TTL)
 RETURN (200, BatchDebitResponse { results })
 ```
 
@@ -530,10 +530,10 @@ RETURN (200, BatchDebitResponse { results })
 POST /currency/convert/calculate | Roles: [user]
 
 ```
-READ definitions:def:{fromCurrencyId}              -> 404 if null
-READ definitions:def:{toCurrencyId}                -> 404 if null
+READ definitions:def:{fromCurrencyId} -> 404 if null
+READ definitions:def:{toCurrencyId} -> 404 if null
 // CalculateEffectiveRate: fromRate / toRate (base currency rate = 1.0)
-IF either lacks ExchangeRateToBase                 -> 400
+IF either lacks ExchangeRateToBase -> 400
 // toAmount = fromAmount * effectiveRate, rounded to ConversionRoundingPrecision
 RETURN (200, CalculateConversionResponse { toAmount, effectiveRate, baseCurrency, conversionPath })
 ```
@@ -542,24 +542,24 @@ RETURN (200, CalculateConversionResponse { toAmount, effectiveRate, baseCurrency
 POST /currency/convert/execute | Roles: []
 
 ```
-READ idempotency:{idempotencyKey}                  -> 409 if exists
-READ wallets:wallet:{walletId}                     -> 404 if null, 400 if frozen
-READ definitions:def:{fromCurrencyId}              -> 404 if null
-READ definitions:def:{toCurrencyId}                -> 404 if null
-// CalculateEffectiveRate                          -> 400 if missing rates
+READ idempotency:{idempotencyKey} -> 409 if exists
+READ wallets:wallet:{walletId} -> 404 if null, 400 if frozen
+READ definitions:def:{fromCurrencyId} -> 404 if null
+READ definitions:def:{toCurrencyId} -> 404 if null
+// CalculateEffectiveRate -> 400 if missing rates
 IF toCurrency has PerWalletCap with Reject
-  // Pre-validate: GetOrCreateBalanceAsync for target currency
-  IF newBalance would exceed cap                   -> 400
+ // Pre-validate: GetOrCreateBalanceAsync for target currency
+ IF newBalance would exceed cap -> 400
 // Saga: debit source, credit target, compensate on failure
 // Step 1: Debit source
 // Delegates to DebitCurrencyAsync("{idempotencyKey}:debit", Conversion_debit)
-IF debit fails                                     -> forward error status
+IF debit fails -> forward error status
 // Step 2: Credit target
 // Delegates to CreditCurrencyAsync("{idempotencyKey}:credit", Conversion_credit, BypassEarnCap)
 IF credit fails
-  // Compensate: CreditCurrencyAsync("{idempotencyKey}:compensate", BypassEarnCap)
-  -> forward credit error status
-WRITE idempotency:{idempotencyKey}                 <- debitTransactionId (TTL)
+ // Compensate: CreditCurrencyAsync("{idempotencyKey}:compensate", BypassEarnCap)
+ -> forward credit error status
+WRITE idempotency:{idempotencyKey} <- debitTransactionId (TTL)
 RETURN (200, ExecuteConversionResponse { debitTransaction, creditTransaction, effectiveRate })
 ```
 
@@ -567,9 +567,9 @@ RETURN (200, ExecuteConversionResponse { debitTransaction, creditTransaction, ef
 POST /currency/exchange-rate/get | Roles: [user]
 
 ```
-READ definitions:def:{fromCurrencyId}              -> 404 if null
-READ definitions:def:{toCurrencyId}                -> 404 if null
-// CalculateEffectiveRate                          -> 400 if missing rates
+READ definitions:def:{fromCurrencyId} -> 404 if null
+READ definitions:def:{toCurrencyId} -> 404 if null
+// CalculateEffectiveRate -> 400 if missing rates
 RETURN (200, GetExchangeRateResponse { rate, inverseRate, baseCurrency, fromRateToBase, toRateToBase })
 ```
 
@@ -579,24 +579,24 @@ POST /currency/exchange-rate/update | Roles: [developer]
 ```
 // Retry loop up to ExchangeRateUpdateMaxRetries
 FOREACH attempt
-  READ definitions:def:{currencyDefinitionId} [with ETag]  -> 404 if null
-  IF isBaseCurrency                                -> 400
-  // Set ExchangeRateToBase, ExchangeRateUpdatedAt
-  ETAG-WRITE definitions:def:{currencyDefinitionId}
-  IF ETag mismatch -> retry
-  // On success:
-  // FindBaseCurrencyCodeAsync
-  READ definitions:base-currency:{scope}
-  PUBLISH currency.exchange-rate.updated { currencyDefinitionId, currencyCode, previousRate, newRate, baseCurrencyCode }
-  RETURN (200, UpdateExchangeRateResponse { definition, previousRate })
-// All retries exhausted                           -> 409
+ READ definitions:def:{currencyDefinitionId} [with ETag] -> 404 if null
+ IF isBaseCurrency -> 400
+ // Set ExchangeRateToBase, ExchangeRateUpdatedAt
+ ETAG-WRITE definitions:def:{currencyDefinitionId}
+ IF ETag mismatch -> retry
+ // On success:
+ // FindBaseCurrencyCodeAsync
+ READ definitions:base-currency:{scope}
+ PUBLISH currency.exchange-rate.updated { currencyDefinitionId, currencyCode, previousRate, newRate, baseCurrencyCode }
+ RETURN (200, UpdateExchangeRateResponse { definition, previousRate })
+// All retries exhausted -> 409
 ```
 
 ### GetTransaction
 POST /currency/transaction/get | Roles: []
 
 ```
-READ transactions:tx:{transactionId}               -> 404 if null
+READ transactions:tx:{transactionId} -> 404 if null
 RETURN (200, TransactionResponse)
 ```
 
@@ -604,8 +604,8 @@ RETURN (200, TransactionResponse)
 POST /currency/transaction/history | Roles: [user]
 
 ```
-READ wallets:wallet:{walletId}                     -> 404 if null
-READ transactions:tx-wallet:{walletId}             // JSON list of txIds
+READ wallets:wallet:{walletId} -> 404 if null
+READ transactions:tx-wallet:{walletId} // JSON list of txIds
 // BulkGetAsync for all transaction keys
 // Filter in-memory: currencyDefinitionId, transactionTypes, date range
 // effectiveFromDate = max(fromDate, now - TransactionRetentionDays)
@@ -617,7 +617,7 @@ RETURN (200, GetTransactionHistoryResponse { transactions, totalCount })
 POST /currency/transaction/by-reference | Roles: []
 
 ```
-READ transactions:tx-ref:{referenceType}:{referenceId}  // JSON list of txIds
+READ transactions:tx-ref:{referenceType}:{referenceId} // JSON list of txIds
 // BulkGetAsync for all transaction keys
 RETURN (200, GetTransactionsByReferenceResponse { transactions })
 ```
@@ -627,7 +627,7 @@ POST /currency/stats/global-supply | Roles: []
 
 ```
 // STUB: returns all zeros
-READ definitions:def:{currencyDefinitionId}        -> 404 if null
+READ definitions:def:{currencyDefinitionId} -> 404 if null
 RETURN (200, GetGlobalSupplyResponse { totalSupply: 0, inCirculation: 0, inEscrow: 0, totalMinted: 0, totalBurned: 0, supplyCap })
 ```
 
@@ -636,7 +636,7 @@ POST /currency/stats/wallet-distribution | Roles: []
 
 ```
 // STUB: returns all zeros
-READ definitions:def:{currencyDefinitionId}        -> 404 if null
+READ definitions:def:{currencyDefinitionId} -> 404 if null
 RETURN (200, GetWalletDistributionResponse { all fields: 0 })
 ```
 
@@ -671,20 +671,20 @@ RETURN (creditStatus, EscrowRefundResponse { transaction, newBalance })
 POST /currency/hold/create | Roles: []
 
 ```
-READ idempotency:{idempotencyKey}                  -> 409 if exists
-READ wallets:wallet:{walletId}                     -> 404 if null
-READ definitions:def:{currencyDefinitionId}        -> 404 if null
-LOCK balance:{walletId}:{currencyDefId}            -> 409 if fails
-  // GetOrCreateBalanceAsync
-  // GetTotalHeldAmountAsync (reads hold index + holds, with Redis cache)
-  // effectiveBalance = amount - totalHeld
-  IF effectiveBalance < holdAmount                 -> 400
-  // Clamp expiresAt to now + HoldMaxDurationDays
-  WRITE holds:hold:{holdId}                        <- new HoldModel { Status = Active }
-  WRITE holds-cache:hold:{holdId}                  // Redis TTL cache
-  LOCK index:hold-wallet:{walletId}:{currencyDefId}
-    // AddToListAsync
-  WRITE idempotency:{idempotencyKey}               <- holdId (TTL)
+READ idempotency:{idempotencyKey} -> 409 if exists
+READ wallets:wallet:{walletId} -> 404 if null
+READ definitions:def:{currencyDefinitionId} -> 404 if null
+LOCK balance:{walletId}:{currencyDefId} -> 409 if fails
+ // GetOrCreateBalanceAsync
+ // GetTotalHeldAmountAsync (reads hold index + holds, with Redis cache)
+ // effectiveBalance = amount - totalHeld
+ IF effectiveBalance < holdAmount -> 400
+ // Clamp expiresAt to now + HoldMaxDurationDays
+ WRITE holds:hold:{holdId} <- new HoldModel { Status = Active }
+ WRITE holds-cache:hold:{holdId} // Redis TTL cache
+ LOCK index:hold-wallet:{walletId}:{currencyDefId}
+ // AddToListAsync
+ WRITE idempotency:{idempotencyKey} <- holdId (TTL)
 PUBLISH currency.hold.created { holdId, walletId, ownerId, currencyDefinitionId, amount, expiresAt }
 RETURN (200, HoldResponse)
 ```
@@ -693,21 +693,21 @@ RETURN (200, HoldResponse)
 POST /currency/hold/capture | Roles: []
 
 ```
-READ idempotency:{idempotencyKey}                  -> 409 if exists
-LOCK hold:{holdId}                                 -> 409 if fails
-  READ holds:hold:{holdId} [with ETag]             -> 404 if null
-  IF status != Active                              -> 400
-  IF captureAmount > holdAmount                    -> 400
-  // Debit captured amount: delegates to DebitCurrencyAsync("{idempotencyKey}:hold-capture", Fee)
-  IF debit fails                                   -> forward error status
-  // Set hold status = Captured, capturedAmount, completedAt
-  ETAG-WRITE holds:hold:{holdId}                   -> 409 if ETag mismatch
-  WRITE holds-cache:hold:{holdId}
-  LOCK index:hold-wallet:{walletId}:{currencyDefId}
-    // RemoveFromListAsync (prune completed hold from active index)
-  WRITE idempotency:{idempotencyKey}               <- transactionId (TTL)
-  READ wallets:wallet:{walletId}                   // for ownerId in event
-  PUBLISH currency.hold.captured { holdId, walletId, ownerId, holdAmount, capturedAmount, amountReleased, transactionId }
+READ idempotency:{idempotencyKey} -> 409 if exists
+LOCK hold:{holdId} -> 409 if fails
+ READ holds:hold:{holdId} [with ETag] -> 404 if null
+ IF status != Active -> 400
+ IF captureAmount > holdAmount -> 400
+ // Debit captured amount: delegates to DebitCurrencyAsync("{idempotencyKey}:hold-capture", Fee)
+ IF debit fails -> forward error status
+ // Set hold status = Captured, capturedAmount, completedAt
+ ETAG-WRITE holds:hold:{holdId} -> 409 if ETag mismatch
+ WRITE holds-cache:hold:{holdId}
+ LOCK index:hold-wallet:{walletId}:{currencyDefId}
+ // RemoveFromListAsync (prune completed hold from active index)
+ WRITE idempotency:{idempotencyKey} <- transactionId (TTL)
+ READ wallets:wallet:{walletId} // for ownerId in event
+ PUBLISH currency.hold.captured { holdId, walletId, ownerId, holdAmount, capturedAmount, amountReleased, transactionId }
 RETURN (200, CaptureHoldResponse { hold, transaction, newBalance, amountReleased })
 ```
 
@@ -715,16 +715,16 @@ RETURN (200, CaptureHoldResponse { hold, transaction, newBalance, amountReleased
 POST /currency/hold/release | Roles: []
 
 ```
-LOCK hold:{holdId}                                 -> 409 if fails
-  READ holds:hold:{holdId} [with ETag]             -> 404 if null
-  IF status != Active                              -> 400
-  // Set hold status = Released, completedAt
-  ETAG-WRITE holds:hold:{holdId}                   -> 409 if ETag mismatch
-  WRITE holds-cache:hold:{holdId}
-  LOCK index:hold-wallet:{walletId}:{currencyDefId}
-    // RemoveFromListAsync
-  READ wallets:wallet:{walletId}                   // for ownerId in event
-  PUBLISH currency.hold.released { holdId, walletId, ownerId, currencyDefinitionId, amount }
+LOCK hold:{holdId} -> 409 if fails
+ READ holds:hold:{holdId} [with ETag] -> 404 if null
+ IF status != Active -> 400
+ // Set hold status = Released, completedAt
+ ETAG-WRITE holds:hold:{holdId} -> 409 if ETag mismatch
+ WRITE holds-cache:hold:{holdId}
+ LOCK index:hold-wallet:{walletId}:{currencyDefId}
+ // RemoveFromListAsync
+ READ wallets:wallet:{walletId} // for ownerId in event
+ PUBLISH currency.hold.released { holdId, walletId, ownerId, currencyDefinitionId, amount }
 RETURN (200, HoldResponse)
 // No balance modification — funds simply become available again
 ```
@@ -733,11 +733,11 @@ RETURN (200, HoldResponse)
 POST /currency/hold/get | Roles: []
 
 ```
-READ holds-cache:hold:{holdId}                     // Redis cache check
+READ holds-cache:hold:{holdId} // Redis cache check
 IF cache hit
-  RETURN (200, HoldResponse)
-READ holds:hold:{holdId}                           -> 404 if null
-WRITE holds-cache:hold:{holdId}                    // Populate cache on miss
+ RETURN (200, HoldResponse)
+READ holds:hold:{holdId} -> 404 if null
+WRITE holds-cache:hold:{holdId} // Populate cache on miss
 RETURN (200, HoldResponse)
 ```
 
@@ -752,21 +752,21 @@ RETURN (200, HoldResponse)
 
 ```
 // Periodic loop
-READ definitions:all-defs                          // all definition IDs
+READ definitions:all-defs // all definition IDs
 FOREACH definition where autogainEnabled
-  READ balances:bal-currency:{currencyDefId}       // reverse index: all walletIds
-  FOREACH walletId in batches of AutogainBatchSize
-    LOCK balance:{walletId}:{currencyDefId}        // skip if unavailable
-      READ balances:bal:{walletId}:{currencyDefId}
-      // Calculate periods elapsed since LastAutogainAt
-      // Simple: gain = periods * autogainAmount
-      // Compound: gain = balance * ((1 + rate)^periods - 1)
-      // Cap enforcement: clamp to autogainCap
-      IF gain > 0
-        WRITE balances:bal:{walletId}:{currencyDefId}
-        WRITE balance-cache:bal:{walletId}:{currencyDefId}
-        PUBLISH currency.autogain.calculated { walletId, periodsApplied, amountGained, newBalance }
-        PUSH CurrencyBalanceChangedClientEvent to owner sessions
+ READ balances:bal-currency:{currencyDefId} // reverse index: all walletIds
+ FOREACH walletId in batches of AutogainBatchSize
+ LOCK balance:{walletId}:{currencyDefId} // skip if unavailable
+ READ balances:bal:{walletId}:{currencyDefId}
+ // Calculate periods elapsed since LastAutogainAt
+ // Simple: gain = periods * autogainAmount
+ // Compound: gain = balance * ((1 + rate)^periods - 1)
+ // Cap enforcement: clamp to autogainCap
+ IF gain > 0
+ WRITE balances:bal:{walletId}:{currencyDefId}
+ WRITE balance-cache:bal:{walletId}:{currencyDefId}
+ PUBLISH currency.autogain.calculated { walletId, periodsApplied, amountGained, newBalance }
+ PUSH CurrencyBalanceChangedClientEvent to owner sessions
 ```
 
 ### CurrencyExpirationTaskService
@@ -777,70 +777,70 @@ FOREACH definition where autogainEnabled
 ```
 // ProcessExpirationCycleAsync — per-cycle span via ITelemetryProvider
 // Scope created once per cycle; all stores resolved once from scoped IStateStoreFactory
-READ definitions:all-defs                          // JSON list of definition IDs
+READ definitions:all-defs // JSON list of definition IDs
 FOREACH definitionId in allIds
-  READ definitions:def:{definitionId}
-  IF definition is null OR !definition.Expires     // skip non-expiring currencies
-    CONTINUE
+ READ definitions:def:{definitionId}
+ IF definition is null OR !definition.Expires // skip non-expiring currencies
+ CONTINUE
 
-  // Determine whether this policy has a global cutoff (FixedDate) or per-balance cutoff
-  IF expirationPolicy == FixedDate
-    IF definition.ExpirationDate is null OR now < definition.ExpirationDate
-      CONTINUE                                     // not yet expired globally
-  ELSE IF expirationPolicy == EndOfSeason
-    CONTINUE                                       // deferred: requires Worldstate integration
-  // DurationFromEarn: no global cutoff; evaluated per-balance below
+ // Determine whether this policy has a global cutoff (FixedDate) or per-balance cutoff
+ IF expirationPolicy == FixedDate
+ IF definition.ExpirationDate is null OR now < definition.ExpirationDate
+ CONTINUE // not yet expired globally
+ ELSE IF expirationPolicy == EndOfSeason
+ CONTINUE // deferred: requires Worldstate integration
+ // DurationFromEarn: no global cutoff; evaluated per-balance below
 
-  READ balances:bal-currency:{definitionId}        // JSON list of walletIds
-  IF empty
-    CONTINUE
+ READ balances:bal-currency:{definitionId} // JSON list of walletIds
+ IF empty
+ CONTINUE
 
-  FOREACH walletId in walletIds in batches of CurrencyExpirationBatchSize
-    // Per-item try-catch: one corrupt balance must not block the rest (IMPLEMENTATION TENETS)
-    READ balances:bal:{walletId}:{definitionId}
-    IF balance is null OR balance.Amount <= 0
-      CONTINUE                                     // nothing to expire
+ FOREACH walletId in walletIds in batches of CurrencyExpirationBatchSize
+ // Per-item try-catch: one corrupt balance must not block the rest (IMPLEMENTATION TENETS)
+ READ balances:bal:{walletId}:{definitionId}
+ IF balance is null OR balance.Amount <= 0
+ CONTINUE // nothing to expire
 
-    IF expirationPolicy == DurationFromEarn
-      // Parse ISO 8601 duration from definition.ExpirationDuration (XmlConvert.ToTimeSpan)
-      cutoff = balance.CreatedAt + duration
-      IF now < cutoff
-        CONTINUE                                   // this individual balance has not yet expired
+ IF expirationPolicy == DurationFromEarn
+ // Parse ISO 8601 duration from definition.ExpirationDuration (XmlConvert.ToTimeSpan)
+ cutoff = balance.CreatedAt + duration
+ IF now < cutoff
+ CONTINUE // this individual balance has not yet expired
 
-    // Balance is expired — zero it out under distributed lock
-    LOCK balance:{walletId}:{definitionId}         // currency-balance lock (same as credit/debit)
-      // Re-read under lock: amount may have changed since pre-lock check
-      READ balances:bal:{walletId}:{definitionId}
-      IF balance is null OR balance.Amount <= 0
-        CONTINUE                                   // already zeroed concurrently
+ // Balance is expired — zero it out under distributed lock
+ LOCK balance:{walletId}:{definitionId} // currency-balance lock (same as credit/debit)
+ // Re-read under lock: amount may have changed since pre-lock check
+ READ balances:bal:{walletId}:{definitionId}
+ IF balance is null OR balance.Amount <= 0
+ CONTINUE // already zeroed concurrently
 
-      amountExpired = balance.Amount
-      balance.Amount = 0
-      balance.LastModifiedAt = now
-      WRITE balances:bal:{walletId}:{definitionId} <- zeroed balance
-      WRITE balance-cache:bal:{walletId}:{definitionId}
+ amountExpired = balance.Amount
+ balance.Amount = 0
+ balance.LastModifiedAt = now
+ WRITE balances:bal:{walletId}:{definitionId} <- zeroed balance
+ WRITE balance-cache:bal:{walletId}:{definitionId}
 
-      // Record expiration transaction (TransactionType = System) for history visibility
-      WRITE transactions:tx:{transactionId}        <- new TransactionModel {
-                                                        TargetWalletId = walletId,
-                                                        Amount = amountExpired,
-                                                        TransactionType = System,
-                                                        TargetBalanceBefore = amountExpired,
-                                                        TargetBalanceAfter = 0
-                                                      }
-      LOCK index:tx-wallet:{walletId}
-        // AddToListAsync
+ // Record expiration transaction (TransactionType = System) for history visibility
+ WRITE transactions:tx:{transactionId} <- new TransactionModel {
+ TargetWalletId = walletId,
+ Amount = amountExpired,
+ TransactionType = System,
+ TargetBalanceBefore = amountExpired,
+ TargetBalanceAfter = 0
+ }
+ LOCK index:tx-wallet:{walletId}
+ // AddToListAsync
 
-      READ wallets:wallet:{walletId}               // for ownerId in event
-      PUBLISH currency.expired {
-        transactionId,
-        walletId,
-        ownerId,
-        currencyDefinitionId = definitionId,
-        currencyCode = definition.Code,
-        amountExpired,
-        expirationPolicy
-      }
+ READ wallets:wallet:{walletId} // for ownerId in event
+ PUBLISH currency.expired {
+ transactionId,
+ walletId,
+ ownerId,
+ currencyDefinitionId = definitionId,
+ currencyCode = definition.Code,
+ amountExpired,
+ expirationPolicy
+ }
 
 // Cycle summary: log Information with count of expired balances and currencies processed
 ```
@@ -861,56 +861,56 @@ FOREACH definitionId in allIds
 ```
 // ProcessHoldExpirationCycleAsync — per-cycle span via ITelemetryProvider
 // Scope created once per cycle; all stores resolved once from scoped IStateStoreFactory
-READ definitions:all-defs                          // JSON list of definition IDs
+READ definitions:all-defs // JSON list of definition IDs
 FOREACH definitionId in allIds
-  // No global holds-by-currency index exists.
-  // Strategy: use the bal-currency reverse index (wallets holding this currency)
-  // then check each wallet's per-currency hold index.
-  READ balances:bal-currency:{definitionId}        // JSON list of walletIds
-  IF empty
-    CONTINUE
+ // No global holds-by-currency index exists.
+ // Strategy: use the bal-currency reverse index (wallets holding this currency)
+ // then check each wallet's per-currency hold index.
+ READ balances:bal-currency:{definitionId} // JSON list of walletIds
+ IF empty
+ CONTINUE
 
-  FOREACH walletId in walletIds in batches of HoldExpirationBatchSize
-    READ holds:hold-wallet:{walletId}:{definitionId}   // JSON list of holdIds
-    IF empty
-      CONTINUE
+ FOREACH walletId in walletIds in batches of HoldExpirationBatchSize
+ READ holds:hold-wallet:{walletId}:{definitionId} // JSON list of holdIds
+ IF empty
+ CONTINUE
 
-    FOREACH holdId in holdIds
-      // Per-item try-catch: one corrupt hold must not block the rest (IMPLEMENTATION TENETS)
-      // Check Redis cache first, fall back to MySQL (same pattern as GetHold)
-      READ holds-cache:hold:{holdId}
-      IF cache miss
-        READ holds:hold:{holdId}
-      IF hold is null OR hold.Status != Active
-        CONTINUE                                   // already captured, released, or gone
+ FOREACH holdId in holdIds
+ // Per-item try-catch: one corrupt hold must not block the rest (IMPLEMENTATION TENETS)
+ // Check Redis cache first, fall back to MySQL (same pattern as GetHold)
+ READ holds-cache:hold:{holdId}
+ IF cache miss
+ READ holds:hold:{holdId}
+ IF hold is null OR hold.Status != Active
+ CONTINUE // already captured, released, or gone
 
-      IF hold.ExpiresAt > now
-        CONTINUE                                   // not yet expired
+ IF hold.ExpiresAt > now
+ CONTINUE // not yet expired
 
-      // Hold is expired — auto-release under hold-level distributed lock
-      LOCK hold:{holdId}                           // hold-level lock (same as CaptureHold/ReleaseHold)
-        READ holds:hold:{holdId} [with ETag]       // re-read under lock for optimistic concurrency
-        IF hold is null OR hold.Status != Active
-          CONTINUE                                 // status changed while waiting for lock
+ // Hold is expired — auto-release under hold-level distributed lock
+ LOCK hold:{holdId} // hold-level lock (same as CaptureHold/ReleaseHold)
+ READ holds:hold:{holdId} [with ETag] // re-read under lock for optimistic concurrency
+ IF hold is null OR hold.Status != Active
+ CONTINUE // status changed while waiting for lock
 
-        // Set status = Released, completedAt = now (no balance modification needed)
-        hold.Status = Released
-        hold.CompletedAt = now
-        ETAG-WRITE holds:hold:{holdId}             -> skip on ETag conflict (concurrent API call won)
-        WRITE holds-cache:hold:{holdId}
+ // Set status = Released, completedAt = now (no balance modification needed)
+ hold.Status = Released
+ hold.CompletedAt = now
+ ETAG-WRITE holds:hold:{holdId} -> skip on ETag conflict (concurrent API call won)
+ WRITE holds-cache:hold:{holdId}
 
-        LOCK index:hold-wallet:{walletId}:{definitionId}
-          // RemoveFromListAsync (prune expired hold from active hold index)
+ LOCK index:hold-wallet:{walletId}:{definitionId}
+ // RemoveFromListAsync (prune expired hold from active hold index)
 
-        READ wallets:wallet:{walletId}             // for ownerId in event
-        PUBLISH currency.hold.expired {
-          holdId,
-          walletId,
-          ownerId,
-          currencyDefinitionId = definitionId,
-          amount = hold.Amount,
-          originalExpiresAt = hold.ExpiresAt
-        }
+ READ wallets:wallet:{walletId} // for ownerId in event
+ PUBLISH currency.hold.expired {
+ holdId,
+ walletId,
+ ownerId,
+ currencyDefinitionId = definitionId,
+ amount = hold.Amount,
+ originalExpiresAt = hold.ExpiresAt
+ }
 
 // Cycle summary: log Information with count of expired holds processed
 ```

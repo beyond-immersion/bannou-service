@@ -33,7 +33,7 @@ The Analytics plugin (L4 GameFeatures) is the central event aggregation point fo
 | `scoreType` (on `AnalyticsScoreUpdatedEvent`) | B (Game Content Type) | Opaque string | Type of score that changed (e.g., `"kills"`, `"points"`, `"xp"`). Published during buffer flush for score-bearing events. Vocabulary matches ingested `eventType` values. |
 | `milestoneType` (on `AnalyticsMilestoneReachedEvent`) | B (Game Content Type) | Opaque string | Type of milestone reached (e.g., `"total_kills"`, `"games_played"`). Published when a score crosses a configured threshold. Vocabulary matches aggregated event types. |
 | `action` | C (System State/Mode) | `ControllerAction` enum | Controller possession action (`possess`, `release`). Binary state tracking whether control was taken or relinquished. |
-| `metadata` (on `IngestEventRequest`) | -- (Client Metadata) | `object` (`additionalProperties: true`) | Opaque client-provided event context. Analytics stores and returns this data without inspecting its structure, per T29 (No Metadata Bag Contracts). |
+| `metadata` (on `IngestEventRequest`) | -- (Client Metadata) | `object` (`additionalProperties: true`) | Opaque client-provided event context. Analytics stores and returns this data without inspecting its structure, per tenets (No Metadata Bag Contracts). |
 
 ## Configuration
 
@@ -62,44 +62,44 @@ The Analytics plugin (L4 GameFeatures) is the central event aggregation point fo
 ## Visual Aid
 
 ```
-Event Sources                    Analytics Service                    Consumers
+Event Sources Analytics Service Consumers
 
 game-session.action.performed --+
-game-session.created -----------+    +---------------------+
-game-session.deleted -----------+---> |  Event Buffer       |
-character-history.* ------------+    |  (Redis Sorted Set) |
-realm-history.* ----------------+    +----------+----------+
-        |                                       |
-        v                       (size >= EventBufferSize OR
-  +--------------+               age >= FlushIntervalSeconds)
-  | Resolution   |                              |
-  | character->  |                    +---------v---------+
-  | realm->      |                    |  Flush (locked)    |
-  | gameService  |                    |  Group by entity   |
-  | (cached)     |                    |  Update summaries  |
-  +--------------+                    +--+------------+----+
-                                         |            |
-                       +-----------------v--+   +----v---------------+
-                       | analytics.score    |   | analytics          |
-                       | .updated           |   | .milestone         |
-                       |                    |   | .reached           |
-                       +------+-------------+   +------+-------------+
-                              |                        |
-                      +-------+-------+       +--------+-------+
-                      |  Leaderboard  |       |  Achievement   |
-                      |  Service      |       |  Service       |
-                      +---------------+       +----------------+
+game-session.created -----------+ +---------------------+
+game-session.deleted -----------+---> | Event Buffer |
+character-history.* ------------+ | (Redis Sorted Set) |
+realm-history.* ----------------+ +----------+----------+
+ | |
+ v (size >= EventBufferSize OR
+ +--------------+ age >= FlushIntervalSeconds)
+ | Resolution | |
+ | character-> | +---------v---------+
+ | realm-> | | Flush (locked) |
+ | gameService | | Group by entity |
+ | (cached) | | Update summaries |
+ +--------------+ +--+------------+----+
+ | |
+ +-----------------v--+ +----v---------------+
+ | analytics.score | | analytics |
+ | .updated | | .milestone |
+ | | | .reached |
+ +------+-------------+ +------+-------------+
+ | |
+ +-------+-------+ +--------+-------+
+ | Leaderboard | | Achievement |
+ | Service | | Service |
+ +---------------+ +----------------+
 
 Direct API
-                       +---------------------+
-/rating/update ------> |  Lock (game+type)   |
-                       |  Snapshot ratings    |
-                       |  Glicko-2 Calc All  |
-                       |  Save All           |---> analytics.rating.updated
-                       +---------------------+         |
-                                                +------+------+
-                                                | Leaderboard |
-                                                +-------------+
+ +---------------------+
+/rating/update ------> | Lock (game+type) |
+ | Snapshot ratings |
+ | Glicko-2 Calc All |
+ | Save All |---> analytics.rating.updated
+ +---------------------+ |
+ +------+------+
+ | Leaderboard |
+ +-------------+
 ```
 
 ## Stubs & Unimplemented Features

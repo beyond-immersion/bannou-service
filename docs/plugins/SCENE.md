@@ -145,13 +145,13 @@ Extracted from `SceneService` for testability. Handles:
 
 - **UpdateScene** (`/scene/update`): Checks scene exists (404 if not). If scene is checked out and no token provided, returns 409. If token provided, validates against stored checkout state (403 on mismatch). Re-validates structure and tag counts. Preserves createdAt, sets updatedAt. Increments PATCH version via `IncrementPatchVersion()`. Stores updated YAML. Updates index entry and secondary indexes (handles reference/asset diff between old and new). Records version history entry with editor ID from checkout. Publishes `scene.updated`.
 
-- **DeleteScene** (`/scene/delete`): Checks existence (404 if not). Checks reverse reference index -- blocks deletion if other scenes reference this one (returns 409 Conflict with referencing scene IDs in response). Loads scene for event data. Removes index entry, secondary indexes, and global index entry. Deletes version history. Publishes `scene.deleted`. Response contains only `referencingScenes` when blocked (T8: no filler). Note: asset content in `scene:content:{id}` is NOT explicitly deleted (remains until TTL or manual cleanup).
+- **DeleteScene** (`/scene/delete`): Checks existence (404 if not). Checks reverse reference index -- blocks deletion if other scenes reference this one (returns 409 Conflict with referencing scene IDs in response). Loads scene for event data. Removes index entry, secondary indexes, and global index entry. Deletes version history. Publishes `scene.deleted`. Response contains only `referencingScenes` when blocked (no filler). Note: asset content in `scene:content:{id}` is NOT explicitly deleted (remains until TTL or manual cleanup).
 
 - **DuplicateScene** (`/scene/duplicate`): Loads source scene (404 if not found). Creates new scene with fresh sceneId and all node IDs regenerated via `DuplicateNodeWithNewIds()`. Preserves refIds, names, transforms, assets, tags, annotations. Optionally overrides gameId and sceneType. Resets version to "1.0.0". Delegates to `CreateSceneAsync()` for storage, indexing, and event publishing.
 
 ### Instance Operations (2 endpoints)
 
-- **InstantiateScene** (`/scene/instantiate`): NOTIFICATION endpoint (caller has already instantiated). Validates scene exists via index lookup (404 if not found). Builds `SceneInstantiatedEvent` with instance ID, scene asset ID, version, name, gameId, sceneType, regionId, and world transform (position/rotation/scale converted to event types). Publishes event. Returns sceneVersion only (T8: no echoed request fields or filler). Does NOT track instance state -- purely event-driven.
+- **InstantiateScene** (`/scene/instantiate`): NOTIFICATION endpoint (caller has already instantiated). Validates scene exists via index lookup (404 if not found). Builds `SceneInstantiatedEvent` with instance ID, scene asset ID, version, name, gameId, sceneType, regionId, and world transform (position/rotation/scale converted to event types). Publishes event. Returns sceneVersion only (no echoed request fields or filler). Does NOT track instance state -- purely event-driven.
 
 - **DestroyInstance** (`/scene/destroy-instance`): Publishes `SceneDestroyedEvent` with instanceId, sceneAssetId (nullable), regionId (nullable), and caller metadata. Does NOT validate instance exists. Returns empty 200 OK. Purely event-driven notification for consumers (Mapping, Actor) to react.
 
@@ -159,7 +159,7 @@ Extracted from `SceneService` for testability. Handles:
 
 - **CheckoutScene** (`/scene/checkout`): Gets index with ETag for optimistic concurrency. If already checked out, checks if existing checkout is expired (allows takeover if expired). Loads scene from content store. Creates `CheckoutState` with random token (Guid "N" format), editor ID, expiry (now + ttlMinutes), extension count 0. Stores with TTL = ttlMinutes + 5 minutes (buffer). Updates index `IsCheckedOut=true` with ETag concurrency check. Publishes `scene.checked-out`. Returns token, scene, and expiresAt.
 
-- **CommitScene** (`/scene/commit`): Validates checkout token (403 Forbidden on mismatch). Checks expiry (409 Conflict if expired). Gets index with ETag. Delegates scene update to `UpdateSceneAsync()` (which handles validation, version increment, and storage). Deletes checkout state. Clears `IsCheckedOut` on index with ETag concurrency. Publishes `scene.committed` with new version, previous version, committer, changes summary, and node count. Response contains newVersion and scene (T8: no filler `committed=true`).
+- **CommitScene** (`/scene/commit`): Validates checkout token (403 Forbidden on mismatch). Checks expiry (409 Conflict if expired). Gets index with ETag. Delegates scene update to `UpdateSceneAsync()` (which handles validation, version increment, and storage). Deletes checkout state. Clears `IsCheckedOut` on index with ETag concurrency. Publishes `scene.committed` with new version, previous version, committer, changes summary, and node count. Response contains newVersion and scene (no filler `committed=true`).
 
 - **DiscardCheckout** (`/scene/discard`): Validates checkout token (403 Forbidden on mismatch). Does NOT check expiry (allows discard even after expiry). Deletes checkout state. Clears `IsCheckedOut` on index with ETag concurrency. Publishes `scene.checkout-discarded`. Returns empty 200 OK. Scene remains at pre-checkout version.
 
@@ -189,184 +189,184 @@ Extracted from `SceneService` for testability. Handles:
 Scene Document Hierarchy
 ===========================
 
-  Scene
-  ├── sceneId: uuid
-  ├── gameId: "arcadia"
-  ├── sceneType: building | region | dungeon | ...
-  ├── name: "Tavern Interior"
-  ├── version: "1.2.5"
-  ├── tags: [indoor, tavern, social]
-  └── root: SceneNode (group)
-       ├── nodeId: uuid
-       ├── refId: "tavern_root"
-       ├── nodeType: group
-       ├── localTransform: {pos, rot, scale}
-       └── children:
-            ├── SceneNode (mesh)
-            │    ├── refId: "floor_mesh"
-            │    ├── nodeType: mesh
-            │    ├── asset: {assetId: uuid}
-            │    └── affordances: [{type: walkable}]
-            │
-            ├── SceneNode (marker)
-            │    ├── refId: "npc_spawn_1"
-            │    ├── nodeType: marker
-            │    ├── markerType: npc_spawn
-            │    └── tags: [barkeeper]
-            │
-            ├── SceneNode (volume)
-            │    ├── refId: "ambient_zone"
-            │    ├── nodeType: volume
-            │    ├── volumeShape: box
-            │    └── volumeSize: {x:10, y:3, z:8}
-            │
-            ├── SceneNode (reference)
-            │    ├── refId: "back_room"
-            │    ├── nodeType: reference
-            │    └── referenceSceneId: uuid (points to another Scene)
-            │
-            └── SceneNode (mesh + attachmentPoints)
-                 ├── refId: "wall_section_1"
-                 ├── nodeType: mesh
-                 ├── asset: {assetId: uuid}
-                 └── attachmentPoints:
-                      ├── {name: "wall_hook_left", acceptsTags: [painting]}
-                      └── {name: "shelf_1", acceptsTags: [decoration]}
+ Scene
+ ├── sceneId: uuid
+ ├── gameId: "arcadia"
+ ├── sceneType: building | region | dungeon | ...
+ ├── name: "Tavern Interior"
+ ├── version: "1.2.5"
+ ├── tags: [indoor, tavern, social]
+ └── root: SceneNode (group)
+ ├── nodeId: uuid
+ ├── refId: "tavern_root"
+ ├── nodeType: group
+ ├── localTransform: {pos, rot, scale}
+ └── children:
+ ├── SceneNode (mesh)
+ │ ├── refId: "floor_mesh"
+ │ ├── nodeType: mesh
+ │ ├── asset: {assetId: uuid}
+ │ └── affordances: [{type: walkable}]
+ │
+ ├── SceneNode (marker)
+ │ ├── refId: "npc_spawn_1"
+ │ ├── nodeType: marker
+ │ ├── markerType: npc_spawn
+ │ └── tags: [barkeeper]
+ │
+ ├── SceneNode (volume)
+ │ ├── refId: "ambient_zone"
+ │ ├── nodeType: volume
+ │ ├── volumeShape: box
+ │ └── volumeSize: {x:10, y:3, z:8}
+ │
+ ├── SceneNode (reference)
+ │ ├── refId: "back_room"
+ │ ├── nodeType: reference
+ │ └── referenceSceneId: uuid (points to another Scene)
+ │
+ └── SceneNode (mesh + attachmentPoints)
+ ├── refId: "wall_section_1"
+ ├── nodeType: mesh
+ ├── asset: {assetId: uuid}
+ └── attachmentPoints:
+ ├── {name: "wall_hook_left", acceptsTags: [painting]}
+ └── {name: "shelf_1", acceptsTags: [decoration]}
 
 
 Checkout/Commit Workflow
 ==========================
 
-  Developer                    Scene Service                    State Store
-     │                              │                              │
-     ├── POST /scene/checkout ──────►                              │
-     │                              ├── GetWithETag(index) ────────►
-     │                              ◄── (indexEntry, etag) ────────┤
-     │                              ├── Check IsCheckedOut         │
-     │                              ├── LoadSceneAsset ────────────►
-     │                              ◄── (scene YAML) ─────────────┤
-     │                              ├── Generate token (Guid.N)    │
-     │                              ├── Save CheckoutState ────────►
-     │                              │   (TTL = ttlMinutes + 5)     │
-     │                              ├── TrySave(index, etag) ──────►
-     │                              ◄── (newEtag) ────────────────┤
-     ◄── {token, scene, expiresAt} ─┤                              │
-     │                              │                              │
-     │  ... editing locally ...     │                              │
-     │                              │                              │
-     ├── POST /scene/heartbeat ─────►                              │
-     │                              ├── Validate token + expiry    │
-     │                              ├── Check extensionCount < max │
-     │                              ├── Extend expiry, count++     │
-     │                              ├── Re-save CheckoutState ─────►
-     ◄── {extended, newExpiresAt} ──┤                              │
-     │                              │                              │
-     ├── POST /scene/commit ────────►                              │
-     │                              ├── Validate token + expiry    │
-     │                              ├── UpdateSceneAsync(scene)    │
-     │                              │   ├── Validate structure     │
-     │                              │   ├── Increment PATCH ver    │
-     │                              │   ├── Store YAML ────────────►
-     │                              │   └── Update indexes ────────►
-     │                              ├── Delete CheckoutState ──────►
-     │                              ├── Clear IsCheckedOut ─────────►
-     │                              ├── Publish scene.committed    │
-     ◄── {committed, newVersion} ───┤                              │
+ Developer Scene Service State Store
+ │ │ │
+ ├── POST /scene/checkout ──────► │
+ │ ├── GetWithETag(index) ────────►
+ │ ◄── (indexEntry, etag) ────────┤
+ │ ├── Check IsCheckedOut │
+ │ ├── LoadSceneAsset ────────────►
+ │ ◄── (scene YAML) ─────────────┤
+ │ ├── Generate token (Guid.N) │
+ │ ├── Save CheckoutState ────────►
+ │ │ (TTL = ttlMinutes + 5) │
+ │ ├── TrySave(index, etag) ──────►
+ │ ◄── (newEtag) ────────────────┤
+ ◄── {token, scene, expiresAt} ─┤ │
+ │ │ │
+ │ ... editing locally ... │ │
+ │ │ │
+ ├── POST /scene/heartbeat ─────► │
+ │ ├── Validate token + expiry │
+ │ ├── Check extensionCount < max │
+ │ ├── Extend expiry, count++ │
+ │ ├── Re-save CheckoutState ─────►
+ ◄── {extended, newExpiresAt} ──┤ │
+ │ │ │
+ ├── POST /scene/commit ────────► │
+ │ ├── Validate token + expiry │
+ │ ├── UpdateSceneAsync(scene) │
+ │ │ ├── Validate structure │
+ │ │ ├── Increment PATCH ver │
+ │ │ ├── Store YAML ────────────►
+ │ │ └── Update indexes ────────►
+ │ ├── Delete CheckoutState ──────►
+ │ ├── Clear IsCheckedOut ─────────►
+ │ ├── Publish scene.committed │
+ ◄── {committed, newVersion} ───┤ │
 
 
 Reference Resolution
 =======================
 
-  GetScene(sceneId, resolveReferences=true, maxDepth=3)
-       │
-       ├── Load scene A
-       ├── visited = {A}
-       │
-       ├── Walk nodes of A:
-       │    └── Node(type=reference, referenceSceneId = B)
-       │         ├── depth=1, maxDepth=3 → proceed
-       │         ├── B not in visited → load scene B
-       │         ├── visited = {A, B}
-       │         ├── resolved += {nodeId, refId, sceneId=B, scene=B, depth=1}
-       │         │
-       │         └── Walk nodes of B:
-       │              └── Node(type=reference, sceneAssetId = C)
-       │                   ├── depth=2, maxDepth=3 → proceed
-       │                   ├── C not in visited → load scene C
-       │                   ├── resolved += {sceneId=C, depth=2}
-       │                   └── Walk nodes of C:
-       │                        └── Node(type=reference, sceneAssetId = A)
-       │                             ├── depth=3, maxDepth=3 → proceed
-       │                             ├── A in visited → CIRCULAR!
-       │                             └── unresolved += {reason=circular_reference, cyclePath=[A,B,C]}
-       │
-       └── Return: resolved=[B,C], unresolved=[A@depth3], errors=[...]
+ GetScene(sceneId, resolveReferences=true, maxDepth=3)
+ │
+ ├── Load scene A
+ ├── visited = {A}
+ │
+ ├── Walk nodes of A:
+ │ └── Node(type=reference, referenceSceneId = B)
+ │ ├── depth=1, maxDepth=3 → proceed
+ │ ├── B not in visited → load scene B
+ │ ├── visited = {A, B}
+ │ ├── resolved += {nodeId, refId, sceneId=B, scene=B, depth=1}
+ │ │
+ │ └── Walk nodes of B:
+ │ └── Node(type=reference, sceneAssetId = C)
+ │ ├── depth=2, maxDepth=3 → proceed
+ │ ├── C not in visited → load scene C
+ │ ├── resolved += {sceneId=C, depth=2}
+ │ └── Walk nodes of C:
+ │ └── Node(type=reference, sceneAssetId = A)
+ │ ├── depth=3, maxDepth=3 → proceed
+ │ ├── A in visited → CIRCULAR!
+ │ └── unresolved += {reason=circular_reference, cyclePath=[A,B,C]}
+ │
+ └── Return: resolved=[B,C], unresolved=[A@depth3], errors=[...]
 
 
 Secondary Index Architecture
 ===============================
 
-  ┌─────────────────────────────────────────────────────────────────────┐
-  │                          State Store                                 │
-  │                                                                     │
-  │  scene:global-index ──── {id1, id2, id3, ...}                       │
-  │                                                                     │
-  │  scene:by-game:arcadia ─── {id1, id2}                               │
-  │  scene:by-game:fantasia ── {id3}                                    │
-  │                                                                     │
-  │  scene:by-type:arcadia:building ── {id1}                            │
-  │  scene:by-type:arcadia:dungeon ─── {id2}                            │
-  │                                                                     │
-  │  scene:references:id1 ──── {id2, id3}  (scenes referencing id1)     │
-  │  scene:assets:assetUuid ── {id1, id3}  (scenes using this asset)    │
-  │                                                                     │
-  │  scene:index:id1 ──── SceneIndexEntry (metadata)                    │
-  │  scene:content:id1 ── SceneContentEntry (YAML)                      │
-  │  scene:checkout:id1 ─ CheckoutState (lock)                          │
-  │  scene:version-history:id1 ── [VersionHistoryEntry, ...]            │
-  │  scene:validation:arcadia:building ── [ValidationRule, ...]         │
-  └─────────────────────────────────────────────────────────────────────┘
+ ┌─────────────────────────────────────────────────────────────────────┐
+ │ State Store │
+ │ │
+ │ scene:global-index ──── {id1, id2, id3, ...} │
+ │ │
+ │ scene:by-game:arcadia ─── {id1, id2} │
+ │ scene:by-game:fantasia ── {id3} │
+ │ │
+ │ scene:by-type:arcadia:building ── {id1} │
+ │ scene:by-type:arcadia:dungeon ─── {id2} │
+ │ │
+ │ scene:references:id1 ──── {id2, id3} (scenes referencing id1) │
+ │ scene:assets:assetUuid ── {id1, id3} (scenes using this asset) │
+ │ │
+ │ scene:index:id1 ──── SceneIndexEntry (metadata) │
+ │ scene:content:id1 ── SceneContentEntry (YAML) │
+ │ scene:checkout:id1 ─ CheckoutState (lock) │
+ │ scene:version-history:id1 ── [VersionHistoryEntry, ...] │
+ │ scene:validation:arcadia:building ── [ValidationRule, ...] │
+ └─────────────────────────────────────────────────────────────────────┘
 
 
 Version History Retention
 ============================
 
-  AddVersionHistoryEntry(sceneId, "1.0.5", editorId)
-       │
-       ├── Load existing history list
-       ├── Append new entry {version, createdAt, createdBy}
-       │
-       ├── if historyEntries.Count > MaxVersionRetentionCount:
-       │    └── Keep only newest MaxVersionRetentionCount entries
-       │         (OrderByDescending(createdAt).Take(max))
-       │
-       └── Save trimmed history list
+ AddVersionHistoryEntry(sceneId, "1.0.5", editorId)
+ │
+ ├── Load existing history list
+ ├── Append new entry {version, createdAt, createdBy}
+ │
+ ├── if historyEntries.Count > MaxVersionRetentionCount:
+ │ └── Keep only newest MaxVersionRetentionCount entries
+ │ (OrderByDescending(createdAt).Take(max))
+ │
+ └── Save trimmed history list
 
 
 Optimistic Concurrency Pattern (Checkout)
 ============================================
 
-  ┌──────────────────────────────────────────────────────────┐
-  │  CheckoutScene:                                          │
-  │                                                          │
-  │  1. GetWithETag(indexKey) → (entry, etag)                │
-  │  2. Validate not checked out / expired                   │
-  │  3. Save CheckoutState (separate key, with TTL)          │
-  │  4. Modify entry: IsCheckedOut = true                    │
-  │  5. TrySave(indexKey, entry, etag) → newEtag             │
-  │       │                                                  │
-  │       ├── Success: concurrency safe                      │
-  │       └── null: another request modified the index       │
-  │            └── Rollback: delete CheckoutState            │
-  │                 return 409 Conflict                      │
-  └──────────────────────────────────────────────────────────┘
+ ┌──────────────────────────────────────────────────────────┐
+ │ CheckoutScene: │
+ │ │
+ │ 1. GetWithETag(indexKey) → (entry, etag) │
+ │ 2. Validate not checked out / expired │
+ │ 3. Save CheckoutState (separate key, with TTL) │
+ │ 4. Modify entry: IsCheckedOut = true │
+ │ 5. TrySave(indexKey, entry, etag) → newEtag │
+ │ │ │
+ │ ├── Success: concurrency safe │
+ │ └── null: another request modified the index │
+ │ └── Rollback: delete CheckoutState │
+ │ return 409 Conflict │
+ └──────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Stubs & Unimplemented Features
 
-1. ~~**lib-asset integration**~~: **RESOLVED** (2026-01-31) - Removed dead config properties `AssetBucket` and `AssetContentType` per IMPLEMENTATION TENETS (T21 Configuration-First: no dead config). Scene content is stored directly in the state store via `scene:content:{id}` key. If lib-asset integration is needed in the future (e.g., for version content snapshots), the config properties can be re-added at that time.
+1. ~~**lib-asset integration**~~: **RESOLVED** (2026-01-31) - Removed dead config properties `AssetBucket` and `AssetContentType` per IMPLEMENTATION TENETS (Configuration-First: no dead config). Scene content is stored directly in the state store via `scene:content:{id}` key. If lib-asset integration is needed in the future (e.g., for version content snapshots), the config properties can be re-added at that time.
 
 2. **Version-specific retrieval**: `LoadSceneAssetAsync` accepts a `version` parameter but ignores it. Only the latest version's content is stored. Historical version content is not preserved -- only version metadata (version string, timestamp, editor) is retained. [Issue #187](https://github.com/beyond-immersion/bannou-service/issues/187)
 
@@ -376,7 +376,7 @@ Optimistic Concurrency Pattern (Checkout)
 
 5. ~~**require_annotation and custom_expression validation rules silently ignored**~~: **FIXED** (2026-02-08) - `ApplyValidationRule` now returns a `Warning`-severity `ValidationError` for unimplemented rule types (`RequireAnnotation`, `CustomExpression`) and unknown types (default case). Rules are no longer silently skipped. See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
 
-6. ~~**referenceSceneId field on SceneNode**~~: **Implemented**. The `GetReferenceSceneId()` helper uses the typed `ReferenceSceneId` field directly. Legacy annotations-based fallback was removed per FOUNDATION TENETS (T29 No Metadata Bag Contracts).
+6. ~~**referenceSceneId field on SceneNode**~~: **Implemented**. The `GetReferenceSceneId()` helper uses the typed `ReferenceSceneId` field directly. Legacy annotations-based fallback was removed per FOUNDATION TENETS (No Metadata Bag Contracts).
 
 7. **node_name search match type**: The `SearchMatchType` enum includes `node_name`, but the search implementation only checks index-level fields (name, description, tags). Searching node names would require loading full scene content, which is not done for performance.
 
@@ -457,36 +457,36 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **2026-03-09**: Production hardening pass (phase 2) — tenet compliance audit fixes:
-  - **Code (T5)**: `UpdateSceneAsync` now populates `changedFields` on `SceneUpdatedEvent` by snapshotting old values before overwrite and comparing. Changed `PublishSceneUpdatedEventAsync` signature to accept `ICollection<string> changedFields`.
-  - **Code (T9)**: All 14 secondary index read-modify-write patterns (`UpdateSceneIndexesAsync`, `RemoveFromIndexesAsync`, `AddToGlobalSceneIndexAsync`, `RemoveFromGlobalSceneIndexAsync`) now use `GetWithETagAsync` + `TrySaveAsync` with retry via new `ModifyGuidSetIndexAsync` helper (max 3 retries, Warning log on exhaustion).
-  - **Code (T7)**: `CommitSceneAsync` reordered for compensation: (1) clear index checkout flag with ETag check, (2) update scene content with compensation on failure (re-marks index as checked out), (3) delete checkout state.
-  - **Code (T7)**: `PublishSceneInstantiatedAsync` and `PublishSceneDestroyedAsync` return values now checked; failures logged at Warning.
-  - **Code (T6)**: All 6 entity-keyed `Build*Key()` methods changed from `string` to `Guid` parameters. `AddVersionHistoryEntryAsync` and `DeleteVersionHistoryAsync` changed from `string sceneId` to `Guid sceneId`. Removed 9 dead `var sceneIdStr = ...ToString()` declarations. Fixed 5 `body.SceneId` references that should have been `scene.SceneId` (for `CreateSceneRequest`/`UpdateSceneRequest` which wrap scene inside `body.Scene`).
-  - **Tests**: Key builder tests updated from string to Guid parameters. Added 13 business logic unit tests with mocked state stores: GetScene (3 tests), DeleteScene (3 tests), GetValidationRules (2 tests), RegisterValidationRules (1 test), CheckoutScene (3 tests), DiscardCheckout (1 test). 110/110 passing.
+ - **Code**: `UpdateSceneAsync` now populates `changedFields` on `SceneUpdatedEvent` by snapshotting old values before overwrite and comparing. Changed `PublishSceneUpdatedEventAsync` signature to accept `ICollection<string> changedFields`.
+ - **Code**: All 14 secondary index read-modify-write patterns (`UpdateSceneIndexesAsync`, `RemoveFromIndexesAsync`, `AddToGlobalSceneIndexAsync`, `RemoveFromGlobalSceneIndexAsync`) now use `GetWithETagAsync` + `TrySaveAsync` with retry via new `ModifyGuidSetIndexAsync` helper (max 3 retries, Warning log on exhaustion).
+ - **Code**: `CommitSceneAsync` reordered for compensation: (1) clear index checkout flag with ETag check, (2) update scene content with compensation on failure (re-marks index as checked out), (3) delete checkout state.
+ - **Code**: `PublishSceneInstantiatedAsync` and `PublishSceneDestroyedAsync` return values now checked; failures logged at Warning.
+ - **Code**: All 6 entity-keyed `Build*Key()` methods changed from `string` to `Guid` parameters. `AddVersionHistoryEntryAsync` and `DeleteVersionHistoryAsync` changed from `string sceneId` to `Guid sceneId`. Removed 9 dead `var sceneIdStr = ...ToString()` declarations. Fixed 5 `body.SceneId` references that should have been `scene.SceneId` (for `CreateSceneRequest`/`UpdateSceneRequest` which wrap scene inside `body.Scene`).
+ - **Tests**: Key builder tests updated from string to Guid parameters. Added 13 business logic unit tests with mocked state stores: GetScene (3 tests), DeleteScene (3 tests), GetValidationRules (2 tests), RegisterValidationRules (1 test), CheckoutScene (3 tests), DiscardCheckout (1 test). 110/110 passing.
 
 - **2026-03-09**: Production hardening pass (phase 1) — schema, events, code, models, and test fixes:
-  - **Schema (T14 Category B)**: Converted `SceneType`, `AffordanceType`, `MarkerType` from enums to opaque strings (game-configurable content codes). Added `maxLength` constraints to remaining response string fields.
-  - **Schema (T26)**: Made `gameId` nullable across API schema, lifecycle events, and instantiation event (scenes can be unpartitioned).
-  - **Schema ($ref reuse)**: Removed duplicate `EventTransform`/`EventVector3`/`EventQuaternion` from events schema; events now `$ref` API spatial types.
-  - **Schema (T8)**: Removed echoed `gameId`/`sceneType` from `GetValidationRulesResponse`.
-  - **Code (T6)**: Replaced all ~60 inline state store key interpolations with `Build*Key()` helper methods.
-  - **Code (T26)**: Replaced `"unknown"` EditorId sentinel with `IMeshInstanceIdentifier.InstanceId` caller identity default.
-  - **Code (dead code)**: Removed unused `SCENE_CHECKOUT_EXT_PREFIX`, `VERSION_RETENTION_PREFIX` constants and their `Build*Key()` methods.
-  - **Code (cleanup)**: Removed duplicate `InternalsVisibleTo` attribute from SceneService.cs (already in AssemblyInfo.cs).
-  - **Models (T26)**: Replaced `string.Empty` defaults with `required` keyword on all non-nullable string properties in `SceneIndexEntry`, `CheckoutState`, `SceneContentEntry`, `VersionHistoryEntry`. Made `SceneIndexEntry.GameId` nullable.
-  - **Tests**: Removed obsolete enum tests (SceneType, AffordanceType, MarkerType). Updated string references. Added `ServiceConstructorValidator` test and 9 key builder unit tests. 97/97 passing.
-  - **Issues**: Commented on #254 and #257 with staleness notes (events no longer exist in schema).
+ - **Schema (Category B)**: Converted `SceneType`, `AffordanceType`, `MarkerType` from enums to opaque strings (game-configurable content codes). Added `maxLength` constraints to remaining response string fields.
+ - **Schema**: Made `gameId` nullable across API schema, lifecycle events, and instantiation event (scenes can be unpartitioned).
+ - **Schema ($ref reuse)**: Removed duplicate `EventTransform`/`EventVector3`/`EventQuaternion` from events schema; events now `$ref` API spatial types.
+ - **Schema**: Removed echoed `gameId`/`sceneType` from `GetValidationRulesResponse`.
+ - **Code**: Replaced all ~60 inline state store key interpolations with `Build*Key()` helper methods.
+ - **Code**: Replaced `"unknown"` EditorId sentinel with `IMeshInstanceIdentifier.InstanceId` caller identity default.
+ - **Code (dead code)**: Removed unused `SCENE_CHECKOUT_EXT_PREFIX`, `VERSION_RETENTION_PREFIX` constants and their `Build*Key()` methods.
+ - **Code (cleanup)**: Removed duplicate `InternalsVisibleTo` attribute from SceneService.cs (already in AssemblyInfo.cs).
+ - **Models**: Replaced `string.Empty` defaults with `required` keyword on all non-nullable string properties in `SceneIndexEntry`, `CheckoutState`, `SceneContentEntry`, `VersionHistoryEntry`. Made `SceneIndexEntry.GameId` nullable.
+ - **Tests**: Removed obsolete enum tests (SceneType, AffordanceType, MarkerType). Updated string references. Added `ServiceConstructorValidator` test and 9 key builder unit tests. 97/97 passing.
+ - **Issues**: Commented on #254 and #257 with staleness notes (events no longer exist in schema).
 
 - **2026-03-07**: Hardening pass — schema, events, code, and test fixes:
-  - **Schema**: `additionalProperties: false` on all objects, NRT fixes (required arrays), validation constraints (minLength/minItems/minimum/maximum), T8 filler removal from 7 responses (success booleans, echoed request fields, action timestamps, observability metrics), nullable fields for optional GUIDs (T26)
-  - **Events**: Removed dead events (`SceneCheckoutExpiredEvent`, `SceneReferenceBrokenEvent`) and their topic constants. Renamed topics to Pattern A: `scene.checkout-discarded`, `scene.validation-rules-updated`. Flattened all custom events (removed `allOf` + `BaseServiceEvent`, inline `eventId`/`timestamp`).
-  - **Configuration**: Added minimum/maximum constraints to all 11 integer properties
-  - **Code**: Removed Guid.Empty sentinel values (T26), changed `SceneContentEntry.UpdatedAt` from unix `long` to `DateTimeOffset`, `SceneValidationService` uses `NodeType` enum comparison instead of string (T25), `HeartbeatCheckout` returns 409 Conflict at extension limit instead of 200+extended=false, empty response methods return `StatusCodes` directly
-  - **Tests**: Fixed 4 string-to-enum type errors, 2 assertion string mismatches, `DeleteSceneResponse` property removal. 91/91 passing.
+ - **Schema**: `additionalProperties: false` on all objects, NRT fixes (required arrays), validation constraints (minLength/minItems/minimum/maximum), filler removal from 7 responses (success booleans, echoed request fields, action timestamps, observability metrics), nullable fields for optional GUIDs
+ - **Events**: Removed dead events (`SceneCheckoutExpiredEvent`, `SceneReferenceBrokenEvent`) and their topic constants. Renamed topics to Pattern A: `scene.checkout-discarded`, `scene.validation-rules-updated`. Flattened all custom events (removed `allOf` + `BaseServiceEvent`, inline `eventId`/`timestamp`).
+ - **Configuration**: Added minimum/maximum constraints to all 11 integer properties
+ - **Code**: Removed Guid.Empty sentinel values, changed `SceneContentEntry.UpdatedAt` from unix `long` to `DateTimeOffset`, `SceneValidationService` uses `NodeType` enum comparison instead of string, `HeartbeatCheckout` returns 409 Conflict at extension limit instead of 200+extended=false, empty response methods return `StatusCodes` directly
+ - **Tests**: Fixed 4 string-to-enum type errors, 2 assertion string mismatches, `DeleteSceneResponse` property removal. 91/91 passing.
 
 - **2026-02-08**: Fixed unimplemented validation rule types silently passing ([#310](https://github.com/beyond-immersion/bannou-service/issues/310)). `RequireAnnotation`, `CustomExpression`, and any future enum values now return `Warning`-severity `ValidationError` instead of being silently skipped. Callers can see which rules were not applied.
 
-- **2026-01-31**: Removed dead config properties `AssetBucket` and `AssetContentType` from scene-configuration.yaml per IMPLEMENTATION TENETS (T21 Configuration-First). These were never used in SceneService.cs - scene content is stored directly in state store. Updated tests accordingly.
+- **2026-01-31**: Removed dead config properties `AssetBucket` and `AssetContentType` from scene-configuration.yaml per IMPLEMENTATION TENETS (Configuration-First). These were never used in SceneService.cs - scene content is stored directly in state store. Updated tests accordingly.
 
 - **2026-01-31**: N+1 bulk loading optimization - Replaced N+1 `GetAsync` calls with `GetBulkAsync` in `ListScenesAsync`, `SearchScenesAsync`, `FindReferencesAsync`, and `FindAssetUsageAsync`. Index entry loading now uses single database round-trips. See Issue #168 for `IStateStore` bulk operations.
 

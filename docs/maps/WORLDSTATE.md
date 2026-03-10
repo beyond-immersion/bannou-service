@@ -59,7 +59,7 @@
 | lib-messaging (`IMessageBus`) | L0 | Hard | All boundary, administrative, and lifecycle events |
 | lib-messaging (`IEventConsumer`) | L0 | Hard | 5 self-subscriptions for cross-node cache invalidation |
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation |
-| lib-resource (`IResourceClient`) | L1 | Hard | Reference registration/unregistration for realm and game-service targets (T28 cleanup) |
+| lib-resource (`IResourceClient`) | L1 | Hard | Reference registration/unregistration for realm and game-service targets (cleanup) |
 | lib-connect (`IEntitySessionRegistry`) | L1 | Hard | Publishes `WorldstateTimeSyncClientEvent` to realm-observing sessions |
 | lib-realm (`IRealmClient`) | L2 | Hard | Realm existence validation and code-to-ID resolution |
 | lib-game-service (`IGameServiceClient`) | L2 | Hard | Game service existence validation during calendar seeding |
@@ -170,7 +170,7 @@ All consumed events are self-subscriptions for cross-node in-memory cache invali
 POST /worldstate/clock/get-realm-time | Roles: [] (service-to-service)
 
 ```
-READ _clockStore:realm:{realmId}                     -> 404 if null
+READ _clockStore:realm:{realmId} -> 404 if null
 RETURN (200, GameTimeSnapshot from clock)
 ```
 
@@ -178,9 +178,9 @@ RETURN (200, GameTimeSnapshot from clock)
 POST /worldstate/clock/get-realm-time-by-code | Roles: [] (service-to-service)
 
 ```
-CALL IRealmClient.GetRealmByCodeAsync(realmCode)     -> propagate upstream error
+CALL IRealmClient.GetRealmByCodeAsync(realmCode) -> propagate upstream error
 // Delegates to GetRealmTime with resolved realmId
-READ _clockStore:realm:{realmId}                     -> 404 if null
+READ _clockStore:realm:{realmId} -> 404 if null
 RETURN (200, GameTimeSnapshot from clock)
 ```
 
@@ -188,11 +188,11 @@ RETURN (200, GameTimeSnapshot from clock)
 POST /worldstate/clock/batch-get-realm-times | Roles: [] (service-to-service)
 
 ```
-IF realmIds.Count > config.MaxBatchRealmTimeQueries  -> 400
+IF realmIds.Count > config.MaxBatchRealmTimeQueries -> 400
 FOREACH realmId in realmIds
-  READ _clockStore:realm:{realmId}
-  IF null: add to notFoundRealmIds
-  ELSE: add snapshot to results
+ READ _clockStore:realm:{realmId}
+ IF null: add to notFoundRealmIds
+ ELSE: add snapshot to results
 RETURN (200, BatchGetRealmTimesResponse { snapshots, notFoundRealmIds })
 ```
 
@@ -200,10 +200,10 @@ RETURN (200, BatchGetRealmTimesResponse { snapshots, notFoundRealmIds })
 POST /worldstate/clock/get-elapsed-game-time | Roles: [] (service-to-service)
 
 ```
-IF fromRealTime >= toRealTime                        -> 400
-READ _ratioHistoryStore:ratio:{realmId}              -> 404 if null
-READ _realmConfigStore:realm-config:{realmId}        -> 404 if null
-READ _calendarStore:calendar:{gsId}:{templateCode}   -> 404 if null
+IF fromRealTime >= toRealTime -> 400
+READ _ratioHistoryStore:ratio:{realmId} -> 404 if null
+READ _realmConfigStore:realm-config:{realmId} -> 404 if null
+READ _calendarStore:calendar:{gsId}:{templateCode} -> 404 if null
 // Piecewise integration over ratio segments
 totalGameSeconds = timeCalculator.ComputeElapsedGameTime(segments, from, to)
 decomposed = timeCalculator.DecomposeGameSeconds(calendar, totalGameSeconds)
@@ -214,7 +214,7 @@ RETURN (200, GetElapsedGameTimeResponse { totalGameSeconds, gameDays, gameHours,
 POST /worldstate/clock/trigger-sync | Roles: [] (service-to-service)
 
 ```
-READ _clockStore:realm:{realmId}                     -> 404 if null
+READ _clockStore:realm:{realmId} -> 404 if null
 // Build time sync client event from clock snapshot
 PUSH entitySessionRegistry.PublishToEntitySessionsAsync("realm", entityId, timeSyncEvent)
 RETURN (200, TriggerTimeSyncResponse { sessionsNotified })
@@ -224,22 +224,22 @@ RETURN (200, TriggerTimeSyncResponse { sessionsNotified })
 POST /worldstate/clock/initialize | Roles: [developer]
 
 ```
-CALL IRealmClient.GetRealmAsync(realmId)             -> propagate upstream error
+CALL IRealmClient.GetRealmAsync(realmId) -> propagate upstream error
 // Resolve template code: request ?? config.DefaultCalendarTemplateCode
-IF no template code available                        -> 400
-READ _calendarStore:calendar:{gsId}:{templateCode}   -> 404 if null
-LOCK worldstate-lock:clock:{realmId}                 -> 409 if fails
-  READ _clockStore:realm:{realmId}
-  IF clock exists                                    -> 409 (already initialized)
-  // Build RealmWorldstateConfigModel, RealmClockModel, TimeRatioHistoryModel
-  // with fallbacks: timeRatio ?? config.DefaultTimeRatio, epoch ?? UtcNow,
-  // startingYear ?? 1, downtimePolicy ?? config.DefaultDowntimePolicy
-  WRITE _realmConfigStore:realm-config:{realmId} <- RealmWorldstateConfigModel
-  WRITE _clockStore:realm:{realmId} <- RealmClockModel
-  WRITE _ratioHistoryStore:ratio:{realmId} <- TimeRatioHistoryModel (initial segment)
-  CALL IResourceClient.RegisterReferenceAsync(realm target)
-  PUBLISH worldstate.realm-clock.initialized { realmId, calendarTemplateCode, initialTimeRatio }
-  PUBLISH worldstate.realm-config.created { realmId, gameServiceId, calendarTemplateCode, ... }
+IF no template code available -> 400
+READ _calendarStore:calendar:{gsId}:{templateCode} -> 404 if null
+LOCK worldstate-lock:clock:{realmId} -> 409 if fails
+ READ _clockStore:realm:{realmId}
+ IF clock exists -> 409 (already initialized)
+ // Build RealmWorldstateConfigModel, RealmClockModel, TimeRatioHistoryModel
+ // with fallbacks: timeRatio ?? config.DefaultTimeRatio, epoch ?? UtcNow,
+ // startingYear ?? 1, downtimePolicy ?? config.DefaultDowntimePolicy
+ WRITE _realmConfigStore:realm-config:{realmId} <- RealmWorldstateConfigModel
+ WRITE _clockStore:realm:{realmId} <- RealmClockModel
+ WRITE _ratioHistoryStore:ratio:{realmId} <- TimeRatioHistoryModel (initial segment)
+ CALL IResourceClient.RegisterReferenceAsync(realm target)
+ PUBLISH worldstate.realm-clock.initialized { realmId, calendarTemplateCode, initialTimeRatio }
+ PUBLISH worldstate.realm-config.created { realmId, gameServiceId, calendarTemplateCode, ... }
 RETURN (200, InitializeRealmClockResponse { gameServiceId, calendarTemplateCode, timeRatio, downtimePolicy, epoch, startingYear })
 ```
 
@@ -247,34 +247,34 @@ RETURN (200, InitializeRealmClockResponse { gameServiceId, calendarTemplateCode,
 POST /worldstate/clock/set-ratio | Roles: [developer]
 
 ```
-IF newRatio < 0.0                                    -> 400
-LOCK worldstate-lock:clock:{realmId}                 -> 409 if fails
-  READ _clockStore:realm:{realmId}                   -> 404 if null
-  READ _calendarStore:calendar:{gsId}:{templateCode} -> 404 if null
-  // Materialize current clock: compute game-seconds since last advance
-  // Advance clock to "now" before applying new ratio
-  boundaries = timeCalculator.AdvanceGameTime(clock, calendar, elapsedGameSeconds)
-  // Publish any boundary events from materialization
-  IF boundaries exist
-    PUBLISH boundary events (hour/period/day/month/season/year as applicable)
-  // Apply new ratio
-  previousRatio = clock.TimeRatio
-  clock.TimeRatio = newRatio
-  clock.IsActive = (newRatio > 0.0)
-  // Append new segment to ratio history
-  READ _ratioHistoryStore:ratio:{realmId}
-  IF ratioHistory != null
-    // Append TimeRatioSegmentEntry
-    WRITE _ratioHistoryStore:ratio:{realmId} <- updated history
-  READ _realmConfigStore:realm-config:{realmId}
-  IF realmConfig != null
-    realmConfig.CurrentTimeRatio = newRatio
-    WRITE _realmConfigStore:realm-config:{realmId} <- updated config
-    PUBLISH worldstate.realm-config.updated { changedFields: ["currentTimeRatio"] }
-  WRITE _clockStore:realm:{realmId} <- updated clock
-  PUBLISH worldstate.ratio-changed { realmId, previousRatio, newRatio, reason }
-  PUSH entitySessionRegistry.PublishToEntitySessionsAsync("realm", realmId, timeSyncEvent { RatioChanged })
-  // Invalidate local cache
+IF newRatio < 0.0 -> 400
+LOCK worldstate-lock:clock:{realmId} -> 409 if fails
+ READ _clockStore:realm:{realmId} -> 404 if null
+ READ _calendarStore:calendar:{gsId}:{templateCode} -> 404 if null
+ // Materialize current clock: compute game-seconds since last advance
+ // Advance clock to "now" before applying new ratio
+ boundaries = timeCalculator.AdvanceGameTime(clock, calendar, elapsedGameSeconds)
+ // Publish any boundary events from materialization
+ IF boundaries exist
+ PUBLISH boundary events (hour/period/day/month/season/year as applicable)
+ // Apply new ratio
+ previousRatio = clock.TimeRatio
+ clock.TimeRatio = newRatio
+ clock.IsActive = (newRatio > 0.0)
+ // Append new segment to ratio history
+ READ _ratioHistoryStore:ratio:{realmId}
+ IF ratioHistory != null
+ // Append TimeRatioSegmentEntry
+ WRITE _ratioHistoryStore:ratio:{realmId} <- updated history
+ READ _realmConfigStore:realm-config:{realmId}
+ IF realmConfig != null
+ realmConfig.CurrentTimeRatio = newRatio
+ WRITE _realmConfigStore:realm-config:{realmId} <- updated config
+ PUBLISH worldstate.realm-config.updated { changedFields: ["currentTimeRatio"] }
+ WRITE _clockStore:realm:{realmId} <- updated clock
+ PUBLISH worldstate.ratio-changed { realmId, previousRatio, newRatio, reason }
+ PUSH entitySessionRegistry.PublishToEntitySessionsAsync("realm", realmId, timeSyncEvent { RatioChanged })
+ // Invalidate local cache
 RETURN (200, SetTimeRatioResponse { previousRatio })
 ```
 
@@ -282,22 +282,22 @@ RETURN (200, SetTimeRatioResponse { previousRatio })
 POST /worldstate/clock/advance | Roles: [developer]
 
 ```
-LOCK worldstate-lock:clock:{realmId}                 -> 409 if fails
-  READ _clockStore:realm:{realmId}                   -> 404 if null
-  READ _realmConfigStore:realm-config:{realmId}      -> 404 if null
-  READ _calendarStore:calendar:{gsId}:{templateCode} -> 404 if null
-  // Convert gameYears/gameMonths/gameDays to game-seconds; add gameSeconds
-  IF no time parameters provided                     -> 400
-  IF totalGameSeconds <= 0                           -> 400
-  previousSnapshot = current GameTimeSnapshot
-  boundaries = timeCalculator.AdvanceGameTime(clock, calendar, totalGameSeconds)
-  // Publish boundary events (capped at config.BoundaryEventBatchSize)
-  FOREACH boundary in boundaries (up to batch limit)
-    PUBLISH worldstate.{boundary-type}-changed { ... }
-  WRITE _clockStore:realm:{realmId} <- updated clock (LastAdvancedRealTime = UtcNow)
-  PUBLISH worldstate.clock-advanced { realmId }
-  PUSH entitySessionRegistry.PublishToEntitySessionsAsync("realm", realmId, timeSyncEvent { AdminAdvance })
-  // Invalidate local cache
+LOCK worldstate-lock:clock:{realmId} -> 409 if fails
+ READ _clockStore:realm:{realmId} -> 404 if null
+ READ _realmConfigStore:realm-config:{realmId} -> 404 if null
+ READ _calendarStore:calendar:{gsId}:{templateCode} -> 404 if null
+ // Convert gameYears/gameMonths/gameDays to game-seconds; add gameSeconds
+ IF no time parameters provided -> 400
+ IF totalGameSeconds <= 0 -> 400
+ previousSnapshot = current GameTimeSnapshot
+ boundaries = timeCalculator.AdvanceGameTime(clock, calendar, totalGameSeconds)
+ // Publish boundary events (capped at config.BoundaryEventBatchSize)
+ FOREACH boundary in boundaries (up to batch limit)
+ PUBLISH worldstate.{boundary-type}-changed { ... }
+ WRITE _clockStore:realm:{realmId} <- updated clock (LastAdvancedRealTime = UtcNow)
+ PUBLISH worldstate.clock-advanced { realmId }
+ PUSH entitySessionRegistry.PublishToEntitySessionsAsync("realm", realmId, timeSyncEvent { AdminAdvance })
+ // Invalidate local cache
 RETURN (200, AdvanceClockResponse { previousTime, newTime, boundaryEventsPublished })
 ```
 
@@ -305,12 +305,12 @@ RETURN (200, AdvanceClockResponse { previousTime, newTime, boundaryEventsPublish
 POST /worldstate/calendar/seed | Roles: [developer]
 
 ```
-CALL IGameServiceClient.GetServiceAsync(gameServiceId)   -> propagate upstream error
-READ _calendarStore:calendar:{gsId}:{templateCode}       -> 409 if exists
+CALL IGameServiceClient.GetServiceAsync(gameServiceId) -> propagate upstream error
+READ _calendarStore:calendar:{gsId}:{templateCode} -> 409 if exists
 QUERY _queryableCalendarStore WHERE GameServiceId == gsId
-IF count >= config.MaxCalendarsPerGameService            -> 400
+IF count >= config.MaxCalendarsPerGameService -> 400
 // Validate calendar structure: day period coverage, season ordinals, month-season refs
-IF validation fails                                      -> 400
+IF validation fails -> 400
 // Compute derived fields: daysPerYear, monthsPerYear, seasonsPerYear
 WRITE _calendarStore:calendar:{gsId}:{templateCode} <- CalendarTemplateModel
 CALL IResourceClient.RegisterReferenceAsync(game-service target)
@@ -322,7 +322,7 @@ RETURN (200, CalendarTemplateResponse)
 POST /worldstate/calendar/get | Roles: [] (service-to-service)
 
 ```
-READ _calendarStore:calendar:{gsId}:{templateCode}   -> 404 if null
+READ _calendarStore:calendar:{gsId}:{templateCode} -> 404 if null
 RETURN (200, CalendarTemplateResponse)
 ```
 
@@ -338,15 +338,15 @@ RETURN (200, ListCalendarsResponse { templates })
 POST /worldstate/calendar/update | Roles: [developer]
 
 ```
-LOCK worldstate-lock:calendar:{gsId}:{templateCode}  -> 409 if fails
-  READ _calendarStore:calendar:{gsId}:{templateCode} -> 404 if null
-  // Apply non-null fields from request, track changedFields
-  IF changedFields.Count == 0
-    RETURN (200, CalendarTemplateResponse)            // no-op
-  // Recompute derived fields if structure changed
-  IF validation fails                                -> 400
-  WRITE _calendarStore:calendar:{gsId}:{templateCode} <- updated model
-  PUBLISH worldstate.calendar-template.updated { ..., changedFields }
+LOCK worldstate-lock:calendar:{gsId}:{templateCode} -> 409 if fails
+ READ _calendarStore:calendar:{gsId}:{templateCode} -> 404 if null
+ // Apply non-null fields from request, track changedFields
+ IF changedFields.Count == 0
+ RETURN (200, CalendarTemplateResponse) // no-op
+ // Recompute derived fields if structure changed
+ IF validation fails -> 400
+ WRITE _calendarStore:calendar:{gsId}:{templateCode} <- updated model
+ PUBLISH worldstate.calendar-template.updated { ..., changedFields }
 RETURN (200, CalendarTemplateResponse)
 ```
 
@@ -354,13 +354,13 @@ RETURN (200, CalendarTemplateResponse)
 POST /worldstate/calendar/delete | Roles: [developer]
 
 ```
-LOCK worldstate-lock:calendar:{gsId}:{templateCode}  -> 409 if fails
-  READ _calendarStore:calendar:{gsId}:{templateCode} -> 404 if null
-  QUERY _queryableRealmConfigStore WHERE CalendarTemplateCode == templateCode AND GameServiceId == gsId
-  IF referencing configs exist                       -> 409 (in use)
-  CALL IResourceClient.UnregisterReferenceAsync(game-service target)
-  DELETE _calendarStore:calendar:{gsId}:{templateCode}
-  PUBLISH worldstate.calendar-template.deleted { templateCode, gameServiceId, ... }
+LOCK worldstate-lock:calendar:{gsId}:{templateCode} -> 409 if fails
+ READ _calendarStore:calendar:{gsId}:{templateCode} -> 404 if null
+ QUERY _queryableRealmConfigStore WHERE CalendarTemplateCode == templateCode AND GameServiceId == gsId
+ IF referencing configs exist -> 409 (in use)
+ CALL IResourceClient.UnregisterReferenceAsync(game-service target)
+ DELETE _calendarStore:calendar:{gsId}:{templateCode}
+ PUBLISH worldstate.calendar-template.deleted { templateCode, gameServiceId, ... }
 RETURN (200, DeleteCalendarResponse)
 ```
 
@@ -368,8 +368,8 @@ RETURN (200, DeleteCalendarResponse)
 POST /worldstate/realm-config/get | Roles: [] (service-to-service)
 
 ```
-READ _realmConfigStore:realm-config:{realmId}        -> 404 if null
-READ _clockStore:realm:{realmId}                     // enrichment for IsActive
+READ _realmConfigStore:realm-config:{realmId} -> 404 if null
+READ _clockStore:realm:{realmId} // enrichment for IsActive
 // If clock null: warn, IsActive = false
 RETURN (200, RealmConfigResponse { ..., isActive: clock?.IsActive ?? false })
 ```
@@ -378,20 +378,20 @@ RETURN (200, RealmConfigResponse { ..., isActive: clock?.IsActive ?? false })
 POST /worldstate/realm-config/update | Roles: [developer]
 
 ```
-LOCK worldstate-lock:clock:{realmId}                 -> 409 if fails
-  READ _realmConfigStore:realm-config:{realmId}      -> 404 if null
-  // Apply non-null fields: downtimePolicy, calendarTemplateCode
-  IF calendarTemplateCode changed
-    READ _calendarStore:calendar:{gsId}:{newCode}    -> 404 if null
-  IF changedFields.Count == 0
-    READ _clockStore:realm:{realmId}                 // for IsActive enrichment
-    RETURN (200, RealmConfigResponse)                // no-op
-  WRITE _realmConfigStore:realm-config:{realmId} <- updated config
-  // Sync changed fields to Redis clock model
-  READ _clockStore:realm:{realmId}
-  IF clock != null
-    WRITE _clockStore:realm:{realmId} <- synced clock
-  PUBLISH worldstate.realm-config.updated { realmId, ..., changedFields }
+LOCK worldstate-lock:clock:{realmId} -> 409 if fails
+ READ _realmConfigStore:realm-config:{realmId} -> 404 if null
+ // Apply non-null fields: downtimePolicy, calendarTemplateCode
+ IF calendarTemplateCode changed
+ READ _calendarStore:calendar:{gsId}:{newCode} -> 404 if null
+ IF changedFields.Count == 0
+ READ _clockStore:realm:{realmId} // for IsActive enrichment
+ RETURN (200, RealmConfigResponse) // no-op
+ WRITE _realmConfigStore:realm-config:{realmId} <- updated config
+ // Sync changed fields to Redis clock model
+ READ _clockStore:realm:{realmId}
+ IF clock != null
+ WRITE _clockStore:realm:{realmId} <- synced clock
+ PUBLISH worldstate.realm-config.updated { realmId, ..., changedFields }
 RETURN (200, RealmConfigResponse)
 ```
 
@@ -400,13 +400,13 @@ POST /worldstate/realm-config/list | Roles: [] (service-to-service)
 
 ```
 IF gameServiceId provided
-  QUERY _queryableRealmConfigStore WHERE GameServiceId == gsId PAGED(page, pageSize)
+ QUERY _queryableRealmConfigStore WHERE GameServiceId == gsId PAGED(page, pageSize)
 ELSE
-  QUERY _queryableRealmConfigStore PAGED(page, pageSize)
+ QUERY _queryableRealmConfigStore PAGED(page, pageSize)
 FOREACH config in pagedResult.Items
-  READ _clockStore:realm:{config.RealmId}
-  IF clock null: skip with warning
-  ELSE: build RealmClockSummary
+ READ _clockStore:realm:{config.RealmId}
+ IF clock null: skip with warning
+ ELSE: build RealmClockSummary
 RETURN (200, ListRealmClocksResponse { items, totalCount })
 ```
 
@@ -414,13 +414,13 @@ RETURN (200, ListRealmClocksResponse { items, totalCount })
 POST /worldstate/cleanup-by-realm | Roles: [] (service-to-service)
 
 ```
-READ _realmConfigStore:realm-config:{realmId}        // for event payload; nullable
+READ _realmConfigStore:realm-config:{realmId} // for event payload; nullable
 DELETE _clockStore:realm:{realmId}
 DELETE _ratioHistoryStore:ratio:{realmId}
 DELETE _realmConfigStore:realm-config:{realmId}
 CALL IResourceClient.UnregisterReferenceAsync(realm target)
 IF realmConfig != null
-  PUBLISH worldstate.realm-config.deleted { realmId, ... }
+ PUBLISH worldstate.realm-config.deleted { realmId, ... }
 // Invalidate local caches
 RETURN (200, CleanupByRealmResponse)
 ```
@@ -431,10 +431,10 @@ POST /worldstate/cleanup-by-game-service | Roles: [] (service-to-service)
 ```
 QUERY _queryableCalendarStore WHERE GameServiceId == gameServiceId
 FOREACH template in calendars
-  DELETE _calendarStore:calendar:{gsId}:{template.TemplateCode}
-  CALL IResourceClient.UnregisterReferenceAsync(game-service target)
-  PUBLISH worldstate.calendar-template.deleted { templateCode, gameServiceId, ... }
-  // Invalidate calendar cache entry
+ DELETE _calendarStore:calendar:{gsId}:{template.TemplateCode}
+ CALL IResourceClient.UnregisterReferenceAsync(game-service target)
+ PUBLISH worldstate.calendar-template.deleted { templateCode, gameServiceId, ... }
+ // Invalidate calendar cache entry
 RETURN (200, CleanupByGameServiceResponse)
 ```
 
@@ -449,46 +449,46 @@ RETURN (200, CleanupByGameServiceResponse)
 
 ```
 // On each tick:
-QUERY _queryableRealmConfigStore WHERE _ => true     // all realm configs
+QUERY _queryableRealmConfigStore WHERE _ => true // all realm configs
 IF none found: return
 
 FOREACH config in realmConfigs
-  // ProcessRealmTickAsync (per-realm, failure isolated)
-  LOCK worldstate-lock:clock:{config.RealmId}
-    // Skip if lock fails (another node processing)
-    READ _clockStore:realm:{config.RealmId}
-    IF clock null or not active or ratio <= 0: skip
+ // ProcessRealmTickAsync (per-realm, failure isolated)
+ LOCK worldstate-lock:clock:{config.RealmId}
+ // Skip if lock fails (another node processing)
+ READ _clockStore:realm:{config.RealmId}
+ IF clock null or not active or ratio <= 0: skip
 
-    calendar = calendarCache.GetOrLoadAsync(gsId, templateCode)
-    IF calendar null: skip
+ calendar = calendarCache.GetOrLoadAsync(gsId, templateCode)
+ IF calendar null: skip
 
-    // Compute elapsed game-seconds
-    gameSeconds = (now - clock.LastAdvancedRealTime).TotalSeconds * clock.TimeRatio
-    IF gameSeconds <= 0: skip
+ // Compute elapsed game-seconds
+ gameSeconds = (now - clock.LastAdvancedRealTime).TotalSeconds * clock.TimeRatio
+ IF gameSeconds <= 0: skip
 
-    // Handle catch-up (large gap after downtime)
-    IF gameSeconds > maxCatchUpGameSeconds
-      IF DowntimePolicy.Advance: cap at max
-      IF DowntimePolicy.Pause: reset LastAdvancedRealTime = now, WRITE clock, skip
+ // Handle catch-up (large gap after downtime)
+ IF gameSeconds > maxCatchUpGameSeconds
+ IF DowntimePolicy.Advance: cap at max
+ IF DowntimePolicy.Pause: reset LastAdvancedRealTime = now, WRITE clock, skip
 
-    // Advance clock via time calculator
-    boundaries = timeCalculator.AdvanceGameTime(clock, calendar, gameSeconds)
+ // Advance clock via time calculator
+ boundaries = timeCalculator.AdvanceGameTime(clock, calendar, gameSeconds)
 
-    // Filter boundaries: suppress hour-changed during catch-up
-    // Cap at config.BoundaryEventBatchSize
+ // Filter boundaries: suppress hour-changed during catch-up
+ // Cap at config.BoundaryEventBatchSize
 
-    // Publish boundary events
-    FOREACH boundary (up to batch limit)
-      PUBLISH worldstate.{type}-changed { realmId, snapshot, ... }
+ // Publish boundary events
+ FOREACH boundary (up to batch limit)
+ PUBLISH worldstate.{type}-changed { realmId, snapshot, ... }
 
-    // Push client time sync on period change
-    IF period boundary crossed
-      PUSH entitySessionRegistry.PublishToEntitySessionsAsync("realm", realmId,
-        timeSyncEvent { SyncReason: PeriodChanged, previousPeriod })
+ // Push client time sync on period change
+ IF period boundary crossed
+ PUSH entitySessionRegistry.PublishToEntitySessionsAsync("realm", realmId,
+ timeSyncEvent { SyncReason: PeriodChanged, previousPeriod })
 
-    // Update state
-    clock.LastAdvancedRealTime = now
-    WRITE _clockStore:realm:{config.RealmId} <- updated clock
-    // Update in-memory cache for variable provider
-    clockCache.Update(config.RealmId, clock)
+ // Update state
+ clock.LastAdvancedRealTime = now
+ WRITE _clockStore:realm:{config.RealmId} <- updated clock
+ // Update in-memory cache for variable provider
+ clockCache.Update(config.RealmId, clock)
 ```

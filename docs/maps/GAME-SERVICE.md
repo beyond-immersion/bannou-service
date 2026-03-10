@@ -104,12 +104,12 @@ POST /game-service/services/list | Roles: []
 ```
 READ list-store:"game-service-list" -> serviceIds
 IF serviceIds is null
-  RETURN (200, { Services: [], TotalCount: 0 })
+ RETURN (200, { Services: [], TotalCount: 0 })
 FOREACH serviceId in serviceIds
-  READ model-store:"game-service:{serviceId}" -> model
-  IF model is null -> skip
-  IF body.ActiveOnly AND NOT model.IsActive -> skip
-  // collect into results
+ READ model-store:"game-service:{serviceId}" -> model
+ IF model is null -> skip
+ IF body.ActiveOnly AND NOT model.IsActive -> skip
+ // collect into results
 // apply body.Skip / body.Take pagination in memory
 RETURN (200, { Services: paginated, TotalCount: filtered count before pagination })
 ```
@@ -119,12 +119,12 @@ POST /game-service/services/get | Roles: []
 
 ```
 IF body.ServiceId has value
-  READ model-store:"game-service:{body.ServiceId}" -> model
+ READ model-store:"game-service:{body.ServiceId}" -> model
 ELSE
-  READ string-store:"game-service-stub:{body.StubName.ToLower()}" -> resolvedId
-  IF resolvedId is empty                             -> 404
-  READ model-store:"game-service:{resolvedId}" -> model
-IF model is null                                     -> 404
+ READ string-store:"game-service-stub:{body.StubName.ToLower()}" -> resolvedId
+ IF resolvedId is empty -> 404
+ READ model-store:"game-service:{resolvedId}" -> model
+IF model is null -> 404
 RETURN (200, ServiceInfo from model)
 ```
 
@@ -134,17 +134,17 @@ POST /game-service/services/create | Roles: []
 ```
 normalizedStubName = body.StubName.ToLower()
 LOCK game-service-lock:"game-service-stub:{normalizedStubName}"
-                                                     -> 409 if lock fails
-  READ string-store:"game-service-stub:{normalizedStubName}" -> existingId
-  IF existingId exists                               -> 409 // duplicate stub name
-  serviceId = new Guid
-  WRITE model-store:"game-service:{serviceId}" <- GameServiceRegistryModel from request
-  WRITE string-store:"game-service-stub:{normalizedStubName}" <- serviceId.ToString()
-  // AddToServiceListAsync (ETag retry loop, up to config.ServiceListRetryAttempts)
-  READ list-store:"game-service-list" [with ETag] -> (serviceIds, etag)
-  IF serviceId already in list -> return // idempotent
-  ETAG-WRITE list-store:"game-service-list" <- serviceIds + serviceId
-  // retry on ETag conflict; log warning and continue if retries exhausted
+ -> 409 if lock fails
+ READ string-store:"game-service-stub:{normalizedStubName}" -> existingId
+ IF existingId exists -> 409 // duplicate stub name
+ serviceId = new Guid
+ WRITE model-store:"game-service:{serviceId}" <- GameServiceRegistryModel from request
+ WRITE string-store:"game-service-stub:{normalizedStubName}" <- serviceId.ToString()
+ // AddToServiceListAsync (ETag retry loop, up to config.ServiceListRetryAttempts)
+ READ list-store:"game-service-list" [with ETag] -> (serviceIds, etag)
+ IF serviceId already in list -> return // idempotent
+ ETAG-WRITE list-store:"game-service-list" <- serviceIds + serviceId
+ // retry on ETag conflict; log warning and continue if retries exhausted
 PUBLISH game-service.created { gameServiceId, stubName, displayName, description, isActive, autoLobbyEnabled, createdAt }
 RETURN (200, ServiceInfo)
 ```
@@ -154,14 +154,14 @@ POST /game-service/services/update | Roles: []
 
 ```
 READ model-store:"game-service:{body.ServiceId}" -> model
-IF model is null                                     -> 404
+IF model is null -> 404
 // track changed fields
 IF body.DisplayName provided AND different -> update model, add "displayName" to changedFields
 IF body.Description provided AND different -> update model, add "description" to changedFields
 IF body.IsActive provided AND different -> update model, add "isActive" to changedFields
 IF body.AutoLobbyEnabled provided AND different -> update model, add "autoLobbyEnabled" to changedFields
 IF changedFields is empty
-  RETURN (200, ServiceInfo from model)               // no write, no event
+ RETURN (200, ServiceInfo from model) // no write, no event
 WRITE model-store:"game-service:{body.ServiceId}" <- updated model
 PUBLISH game-service.updated { gameServiceId, stubName, displayName, description, isActive, autoLobbyEnabled, createdAt, updatedAt, changedFields }
 RETURN (200, ServiceInfo)
@@ -172,16 +172,16 @@ POST /game-service/services/delete | Roles: []
 
 ```
 READ model-store:"game-service:{body.ServiceId}" -> model
-IF model is null                                     -> 404
-// Resource cleanup check (T28 pattern)
+IF model is null -> 404
+// Resource cleanup check (pattern)
 CALL IResourceClient.CheckReferencesAsync({ resourceType: "game-service", resourceId: body.ServiceId }) -> check
 IF check.RefCount > 0
-  CALL IResourceClient.ExecuteCleanupAsync({ resourceType: "game-service", resourceId: body.ServiceId, policy: AllRequired }) -> result
-  IF result is null OR !result.Success               -> 409
-// catches ApiException from resource calls           -> 409
+ CALL IResourceClient.ExecuteCleanupAsync({ resourceType: "game-service", resourceId: body.ServiceId, policy: AllRequired }) -> result
+ IF result is null OR !result.Success -> 409
+// catches ApiException from resource calls -> 409
 DELETE model-store:"game-service:{body.ServiceId}"
 IF model.StubName non-empty
-  DELETE string-store:"game-service-stub:{model.StubName}"
+ DELETE string-store:"game-service-stub:{model.StubName}"
 // RemoveFromServiceListAsync (ETag retry loop, up to config.ServiceListRetryAttempts)
 READ list-store:"game-service-list" [with ETag] -> (serviceIds, etag)
 IF serviceIds is null OR serviceId not in list -> return // idempotent

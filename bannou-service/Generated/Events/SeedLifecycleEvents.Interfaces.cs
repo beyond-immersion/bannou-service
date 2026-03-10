@@ -17,6 +17,6 @@ public partial class SeedCreatedEvent : ILifecycleCreatedEvent { }
 public partial class SeedUpdatedEvent : ILifecycleUpdatedEvent { }
 public partial class SeedDeletedEvent : ILifecycleDeletedEvent { }
 
-public partial class SeedTypeCreatedEvent : ILifecycleCreatedEvent { }
-public partial class SeedTypeUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class SeedTypeDeletedEvent : ILifecycleDeletedEvent { }
+public partial class SeedTypeCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class SeedTypeUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class SeedTypeDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }

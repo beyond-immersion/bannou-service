@@ -25,10 +25,10 @@ components:
       - difficulty
       - repeatable
       - maxQuestors
-      - isDeprecated
       - gameServiceId
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -76,19 +76,7 @@ components:
         maxQuestors: &id012
           type: integer
           description: "Max party size"
-        isDeprecated: &id013
-          type: boolean
-          description: "Whether definition is deprecated"
-        deprecatedAt: &id014
-          type: string
-          format: date-time
-          nullable: true
-          description: "When the definition was deprecated"
-        deprecationReason: &id015
-          type: string
-          nullable: true
-          description: "Reason for deprecation"
-        gameServiceId: &id016
+        gameServiceId: &id013
           type: string
           format: uuid
           description: "Game service this definition belongs to"
@@ -100,6 +88,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the quest definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this quest definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the quest definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     QuestDefinitionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -118,10 +119,10 @@ components:
       - difficulty
       - repeatable
       - maxQuestors
-      - isDeprecated
       - gameServiceId
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -140,10 +141,7 @@ components:
         cooldownSeconds: *id010
         deadlineSeconds: *id011
         maxQuestors: *id012
-        isDeprecated: *id013
-        deprecatedAt: *id014
-        deprecationReason: *id015
-        gameServiceId: *id016
+        gameServiceId: *id013
         createdAt:
           type: string
           format: date-time
@@ -152,6 +150,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the quest definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this quest definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the quest definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -175,10 +186,10 @@ components:
       - difficulty
       - repeatable
       - maxQuestors
-      - isDeprecated
       - gameServiceId
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -196,10 +207,7 @@ components:
         cooldownSeconds: *id010
         deadlineSeconds: *id011
         maxQuestors: *id012
-        isDeprecated: *id013
-        deprecatedAt: *id014
-        deprecationReason: *id015
-        gameServiceId: *id016
+        gameServiceId: *id013
         createdAt:
           type: string
           format: date-time
@@ -208,6 +216,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the quest definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this quest definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the quest definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

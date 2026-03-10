@@ -31,30 +31,30 @@ Every character with lifecycle tracking has a profile:
 
 ```
 LifecycleProfile:
-  characterId:         Guid          # The character being tracked
-  gameServiceId:       Guid          # Game service scope
-  realmId:             Guid          # Realm for worldstate time queries
-  speciesCode:         string        # Species determines stage thresholds and longevity
-  birthGameYear:       int           # Game year of birth (from worldstate)
-  birthSeason:         string        # Season of birth (game-configurable, from Worldstate calendar)
-  currentAge:          int           # Current age in game years
-  currentStage:        string        # Current lifecycle stage code
-  causeOfCreation:     CreationCause # Procreation, Seeded, Divine, Spawned
-  parentAId:           Guid?         # Null for seeded/spawned characters
-  parentBId:           Guid?
-  householdOrgId:      Guid?         # Organization ID of household
-  marriageContractIds: Guid[]        # Active marriage Contract IDs (empty if unmarried; array for polygamous cultures)
-  spouseCharacterIds:  Guid[]        # Current spouses (from Relationship, cached; empty if unmarried)
-  childCount:          int           # Living children count
-  totalChildCount:     int           # All children ever (including deceased)
-  fertilityModifier:   float         # Species + age + heritage modifier (0.0-2.0)
-  healthModifier:      float         # Age-based health decline (0.0-2.0)
-  naturalDeathYear:    int?          # Projected natural death year (null = not yet calculated)
-  fulfillmentScore:    float?        # Calculated at death from Disposition drives (0.0-1.0)
-  deathGameYear:       int?          # Game year of death (null = alive)
-  deathCause:          string?       # Game-extensible death cause code (e.g., "natural", "combat", "disease")
-  afterlifePath:       string?       # Determined at death processing
-  status:              LifecycleStatus # Alive, Dying, Dead, Archived
+ characterId: Guid # The character being tracked
+ gameServiceId: Guid # Game service scope
+ realmId: Guid # Realm for worldstate time queries
+ speciesCode: string # Species determines stage thresholds and longevity
+ birthGameYear: int # Game year of birth (from worldstate)
+ birthSeason: string # Season of birth (game-configurable, from Worldstate calendar)
+ currentAge: int # Current age in game years
+ currentStage: string # Current lifecycle stage code
+ causeOfCreation: CreationCause # Procreation, Seeded, Divine, Spawned
+ parentAId: Guid? # Null for seeded/spawned characters
+ parentBId: Guid?
+ householdOrgId: Guid? # Organization ID of household
+ marriageContractIds: Guid[] # Active marriage Contract IDs (empty if unmarried; array for polygamous cultures)
+ spouseCharacterIds: Guid[] # Current spouses (from Relationship, cached; empty if unmarried)
+ childCount: int # Living children count
+ totalChildCount: int # All children ever (including deceased)
+ fertilityModifier: float # Species + age + heritage modifier (0.0-2.0)
+ healthModifier: float # Age-based health decline (0.0-2.0)
+ naturalDeathYear: int? # Projected natural death year (null = not yet calculated)
+ fulfillmentScore: float? # Calculated at death from Disposition drives (0.0-1.0)
+ deathGameYear: int? # Game year of death (null = alive)
+ deathCause: string? # Game-extensible death cause code (e.g., "natural", "combat", "disease")
+ afterlifePath: string? # Determined at death processing
+ status: LifecycleStatus # Alive, Dying, Dead, Archived
 ```
 
 ### Lifecycle Stages
@@ -76,26 +76,26 @@ Stages are species-configurable strings (not enums), following the same extensib
 
 ```
 LifecycleTemplate:
-  templateCode:        string        # Species code or custom template
-  gameServiceId:       Guid
-  stages:
-    - code:            string        # "infant", "child", "adolescent", "adult", "elder", "dying"
-      minAge:          int           # Game years
-      maxAge:          int?          # Null = no upper bound (dying stage)
-      healthModifier:  float         # Multiplier applied to character health
-      fertilityBase:   float         # Base fertility at this stage (0.0-1.0)
-      canMarry:        bool          # Whether marriage is permitted
-      canProcreate:    bool          # Whether procreation is permitted
-      canOwnOrg:      bool          # Whether character can own organizations
-      canBePossessed:  bool          # Whether guardian spirit can possess
-  naturalDeathRange:
-    minAge:            int           # Earliest natural death (e.g., 75)
-    maxAge:            int           # Latest natural death (e.g., 95)
-    distribution:      DeathDistribution # Uniform, Normal, WeightedLate
-  fertilityWindow:
-    peakStartAge:      int           # When fertility peaks
-    peakEndAge:        int           # When peak ends
-    declineRate:       float         # How fast fertility drops after peak (0.0-1.0)
+ templateCode: string # Species code or custom template
+ gameServiceId: Guid
+ stages:
+ - code: string # "infant", "child", "adolescent", "adult", "elder", "dying"
+ minAge: int # Game years
+ maxAge: int? # Null = no upper bound (dying stage)
+ healthModifier: float # Multiplier applied to character health
+ fertilityBase: float # Base fertility at this stage (0.0-1.0)
+ canMarry: bool # Whether marriage is permitted
+ canProcreate: bool # Whether procreation is permitted
+ canOwnOrg: bool # Whether character can own organizations
+ canBePossessed: bool # Whether guardian spirit can possess
+ naturalDeathRange:
+ minAge: int # Earliest natural death (e.g., 75)
+ maxAge: int # Latest natural death (e.g., 95)
+ distribution: DeathDistribution # Uniform, Normal, WeightedLate
+ fertilityWindow:
+ peakStartAge: int # When fertility peaks
+ peakEndAge: int # When peak ends
+ declineRate: float # How fast fertility drops after peak (0.0-1.0)
 ```
 
 ### Aging
@@ -104,20 +104,20 @@ The aging system subscribes to `worldstate.year-changed` events and advances all
 
 ```
 On worldstate.year-changed (realmId, yearsCrossed):
-  1. Query all alive LifecycleProfiles for this realm
-  2. For each character:
-     a. Advance currentAge by yearsCrossed
-     b. Check stage transitions (has age crossed a stage boundary?)
-     c. If stage changed:
-        - Update healthModifier from template
-        - Update fertilityModifier
-        - Publish character-lifecycle.stage-changed event
-        - Trigger stage-specific side effects (see below)
-     d. Check natural death (has age exceeded naturalDeathYear?)
-     e. If natural death:
-        - Transition to Dying status
-        - Begin death processing pipeline
-  3. Batch processing with configurable batch size
+ 1. Query all alive LifecycleProfiles for this realm
+ 2. For each character:
+ a. Advance currentAge by yearsCrossed
+ b. Check stage transitions (has age crossed a stage boundary?)
+ c. If stage changed:
+ - Update healthModifier from template
+ - Update fertilityModifier
+ - Publish character-lifecycle.stage-changed event
+ - Trigger stage-specific side effects (see below)
+ d. Check natural death (has age exceeded naturalDeathYear?)
+ e. If natural death:
+ - Transition to Dying status
+ - Begin death processing pipeline
+ 3. Batch processing with configurable batch size
 ```
 
 **Stage transition side effects**:
@@ -135,35 +135,35 @@ Marriage composes Contract + Relationship + Organization into a coherent ceremon
 
 ```
 Marriage Flow:
-  1. Validate eligibility:
-     - Both characters in "adult" or "elder" stage
-     - No prohibited relationship types between them (configurable)
-     - Species compatibility check (if cross-species marriage allowed)
+ 1. Validate eligibility:
+ - Both characters in "adult" or "elder" stage
+ - No prohibited relationship types between them (configurable)
+ - Species compatibility check (if cross-species marriage allowed)
 
-  2. Create marriage contract (via IContractClient):
-     - Template: configurable per game (e.g., "marriage-standard", "marriage-noble")
-     - Parties: character A, character B (and optionally their households)
-     - Behavioral clauses: configurable (fidelity, mutual support, etc.)
-     - Milestones: anniversary milestones (optional, for contract-based benefits)
-     - Breach consequences: configurable (divorce eligibility, reputation impact)
+ 2. Create marriage contract (via IContractClient):
+ - Template: configurable per game (e.g., "marriage-standard", "marriage-noble")
+ - Parties: character A, character B (and optionally their households)
+ - Behavioral clauses: configurable (fidelity, mutual support, etc.)
+ - Milestones: anniversary milestones (optional, for contract-based benefits)
+ - Breach consequences: configurable (divorce eligibility, reputation impact)
 
-  3. Create SPOUSE relationship (via IRelationshipClient):
-     - Bidirectional SPOUSE bond between the two characters
+ 3. Create SPOUSE relationship (via IRelationshipClient):
+ - Bidirectional SPOUSE bond between the two characters
 
-  4. Household resolution (via Organization):
-     - Option A: Character B joins Character A's household
-     - Option B: Character A joins Character B's household
-     - Option C: New household created for the couple
-     - Determined by: cultural norms (faction governance), family status,
-       household succession rules, or explicit choice
-     - Dowry/bride-price: optional Currency/Item transfer between households
+ 4. Household resolution (via Organization):
+ - Option A: Character B joins Character A's household
+ - Option B: Character A joins Character B's household
+ - Option C: New household created for the couple
+ - Determined by: cultural norms (faction governance), family status,
+ household succession rules, or explicit choice
+ - Dowry/bride-price: optional Currency/Item transfer between households
 
-  5. Seed Disposition feelings:
-     - Warmth modifier between spouses (positive, from ceremony)
-     - Trust modifier between spouses
-     - Drive formation check: "protect_family" drive may form
+ 5. Seed Disposition feelings:
+ - Warmth modifier between spouses (positive, from ceremony)
+ - Trust modifier between spouses
+ - Drive formation check: "protect_family" drive may form
 
-  6. Publish character-lifecycle.marriage event
+ 6. Publish character-lifecycle.marriage event
 ```
 
 ### Procreation
@@ -172,60 +172,60 @@ The most complex orchestration flow in the service. Creates a new character enti
 
 ```
 Procreation Flow:
-  1. Validate eligibility:
-     - Both parents in a stage where canProcreate = true
-     - Both parents alive
-     - Fertility check: combined fertility modifier (age + species + heritage)
-       produces a probability. Not every attempt succeeds.
-     - Pregnancy duration: species-configurable game-time period
+ 1. Validate eligibility:
+ - Both parents in a stage where canProcreate = true
+ - Both parents alive
+ - Fertility check: combined fertility modifier (age + species + heritage)
+ produces a probability. Not every attempt succeeds.
+ - Pregnancy duration: species-configurable game-time period
 
-  2. Heritage computation (Heritage Engine):
-     a. Load parent A genetic profile
-     b. Load parent B genetic profile
-     c. For each heritable trait:
-        - Select alleles: one from each parent (random per Mendelian rules)
-        - Apply dominance rules (dominant, recessive, blending, codominant)
-        - Apply mutation chance (configurable per species)
-     d. Compute phenotype from genotype (expression rules per species)
-     e. Compute bloodline membership (union of parent bloodlines + mutation chance)
-     f. Generate aptitude values from phenotype traits
+ 2. Heritage computation (Heritage Engine):
+ a. Load parent A genetic profile
+ b. Load parent B genetic profile
+ c. For each heritable trait:
+ - Select alleles: one from each parent (random per Mendelian rules)
+ - Apply dominance rules (dominant, recessive, blending, codominant)
+ - Apply mutation chance (configurable per species)
+ d. Compute phenotype from genotype (expression rules per species)
+ e. Compute bloodline membership (union of parent bloodlines + mutation chance)
+ f. Generate aptitude values from phenotype traits
 
-  3. Create character entity (via ICharacterClient):
-     - Species: inherited (same as parents, or hybrid rules if cross-species)
-     - Realm: same as parents
-     - Initial stats: from heritage phenotype
-     - Name: configurable (cultural naming rules, family name inheritance)
+ 3. Create character entity (via ICharacterClient):
+ - Species: inherited (same as parents, or hybrid rules if cross-species)
+ - Realm: same as parents
+ - Initial stats: from heritage phenotype
+ - Name: configurable (cultural naming rules, family name inheritance)
 
-  4. Create relationships (via IRelationshipClient):
-     - PARENT bonds: parentA → child, parentB → child
-     - CHILD bonds: child → parentA, child → parentB
-     - SIBLING bonds: child ↔ each existing child of parents
+ 4. Create relationships (via IRelationshipClient):
+ - PARENT bonds: parentA → child, parentB → child
+ - CHILD bonds: child → parentA, child → parentB
+ - SIBLING bonds: child ↔ each existing child of parents
 
-  5. Create lifecycle profile:
-     - birthGameYear: current game year from worldstate
-     - currentStage: "infant"
-     - causeOfCreation: "procreation"
-     - parentAId, parentBId: set
-     - naturalDeathYear: computed from species template + heritage longevity traits
+ 5. Create lifecycle profile:
+ - birthGameYear: current game year from worldstate
+ - currentStage: "infant"
+ - causeOfCreation: "procreation"
+ - parentAId, parentBId: set
+ - naturalDeathYear: computed from species template + heritage longevity traits
 
-  6. Store genetic profile (Heritage Engine):
-     - Genotype, phenotype, bloodlines, mutations
-     - Immutable after creation
+ 6. Store genetic profile (Heritage Engine):
+ - Genotype, phenotype, bloodlines, mutations
+ - Immutable after creation
 
-  7. Add to household (via Organization):
-     - Add child as member with "dependent" role
-     - Register child as potential heir (if succession mode permits)
+ 7. Add to household (via Organization):
+ - Add child as member with "dependent" role
+ - Register child as potential heir (if succession mode permits)
 
-  8. Seed Character-History backstory (via ICharacterHistoryClient):
-     - Origin: born to [parentA] and [parentB] in [location]
-     - Family context: household status, sibling count, family trade
+ 8. Seed Character-History backstory (via ICharacterHistoryClient):
+ - Origin: born to [parentA] and [parentB] in [location]
+ - Family context: household status, sibling count, family trade
 
-  9. Register with Resource (via IResourceClient):
-     - Character reference tracking for cleanup coordination
+ 9. Register with Resource (via IResourceClient):
+ - Character reference tracking for cleanup coordination
 
-  10. Publish character-lifecycle.birth event:
-      - Includes characterId, parentIds, speciesCode, realmId, bloodlines
-      - Consumed by: Disposition (family drive seeds), Analytics, Storyline
+ 10. Publish character-lifecycle.birth event:
+ - Includes characterId, parentIds, speciesCode, realmId, bloodlines
+ - Consumed by: Disposition (family drive seeds), Analytics, Storyline
 ```
 
 ### Death Processing
@@ -234,130 +234,130 @@ Death is the content flywheel's ignition moment. Every character death produces 
 
 ```
 Death Processing Pipeline:
-  1. Determine cause of death:
-     - Game-extensible cause codes (e.g., "natural", "combat", "disease",
-       "accident", "divine", "execution")
-     - No internal logic branches on specific cause values
-     - External systems call lifecycle's RecordDeath endpoint with cause
+ 1. Determine cause of death:
+ - Game-extensible cause codes (e.g., "natural", "combat", "disease",
+ "accident", "divine", "execution")
+ - No internal logic branches on specific cause values
+ - External systems call lifecycle's RecordDeath endpoint with cause
 
-  2. Calculate fulfillment (from Disposition):
-     a. Query all drives for this character
-     b. For each drive:
-        - fulfillmentContribution = drive.satisfaction * drive.intensity
-        - frustrationPenalty = drive.frustration * 0.5
-        - driveScore = fulfillmentContribution - frustrationPenalty
-     c. totalFulfillment = average(driveScores) normalized to 0.0-1.0
-     d. If character had no drives (drifter): fulfillment = 0.3 (neutral)
+ 2. Calculate fulfillment (from Disposition):
+ a. Query all drives for this character
+ b. For each drive:
+ - fulfillmentContribution = drive.satisfaction * drive.intensity
+ - frustrationPenalty = drive.frustration * 0.5
+ - driveScore = fulfillmentContribution - frustrationPenalty
+ c. totalFulfillment = average(driveScores) normalized to 0.0-1.0
+ d. If character had no drives (drifter): fulfillment = 0.3 (neutral)
 
-  3. Calculate guardian spirit contribution:
-     a. baseLogos = totalFulfillment * speciesLogosMultiplier
-        (speciesLogosMultiplier: per-species value from LifecycleTemplate)
-     b. bonusLogos = guardian trust modifier (from Disposition guardian feelings)
-        - Character who trusted the spirit contributes more
-        - Character who resented the spirit contributes less
-     c. totalLogos = baseLogos + bonusLogos
-     d. Apply to guardian spirit seed (via ISeedClient):
-        - Resolve: characterId → household Org → account owner → guardian seed
-          (T32: lifecycle never receives accountId directly)
-        - RecordGrowth on the resolved guardian seed
-        - Growth domain: "character_lifecycle"
+ 3. Calculate guardian spirit contribution:
+ a. baseLogos = totalFulfillment * speciesLogosMultiplier
+ (speciesLogosMultiplier: per-species value from LifecycleTemplate)
+ b. bonusLogos = guardian trust modifier (from Disposition guardian feelings)
+ - Character who trusted the spirit contributes more
+ - Character who resented the spirit contributes less
+ c. totalLogos = baseLogos + bonusLogos
+ d. Apply to guardian spirit seed (via ISeedClient):
+ - Resolve: characterId → household Org → account owner → guardian seed
+ (lifecycle never receives accountId directly)
+ - RecordGrowth on the resolved guardian seed
+ - Growth domain: "character_lifecycle"
 
-  4. Trigger archive compression (via IResourceClient):
-     - Resource coordinates compression callbacks across all character-* services
-     - Character-History: biographical events
-     - Character-Personality: final trait values
-     - Character-Encounter: significant encounters
-     - Disposition: feeling snapshot + drive fulfillment/frustration state
-     - Hearsay: high-confidence belief snapshot
-     - Character-Lifecycle: heritage profile, lifecycle summary, fulfillment score
-     - Compressed archive stored in MySQL via Resource
+ 4. Trigger archive compression (via IResourceClient):
+ - Resource coordinates compression callbacks across all character-* services
+ - Character-History: biographical events
+ - Character-Personality: final trait values
+ - Character-Encounter: significant encounters
+ - Disposition: feeling snapshot + drive fulfillment/frustration state
+ - Hearsay: high-confidence belief snapshot
+ - Character-Lifecycle: heritage profile, lifecycle summary, fulfillment score
+ - Compressed archive stored in MySQL via Resource
 
-  5. Process inheritance:
-     a. Trigger Organization succession (if character was household head)
-     b. Process testament contract if exists (via IContractClient)
-     c. Heirloom items: transfer designated items to heir (via IInventoryClient)
-     d. Family legacy: if household seed has "dynasty.establish" capability,
-        heritage data contributes to household prestige
+ 5. Process inheritance:
+ a. Trigger Organization succession (if character was household head)
+ b. Process testament contract if exists (via IContractClient)
+ c. Heirloom items: transfer designated items to heir (via IInventoryClient)
+ d. Family legacy: if household seed has "dynasty.establish" capability,
+ heritage data contributes to household prestige
 
-  6. Determine afterlife pathway:
-     - Based on: fulfillment score, cause of death, personality traits, divine favor
-     - Pathway codes are opaque strings (e.g., "elysium", "purgatory", "restless")
-     - Pathway determines what kind of content the archive generates:
-       * High fulfillment → inspiration seeds, heroic legacy, mentor ghosts
-       * Low fulfillment → unfinished business seeds, restless spirits, quest hooks
-       * Traumatic death → vengeance seeds, haunting, warning tales
+ 6. Determine afterlife pathway:
+ - Based on: fulfillment score, cause of death, personality traits, divine favor
+ - Pathway codes are opaque strings (e.g., "elysium", "purgatory", "restless")
+ - Pathway determines what kind of content the archive generates:
+ * High fulfillment → inspiration seeds, heroic legacy, mentor ghosts
+ * Low fulfillment → unfinished business seeds, restless spirits, quest hooks
+ * Traumatic death → vengeance seeds, haunting, warning tales
 
-  7. Update lifecycle profile:
-     - status: Dead
-     - deathGameYear, deathCause, fulfillmentScore, afterlifePath
+ 7. Update lifecycle profile:
+ - status: Dead
+ - deathGameYear, deathCause, fulfillmentScore, afterlifePath
 
-  8. Publish character-lifecycle.death event:
-     - Includes all death processing results
-     - Consumed by: Storyline (archive → narrative seeds), Puppetmaster
-       (regional watchers notified), Analytics (population statistics),
-       Organization (succession trigger), Disposition (household grief)
+ 8. Publish character-lifecycle.death event:
+ - Includes all death processing results
+ - Consumed by: Storyline (archive → narrative seeds), Puppetmaster
+ (regional watchers notified), Analytics (population statistics),
+ Organization (succession trigger), Disposition (household grief)
 
-  9. Content flywheel activated:
-     - Storyline's GOAP planner receives the archive
-     - Regional watchers evaluate the death for narrative opportunity
-     - The archive becomes a permanent story seed in the world's history
+ 9. Content flywheel activated:
+ - Storyline's GOAP planner receives the archive
+ - Regional watchers evaluate the death for narrative opportunity
+ - The archive becomes a permanent story seed in the world's history
 ```
 
 ### The Fulfillment Principle (Visual)
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    THE FULFILLMENT PRINCIPLE                          │
-│                                                                      │
-│  CHARACTER LIFETIME                                                  │
-│  ┌──────────────────────────────────────────────────────┐           │
-│  │  Drives form:        Drives pursued:    Drives resolve:│          │
-│  │  master_craft (0.3)  practice daily     satisfaction 0.9│          │
-│  │  protect_family(0.4) guard household    satisfaction 0.7│          │
-│  │  prove_worth  (0.4)  face rival         frustration 0.6│          │
-│  └────────────────────────────────────┬─────────────────┘           │
-│                                        │                             │
-│                                        ▼                             │
-│  DEATH PROCESSING                                                    │
-│  ┌──────────────────────────────────────────────────────┐           │
-│  │  master_craft:  0.9 sat * 0.8 int = 0.72            │           │
-│  │  protect_family: 0.7 sat * 0.6 int = 0.42           │           │
-│  │  prove_worth:   0.3 sat * 0.5 int - 0.6 frus = -0.15│          │
-│  │                                                       │           │
-│  │  fulfillment = avg(0.72, 0.42, -0.15) = 0.33         │           │
-│  │  normalized to 0.0-1.0 range: 0.55                    │           │
-│  └────────────────────────────────────┬─────────────────┘           │
-│                                        │                             │
-│                    ┌───────────────────┼───────────────────┐        │
-│                    ▼                   ▼                   ▼         │
-│  GUARDIAN SPIRIT           ARCHIVE TYPE           AFTERLIFE PATH    │
-│  ┌─────────────┐    ┌─────────────────┐    ┌─────────────────┐     │
-│  │ Logos flow:  │    │ Mixed:          │    │ "reflection"    │     │
-│  │ moderate     │    │ - Mastery       │    │ - Achieved dream│     │
-│  │ (0.55 * mult)│    │   achieved!     │    │   but left      │     │
-│  │             │    │ - Family safe   │    │   unfinished    │     │
-│  │ Spirit seed  │    │ - Worth         │    │   business      │     │
-│  │ grows by     │    │   unproven      │    │ - Story seeds:  │     │
-│  │ proportional │    │                 │    │   "the master   │     │
-│  │ amount       │    │ Content seeds:  │    │   who never     │     │
-│  └─────────────┘    │ inspiration +   │    │   proved         │     │
-│                      │ unfinished      │    │   themselves"   │     │
-│                      │ business        │    └─────────────────┘     │
-│                      └─────────────────┘                            │
-│                                                                      │
-│  HIGH FULFILLMENT (>0.8):                                           │
-│    Spirit grows significantly. Archive is "inspiration" type.        │
-│    Afterlife: peaceful. Content: mentor ghosts, legacy quests.       │
-│                                                                      │
-│  LOW FULFILLMENT (<0.3):                                            │
-│    Spirit grows minimally. Archive is "unfinished_business" type.    │
-│    Afterlife: restless. Content: haunting, vengeance quests,         │
-│    cautionary tales. "This spirit died with dreams unfulfilled."     │
-│                                                                      │
-│  PLAYER INCENTIVE:                                                   │
-│    Guide characters toward their dreams, not just toward power.      │
-│    A fulfilled blacksmith contributes more to the spirit than         │
-│    an unfulfilled king.                                              │
+│ THE FULFILLMENT PRINCIPLE │
+│ │
+│ CHARACTER LIFETIME │
+│ ┌──────────────────────────────────────────────────────┐ │
+│ │ Drives form: Drives pursued: Drives resolve:│ │
+│ │ master_craft (0.3) practice daily satisfaction 0.9│ │
+│ │ protect_family(0.4) guard household satisfaction 0.7│ │
+│ │ prove_worth (0.4) face rival frustration 0.6│ │
+│ └────────────────────────────────────┬─────────────────┘ │
+│ │ │
+│ ▼ │
+│ DEATH PROCESSING │
+│ ┌──────────────────────────────────────────────────────┐ │
+│ │ master_craft: 0.9 sat * 0.8 int = 0.72 │ │
+│ │ protect_family: 0.7 sat * 0.6 int = 0.42 │ │
+│ │ prove_worth: 0.3 sat * 0.5 int - 0.6 frus = -0.15│ │
+│ │ │ │
+│ │ fulfillment = avg(0.72, 0.42, -0.15) = 0.33 │ │
+│ │ normalized to 0.0-1.0 range: 0.55 │ │
+│ └────────────────────────────────────┬─────────────────┘ │
+│ │ │
+│ ┌───────────────────┼───────────────────┐ │
+│ ▼ ▼ ▼ │
+│ GUARDIAN SPIRIT ARCHIVE TYPE AFTERLIFE PATH │
+│ ┌─────────────┐ ┌─────────────────┐ ┌─────────────────┐ │
+│ │ Logos flow: │ │ Mixed: │ │ "reflection" │ │
+│ │ moderate │ │ - Mastery │ │ - Achieved dream│ │
+│ │ (0.55 * mult)│ │ achieved! │ │ but left │ │
+│ │ │ │ - Family safe │ │ unfinished │ │
+│ │ Spirit seed │ │ - Worth │ │ business │ │
+│ │ grows by │ │ unproven │ │ - Story seeds: │ │
+│ │ proportional │ │ │ │ "the master │ │
+│ │ amount │ │ Content seeds: │ │ who never │ │
+│ └─────────────┘ │ inspiration + │ │ proved │ │
+│ │ unfinished │ │ themselves" │ │
+│ │ business │ └─────────────────┘ │
+│ └─────────────────┘ │
+│ │
+│ HIGH FULFILLMENT (>0.8): │
+│ Spirit grows significantly. Archive is "inspiration" type. │
+│ Afterlife: peaceful. Content: mentor ghosts, legacy quests. │
+│ │
+│ LOW FULFILLMENT (<0.3): │
+│ Spirit grows minimally. Archive is "unfinished_business" type. │
+│ Afterlife: restless. Content: haunting, vengeance quests, │
+│ cautionary tales. "This spirit died with dreams unfulfilled." │
+│ │
+│ PLAYER INCENTIVE: │
+│ Guide characters toward their dreams, not just toward power. │
+│ A fulfilled blacksmith contributes more to the spirit than │
+│ an unfulfilled king. │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -371,17 +371,17 @@ Every character created through procreation has an immutable genetic profile:
 
 ```
 GeneticProfile:
-  characterId:     Guid
-  speciesCode:     string             # Primary species
-  secondarySpecies: string?           # Non-null for hybrids
-  parentAId:       Guid?              # Null for seeded/first-generation
-  parentBId:       Guid?
-  bloodlines:      BloodlineEntry[]   # Named lineages
-  genotype:        GenotypeEntry[]    # Inherited allele pairs
-  phenotype:       PhenotypeEntry[]   # Expressed trait values
-  aptitudes:       AptitudeEntry[]    # Derived skill aptitudes
-  mutations:       MutationEntry[]    # Random mutations applied
-  generationDepth: int                # Generations from earliest tracked ancestor
+ characterId: Guid
+ speciesCode: string # Primary species
+ secondarySpecies: string? # Non-null for hybrids
+ parentAId: Guid? # Null for seeded/first-generation
+ parentBId: Guid?
+ bloodlines: BloodlineEntry[] # Named lineages
+ genotype: GenotypeEntry[] # Inherited allele pairs
+ phenotype: PhenotypeEntry[] # Expressed trait values
+ aptitudes: AptitudeEntry[] # Derived skill aptitudes
+ mutations: MutationEntry[] # Random mutations applied
+ generationDepth: int # Generations from earliest tracked ancestor
 ```
 
 ### Genotype and Phenotype
@@ -391,18 +391,18 @@ The heritage engine uses a simplified genetic model:
 **Genotype** (what was inherited):
 ```
 GenotypeEntry:
-  traitCode:     string        # "physical_strength", "magical_aptitude", etc.
-  alleleA:       float         # Value from parent A (0.0-1.0)
-  alleleB:       float         # Value from parent B (0.0-1.0)
-  dominance:     DominanceModel # DominantHigh, DominantLow, Blending, Codominant, Maternal, Random
+ traitCode: string # "physical_strength", "magical_aptitude", etc.
+ alleleA: float # Value from parent A (0.0-1.0)
+ alleleB: float # Value from parent B (0.0-1.0)
+ dominance: DominanceModel # DominantHigh, DominantLow, Blending, Codominant, Maternal, Random
 ```
 
 **Phenotype** (what is expressed):
 ```
 PhenotypeEntry:
-  traitCode:     string        # Same code as genotype
-  value:         float         # The expressed value
-  expressionRule: DominanceModel # Which dominance model produced this value
+ traitCode: string # Same code as genotype
+ value: float # The expressed value
+ expressionRule: DominanceModel # Which dominance model produced this value
 ```
 
 **Dominance models**:
@@ -424,21 +424,21 @@ Which traits are heritable and how they combine is defined per species in a trai
 
 ```
 HeritableTraitTemplate:
-  speciesCode:     string
-  gameServiceId:   Guid
-  traits:
-    - traitCode:       string         # "physical_strength"
-      displayName:     string         # "Physical Strength"
-      category:        string         # "physical", "mental", "magical", "social"
-      dominanceModel:  DominanceModel # How alleles combine
-      mutationChance:  float          # 0.0-1.0 (default 0.02)
-      mutationRange:   float          # Max shift on mutation (default 0.1)
-      expressionDelay: string?        # Stage at which trait fully expresses
-                                      # null = birth, "adolescent" = puberty
-      personalityMapping: string?     # Which personality trait this feeds
-                                      # e.g., "aggression" → initial aggression bias
-      aptitudeMapping:  string?       # Which aptitude domain this feeds
-                                      # e.g., "smithing" → smithing aptitude
+ speciesCode: string
+ gameServiceId: Guid
+ traits:
+ - traitCode: string # "physical_strength"
+ displayName: string # "Physical Strength"
+ category: string # "physical", "mental", "magical", "social"
+ dominanceModel: DominanceModel # How alleles combine
+ mutationChance: float # 0.0-1.0 (default 0.02)
+ mutationRange: float # Max shift on mutation (default 0.1)
+ expressionDelay: string? # Stage at which trait fully expresses
+ # null = birth, "adolescent" = puberty
+ personalityMapping: string? # Which personality trait this feeds
+ # e.g., "aggression" → initial aggression bias
+ aptitudeMapping: string? # Which aptitude domain this feeds
+ # e.g., "smithing" → smithing aptitude
 ```
 
 **Expression delay**: Some traits don't fully express until a certain lifecycle stage. A child's magical aptitude might be latent until adolescence. Physical strength doesn't peak until adulthood. The heritage engine stores the full genotype at birth but computes phenotype expression progressively, publishing `character-lifecycle.trait.expressed` events when latent traits activate.
@@ -449,12 +449,12 @@ Bloodlines are named genetic lineages that track inheritance across generations:
 
 ```
 BloodlineEntry:
-  bloodlineId:    Guid
-  bloodlineCode:  string         # "blackthorn", "ironforge", "moonwhisper"
-  originCharId:   Guid           # Character who founded/was first tracked member
-  originGameYear: int            # When the bloodline was first identified
-  traitSignature: string[]       # Trait codes that characterize this bloodline
-  generationFrom: int            # Generations from origin to this character
+ bloodlineId: Guid
+ bloodlineCode: string # "blackthorn", "ironforge", "moonwhisper"
+ originCharId: Guid # Character who founded/was first tracked member
+ originGameYear: int # When the bloodline was first identified
+ traitSignature: string[] # Trait codes that characterize this bloodline
+ generationFrom: int # Generations from origin to this character
 ```
 
 **Bloodline formation**: Bloodlines can form organically. When a family line produces 3+ generations with a distinctive trait pattern (e.g., consistently high `magical_aptitude` + low `physical_strength`), the system identifies this as a bloodline signature. Bloodlines can also be manually established (noble houses declaring their lineage, divine intervention marking a family).
@@ -483,10 +483,10 @@ Heritage phenotype traits feed into skill aptitudes:
 
 ```
 aptitude("smithing") =
-    phenotype("physical_strength") * 0.4
-  + phenotype("hand_eye_coordination") * 0.3
-  + phenotype("heat_tolerance") * 0.2
-  + phenotype("patience") * 0.1
+ phenotype("physical_strength") * 0.4
+ + phenotype("hand_eye_coordination") * 0.3
+ + phenotype("heat_tolerance") * 0.2
+ + phenotype("patience") * 0.1
 ```
 
 Aptitude mappings are defined in the heritable trait template. The resulting aptitude values are exposed via the `${heritage.aptitude.*}` variable namespace. These represent **innate potential**, not learned skill. A character with high smithing aptitude learns faster and has a higher skill ceiling, but still needs to practice. A character with low aptitude can still become competent through dedication (Disposition's `master_craft` drive overcoming genetic limitation is a compelling character arc).
@@ -506,84 +506,84 @@ The motivating use case, played out step by step:
 
 ```
 GENERATION 1: Erik and Marta (seeded characters)
-  ┌────────────────────────────────────────────────────────┐
-  │ Erik: physical_strength=0.8, magical_aptitude=0.2      │
-  │        heritage: seeded (no parents), blacksmith        │
-  │ Marta: physical_strength=0.4, magical_aptitude=0.7     │
-  │         heritage: seeded, herbalist                     │
-  │                                                         │
-  │ Marriage: Contract created, SPOUSE bond, household org  │
-  │ Household "Erikson" created (Organization, type:household)│
-  └────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────┐
+ │ Erik: physical_strength=0.8, magical_aptitude=0.2 │
+ │ heritage: seeded (no parents), blacksmith │
+ │ Marta: physical_strength=0.4, magical_aptitude=0.7 │
+ │ heritage: seeded, herbalist │
+ │ │
+ │ Marriage: Contract created, SPOUSE bond, household org │
+ │ Household "Erikson" created (Organization, type:household)│
+ └────────────────────────────────────────────────────────┘
 
 Year 5: First child born (Kael)
-  Heritage computation:
-    physical_strength: alleleA=0.8(Erik), alleleB=0.4(Marta)
-      dominance: Blending → phenotype: 0.6
-    magical_aptitude: alleleA=0.2(Erik), alleleB=0.7(Marta)
-      dominance: DominantHigh → phenotype: 0.7
-    mutation: hand_eye_coordination shifted +0.08 (lucky mutation)
+ Heritage computation:
+ physical_strength: alleleA=0.8(Erik), alleleB=0.4(Marta)
+ dominance: Blending → phenotype: 0.6
+ magical_aptitude: alleleA=0.2(Erik), alleleB=0.7(Marta)
+ dominance: DominantHigh → phenotype: 0.7
+ mutation: hand_eye_coordination shifted +0.08 (lucky mutation)
 
-  Result: Kael has moderate strength AND high magic -- unusual for
-  a blacksmith's son. Aptitude for enchanted smithing emerges.
+ Result: Kael has moderate strength AND high magic -- unusual for
+ a blacksmith's son. Aptitude for enchanted smithing emerges.
 
-  Disposition: Kael seeded with latent "master_craft" drive
-  (family tradition, reduced intensity 0.15 -- may or may not activate)
-  Character-History: backstory seeded "born to Erik the blacksmith
-  and Marta the herbalist in the market district"
+ Disposition: Kael seeded with latent "master_craft" drive
+ (family tradition, reduced intensity 0.15 -- may or may not activate)
+ Character-History: backstory seeded "born to Erik the blacksmith
+ and Marta the herbalist in the market district"
 
 Year 8: Second child born (Lena)
-  Heritage computation:
-    physical_strength: alleleA=0.8(Erik), alleleB=0.4(Marta)
-      dominance: Blending → phenotype: 0.6
-    magical_aptitude: alleleA=0.2(Erik), alleleB=0.7(Marta)
-      dominance: DominantHigh → phenotype: 0.2 (drew Erik's allele)
-    No mutations.
+ Heritage computation:
+ physical_strength: alleleA=0.8(Erik), alleleB=0.4(Marta)
+ dominance: Blending → phenotype: 0.6
+ magical_aptitude: alleleA=0.2(Erik), alleleB=0.7(Marta)
+ dominance: DominantHigh → phenotype: 0.2 (drew Erik's allele)
+ No mutations.
 
-  Result: Lena has moderate strength, low magic. Traditional blacksmith
-  profile. Sibling has very different genetic expression from same parents.
+ Result: Lena has moderate strength, low magic. Traditional blacksmith
+ profile. Sibling has very different genetic expression from same parents.
 
 Year 15: Kael reaches adolescence
-  - Heritage traits fully express (magical_aptitude was delayed)
-  - Character-Personality initialized: aggression baseline from heritage,
-    modified by childhood encounters
-  - Coming-of-age event → Organization role change (dependent → active)
-  - Kael's latent master_craft drive activates (conscientiousness 0.7
-    from heritage + domain engagement threshold met)
+ - Heritage traits fully express (magical_aptitude was delayed)
+ - Character-Personality initialized: aggression baseline from heritage,
+ modified by childhood encounters
+ - Coming-of-age event → Organization role change (dependent → active)
+ - Kael's latent master_craft drive activates (conscientiousness 0.7
+ from heritage + domain engagement threshold met)
 
 Year 18: Kael reaches adulthood
-  - Can now marry, work, own organizations
-  - Aptitude for enchanted smithing visible to other services
-  - Quest prerequisites check: "heritage.aptitude.enchanting > 0.5" → true
+ - Can now marry, work, own organizations
+ - Aptitude for enchanted smithing visible to other services
+ - Quest prerequisites check: "heritage.aptitude.enchanting > 0.5" → true
 
 Year 25: Kael marries Sera (from another family)
-  - Marriage contract, SPOUSE bond, household decision
-  - Sera joins Erikson household (Organization member add)
-  - Bloodline tracking: Sera's "Moonwhisper" bloodline enters the family
+ - Marriage contract, SPOUSE bond, household decision
+ - Sera joins Erikson household (Organization member add)
+ - Bloodline tracking: Sera's "Moonwhisper" bloodline enters the family
 
 Year 28: Kael and Sera have a child (Thane)
-  Heritage: combines Erikson strength/magic with Moonwhisper magic/grace
-  Bloodlines: [Erikson, Moonwhisper]
-  Aptitudes: very high enchanting (both parents have magical aptitude)
-  → "The Erikson-Moonwhisper line of enchanter-smiths begins"
+ Heritage: combines Erikson strength/magic with Moonwhisper magic/grace
+ Bloodlines: [Erikson, Moonwhisper]
+ Aptitudes: very high enchanting (both parents have magical aptitude)
+ → "The Erikson-Moonwhisper line of enchanter-smiths begins"
 
 Year 65: Erik dies of natural causes
-  Fulfillment: master_craft satisfied (0.85), protect_family satisfied (0.7)
-  → fulfillment score: 0.72 (high)
-  → Guardian spirit receives significant logos
-  → Archive: "Erik the master blacksmith, founder of the Erikson line,
-     died fulfilled having passed his craft to his son"
-  → Storyline: inspiration seed (mentor ghost, legacy quest hook)
-  → Organization: succession triggers, Kael becomes household head
-  → Content flywheel: Erik's archive enriches the world's history
+ Fulfillment: master_craft satisfied (0.85), protect_family satisfied (0.7)
+ → fulfillment score: 0.72 (high)
+ → Guardian spirit receives significant logos
+ → Archive: "Erik the master blacksmith, founder of the Erikson line,
+ died fulfilled having passed his craft to his son"
+ → Storyline: inspiration seed (mentor ghost, legacy quest hook)
+ → Organization: succession triggers, Kael becomes household head
+ → Content flywheel: Erik's archive enriches the world's history
 
 GENERATION 3: Thane grows up carrying both bloodlines
-  - Heritage: high enchanting aptitude from genetic convergence
-  - Disposition: latent drive for "transcend_family_legacy" (identity category)
-  - The Erikson enchanted weapons become a known commodity
-  - Storyline can generate: "The Erikson-Moonwhisper dynasty has produced
-    three generations of enchanter-smiths. Their workshop is legendary."
-  - Content from generation 1's archives feeds generation 3's world state
+ - Heritage: high enchanting aptitude from genetic convergence
+ - Disposition: latent drive for "transcend_family_legacy" (identity category)
+ - The Erikson enchanted weapons become a known commodity
+ - Storyline can generate: "The Erikson-Moonwhisper dynasty has produced
+ three generations of enchanter-smiths. Their workshop is legendary."
+ - Content from generation 1's archives feeds generation 3's world state
 ```
 
 ---
@@ -644,14 +644,14 @@ GENERATION 3: Thane grows up carrying both bloodlines
 
 ```yaml
 x-references:
-  character:
-    source_type: lifecycle
-    on_delete: CASCADE
-    cleanup_endpoint: /character-lifecycle/cleanup-by-character
-  realm:
-    source_type: lifecycle
-    on_delete: CASCADE
-    cleanup_endpoint: /character-lifecycle/cleanup-by-realm
+ character:
+ source_type: lifecycle
+ on_delete: CASCADE
+ cleanup_endpoint: /character-lifecycle/cleanup-by-character
+ realm:
+ source_type: lifecycle
+ on_delete: CASCADE
+ cleanup_endpoint: /character-lifecycle/cleanup-by-realm
 ```
 
 ### Lifecycle Profile Store
@@ -726,7 +726,7 @@ x-references:
 | `category` (on trait definition) | B (Content Code) | Opaque string | Game-configurable trait categories (physical, mental, magical, social). Used for grouping and aptitude computation. |
 | `bloodlineCode` | B (Content Code) | Opaque string | Game-configurable bloodline identifiers (blackthorn, ironforge, moonwhisper, etc.). Accumulated through lineage, carries trait signatures. |
 
-### Deprecation Lifecycle (IMPLEMENTATION TENETS — T31)
+### Deprecation Lifecycle (IMPLEMENTATION TENETS —)
 
 All template entities follow **Category B** deprecation (instances persist independently and need the template to remain readable forever):
 
@@ -775,7 +775,7 @@ Templates (`LifecycleTemplate`, `HeritableTraitTemplate`, `HybridTraitTemplate`)
 | `contract.breached` | `HandleContractBreachedAsync` | If a marriage contract is breached: evaluate breach severity. May trigger divorce proceedings or reconciliation period (configurable). |
 | `seed.phase.changed` | `HandleSeedPhaseChangedAsync` | If a household seed gains `dynasty.establish` capability: evaluate whether the family qualifies for bloodline formation. |
 
-**Note**: Character deletion cleanup is handled exclusively via lib-resource cleanup callbacks (`/character-lifecycle/cleanup-by-character`), not via event subscription (per FOUNDATION TENETS — T28 forbids subscribing to `*.deleted` events for dependent data cleanup).
+**Note**: Character deletion cleanup is handled exclusively via lib-resource cleanup callbacks (`/character-lifecycle/cleanup-by-character`), not via event subscription (per FOUNDATION TENETS — forbids subscribing to `*.deleted` events for dependent data cleanup).
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
@@ -830,7 +830,7 @@ Archives lifecycle summary (stages traversed, marriages, children, fulfillment) 
 | `CharacterLifecycleServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (creates 5 stores) |
 | `IMessageBus` | Event publishing |
-| `ITelemetryProvider` | Telemetry span creation for all async helpers (heritage computation, fulfillment calculation, death pipeline, background workers) per T30 |
+| `ITelemetryProvider` | Telemetry span creation for all async helpers (heritage computation, fulfillment calculation, death pipeline, background workers) per tenets |
 | `IEventConsumer` | Worldstate, contract, seed event subscriptions |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 | `ICharacterClient` | Character creation and queries (L2) |
@@ -914,7 +914,7 @@ Seed/write endpoints (`SeedLifecycleTemplate`, `SeedHeritableTraitTemplate`, `Se
 
 - **GetHeritableTraitTemplate** (`/character-lifecycle/template/get-heritable-traits`): Returns heritable trait template for a species.
 
-- **ListTemplates** (`/character-lifecycle/template/list`): Returns all lifecycle and heritage templates for a game service. Supports `includeDeprecated` parameter (default: `false`) per T31.
+- **ListTemplates** (`/character-lifecycle/template/list`): Returns all lifecycle and heritage templates for a game service. Supports `includeDeprecated` parameter (default: `false`) per tenets.
 
 ### Bloodline Management (4 endpoints)
 
@@ -922,7 +922,7 @@ Read endpoints (`GetBloodline`, `ListBloodlines`, `QueryBloodlineMembers`) use `
 
 - **GetBloodline** (`/character-lifecycle/bloodline/get`): Returns bloodline definition: origin, trait signature, member count, generation span.
 
-- **ListBloodlines** (`/character-lifecycle/bloodline/list`): Paged list of bloodlines within a game service. Filterable by trait signature, minimum generation depth, minimum member count. Supports `includeDeprecated` parameter (default: `false`) per T31.
+- **ListBloodlines** (`/character-lifecycle/bloodline/list`): Paged list of bloodlines within a game service. Filterable by trait signature, minimum generation depth, minimum member count. Supports `includeDeprecated` parameter (default: `false`) per tenets.
 
 - **EstablishBloodline** (`/character-lifecycle/bloodline/establish`): Manually establishes a bloodline (divine intervention, noble declaration). Creates bloodline record and assigns to specified character and their ancestors (retroactive). Publishes `character-lifecycle.bloodline.formed`. Requires `developer` role.
 
@@ -1038,67 +1038,67 @@ Implements `IVariableProviderFactory` (via `LifecycleProviderFactory`). Loads fr
 
 ```yaml
 flows:
-  elder_contemplation:
-    - cond:
-        # Getting old, no heir designated
-        - when: "${lifecycle.is_elder && !organization.primary.has_successor}"
-          then:
-            - call: evaluate_succession_options
-            - set:
-                urgency: "${lifecycle.mortality_awareness}"
+ elder_contemplation:
+ - cond:
+ # Getting old, no heir designated
+ - when: "${lifecycle.is_elder && !organization.primary.has_successor}"
+ then:
+ - call: evaluate_succession_options
+ - set:
+ urgency: "${lifecycle.mortality_awareness}"
 
-        # High fulfillment projection -- content with life
-        - when: "${lifecycle.fulfillment_projection > 0.7 && lifecycle.is_elder}"
-          then:
-            - call: mentor_younger_generation
-            - set:
-                mood: "content"
+ # High fulfillment projection -- content with life
+ - when: "${lifecycle.fulfillment_projection > 0.7 && lifecycle.is_elder}"
+ then:
+ - call: mentor_younger_generation
+ - set:
+ mood: "content"
 
-        # Low fulfillment, dying -- desperate for closure
-        - when: "${lifecycle.fulfillment_projection < 0.3 && lifecycle.is_dying}"
-          then:
-            - call: pursue_unfinished_business
-            - set:
-                urgency: "1.0"
-                desperation: "${1.0 - lifecycle.fulfillment_projection}"
+ # Low fulfillment, dying -- desperate for closure
+ - when: "${lifecycle.fulfillment_projection < 0.3 && lifecycle.is_dying}"
+ then:
+ - call: pursue_unfinished_business
+ - set:
+ urgency: "1.0"
+ desperation: "${1.0 - lifecycle.fulfillment_projection}"
 
-  consider_parenthood:
-    - cond:
-        # Married, fertile, drive to protect family
-        - when: "${lifecycle.is_married && lifecycle.can_procreate
-                  && disposition.drive.has_drive.protect_family
-                  && lifecycle.child_count < 3}"
-          then:
-            - call: consider_having_child
-            - set:
-                desire_strength: "${disposition.drive.protect_family.intensity
-                                    * lifecycle.fertility}"
+ consider_parenthood:
+ - cond:
+ # Married, fertile, drive to protect family
+ - when: "${lifecycle.is_married && lifecycle.can_procreate
+ && disposition.drive.has_drive.protect_family
+ && lifecycle.child_count < 3}"
+ then:
+ - call: consider_having_child
+ - set:
+ desire_strength: "${disposition.drive.protect_family.intensity
+ * lifecycle.fertility}"
 
-        # Heritage aptitude alignment -- want a child to carry the legacy
-        - when: "${lifecycle.is_married && lifecycle.can_procreate
-                  && heritage.aptitude.strongest == 'enchanting'
-                  && disposition.drive.has_drive.master_craft}"
-          then:
-            - call: consider_legacy_child
-            # "I want a child who inherits my gift"
+ # Heritage aptitude alignment -- want a child to carry the legacy
+ - when: "${lifecycle.is_married && lifecycle.can_procreate
+ && heritage.aptitude.strongest == 'enchanting'
+ && disposition.drive.has_drive.master_craft}"
+ then:
+ - call: consider_legacy_child
+ # "I want a child who inherits my gift"
 
-  heritage_awareness:
-    - cond:
-        # Member of a notable bloodline
-        - when: "${heritage.has_bloodline.ironforge && lifecycle.is_adult}"
-          then:
-            - cond:
-                # Living up to the family name
-                - when: "${heritage.aptitude.smithing > 0.6
-                          && disposition.drive.has_drive.honor_legacy}"
-                  then:
-                    - call: pursue_family_tradition
-                - otherwise:
-                    # Breaking from tradition
-                    - call: forge_own_path
-                    - set:
-                        identity_conflict: "${heritage.aptitude.smithing
-                                             - disposition.drive.master_craft.intensity}"
+ heritage_awareness:
+ - cond:
+ # Member of a notable bloodline
+ - when: "${heritage.has_bloodline.ironforge && lifecycle.is_adult}"
+ then:
+ - cond:
+ # Living up to the family name
+ - when: "${heritage.aptitude.smithing > 0.6
+ && disposition.drive.has_drive.honor_legacy}"
+ then:
+ - call: pursue_family_tradition
+ - otherwise:
+ # Breaking from tradition
+ - call: forge_own_path
+ - set:
+ identity_conflict: "${heritage.aptitude.smithing
+ - disposition.drive.master_craft.intensity}"
 ```
 
 ---
@@ -1111,79 +1111,79 @@ Lifecycle identity, aging, and heritage computation are owned here. Marriage cer
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    CHARACTER LIFECYCLE FLOW                            │
-│                                                                      │
-│  CREATION                                                            │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐                    │
-│  │ Procreation│  │ Seeded     │  │ Divine     │                    │
-│  │ (parents)  │  │ (world init│  │ (god act)  │                    │
-│  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘                    │
-│        │               │               │                             │
-│        └───────────────┼───────────────┘                             │
-│                        ▼                                             │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │ INFANT (0-2)                                                 │    │
-│  │ Fully dependent. Heritage genotype set but latent.           │    │
-│  │ Cannot be possessed by guardian spirit.                      │    │
-│  └──────────────────────┬──────────────────────────────────────┘    │
-│                          │ worldstate.year-changed (age >= 3)        │
-│                          ▼                                           │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │ CHILD (3-14)                                                 │    │
-│  │ Dependent role. Learning phase. Guardian spirit can possess   │    │
-│  │ with minimal agency. Heritage aptitudes begin to emerge.     │    │
-│  │ THE TUTORIAL GENERATION (from Player Vision).                │    │
-│  └──────────────────────┬──────────────────────────────────────┘    │
-│                          │ worldstate.year-changed (age >= 15)       │
-│                          ▼                                           │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │ ADOLESCENT (15-17)                                           │    │
-│  │ Heritage traits fully express. Personality initializes from  │    │
-│  │ heritage phenotype. Coming-of-age event. Role change in     │    │
-│  │ household (dependent → potential heir).                       │    │
-│  └──────────────────────┬──────────────────────────────────────┘    │
-│                          │ worldstate.year-changed (age >= 18)       │
-│                          ▼                                           │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │ ADULT (18-59)                                                │    │
-│  │ FULL AGENCY. Can marry, work, own organizations, hold any   │    │
-│  │ role. Peak fertility window. PRIMARY GAMEPLAY PHASE.         │    │
-│  │                                                               │    │
-│  │ Events: marriage, procreation, career, adventures, drives    │    │
-│  │ Interactions: Quest, Organization, Disposition, Hearsay      │    │
-│  └──────────────────────┬──────────────────────────────────────┘    │
-│                          │ worldstate.year-changed (age >= 60)       │
-│                          ▼                                           │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │ ELDER (60-79)                                                │    │
-│  │ Health declining. Fertility reduced. Wisdom bonus.           │    │
-│  │ Succession planning urgency increases. Legacy drives         │    │
-│  │ intensify. Mentoring younger generation.                     │    │
-│  └──────────────────────┬──────────────────────────────────────┘    │
-│                          │ worldstate.year-changed (age >= death yr) │
-│                          ▼                                           │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │ DYING                                                        │    │
-│  │ Final fulfillment calc begins. Last-will contract triggers.  │    │
-│  │ Disposition drives evaluated for closure. Health severely    │    │
-│  │ reduced. The clock is running out.                           │    │
-│  └──────────────────────┬──────────────────────────────────────┘    │
-│                          │ Death processing triggered                │
-│                          ▼                                           │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │ DEATH → CONTENT FLYWHEEL                                    │    │
-│  │                                                               │    │
-│  │ 1. Fulfillment score calculated from Disposition drives      │    │
-│  │ 2. Guardian spirit receives logos (proportional to fulfillment│   │
-│  │ 3. Archive compression triggered across all character-* svcs │    │
-│  │ 4. Organization succession executes                          │    │
-│  │ 5. Inheritance processed (heirlooms, testament)              │    │
-│  │ 6. Afterlife pathway determined                              │    │
-│  │ 7. Storyline receives archive → narrative seeds generated    │    │
-│  │ 8. Regional watchers evaluate for narrative opportunity      │    │
-│  │                                                               │    │
-│  │ "Death creates, not destroys."                               │    │
-│  └─────────────────────────────────────────────────────────────┘    │
+│ CHARACTER LIFECYCLE FLOW │
+│ │
+│ CREATION │
+│ ┌────────────┐ ┌────────────┐ ┌────────────┐ │
+│ │ Procreation│ │ Seeded │ │ Divine │ │
+│ │ (parents) │ │ (world init│ │ (god act) │ │
+│ └─────┬──────┘ └─────┬──────┘ └─────┬──────┘ │
+│ │ │ │ │
+│ └───────────────┼───────────────┘ │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ INFANT (0-2) │ │
+│ │ Fully dependent. Heritage genotype set but latent. │ │
+│ │ Cannot be possessed by guardian spirit. │ │
+│ └──────────────────────┬──────────────────────────────────────┘ │
+│ │ worldstate.year-changed (age >= 3) │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ CHILD (3-14) │ │
+│ │ Dependent role. Learning phase. Guardian spirit can possess │ │
+│ │ with minimal agency. Heritage aptitudes begin to emerge. │ │
+│ │ THE TUTORIAL GENERATION (from Player Vision). │ │
+│ └──────────────────────┬──────────────────────────────────────┘ │
+│ │ worldstate.year-changed (age >= 15) │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ ADOLESCENT (15-17) │ │
+│ │ Heritage traits fully express. Personality initializes from │ │
+│ │ heritage phenotype. Coming-of-age event. Role change in │ │
+│ │ household (dependent → potential heir). │ │
+│ └──────────────────────┬──────────────────────────────────────┘ │
+│ │ worldstate.year-changed (age >= 18) │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ ADULT (18-59) │ │
+│ │ FULL AGENCY. Can marry, work, own organizations, hold any │ │
+│ │ role. Peak fertility window. PRIMARY GAMEPLAY PHASE. │ │
+│ │ │ │
+│ │ Events: marriage, procreation, career, adventures, drives │ │
+│ │ Interactions: Quest, Organization, Disposition, Hearsay │ │
+│ └──────────────────────┬──────────────────────────────────────┘ │
+│ │ worldstate.year-changed (age >= 60) │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ ELDER (60-79) │ │
+│ │ Health declining. Fertility reduced. Wisdom bonus. │ │
+│ │ Succession planning urgency increases. Legacy drives │ │
+│ │ intensify. Mentoring younger generation. │ │
+│ └──────────────────────┬──────────────────────────────────────┘ │
+│ │ worldstate.year-changed (age >= death yr) │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ DYING │ │
+│ │ Final fulfillment calc begins. Last-will contract triggers. │ │
+│ │ Disposition drives evaluated for closure. Health severely │ │
+│ │ reduced. The clock is running out. │ │
+│ └──────────────────────┬──────────────────────────────────────┘ │
+│ │ Death processing triggered │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ DEATH → CONTENT FLYWHEEL │ │
+│ │ │ │
+│ │ 1. Fulfillment score calculated from Disposition drives │ │
+│ │ 2. Guardian spirit receives logos (proportional to fulfillment│ │
+│ │ 3. Archive compression triggered across all character-* svcs │ │
+│ │ 4. Organization succession executes │ │
+│ │ 5. Inheritance processed (heirlooms, testament) │ │
+│ │ 6. Afterlife pathway determined │ │
+│ │ 7. Storyline receives archive → narrative seeds generated │ │
+│ │ 8. Regional watchers evaluate for narrative opportunity │ │
+│ │ │ │
+│ │ "Death creates, not destroys." │ │
+│ └─────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1191,71 +1191,71 @@ Lifecycle identity, aging, and heritage computation are owned here. Marriage cer
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    HERITAGE COMPUTATION                                │
-│                                                                      │
-│  PARENT A (Erik)                    PARENT B (Marta)                 │
-│  ┌─────────────────────┐           ┌─────────────────────┐          │
-│  │ Genotype:            │           │ Genotype:            │          │
-│  │  strength: [0.8, 0.6]│           │  strength: [0.4, 0.3]│          │
-│  │  magic:    [0.2, 0.1]│           │  magic:    [0.7, 0.8]│          │
-│  │  patience: [0.6, 0.5]│           │  patience: [0.7, 0.4]│          │
-│  │                       │           │                       │          │
-│  │ Bloodlines: [Erikson] │           │ Bloodlines: [Meadow] │          │
-│  └──────────┬────────────┘           └──────────┬────────────┘          │
-│             │                                    │                     │
-│             │    ┌───────────────────────┐       │                     │
-│             └───►│  RECOMBINATION        │◄──────┘                     │
-│                  │                       │                             │
-│                  │  For each trait:       │                             │
-│                  │  1. Pick one allele    │                             │
-│                  │     from each parent   │                             │
-│                  │     (random selection) │                             │
-│                  │                       │                             │
-│                  │  2. Check mutation     │                             │
-│                  │     (2% chance per     │                             │
-│                  │      trait)            │                             │
-│                  │                       │                             │
-│                  │  3. Apply dominance    │                             │
-│                  │     model to produce   │                             │
-│                  │     phenotype          │                             │
-│                  └───────────┬───────────┘                             │
-│                              │                                         │
-│                              ▼                                         │
-│  CHILD (Kael)                                                         │
-│  ┌─────────────────────────────────────────────────────┐              │
-│  │ Genotype:                                            │              │
-│  │   strength: alleleA=0.8(Erik), alleleB=0.4(Marta)   │              │
-│  │   magic:    alleleA=0.2(Erik), alleleB=0.7(Marta)   │              │
-│  │   patience: alleleA=0.6(Erik), alleleB=0.7(Marta)   │              │
-│  │                                                       │              │
-│  │ Phenotype (after dominance):                          │              │
-│  │   strength: 0.6  (Blending: (0.8+0.4)/2)             │              │
-│  │   magic:    0.7  (DominantHigh: max(0.2, 0.7))      │              │
-│  │   patience: 0.65 (Blending: (0.6+0.7)/2)            │              │
-│  │                                                       │              │
-│  │ Aptitudes (derived from phenotype):                   │              │
-│  │   smithing:    0.55 (str*0.4 + patience*0.4 + ...)   │              │
-│  │   enchanting:  0.68 (magic*0.6 + patience*0.3 + ...) │              │
-│  │   ← Kael has inherited a gift for enchanted smithing! │              │
-│  │                                                       │              │
-│  │ Bloodlines: [Erikson, Meadow]                         │              │
-│  │ Mutations: hand_eye +0.08 (lucky!)                    │              │
-│  └─────────────────────────────────────────────────────┘              │
-│                                                                      │
-│  WHAT THIS FEEDS:                                                    │
-│  ┌──────────────────────────────────────────────┐                   │
-│  │ Character-Personality: initial trait bias      │                   │
-│  │   (patience 0.65 → conscientiousness bias)    │                   │
-│  │                                                │                   │
-│  │ Disposition: family drive seeds                │                   │
-│  │   (blacksmith family → latent master_craft)    │                   │
-│  │                                                │                   │
-│  │ Actor: ${heritage.aptitude.enchanting} = 0.68  │                   │
-│  │   (behavior expressions use inherited talent)  │                   │
-│  │                                                │                   │
-│  │ Quest: prerequisite checks                     │                   │
-│  │   ("heritage.aptitude.enchanting > 0.5" ✓)     │                   │
-│  └──────────────────────────────────────────────┘                   │
+│ HERITAGE COMPUTATION │
+│ │
+│ PARENT A (Erik) PARENT B (Marta) │
+│ ┌─────────────────────┐ ┌─────────────────────┐ │
+│ │ Genotype: │ │ Genotype: │ │
+│ │ strength: [0.8, 0.6]│ │ strength: [0.4, 0.3]│ │
+│ │ magic: [0.2, 0.1]│ │ magic: [0.7, 0.8]│ │
+│ │ patience: [0.6, 0.5]│ │ patience: [0.7, 0.4]│ │
+│ │ │ │ │ │
+│ │ Bloodlines: [Erikson] │ │ Bloodlines: [Meadow] │ │
+│ └──────────┬────────────┘ └──────────┬────────────┘ │
+│ │ │ │
+│ │ ┌───────────────────────┐ │ │
+│ └───►│ RECOMBINATION │◄──────┘ │
+│ │ │ │
+│ │ For each trait: │ │
+│ │ 1. Pick one allele │ │
+│ │ from each parent │ │
+│ │ (random selection) │ │
+│ │ │ │
+│ │ 2. Check mutation │ │
+│ │ (2% chance per │ │
+│ │ trait) │ │
+│ │ │ │
+│ │ 3. Apply dominance │ │
+│ │ model to produce │ │
+│ │ phenotype │ │
+│ └───────────┬───────────┘ │
+│ │ │
+│ ▼ │
+│ CHILD (Kael) │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ Genotype: │ │
+│ │ strength: alleleA=0.8(Erik), alleleB=0.4(Marta) │ │
+│ │ magic: alleleA=0.2(Erik), alleleB=0.7(Marta) │ │
+│ │ patience: alleleA=0.6(Erik), alleleB=0.7(Marta) │ │
+│ │ │ │
+│ │ Phenotype (after dominance): │ │
+│ │ strength: 0.6 (Blending: (0.8+0.4)/2) │ │
+│ │ magic: 0.7 (DominantHigh: max(0.2, 0.7)) │ │
+│ │ patience: 0.65 (Blending: (0.6+0.7)/2) │ │
+│ │ │ │
+│ │ Aptitudes (derived from phenotype): │ │
+│ │ smithing: 0.55 (str*0.4 + patience*0.4 + ...) │ │
+│ │ enchanting: 0.68 (magic*0.6 + patience*0.3 + ...) │ │
+│ │ ← Kael has inherited a gift for enchanted smithing! │ │
+│ │ │ │
+│ │ Bloodlines: [Erikson, Meadow] │ │
+│ │ Mutations: hand_eye +0.08 (lucky!) │ │
+│ └─────────────────────────────────────────────────────┘ │
+│ │
+│ WHAT THIS FEEDS: │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ Character-Personality: initial trait bias │ │
+│ │ (patience 0.65 → conscientiousness bias) │ │
+│ │ │ │
+│ │ Disposition: family drive seeds │ │
+│ │ (blacksmith family → latent master_craft) │ │
+│ │ │ │
+│ │ Actor: ${heritage.aptitude.enchanting} = 0.68 │ │
+│ │ (behavior expressions use inherited talent) │ │
+│ │ │ │
+│ │ Quest: prerequisite checks │ │
+│ │ ("heritage.aptitude.enchanting > 0.5" ✓) │ │
+│ └──────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1393,23 +1393,23 @@ The question arises: why not add aging to Character or genetics to Character-His
 
 The pipeline with lifecycle:
 ```
-Species (species-level template)  ─────────────────────────────────────┐
-Heritage (individual genetic inheritance)  ────────────────────────────┤
-                                                                       ▼
-                                                            CHARACTER-LIFECYCLE
-                                                            (what they're born with
-                                                             + where they are in life)
-                                                                       │
-                         ┌─────────────────┬───────────────┬──────────┘
-                         ▼                 ▼               ▼
-                   Personality        Disposition      Actor ABML
-                   (initial traits)   (initial drives) (${heritage.*}
-                                                        ${lifecycle.*})
-                         │                 │
-                         ▼                 ▼
-                   Experience shapes    Experience shapes
-                   who they become      what they aspire to
-                   (mutable)            (mutable)
+Species (species-level template) ─────────────────────────────────────┐
+Heritage (individual genetic inheritance) ────────────────────────────┤
+ ▼
+ CHARACTER-LIFECYCLE
+ (what they're born with
+ + where they are in life)
+ │
+ ┌─────────────────┬───────────────┬──────────┘
+ ▼ ▼ ▼
+ Personality Disposition Actor ABML
+ (initial traits) (initial drives) (${heritage.*}
+ ${lifecycle.*})
+ │ │
+ ▼ ▼
+ Experience shapes Experience shapes
+ who they become what they aspire to
+ (mutable) (mutable)
 ```
 
 Heritage provides the NATURE. Personality/Disposition/History provide the NURTURE. Lifecycle provides the CLOCK that connects them across generations.
@@ -1464,7 +1464,7 @@ Heritage provides the NATURE. Personality/Disposition/History provide the NURTUR
 
 9. **Polygamous marriage support**: `spouseCharacterIds` and `marriageContractIds` are arrays, not single values. Marriage eligibility does not check "is already married" — games that want monogamy enforce it via marriage contract template terms or cultural norms through the Faction/Obligation system, not lifecycle code. The `${lifecycle.spouse_count}` and `${lifecycle.spouse_ids}` variables expose the full spouse set to ABML. This is game-configurable, not hardcoded.
 
-10. **Guardian spirit seed resolution (T32 compliance)**: Death processing must resolve `characterId → household Organization → account owner → guardian spirit seed` without accepting `accountId` in the request. The resolution chain is: query Organization for the character's household, query the household's account owner, then record growth on the account's guardian seed via `ISeedClient`. This respects the T32 account identity boundary — lifecycle never receives or stores accountId directly.
+10. **Guardian spirit seed resolution (compliance)**: Death processing must resolve `characterId → household Organization → account owner → guardian spirit seed` without accepting `accountId` in the request. The resolution chain is: query Organization for the character's household, query the household's account owner, then record growth on the account's guardian seed via `ISeedClient`. This respects the account identity boundary — lifecycle never receives or stores accountId directly.
 
 ---
 
@@ -1474,7 +1474,7 @@ Heritage provides the NATURE. Personality/Disposition/History provide the NURTUR
 
 ### Completed
 
-- ~~**Dependency table: lib-inventory and lib-currency misclassified as soft**~~: **FIXED** (2026-03-08) - Moved lib-inventory (L2) and lib-currency (L2) from soft dependencies to hard dependencies per T4/SERVICE-HIERARCHY.md. L4 services MUST use constructor injection for L0/L1/L2 deps. Also added `IInventoryClient` and `ICurrencyClient` to DI Services table.
+- ~~**Dependency table: lib-inventory and lib-currency misclassified as soft**~~: **FIXED** (2026-03-08) - Moved lib-inventory (L2) and lib-currency (L2) from soft dependencies to hard dependencies per tenets/SERVICE-HIERARCHY.md. L4 services MUST use constructor injection for L0/L1/L2 deps. Also added `IInventoryClient` and `ICurrencyClient` to DI Services table.
 
 ### Active
 

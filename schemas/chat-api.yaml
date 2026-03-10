@@ -137,6 +137,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/RoomTypeResponse'
 
+  /chat/type/clean-deprecated:
+    post:
+      operationId: CleanDeprecatedRoomTypes
+      summary: Clean deprecated room types with zero remaining rooms
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        room types and permanently removes those with zero remaining rooms,
+        subject to an optional grace period. Publishes room-type.deleted events for
+        each removed type. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+
   # ==========================================================================
   # Room Management
   # ==========================================================================
@@ -1071,6 +1097,8 @@ components:
           description: Reason for deprecation (recommended for audit trail)
 
     RoomTypeResponse:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: Room type definition with current configuration and status
@@ -1081,7 +1109,6 @@ components:
         - persistenceMode
         - allowAnonymousSenders
         - status
-        - isDeprecated
         - createdAt
       properties:
         code:
@@ -1137,19 +1164,6 @@ components:
         status:
           $ref: '#/components/schemas/RoomTypeStatus'
           description: Current lifecycle status of the room type
-        isDeprecated:
-          type: boolean
-          description: Whether this room type has been deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When this room type was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason provided when this room type was deprecated
         createdAt:
           type: string
           format: date-time

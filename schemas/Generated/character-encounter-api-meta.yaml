@@ -102,35 +102,31 @@ paths:
         \           \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"Indifference\"\
         ,\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeResponse\"\
-        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"typeId\",\n                \"code\",\n                \"name\",\n                \"isBuiltIn\"\
-        ,\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n                },\n\
-        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Display name\"\n                },\n                \"description\": {\n              \
-        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Description\"\
-        \n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether this is a built-in type\"\n                },\n                \"defaultEmotionalImpact\"\
-        : {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Suggested emotional response\"\n                },\n                \"sortOrder\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\n     \
-        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether the type is active\"\n                },\n                \"isDeprecated\": {\n         \
-        \           \"type\": \"boolean\",\n                    \"description\": \"Whether this type has been deprecated\"\
-        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the type was deprecated\"\n                },\n                \"deprecationReason\": {\n               \
-        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why the
-        type was deprecated\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the type was created\"\
-        \n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n\
-        \                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\"\
-        ,\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"\
-        Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
+        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"typeId\",\n                \"code\",\n                \"name\",\n  \
+        \              \"isBuiltIn\",\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n       \
+        \         },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n  \
+        \                  \"description\": \"Display name\"\n                },\n                \"description\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description\"\n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this is a built-in type\"\n                },\n                \"\
+        defaultEmotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Suggested emotional response\"\n                },\n             \
+        \   \"sortOrder\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\
+        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
+        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
+        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
+        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
+        \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new encounter type\",\n    \"description\": \"Creates a new encounter
         type code for game-specific encounter categories.\\nBuilt-in types (COMBAT, TRADE, etc.) cannot be created via this
         endpoint.\\n\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n    \"\
@@ -165,35 +161,31 @@ paths:
         {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code of the encounter
         type\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeResponse\"\
-        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"typeId\",\n                \"code\",\n                \"name\",\n                \"isBuiltIn\"\
-        ,\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n                },\n\
-        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Display name\"\n                },\n                \"description\": {\n              \
-        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Description\"\
-        \n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether this is a built-in type\"\n                },\n                \"defaultEmotionalImpact\"\
-        : {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Suggested emotional response\"\n                },\n                \"sortOrder\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\n     \
-        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether the type is active\"\n                },\n                \"isDeprecated\": {\n         \
-        \           \"type\": \"boolean\",\n                    \"description\": \"Whether this type has been deprecated\"\
-        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the type was deprecated\"\n                },\n                \"deprecationReason\": {\n               \
-        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why the
-        type was deprecated\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the type was created\"\
-        \n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n\
-        \                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\"\
-        ,\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"\
-        Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
+        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"typeId\",\n                \"code\",\n                \"name\",\n  \
+        \              \"isBuiltIn\",\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n       \
+        \         },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n  \
+        \                  \"description\": \"Display name\"\n                },\n                \"description\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description\"\n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this is a built-in type\"\n                },\n                \"\
+        defaultEmotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Suggested emotional response\"\n                },\n             \
+        \   \"sortOrder\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\
+        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
+        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
+        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
+        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
+        \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get encounter type by code\",\n    \"description\": \"Retrieve an encounter
         type by its unique code.\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getEncounterType\"\n}"
@@ -236,35 +228,31 @@ paths:
         \                      \"$ref\": \"#/$defs/EncounterTypeResponse\"\n                    },\n                    \"\
         description\": \"List of encounter types\"\n                },\n                \"totalCount\": {\n              \
         \      \"type\": \"integer\",\n                    \"description\": \"Total number of types\"\n                }\n\
-        \            }\n        },\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n        \
-        \    \"required\": [\n                \"typeId\",\n                \"code\",\n                \"name\",\n        \
-        \        \"isBuiltIn\",\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\
-        \n            ],\n            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n       \
-        \         },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Unique code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n  \
-        \                  \"description\": \"Display name\"\n                },\n                \"description\": {\n   \
-        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        \            }\n        },\n        \"EncounterTypeResponse\": {\n            \"allOf\": [\n                {\n  \
+        \                  \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n  \
+        \          \"description\": \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"typeId\",\n                \"code\",\n                \"name\",\n\
+        \                \"isBuiltIn\",\n                \"sortOrder\",\n                \"isActive\",\n                \"\
+        createdAt\"\n            ],\n            \"properties\": {\n                \"typeId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\
+        \n                },\n                \"code\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Unique code\"\n                },\n                \"name\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Display name\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Description\"\n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\"\
         ,\n                    \"description\": \"Whether this is a built-in type\"\n                },\n                \"\
         defaultEmotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Suggested emotional response\"\n                },\n             \
         \   \"sortOrder\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\
         \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"description\": \"Whether the type is active\"\n                },\n                \"isDeprecated\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this type has been deprecated\"\
-        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the type was deprecated\"\n                },\n                \"deprecationReason\": {\n               \
-        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why the
-        type was deprecated\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the type was created\"\
-        \n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n\
-        \                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\"\
-        ,\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"\
-        Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
+        \      \"description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
+        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
+        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
+        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
+        \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all encounter types\",\n    \"description\": \"Retrieve all encounter
         types including built-in and custom types.\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n  \
         \  \"deprecated\": false,\n    \"operationId\": \"listEncounterTypes\"\n}"
@@ -316,35 +304,31 @@ paths:
         ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
         \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeResponse\"\
-        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"typeId\",\n                \"code\",\n                \"name\",\n                \"isBuiltIn\"\
-        ,\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n                },\n\
-        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Display name\"\n                },\n                \"description\": {\n              \
-        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Description\"\
-        \n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether this is a built-in type\"\n                },\n                \"defaultEmotionalImpact\"\
-        : {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Suggested emotional response\"\n                },\n                \"sortOrder\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\n     \
-        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether the type is active\"\n                },\n                \"isDeprecated\": {\n         \
-        \           \"type\": \"boolean\",\n                    \"description\": \"Whether this type has been deprecated\"\
-        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the type was deprecated\"\n                },\n                \"deprecationReason\": {\n               \
-        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why the
-        type was deprecated\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the type was created\"\
-        \n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n\
-        \                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\"\
-        ,\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"\
-        Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
+        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"typeId\",\n                \"code\",\n                \"name\",\n  \
+        \              \"isBuiltIn\",\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n       \
+        \         },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n  \
+        \                  \"description\": \"Display name\"\n                },\n                \"description\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description\"\n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this is a built-in type\"\n                },\n                \"\
+        defaultEmotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Suggested emotional response\"\n                },\n             \
+        \   \"sortOrder\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\
+        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
+        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
+        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
+        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
+        \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update encounter type\",\n    \"description\": \"Update an existing encounter
         type. Built-in types can only have their\\ndescription and defaultEmotionalImpact updated.\\n\",\n    \"tags\": [\n\
         \        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateEncounterType\"\
@@ -387,40 +371,74 @@ paths:
         nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation
         (recommended for audit trail)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeResponse\"\
-        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"typeId\",\n                \"code\",\n                \"name\",\n                \"isBuiltIn\"\
-        ,\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
-        \            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n                },\n\
-        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Display name\"\n                },\n                \"description\": {\n              \
-        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Description\"\
-        \n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether this is a built-in type\"\n                },\n                \"defaultEmotionalImpact\"\
-        : {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Suggested emotional response\"\n                },\n                \"sortOrder\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\n     \
-        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether the type is active\"\n                },\n                \"isDeprecated\": {\n         \
-        \           \"type\": \"boolean\",\n                    \"description\": \"Whether this type has been deprecated\"\
-        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the type was deprecated\"\n                },\n                \"deprecationReason\": {\n               \
-        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why the
-        type was deprecated\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the type was created\"\
-        \n                }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n\
-        \                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n                \"Respect\"\
-        ,\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\",\n                \"\
-        Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
+        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"typeId\",\n                \"code\",\n                \"name\",\n  \
+        \              \"isBuiltIn\",\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n       \
+        \         },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n  \
+        \                  \"description\": \"Display name\"\n                },\n                \"description\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description\"\n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this is a built-in type\"\n                },\n                \"\
+        defaultEmotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Suggested emotional response\"\n                },\n             \
+        \   \"sortOrder\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\
+        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
+        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
+        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
+        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
+        \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate encounter type\",\n    \"description\": \"Marks an encounter
         type as deprecated. Deprecated types remain readable\\nforever but new encounters cannot reference them.\\nCategory
         B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\\nno delete. Idempotent \\u2014 returns OK if
         already deprecated.\\n\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"deprecateEncounterType\"\n}"
+  /character-encounter/type/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedEncounterTypes
+      tags:
+      - Encounter Type Management
+      summary: Clean deprecated encounter types with zero remaining encounters
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        encounter types and permanently removes those with zero remaining encounters
+        referencing them, subject to an optional grace period. Publishes
+        encounter-type.deleted events for each removed type.
+        Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean deprecated encounter types with zero remaining encounters\",\n  \
+        \  \"description\": \"Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\\nencounter types
+        and permanently removes those with zero remaining encounters\\nreferencing them, subject to an optional grace period.
+        Publishes\\nencounter-type.deleted events for each removed type.\\nIdempotent and safe to call at any frequency.\\
+        nSupports dry-run mode for admin panel preview.\\n\",\n    \"tags\": [\n        \"Encounter Type Management\"\n  \
+        \  ],\n    \"deprecated\": false,\n    \"operationId\": \"cleanDeprecatedEncounterTypes\"\n}"
   /character-encounter/type/seed:
     post:
       summary: Seed default encounter types
@@ -472,6 +490,7 @@ paths:
       description: |
         Records a new encounter between two or more characters. Creates the shared
         encounter record and individual perspectives for each participant.
+        Rejects with 400 if encounter type is deprecated.
 
         Perspectives can be provided in the request or will be auto-generated with
         default values if not specified.
@@ -490,7 +509,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/EncounterResponse'
         '400':
-          description: Invalid encounter data (requires at least 2 participants)
+          description: Invalid encounter data (requires at least 2 participants, or encounter type is deprecated)
         '404':
           description: One or more characters not found
         '409':
@@ -630,9 +649,9 @@ paths:
         \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Record new encounter with perspectives\",\n    \"description\": \"Records
         a new encounter between two or more characters. Creates the shared\\nencounter record and individual perspectives
-        for each participant.\\n\\nPerspectives can be provided in the request or will be auto-generated with\\ndefault values
-        if not specified.\\n\",\n    \"tags\": [\n        \"Recording\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
-        : \"recordEncounter\"\n}"
+        for each participant.\\nRejects with 400 if encounter type is deprecated.\\n\\nPerspectives can be provided in the
+        request or will be auto-generated with\\ndefault values if not specified.\\n\",\n    \"tags\": [\n        \"Recording\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"recordEncounter\"\n}"
   /character-encounter/query/by-character:
     post:
       summary: Get character's encounters (paginated)
@@ -2469,6 +2488,8 @@ components:
           default: false
           description: Preview changes without applying
     EncounterTypeResponse:
+      allOf:
+      - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Response containing an encounter type
       additionalProperties: false
@@ -2508,18 +2529,6 @@ components:
         isActive:
           type: boolean
           description: Whether the type is active
-        isDeprecated:
-          type: boolean
-          description: Whether this type has been deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the type was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Why the type was deprecated
         createdAt:
           type: string
           format: date-time

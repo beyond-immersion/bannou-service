@@ -127,17 +127,17 @@ When an actor needs data from another service, the correct pattern depends on th
 
 ```
 Is this the actor's own cognitive state (memories, perceptions)?
-    YES → Shared store (agent-memories, owned by lib-behavior cognition pipeline)
-    NO  ↓
+ YES → Shared store (agent-memories, owned by lib-behavior cognition pipeline)
+ NO ↓
 
 Is this character attribute data for ABML expressions?
-    YES → Variable Provider Factory (cached API calls, DI-discovered)
-          Owning L4 plugin provides the factory + cache.
-    NO  ↓
+ YES → Variable Provider Factory (cached API calls, DI-discovered)
+ Owning L4 plugin provides the factory + cache.
+ NO ↓
 
 Is consistency critical (currency balance, item ownership)?
-    YES → Direct API call via lib-mesh (authoritative source)
-    NO  → Variable Provider Factory with appropriate cache TTL
+ YES → Direct API call via lib-mesh (authoritative source)
+ NO → Variable Provider Factory with appropriate cache TTL
 ```
 
 Current providers: personality, combat, backstory, encounters, obligations, faction, quest, seed, location, transit, world, currency, inventory, relationship (see Registered Provider Factories table above).
@@ -181,228 +181,228 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 Deployment Modes
 ==================
 
-  BANNOU MODE (local, development):
-  ┌─────────────────────────────────────────────────────────┐
-  │  ActorService (main process)                            │
-  │       │                                                  │
-  │       ├── ActorRegistry (ConcurrentDictionary)          │
-  │       │    ├── actor-1 → ActorRunner                    │
-  │       │    ├── actor-2 → ActorRunner                    │
-  │       │    └── actor-3 → ActorRunner                    │
-  │       │                                                  │
-  │       └── Direct spawn/stop (no network)                │
-  └─────────────────────────────────────────────────────────┘
+ BANNOU MODE (local, development):
+ ┌─────────────────────────────────────────────────────────┐
+ │ ActorService (main process) │
+ │ │ │
+ │ ├── ActorRegistry (ConcurrentDictionary) │
+ │ │ ├── actor-1 → ActorRunner │
+ │ │ ├── actor-2 → ActorRunner │
+ │ │ └── actor-3 → ActorRunner │
+ │ │ │
+ │ └── Direct spawn/stop (no network) │
+ └─────────────────────────────────────────────────────────┘
 
-  POOL MODE (distributed, production):
-  ┌─────────────────────────────────────────────────────────┐
-  │  Control Plane (ActorService + ActorPoolManager)        │
-  │       │                                                  │
-  │       ├── AcquireNode → least-loaded pool node          │
-  │       ├── Publish: actor.node.{appId}.spawn             │
-  │       └── Track: actor-assignments store                │
-  └──────────────────────┬──────────────────────────────────┘
-                         │ RabbitMQ command topics
-          ┌──────────────┼──────────────┐
-          ▼              ▼              ▼
-  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-  │ Pool Node A │ │ Pool Node B │ │ Pool Node C │
-  │ (cap: 100)  │ │ (cap: 100)  │ │ (cap: 100)  │
-  │             │ │             │ │             │
-  │ Actors:     │ │ Actors:     │ │ Actors:     │
-  │  runner-1   │ │  runner-4   │ │  runner-7   │
-  │  runner-2   │ │  runner-5   │ │  runner-8   │
-  │  runner-3   │ │  runner-6   │ │             │
-  │             │ │             │ │             │
-  │ Heartbeat ──┼─┼─► control   │ │ Heartbeat ──┤
-  └─────────────┘ └─────────────┘ └─────────────┘
+ POOL MODE (distributed, production):
+ ┌─────────────────────────────────────────────────────────┐
+ │ Control Plane (ActorService + ActorPoolManager) │
+ │ │ │
+ │ ├── AcquireNode → least-loaded pool node │
+ │ ├── Publish: actor.node.{appId}.spawn │
+ │ └── Track: actor-assignments store │
+ └──────────────────────┬──────────────────────────────────┘
+ │ RabbitMQ command topics
+ ┌──────────────┼──────────────┐
+ ▼ ▼ ▼
+ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+ │ Pool Node A │ │ Pool Node B │ │ Pool Node C │
+ │ (cap: 100) │ │ (cap: 100) │ │ (cap: 100) │
+ │ │ │ │ │ │
+ │ Actors: │ │ Actors: │ │ Actors: │
+ │ runner-1 │ │ runner-4 │ │ runner-7 │
+ │ runner-2 │ │ runner-5 │ │ runner-8 │
+ │ runner-3 │ │ runner-6 │ │ │
+ │ │ │ │ │ │
+ │ Heartbeat ──┼─┼─► control │ │ Heartbeat ──┤
+ └─────────────┘ └─────────────┘ └─────────────┘
 
 
 ActorRunner Behavior Loop (Two-Phase Execution)
 ==================================================
 
-  StartAsync()
-       │
-       ├── InitializeBehaviorAsync()
-       │    ├── Load ABML document (cached, hot-reloadable)
-       │    └── BuildCognitionPipeline()
-       │         ├── Resolve template: config → ABML metadata → category default
-       │         ├── Merge overrides: template L1 + instance L2
-       │         └── _cognitionPipeline = builder.Build(templateId, overrides)
-       │              └── null template ID → no pipeline (ABML-only)
-       │              └── null result with ID → Error (misconfigured)
-       │
-       ├── If CharacterId set at spawn:
-       │    ├── SetupPerceptionSubscriptionAsync()
-       │    └── Publish ActorCharacterBoundEvent
-       │
-       ├── [Later, at runtime] BindCharacterAsync(characterId):
-       │    ├── Guard: already bound → InvalidOperationException
-       │    ├── Set CharacterId = characterId
-       │    ├── SetupPerceptionSubscriptionAsync()
-       │    └── Publish ActorCharacterBoundEvent
-       │
-       └── RunBehaviorLoopAsync() [while !cancelled]
-                │
-                ├── Phase 1: COGNITION (if pipeline exists)
-                │    ├── Capture pipeline to local (TOCTOU safety)
-                │    ├── Drain perception queue → perceptions list
-                │    │    ├── urgency < FilterThreshold → drop
-                │    │    └── urgency ≥ MemoryThreshold → store as memory
-                │    ├── Build CognitionContext (entityId, handler registry)
-                │    ├── pipeline.ProcessBatchAsync(perceptions, context)
-                │    └── Apply result → working memory, replan flags
-                │         └── On failure: store perceptions directly (no loss)
-                │
-                ├── Phase 2: BEHAVIOR (always)
-                │    ├── Build execution scope:
-                │    │    ├── agent: {id, behavior_id, character_id, category}
-                │    │    ├── feelings: {joy: 0.5, anger: 0.2, ...}
-                │    │    ├── goals: {primary, secondary[], parameters{}}
-                │    │    ├── memories: {key → value (with TTL)}
-                │    │    ├── working_memory: {perception:type:source → data}
-                │    │    ├── personality: {traits, combat_style, risk}
-                │    │    └── backstory: {elements[]}
-                │    │
-                │    └── Execute flow: on_tick (preferred) or main
-                │
-                ├── 3. PublishStateUpdateIfNeededAsync()
-                │    └── If CharacterId set: publish character.state-update
-                │
-                ├── 4. PeriodicPersistence()
-                │    └── If AutoSaveInterval exceeded: save state snapshot
-                │
-                ├── 5. CleanupExpiredMemories()
-                │    └── Remove memories past ExpiresAt
-                │
-                └── 6. Sleep(TickInterval - elapsed)
+ StartAsync()
+ │
+ ├── InitializeBehaviorAsync()
+ │ ├── Load ABML document (cached, hot-reloadable)
+ │ └── BuildCognitionPipeline()
+ │ ├── Resolve template: config → ABML metadata → category default
+ │ ├── Merge overrides: template L1 + instance L2
+ │ └── _cognitionPipeline = builder.Build(templateId, overrides)
+ │ └── null template ID → no pipeline (ABML-only)
+ │ └── null result with ID → Error (misconfigured)
+ │
+ ├── If CharacterId set at spawn:
+ │ ├── SetupPerceptionSubscriptionAsync()
+ │ └── Publish ActorCharacterBoundEvent
+ │
+ ├── [Later, at runtime] BindCharacterAsync(characterId):
+ │ ├── Guard: already bound → InvalidOperationException
+ │ ├── Set CharacterId = characterId
+ │ ├── SetupPerceptionSubscriptionAsync()
+ │ └── Publish ActorCharacterBoundEvent
+ │
+ └── RunBehaviorLoopAsync() [while !cancelled]
+ │
+ ├── Phase 1: COGNITION (if pipeline exists)
+ │ ├── Capture pipeline to local (TOCTOU safety)
+ │ ├── Drain perception queue → perceptions list
+ │ │ ├── urgency < FilterThreshold → drop
+ │ │ └── urgency ≥ MemoryThreshold → store as memory
+ │ ├── Build CognitionContext (entityId, handler registry)
+ │ ├── pipeline.ProcessBatchAsync(perceptions, context)
+ │ └── Apply result → working memory, replan flags
+ │ └── On failure: store perceptions directly (no loss)
+ │
+ ├── Phase 2: BEHAVIOR (always)
+ │ ├── Build execution scope:
+ │ │ ├── agent: {id, behavior_id, character_id, category}
+ │ │ ├── feelings: {joy: 0.5, anger: 0.2, ...}
+ │ │ ├── goals: {primary, secondary[], parameters{}}
+ │ │ ├── memories: {key → value (with TTL)}
+ │ │ ├── working_memory: {perception:type:source → data}
+ │ │ ├── personality: {traits, combat_style, risk}
+ │ │ └── backstory: {elements[]}
+ │ │
+ │ └── Execute flow: on_tick (preferred) or main
+ │
+ ├── 3. PublishStateUpdateIfNeededAsync()
+ │ └── If CharacterId set: publish character.state-update
+ │
+ ├── 4. PeriodicPersistence()
+ │ └── If AutoSaveInterval exceeded: save state snapshot
+ │
+ ├── 5. CleanupExpiredMemories()
+ │ └── Remove memories past ExpiresAt
+ │
+ └── 6. Sleep(TickInterval - elapsed)
 
 
 Dynamic Character Binding
 ===========================
 
-  BindActorCharacter(actorId, characterId)
-       │
-       ├── BANNOU MODE:
-       │    ├── Find runner in ActorRegistry
-       │    ├── Call runner.BindCharacterAsync(characterId)
-       │    │    ├── Guard: already bound? → Conflict
-       │    │    ├── Set CharacterId = characterId
-       │    │    ├── SetupPerceptionSubscriptionAsync()
-       │    │    │    └── SubscribeDynamicAsync("character.{charId}.perceptions")
-       │    │    └── Publish ActorCharacterBoundEvent
-       │    └── Next tick: variable providers detect characterId
-       │         ├── ${personality.*} → activates
-       │         ├── ${encounters.*} → activates
-       │         ├── ${backstory.*}  → activates
-       │         └── ${quest.*}      → activates
-       │
-       └── POOL MODE:
-            ├── Update actor assignment (characterId) in Redis
-            ├── Publish BindActorCharacterCommand to node topic
-            │    └── actor.node.{appId}.bind-character
-            └── Pool node worker receives command
-                 └── Forwards to local runner.BindCharacterAsync()
+ BindActorCharacter(actorId, characterId)
+ │
+ ├── BANNOU MODE:
+ │ ├── Find runner in ActorRegistry
+ │ ├── Call runner.BindCharacterAsync(characterId)
+ │ │ ├── Guard: already bound? → Conflict
+ │ │ ├── Set CharacterId = characterId
+ │ │ ├── SetupPerceptionSubscriptionAsync()
+ │ │ │ └── SubscribeDynamicAsync("character.{charId}.perceptions")
+ │ │ └── Publish ActorCharacterBoundEvent
+ │ └── Next tick: variable providers detect characterId
+ │ ├── ${personality.*} → activates
+ │ ├── ${encounters.*} → activates
+ │ ├── ${backstory.*} → activates
+ │ └── ${quest.*} → activates
+ │
+ └── POOL MODE:
+ ├── Update actor assignment (characterId) in Redis
+ ├── Publish BindActorCharacterCommand to node topic
+ │ └── actor.node.{appId}.bind-character
+ └── Pool node worker receives command
+ └── Forwards to local runner.BindCharacterAsync()
 
 
-  Progressive Entity Awakening (Example: Divine Actor)
-  =====================================================
+ Progressive Entity Awakening (Example: Divine Actor)
+ =====================================================
 
-  1. Deity created → Actor spawned (event brain, no character)
-     │  Actor runs ABML behavior with ${personality.*} = null
-     │  Uses load_snapshot: for ad-hoc entity data
-     │
-  2. Deity creates Character in divine system realm
-     │  (via /divine/deity/create or runtime behavior)
-     │
-  3. BindActorCharacter(actorId, divineCharacterId)
-     │  Actor now has ${personality.*}, ${encounters.*}, etc.
-     │  Same behavior document, richer data
-     │  Still uses load_snapshot: for mortal data
-     │
-     └── The actor is now a character brain + event brain hybrid
+ 1. Deity created → Actor spawned (event brain, no character)
+ │ Actor runs ABML behavior with ${personality.*} = null
+ │ Uses load_snapshot: for ad-hoc entity data
+ │
+ 2. Deity creates Character in divine system realm
+ │ (via /divine/deity/create or runtime behavior)
+ │
+ 3. BindActorCharacter(actorId, divineCharacterId)
+ │ Actor now has ${personality.*}, ${encounters.*}, etc.
+ │ Same behavior document, richer data
+ │ Still uses load_snapshot: for mortal data
+ │
+ └── The actor is now a character brain + event brain hybrid
 
 
 Auto-Spawn Pattern
 ====================
 
-  GetActor(actorId="character-abc123-npc-blacksmith")
-       │
-       ├── Check registry/assignments → not found
-       │
-       ├── FindAutoSpawnTemplateAsync(actorId)
-       │    ├── For each template with AutoSpawn.Enabled:
-       │    │    ├── Match regex: "character-(?<charid>[0-9a-f-]+)-.*"
-       │    │    └── Extract CharacterId from capture group
-       │    └── Return: (template, characterId=abc123)
-       │
-       └── SpawnActor(template, actorId, characterId)
-            └── Actor starts running immediately
+ GetActor(actorId="character-abc123-npc-blacksmith")
+ │
+ ├── Check registry/assignments → not found
+ │
+ ├── FindAutoSpawnTemplateAsync(actorId)
+ │ ├── For each template with AutoSpawn.Enabled:
+ │ │ ├── Match regex: "character-(?<charid>[0-9a-f-]+)-.*"
+ │ │ └── Extract CharacterId from capture group
+ │ └── Return: (template, characterId=abc123)
+ │
+ └── SpawnActor(template, actorId, characterId)
+ └── Actor starts running immediately
 
 
 Perception Processing
 =======================
 
-  InjectPerception(actorId, type="player_nearby", urgency=0.8)
-       │
-       ├── Find actor (local registry or remote node)
-       │
-       ├── Enqueue to bounded channel:
-       │    Channel<PerceptionData>(size=100, DropOldest)
-       │         │
-       │         ├── urgency < 0.1 → dropped (below filter threshold)
-       │         ├── urgency ≥ 0.7 → stored as short-term memory (5 min TTL)
-       │         └── 0.1 ≤ urgency < 0.7 → working memory only (ephemeral)
-       │
-       └── Next tick: perception influences behavior execution
+ InjectPerception(actorId, type="player_nearby", urgency=0.8)
+ │
+ ├── Find actor (local registry or remote node)
+ │
+ ├── Enqueue to bounded channel:
+ │ Channel<PerceptionData>(size=100, DropOldest)
+ │ │
+ │ ├── urgency < 0.1 → dropped (below filter threshold)
+ │ ├── urgency ≥ 0.7 → stored as short-term memory (5 min TTL)
+ │ └── 0.1 ≤ urgency < 0.7 → working memory only (ephemeral)
+ │
+ └── Next tick: perception influences behavior execution
 
 
 Encounter Lifecycle (Event Brain)
 ====================================
 
-  StartEncounter(actorId, participants, phase="initializing")
-       │
-       ├── Set actor.encounter = { id, participants, phase, data }
-       ├── Publish: actor.encounter.started
-       │
-       ▼ (Event Brain behavior loop manages phases)
-  UpdatePhase(actorId, phase="combat")
-       │
-       ├── actor.encounter.phase = "combat"
-       ├── Publish: actor.encounter.phase-changed
-       │
-       ▼ (conditions met)
-  EndEncounter(actorId, outcome="victory")
-       │
-       ├── Clear actor.encounter
-       └── Publish: actor.encounter.ended
+ StartEncounter(actorId, participants, phase="initializing")
+ │
+ ├── Set actor.encounter = { id, participants, phase, data }
+ ├── Publish: actor.encounter.started
+ │
+ ▼ (Event Brain behavior loop manages phases)
+ UpdatePhase(actorId, phase="combat")
+ │
+ ├── actor.encounter.phase = "combat"
+ ├── Publish: actor.encounter.phase-changed
+ │
+ ▼ (conditions met)
+ EndEncounter(actorId, outcome="victory")
+ │
+ ├── Clear actor.encounter
+ └── Publish: actor.encounter.ended
 
 
 Actor State Model
 ===================
 
-  ActorState
-  ├── Feelings: Dict<string, double> [0-1]
-  │    ├── joy, sadness, anger, fear
-  │    ├── surprise, trust, disgust
-  │    └── anticipation
-  │
-  ├── Goals
-  │    ├── PrimaryGoal: string
-  │    ├── SecondaryGoals: List<string>
-  │    └── GoalParameters: Dict<string, object>
-  │
-  ├── Memories: Dict<string, MemoryEntry>
-  │    ├── Key → { Value, ExpiresAt }
-  │    └── TTL-based cleanup each tick
-  │
-  ├── WorkingMemory: Dict<string, object>
-  │    └── Ephemeral per-tick data
-  │
-  └── Encounter (optional)
-       ├── EncounterId, EncounterType
-       ├── Participants, Phase
-       ├── StartedAt
-       └── Data: Dict<string, object?>
+ ActorState
+ ├── Feelings: Dict<string, double> [0-1]
+ │ ├── joy, sadness, anger, fear
+ │ ├── surprise, trust, disgust
+ │ └── anticipation
+ │
+ ├── Goals
+ │ ├── PrimaryGoal: string
+ │ ├── SecondaryGoals: List<string>
+ │ └── GoalParameters: Dict<string, object>
+ │
+ ├── Memories: Dict<string, MemoryEntry>
+ │ ├── Key → { Value, ExpiresAt }
+ │ └── TTL-based cleanup each tick
+ │
+ ├── WorkingMemory: Dict<string, object>
+ │ └── Ephemeral per-tick data
+ │
+ └── Encounter (optional)
+ ├── EncounterId, EncounterType
+ ├── Participants, Phase
+ ├── StartedAt
+ └── Data: Dict<string, object?>
 ```
 
 ---
@@ -468,11 +468,11 @@ Actor State Model
 
 ### Bugs (Fix Immediately)
 
-1. **T29 violation: `cognitionOverrides` uses `additionalProperties: true` but is deserialized to typed `CognitionOverrides`**: The `cognitionOverrides` field on `CreateActorTemplateRequest`, `UpdateActorTemplateRequest`, and `ActorTemplateResponse` is defined as an opaque metadata bag but `ActorTemplateData.DeserializeCognitionOverrides()` explicitly calls `BannouJson.Deserialize<CognitionOverrides>()` to convert it to a fully typed record with 5 discriminated `ICognitionOverride` subtypes. Should be a typed schema with `oneOf`/discriminator pattern.
-   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/462 -->
+1. **violation: `cognitionOverrides` uses `additionalProperties: true` but is deserialized to typed `CognitionOverrides`**: The `cognitionOverrides` field on `CreateActorTemplateRequest`, `UpdateActorTemplateRequest`, and `ActorTemplateResponse` is defined as an opaque metadata bag but `ActorTemplateData.DeserializeCognitionOverrides()` explicitly calls `BannouJson.Deserialize<CognitionOverrides>()` to convert it to a fully typed record with 5 discriminated `ICognitionOverride` subtypes. Should be a typed schema with `oneOf`/discriminator pattern.
+ <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/462 -->
 
-2. **T29 violation: `initialState` uses `additionalProperties: true` but is deserialized to `ActorStateSnapshot`**: `SpawnActorRequest.initialState` is marked opaque but `ActorRunner.InitializeFromState()` casts it to `ActorStateSnapshot` and reads `.Feelings`, `.Goals`, `.Memories`, `.WorkingMemory`, `.CognitionOverrides`. Schema description contradicts itself. Should define `ActorStateSnapshot` (or API-appropriate subset) as a typed schema.
-   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/463 -->
+2. **violation: `initialState` uses `additionalProperties: true` but is deserialized to `ActorStateSnapshot`**: `SpawnActorRequest.initialState` is marked opaque but `ActorRunner.InitializeFromState()` casts it to `ActorStateSnapshot` and reads `.Feelings`, `.Goals`, `.Memories`, `.WorkingMemory`, `.CognitionOverrides`. Schema description contradicts itself. Should define `ActorStateSnapshot` (or API-appropriate subset) as a typed schema.
+ <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/463 -->
 
 ### Intentional Quirks
 

@@ -1020,7 +1020,7 @@ public class StorylineDeprecationTests : ServiceTestBase<StorylineServiceConfigu
         // Act
         await service.DeprecateScenarioDefinitionAsync(request, CancellationToken.None);
 
-        // Assert — triple-field model per IMPLEMENTATION TENETS (T31)
+        // Assert — triple-field model per IMPLEMENTATION TENETS
         Assert.NotNull(savedModel);
         Assert.True(savedModel.IsDeprecated);
         Assert.NotNull(savedModel.DeprecatedAt);

@@ -78,7 +78,7 @@
 
 **Special notes**:
 - Resource has zero service client dependencies. All cross-service coordination happens via `IServiceNavigator` executing opaque callback endpoint definitions stored as data in Redis. This satisfies L1 hierarchy isolation — Resource never knows what services it calls.
-- Account is exempt from lib-resource reference tracking (privacy constraint). Services with account-owned data MUST instead subscribe to `account.deleted` per T28's Account Deletion Cleanup Obligation.
+- Account is exempt from lib-resource reference tracking (privacy constraint). Services with account-owned data MUST instead subscribe to `account.deleted` per FOUNDATION TENETS's Account Deletion Cleanup Obligation.
 
 ---
 
@@ -147,10 +147,10 @@ This plugin does not consume external events. `ResourceServiceEvents.cs` registe
 POST /resource/register | Roles: [developer]
 
 ```
-WRITE _refStore:{resourceType}:{resourceId}:sources <- entry  // set add, atomic; deduplicates by SourceType+SourceId
+WRITE _refStore:{resourceType}:{resourceId}:sources <- entry // set add, atomic; deduplicates by SourceType+SourceId
 IF added
-  DELETE _graceStore:{resourceType}:{resourceId}:grace  // clear zero-timestamp
-READ _refStore:{resourceType}:{resourceId}:sources  // set count -> refCount
+ DELETE _graceStore:{resourceType}:{resourceId}:grace // clear zero-timestamp
+READ _refStore:{resourceType}:{resourceId}:sources // set count -> refCount
 RETURN (200, RegisterReferenceResponse { newRefCount, alreadyRegistered: !added })
 ```
 
@@ -160,11 +160,11 @@ RETURN (200, RegisterReferenceResponse { newRefCount, alreadyRegistered: !added 
 POST /resource/unregister | Roles: [developer]
 
 ```
-DELETE _refStore:{resourceType}:{resourceId}:sources <- entry  // set remove; equality ignores RegisteredAt
-READ _refStore:{resourceType}:{resourceId}:sources  // set count -> refCount
+DELETE _refStore:{resourceType}:{resourceId}:sources <- entry // set remove; equality ignores RegisteredAt
+READ _refStore:{resourceType}:{resourceId}:sources // set count -> refCount
 IF removed AND refCount == 0
-  WRITE _graceStore:{resourceType}:{resourceId}:grace <- GracePeriodRecord { ZeroTimestamp: now }
-  PUBLISH resource.grace-period.started { resourceType, resourceId, gracePeriodEndsAt, timestamp }
+ WRITE _graceStore:{resourceType}:{resourceId}:grace <- GracePeriodRecord { ZeroTimestamp: now }
+ PUBLISH resource.grace-period.started { resourceType, resourceId, gracePeriodEndsAt, timestamp }
 RETURN (200, UnregisterReferenceResponse { newRefCount, wasRegistered: removed, gracePeriodStartedAt })
 ```
 
@@ -174,15 +174,15 @@ RETURN (200, UnregisterReferenceResponse { newRefCount, wasRegistered: removed, 
 POST /resource/check | Roles: [developer]
 
 ```
-READ _refStore:{resourceType}:{resourceId}:sources  // set count -> refCount
-READ _refStore:{resourceType}:{resourceId}:sources  // full set -> entries
+READ _refStore:{resourceType}:{resourceId}:sources // set count -> refCount
+READ _refStore:{resourceType}:{resourceId}:sources // full set -> entries
 READ _graceStore:{resourceType}:{resourceId}:grace
 IF refCount == 0 AND graceRecord != null
-  // isCleanupEligible = now >= graceRecord.ZeroTimestamp + config.DefaultGracePeriodSeconds
-  IF isCleanupEligible
-    // gracePeriodEndsAt = null (already passed)
-  ELSE
-    // gracePeriodEndsAt = graceRecord.ZeroTimestamp + gracePeriod
+ // isCleanupEligible = now >= graceRecord.ZeroTimestamp + config.DefaultGracePeriodSeconds
+ IF isCleanupEligible
+ // gracePeriodEndsAt = null (already passed)
+ ELSE
+ // gracePeriodEndsAt = graceRecord.ZeroTimestamp + gracePeriod
 RETURN (200, CheckReferencesResponse { refCount, isCleanupEligible, sources, gracePeriodEndsAt, lastZeroTimestamp })
 ```
 
@@ -194,9 +194,9 @@ RETURN (200, CheckReferencesResponse { refCount, isCleanupEligible, sources, gra
 POST /resource/list | Roles: [developer]
 
 ```
-READ _refStore:{resourceType}:{resourceId}:sources  // full set -> entries
+READ _refStore:{resourceType}:{resourceId}:sources // full set -> entries
 IF filterSourceType specified
-  // filter entries by SourceType
+ // filter entries by SourceType
 // totalCount = count of filtered (pre-limit) entries
 // apply limit via Take(body.Limit)
 RETURN (200, ListReferencesResponse { references, totalCount })
@@ -208,13 +208,13 @@ RETURN (200, ListReferencesResponse { references, totalCount })
 POST /resource/cleanup/define | Roles: [admin]
 
 ```
-READ _cleanupStore:callback:{resourceType}:{sourceType}  // check for existing -> previouslyDefined
+READ _cleanupStore:callback:{resourceType}:{sourceType} // check for existing -> previouslyDefined
 WRITE _cleanupStore:callback:{resourceType}:{sourceType} <- CleanupCallbackDefinition
-  // serviceName defaults to sourceType; onDeleteAction defaults to Cascade
-WRITE _cleanupStore:callback-index:{resourceType} <- sourceType  // set add
-WRITE _cleanupStore:callback-resource-types <- resourceType  // set add
+ // serviceName defaults to sourceType; onDeleteAction defaults to Cascade
+WRITE _cleanupStore:callback-index:{resourceType} <- sourceType // set add
+WRITE _cleanupStore:callback-resource-types <- resourceType // set add
 RETURN (200, DefineCleanupResponse { previouslyDefined })
-// T8: 200 confirms registration; no `registered` boolean needed.
+// 200 confirms registration; no `registered` boolean needed.
 ```
 
 ---
@@ -224,12 +224,12 @@ POST /resource/cleanup/execute | Roles: [developer]
 
 ```
 // Gather all callbacks for this resourceType
-READ _cleanupStore:callback-index:{resourceType}  // set -> sourceTypes
+READ _cleanupStore:callback-index:{resourceType} // set -> sourceTypes
 FOREACH sourceType
-  READ _cleanupStore:callback:{resourceType}:{sourceType}
+ READ _cleanupStore:callback:{resourceType}:{sourceType}
 
 // Internal reference check (reuses CheckReferences logic)
-READ _refStore:{resourceType}:{resourceId}:sources  // count + full set
+READ _refStore:{resourceType}:{resourceId}:sources // count + full set
 READ _graceStore:{resourceType}:{resourceId}:grace
 
 // Separate callbacks by OnDeleteAction
@@ -237,44 +237,44 @@ READ _graceStore:{resourceType}:{resourceId}:grace
 // cascadeDetachCallbacks = callbacks where OnDeleteAction == Cascade or Detach
 
 IF dryRun
-  // Analyze RESTRICT violations, unresolved refs, grace period
-  // Return preview with hypothetical results
-  RETURN (200, ExecuteCleanupResponse { dryRun: true, callbackResults })
+ // Analyze RESTRICT violations, unresolved refs, grace period
+ // Return preview with hypothetical results
+ RETURN (200, ExecuteCleanupResponse { dryRun: true, callbackResults })
 
 IF any RESTRICT callbacks with active references of that sourceType
-  RETURN (409, abortReason: "Blocked by RESTRICT policy")
+ RETURN (409, abortReason: "Blocked by RESTRICT policy")
 
 IF unresolved references without registered callbacks
-  RETURN (400, abortReason: "Unhandled references")
+ RETURN (400, abortReason: "Unhandled references")
 
 // gracePeriodSeconds: 0 skips grace check (used by ExecuteCompress with deleteSourceData)
 IF grace period not elapsed AND gracePeriodSeconds != 0
-  RETURN (409, abortReason: "Grace period active")
+ RETURN (409, abortReason: "Grace period active")
 
 LOCK _refStore:cleanup:{resourceType}:{resourceId}
-  // -> 409 { abortReason: "Failed to acquire cleanup lock" } if lock fails
+ // -> 409 { abortReason: "Failed to acquire cleanup lock" } if lock fails
 
-  // Re-validate under lock (race protection)
-  READ _refStore:{resourceType}:{resourceId}:sources  // count
-  IF count changed
-    READ _refStore:{resourceType}:{resourceId}:sources  // full set
-    // Re-check RESTRICT violations with updated refs
+ // Re-validate under lock (race protection)
+ READ _refStore:{resourceType}:{resourceId}:sources // count
+ IF count changed
+ READ _refStore:{resourceType}:{resourceId}:sources // full set
+ // Re-check RESTRICT violations with updated refs
 
-  // Execute only CASCADE and DETACH callbacks (not RESTRICT)
-  CALL _navigator.ExecutePreboundApiBatchAsync(cascadeDetachCallbacks, Parallel, timeout)
+ // Execute only CASCADE and DETACH callbacks (not RESTRICT)
+ CALL _navigator.ExecutePreboundApiBatchAsync(cascadeDetachCallbacks, Parallel, timeout)
 
-  FOREACH failed callback
-    PUBLISH resource.cleanup.callback-failed { resourceType, resourceId, sourceType, serviceName, endpoint, statusCode, errorMessage, timestamp }
+ FOREACH failed callback
+ PUBLISH resource.cleanup.callback-failed { resourceType, resourceId, sourceType, serviceName, endpoint, statusCode, errorMessage, timestamp }
 
-  IF AllRequired policy AND any failure
-    RETURN (502, abortReason: "Callback failed with ALL_REQUIRED policy", callbackResults)
+ IF AllRequired policy AND any failure
+ RETURN (502, abortReason: "Callback failed with ALL_REQUIRED policy", callbackResults)
 
-  // Cleanup succeeded (or BestEffort with partial success)
-  DELETE _graceStore:{resourceType}:{resourceId}:grace
-  DELETE _refStore:{resourceType}:{resourceId}:sources  // delete entire set
+ // Cleanup succeeded (or BestEffort with partial success)
+ DELETE _graceStore:{resourceType}:{resourceId}:grace
+ DELETE _refStore:{resourceType}:{resourceId}:sources // delete entire set
 
 RETURN (200, ExecuteCleanupResponse { callbackResults, cleanupDurationMs })
-// T8: Status code communicates success/failure; no `success` boolean needed.
+// Status code communicates success/failure; no `success` boolean needed.
 ```
 
 ---
@@ -284,17 +284,17 @@ POST /resource/cleanup/list | Roles: [developer]
 
 ```
 IF resourceType specified
-  READ _cleanupStore:callback-index:{resourceType}  // set -> sourceTypes
-  FOREACH sourceType
-    READ _cleanupStore:callback:{resourceType}:{sourceType}
-  IF sourceType filter also specified
-    // filter results by sourceType
+ READ _cleanupStore:callback-index:{resourceType} // set -> sourceTypes
+ FOREACH sourceType
+ READ _cleanupStore:callback:{resourceType}:{sourceType}
+ IF sourceType filter also specified
+ // filter results by sourceType
 ELSE
-  READ _cleanupStore:callback-resource-types  // master set -> resourceTypes
-  FOREACH resourceType
-    READ _cleanupStore:callback-index:{resourceType}  // set -> sourceTypes
-    FOREACH sourceType
-      READ _cleanupStore:callback:{resourceType}:{sourceType}
+ READ _cleanupStore:callback-resource-types // master set -> resourceTypes
+ FOREACH resourceType
+ READ _cleanupStore:callback-index:{resourceType} // set -> sourceTypes
+ FOREACH sourceType
+ READ _cleanupStore:callback:{resourceType}:{sourceType}
 RETURN (200, ListCleanupCallbacksResponse { callbacks, totalCount })
 ```
 
@@ -305,14 +305,14 @@ POST /resource/cleanup/remove | Roles: [admin]
 
 ```
 READ _cleanupStore:callback:{resourceType}:{sourceType}
-  -> 404 if null
+ -> 404 if null
 DELETE _cleanupStore:callback:{resourceType}:{sourceType}
-DELETE _cleanupStore:callback-index:{resourceType} <- sourceType  // set remove
-READ _cleanupStore:callback-index:{resourceType}  // check if set is now empty
+DELETE _cleanupStore:callback-index:{resourceType} <- sourceType // set remove
+READ _cleanupStore:callback-index:{resourceType} // check if set is now empty
 IF empty
-  DELETE _cleanupStore:callback-resource-types <- resourceType  // set remove from master index
+ DELETE _cleanupStore:callback-resource-types <- resourceType // set remove from master index
 RETURN (200, RemoveCleanupCallbackResponse { removedAt: now })
-// T8: 200 confirms removal; 404 if not registered.
+// 200 confirms removal; 404 if not registered.
 ```
 
 ---
@@ -321,13 +321,13 @@ RETURN (200, RemoveCleanupCallbackResponse { removedAt: now })
 POST /resource/compress/define | Roles: [admin]
 
 ```
-READ _compressStore:compress-callback:{resourceType}:{sourceType}  // check existing -> previouslyDefined
+READ _compressStore:compress-callback:{resourceType}:{sourceType} // check existing -> previouslyDefined
 WRITE _compressStore:compress-callback:{resourceType}:{sourceType} <- CompressCallbackDefinition
-  // serviceName defaults to sourceType; decompressEndpoint/template are optional
-WRITE _compressStore:compress-callback-index:{resourceType} <- sourceType  // set add
-WRITE _compressStore:compress-callback-resource-types <- resourceType  // set add
+ // serviceName defaults to sourceType; decompressEndpoint/template are optional
+WRITE _compressStore:compress-callback-index:{resourceType} <- sourceType // set add
+WRITE _compressStore:compress-callback-resource-types <- resourceType // set add
 RETURN (200, DefineCompressCallbackResponse { previouslyDefined })
-// T8: 200 confirms registration; no `registered` boolean needed.
+// 200 confirms registration; no `registered` boolean needed.
 ```
 
 ---
@@ -337,49 +337,49 @@ POST /resource/compress/execute | Roles: [developer]
 
 ```
 // Get all compression callbacks, sorted by Priority ASC
-READ _compressStore:compress-callback-index:{resourceType}  // set -> sourceTypes
+READ _compressStore:compress-callback-index:{resourceType} // set -> sourceTypes
 FOREACH sourceType
-  READ _compressStore:compress-callback:{resourceType}:{sourceType}
+ READ _compressStore:compress-callback:{resourceType}:{sourceType}
 // Sort by Priority ASC
 
 IF no callbacks
-  RETURN (400, abortReason: "No compression callbacks registered")
+ RETURN (400, abortReason: "No compression callbacks registered")
 
 IF dryRun
-  RETURN (200, ExecuteCompressResponse { dryRun: true, callbackResults })
+ RETURN (200, ExecuteCompressResponse { dryRun: true, callbackResults })
 
 LOCK _compressStore:compress:{resourceType}:{resourceId}
-  // -> 409 { abortReason: "Failed to acquire compression lock" } if lock fails
+ // -> 409 { abortReason: "Failed to acquire compression lock" } if lock fails
 
-  FOREACH callback (sorted by priority, sequential)
-    CALL _navigator.ExecutePreboundApiAsync(callback.CompressEndpoint, context["resourceId"], timeout)
-    IF success
-      // GZip compress response body, Base64 encode, compute SHA256 checksum
-      // Add to archive entries
-    ELSE
-      PUBLISH resource.compress.callback-failed { eventId, timestamp, resourceType, resourceId, sourceType, serviceName, endpoint, statusCode, errorMessage }
-      IF AllRequired policy
-        RETURN (502, abortReason: "Callback failed with ALL_REQUIRED", callbackResults)
+ FOREACH callback (sorted by priority, sequential)
+ CALL _navigator.ExecutePreboundApiAsync(callback.CompressEndpoint, context["resourceId"], timeout)
+ IF success
+ // GZip compress response body, Base64 encode, compute SHA256 checksum
+ // Add to archive entries
+ ELSE
+ PUBLISH resource.compress.callback-failed { eventId, timestamp, resourceType, resourceId, sourceType, serviceName, endpoint, statusCode, errorMessage }
+ IF AllRequired policy
+ RETURN (502, abortReason: "Callback failed with ALL_REQUIRED", callbackResults)
 
-  IF no successful callbacks
-    RETURN (502, abortReason: "No successful compression callbacks")
+ IF no successful callbacks
+ RETURN (502, abortReason: "No successful compression callbacks")
 
-  // Determine version
-  READ _archiveStore:archive:{resourceType}:{resourceId}  // existing archive for version
-  // version = (existing?.Version ?? 0) + 1
+ // Determine version
+ READ _archiveStore:archive:{resourceType}:{resourceId} // existing archive for version
+ // version = (existing?.Version ?? 0) + 1
 
-  WRITE _archiveStore:archive:{resourceType}:{resourceId} <- ResourceArchiveModel { archiveId, version, entries, createdAt }
+ WRITE _archiveStore:archive:{resourceType}:{resourceId} <- ResourceArchiveModel { archiveId, version, entries, createdAt }
 
-  IF deleteSourceData
-    // Internal self-call with gracePeriodSeconds: 0
-    CALL ExecuteCleanupAsync({ resourceType, resourceId, gracePeriodSeconds: 0, cleanupPolicy: deleteSourceDataPolicy })
-    IF cleanup succeeded
-      WRITE _archiveStore:archive:{resourceType}:{resourceId} <- archive { sourceDataDeleted: true }
+ IF deleteSourceData
+ // Internal self-call with gracePeriodSeconds: 0
+ CALL ExecuteCleanupAsync({ resourceType, resourceId, gracePeriodSeconds: 0, cleanupPolicy: deleteSourceDataPolicy })
+ IF cleanup succeeded
+ WRITE _archiveStore:archive:{resourceType}:{resourceId} <- archive { sourceDataDeleted: true }
 
-  PUBLISH resource.compressed { eventId, timestamp, resourceType, resourceId, archiveId, sourceDataDeleted, entriesCount }
+ PUBLISH resource.compressed { eventId, timestamp, resourceType, resourceId, archiveId, sourceDataDeleted, entriesCount }
 
 RETURN (200, ExecuteCompressResponse { archiveId, sourceDataDeleted, callbackResults })
-// T8: Status code communicates success/failure; no `success` boolean needed.
+// Status code communicates success/failure; no `success` boolean needed.
 ```
 
 ---
@@ -389,27 +389,27 @@ POST /resource/decompress/execute | Roles: [admin]
 
 ```
 READ _archiveStore:archive:{resourceType}:{resourceId}
-  -> 404 if null
+ -> 404 if null
 
 IF archiveId specified AND archive.ArchiveId != archiveId
-  RETURN (400, abortReason: "Archive ID mismatch")
+ RETURN (400, abortReason: "Archive ID mismatch")
 
 // Get compression callbacks for decompression endpoints
 READ _compressStore (via GetCompressCallbacksAsync)
 
 FOREACH entry in archive.Entries (sequential, per-entry try/catch)
-  IF no callback registered for entry.SourceType
-    // Add failure result, continue
-  ELSE IF callback.DecompressEndpoint is null/empty
-    // Add failure result, continue
-  ELSE
-    CALL _navigator.ExecutePreboundApiAsync(callback.DecompressEndpoint, context["resourceId", "data"=entry.Data], timeout)
+ IF no callback registered for entry.SourceType
+ // Add failure result, continue
+ ELSE IF callback.DecompressEndpoint is null/empty
+ // Add failure result, continue
+ ELSE
+ CALL _navigator.ExecutePreboundApiAsync(callback.DecompressEndpoint, context["resourceId", "data"=entry.Data], timeout)
 
 IF any callback succeeded
-  PUBLISH resource.decompressed { eventId, timestamp, resourceType, resourceId, archiveId, entriesCount, succeededSourceTypes, failedSourceTypes }
+ PUBLISH resource.decompressed { eventId, timestamp, resourceType, resourceId, archiveId, entriesCount, succeededSourceTypes, failedSourceTypes }
 
 RETURN (200, ExecuteDecompressResponse { archiveId, callbackResults })
-// T8: Status code communicates success/failure; callbackResults has per-entry detail.
+// Status code communicates success/failure; callbackResults has per-entry detail.
 ```
 
 ---
@@ -419,17 +419,17 @@ POST /resource/compress/list | Roles: [developer]
 
 ```
 IF resourceType specified
-  READ _compressStore:compress-callback-index:{resourceType}  // set -> sourceTypes
-  FOREACH sourceType
-    READ _compressStore:compress-callback:{resourceType}:{sourceType}
-  IF sourceType filter also specified
-    // filter results by sourceType
+ READ _compressStore:compress-callback-index:{resourceType} // set -> sourceTypes
+ FOREACH sourceType
+ READ _compressStore:compress-callback:{resourceType}:{sourceType}
+ IF sourceType filter also specified
+ // filter results by sourceType
 ELSE
-  READ _compressStore:compress-callback-resource-types  // master set -> resourceTypes
-  FOREACH resourceType
-    READ _compressStore:compress-callback-index:{resourceType}
-    FOREACH sourceType
-      READ _compressStore:compress-callback:{resourceType}:{sourceType}
+ READ _compressStore:compress-callback-resource-types // master set -> resourceTypes
+ FOREACH resourceType
+ READ _compressStore:compress-callback-index:{resourceType}
+ FOREACH sourceType
+ READ _compressStore:compress-callback:{resourceType}:{sourceType}
 RETURN (200, ListCompressCallbacksResponse { callbacks, totalCount })
 ```
 
@@ -440,11 +440,11 @@ POST /resource/archive/get | Roles: [developer]
 
 ```
 READ _archiveStore:archive:{resourceType}:{resourceId}
-  -> 404 if null
+ -> 404 if null
 IF archiveId specified AND archive.ArchiveId != archiveId
-  RETURN (404)
+ RETURN (404)
 RETURN (200, GetArchiveResponse { archive })
-// T8: 200 = found, 404 = not found. No `found` boolean needed.
+// 200 = found, 404 = not found. No `found` boolean needed.
 ```
 
 ---
@@ -454,40 +454,40 @@ POST /resource/snapshot/execute | Roles: [developer]
 
 ```
 // Get compression callbacks (reuses compress callback infrastructure)
-READ _compressStore:compress-callback-index:{resourceType}  // set -> sourceTypes
+READ _compressStore:compress-callback-index:{resourceType} // set -> sourceTypes
 FOREACH sourceType
-  READ _compressStore:compress-callback:{resourceType}:{sourceType}
+ READ _compressStore:compress-callback:{resourceType}:{sourceType}
 // Sort by Priority ASC
 
 IF filterSourceTypes specified
-  // Filter callbacks to matching source types only (case-insensitive)
+ // Filter callbacks to matching source types only (case-insensitive)
 
 IF no callbacks (after filtering)
-  RETURN (400, abortReason: "No callbacks")
+ RETURN (400, abortReason: "No callbacks")
 
 IF dryRun
-  RETURN (200, ExecuteSnapshotResponse { dryRun: true, callbackResults })
+ RETURN (200, ExecuteSnapshotResponse { dryRun: true, callbackResults })
 
 // Clamp TTL: ttl = clamp(body.TtlSeconds ?? config.SnapshotDefaultTtlSeconds, config.SnapshotMinTtlSeconds, config.SnapshotMaxTtlSeconds)
 
 FOREACH callback (sorted by priority, sequential)
-  CALL _navigator.ExecutePreboundApiAsync(callback.CompressEndpoint, context["resourceId"], timeout)
-  IF success
-    // GZip compress + Base64 encode + SHA256 checksum (same as ExecuteCompress)
-  ELSE
-    PUBLISH resource.compress.callback-failed { eventId, timestamp, resourceType, resourceId, sourceType, serviceName, endpoint, statusCode, errorMessage }
-    IF AllRequired policy
-      RETURN (502, abortReason: "Callback failed with ALL_REQUIRED", callbackResults)
+ CALL _navigator.ExecutePreboundApiAsync(callback.CompressEndpoint, context["resourceId"], timeout)
+ IF success
+ // GZip compress + Base64 encode + SHA256 checksum (same as ExecuteCompress)
+ ELSE
+ PUBLISH resource.compress.callback-failed { eventId, timestamp, resourceType, resourceId, sourceType, serviceName, endpoint, statusCode, errorMessage }
+ IF AllRequired policy
+ RETURN (502, abortReason: "Callback failed with ALL_REQUIRED", callbackResults)
 
 IF no successful callbacks
-  RETURN (502, abortReason: "No successful snapshot callbacks")
+ RETURN (502, abortReason: "No successful snapshot callbacks")
 
 // snapshotId = new Guid (unique key, no lock needed)
 // snapshotType = body.SnapshotType ?? "default"
 WRITE _snapshotStore:snap:{snapshotId} <- ResourceSnapshotModel [TTL: ttlSeconds]
 PUBLISH resource.snapshot.created { eventId, timestamp, resourceType, resourceId, snapshotId, snapshotType, expiresAt, entriesCount }
 RETURN (200, ExecuteSnapshotResponse { snapshotId, expiresAt, callbackResults })
-// T8: Status code communicates success/failure; no `success` boolean needed.
+// Status code communicates success/failure; no `success` boolean needed.
 ```
 
 ---
@@ -497,11 +497,11 @@ POST /resource/snapshot/get | Roles: [developer]
 
 ```
 READ _snapshotStore:snap:{snapshotId}
-  -> 404 if null  // may have TTL-expired
+ -> 404 if null // may have TTL-expired
 IF filterSourceTypes specified
-  // Filter snapshot entries by source type (case-insensitive)
+ // Filter snapshot entries by source type (case-insensitive)
 RETURN (200, GetSnapshotResponse { snapshot })
-// T8: 200 = found, 404 = not found. No `found` boolean needed.
+// 200 = found, 404 = not found. No `found` boolean needed.
 ```
 
 ---
@@ -511,10 +511,10 @@ POST /resource/seeded/list | Roles: []
 
 ```
 FOREACH provider in _seededProviders (sequential, per-provider try/catch)
-  IF resourceType filter specified AND provider.ResourceType != filter
-    // skip
-  CALL provider.ListSeededAsync()
-  // SizeBytes always null in summaries (efficiency)
+ IF resourceType filter specified AND provider.ResourceType != filter
+ // skip
+ CALL provider.ListSeededAsync()
+ // SizeBytes always null in summaries (efficiency)
 RETURN (200, ListSeededResourcesResponse { resources, totalCount })
 ```
 
@@ -525,15 +525,15 @@ POST /resource/seeded/get | Roles: []
 
 ```
 // Filter _seededProviders by ResourceType (case-insensitive)
-IF no matching providers                            -> 404
+IF no matching providers -> 404
 FOREACH provider in matchingProviders (sequential, per-provider try/catch)
-  CALL provider.GetSeededAsync(identifier)
-  IF result != null
-    // Convert content to Base64, map metadata
-    RETURN (200, GetSeededResourceResponse { resource })
-  // If provider throws, log warning and continue to next
+ CALL provider.GetSeededAsync(identifier)
+ IF result != null
+ // Convert content to Base64, map metadata
+ RETURN (200, GetSeededResourceResponse { resource })
+ // If provider throws, log warning and continue to next
 RETURN (404)
-// T8: 200 = found, 404 = not found. No `found` boolean needed.
+// 200 = found, 404 = not found. No `found` boolean needed.
 ```
 
 ---

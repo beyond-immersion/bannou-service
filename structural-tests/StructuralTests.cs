@@ -253,7 +253,7 @@ public class StructuralTests
 
     /// <summary>
     /// Publisher methods that are intentionally never called. Category B entities
-    /// (per IMPLEMENTATION TENETS T31) are never deleted — their x-lifecycle generates
+    /// (per IMPLEMENTATION TENETS) are never deleted — their x-lifecycle generates
     /// a *.deleted publisher but it is unused infrastructure. Immutable entities
     /// (e.g., license boards) similarly have unused *.updated publishers.
     /// </summary>
@@ -334,7 +334,7 @@ public class StructuralTests
 
     /// <summary>
     /// Validates that each service has a {Service}ServiceEvents.cs file on disk,
-    /// confirming the partial class pattern required by T6 (service logic in
+    /// confirming the partial class pattern required by FOUNDATION TENETS (service logic in
     /// *Service.cs, event handlers in *ServiceEvents.cs).
     /// </summary>
     [Theory]
@@ -362,7 +362,7 @@ public class StructuralTests
     /// <summary>
     /// Validates that no plugin assembly directly calls System.Text.Json.JsonSerializer
     /// methods (Serialize, Deserialize). All JSON serialization must go through
-    /// BannouJson.Serialize/Deserialize for consistent settings (T20).
+    /// BannouJson.Serialize/Deserialize for consistent settings (IMPLEMENTATION TENETS).
     /// Uses IL-level metadata scanning to catch compiled violations.
     /// </summary>
     [Theory]
@@ -385,7 +385,7 @@ public class StructuralTests
 
     /// <summary>
     /// Validates that no plugin assembly directly calls Environment.GetEnvironmentVariable().
-    /// All configuration must go through generated configuration classes (T21).
+    /// All configuration must go through generated configuration classes (IMPLEMENTATION TENETS).
     /// Uses IL-level metadata scanning to catch compiled violations.
     /// </summary>
     [Theory]
@@ -409,7 +409,7 @@ public class StructuralTests
     /// <summary>
     /// Validates that no non-infrastructure plugin assembly directly references
     /// infrastructure client types (StackExchange.Redis, RabbitMQ.Client, MySqlConnector).
-    /// Non-L0 services must use lib-state, lib-messaging, lib-mesh abstractions (T4).
+    /// Non-L0 services must use lib-state, lib-messaging, lib-mesh abstractions (FOUNDATION TENETS).
     /// Uses IL-level metadata scanning to catch compiled violations.
     /// </summary>
     [Theory]
@@ -458,7 +458,7 @@ public class StructuralTests
 
     /// <summary>
     /// Validates that no plugin assembly uses Microsoft.AspNetCore.Http.StatusCodes.
-    /// All services must use BeyondImmersion.BannouService.StatusCodes instead (T8).
+    /// All services must use BeyondImmersion.BannouService.StatusCodes instead (IMPLEMENTATION TENETS).
     /// Uses IL-level metadata scanning to catch compiled violations.
     /// </summary>
     [Theory]

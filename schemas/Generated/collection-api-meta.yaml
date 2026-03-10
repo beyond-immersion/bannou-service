@@ -130,68 +130,62 @@ paths:
         \n                    },\n                    \"description\": \"List of field or information keys revealed at this
         level\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EntryTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"EntryTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Entry template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"entryTemplateId\",\n                \"code\",\n                \"collectionType\",\n          \
-        \      \"gameServiceId\",\n                \"displayName\",\n                \"hideWhenLocked\",\n               \
-        \ \"itemTemplateId\",\n                \"isDeprecated\",\n                \"createdAt\"\n            ],\n        \
-        \    \"properties\": {\n                \"entryTemplateId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"description\": \"Unique entry template identifier\"\n\
-        \                },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Unique code within this collection type and game service\"\n                },\n                \"\
-        collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\"\
-        : \"Type of collection this entry belongs to\"\n                },\n                \"gameServiceId\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this entry template is scoped to\"\n                },\n                \"displayName\": {\n    \
-        \                \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n   \
-        \             },\n                \"category\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Category within the collection type\"\n            \
-        \    },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\":
-        true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n  \
-        \                  \"description\": \"Searchable tags\"\n                },\n                \"assetId\": {\n    \
-        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Primary asset identifier\"\n                },\n                \"thumbnailAssetId\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Thumbnail or
-        preview asset identifier\"\n                },\n                \"unlockHint\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Hint text about how to
-        unlock this entry\"\n                },\n                \"hideWhenLocked\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether this entry is hidden until unlocked\"\n                },\n    \
-        \            \"itemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Item template used when granting this entry\"\n                },\n\
-        \                \"discoveryLevels\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\n        \
-        \            },\n                    \"description\": \"Progressive discovery levels\"\n                },\n     \
-        \           \"themes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n   \
-        \                 \"items\": {\n                        \"type\": \"string\"\n                    },\n           \
-        \         \"description\": \"Theme tags for music entries\"\n                },\n                \"duration\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Duration of the content\"\n                },\n                \"loopPoint\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Loop point for music
-        entries\"\n                },\n                \"composer\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Composer or creator name\"\n          \
-        \      },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether this entry template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        ,\n    \"$defs\": {\n        \"EntryTemplateResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Entry template with all fields\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"entryTemplateId\",\n                \"code\",\n                \"collectionType\"\
+        ,\n                \"gameServiceId\",\n                \"displayName\",\n                \"hideWhenLocked\",\n   \
+        \             \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
+        \                \"entryTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique entry template identifier\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within this collection type and game service\"\n                },\n                \"collectionType\": {\n \
+        \                   \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection
+        this entry belongs to\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this entry
+        template is scoped to\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Human-readable display name\"\n                },\n            \
+        \    \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Category within the collection type\"\n                },\n                \"tags\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Searchable tags\"\n                },\n                \"assetId\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Primary asset identifier\"\n    \
+        \            },\n                \"thumbnailAssetId\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Thumbnail or preview asset identifier\"\n   \
+        \             },\n                \"unlockHint\": {\n                    \"type\": \"string\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Hint text about how to unlock this entry\"\n     \
+        \           },\n                \"hideWhenLocked\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether this entry is hidden until unlocked\"\n                },\n                \"itemTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Item template used when granting this entry\"\n                },\n                \"discoveryLevels\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\n                    },\n                    \"\
+        description\": \"Progressive discovery levels\"\n                },\n                \"themes\": {\n             \
+        \       \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n        \
+        \                \"type\": \"string\"\n                    },\n                    \"description\": \"Theme tags for
+        music entries\"\n                },\n                \"duration\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Duration of the content\"\n     \
+        \           },\n                \"loopPoint\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Loop point for music entries\"\n                },\n   \
+        \             \"composer\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Composer or creator name\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this template was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\":
-        \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this entry template was created\"\n                },\n                \"updatedAt\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When this entry template was last updated\"\n                }\n         \
-        \   }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\":
-        \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined and extensible
-        \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive,
-        music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"DiscoveryLevel\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"A discovery level defining what information
-        is revealed at this level\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
-        \        \"level\",\n                \"reveals\"\n            ],\n            \"properties\": {\n                \"\
-        level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"\
-        description\": \"Discovery level number (zero-indexed)\"\n                },\n                \"reveals\": {\n   \
-        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"List of field or information keys revealed at this
-        level\"\n                }\n            }\n        }\n    }\n}"
+        \   \"description\": \"When this entry template was created\"\n                },\n                \"updatedAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"When this entry template was last updated\"\n      \
+        \          }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n      \
+        \      \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined
+        and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery,
+        scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"\
+        DiscoveryLevel\": {\n            \"type\": \"object\",\n            \"description\": \"A discovery level defining
+        what information is revealed at this level\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"level\",\n                \"reveals\"\n            ],\n            \"properties\": {\n    \
+        \            \"level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n     \
+        \               \"description\": \"Discovery level number (zero-indexed)\"\n                },\n                \"\
+        reveals\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                       \
+        \ \"type\": \"string\"\n                    },\n                    \"description\": \"List of field or information
+        keys revealed at this level\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create an entry template\",\n    \"description\": \"Create an entry template
         defining a collectible content item. Each template\\nhas a unique code within its collection type and game service,
         references\\nan item template for inventory placement, and includes display/metadata fields.\\n\",\n    \"tags\":
@@ -227,68 +221,62 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Entry template identifier\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EntryTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"EntryTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Entry template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"entryTemplateId\",\n                \"code\",\n                \"collectionType\",\n          \
-        \      \"gameServiceId\",\n                \"displayName\",\n                \"hideWhenLocked\",\n               \
-        \ \"itemTemplateId\",\n                \"isDeprecated\",\n                \"createdAt\"\n            ],\n        \
-        \    \"properties\": {\n                \"entryTemplateId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"description\": \"Unique entry template identifier\"\n\
-        \                },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Unique code within this collection type and game service\"\n                },\n                \"\
-        collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\"\
-        : \"Type of collection this entry belongs to\"\n                },\n                \"gameServiceId\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this entry template is scoped to\"\n                },\n                \"displayName\": {\n    \
-        \                \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n   \
-        \             },\n                \"category\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Category within the collection type\"\n            \
-        \    },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\":
-        true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n  \
-        \                  \"description\": \"Searchable tags\"\n                },\n                \"assetId\": {\n    \
-        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Primary asset identifier\"\n                },\n                \"thumbnailAssetId\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Thumbnail or
-        preview asset identifier\"\n                },\n                \"unlockHint\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Hint text about how to
-        unlock this entry\"\n                },\n                \"hideWhenLocked\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether this entry is hidden until unlocked\"\n                },\n    \
-        \            \"itemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Item template used when granting this entry\"\n                },\n\
-        \                \"discoveryLevels\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\n        \
-        \            },\n                    \"description\": \"Progressive discovery levels\"\n                },\n     \
-        \           \"themes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n   \
-        \                 \"items\": {\n                        \"type\": \"string\"\n                    },\n           \
-        \         \"description\": \"Theme tags for music entries\"\n                },\n                \"duration\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Duration of the content\"\n                },\n                \"loopPoint\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Loop point for music
-        entries\"\n                },\n                \"composer\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Composer or creator name\"\n          \
-        \      },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether this entry template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        ,\n    \"$defs\": {\n        \"EntryTemplateResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Entry template with all fields\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"entryTemplateId\",\n                \"code\",\n                \"collectionType\"\
+        ,\n                \"gameServiceId\",\n                \"displayName\",\n                \"hideWhenLocked\",\n   \
+        \             \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
+        \                \"entryTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique entry template identifier\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within this collection type and game service\"\n                },\n                \"collectionType\": {\n \
+        \                   \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection
+        this entry belongs to\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this entry
+        template is scoped to\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Human-readable display name\"\n                },\n            \
+        \    \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Category within the collection type\"\n                },\n                \"tags\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Searchable tags\"\n                },\n                \"assetId\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Primary asset identifier\"\n    \
+        \            },\n                \"thumbnailAssetId\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Thumbnail or preview asset identifier\"\n   \
+        \             },\n                \"unlockHint\": {\n                    \"type\": \"string\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Hint text about how to unlock this entry\"\n     \
+        \           },\n                \"hideWhenLocked\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether this entry is hidden until unlocked\"\n                },\n                \"itemTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Item template used when granting this entry\"\n                },\n                \"discoveryLevels\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\n                    },\n                    \"\
+        description\": \"Progressive discovery levels\"\n                },\n                \"themes\": {\n             \
+        \       \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n        \
+        \                \"type\": \"string\"\n                    },\n                    \"description\": \"Theme tags for
+        music entries\"\n                },\n                \"duration\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Duration of the content\"\n     \
+        \           },\n                \"loopPoint\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Loop point for music entries\"\n                },\n   \
+        \             \"composer\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Composer or creator name\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this template was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\":
-        \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this entry template was created\"\n                },\n                \"updatedAt\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When this entry template was last updated\"\n                }\n         \
-        \   }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\":
-        \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined and extensible
-        \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive,
-        music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"DiscoveryLevel\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"A discovery level defining what information
-        is revealed at this level\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
-        \        \"level\",\n                \"reveals\"\n            ],\n            \"properties\": {\n                \"\
-        level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"\
-        description\": \"Discovery level number (zero-indexed)\"\n                },\n                \"reveals\": {\n   \
-        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"List of field or information keys revealed at this
-        level\"\n                }\n            }\n        }\n    }\n}"
+        \   \"description\": \"When this entry template was created\"\n                },\n                \"updatedAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"When this entry template was last updated\"\n      \
+        \          }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n      \
+        \      \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined
+        and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery,
+        scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"\
+        DiscoveryLevel\": {\n            \"type\": \"object\",\n            \"description\": \"A discovery level defining
+        what information is revealed at this level\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"level\",\n                \"reveals\"\n            ],\n            \"properties\": {\n    \
+        \            \"level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n     \
+        \               \"description\": \"Discovery level number (zero-indexed)\"\n                },\n                \"\
+        reveals\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                       \
+        \ \"type\": \"string\"\n                    },\n                    \"description\": \"List of field or information
+        keys revealed at this level\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get an entry template by ID\",\n    \"description\": \"Retrieves an entry
         template by its unique identifier.\",\n    \"tags\": [\n        \"EntryTemplate\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getEntryTemplate\"\n}"
@@ -345,68 +333,62 @@ paths:
         \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Cursor for next page (null if no more results)\"\n                },\n                \"hasMore\": {\n       \
         \             \"type\": \"boolean\",\n                    \"description\": \"Whether more results exist beyond this
-        page\"\n                }\n            }\n        },\n        \"EntryTemplateResponse\": {\n            \"type\":
-        \"object\",\n            \"description\": \"Entry template with all fields\",\n            \"additionalProperties\"\
+        page\"\n                }\n            }\n        },\n        \"EntryTemplateResponse\": {\n            \"allOf\"\
+        : [\n                {\n                    \"type\": \"object\"\n                }\n            ],\n            \"\
+        type\": \"object\",\n            \"description\": \"Entry template with all fields\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"entryTemplateId\",\n                \"code\",\n         \
         \       \"collectionType\",\n                \"gameServiceId\",\n                \"displayName\",\n              \
-        \  \"hideWhenLocked\",\n                \"itemTemplateId\",\n                \"isDeprecated\",\n                \"\
-        createdAt\"\n            ],\n            \"properties\": {\n                \"entryTemplateId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Unique entry template identifier\"\n                },\n                \"code\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Unique code within this collection type and game service\"\n\
-        \                },\n                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\"\
-        ,\n                    \"description\": \"Type of collection this entry belongs to\"\n                },\n       \
-        \         \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Game service this entry template is scoped to\"\n                },\n  \
-        \              \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable display name\"\n                },\n                \"category\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category within the
-        collection type\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n   \
-        \                 \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Searchable tags\"\n                },\n         \
-        \       \"assetId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Primary asset identifier\"\n                },\n                \"thumbnailAssetId\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Thumbnail or preview asset identifier\"\n                },\n                \"unlockHint\": {\n             \
-        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Hint
-        text about how to unlock this entry\"\n                },\n                \"hideWhenLocked\": {\n               \
-        \     \"type\": \"boolean\",\n                    \"description\": \"Whether this entry is hidden until unlocked\"\
-        \n                },\n                \"itemTemplateId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"description\": \"Item template used when granting this entry\"\
-        \n                },\n                \"discoveryLevels\": {\n                    \"type\": \"array\",\n         \
-        \           \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\
-        \n                    },\n                    \"description\": \"Progressive discovery levels\"\n                },\n\
-        \                \"themes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Theme tags for music entries\"\n                },\n                \"duration\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        \  \"hideWhenLocked\",\n                \"itemTemplateId\",\n                \"createdAt\"\n            ],\n     \
+        \       \"properties\": {\n                \"entryTemplateId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"uuid\",\n                    \"description\": \"Unique entry template identifier\"\
+        \n                },\n                \"code\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Unique code within this collection type and game service\"\n                },\n            \
+        \    \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\"\
+        : \"Type of collection this entry belongs to\"\n                },\n                \"gameServiceId\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service this entry template is scoped to\"\n                },\n                \"displayName\": {\n    \
+        \                \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n   \
+        \             },\n                \"category\": {\n                    \"type\": \"string\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Category within the collection type\"\n            \
+        \    },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\":
+        true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n  \
+        \                  \"description\": \"Searchable tags\"\n                },\n                \"assetId\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Primary asset identifier\"\n                },\n                \"thumbnailAssetId\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Thumbnail or
+        preview asset identifier\"\n                },\n                \"unlockHint\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Hint text about how to
+        unlock this entry\"\n                },\n                \"hideWhenLocked\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this entry is hidden until unlocked\"\n                },\n    \
+        \            \"itemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Item template used when granting this entry\"\n                },\n\
+        \                \"discoveryLevels\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
+        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\n        \
+        \            },\n                    \"description\": \"Progressive discovery levels\"\n                },\n     \
+        \           \"themes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n   \
+        \                 \"items\": {\n                        \"type\": \"string\"\n                    },\n           \
+        \         \"description\": \"Theme tags for music entries\"\n                },\n                \"duration\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Duration of the content\"\n                },\n                \"loopPoint\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Loop point for music
         entries\"\n                },\n                \"composer\": {\n                    \"type\": \"string\",\n      \
         \              \"nullable\": true,\n                    \"description\": \"Composer or creator name\"\n          \
-        \      },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether this entry template is deprecated\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this template was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\":
-        \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this entry template was created\"\n                },\n                \"updatedAt\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When this entry template was last updated\"\n                }\n         \
-        \   }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\":
-        \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined and extensible
-        \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive,
-        music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"DiscoveryLevel\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"A discovery level defining what information
-        is revealed at this level\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
-        \        \"level\",\n                \"reveals\"\n            ],\n            \"properties\": {\n                \"\
-        level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"\
-        description\": \"Discovery level number (zero-indexed)\"\n                },\n                \"reveals\": {\n   \
-        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"List of field or information keys revealed at this
-        level\"\n                }\n            }\n        }\n    }\n}"
+        \      },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"When this entry template was created\"\n                },\n\
+        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this entry template was last
+        updated\"\n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
+        are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
+        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
+        \  },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n            \"description\": \"A discovery
+        level defining what information is revealed at this level\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"level\",\n                \"reveals\"\n            ],\n            \"properties\"\
+        : {\n                \"level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Discovery level number (zero-indexed)\"\n                },\n            \
+        \    \"reveals\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
+        \        \"type\": \"string\"\n                    },\n                    \"description\": \"List of field or information
+        keys revealed at this level\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List entry templates\",\n    \"description\": \"Paginated list of entry
         templates filtered by collection type, game service, and optional category.\",\n    \"tags\": [\n        \"EntryTemplate\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listEntryTemplates\"\n}"
@@ -474,68 +456,62 @@ paths:
         \        \"type\": \"string\"\n                    },\n                    \"description\": \"List of field or information
         keys revealed at this level\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EntryTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"EntryTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Entry template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"entryTemplateId\",\n                \"code\",\n                \"collectionType\",\n          \
-        \      \"gameServiceId\",\n                \"displayName\",\n                \"hideWhenLocked\",\n               \
-        \ \"itemTemplateId\",\n                \"isDeprecated\",\n                \"createdAt\"\n            ],\n        \
-        \    \"properties\": {\n                \"entryTemplateId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"description\": \"Unique entry template identifier\"\n\
-        \                },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Unique code within this collection type and game service\"\n                },\n                \"\
-        collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\"\
-        : \"Type of collection this entry belongs to\"\n                },\n                \"gameServiceId\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this entry template is scoped to\"\n                },\n                \"displayName\": {\n    \
-        \                \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n   \
-        \             },\n                \"category\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Category within the collection type\"\n            \
-        \    },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\":
-        true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n  \
-        \                  \"description\": \"Searchable tags\"\n                },\n                \"assetId\": {\n    \
-        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Primary asset identifier\"\n                },\n                \"thumbnailAssetId\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Thumbnail or
-        preview asset identifier\"\n                },\n                \"unlockHint\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Hint text about how to
-        unlock this entry\"\n                },\n                \"hideWhenLocked\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether this entry is hidden until unlocked\"\n                },\n    \
-        \            \"itemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Item template used when granting this entry\"\n                },\n\
-        \                \"discoveryLevels\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\n        \
-        \            },\n                    \"description\": \"Progressive discovery levels\"\n                },\n     \
-        \           \"themes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n   \
-        \                 \"items\": {\n                        \"type\": \"string\"\n                    },\n           \
-        \         \"description\": \"Theme tags for music entries\"\n                },\n                \"duration\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Duration of the content\"\n                },\n                \"loopPoint\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Loop point for music
-        entries\"\n                },\n                \"composer\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Composer or creator name\"\n          \
-        \      },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether this entry template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        ,\n    \"$defs\": {\n        \"EntryTemplateResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Entry template with all fields\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"entryTemplateId\",\n                \"code\",\n                \"collectionType\"\
+        ,\n                \"gameServiceId\",\n                \"displayName\",\n                \"hideWhenLocked\",\n   \
+        \             \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
+        \                \"entryTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique entry template identifier\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within this collection type and game service\"\n                },\n                \"collectionType\": {\n \
+        \                   \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection
+        this entry belongs to\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this entry
+        template is scoped to\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Human-readable display name\"\n                },\n            \
+        \    \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Category within the collection type\"\n                },\n                \"tags\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Searchable tags\"\n                },\n                \"assetId\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Primary asset identifier\"\n    \
+        \            },\n                \"thumbnailAssetId\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Thumbnail or preview asset identifier\"\n   \
+        \             },\n                \"unlockHint\": {\n                    \"type\": \"string\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Hint text about how to unlock this entry\"\n     \
+        \           },\n                \"hideWhenLocked\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether this entry is hidden until unlocked\"\n                },\n                \"itemTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Item template used when granting this entry\"\n                },\n                \"discoveryLevels\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\n                    },\n                    \"\
+        description\": \"Progressive discovery levels\"\n                },\n                \"themes\": {\n             \
+        \       \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n        \
+        \                \"type\": \"string\"\n                    },\n                    \"description\": \"Theme tags for
+        music entries\"\n                },\n                \"duration\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Duration of the content\"\n     \
+        \           },\n                \"loopPoint\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Loop point for music entries\"\n                },\n   \
+        \             \"composer\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Composer or creator name\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this template was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\":
-        \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this entry template was created\"\n                },\n                \"updatedAt\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When this entry template was last updated\"\n                }\n         \
-        \   }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\":
-        \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined and extensible
-        \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive,
-        music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"DiscoveryLevel\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"A discovery level defining what information
-        is revealed at this level\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
-        \        \"level\",\n                \"reveals\"\n            ],\n            \"properties\": {\n                \"\
-        level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"\
-        description\": \"Discovery level number (zero-indexed)\"\n                },\n                \"reveals\": {\n   \
-        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"List of field or information keys revealed at this
-        level\"\n                }\n            }\n        }\n    }\n}"
+        \   \"description\": \"When this entry template was created\"\n                },\n                \"updatedAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"When this entry template was last updated\"\n      \
+        \          }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n      \
+        \      \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined
+        and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery,
+        scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"\
+        DiscoveryLevel\": {\n            \"type\": \"object\",\n            \"description\": \"A discovery level defining
+        what information is revealed at this level\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"level\",\n                \"reveals\"\n            ],\n            \"properties\": {\n    \
+        \            \"level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n     \
+        \               \"description\": \"Discovery level number (zero-indexed)\"\n                },\n                \"\
+        reveals\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                       \
+        \ \"type\": \"string\"\n                    },\n                    \"description\": \"List of field or information
+        keys revealed at this level\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update an entry template\",\n    \"description\": \"Update mutable fields
         of an entry template (displayName, tags, assets, unlockHint, themes, music metadata).\",\n    \"tags\": [\n      \
         \  \"EntryTemplate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateEntryTemplate\"\n}"
@@ -578,73 +554,104 @@ paths:
         deprecation (recommended but not required for Category B templates)\"\n                }\n            }\n        }\n\
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EntryTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"EntryTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Entry template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"entryTemplateId\",\n                \"code\",\n                \"collectionType\",\n          \
-        \      \"gameServiceId\",\n                \"displayName\",\n                \"hideWhenLocked\",\n               \
-        \ \"itemTemplateId\",\n                \"isDeprecated\",\n                \"createdAt\"\n            ],\n        \
-        \    \"properties\": {\n                \"entryTemplateId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"description\": \"Unique entry template identifier\"\n\
-        \                },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Unique code within this collection type and game service\"\n                },\n                \"\
-        collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\"\
-        : \"Type of collection this entry belongs to\"\n                },\n                \"gameServiceId\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this entry template is scoped to\"\n                },\n                \"displayName\": {\n    \
-        \                \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n   \
-        \             },\n                \"category\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Category within the collection type\"\n            \
-        \    },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\":
-        true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n  \
-        \                  \"description\": \"Searchable tags\"\n                },\n                \"assetId\": {\n    \
-        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Primary asset identifier\"\n                },\n                \"thumbnailAssetId\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Thumbnail or
-        preview asset identifier\"\n                },\n                \"unlockHint\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Hint text about how to
-        unlock this entry\"\n                },\n                \"hideWhenLocked\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether this entry is hidden until unlocked\"\n                },\n    \
-        \            \"itemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Item template used when granting this entry\"\n                },\n\
-        \                \"discoveryLevels\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\n        \
-        \            },\n                    \"description\": \"Progressive discovery levels\"\n                },\n     \
-        \           \"themes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n   \
-        \                 \"items\": {\n                        \"type\": \"string\"\n                    },\n           \
-        \         \"description\": \"Theme tags for music entries\"\n                },\n                \"duration\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Duration of the content\"\n                },\n                \"loopPoint\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Loop point for music
-        entries\"\n                },\n                \"composer\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Composer or creator name\"\n          \
-        \      },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether this entry template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        ,\n    \"$defs\": {\n        \"EntryTemplateResponse\": {\n            \"allOf\": [\n                {\n         \
+        \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Entry template with all fields\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"entryTemplateId\",\n                \"code\",\n                \"collectionType\"\
+        ,\n                \"gameServiceId\",\n                \"displayName\",\n                \"hideWhenLocked\",\n   \
+        \             \"itemTemplateId\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
+        \                \"entryTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique entry template identifier\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within this collection type and game service\"\n                },\n                \"collectionType\": {\n \
+        \                   \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection
+        this entry belongs to\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this entry
+        template is scoped to\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Human-readable display name\"\n                },\n            \
+        \    \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Category within the collection type\"\n                },\n                \"tags\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Searchable tags\"\n                },\n                \"assetId\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Primary asset identifier\"\n    \
+        \            },\n                \"thumbnailAssetId\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Thumbnail or preview asset identifier\"\n   \
+        \             },\n                \"unlockHint\": {\n                    \"type\": \"string\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Hint text about how to unlock this entry\"\n     \
+        \           },\n                \"hideWhenLocked\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether this entry is hidden until unlocked\"\n                },\n                \"itemTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Item template used when granting this entry\"\n                },\n                \"discoveryLevels\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\n                    },\n                    \"\
+        description\": \"Progressive discovery levels\"\n                },\n                \"themes\": {\n             \
+        \       \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n        \
+        \                \"type\": \"string\"\n                    },\n                    \"description\": \"Theme tags for
+        music entries\"\n                },\n                \"duration\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Duration of the content\"\n     \
+        \           },\n                \"loopPoint\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Loop point for music entries\"\n                },\n   \
+        \             \"composer\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Composer or creator name\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this template was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\":
-        \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this entry template was created\"\n                },\n                \"updatedAt\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When this entry template was last updated\"\n                }\n         \
-        \   }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\":
-        \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined and extensible
-        \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive,
-        music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"DiscoveryLevel\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"A discovery level defining what information
-        is revealed at this level\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
-        \        \"level\",\n                \"reveals\"\n            ],\n            \"properties\": {\n                \"\
-        level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"\
-        description\": \"Discovery level number (zero-indexed)\"\n                },\n                \"reveals\": {\n   \
-        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"List of field or information keys revealed at this
-        level\"\n                }\n            }\n        }\n    }\n}"
+        \   \"description\": \"When this entry template was created\"\n                },\n                \"updatedAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"When this entry template was last updated\"\n      \
+        \          }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n      \
+        \      \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined
+        and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery,
+        scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"\
+        DiscoveryLevel\": {\n            \"type\": \"object\",\n            \"description\": \"A discovery level defining
+        what information is revealed at this level\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"level\",\n                \"reveals\"\n            ],\n            \"properties\": {\n    \
+        \            \"level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n     \
+        \               \"description\": \"Discovery level number (zero-indexed)\"\n                },\n                \"\
+        reveals\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                       \
+        \ \"type\": \"string\"\n                    },\n                    \"description\": \"List of field or information
+        keys revealed at this level\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate an entry template\",\n    \"description\": \"Marks an entry template
         as deprecated. Deprecated templates cannot be used\\nto grant new entries, but existing unlocked entries remain valid.\\
         nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\\nno delete. Idempotent \\u2014 returns
         OK if already deprecated.\\n\",\n    \"tags\": [\n        \"EntryTemplate\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"deprecateEntryTemplate\"\n}"
+  /collection/entry-template/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedEntryTemplates
+      tags:
+      - EntryTemplate
+      summary: Clean deprecated entry templates with zero remaining entries
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        entry templates and permanently removes those with zero remaining unlocked entries,
+        subject to an optional grace period. Publishes entry-template.deleted events for
+        each removed template. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean deprecated entry templates with zero remaining entries\",\n    \"\
+        description\": \"Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\\nentry templates and
+        permanently removes those with zero remaining unlocked entries,\\nsubject to an optional grace period. Publishes entry-template.deleted
+        events for\\neach removed template. Idempotent and safe to call at any frequency.\\nSupports dry-run mode for admin
+        panel preview.\\n\",\n    \"tags\": [\n        \"EntryTemplate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"cleanDeprecatedEntryTemplates\"\n}"
   /collection/entry-template/seed:
     post:
       operationId: seedEntryTemplates
@@ -2138,6 +2145,8 @@ components:
             $ref: '#/components/schemas/CreateEntryTemplateRequest'
           description: Entry templates to create (duplicates are skipped)
     EntryTemplateResponse:
+      allOf:
+      - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Entry template with all fields
       additionalProperties: false
@@ -2149,7 +2158,6 @@ components:
       - displayName
       - hideWhenLocked
       - itemTemplateId
-      - isDeprecated
       - createdAt
       properties:
         entryTemplateId:
@@ -2222,19 +2230,6 @@ components:
           type: string
           nullable: true
           description: Composer or creator name
-        isDeprecated:
-          type: boolean
-          description: Whether this entry template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When this template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
         createdAt:
           type: string
           format: date-time

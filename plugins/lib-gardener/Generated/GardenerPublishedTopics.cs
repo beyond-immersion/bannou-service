@@ -20,10 +20,10 @@ public static class GardenerPublishedTopics
     /// <summary>Published when a new scenario template is created.</summary>
     public const string ScenarioTemplateCreated = "gardener.scenario-template.created";
 
-    /// <summary>Published when a scenario template is updated.</summary>
+    /// <summary>Published when a scenario template is updated, including deprecation via changedFields.</summary>
     public const string ScenarioTemplateUpdated = "gardener.scenario-template.updated";
 
-    /// <summary>Published when a scenario template is deleted.</summary>
+    /// <summary>Unused Category B infrastructure — scenario templates are never deleted, only deprecated. Retained for schema completeness.</summary>
     public const string ScenarioTemplateDeleted = "gardener.scenario-template.deleted";
 
     /// <summary>Published when a player enters the garden.</summary>

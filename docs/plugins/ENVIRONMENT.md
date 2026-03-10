@@ -34,62 +34,62 @@ A climate template defines the baseline environmental patterns for a biome type 
 
 ```
 ClimateTemplate:
-  templateId:        Guid
-  gameServiceId:     Guid
-  biomeCode:         string              # "temperate_forest", "alpine", "desert", "tropical", "tundra", etc.
-  displayName:       string
-  description:       string
+ templateId: Guid
+ gameServiceId: Guid
+ biomeCode: string # "temperate_forest", "alpine", "desert", "tropical", "tundra", etc.
+ displayName: string
+ description: string
 
-  # Temperature curves (game-hour indexed, per season)
-  temperatureCurves:
-    - seasonCode:    string              # References Worldstate calendar season code
-      baseMinTemp:   float               # Minimum daily temperature (arbitrary units, typically Celsius-like)
-      baseMaxTemp:   float               # Maximum daily temperature
-      hourlyShape:   TemperatureCurveShape  # Sinusoidal (default), Plateau, Spike -- curve shape for intra-day variation. Enum defined in environment-api.yaml.
-      peakHour:      int                 # Game-hour of maximum temperature (default: 14)
-      troughHour:    int                 # Game-hour of minimum temperature (default: 4)
+ # Temperature curves (game-hour indexed, per season)
+ temperatureCurves:
+ - seasonCode: string # References Worldstate calendar season code
+ baseMinTemp: float # Minimum daily temperature (arbitrary units, typically Celsius-like)
+ baseMaxTemp: float # Maximum daily temperature
+ hourlyShape: TemperatureCurveShape # Sinusoidal (default), Plateau, Spike -- curve shape for intra-day variation. Enum defined in environment-api.yaml.
+ peakHour: int # Game-hour of maximum temperature (default: 14)
+ troughHour: int # Game-hour of minimum temperature (default: 4)
 
-  # Weather distributions (probability weights per season)
-  weatherDistributions:
-    - seasonCode:    string
-      patterns:
-        - weatherCode: string            # "clear", "cloudy", "overcast", "light_rain", "heavy_rain", "storm", "snow", "fog", "haze"
-          weight:      float             # Relative probability weight for this season
-          durationGameHours: int         # Typical duration in game-hours before re-rolling
-          temperatureModifier: float     # Additive temp modifier while this weather is active
-          visibilityMultiplier: float    # 1.0 = normal, 0.3 = heavy fog, 0.1 = blizzard
-          precipitationIntensity: float  # 0.0 = none, 1.0 = maximum
-          precipitationType: PrecipitationType  # None, Rain, Snow, Sleet, Hail. Enum defined in environment-api.yaml. Determines precipitation form. For temperature-sensitive types (Rain/Snow), the resolver applies a crossover rule: Rain below 0°C becomes Snow, Snow above 5°C becomes Rain, between 0-5°C becomes Sleet.
-          cloudCover: float              # 0.0-1.0. Cloud coverage during this weather pattern. clear=0.1, cloudy=0.6, overcast=0.95, storm=1.0, etc.
-          resourceImpactModifier: float  # Additive impact on resource availability. rain=+0.05, storm=-0.15, drought=-0.3, clear=0.0. See Resource Availability Computation.
+ # Weather distributions (probability weights per season)
+ weatherDistributions:
+ - seasonCode: string
+ patterns:
+ - weatherCode: string # "clear", "cloudy", "overcast", "light_rain", "heavy_rain", "storm", "snow", "fog", "haze"
+ weight: float # Relative probability weight for this season
+ durationGameHours: int # Typical duration in game-hours before re-rolling
+ temperatureModifier: float # Additive temp modifier while this weather is active
+ visibilityMultiplier: float # 1.0 = normal, 0.3 = heavy fog, 0.1 = blizzard
+ precipitationIntensity: float # 0.0 = none, 1.0 = maximum
+ precipitationType: PrecipitationType # None, Rain, Snow, Sleet, Hail. Enum defined in environment-api.yaml. Determines precipitation form. For temperature-sensitive types (Rain/Snow), the resolver applies a crossover rule: Rain below 0°C becomes Snow, Snow above 5°C becomes Rain, between 0-5°C becomes Sleet.
+ cloudCover: float # 0.0-1.0. Cloud coverage during this weather pattern. clear=0.1, cloudy=0.6, overcast=0.95, storm=1.0, etc.
+ resourceImpactModifier: float # Additive impact on resource availability. rain=+0.05, storm=-0.15, drought=-0.3, clear=0.0. See Resource Availability Computation.
 
-  # Atmospheric baselines (per season)
-  atmosphericBaselines:
-    - seasonCode:    string
-      baseHumidity:  float               # 0.0-1.0
-      baseWindSpeed: float               # 0.0-1.0 (normalized; games interpret scale)
-      windDirectionBias: float           # 0.0-360.0 degrees (prevailing wind direction)
-      windVariance:  float               # Degrees of random deviation from bias
+ # Atmospheric baselines (per season)
+ atmosphericBaselines:
+ - seasonCode: string
+ baseHumidity: float # 0.0-1.0
+ baseWindSpeed: float # 0.0-1.0 (normalized; games interpret scale)
+ windDirectionBias: float # 0.0-360.0 degrees (prevailing wind direction)
+ windVariance: float # Degrees of random deviation from bias
 
-  # Resource availability (per season)
-  resourceAvailability:
-    - seasonCode:    string
-      abundanceLevel: float              # 0.0 (barren) to 1.0 (abundant)
-      forageModifier: float              # Multiplier for forageable resource generation
-      huntModifier:   float              # Multiplier for wildlife activity
+ # Resource availability (per season)
+ resourceAvailability:
+ - seasonCode: string
+ abundanceLevel: float # 0.0 (barren) to 1.0 (abundant)
+ forageModifier: float # Multiplier for forageable resource generation
+ huntModifier: float # Multiplier for wildlife activity
 
-  # Altitude and depth modifiers
-  altitudeTemperatureRate: float         # Temperature change per altitude unit (default: -0.006, lapse rate)
-  depthTemperatureRate:   float          # Temperature change per depth unit (default: +0.003, geothermal)
+ # Altitude and depth modifiers
+ altitudeTemperatureRate: float # Temperature change per altitude unit (default: -0.006, lapse rate)
+ depthTemperatureRate: float # Temperature change per depth unit (default: +0.003, geothermal)
 
-  # Extreme temperature threshold
-  heatThreshold:     float               # Temperature above which ${environment.temperature.is_hot} is true (default: 30.0 for temperate, 45.0 for desert, etc.)
+ # Extreme temperature threshold
+ heatThreshold: float # Temperature above which ${environment.temperature.is_hot} is true (default: 30.0 for temperate, 45.0 for desert, etc.)
 
-  isDeprecated:      bool
-  deprecatedAt:      DateTimeOffset?
-  deprecationReason: string?
-  createdAt:         DateTimeOffset
-  updatedAt:         DateTimeOffset
+ isDeprecated: bool
+ deprecatedAt: DateTimeOffset?
+ deprecationReason: string?
+ createdAt: DateTimeOffset
+ updatedAt: DateTimeOffset
 ```
 
 **Schema design note**: The nested structures above MUST be defined as named `$ref` types in `environment-api.yaml` to avoid NSwag duplicate type generation when `x-lifecycle` references the ClimateTemplate model:
@@ -99,7 +99,7 @@ ClimateTemplate:
 - `AtmosphericBaselineSeason` — seasonal atmospheric baseline values
 - `ResourceAvailabilitySeason` — seasonal resource availability values
 
-**Schema compliance**: All models in `environment-api.yaml` MUST specify `additionalProperties: false` per SCHEMA-RULES.md. This prevents metadata bag anti-patterns (FOUNDATION TENETS, T29).
+**Schema compliance**: All models in `environment-api.yaml` MUST specify `additionalProperties: false` per SCHEMA-RULES.md. This prevents metadata bag anti-patterns (FOUNDATION TENETS,).
 
 **Key design decisions**:
 
@@ -117,18 +117,18 @@ Each location in the game world is bound to a climate template via Environment's
 
 ```
 LocationClimateBinding:
-  bindingId:         Guid
-  locationId:        Guid
-  realmId:           Guid
-  gameServiceId:     Guid
-  biomeCode:         string              # Environment's own domain data
-  climateTemplateId: Guid                # Resolved from biomeCode + gameServiceId
-  altitude:          float               # Stored by Environment at binding creation (queried from Location)
-  depth:             float               # For underground locations (0 for surface)
-  isIndoor:          bool                # True for enclosed locations (buildings, caves, taverns). Indoor locations skip weather computation entirely: no weather, no wind, full visibility. Temperature uses biome base modified by depth only. Default: false.
-  isInherited:       bool                # True if inherited from parent binding
-  createdAt:         DateTimeOffset
-  updatedAt:         DateTimeOffset
+ bindingId: Guid
+ locationId: Guid
+ realmId: Guid
+ gameServiceId: Guid
+ biomeCode: string # Environment's own domain data
+ climateTemplateId: Guid # Resolved from biomeCode + gameServiceId
+ altitude: float # Stored by Environment at binding creation (queried from Location)
+ depth: float # For underground locations (0 for surface)
+ isIndoor: bool # True for enclosed locations (buildings, caves, taverns). Indoor locations skip weather computation entirely: no weather, no wind, full visibility. Temperature uses biome base modified by depth only. Default: false.
+ isInherited: bool # True if inherited from parent binding
+ createdAt: DateTimeOffset
+ updatedAt: DateTimeOffset
 ```
 
 **Binding management** — `x-permissions: [{ role: developer }]`: Environment provides its own API endpoints for managing location-climate bindings:
@@ -147,11 +147,11 @@ LocationClimateBinding:
 **RealmEnvironmentConfig** (Environment-owned per-realm configuration):
 ```
 RealmEnvironmentConfig:
-  realmId:            Guid
-  gameServiceId:      Guid
-  defaultBiomeCode:   string              # Fallback biome for locations with no binding in hierarchy
-  createdAt:          DateTimeOffset
-  updatedAt:          DateTimeOffset
+ realmId: Guid
+ gameServiceId: Guid
+ defaultBiomeCode: string # Fallback biome for locations with no binding in hierarchy
+ createdAt: DateTimeOffset
+ updatedAt: DateTimeOffset
 ```
 Managed via `/environment/realm-config/set` and `/environment/realm-config/get` — `x-permissions: [{ role: developer }]`. Seeded alongside climate templates during world initialization. Different realms need different defaults (Arcadia=temperate, Fantasia=tropical). Stored in `environment-climate` (MySQL) alongside climate templates.
 
@@ -165,53 +165,53 @@ Temperature is computed, not stored. Given a location and a game-time snapshot, 
 
 ```
 ComputeTemperature(location, binding, gameTimeSnapshot):
-  # 0. Indoor short-circuit: enclosed locations skip weather entirely
-  if binding.isIndoor:
-    template = resolveClimateTemplate(location)
-    currentCurve = template.temperatureCurves[gameTimeSnapshot.season]
-    baseTemp = (currentCurve.baseMinTemp + currentCurve.baseMaxTemp) / 2
-    baseTemp += binding.depth * template.depthTemperatureRate  # caves warm with depth
-    return baseTemp
+ # 0. Indoor short-circuit: enclosed locations skip weather entirely
+ if binding.isIndoor:
+ template = resolveClimateTemplate(location)
+ currentCurve = template.temperatureCurves[gameTimeSnapshot.season]
+ baseTemp = (currentCurve.baseMinTemp + currentCurve.baseMaxTemp) / 2
+ baseTemp += binding.depth * template.depthTemperatureRate # caves warm with depth
+ return baseTemp
 
-  template = resolveClimateTemplate(location)
+ template = resolveClimateTemplate(location)
 
-  # 1. Get seasonal base temperature
-  currentSeason = gameTimeSnapshot.season
-  nextSeason = getNextSeason(gameTimeSnapshot, template)
-  seasonProgress = gameTimeSnapshot.seasonProgress  # 0.0-1.0 from Worldstate's GameTimeSnapshot
+ # 1. Get seasonal base temperature
+ currentSeason = gameTimeSnapshot.season
+ nextSeason = getNextSeason(gameTimeSnapshot, template)
+ seasonProgress = gameTimeSnapshot.seasonProgress # 0.0-1.0 from Worldstate's GameTimeSnapshot
 
-  currentCurve = template.temperatureCurves[currentSeason]
-  nextCurve = template.temperatureCurves[nextSeason]
+ currentCurve = template.temperatureCurves[currentSeason]
+ nextCurve = template.temperatureCurves[nextSeason]
 
-  # Interpolate between current and next season for smooth transitions
-  baseMin = lerp(currentCurve.baseMinTemp, nextCurve.baseMinTemp, seasonProgress * 0.5)
-  baseMax = lerp(currentCurve.baseMaxTemp, nextCurve.baseMaxTemp, seasonProgress * 0.5)
+ # Interpolate between current and next season for smooth transitions
+ baseMin = lerp(currentCurve.baseMinTemp, nextCurve.baseMinTemp, seasonProgress * 0.5)
+ baseMax = lerp(currentCurve.baseMaxTemp, nextCurve.baseMaxTemp, seasonProgress * 0.5)
 
-  # 2. Apply hourly curve (sinusoidal by default)
-  gameHour = gameTimeSnapshot.hour
-  hourFraction = sinusoidalInterpolation(gameHour, currentCurve.peakHour, currentCurve.troughHour)
-  baseTemp = lerp(baseMin, baseMax, hourFraction)
+ # 2. Apply hourly curve (sinusoidal by default)
+ gameHour = gameTimeSnapshot.hour
+ hourFraction = sinusoidalInterpolation(gameHour, currentCurve.peakHour, currentCurve.troughHour)
+ baseTemp = lerp(baseMin, baseMax, hourFraction)
 
-  # 3. Apply altitude/depth modifier (from Environment's LocationClimateBinding)
-  baseTemp += binding.altitude * template.altitudeTemperatureRate
-  baseTemp += binding.depth * template.depthTemperatureRate
+ # 3. Apply altitude/depth modifier (from Environment's LocationClimateBinding)
+ baseTemp += binding.altitude * template.altitudeTemperatureRate
+ baseTemp += binding.depth * template.depthTemperatureRate
 
-  # 4. Apply weather modifier
-  currentWeather = resolveWeather(location, gameTimeSnapshot)
-  baseTemp += currentWeather.temperatureModifier
+ # 4. Apply weather modifier
+ currentWeather = resolveWeather(location, gameTimeSnapshot)
+ baseTemp += currentWeather.temperatureModifier
 
-  # 5. Apply divine overrides (if any)
-  override = getActiveOverride(location, gameTimeSnapshot)
-  if override != null && override.temperatureOverride != null:
-    baseTemp = override.temperatureOverride  # Hard override
-  elif override != null && override.temperatureModifier != null:
-    baseTemp += override.temperatureModifier  # Additive modifier
+ # 5. Apply divine overrides (if any)
+ override = getActiveOverride(location, gameTimeSnapshot)
+ if override != null && override.temperatureOverride != null:
+ baseTemp = override.temperatureOverride # Hard override
+ elif override != null && override.temperatureModifier != null:
+ baseTemp += override.temperatureModifier # Additive modifier
 
-  # 6. Apply deterministic location noise (subtle per-location variation)
-  noise = hash(location.locationId + "temperature" + gameTimeSnapshot.dayOfYear)
-  baseTemp += normalizeToRange(noise, -1.5, +1.5)
+ # 6. Apply deterministic location noise (subtle per-location variation)
+ noise = hash(location.locationId + "temperature" + gameTimeSnapshot.dayOfYear)
+ baseTemp += normalizeToRange(noise, -1.5, +1.5)
 
-  return baseTemp
+ return baseTemp
 ```
 
 **Season transition smoothing**: The `seasonProgress * 0.5` factor means temperature begins transitioning to the next season's values halfway through the current season. At season start (progress=0.0), temperature is 100% current season. At season midpoint (progress=0.5), it starts blending with next season. At season end (progress=1.0), it's 50/50. The full transition to the next season's baseline completes at the NEW season's midpoint. This prevents jarring temperature jumps at season boundaries.
@@ -224,33 +224,33 @@ Weather is deterministic per location per game-day, with optional divine overrid
 
 ```
 ResolveWeather(location, gameTimeSnapshot):
-  # 1. Check for active divine weather override
-  override = getActiveWeatherOverride(location, gameTimeSnapshot)
-  if override != null:
-    return override.weatherPattern
+ # 1. Check for active divine weather override
+ override = getActiveWeatherOverride(location, gameTimeSnapshot)
+ if override != null:
+ return override.weatherPattern
 
-  # 2. Deterministic weather from hash
-  template = resolveClimateTemplate(location)
-  distribution = template.weatherDistributions[gameTimeSnapshot.season]
+ # 2. Deterministic weather from hash
+ template = resolveClimateTemplate(location)
+ distribution = template.weatherDistributions[gameTimeSnapshot.season]
 
-  # Day-level weather seed (same day = same weather)
-  daySeed = hash(
-    location.realmId +
-    gameTimeSnapshot.year +
-    gameTimeSnapshot.dayOfYear +
-    "weather"
-  )
+ # Day-level weather seed (same day = same weather)
+ daySeed = hash(
+ location.realmId +
+ gameTimeSnapshot.year +
+ gameTimeSnapshot.dayOfYear +
+ "weather"
+ )
 
-  # Select weather pattern from weighted distribution using seed
-  selectedPattern = weightedSelect(distribution.patterns, daySeed)
+ # Select weather pattern from weighted distribution using seed
+ selectedPattern = weightedSelect(distribution.patterns, daySeed)
 
-  # 3. Check if weather has changed since last period
-  # Weather has a duration; once selected for a day-segment, it persists
-  segmentIndex = gameTimeSnapshot.totalGameHours / selectedPattern.durationGameHours
-  segmentSeed = hash(daySeed + segmentIndex)
+ # 3. Check if weather has changed since last period
+ # Weather has a duration; once selected for a day-segment, it persists
+ segmentIndex = gameTimeSnapshot.totalGameHours / selectedPattern.durationGameHours
+ segmentSeed = hash(daySeed + segmentIndex)
 
-  # Re-roll at segment boundaries (weather changes every durationGameHours)
-  return weightedSelect(distribution.patterns, segmentSeed)
+ # Re-roll at segment boundaries (weather changes every durationGameHours)
+ return weightedSelect(distribution.patterns, segmentSeed)
 ```
 
 **Why per-day-segment, not per-hour?** Weather that changes every game-hour (2.5 real minutes at 24:1) would feel chaotic. Real weather has inertia. A rainstorm lasts hours, not minutes. The `durationGameHours` field on each weather pattern defines its persistence. Clear weather might last 12-24 game-hours (30-60 real minutes). A storm might last 4-8 game-hours (10-20 real minutes). This creates weather patterns that feel natural and that NPCs can meaningfully plan around.
@@ -263,35 +263,35 @@ Weather events are extraordinary environmental phenomena that override normal we
 
 ```
 WeatherEvent:
-  eventId:           Guid
-  realmId:           Guid
-  scopeType:         WeatherEventScopeType  # Realm, Location, LocationSubtree. Enum defined in environment-api.yaml.
-  scopeId:           Guid
+ eventId: Guid
+ realmId: Guid
+ scopeType: WeatherEventScopeType # Realm, Location, LocationSubtree. Enum defined in environment-api.yaml.
+ scopeId: Guid
 
-  # Event definition
-  eventCode:         string              # "thunderstorm", "drought", "blizzard", "heat_wave", "eclipse", "volcanic_ash"
-  displayName:       string
-  severity:          float               # 0.0-1.0 (intensity multiplier)
+ # Event definition
+ eventCode: string # "thunderstorm", "drought", "blizzard", "heat_wave", "eclipse", "volcanic_ash"
+ displayName: string
+ severity: float # 0.0-1.0 (intensity multiplier)
 
-  # Weather overrides
-  weatherCode:       string?             # Override weather pattern (null = keep existing)
-  temperatureModifier: float?            # Additive temperature change
-  temperatureOverride: float?            # Hard temperature override (takes precedence over modifier)
-  visibilityMultiplier: float?           # Override visibility
-  precipitationIntensity: float?         # Override precipitation
-  windSpeedMultiplier: float?            # Multiply base wind speed
-  resourceAvailabilityMultiplier: float? # Multiply seasonal resource availability
+ # Weather overrides
+ weatherCode: string? # Override weather pattern (null = keep existing)
+ temperatureModifier: float? # Additive temperature change
+ temperatureOverride: float? # Hard temperature override (takes precedence over modifier)
+ visibilityMultiplier: float? # Override visibility
+ precipitationIntensity: float? # Override precipitation
+ windSpeedMultiplier: float? # Multiply base wind speed
+ resourceAvailabilityMultiplier: float? # Multiply seasonal resource availability
 
-  # Timing (always game-time, sourced from Worldstate)
-  startGameTime:     long?               # Game-seconds-since-epoch when event begins. null = starts immediately (handler fills from Worldstate's current game time per IMPLEMENTATION TENETS: no sentinel values).
-  endGameTime:       long?               # null = indefinite (must be ended explicitly)
+ # Timing (always game-time, sourced from Worldstate)
+ startGameTime: long? # Game-seconds-since-epoch when event begins. null = starts immediately (handler fills from Worldstate's current game time per IMPLEMENTATION TENETS: no sentinel values).
+ endGameTime: long? # null = indefinite (must be ended explicitly)
 
-  # Source tracking
-  sourceType:        WeatherEventSourceType  # Divine, Scheduled, GameEvent, Admin. Enum defined in environment-api.yaml.
-  sourceId:          Guid?               # Actor ID, schedule ID, etc.
+ # Source tracking
+ sourceType: WeatherEventSourceType # Divine, Scheduled, GameEvent, Admin. Enum defined in environment-api.yaml.
+ sourceId: Guid? # Actor ID, schedule ID, etc.
 
-  isActive:          bool
-  createdAt:         DateTimeOffset
+ isActive: bool
+ createdAt: DateTimeOffset
 ```
 
 **Event stacking**: Multiple events can affect the same location. They stack additively for modifiers. For hard overrides (weatherCode, temperatureOverride), **scope specificity wins**: `Location` overrides `LocationSubtree` overrides `Realm`. Within the same scope level, the most recently created event wins. A drought (resource -0.5) and a divine blessing (resource +0.3) stack to net -0.2. A location-specific divine storm's weatherCode override takes precedence over a realm-wide drought's weatherCode override at that location, regardless of creation order. A hard temperature override from a blizzard event takes precedence over seasonal temperature.
@@ -307,31 +307,31 @@ Resource availability is a **single composite float** (0.0-1.0) per location rep
 
 ```
 ComputeResourceAvailability(location, gameTimeSnapshot):
-  template = resolveClimateTemplate(location)
+ template = resolveClimateTemplate(location)
 
-  # 1. Seasonal baseline from climate template
-  seasonalAvail = template.resourceAvailability[gameTimeSnapshot.season]
-  baseAbundance = seasonalAvail.abundanceLevel  # e.g., spring=0.8, winter=0.3
+ # 1. Seasonal baseline from climate template
+ seasonalAvail = template.resourceAvailability[gameTimeSnapshot.season]
+ baseAbundance = seasonalAvail.abundanceLevel # e.g., spring=0.8, winter=0.3
 
-  # 2. Season transition smoothing (same approach as temperature)
-  nextSeasonAvail = template.resourceAvailability[getNextSeason(gameTimeSnapshot, template)]
-  progress = gameTimeSnapshot.seasonProgress
-  smoothedAbundance = lerp(baseAbundance, nextSeasonAvail.abundanceLevel, progress * 0.5)
+ # 2. Season transition smoothing (same approach as temperature)
+ nextSeasonAvail = template.resourceAvailability[getNextSeason(gameTimeSnapshot, template)]
+ progress = gameTimeSnapshot.seasonProgress
+ smoothedAbundance = lerp(baseAbundance, nextSeasonAvail.abundanceLevel, progress * 0.5)
 
-  # 3. Weather impact modifier (from climate template's weather distribution)
-  currentWeather = resolveWeather(location, gameTimeSnapshot)
-  # Each weather pattern defines its own resourceImpactModifier in the climate template
-  # e.g., "storm" = -0.15, "drought" = -0.3, "clear" = 0.0, "rain" = +0.05
-  smoothedAbundance += currentWeather.resourceImpactModifier
+ # 3. Weather impact modifier (from climate template's weather distribution)
+ currentWeather = resolveWeather(location, gameTimeSnapshot)
+ # Each weather pattern defines its own resourceImpactModifier in the climate template
+ # e.g., "storm" = -0.15, "drought" = -0.3, "clear" = 0.0, "rain" = +0.05
+ smoothedAbundance += currentWeather.resourceImpactModifier
 
-  # 4. Weather event modifiers (stacked additively)
-  activeEvents = getActiveWeatherEvents(location, gameTimeSnapshot)
-  for event in activeEvents:
-    if event.resourceAvailabilityMultiplier != null:
-      smoothedAbundance *= event.resourceAvailabilityMultiplier
+ # 4. Weather event modifiers (stacked additively)
+ activeEvents = getActiveWeatherEvents(location, gameTimeSnapshot)
+ for event in activeEvents:
+ if event.resourceAvailabilityMultiplier != null:
+ smoothedAbundance *= event.resourceAvailabilityMultiplier
 
-  # 5. Clamp to [0.0, 1.0]
-  return clamp(smoothedAbundance, 0.0, 1.0)
+ # 5. Clamp to [0.0, 1.0]
+ return clamp(smoothedAbundance, 0.0, 1.0)
 ```
 
 **Weather-to-resource impact mapping**: The impact of weather on resource availability is defined per-climate-template as part of each weather distribution pattern's `resourceImpactModifier` field. Each weather pattern declares its own ecological impact: rain is generally positive (+0.05, crops grow), storms are negative (-0.15, damage to environment), drought is strongly negative (-0.3, ecological stress), clear is neutral (0.0). These are NOT hardcoded weather-code-to-impact lookups -- each climate template's weather patterns define their own `resourceImpactModifier` alongside `temperatureModifier` and other weather-specific fields, allowing the same weather code to have different ecological impacts in different biomes.
@@ -526,7 +526,7 @@ These MUST be declared as `x-event-subscriptions` in `environment-events.yaml` s
 
 | Service | Role |
 |---------|------|
-| `ITelemetryProvider` | Span instrumentation for all async helper services per QUALITY TENETS (T30). Required as constructor parameter for `EnvironmentService`, `WeatherResolver`, `TemperatureCalculator`, `ClimateTemplateCache`, `ConditionSnapshotCache`, and both background workers. |
+| `ITelemetryProvider` | Span instrumentation for all async helper services per QUALITY TENETS. Required as constructor parameter for `EnvironmentService`, `WeatherResolver`, `TemperatureCalculator`, `ClimateTemplateCache`, `ConditionSnapshotCache`, and both background workers. |
 | `ILogger<EnvironmentService>` | Structured logging |
 | `EnvironmentServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (creates 4 stores: environment-climate, environment-weather, environment-conditions, environment-overrides) |
@@ -568,8 +568,8 @@ Environment publishes weather condition data to Mapping's `weather_effects` spat
 var mappingClient = _serviceProvider.GetService<IMappingClient>();
 if (mappingClient == null)
 {
-    _logger.LogDebug("Mapping not enabled, skipping weather layer publication");
-    return; // Graceful degradation -- spatial queries unavailable, direct queries still work
+ _logger.LogDebug("Mapping not enabled, skipping weather layer publication");
+ return; // Graceful degradation -- spatial queries unavailable, direct queries still work
 }
 ```
 
@@ -578,19 +578,19 @@ if (mappingClient == null)
 **Data model published per location**:
 ```
 WeatherEffectSpatialData:
-  locationId:              Guid
-  realmId:                 Guid
-  weatherCode:             string     # Current weather pattern code
-  temperature:             float      # Computed temperature
-  precipitationType:       PrecipitationType  # None, Rain, Snow, Sleet, Hail
-  precipitationIntensity:  float      # 0.0-1.0
-  visibility:              float      # 0.0-1.0
-  windSpeed:               float      # 0.0-1.0 normalized
-  windDirection:           float      # 0.0-360.0 degrees
-  resourceAvailability:    float      # 0.0-1.0
-  hasActiveWeatherEvent:   bool       # Whether a divine/scheduled event is active
-  activeEventCode:         string?    # Event code if applicable
-  ttlSeconds:              int        # Matches ConditionCacheTtlSeconds * 2 (buffer for refresh cycles)
+ locationId: Guid
+ realmId: Guid
+ weatherCode: string # Current weather pattern code
+ temperature: float # Computed temperature
+ precipitationType: PrecipitationType # None, Rain, Snow, Sleet, Hail
+ precipitationIntensity: float # 0.0-1.0
+ visibility: float # 0.0-1.0
+ windSpeed: float # 0.0-1.0 normalized
+ windDirection: float # 0.0-360.0 degrees
+ resourceAvailability: float # 0.0-1.0
+ hasActiveWeatherEvent: bool # Whether a divine/scheduled event is active
+ activeEventCode: string? # Event code if applicable
+ ttlSeconds: int # Matches ConditionCacheTtlSeconds * 2 (buffer for refresh cycles)
 ```
 
 **API call**: Uses Mapping's spatial ingest endpoint (`/mapping/ingest/batch`) with channel `weather_effects` and the location's spatial coordinates queried from Location via `ILocationClient`. The `TtlWeatherEffects` Mapping configuration (600s TTL) auto-expires stale weather data if Environment stops publishing (e.g., during downtime or when `MappingPublishEnabled` is disabled).
@@ -611,7 +611,7 @@ WeatherEffectSpatialData:
 
 ### Climate Template Management (8 endpoints) — `x-permissions: [{ role: developer }]`
 
-**Deprecation Lifecycle (T31 Category A)**: Climate templates are Category A entities — world-building definitions referenced by LocationClimateBindings (which are Environment's own internal references). Unlike configuration singletons (calendar templates, realm configs), multiple climate templates exist per game and represent authored biome definitions. Category A means: deprecation with reason, undeprecation allowed, deletion requires prior deprecation, `includeDeprecated` on list endpoints.
+**Deprecation Lifecycle (Category A)**: Climate templates are Category A entities — world-building definitions referenced by LocationClimateBindings (which are Environment's own internal references). Unlike configuration singletons (calendar templates, realm configs), multiple climate templates exist per game and represent authored biome definitions. Category A means: deprecation with reason, undeprecation allowed, deletion requires prior deprecation, `includeDeprecated` on list endpoints.
 
 - **SeedClimate** (`/environment/climate/seed`): Creates a climate template for a biome within a game service. Validates: game service exists, biome code unique within game scope, temperature curves cover all seasons in the game's calendar, weather distribution weights are positive, seasonal baselines reference valid season codes. Enforces `MaxClimateTemplatesPerGameService`.
 
@@ -621,7 +621,7 @@ WeatherEffectSpatialData:
 
 - **UpdateClimate** (`/environment/climate/update`): Acquires distributed lock. Partial update. Validates structural consistency. Invalidates climate cache and all condition caches for locations using this template. Active weather computations use updated template starting next refresh cycle.
 
-- **DeprecateClimate** (`/environment/climate/deprecate`): Marks a climate template as deprecated using triple-field semantics: sets `isDeprecated: true`, records `deprecatedAt` timestamp, and stores the provided `deprecationReason`. Idempotent -- returns OK if already deprecated. Existing locations continue resolving. New location bindings referencing this biome code are **rejected with BadRequest** (T31 Category A instance creation guard).
+- **DeprecateClimate** (`/environment/climate/deprecate`): Marks a climate template as deprecated using triple-field semantics: sets `isDeprecated: true`, records `deprecatedAt` timestamp, and stores the provided `deprecationReason`. Idempotent -- returns OK if already deprecated. Existing locations continue resolving. New location bindings referencing this biome code are **rejected with BadRequest** (Category A instance creation guard).
 
 - **UndeprecateClimate** (`/environment/climate/undeprecate`): Restores a deprecated climate template to active status. Clears `isDeprecated`, `deprecatedAt`, and `deprecationReason`. Idempotent -- returns OK if not deprecated. Category A entities allow undeprecation.
 
@@ -691,95 +691,95 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                    ENVIRONMENTAL CONDITION RESOLUTION                      │
-│                                                                          │
-│  INPUT: locationId, realmId                                              │
-│                                                                          │
-│  STEP 1: RESOLVE CLIMATE TEMPLATE                                        │
-│  ┌──────────────────────────────────────────────────────────┐           │
-│  │ Location "Ironpeak Summit"                                │           │
-│  │   biomeCode: "alpine"  (from Environment's own binding)   │           │
-│  │   altitude: 2800       (stored in binding at creation)    │           │
-│  │   climateTemplate: "alpine" for game "arcadia"            │           │
-│  └───────────────────────┬──────────────────────────────────┘           │
-│                           │                                               │
-│  STEP 2: QUERY WORLDSTATE                                                │
-│  ┌───────────────────────▼──────────────────────────────────┐           │
-│  │ Worldstate says:                                          │           │
-│  │   season: "winter"          seasonProgress: 0.7           │           │
-│  │   time.hour: 3              time.period: "night"          │           │
-│  │   dayOfYear: 267            year: 5                       │           │
-│  └───────────────────────┬──────────────────────────────────┘           │
-│                           │                                               │
-│  STEP 3: COMPUTE TEMPERATURE                                             │
-│  ┌───────────────────────▼──────────────────────────────────┐           │
-│  │ Winter alpine curve: baseMin=-15, baseMax=-2              │           │
-│  │ Spring alpine curve: baseMin=-5, baseMax=8                │           │
-│  │ Season transition (progress=0.7): blending toward spring  │           │
-│  │   interpolated min=-11.5, max=1.5                         │           │
-│  │                                                            │           │
-│  │ Hourly curve (hour=3, trough=4): near daily minimum       │           │
-│  │   baseTemp = -10.8                                        │           │
-│  │                                                            │           │
-│  │ Altitude modifier: 2800 * -0.006 = -16.8                 │           │
-│  │   afterAltitude = -27.6                                   │           │
-│  │                                                            │           │
-│  │ Weather modifier (snow): -2.0                             │           │
-│  │   afterWeather = -29.6                                    │           │
-│  │                                                            │           │
-│  │ Location noise: hash("ironpeak"+"temp"+267) = +0.8        │           │
-│  │   final temperature = -28.8                               │           │
-│  └───────────────────────┬──────────────────────────────────┘           │
-│                           │                                               │
-│  STEP 4: RESOLVE WEATHER                                                 │
-│  ┌───────────────────────▼──────────────────────────────────┐           │
-│  │ Check divine overrides: none active                       │           │
-│  │                                                            │           │
-│  │ Deterministic roll:                                       │           │
-│  │   hash(realmId + year=5 + day=267 + "weather") → seed     │           │
-│  │   Winter alpine distribution:                             │           │
-│  │     snow: 40%, clear: 25%, blizzard: 15%,                │           │
-│  │     overcast: 15%, fog: 5%                                │           │
-│  │   seed selects: "snow"                                    │           │
-│  │   duration: 8 game-hours → segment persists               │           │
-│  │                                                            │           │
-│  │ Weather dampening (0.3): 30% chance previous weather      │           │
-│  │   repeats → checked, new roll wins → "snow"               │           │
-│  └───────────────────────┬──────────────────────────────────┘           │
-│                           │                                               │
-│  STEP 5: COMPOSE SNAPSHOT                                                │
-│  ┌───────────────────────▼──────────────────────────────────┐           │
-│  │ ConditionSnapshot:                                        │           │
-│  │   temperature:        -28.8                               │           │
-│  │   weatherCode:        "snow"                              │           │
-│  │   precipitationType:  "snow"                              │           │
-│  │   precipitationIntensity: 0.6                             │           │
-│  │   windSpeed:          0.7                                 │           │
-│  │   windDirection:      225.0  (southwest prevailing)       │           │
-│  │   humidity:           0.85                                │           │
-│  │   visibility:         0.4   (reduced by snow)             │           │
-│  │   cloudCover:         0.9                                 │           │
-│  │   resourceAvailability: 0.15 (winter alpine = scarce)     │           │
-│  │                                                            │           │
-│  │ → Cached in environment:conditions:snapshot:{locationId}   │           │
-│  │ → Returned to Actor as IVariableProvider                   │           │
-│  │ → Published to Mapping weather_effects layer               │           │
-│  │ → Available as ${environment.*} in ABML expressions        │           │
-│  └──────────────────────────────────────────────────────────┘           │
-│                                                                          │
-│  CONSUMER EXAMPLES:                                                      │
-│  ┌───────────────────────────┐  ┌─────────────────────────────────┐    │
-│  │ NPC Farmer ABML:          │  │ Ethology Seasonal Override:      │    │
-│  │                           │  │                                   │    │
-│  │ when: temp < 0            │  │ worldstate.season-changed →       │    │
-│  │   → stay_indoors          │  │   query environment for realm     │    │
-│  │                           │  │   if resourceAvail < 0.3:         │    │
-│  │ when: weather == "rain"   │  │     wolf aggression += 0.15       │    │
-│  │   → delay_planting        │  │     (scarce food = more aggro)   │    │
-│  │                           │  │                                   │    │
-│  │ when: resourceAvail > 0.7 │  │ Loot Seasonal Modifier:          │    │
-│  │   → expand_operations     │  │   forageDropRate *= resourceAvail │    │
-│  └───────────────────────────┘  └─────────────────────────────────┘    │
+│ ENVIRONMENTAL CONDITION RESOLUTION │
+│ │
+│ INPUT: locationId, realmId │
+│ │
+│ STEP 1: RESOLVE CLIMATE TEMPLATE │
+│ ┌──────────────────────────────────────────────────────────┐ │
+│ │ Location "Ironpeak Summit" │ │
+│ │ biomeCode: "alpine" (from Environment's own binding) │ │
+│ │ altitude: 2800 (stored in binding at creation) │ │
+│ │ climateTemplate: "alpine" for game "arcadia" │ │
+│ └───────────────────────┬──────────────────────────────────┘ │
+│ │ │
+│ STEP 2: QUERY WORLDSTATE │
+│ ┌───────────────────────▼──────────────────────────────────┐ │
+│ │ Worldstate says: │ │
+│ │ season: "winter" seasonProgress: 0.7 │ │
+│ │ time.hour: 3 time.period: "night" │ │
+│ │ dayOfYear: 267 year: 5 │ │
+│ └───────────────────────┬──────────────────────────────────┘ │
+│ │ │
+│ STEP 3: COMPUTE TEMPERATURE │
+│ ┌───────────────────────▼──────────────────────────────────┐ │
+│ │ Winter alpine curve: baseMin=-15, baseMax=-2 │ │
+│ │ Spring alpine curve: baseMin=-5, baseMax=8 │ │
+│ │ Season transition (progress=0.7): blending toward spring │ │
+│ │ interpolated min=-11.5, max=1.5 │ │
+│ │ │ │
+│ │ Hourly curve (hour=3, trough=4): near daily minimum │ │
+│ │ baseTemp = -10.8 │ │
+│ │ │ │
+│ │ Altitude modifier: 2800 * -0.006 = -16.8 │ │
+│ │ afterAltitude = -27.6 │ │
+│ │ │ │
+│ │ Weather modifier (snow): -2.0 │ │
+│ │ afterWeather = -29.6 │ │
+│ │ │ │
+│ │ Location noise: hash("ironpeak"+"temp"+267) = +0.8 │ │
+│ │ final temperature = -28.8 │ │
+│ └───────────────────────┬──────────────────────────────────┘ │
+│ │ │
+│ STEP 4: RESOLVE WEATHER │
+│ ┌───────────────────────▼──────────────────────────────────┐ │
+│ │ Check divine overrides: none active │ │
+│ │ │ │
+│ │ Deterministic roll: │ │
+│ │ hash(realmId + year=5 + day=267 + "weather") → seed │ │
+│ │ Winter alpine distribution: │ │
+│ │ snow: 40%, clear: 25%, blizzard: 15%, │ │
+│ │ overcast: 15%, fog: 5% │ │
+│ │ seed selects: "snow" │ │
+│ │ duration: 8 game-hours → segment persists │ │
+│ │ │ │
+│ │ Weather dampening (0.3): 30% chance previous weather │ │
+│ │ repeats → checked, new roll wins → "snow" │ │
+│ └───────────────────────┬──────────────────────────────────┘ │
+│ │ │
+│ STEP 5: COMPOSE SNAPSHOT │
+│ ┌───────────────────────▼──────────────────────────────────┐ │
+│ │ ConditionSnapshot: │ │
+│ │ temperature: -28.8 │ │
+│ │ weatherCode: "snow" │ │
+│ │ precipitationType: "snow" │ │
+│ │ precipitationIntensity: 0.6 │ │
+│ │ windSpeed: 0.7 │ │
+│ │ windDirection: 225.0 (southwest prevailing) │ │
+│ │ humidity: 0.85 │ │
+│ │ visibility: 0.4 (reduced by snow) │ │
+│ │ cloudCover: 0.9 │ │
+│ │ resourceAvailability: 0.15 (winter alpine = scarce) │ │
+│ │ │ │
+│ │ → Cached in environment:conditions:snapshot:{locationId} │ │
+│ │ → Returned to Actor as IVariableProvider │ │
+│ │ → Published to Mapping weather_effects layer │ │
+│ │ → Available as ${environment.*} in ABML expressions │ │
+│ └──────────────────────────────────────────────────────────┘ │
+│ │
+│ CONSUMER EXAMPLES: │
+│ ┌───────────────────────────┐ ┌─────────────────────────────────┐ │
+│ │ NPC Farmer ABML: │ │ Ethology Seasonal Override: │ │
+│ │ │ │ │ │
+│ │ when: temp < 0 │ │ worldstate.season-changed → │ │
+│ │ → stay_indoors │ │ query environment for realm │ │
+│ │ │ │ if resourceAvail < 0.3: │ │
+│ │ when: weather == "rain" │ │ wolf aggression += 0.15 │ │
+│ │ → delay_planting │ │ (scarce food = more aggro) │ │
+│ │ │ │ │ │
+│ │ when: resourceAvail > 0.7 │ │ Loot Seasonal Modifier: │ │
+│ │ → expand_operations │ │ forageDropRate *= resourceAvail │ │
+│ └───────────────────────────┘ └─────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -851,80 +851,80 @@ Implements `IVariableProviderFactory` (via `EnvironmentProviderFactory`). Loads 
 
 ```yaml
 flows:
-  weather_aware_routine:
-    # NPC adjusts daily routine based on weather
-    - cond:
-        # Terrible storm -- everyone stays inside
-        - when: "${environment.weather.is_storm
-                  && environment.wind.speed > 0.7}"
-          then:
-            - call: seek_shelter
-            - set: { mood_modifier: -0.2 }
+ weather_aware_routine:
+ # NPC adjusts daily routine based on weather
+ - cond:
+ # Terrible storm -- everyone stays inside
+ - when: "${environment.weather.is_storm
+ && environment.wind.speed > 0.7}"
+ then:
+ - call: seek_shelter
+ - set: { mood_modifier: -0.2 }
 
-        # Rain -- do indoor work, postpone farming
-        - when: "${environment.weather.is_precipitation
-                  && !environment.weather.is_storm}"
-          then:
-            - call: indoor_work
-            - set: { outdoor_preference: 0.2 }
+ # Rain -- do indoor work, postpone farming
+ - when: "${environment.weather.is_precipitation
+ && !environment.weather.is_storm}"
+ then:
+ - call: indoor_work
+ - set: { outdoor_preference: 0.2 }
 
-        # Clear and warm -- great day for outdoor activities
-        - when: "${environment.weather.is_clear
-                  && environment.temperature > 15}"
-          then:
-            - call: outdoor_work
-            - set: { mood_modifier: 0.1 }
+ # Clear and warm -- great day for outdoor activities
+ - when: "${environment.weather.is_clear
+ && environment.temperature > 15}"
+ then:
+ - call: outdoor_work
+ - set: { mood_modifier: 0.1 }
 
-        # Freezing -- bundle up, shorter outdoor time
-        - when: "${environment.temperature.is_freezing}"
-          then:
-            - call: dress_warm
-            - set: { outdoor_time_limit: 0.3 }
+ # Freezing -- bundle up, shorter outdoor time
+ - when: "${environment.temperature.is_freezing}"
+ then:
+ - call: dress_warm
+ - set: { outdoor_time_limit: 0.3 }
 
-  survival_decisions:
-    # Creature survival behavior in harsh conditions
-    - cond:
-        # Drought -- need to find water, may migrate
-        - when: "${environment.is_drought
-                  && nature.persistence < 0.5}"
-          then:
-            - call: seek_water_source
-            - call: consider_migration
+ survival_decisions:
+ # Creature survival behavior in harsh conditions
+ - cond:
+ # Drought -- need to find water, may migrate
+ - when: "${environment.is_drought
+ && nature.persistence < 0.5}"
+ then:
+ - call: seek_water_source
+ - call: consider_migration
 
-        # Low visibility -- predators have advantage
-        - when: "${environment.visibility < 0.3
-                  && nature.category == 'predator'}"
-          then:
-            - call: hunt_opportunistically
-            - set: { stealth_bonus: "${1.0 - environment.visibility}" }
+ # Low visibility -- predators have advantage
+ - when: "${environment.visibility < 0.3
+ && nature.category == 'predator'}"
+ then:
+ - call: hunt_opportunistically
+ - set: { stealth_bonus: "${1.0 - environment.visibility}" }
 
-        # Low visibility -- prey is more cautious
-        - when: "${environment.visibility < 0.3
-                  && nature.category == 'prey'}"
-          then:
-            - call: stay_in_herd
-            - set: { vigilance_boost: "${1.0 - environment.visibility}" }
+ # Low visibility -- prey is more cautious
+ - when: "${environment.visibility < 0.3
+ && nature.category == 'prey'}"
+ then:
+ - call: stay_in_herd
+ - set: { vigilance_boost: "${1.0 - environment.visibility}" }
 
-  economic_decisions:
-    # NPC merchant adjusts behavior based on ecology
-    - cond:
-        # Resources are scarce -- raise prices, reduce stock
-        - when: "${environment.resource_availability < 0.3}"
-          then:
-            - set: { price_multiplier: "${1.5 + (0.3 - environment.resource_availability)}" }
-            - call: reduce_stock_orders
+ economic_decisions:
+ # NPC merchant adjusts behavior based on ecology
+ - cond:
+ # Resources are scarce -- raise prices, reduce stock
+ - when: "${environment.resource_availability < 0.3}"
+ then:
+ - set: { price_multiplier: "${1.5 + (0.3 - environment.resource_availability)}" }
+ - call: reduce_stock_orders
 
-        # Resources abundant -- lower prices, stock up
-        - when: "${environment.resource_availability > 0.7}"
-          then:
-            - set: { price_multiplier: "${0.8}" }
-            - call: increase_stock_orders
+ # Resources abundant -- lower prices, stock up
+ - when: "${environment.resource_availability > 0.7}"
+ then:
+ - set: { price_multiplier: "${0.8}" }
+ - call: increase_stock_orders
 
-        # Divine event active -- acknowledge it in dialogue
-        - when: "${environment.has_active_event
-                  && environment.active_event.source == 'divine'}"
-          then:
-            - call: comment_on_divine_weather
+ # Divine event active -- acknowledge it in dialogue
+ - when: "${environment.has_active_event
+ && environment.active_event.source == 'divine'}"
+ then:
+ - call: comment_on_divine_weather
 ```
 
 ---
@@ -995,7 +995,7 @@ flows:
 - Implement resource cleanup endpoints
 - Implement ABML action handlers (`register_weather_event`, `cancel_weather_event`, `extend_weather_event`) as `IActionHandler` DI services discovered by `IActionHandlerRegistry`
 - Implement `EnvironmentTransitCostModifierProvider` for `ITransitCostModifierProvider` DI integration with Transit (L2). Uses the existing `ITransitCostModifierProvider` interface in `bannou-service/Providers/`. Document the new DI Provider entry in SERVICE-HIERARCHY.md's "Current DI Inversion Patterns" table
-- Create `environment-client-events.yaml` schema for weather transition push events via `IClientEventPublisher` (IMPLEMENTATION TENETS, T17 — use `IClientEventPublisher`, never `IMessageBus` for client push). Published when weather changes at a player's location (not continuously). One event per weather transition per player location — detect transition → publish service event → publish client event. Client event model naming: `WeatherTransitionClientEvent` (suffix `ClientEvent` per T16 to avoid collision with service event names)
+- Create `environment-client-events.yaml` schema for weather transition push events via `IClientEventPublisher` (IMPLEMENTATION TENETS, — use `IClientEventPublisher`, never `IMessageBus` for client push). Published when weather changes at a player's location (not continuously). One event per weather transition per player location — detect transition → publish service event → publish client event. Client event model naming: `WeatherTransitionClientEvent` (suffix `ClientEvent` per tenets to avoid collision with service event names)
 - Integration testing with Ethology, Workshop, Loot consumers
 
 ### Bootstrap Sequence
@@ -1049,20 +1049,20 @@ Environment is **not a clock** (time is Worldstate's concern), **not a spatial e
 
 The pipeline with Environment:
 ```
-Worldstate (what time)  ────────────────────────────────────┐
-Location (where)  ──────────────────────────────────────────┤
-                                                             ▼
-                                               ENVIRONMENT SERVICE
-                                               Computes conditions from
-                                               time + season + biome +
-                                               altitude + weather events
-                                                             │
-              ┌────────────────┬──────────────┬──────────────┤
-              ▼                ▼              ▼              ▼
-         Actor ABML        Ethology       Workshop        Mapping
-         ${environment.*}  Seasonal       Seasonal        weather_effects
-         NPC decisions     behavior       production      spatial layer
-                           overrides      modifiers       client rendering
+Worldstate (what time) ────────────────────────────────────┐
+Location (where) ──────────────────────────────────────────┤
+ ▼
+ ENVIRONMENT SERVICE
+ Computes conditions from
+ time + season + biome +
+ altitude + weather events
+ │
+ ┌────────────────┬──────────────┬──────────────┤
+ ▼ ▼ ▼ ▼
+ Actor ABML Ethology Workshop Mapping
+ ${environment.*} Seasonal Seasonal weather_effects
+ NPC decisions behavior production spatial layer
+ overrides modifiers client rendering
 ```
 
 ---
@@ -1101,11 +1101,11 @@ Location (where)  ────────────────────�
 
 1. **Scale of condition computation for large worlds**: The background worker is **realm-scoped** -- one distributed lock per realm, one refresh cycle per realm, independently parallelizable across nodes. A realm with 10,000 locations processes them in batches within its refresh cycle (~every 30 real seconds at default interval). This is architecturally fixed: per-realm locks, per-realm iteration, per-realm Worldstate queries.
 
-   **Active-region-only optimization** (`ConditionRefreshMode` config): For realms with thousands of locations where most are dormant (no players, no active NPCs), the `ActiveOnly` mode skips locations that haven't been queried or had entity activity within the `ActiveLocationWindowMinutes` window. Active locations are tracked via a Redis sorted set (`environment:active:{realmId}` with timestamps as scores), updated whenever a condition query or variable provider reads a location's snapshot. Dormant locations still resolve conditions correctly -- they just compute lazily on first query rather than being pre-cached by the worker. Trade-offs:
-   - `AllLocations` (default): All condition caches are always warm. Mapping weather layer is always current for all locations. Higher CPU/Redis cost for large realms with many dormant areas.
-   - `ActiveOnly`: Only active locations pay refresh cost. Dormant locations have a cold-cache penalty on first query (~5-10ms compute vs <1ms cache hit). Mapping weather layer may be stale for dormant areas until queried. Better scaling for large worlds where <10% of locations are active at any given time.
+ **Active-region-only optimization** (`ConditionRefreshMode` config): For realms with thousands of locations where most are dormant (no players, no active NPCs), the `ActiveOnly` mode skips locations that haven't been queried or had entity activity within the `ActiveLocationWindowMinutes` window. Active locations are tracked via a Redis sorted set (`environment:active:{realmId}` with timestamps as scores), updated whenever a condition query or variable provider reads a location's snapshot. Dormant locations still resolve conditions correctly -- they just compute lazily on first query rather than being pre-cached by the worker. Trade-offs:
+ - `AllLocations` (default): All condition caches are always warm. Mapping weather layer is always current for all locations. Higher CPU/Redis cost for large realms with many dormant areas.
+ - `ActiveOnly`: Only active locations pay refresh cost. Dormant locations have a cold-cache penalty on first query (~5-10ms compute vs <1ms cache hit). Mapping weather layer may be stale for dormant areas until queried. Better scaling for large worlds where <10% of locations are active at any given time.
 
-   The Mapping publishing step (pushing weather data to spatial index) is the primary bottleneck at scale. `MappingPublishBatchSize` bounds the per-cycle publish volume. In `ActiveOnly` mode, only active locations publish to Mapping, significantly reducing spatial index write pressure.
+ The Mapping publishing step (pushing weather data to spatial index) is the primary bottleneck at scale. `MappingPublishBatchSize` bounds the per-cycle publish volume. In `ActiveOnly` mode, only active locations publish to Mapping, significantly reducing spatial index write pressure.
 
 2. **Climate template complexity vs. performance**: Rich climate templates with many weather patterns, complex temperature curves, and multiple seasonal baselines require non-trivial computation on every condition resolution. The `ClimateTemplateCache` mitigates MySQL queries, but the computation itself (seasonal interpolation, hourly curve evaluation, altitude adjustment) runs on every cache miss. Pre-computing daily condition tables per location (one computation per game-day per location) would amortize the cost.
 
@@ -1116,11 +1116,11 @@ Location (where)  ────────────────────�
 5. **Offline/downtime weather catch-up**: When the service starts after downtime, Worldstate catches up game-time (advance policy). Environment should NOT recompute conditions for every missed weather segment during catch-up. Instead, compute current conditions from the current game-time snapshot (deterministic weather is reproducible from the current state) and publish a single `conditions-changed` event. Consumers handle catch-up via their own mechanisms (Workshop materializes missed production, Loot regenerates tables).
 
 6. **Worldstate time model dependencies**: The current design assumes realm-scoped uniform time (one game clock per realm, one season per realm). Three planned Worldstate enhancements would require Environment changes:
-   - **Location-specific time zones** ([#532](https://github.com/beyond-immersion/bannou-service/issues/532)): Condition computation currently uses realm-wide `GameTimeSnapshot`. If locations get independent time offsets, the worker must query per-location time or apply offsets during condition computation.
-   - **Magical time dilation** ([#534](https://github.com/beyond-immersion/bannou-service/issues/534)): If locations can have accelerated/decelerated time (e.g., inside a dungeon), weather progression and temperature curves must account for non-uniform time flow within a single realm.
-   - **Variable-rate time** ([#543](https://github.com/beyond-immersion/bannou-service/issues/543)): If time ratios change dynamically (not just per-realm config), the deterministic weather hash segments must account for variable segment durations.
+ - **Location-specific time zones** ([#532](https://github.com/beyond-immersion/bannou-service/issues/532)): Condition computation currently uses realm-wide `GameTimeSnapshot`. If locations get independent time offsets, the worker must query per-location time or apply offsets during condition computation.
+ - **Magical time dilation** ([#534](https://github.com/beyond-immersion/bannou-service/issues/534)): If locations can have accelerated/decelerated time (e.g., inside a dungeon), weather progression and temperature curves must account for non-uniform time flow within a single realm.
+ - **Variable-rate time** ([#543](https://github.com/beyond-immersion/bannou-service/issues/543)): If time ratios change dynamically (not just per-realm config), the deterministic weather hash segments must account for variable segment durations.
 
-   **Impact**: All three affect the condition computation pipeline's assumption that `GameTimeSnapshot` is realm-uniform. Environment's Phase 2 (deterministic weather) and Phase 3 (temperature) are the primary affected areas. Current implementation is correct for the current Worldstate model; these notes track future adaptation needed if/when Worldstate evolves.
+ **Impact**: All three affect the condition computation pipeline's assumption that `GameTimeSnapshot` is realm-uniform. Environment's Phase 2 (deterministic weather) and Phase 3 (temperature) are the primary affected areas. Current implementation is correct for the current Worldstate model; these notes track future adaptation needed if/when Worldstate evolves.
 
 7. **Multi-realm climate template sharing**: Multiple realms can reference the same climate templates (both use `temperate_forest`). This is fine for read operations but means updating a template affects all realms using it. Climate template updates should be admin-only and infrequent. Per-realm template overrides would add complexity; prefer creating separate templates for realms that need different climate parameters.
 

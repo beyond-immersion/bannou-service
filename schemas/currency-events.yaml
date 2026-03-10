@@ -101,6 +101,7 @@ info:
 x-lifecycle:
   topic_prefix: currency
   CurrencyDefinition:
+    deprecation: true
     model:
       definitionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the currency definition" }
       code: { type: string, required: true, description: "Unique currency code" }
@@ -108,9 +109,6 @@ x-lifecycle:
       scope: { $ref: 'currency-api.yaml#/components/schemas/CurrencyScope', required: true, description: "Currency scope" }
       precision: { $ref: 'currency-api.yaml#/components/schemas/CurrencyPrecision', required: true, description: "Currency precision type" }
       isActive: { type: boolean, required: true, description: "Whether the definition is active" }
-      isDeprecated: { type: boolean, required: true, description: "Whether the definition is deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the definition was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
       createdAt: { type: string, format: date-time, required: true, description: "When the definition was created" }
       modifiedAt: { type: string, format: date-time, nullable: true, description: "When the definition was last modified" }
     sensitive: []

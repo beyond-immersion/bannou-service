@@ -715,7 +715,7 @@ public partial class QuestService : IQuestService
         var instanceKey = BuildInstanceKey(questInstanceId);
         await _instanceStore.SaveAsync(instanceKey, questInstance, cancellationToken: cancellationToken);
 
-        // Register character reference with lib-resource for T28 cleanup
+        // Register character reference with lib-resource for cleanup per FOUNDATION TENETS
         await RegisterCharacterReferenceAsync(questInstanceId.ToString(), body.QuestorCharacterId, cancellationToken);
 
         // Initialize objective progress

@@ -53,37 +53,37 @@ When a dungeon core's `dungeon_core` seed growth in `domain_expansion.*` crosses
 
 ```
 Dungeon Actor exercises domain_expansion capability
-    |
-    v
+ |
+ v
 lib-dungeon calls lib-procedural with:
-    - template_id: dungeon chamber HDA (stored in Asset service)
-    - parameters: {
-        personality: "martial",    (from dungeon_core seed metadata)
-        seed: 42,                  (deterministic)
-        room_type: "arena",        (from dungeon cognition)
-        connection_points: [...],  (from existing layout in Mapping)
-        growth_phase: "Awakened",  (from dungeon_core seed phase)
-        style_params: {...}        (from personality_effects configuration)
-      }
-    |
-    v
+ - template_id: dungeon chamber HDA (stored in Asset service)
+ - parameters: {
+ personality: "martial", (from dungeon_core seed metadata)
+ seed: 42, (deterministic)
+ room_type: "arena", (from dungeon cognition)
+ connection_points: [...], (from existing layout in Mapping)
+ growth_phase: "Awakened", (from dungeon_core seed phase)
+ style_params: {...} (from personality_effects configuration)
+ }
+ |
+ v
 lib-procedural:
-    1. Check cache (hash of template + params + seed)
-    2. If miss: acquire Houdini worker from Orchestrator pool
-    3. Download HDA from Asset service
-    4. Execute HDA with parameters
-    5. Upload generated geometry to Asset service
-    6. Bundle as .bannou (LZ4 compressed)
-    7. Cache result
-    |
-    v
+ 1. Check cache (hash of template + params + seed)
+ 2. If miss: acquire Houdini worker from Orchestrator pool
+ 3. Download HDA from Asset service
+ 4. Execute HDA with parameters
+ 5. Upload generated geometry to Asset service
+ 6. Bundle as .bannou (LZ4 compressed)
+ 7. Cache result
+ |
+ v
 lib-dungeon receives asset/bundle reference
-    |
-    v
+ |
+ v
 Registers new chamber in:
-    - lib-mapping (spatial boundaries, room connectivity, affordances)
-    - lib-scene (visual composition, decorations)
-    - lib-save-load (persistent construction state)
+ - lib-mapping (spatial boundaries, room connectivity, affordances)
+ - lib-scene (visual composition, decorations)
+ - lib-save-load (persistent construction state)
 ```
 
 **Deterministic seeds enable reproducible dungeons**: A dungeon that grew chamber X with seed 42 will always get the same geometry. This means dungeon layouts are reproducible from their growth history -- the save-load state doesn't need to store the full geometry, just the generation parameters.
@@ -184,7 +184,7 @@ All dependents are L4 (or L2 workflows using L4). lib-procedural is L4 and depen
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `asset.deleted` | `HandleAssetDeletedAsync` | If deleted asset is an HDA template, deprecate the template registration (AUDIT:NEEDS_DESIGN -- see DC#6 below: should this use lib-resource x-references instead of event subscription per T28?) |
+| `asset.deleted` | `HandleAssetDeletedAsync` | If deleted asset is an HDA template, deprecate the template registration (AUDIT:NEEDS_DESIGN -- see DC#6 below: should this use lib-resource x-references instead of event subscription per tenets?) |
 
 ---
 
@@ -210,12 +210,12 @@ All dependents are L4 (or L2 workflows using L4). lib-procedural is L4 and depen
 
 ### Template Management (4 endpoints)
 
-All endpoints require `developer` role. Templates are **T31 Category B** entities (instances -- jobs and cached results -- persist independently with the template's ID). Category B means: deprecation is one-way (no undeprecate), there is no delete endpoint, and deprecated templates remain readable forever.
+All endpoints require `developer` role. Templates are **Category B** entities (instances -- jobs and cached results -- persist independently with the template's ID). Category B means: deprecation is one-way (no undeprecate), there is no delete endpoint, and deprecated templates remain readable forever.
 
 - **RegisterTemplate** (`/procedural/template/register`): Downloads HDA from Asset service, introspects parameter schema via Houdini worker, stores template metadata with parameter definitions. Validates HDA is loadable. MUST check that the template code is not already taken.
 - **GetTemplate** (`/procedural/template/get`): Returns template metadata including full parameter schema and deprecation state.
 - **ListTemplates** (`/procedural/template/list`): Paged query with optional category filter. MUST support `includeDeprecated` parameter (default: `false`).
-- **DeprecateTemplate** (`/procedural/template/deprecate`): Deprecate template (T31 Category B). Active jobs using this template continue; new generation requests rejected with `BadRequest`. Idempotent -- returns `OK` if already deprecated. Uses triple-field deprecation model (`IsDeprecated`, `DeprecatedAt`, `DeprecationReason`). State change published as `procedural.template.updated` with `changedFields`.
+- **DeprecateTemplate** (`/procedural/template/deprecate`): Deprecate template (Category B). Active jobs using this template continue; new generation requests rejected with `BadRequest`. Idempotent -- returns `OK` if already deprecated. Uses triple-field deprecation model (`IsDeprecated`, `DeprecatedAt`, `DeprecationReason`). State change published as `procedural.template.updated` with `changedFields`.
 
 ### Generation (4 endpoints)
 
@@ -246,7 +246,7 @@ All endpoints require `developer` role (or `procedural.generate` permission for 
 FROM aaronsmithtv/houdini:20.5
 
 COPY houdini_server.py /opt/houdini/server.py
-COPY hdas/ /opt/houdini/hdas/    # Pre-cached common HDAs
+COPY hdas/ /opt/houdini/hdas/ # Pre-cached common HDAs
 
 EXPOSE 8008
 
@@ -269,16 +269,16 @@ Houdini workers are managed by Orchestrator as a processing pool:
 
 ```
 Orchestrator Processing Pool: "houdini-generation"
-    |
-    +-- Worker 1 (warm, pre-initialized, common HDAs loaded)
-    +-- Worker 2 (warm)
-    +-- Worker 3 (cold, spun up on demand)
-    |
-    Pool Config:
-        min_workers: 1          (always keep one warm)
-        max_workers: 10         (scale ceiling)
-        idle_timeout: 300s      (shutdown idle workers after 5 min)
-        warmup_hdas: [...]      (pre-load common HDA templates)
+ |
+ +-- Worker 1 (warm, pre-initialized, common HDAs loaded)
+ +-- Worker 2 (warm)
+ +-- Worker 3 (cold, spun up on demand)
+ |
+ Pool Config:
+ min_workers: 1 (always keep one warm)
+ max_workers: 10 (scale ceiling)
+ idle_timeout: 300s (shutdown idle workers after 5 min)
+ warmup_hdas: [...] (pre-load common HDA templates)
 ```
 
 ### Cold Start Mitigation
@@ -377,32 +377,32 @@ lib-procedural amplifies the content flywheel in a unique way. Without it, the f
 
 ```
 Player Actions
-    |
-    v
+ |
+ v
 Character History / Realm History (accumulated)
-    |
-    v
+ |
+ v
 Resource Service (compression into archives)
-    |
-    v
+ |
+ v
 Storyline (GOAP narrative generation from archives)
-    |
-    v
+ |
+ v
 Regional Watchers / Puppetmaster (orchestrate scenarios)
-    |                                    |
-    v                                    v
-Quest generation               lib-procedural
-(narrative content)            (physical content)
-    |                              |
-    |                    Terrain changes from world events
-    |                    Buildings from NPC construction
-    |                    Dungeon chambers from core growth
-    |                    Environmental effects from magic
-    |                              |
-    v                              v
+ | |
+ v v
+Quest generation lib-procedural
+(narrative content) (physical content)
+ | |
+ | Terrain changes from world events
+ | Buildings from NPC construction
+ | Dungeon chambers from core growth
+ | Environmental effects from magic
+ | |
+ v v
 New Player Experiences (richer because the WORLD PHYSICALLY CHANGED)
-    |
-    v
+ |
+ v
 More Player Actions --> loop
 ```
 
@@ -434,7 +434,7 @@ The flywheel doesn't just generate stories -- it generates the **geometry those 
 
 1. **Parameters are schema-less (additionalProperties: true)**: Different HDAs have completely different parameter sets. lib-procedural stores the parameter schema per template (from introspection) but the generation request accepts arbitrary key-value pairs. Validation happens at introspection time, not in the API schema.
 
-2. **Determinism requires explicit seeds**: If the caller doesn't provide a seed, lib-procedural generates a random one. But the random seed is stored in the job record, so the generation can always be reproduced later. Per T26, the seed parameter in the generation request schema must be `nullable: true` (null = "generate random seed"), not a sentinel value like 0 or -1.
+2. **Determinism requires explicit seeds**: If the caller doesn't provide a seed, lib-procedural generates a random one. But the random seed is stored in the job record, so the generation can always be reproduced later. Per, the seed parameter in the generation request schema must be `nullable: true` (null = "generate random seed"), not a sentinel value like 0 or -1.
 
 3. **Cache key is content-addressed**: SHA256(templateId + canonicalized parameters + seed). Two requests with identical inputs always hit the same cache entry, even from different callers. This is intentional -- generation is pure function of inputs.
 
@@ -456,17 +456,17 @@ The flywheel doesn't just generate stories -- it generates the **geometry those 
 
 5. **Multi-output HDAs**: Some HDAs produce multiple outputs (mesh + collision mesh + LODs + textures). The generation response should support multiple asset IDs per job.
 
-6. **(AUDIT:NEEDS_DESIGN) Asset deletion cleanup -- lib-resource vs event subscription**: Templates store Asset entity references (HDA file IDs). When the HDA asset is deleted, the template should be deprecated. T28 forbids event subscriptions for "destroying dependent data" but permits them for "live state reactions." Deprecating (not destroying) a template is arguably a live state reaction. Decision needed: use lib-resource `x-references` with `onDelete: detach` (deprecate template via cleanup callback), or keep the `asset.deleted` event subscription as a live state reaction. If lib-resource is used, remove the event subscription.
+6. **(AUDIT:NEEDS_DESIGN) Asset deletion cleanup -- lib-resource vs event subscription**: Templates store Asset entity references (HDA file IDs). When the HDA asset is deleted, the template should be deprecated. forbids event subscriptions for "destroying dependent data" but permits them for "live state reactions." Deprecating (not destroying) a template is arguably a live state reaction. Decision needed: use lib-resource `x-references` with `onDelete: detach` (deprecate template via cleanup callback), or keep the `asset.deleted` event subscription as a live state reaction. If lib-resource is used, remove the event subscription.
 
-7. **(AUDIT:NEEDS_DESIGN) lib-resource integration scope**: Should Procedural register references to Asset entities via `x-references`? Should other services that store Procedural template IDs (e.g., lib-dungeon storing the template used for chamber generation) register references back to Procedural? T28 says services that store another service's entity ID should register references with lib-resource, but the practical scope needs definition.
+7. **(AUDIT:NEEDS_DESIGN) lib-resource integration scope**: Should Procedural register references to Asset entities via `x-references`? Should other services that store Procedural template IDs (e.g., lib-dungeon storing the template used for chamber generation) register references back to Procedural? says services that store another service's entity ID should register references with lib-resource, but the practical scope needs definition.
 
-8. **(AUDIT:NEEDS_DESIGN) DefaultOutputFormat -- enum vs string**: Output formats (Glb, Usd, Bgeo, etc.) are determined by what Houdini can export. T25 favors enums for finite system-owned sets, but the set could expand with Houdini updates. Decision: define an `OutputFormat` enum (Category C, PascalCase values) or keep as string for extensibility.
+8. **(AUDIT:NEEDS_DESIGN) DefaultOutputFormat -- enum vs string**: Output formats (Glb, Usd, Bgeo, etc.) are determined by what Houdini can export. favors enums for finite system-owned sets, but the set could expand with Houdini updates. Decision: define an `OutputFormat` enum (Category C, PascalCase values) or keep as string for extensibility.
 
-9. **(AUDIT:NEEDS_DESIGN) Worker pool tunables ownership**: The deep dive shows `min_workers`, `max_workers`, `idle_timeout`, `warmup_hdas` as inline pool config values. T21 requires all tunables in config. Decision: are these Procedural's config properties (passed to Orchestrator pool API) or Orchestrator's pool configuration? If Procedural's, add `HoudiniPoolMinWorkers`, `HoudiniPoolMaxWorkers`, `HoudiniPoolIdleTimeoutSeconds`, `HoudiniWarmupHdas` to the configuration table.
+9. **(AUDIT:NEEDS_DESIGN) Worker pool tunables ownership**: The deep dive shows `min_workers`, `max_workers`, `idle_timeout`, `warmup_hdas` as inline pool config values. requires all tunables in config. Decision: are these Procedural's config properties (passed to Orchestrator pool API) or Orchestrator's pool configuration? If Procedural's, add `HoudiniPoolMinWorkers`, `HoudiniPoolMaxWorkers`, `HoudiniPoolIdleTimeoutSeconds`, `HoudiniWarmupHdas` to the configuration table.
 
 10. **(AUDIT:NEEDS_DESIGN) x-permissions model for generation endpoints**: The deep dive mentions "procedural.generate permission" which is not a valid x-permissions construct (Bannou uses roles and states, not custom permission strings). Decision needed: should generation endpoints be `x-permissions: []` (service-to-service only via mesh, not exposed to WebSocket clients) or `x-permissions: [{role: developer}]` (accessible to developer WebSocket sessions)? Template/cache/introspection endpoints should be `[{role: developer}]`.
 
-11. **(AUDIT:NEEDS_DESIGN) T29 documentation for HDA parameters**: The parameters field uses `additionalProperties: true` which T29 restricts. The use case is defensible (opaque pass-through to Houdini workers, no Bannou service reads keys by convention, validated at runtime against per-template parameter schema). Decision: what exact T29 compliance description to include in the schema property description.
+11. **(AUDIT:NEEDS_DESIGN) documentation for HDA parameters**: The parameters field uses `additionalProperties: true` which restricts. The use case is defensible (opaque pass-through to Houdini workers, no Bannou service reads keys by convention, validated at runtime against per-template parameter schema). Decision: what exact compliance description to include in the schema property description.
 
 ---
 

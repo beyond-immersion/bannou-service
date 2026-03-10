@@ -48,54 +48,54 @@ The Realm service (L2 GameFoundation) manages top-level persistent worlds in the
 Realm Deletion Safety Chain
 =============================
 
-  [Active Realm]
-       │
-       │ POST /realm/deprecate
-       │   (requires admin)
-       ▼
-  [Deprecated Realm]
-   isDeprecated: true
-   deprecatedAt: timestamp
-   deprecationReason: "..."
-       │
-       ├──── POST /realm/undeprecate ───► [Active Realm again]
-       │       (reversal path)
-       │
-       │ POST /realm/delete
-       │   (requires admin + deprecated)
-       ▼
-  [Permanently Deleted]
-   - realm:{id} removed
-   - code-index:{CODE} removed
-   - all-realms list updated
+ [Active Realm]
+ │
+ │ POST /realm/deprecate
+ │ (requires admin)
+ ▼
+ [Deprecated Realm]
+ isDeprecated: true
+ deprecatedAt: timestamp
+ deprecationReason: "..."
+ │
+ ├──── POST /realm/undeprecate ───► [Active Realm again]
+ │ (reversal path)
+ │
+ │ POST /realm/delete
+ │ (requires admin + deprecated)
+ ▼
+ [Permanently Deleted]
+ - realm:{id} removed
+ - code-index:{CODE} removed
+ - all-realms list updated
 
-  [Active Realm] ─── POST /realm/delete ──► 400 BadRequest
-                     (cannot skip deprecation step)
+ [Active Realm] ─── POST /realm/delete ──► 400 BadRequest
+ (cannot skip deprecation step)
 
 
 Realm Merge Flow
 ==================
 
-  [Deprecated Source Realm] ──► POST /realm/merge ──► [Target Realm]
-       │                                                    │
-       │  Phase A: Species Migration                        │
-       │    paginate ListSpeciesByRealm(source)             │
-       │    for each: AddSpeciesToRealm(target)             │
-       │              RemoveSpeciesFromRealm(source)        │
-       │                                                    │
-       │  Phase B: Location Migration (root-first)          │
-       │    1. ListRootLocations(source)                    │
-       │    2. For each root:                               │
-       │       a. GetDescendants (while tree intact)        │
-       │       b. TransferLocationToRealm(root → target)    │
-       │       c. Transfer descendants by depth order       │
-       │       d. SetLocationParent (restore hierarchy)     │
-       │                                                    │
-       │  Phase C: Character Migration                      │
-       │    paginate GetCharactersByRealm(source)           │
-       │    for each: TransferCharacterToRealm(target)      │
-       │                                                    │
-       └── if deleteAfterMerge && 0 failures ──► DeleteRealm(source)
+ [Deprecated Source Realm] ──► POST /realm/merge ──► [Target Realm]
+ │ │
+ │ Phase A: Species Migration │
+ │ paginate ListSpeciesByRealm(source) │
+ │ for each: AddSpeciesToRealm(target) │
+ │ RemoveSpeciesFromRealm(source) │
+ │ │
+ │ Phase B: Location Migration (root-first) │
+ │ 1. ListRootLocations(source) │
+ │ 2. For each root: │
+ │ a. GetDescendants (while tree intact) │
+ │ b. TransferLocationToRealm(root → target) │
+ │ c. Transfer descendants by depth order │
+ │ d. SetLocationParent (restore hierarchy) │
+ │ │
+ │ Phase C: Character Migration │
+ │ paginate GetCharactersByRealm(source) │
+ │ for each: TransferCharacterToRealm(target) │
+ │ │
+ └── if deleteAfterMerge && 0 failures ──► DeleteRealm(source)
 ```
 
 **Deletion also updates the visual aid above** — the resource check step sits between "Deprecated Realm" and "Permanently Deleted", returning 409 Conflict if active L4 references (e.g., realm-history) exist with RESTRICT policy.
@@ -133,19 +133,19 @@ None identified.
 5. **LoadRealmsByIdsAsync silently drops missing realms**: If the all-realms list contains an ID that doesn't exist in data store, it's silently excluded from results.
 
 6. **Event publishing uses aggressive retry with fail-loud crash semantics**: State store writes and event publishing are separate operations (no transactional outbox). However, lib-messaging's `TryPublishAsync` implements a sophisticated retry system via `MessageRetryBuffer`:
-   - **On publish failure**: Messages are buffered in-memory and `TryPublishAsync` returns `true` (because delivery WILL be retried)
-   - **Retry processing**: Every 5 seconds (configurable), the buffer is processed and failed messages are re-attempted
-   - **Fail-loud thresholds**: If RabbitMQ stays down too long, the node **intentionally crashes** via `Environment.FailFast()`:
-     - Buffer exceeds 10,000 messages (default `MESSAGING_RETRY_BUFFER_MAX_SIZE`)
-     - Oldest message exceeds 5 minutes (default `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS`)
-   - **Why crash?**: Crashing triggers orchestrator restart, makes the failure visible in monitoring, and prevents silent data loss or unbounded memory growth
+ - **On publish failure**: Messages are buffered in-memory and `TryPublishAsync` returns `true` (because delivery WILL be retried)
+ - **Retry processing**: Every 5 seconds (configurable), the buffer is processed and failed messages are re-attempted
+ - **Fail-loud thresholds**: If RabbitMQ stays down too long, the node **intentionally crashes** via `Environment.FailFast()`:
+ - Buffer exceeds 10,000 messages (default `MESSAGING_RETRY_BUFFER_MAX_SIZE`)
+ - Oldest message exceeds 5 minutes (default `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS`)
+ - **Why crash?**: Crashing triggers orchestrator restart, makes the failure visible in monitoring, and prevents silent data loss or unbounded memory growth
 
-   **True loss scenarios** (rare):
-   - Node dies (power failure, OOM kill) before buffer flushes
-   - Clean shutdown with non-empty buffer (logged as warning)
-   - Serialization failure (programming error, not retryable)
+ **True loss scenarios** (rare):
+ - Node dies (power failure, OOM kill) before buffer flushes
+ - Clean shutdown with non-empty buffer (logged as warning)
+ - Serialization failure (programming error, not retryable)
 
-   The `PublishRealm*EventAsync` helper methods delegate directly to `TryPublishAsync` without redundant try/catch wrappers (per QUALITY TENETS error handling — `TryPublishAsync` is internally safe). This is the **standard Bannou architecture** used by all services.
+ The `PublishRealm*EventAsync` helper methods delegate directly to `TryPublishAsync` without redundant try/catch wrappers (per QUALITY TENETS error handling — `TryPublishAsync` is internally safe). This is the **standard Bannou architecture** used by all services.
 
 7. **GameServiceId is mutable**: `UpdateRealmRequest` allows changing `GameServiceId`, which reassigns the realm to a different game service. This is intentional - realms can be reorganized (e.g., game service consolidation, re-branding). Dependent services handle this via event-driven cache invalidation: Analytics subscribes to `realm.updated` and invalidates its `realm-to-gameService` cache, ensuring subsequent lookups fetch the new `GameServiceId`. Other services (Location, Species, Character) validate realm existence on creation but don't cache `GameServiceId`, so they're unaffected.
 
@@ -171,8 +171,8 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-08**: Reference counting for safe deletion implemented via lib-resource integration. See [#170](https://github.com/beyond-immersion/bannou-service/issues/170) (closed). DeleteRealm now checks references and executes cleanup callbacks before proceeding.
 - **2026-02-08**: Realm statistics evaluated and closed — entity count tracking belongs in Analytics (L4), not Realm (L2). See [#169](https://github.com/beyond-immersion/bannou-service/issues/169) (closed).
 - **2026-02-08**: Realm merge feature implemented. Three-phase migration (species → locations root-first → characters) with continue-on-individual-failure policy, configurable page size, and optional post-merge deletion. See [#167](https://github.com/beyond-immersion/bannou-service/issues/167) (closed). Also added `/location/transfer-realm` endpoint as prerequisite.
-- **2026-02-26**: T31 deprecation lifecycle compliance — Deprecate and Undeprecate are now idempotent per IMPLEMENTATION TENETS.
-- **2026-02-28**: Production hardening audit — comprehensive tenet compliance pass (schema, T6, T7, T8, T9, T21, T30) and post-audit code review fixes (ETag concurrency for seed update, ApiException handling in migration helpers).
+- **2026-02-26**: deprecation lifecycle compliance — Deprecate and Undeprecate are now idempotent per IMPLEMENTATION TENETS.
+- **2026-02-28**: Production hardening audit — comprehensive tenet compliance pass (schema,,,,,,) and post-audit code review fixes (ETag concurrency for seed update, ApiException handling in migration helpers).
 - **2026-03-04**: Added `GetLocationCompressContext` endpoint and compression callback registration providing realm context (name, code, description) for location archives. Fixed `x-resource-lifecycle` placement (was at YAML root level instead of inside `info:` block, causing generators to silently skip it). Also registered `RealmContextTemplate` as `IResourceTemplate` for ABML path validation.
 
 ### Pending Design

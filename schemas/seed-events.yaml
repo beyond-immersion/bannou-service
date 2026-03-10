@@ -93,6 +93,7 @@ x-lifecycle:
       bondId: { type: string, format: uuid, nullable: true, description: "Bond ID if bonded, null otherwise" }
     sensitive: [metadata]
   SeedType:
+    deprecation: true
     model:
       seedTypeCode: { type: string, primary: true, required: true, minLength: 1, description: "Unique seed type code" }
       gameServiceId: { type: string, format: uuid, nullable: true, description: "Game service this type is scoped to. Null for cross-game seed types." }
@@ -102,9 +103,6 @@ x-lifecycle:
       bondCardinality: { type: integer, required: true, description: "Max bond participants (0 = no bonding)" }
       bondPermanent: { type: boolean, required: true, description: "Whether bonds of this type are permanent" }
       sameOwnerGrowthMultiplier: { type: number, format: float, required: true, description: "Cross-pollination multiplier" }
-      isDeprecated: { type: boolean, required: true, description: "Whether this seed type is deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the seed type was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
     sensitive: [capabilityRules, growthPhases, allowedOwnerTypes]
 
 paths: {}  # Events don't have HTTP paths

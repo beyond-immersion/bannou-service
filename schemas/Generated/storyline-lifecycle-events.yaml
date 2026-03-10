@@ -22,9 +22,9 @@ components:
       - name
       - priority
       - enabled
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -60,18 +60,6 @@ components:
           format: uuid
           nullable: true
           description: "Game service scope (null means all games)"
-        isDeprecated: &id009
-          type: boolean
-          description: "Whether scenario definition is deprecated"
-        deprecatedAt: &id010
-          type: string
-          format: date-time
-          nullable: true
-          description: "When the scenario definition was deprecated"
-        deprecationReason: &id011
-          type: string
-          nullable: true
-          description: "Reason for deprecation"
         createdAt:
           type: string
           format: date-time
@@ -80,6 +68,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the scenario definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     ScenarioDefinitionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -95,9 +96,9 @@ components:
       - name
       - priority
       - enabled
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -112,9 +113,6 @@ components:
         enabled: *id006
         realmId: *id007
         gameServiceId: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
         createdAt:
           type: string
           format: date-time
@@ -123,6 +121,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the scenario definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -143,9 +154,9 @@ components:
       - name
       - priority
       - enabled
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -159,9 +170,6 @@ components:
         enabled: *id006
         realmId: *id007
         gameServiceId: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
         createdAt:
           type: string
           format: date-time
@@ -170,6 +178,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the scenario definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

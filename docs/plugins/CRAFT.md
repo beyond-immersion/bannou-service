@@ -28,7 +28,7 @@ The question arises: why not combine crafting operations with the modifier syste
 | Concern | lib-affix (L4) | lib-craft (L4) |
 |---------|---------------|----------------|
 | **Core entity** | AffixDefinition (modifier templates) | RecipeDefinition (workflow templates) |
-| **What it knows** | "T3 fire resistance suffix exists with weight 400 and requires iLvl 74" | "Enchanting recipe 'inscribe_fire' requires an enchanting table, fire reagents, and Enchanting proficiency 5" |
+| **What it knows** | "fire resistance suffix exists with weight 400 and requires iLvl 74" | "Enchanting recipe 'inscribe_fire' requires an enchanting table, fire reagents, and Enchanting proficiency 5" |
 | **Operations** | Apply/remove validated modifier, generate pool, roll values | Execute recipe steps, consume materials, check proficiency, determine quality, produce outputs |
 | **State managed** | Definitions, implicit mappings, pool caches | Sessions, proficiency, discovery, station registry |
 | **Session concept** | None (stateless operations) | Multi-step Contract-backed sessions with milestone progression |
@@ -73,101 +73,101 @@ A recipe definition is the template that describes a crafting workflow. It defin
 
 ```
 RecipeDefinition:
-  recipeId: Guid
-  gameServiceId: Guid
-  code: string                    # Unique within game service (e.g., "smelt_iron_ingot")
+ recipeId: Guid
+ gameServiceId: Guid
+ code: string # Unique within game service (e.g., "smelt_iron_ingot")
 
-  # Classification
-  recipeType: string              # "production", "modification", "extraction"
-  domain: string                  # Proficiency domain (e.g., "blacksmithing", "enchanting", "alchemy")
-  category: string                # Broad classification (e.g., "weapons", "potions", "enchantments")
-  tags: [string]                  # For filtering and discovery (e.g., ["fire", "melee", "basic"])
+ # Classification
+ recipeType: string # "production", "modification", "extraction"
+ domain: string # Proficiency domain (e.g., "blacksmithing", "enchanting", "alchemy")
+ category: string # Broad classification (e.g., "weapons", "potions", "enchantments")
+ tags: [string] # For filtering and discovery (e.g., ["fire", "melee", "basic"])
 
-  # Inputs (materials consumed on completion)
-  inputs:
-    - itemTemplateCode: string    # Required material
-      quantity: decimal           # Amount consumed
-      qualityMinimum: decimal?    # Minimum quality required (null = any)
-      consumeOnStep: string?      # Which step consumes this (null = final step)
+ # Inputs (materials consumed on completion)
+ inputs:
+ - itemTemplateCode: string # Required material
+ quantity: decimal # Amount consumed
+ qualityMinimum: decimal? # Minimum quality required (null = any)
+ consumeOnStep: string? # Which step consumes this (null = final step)
 
-  # Currency costs
-  currencyCosts:
-    - currencyCode: string
-      amount: decimal
+ # Currency costs
+ currencyCosts:
+ - currencyCode: string
+ amount: decimal
 
-  # For modification recipes: target item requirements
-  targetRequirements:
-    validItemClasses: [string]?   # Item template categories the recipe can target
-    minimumItemLevel: int?
-    requiredItemStates:           # Typed predicates replacing object? (T29 compliance)
-      - field: ItemStateField     # Service-specific enum: IsIdentified, IsCorrupted, IsMirrored, IsFractured
-        expected: bool            # Required state value
-    requiredAffixSlotType: string? # For "add specific affix type" recipes
+ # For modification recipes: target item requirements
+ targetRequirements:
+ validItemClasses: [string]? # Item template categories the recipe can target
+ minimumItemLevel: int?
+ requiredItemStates: # Typed predicates replacing object? (compliance)
+ - field: ItemStateField # Service-specific enum: IsIdentified, IsCorrupted, IsMirrored, IsFractured
+ expected: bool # Required state value
+ requiredAffixSlotType: string? # For "add specific affix type" recipes
 
-  # Affix operation (modification recipes only, requires lib-affix)
-  affixOperation: AffixOperationType?  # Service-specific enum (Category C):
-                                       # ApplyRandom, RemoveRandom, RerollAll,
-                                       # RerollValues, Corrupt, Fracture, ApplySpecific
-  affixOperationConfig:                # Typed config per operation (T29 compliance)
-    weightModifiers: Dictionary<string, decimal>?  # For ApplyRandom: tag → weight multiplier
-    slotType: string?                  # For ApplyRandom/ApplySpecific: target slot type
-    guaranteedAffixCode: string?       # For ApplySpecific: exact affix code to apply
+ # Affix operation (modification recipes only, requires lib-affix)
+ affixOperation: AffixOperationType? # Service-specific enum (Category C):
+ # ApplyRandom, RemoveRandom, RerollAll,
+ # RerollValues, Corrupt, Fracture, ApplySpecific
+ affixOperationConfig: # Typed config per operation (compliance)
+ weightModifiers: Dictionary<string, decimal>? # For ApplyRandom: tag → weight multiplier
+ slotType: string? # For ApplyRandom/ApplySpecific: target slot type
+ guaranteedAffixCode: string? # For ApplySpecific: exact affix code to apply
 
-  # Steps (ordered)
-  steps:
-    - code: string                # "prepare", "heat", "hammer", "quench"
-      name: string
-      durationSeconds: int?       # Real-time duration (null = instant)
-      stationType: string?        # Required station type (null = no station needed)
-      toolCategory: string?       # Required tool category (null = no tool needed)
-      skillCheck: bool            # Whether this step has a quality-affecting skill check
+ # Steps (ordered)
+ steps:
+ - code: string # "prepare", "heat", "hammer", "quench"
+ name: string
+ durationSeconds: int? # Real-time duration (null = instant)
+ stationType: string? # Required station type (null = no station needed)
+ toolCategory: string? # Required tool category (null = no tool needed)
+ skillCheck: bool # Whether this step has a quality-affecting skill check
 
-  # Outputs (production recipes)
-  outputs:
-    - itemTemplateCode: string
-      quantity: decimal
-      qualityInfluence: decimal   # How much recipe quality affects this output (0-1)
+ # Outputs (production recipes)
+ outputs:
+ - itemTemplateCode: string
+ quantity: decimal
+ qualityInfluence: decimal # How much recipe quality affects this output (0-1)
 
-  # Extraction outputs (extraction recipes)
-  extractionOutputs:
-    - itemTemplateCode: string
-      baseQuantity: decimal
-      quantityVariance: decimal   # +/- variance on quantity
-      probability: decimal        # Chance of this output (0-1)
+ # Extraction outputs (extraction recipes)
+ extractionOutputs:
+ - itemTemplateCode: string
+ baseQuantity: decimal
+ quantityVariance: decimal # +/- variance on quantity
+ probability: decimal # Chance of this output (0-1)
 
-  # Proficiency requirements
-  proficiencyRequirements:
-    - domain: string              # Must match a proficiency domain
-      minimumLevel: int
+ # Proficiency requirements
+ proficiencyRequirements:
+ - domain: string # Must match a proficiency domain
+ minimumLevel: int
 
-  # Quality formula weights (all sum to 1.0)
-  qualityWeights:
-    materialQuality: decimal      # How much input quality affects output (0-1)
-    proficiencyLevel: decimal     # How much skill affects output (0-1)
-    toolQuality: decimal          # How much tool quality affects output (0-1)
+ # Quality formula weights (all sum to 1.0)
+ qualityWeights:
+ materialQuality: decimal # How much input quality affects output (0-1)
+ proficiencyLevel: decimal # How much skill affects output (0-1)
+ toolQuality: decimal # How much tool quality affects output (0-1)
 
-  # Experience granted on completion
-  experienceGrants:
-    - domain: string
-      baseExperience: decimal
-      firstCraftBonus: decimal?   # Extra XP for first successful craft of this recipe
+ # Experience granted on completion
+ experienceGrants:
+ - domain: string
+ baseExperience: decimal
+ firstCraftBonus: decimal? # Extra XP for first successful craft of this recipe
 
-  # Discovery
-  isDiscoverable: bool            # Can be discovered through experimentation
-  discoveryHints: [string]?       # Hints for discovery system (e.g., ["combine_fire_reagent_with_weapon"])
-  prerequisiteRecipeCodes: [string]? # Must know these recipes before this one can be discovered
+ # Discovery
+ isDiscoverable: bool # Can be discovered through experimentation
+ discoveryHints: [string]? # Hints for discovery system (e.g., ["combine_fire_reagent_with_weapon"])
+ prerequisiteRecipeCodes: [string]? # Must know these recipes before this one can be discovered
 
-  # Deprecation (T31 Category B — templates persist forever, no delete, no undeprecate)
-  isDeprecated: bool
-  deprecatedAt: DateTimeOffset?
-  deprecationReason: string?
+ # Deprecation (Category B — templates persist forever, no delete, no undeprecate)
+ isDeprecated: bool
+ deprecatedAt: DateTimeOffset?
+ deprecationReason: string?
 ```
 
 **Key design decisions**:
 
 1. **Recipe types are opaque strings**, not enums. "production", "modification", "extraction" are conventions. A game might add "transmutation", "ritual", "assembly" as types with custom handling.
 
-2. **Affix operations use a typed enum** (`AffixOperationType`): Modification recipes declare which lib-affix operation to invoke using a Category C service-specific enum, with typed configuration parameters (`AffixOperationConfig`). This replaces the previous `object?` approach that violated T29.
+2. **Affix operations use a typed enum** (`AffixOperationType`): Modification recipes declare which lib-affix operation to invoke using a Category C service-specific enum, with typed configuration parameters (`AffixOperationConfig`). This replaces the previous `object?` approach that violated.
 
 3. **Steps are ordered milestones** that map directly to Contract milestones. Starting a crafting session creates a Contract instance whose milestones mirror the recipe's steps.
 
@@ -182,53 +182,53 @@ A crafting session is a live execution of a recipe by an entity. Sessions are ba
 ```
 Crafting Session Flow:
 
-  /craft/session/start
-      |
-      +-- Validate: entity has required proficiency
-      +-- Validate: entity has required materials in inventory
-      +-- Validate: station available (if required)
-      +-- Validate: tool available (if required)
-      +-- Lock materials (authorization hold on currency, reservation on items)
-      |
-      +-- Create Contract instance from recipe's step structure
-      |     Milestones = recipe steps
-      |     onComplete (final step):
-      |       - /craft/internal/complete-session
-      |
-      +-- Return sessionId (= contractInstanceId)
+ /craft/session/start
+ |
+ +-- Validate: entity has required proficiency
+ +-- Validate: entity has required materials in inventory
+ +-- Validate: station available (if required)
+ +-- Validate: tool available (if required)
+ +-- Lock materials (authorization hold on currency, reservation on items)
+ |
+ +-- Create Contract instance from recipe's step structure
+ | Milestones = recipe steps
+ | onComplete (final step):
+ | - /craft/internal/complete-session
+ |
+ +-- Return sessionId (= contractInstanceId)
 
-  /craft/session/advance (per step)
-      |
-      +-- Validate: step prerequisites met (previous steps complete)
-      +-- Validate: station still available, tool still held
-      +-- If step has skillCheck: roll quality factor for this step
-      +-- If step has durationSeconds: wait (or skip with timer)
-      +-- If step has consumeOnStep material: consume it now
-      |
-      +-- Complete Contract milestone for this step
-      +-- Return step result (quality contribution, remaining steps)
+ /craft/session/advance (per step)
+ |
+ +-- Validate: step prerequisites met (previous steps complete)
+ +-- Validate: station still available, tool still held
+ +-- If step has skillCheck: roll quality factor for this step
+ +-- If step has durationSeconds: wait (or skip with timer)
+ +-- If step has consumeOnStep material: consume it now
+ |
+ +-- Complete Contract milestone for this step
+ +-- Return step result (quality contribution, remaining steps)
 
-  /craft/internal/complete-session (prebound API, called by Contract)
-      |
-      +-- Consume remaining materials
-      +-- Compute final quality from accumulated step quality + weights
-      |
-      +-- If production:
-      |     Create output items via lib-item
-      |     Place in entity's inventory via lib-inventory
-      |     Quality affects: stat rolls, durability, rarity
-      |
-      +-- If modification:
-      |     Call lib-affix operation on target item
-      |     Quality affects: tier selection, value rolls
-      |
-      +-- If extraction:
-      |     Destroy target item via lib-item
-      |     Create extracted outputs (probabilistic)
-      |     Place in inventory
-      |
-      +-- Grant proficiency experience
-      +-- Publish crafting events
+ /craft/internal/complete-session (prebound API, called by Contract)
+ |
+ +-- Consume remaining materials
+ +-- Compute final quality from accumulated step quality + weights
+ |
+ +-- If production:
+ | Create output items via lib-item
+ | Place in entity's inventory via lib-inventory
+ | Quality affects: stat rolls, durability, rarity
+ |
+ +-- If modification:
+ | Call lib-affix operation on target item
+ | Quality affects: tier selection, value rolls
+ |
+ +-- If extraction:
+ | Destroy target item via lib-item
+ | Create extracted outputs (probabilistic)
+ | Place in inventory
+ |
+ +-- Grant proficiency experience
+ +-- Publish crafting events
 ```
 
 **Why Contract integration matters**: Contracts provide durable state machines. If the server crashes mid-craft, the Contract persists the session state. Steps can have real-time durations (a forging step takes 30 seconds of in-game time). Prebound APIs on the final milestone handle the actual item creation/modification, ensuring atomicity.
@@ -241,25 +241,25 @@ Transform input materials into output items. The economic backbone of NPC crafti
 
 ```
 Example: "Forge Iron Sword"
-  recipeType: "production"
-  domain: "blacksmithing"
-  inputs:
-    - {itemTemplateCode: "iron_ingot", quantity: 3}
-    - {itemTemplateCode: "leather_strip", quantity: 1}
-  currencyCosts: []
-  steps:
-    - {code: "heat_metal", stationType: "forge", durationSeconds: 15, skillCheck: true}
-    - {code: "hammer_blade", stationType: "forge", toolCategory: "hammer", skillCheck: true}
-    - {code: "quench", stationType: "forge", skillCheck: false}
-    - {code: "attach_grip", toolCategory: "hammer", skillCheck: false}
-  outputs:
-    - {itemTemplateCode: "iron_sword", quantity: 1, qualityInfluence: 1.0}
-  proficiencyRequirements:
-    - {domain: "blacksmithing", minimumLevel: 3}
-  qualityWeights:
-    materialQuality: 0.3
-    proficiencyLevel: 0.5
-    toolQuality: 0.2
+ recipeType: "production"
+ domain: "blacksmithing"
+ inputs:
+ - {itemTemplateCode: "iron_ingot", quantity: 3}
+ - {itemTemplateCode: "leather_strip", quantity: 1}
+ currencyCosts: []
+ steps:
+ - {code: "heat_metal", stationType: "forge", durationSeconds: 15, skillCheck: true}
+ - {code: "hammer_blade", stationType: "forge", toolCategory: "hammer", skillCheck: true}
+ - {code: "quench", stationType: "forge", skillCheck: false}
+ - {code: "attach_grip", toolCategory: "hammer", skillCheck: false}
+ outputs:
+ - {itemTemplateCode: "iron_sword", quantity: 1, qualityInfluence: 1.0}
+ proficiencyRequirements:
+ - {domain: "blacksmithing", minimumLevel: 3}
+ qualityWeights:
+ materialQuality: 0.3
+ proficiencyLevel: 0.5
+ toolQuality: 0.2
 ```
 
 #### Modification Recipes
@@ -268,45 +268,45 @@ Transform an existing item using lib-affix operations. Maps to PoE-style currenc
 
 ```
 Example: "Chaos Reforge" (PoE's Chaos Orb equivalent)
-  recipeType: "modification"
-  domain: "enchanting"
-  inputs:
-    - {itemTemplateCode: "chaos_reagent", quantity: 1}
-  targetRequirements:
-    requiredItemStates:
-      - {field: IsCorrupted, expected: false}
-      - {field: IsMirrored, expected: false}
-  affixOperation: RerollAll
-  affixOperationConfig: {}
-  steps:
-    - {code: "apply", skillCheck: false}
-  proficiencyRequirements: []
+ recipeType: "modification"
+ domain: "enchanting"
+ inputs:
+ - {itemTemplateCode: "chaos_reagent", quantity: 1}
+ targetRequirements:
+ requiredItemStates:
+ - {field: IsCorrupted, expected: false}
+ - {field: IsMirrored, expected: false}
+ affixOperation: RerollAll
+ affixOperationConfig: {}
+ steps:
+ - {code: "apply", skillCheck: false}
+ proficiencyRequirements: []
 
 Example: "Inscribe Fire Logos" (Arcadia enchanting)
-  recipeType: "modification"
-  domain: "enchanting"
-  inputs:
-    - {itemTemplateCode: "fire_reagent", quantity: 2}
-    - {itemTemplateCode: "inscription_ink", quantity: 1}
-  targetRequirements:
-    requiredItemStates:
-      - {field: IsCorrupted, expected: false}
-      - {field: IsIdentified, expected: true}
-    requiredAffixSlotType: "suffix"
-  affixOperation: ApplyRandom
-  affixOperationConfig:
-    weightModifiers: {"fire": 5.0, "cold": 0.0, "lightning": 0.0}
-    slotType: "suffix"
-  steps:
-    - {code: "prepare_channels", stationType: "enchanting_table", durationSeconds: 10, skillCheck: true}
-    - {code: "flow_pneuma", stationType: "enchanting_table", toolCategory: "inscription_tools", skillCheck: true}
-    - {code: "stabilize", stationType: "enchanting_table", skillCheck: true}
-  proficiencyRequirements:
-    - {domain: "enchanting", minimumLevel: 5}
-  qualityWeights:
-    materialQuality: 0.2
-    proficiencyLevel: 0.6
-    toolQuality: 0.2
+ recipeType: "modification"
+ domain: "enchanting"
+ inputs:
+ - {itemTemplateCode: "fire_reagent", quantity: 2}
+ - {itemTemplateCode: "inscription_ink", quantity: 1}
+ targetRequirements:
+ requiredItemStates:
+ - {field: IsCorrupted, expected: false}
+ - {field: IsIdentified, expected: true}
+ requiredAffixSlotType: "suffix"
+ affixOperation: ApplyRandom
+ affixOperationConfig:
+ weightModifiers: {"fire": 5.0, "cold": 0.0, "lightning": 0.0}
+ slotType: "suffix"
+ steps:
+ - {code: "prepare_channels", stationType: "enchanting_table", durationSeconds: 10, skillCheck: true}
+ - {code: "flow_pneuma", stationType: "enchanting_table", toolCategory: "inscription_tools", skillCheck: true}
+ - {code: "stabilize", stationType: "enchanting_table", skillCheck: true}
+ proficiencyRequirements:
+ - {domain: "enchanting", minimumLevel: 5}
+ qualityWeights:
+ materialQuality: 0.2
+ proficiencyLevel: 0.6
+ toolQuality: 0.2
 ```
 
 For modification recipes, quality influences which tiers of affixes can roll and how close to max values the rolls land. Higher quality = higher probability of better tiers and better rolls within the tier's range.
@@ -317,18 +317,18 @@ Destroy an item and recover components. Enables material recycling and the "salv
 
 ```
 Example: "Salvage Weapon"
-  recipeType: "extraction"
-  domain: "blacksmithing"
-  inputs: []
-  targetRequirements:
-    validItemClasses: ["one_hand_sword", "two_hand_sword", "axe", "mace"]
-  steps:
-    - {code: "disassemble", stationType: "forge", toolCategory: "hammer", skillCheck: true}
-  extractionOutputs:
-    - {itemTemplateCode: "iron_ingot", baseQuantity: 1, quantityVariance: 1, probability: 1.0}
-    - {itemTemplateCode: "leather_strip", baseQuantity: 0, quantityVariance: 1, probability: 0.5}
-  proficiencyRequirements:
-    - {domain: "blacksmithing", minimumLevel: 1}
+ recipeType: "extraction"
+ domain: "blacksmithing"
+ inputs: []
+ targetRequirements:
+ validItemClasses: ["one_hand_sword", "two_hand_sword", "axe", "mace"]
+ steps:
+ - {code: "disassemble", stationType: "forge", toolCategory: "hammer", skillCheck: true}
+ extractionOutputs:
+ - {itemTemplateCode: "iron_ingot", baseQuantity: 1, quantityVariance: 1, probability: 1.0}
+ - {itemTemplateCode: "leather_strip", baseQuantity: 0, quantityVariance: 1, probability: 0.5}
+ proficiencyRequirements:
+ - {domain: "blacksmithing", minimumLevel: 1}
 ```
 
 ### Proficiency (Seed Integration)
@@ -339,12 +339,12 @@ Each crafting domain (blacksmithing, enchanting, alchemy, etc.) maps to a seed t
 
 ```
 Seed Type: "proficiency:blacksmithing"
-  Phases:
-    novice     (0-99 growth)     -> Can craft basic recipes
-    apprentice (100-499)         -> Unlocks intermediate recipes, quality bonus +10%
-    journeyman (500-1499)        -> Unlocks advanced recipes, quality bonus +25%
-    expert     (1500-3999)       -> Unlocks expert recipes, quality bonus +40%
-    master     (4000+)           -> Unlocks master recipes, quality bonus +50%, special techniques
+ Phases:
+ novice (0-99 growth) -> Can craft basic recipes
+ apprentice (100-499) -> Unlocks intermediate recipes, quality bonus +10%
+ journeyman (500-1499) -> Unlocks advanced recipes, quality bonus +25%
+ expert (1500-3999) -> Unlocks expert recipes, quality bonus +40%
+ master (4000+) -> Unlocks master recipes, quality bonus +50%, special techniques
 ```
 
 **Why lib-seed**: The seed system already provides polymorphic ownership, configurable growth phases, capability manifests, and growth event publishing. Reusing it avoids duplicating all that infrastructure. A blacksmith NPC's crafting seed is the same architectural pattern as any other seed -- it just uses `${craft.*}` variables instead of `${seed.*}`.
@@ -359,14 +359,14 @@ Stations are fixed locations where crafting occurs. Tools are items held by the 
 
 ```
 StationDefinition:
-  stationId: Guid
-  gameServiceId: Guid
-  stationType: string            # "forge", "enchanting_table", "alchemy_bench", "loom"
-  locationId: Guid?              # Physical location (null = portable/anywhere)
-  ownerId: Guid?                 # Entity that owns/maintains this station (null = unowned)
-  ownerType: EntityType?         # Must be non-null when ownerId is set; null when unowned
-  quality: decimal               # Station quality (0-1), affects crafting output
-  isActive: bool
+ stationId: Guid
+ gameServiceId: Guid
+ stationType: string # "forge", "enchanting_table", "alchemy_bench", "loom"
+ locationId: Guid? # Physical location (null = portable/anywhere)
+ ownerId: Guid? # Entity that owns/maintains this station (null = unowned)
+ ownerType: EntityType? # Must be non-null when ownerId is set; null when unowned
+ quality: decimal # Station quality (0-1), affects crafting output
+ isActive: bool
 ```
 
 **Tools** are item instances with a tool category. lib-craft reads the tool's quality from its item metadata. Tool quality is a factor in the quality formula.
@@ -379,15 +379,15 @@ Every crafting session produces a quality score (0-1 normalized) that influences
 
 ```
 quality = (materialQuality * weights.materialQuality)
-        + (proficiencyFactor * weights.proficiencyLevel)
-        + (toolQuality * weights.toolQuality)
-        + stepBonuses
+ + (proficiencyFactor * weights.proficiencyLevel)
+ + (toolQuality * weights.toolQuality)
+ + stepBonuses
 
 where:
-  materialQuality = average quality of input materials (from instanceMetadata)
-  proficiencyFactor = normalized proficiency level (current / max for recipe tier)
-  toolQuality = tool's quality value (from instanceMetadata, default 0.5)
-  stepBonuses = accumulated quality contributions from skill-check steps
+ materialQuality = average quality of input materials (from instanceMetadata)
+ proficiencyFactor = normalized proficiency level (current / max for recipe tier)
+ toolQuality = tool's quality value (from instanceMetadata, default 0.5)
+ stepBonuses = accumulated quality contributions from skill-check steps
 ```
 
 **Quality effects by recipe type**:
@@ -417,13 +417,13 @@ Entities can discover new recipes through experimentation. The discovery system 
 NPCs use crafting as part of their autonomous economic behavior. The `${craft.*}` variable provider exposes crafting state to ABML behavior expressions:
 
 ```
-${craft.can_craft.<recipe_code>}     -- Can this NPC craft this recipe? (proficiency + materials + station)
-${craft.proficiency.<domain>}        -- Proficiency level in a domain
+${craft.can_craft.<recipe_code>} -- Can this NPC craft this recipe? (proficiency + materials + station)
+${craft.proficiency.<domain>} -- Proficiency level in a domain
 ${craft.materials_for.<recipe_code>} -- Does the NPC have materials for this recipe?
-${craft.station_nearby.<type>}       -- Is a station of this type nearby?
-${craft.best_recipe}                 -- Highest-value recipe the NPC can currently craft
-${craft.queue_depth}                 -- How many items queued for crafting
-${craft.last_craft_quality}          -- Quality of last completed craft
+${craft.station_nearby.<type>} -- Is a station of this type nearby?
+${craft.best_recipe} -- Highest-value recipe the NPC can currently craft
+${craft.queue_depth} -- How many items queued for crafting
+${craft.last_craft_quality} -- Quality of last completed craft
 ```
 
 NPC crafting decisions are driven by GOAP:
@@ -570,7 +570,7 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 |-------|---------|--------|
 | `contract.terminated` | `HandleContractTerminated` | Clean up crafting sessions whose backing contract has terminated (timeout, breach) |
 
-### Resource Cleanup (T28)
+### Resource Cleanup
 
 | Target Resource | Source Type | On Delete | Cleanup Endpoint |
 |----------------|-------------|-----------|-----------------|
@@ -649,7 +649,7 @@ Write endpoints (`CreateRecipe`, `UpdateRecipe`, `DeprecateRecipe`, `SeedRecipes
 
 `x-permissions: []` (internal-only, called by NPC actors and game engine).
 
-- **StartSession** (`/craft/session/start`): The core session creation. **Rejects with BadRequest if recipe is deprecated** (T31 Category B instance creation guard). Validates: entity knows the recipe, meets proficiency requirements, has required materials, has required currency, station available (if needed), tool available (if needed). For modification: validates target item meets requirements. Creates Contract instance with milestones matching recipe steps. Records material reservations. Returns sessionId + first step info.
+- **StartSession** (`/craft/session/start`): The core session creation. **Rejects with BadRequest if recipe is deprecated** (Category B instance creation guard). Validates: entity knows the recipe, meets proficiency requirements, has required materials, has required currency, station available (if needed), tool available (if needed). For modification: validates target item meets requirements. Creates Contract instance with milestones matching recipe steps. Records material reservations. Returns sessionId + first step info.
 
 - **AdvanceSession** (`/craft/session/advance`): Advances to the next step. Acquires session lock. Validates: step sequence correct, station still available, tool still held. If step has `skillCheck`: computes quality contribution for this step. If step has `consumeOnStep`: consumes specified materials now. Completes the Contract milestone for this step. If final step: triggers session completion via Contract prebound API. Returns step result (quality contribution, next step code).
 
@@ -721,123 +721,123 @@ Recipe definitions and crafting session management are owned here. Item storage 
 
 ```
 +-----------------------------------------------------------------------+
-|                      Craft Service Architecture                        |
-|                                                                        |
-|   RECIPE LAYER (owned by lib-craft, MySQL + Redis cache)               |
-|   +------------------------------------------------------------------+|
-|   |  RecipeDefinition                                                 ||
-|   |  +------------------------+  +---------------------------+        ||
-|   |  | code: "forge_iron_sw"  |  | code: "inscribe_fire"     |        ||
-|   |  | type: "production"     |  | type: "modification"      |        ||
-|   |  | domain: "blacksmithing"|  | domain: "enchanting"       |        ||
-|   |  | inputs: iron x3,       |  | inputs: fire_reagent x2,  |        ||
-|   |  |   leather x1           |  |   inscription_ink x1      |        ||
-|   |  | steps: heat, hammer,   |  | affixOperation:           |        ||
-|   |  |   quench, grip         |  |   "apply_random"          |        ||
-|   |  | output: iron_sword x1  |  | affixParams:              |        ||
-|   |  | proficiency: 3         |  |   {fire: 5.0, cold: 0.0}  |        ||
-|   |  +------------------------+  +---------------------------+        ||
-|   +------------------------------------------------------------------+|
-|            |                                                           |
-|            | /craft/session/start                                      |
-|            v                                                           |
-|   SESSION LAYER (Contract-backed state machine)                        |
-|   +------------------------------------------------------------------+|
-|   |  1. Validate proficiency, materials, station, tool                ||
-|   |  2. Create Contract with milestones = recipe steps                ||
-|   |  3. Lock materials (reservation / authorization hold)             ||
-|   |  4. Advance through steps (with quality checks)                   ||
-|   |  5. Final milestone -> prebound API -> complete session           ||
-|   +------------------------------------------------------------------+|
-|            |                                                           |
-|   +--------+--------+                                                  |
-|   |                  |                                                  |
-|   v                  v                                                  |
-| PRODUCTION         MODIFICATION                                        |
-| +----------------+ +------------------------------------------+        |
-| | Consume inputs | | Call lib-affix operation on target item   |        |
-| | Create outputs | | (apply_random, reroll_all, remove, etc.) |        |
-| | via lib-item   | | Quality affects tier selection & rolls   |        |
-| | Place in inv   | +------------------------------------------+        |
-| +----------------+                                                     |
-|            |                                                           |
-|            | Variable Provider Factory                                 |
-|            v                                                           |
-|   NPC GOAP (via Actor L2)                                              |
-|   +------------------------------------------------------------------+|
-|   |  ${craft.can_craft.forge_iron_sw}  -- "I can make swords"        ||
-|   |  ${craft.proficiency.blacksmithing} -- "I'm level 7"             ||
-|   |  ${craft.materials_for.forge_iron_sw} -- "I have materials"      ||
-|   |  ${craft.best_recipe}               -- "Swords are most valuable"||
-|   +------------------------------------------------------------------+|
+| Craft Service Architecture |
+| |
+| RECIPE LAYER (owned by lib-craft, MySQL + Redis cache) |
+| +------------------------------------------------------------------+|
+| | RecipeDefinition ||
+| | +------------------------+ +---------------------------+ ||
+| | | code: "forge_iron_sw" | | code: "inscribe_fire" | ||
+| | | type: "production" | | type: "modification" | ||
+| | | domain: "blacksmithing"| | domain: "enchanting" | ||
+| | | inputs: iron x3, | | inputs: fire_reagent x2, | ||
+| | | leather x1 | | inscription_ink x1 | ||
+| | | steps: heat, hammer, | | affixOperation: | ||
+| | | quench, grip | | "apply_random" | ||
+| | | output: iron_sword x1 | | affixParams: | ||
+| | | proficiency: 3 | | {fire: 5.0, cold: 0.0} | ||
+| | +------------------------+ +---------------------------+ ||
+| +------------------------------------------------------------------+|
+| | |
+| | /craft/session/start |
+| v |
+| SESSION LAYER (Contract-backed state machine) |
+| +------------------------------------------------------------------+|
+| | 1. Validate proficiency, materials, station, tool ||
+| | 2. Create Contract with milestones = recipe steps ||
+| | 3. Lock materials (reservation / authorization hold) ||
+| | 4. Advance through steps (with quality checks) ||
+| | 5. Final milestone -> prebound API -> complete session ||
+| +------------------------------------------------------------------+|
+| | |
+| +--------+--------+ |
+| | | |
+| v v |
+| PRODUCTION MODIFICATION |
+| +----------------+ +------------------------------------------+ |
+| | Consume inputs | | Call lib-affix operation on target item | |
+| | Create outputs | | (apply_random, reroll_all, remove, etc.) | |
+| | via lib-item | | Quality affects tier selection & rolls | |
+| | Place in inv | +------------------------------------------+ |
+| +----------------+ |
+| | |
+| | Variable Provider Factory |
+| v |
+| NPC GOAP (via Actor L2) |
+| +------------------------------------------------------------------+|
+| | ${craft.can_craft.forge_iron_sw} -- "I can make swords" ||
+| | ${craft.proficiency.blacksmithing} -- "I'm level 7" ||
+| | ${craft.materials_for.forge_iron_sw} -- "I have materials" ||
+| | ${craft.best_recipe} -- "Swords are most valuable"||
+| +------------------------------------------------------------------+|
 +-----------------------------------------------------------------------+
 
 
 Crafting Session Lifecycle (Production)
 =========================================
 
-  StartSession("forge_iron_sword", entityId, inventoryId)
-       |
-       +-- Validate proficiency: blacksmithing >= 3? YES
-       +-- Validate materials: 3 iron ingots + 1 leather strip? YES
-       +-- Validate station: forge nearby? YES
-       +-- Reserve materials (mark as locked)
-       +-- Create Contract instance (4 milestones)
-       |
-       |   Contract Milestones:
-       |   [1] heat_metal  (15s duration, skill check)
-       |   [2] hammer_blade (skill check, requires hammer tool)
-       |   [3] quench
-       |   [4] attach_grip (requires hammer tool)
-       |       onComplete: /craft/internal/complete-session
-       |
-       +-- Return sessionId, step 1 info
+ StartSession("forge_iron_sword", entityId, inventoryId)
+ |
+ +-- Validate proficiency: blacksmithing >= 3? YES
+ +-- Validate materials: 3 iron ingots + 1 leather strip? YES
+ +-- Validate station: forge nearby? YES
+ +-- Reserve materials (mark as locked)
+ +-- Create Contract instance (4 milestones)
+ |
+ | Contract Milestones:
+ | [1] heat_metal (15s duration, skill check)
+ | [2] hammer_blade (skill check, requires hammer tool)
+ | [3] quench
+ | [4] attach_grip (requires hammer tool)
+ | onComplete: /craft/internal/complete-session
+ |
+ +-- Return sessionId, step 1 info
 
-  AdvanceSession(sessionId, step: "heat_metal")
-       |
-       +-- Validate: station = forge? YES
-       +-- Wait 15 seconds (or timer)
-       +-- Skill check: roll quality contribution = 0.82
-       +-- Complete Contract milestone 1
-       +-- Return: {quality: 0.82, nextStep: "hammer_blade"}
+ AdvanceSession(sessionId, step: "heat_metal")
+ |
+ +-- Validate: station = forge? YES
+ +-- Wait 15 seconds (or timer)
+ +-- Skill check: roll quality contribution = 0.82
+ +-- Complete Contract milestone 1
+ +-- Return: {quality: 0.82, nextStep: "hammer_blade"}
 
-  AdvanceSession(sessionId, step: "hammer_blade")
-       |
-       +-- Validate: tool = hammer? YES
-       +-- Skill check: roll quality contribution = 0.71
-       +-- Complete Contract milestone 2
-       +-- Return: {quality: 0.76, nextStep: "quench"}
+ AdvanceSession(sessionId, step: "hammer_blade")
+ |
+ +-- Validate: tool = hammer? YES
+ +-- Skill check: roll quality contribution = 0.71
+ +-- Complete Contract milestone 2
+ +-- Return: {quality: 0.76, nextStep: "quench"}
 
-  AdvanceSession(sessionId, step: "quench")
-       |
-       +-- No skill check (fixed step)
-       +-- Complete Contract milestone 3
-       +-- Return: {quality: 0.76, nextStep: "attach_grip"}
+ AdvanceSession(sessionId, step: "quench")
+ |
+ +-- No skill check (fixed step)
+ +-- Complete Contract milestone 3
+ +-- Return: {quality: 0.76, nextStep: "attach_grip"}
 
-  AdvanceSession(sessionId, step: "attach_grip")
-       |
-       +-- Validate: tool = hammer? YES
-       +-- No skill check
-       +-- Complete Contract milestone 4 (FINAL)
-       +-- Contract executes prebound API: /craft/internal/complete-session
-       |
-       +-- Complete session:
-       |     materialQuality = 0.65 (average of input qualities)
-       |     proficiencyFactor = 0.70 (level 7 of max 10 for this recipe)
-       |     toolQuality = 0.80 (good hammer)
-       |     stepBonuses = 0.06 (from skill checks)
-       |
-       |     finalQuality = (0.65 * 0.3) + (0.70 * 0.5) + (0.80 * 0.2) + 0.06
-       |                  = 0.195 + 0.350 + 0.160 + 0.06
-       |                  = 0.765
-       |
-       |     Consume 3 iron ingots + 1 leather strip
-       |     Create iron_sword (quality: 0.765)
-       |     Place in entity's inventory
-       |     Grant blacksmithing XP: 50
-       |
-       +-- Publish craft.session.completed
-       +-- Return: {outputItems: [iron_sword], quality: 0.765}
+ AdvanceSession(sessionId, step: "attach_grip")
+ |
+ +-- Validate: tool = hammer? YES
+ +-- No skill check
+ +-- Complete Contract milestone 4 (FINAL)
+ +-- Contract executes prebound API: /craft/internal/complete-session
+ |
+ +-- Complete session:
+ | materialQuality = 0.65 (average of input qualities)
+ | proficiencyFactor = 0.70 (level 7 of max 10 for this recipe)
+ | toolQuality = 0.80 (good hammer)
+ | stepBonuses = 0.06 (from skill checks)
+ |
+ | finalQuality = (0.65 * 0.3) + (0.70 * 0.5) + (0.80 * 0.2) + 0.06
+ | = 0.195 + 0.350 + 0.160 + 0.06
+ | = 0.765
+ |
+ | Consume 3 iron ingots + 1 leather strip
+ | Create iron_sword (quality: 0.765)
+ | Place in entity's inventory
+ | Grant blacksmithing XP: 50
+ |
+ +-- Publish craft.session.completed
+ +-- Return: {outputItems: [iron_sword], quality: 0.765}
 ```
 
 ---
@@ -975,4 +975,4 @@ Crafting Session Lifecycle (Production)
 - **2026-03-08**: Pre-implementation audit (pass 3). Created issues for remaining design questions: #5 (cross-entity crafting → [#613](https://github.com/beyond-immersion/bannou-service/issues/613)), #7 (offline NPC crafting → pending).
 - **2026-03-08**: Pre-implementation audit (pass 2). Resolved Design Considerations #3 (real-time step durations → Contract timer milestones), #4 (proficiency seed type registration → implementation ordering note, moved to Intentional Quirks #9), #6 (material quality propagation → external dependency, lib-craft is consumer not producer). Two genuine design questions remain: #5 (cross-entity crafting) and #7 (offline NPC crafting).
 - **2026-03-08**: Pre-implementation audit. Resolved Design Consideration #2 (concurrent crafting and item modification) — lib-affix's internal per-operation locking handles this; no lib-craft pre-check needed.
-- **2026-03-06**: L4 audit pass. Fixed: Pattern B→C event topics (all 10), T29 violations (`requiredStates: object?` → typed predicates, `affixOperationParams: object?` → typed config), `affixOperation` reclassified Category B→C (service-specific enum), T31 Category B explicitly designated with deprecation guard on StartSession, `isActive` removed (use deprecation lifecycle), `ProficiencySource` local fallback removed (lib-seed guaranteed), `craft-proficiency-store` removed, `ownerType` typed to `EntityType?`, x-permissions added to all endpoint groups, location cleanup target added, `CraftStepCompletedEvent` → `CraftSessionStepCompletedEvent`. T29 "Archive Shape" tenet added to FOUNDATION.md to prevent future agents from suggesting compression callbacks for game-mechanical operational state.
+- **2026-03-06**: L4 audit pass. Fixed: Pattern B→C event topics (all 10), violations (`requiredStates: object?` → typed predicates, `affixOperationParams: object?` → typed config), `affixOperation` reclassified Category B→C (service-specific enum), Category B explicitly designated with deprecation guard on StartSession, `isActive` removed (use deprecation lifecycle), `ProficiencySource` local fallback removed (lib-seed guaranteed), `craft-proficiency-store` removed, `ownerType` typed to `EntityType?`, x-permissions added to all endpoint groups, location cleanup target added, `CraftStepCompletedEvent` → `CraftSessionStepCompletedEvent`. "Archive Shape" tenet added to FOUNDATION.md to prevent future agents from suggesting compression callbacks for game-mechanical operational state.

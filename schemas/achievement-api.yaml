@@ -168,6 +168,34 @@ paths:
         '404':
           description: Achievement definition not found
 
+  /achievement/definition/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedAchievementDefinitions
+      tags:
+      - Definitions
+      summary: Clean deprecated achievement definitions with zero remaining progress
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        achievement definitions and permanently removes those with zero remaining progress
+        records, subject to an optional grace period. Publishes achievement-definition.deleted
+        events for each removed definition. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+
   /achievement/progress/get:
     post:
       summary: Get entity's achievement progress
@@ -683,6 +711,8 @@ components:
           description: Audit reason for deprecation, explaining why this achievement is being phased out
 
     AchievementDefinitionResponse:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Achievement definition details
       additionalProperties: false
@@ -694,7 +724,6 @@ components:
       - achievementType
       - points
       - isActive
-      - isDeprecated
       - earnedCount
       - createdAt
       properties:
@@ -791,19 +820,6 @@ components:
         isActive:
           type: boolean
           description: Whether achievement is earnable
-        isDeprecated:
-          type: boolean
-          description: Whether this definition is deprecated and should not be used for new progress
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When deprecation occurred, null if not deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Audit reason for deprecation, null if not deprecated
         earnedCount:
           type: integer
           format: int64

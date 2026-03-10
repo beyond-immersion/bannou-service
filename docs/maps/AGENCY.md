@@ -82,7 +82,7 @@
 
 **DI Provider Registration**: Agency implements `IVariableProviderFactory` as `SpiritProviderFactory`, providing the `${spirit.*}` namespace to Actor (L2) via the Variable Provider Factory pattern.
 
-**T28 Note**: `agency-manifest-history` (MySQL) is persistent data keyed by seedId. Must implement `ISeededResourceProvider` and declare `x-references` with `target: seed, onDelete: cascade`.
+**Note**: `agency-manifest-history` (MySQL) is persistent data keyed by seedId. Must implement `ISeededResourceProvider` and declare `x-references` with `target: seed, onDelete: cascade`.
 
 ---
 
@@ -170,10 +170,10 @@
 POST /agency/domain/create | Roles: [developer]
 
 ```
-LOCK agency-lock:domain:{request.DomainCode}                 -> 409 if lock fails
-  READ _domainsStore:domain:{request.DomainCode}              -> 409 if exists
-  WRITE _domainsStore:domain:{request.DomainCode} <- AgencyDomainModel from request
-  PUBLISH agency.domain.created { domainCode, displayName, seedDomainPaths }
+LOCK agency-lock:domain:{request.DomainCode} -> 409 if lock fails
+ READ _domainsStore:domain:{request.DomainCode} -> 409 if exists
+ WRITE _domainsStore:domain:{request.DomainCode} <- AgencyDomainModel from request
+ PUBLISH agency.domain.created { domainCode, displayName, seedDomainPaths }
 RETURN (200, DomainResponse)
 ```
 
@@ -183,7 +183,7 @@ RETURN (200, DomainResponse)
 POST /agency/domain/get | Roles: [developer]
 
 ```
-READ _domainsStore:domain:{request.DomainCode}                -> 404 if null
+READ _domainsStore:domain:{request.DomainCode} -> 404 if null
 RETURN (200, DomainResponse)
 ```
 
@@ -194,13 +194,13 @@ POST /agency/domain/list | Roles: [developer]
 
 ```
 QUERY _domainsStore WHERE $.GameServiceId == request.GameServiceId (if provided)
-  AND $.IsDeprecated == false (unless request.IncludeDeprecated)
-  [ORDER BY $.DomainCode ASC]
-  [PAGED(request.Page, request.PageSize)]
+ AND $.IsDeprecated == false (unless request.IncludeDeprecated)
+ [ORDER BY $.DomainCode ASC]
+ [PAGED(request.Page, request.PageSize)]
 // Module/influence counts per domain require additional COUNT queries
 FOREACH domain in results
-  COUNT _modulesStore WHERE $.DomainCode == domain.DomainCode AND $.IsDeprecated == false
-  COUNT _influencesStore WHERE $.DomainCode == domain.DomainCode AND $.IsDeprecated == false
+ COUNT _modulesStore WHERE $.DomainCode == domain.DomainCode AND $.IsDeprecated == false
+ COUNT _influencesStore WHERE $.DomainCode == domain.DomainCode AND $.IsDeprecated == false
 RETURN (200, ListDomainsResponse { domains, totalCount })
 ```
 
@@ -210,22 +210,22 @@ RETURN (200, ListDomainsResponse { domains, totalCount })
 POST /agency/domain/delete | Roles: [developer]
 
 ```
-READ _domainsStore:domain:{request.DomainCode}                -> 404 if null
+READ _domainsStore:domain:{request.DomainCode} -> 404 if null
 IF existing.IsDeprecated == false
-  -> 400 // Category A: must deprecate before delete (T31)
-LOCK agency-lock:domain:{request.DomainCode}                  -> 409 if lock fails
-  // Cascade: delete child modules
-  QUERY _modulesStore WHERE $.DomainCode == request.DomainCode
-  FOREACH module in modules
-    DELETE _modulesStore:module:{module.ModuleCode}
-    PUBLISH agency.module.deleted { moduleCode }
-  // Cascade: delete child influences
-  QUERY _influencesStore WHERE $.DomainCode == request.DomainCode
-  FOREACH influence in influences
-    DELETE _influencesStore:influence:{influence.InfluenceCode}
-    PUBLISH agency.influence.deleted { influenceCode }
-  DELETE _domainsStore:domain:{request.DomainCode}
-  PUBLISH agency.domain.deleted { domainCode }
+ -> 400 // Category A: must deprecate before delete
+LOCK agency-lock:domain:{request.DomainCode} -> 409 if lock fails
+ // Cascade: delete child modules
+ QUERY _modulesStore WHERE $.DomainCode == request.DomainCode
+ FOREACH module in modules
+ DELETE _modulesStore:module:{module.ModuleCode}
+ PUBLISH agency.module.deleted { moduleCode }
+ // Cascade: delete child influences
+ QUERY _influencesStore WHERE $.DomainCode == request.DomainCode
+ FOREACH influence in influences
+ DELETE _influencesStore:influence:{influence.InfluenceCode}
+ PUBLISH agency.influence.deleted { influenceCode }
+ DELETE _domainsStore:domain:{request.DomainCode}
+ PUBLISH agency.domain.deleted { domainCode }
 RETURN (200, null)
 ```
 
@@ -235,16 +235,16 @@ RETURN (200, null)
 POST /agency/module/create | Roles: [developer]
 
 ```
-READ _domainsStore:domain:{request.DomainCode}                -> 404 if null
+READ _domainsStore:domain:{request.DomainCode} -> 404 if null
 IF domain.IsDeprecated == true
-  -> 400 // Cannot add modules to deprecated domain
+ -> 400 // Cannot add modules to deprecated domain
 COUNT _modulesStore WHERE $.DomainCode == request.DomainCode AND $.IsDeprecated == false
 IF count >= config.MaxModulesPerDomain
-  -> 400 // Module limit reached
-LOCK agency-lock:module:{request.ModuleCode}                  -> 409 if lock fails
-  READ _modulesStore:module:{request.ModuleCode}              -> 409 if exists
-  WRITE _modulesStore:module:{request.ModuleCode} <- AgencyModuleModel from request
-  PUBLISH agency.module.created { moduleCode, domainCode, depthThreshold, fidelityCurve, sortOrder }
+ -> 400 // Module limit reached
+LOCK agency-lock:module:{request.ModuleCode} -> 409 if lock fails
+ READ _modulesStore:module:{request.ModuleCode} -> 409 if exists
+ WRITE _modulesStore:module:{request.ModuleCode} <- AgencyModuleModel from request
+ PUBLISH agency.module.created { moduleCode, domainCode, depthThreshold, fidelityCurve, sortOrder }
 RETURN (200, ModuleResponse)
 ```
 
@@ -254,7 +254,7 @@ RETURN (200, ModuleResponse)
 POST /agency/module/update | Roles: [developer]
 
 ```
-READ _modulesStore:module:{request.ModuleCode} [with ETag]    -> 404 if null
+READ _modulesStore:module:{request.ModuleCode} [with ETag] -> 404 if null
 // Updatable: DepthThreshold, FidelityCurve, SortOrder, DisplayName, Description
 // Immutable: ModuleCode, DomainCode
 ETAG-WRITE _modulesStore:module:{request.ModuleCode} <- merged model -> 409 on ETag mismatch
@@ -268,7 +268,7 @@ RETURN (200, ModuleResponse)
 POST /agency/module/get | Roles: [developer]
 
 ```
-READ _modulesStore:module:{request.ModuleCode}                -> 404 if null
+READ _modulesStore:module:{request.ModuleCode} -> 404 if null
 RETURN (200, ModuleResponse)
 ```
 
@@ -279,10 +279,10 @@ POST /agency/module/list | Roles: [developer]
 
 ```
 QUERY _modulesStore WHERE $.DomainCode == request.DomainCode (if provided)
-  AND $.IsDeprecated == false (unless request.IncludeDeprecated)
-  AND $.GameServiceId == request.GameServiceId (if provided)
-  [ORDER BY $.SortOrder ASC]
-  [PAGED(request.Page, request.PageSize)]
+ AND $.IsDeprecated == false (unless request.IncludeDeprecated)
+ AND $.GameServiceId == request.GameServiceId (if provided)
+ [ORDER BY $.SortOrder ASC]
+ [PAGED(request.Page, request.PageSize)]
 RETURN (200, ListModulesResponse { modules, totalCount })
 ```
 
@@ -292,9 +292,9 @@ RETURN (200, ListModulesResponse { modules, totalCount })
 POST /agency/module/delete | Roles: [developer]
 
 ```
-READ _modulesStore:module:{request.ModuleCode}                -> 404 if null
+READ _modulesStore:module:{request.ModuleCode} -> 404 if null
 IF existing.IsDeprecated == false
-  -> 400 // Category A: must deprecate before delete (T31)
+ -> 400 // Category A: must deprecate before delete
 DELETE _modulesStore:module:{request.ModuleCode}
 PUBLISH agency.module.deleted { moduleCode }
 RETURN (200, null)
@@ -306,17 +306,17 @@ RETURN (200, null)
 POST /agency/influence/create | Roles: [developer]
 
 ```
-READ _domainsStore:domain:{request.DomainCode}                -> 404 if null
+READ _domainsStore:domain:{request.DomainCode} -> 404 if null
 IF domain.IsDeprecated == true
-  -> 400 // Cannot add influences to deprecated domain
+ -> 400 // Cannot add influences to deprecated domain
 COUNT _influencesStore WHERE $.DomainCode == request.DomainCode AND $.IsDeprecated == false
 IF count >= config.MaxInfluencesPerDomain
-  -> 400 // Influence limit reached
-LOCK agency-lock:influence:{request.InfluenceCode}            -> 409 if lock fails
-  READ _influencesStore:influence:{request.InfluenceCode}     -> 409 if exists
-  // ComplianceFactors is typed array of {AxisCode, Weight} objects (not additionalProperties)
-  WRITE _influencesStore:influence:{request.InfluenceCode} <- AgencyInfluenceModel from request
-  PUBLISH agency.influence.created { influenceCode, domainCode, perceptionType, depthThreshold }
+ -> 400 // Influence limit reached
+LOCK agency-lock:influence:{request.InfluenceCode} -> 409 if lock fails
+ READ _influencesStore:influence:{request.InfluenceCode} -> 409 if exists
+ // ComplianceFactors is typed array of {AxisCode, Weight} objects (not additionalProperties)
+ WRITE _influencesStore:influence:{request.InfluenceCode} <- AgencyInfluenceModel from request
+ PUBLISH agency.influence.created { influenceCode, domainCode, perceptionType, depthThreshold }
 RETURN (200, InfluenceResponse)
 ```
 
@@ -326,7 +326,7 @@ RETURN (200, InfluenceResponse)
 POST /agency/influence/update | Roles: [developer]
 
 ```
-READ _influencesStore:influence:{request.InfluenceCode} [with ETag]  -> 404 if null
+READ _influencesStore:influence:{request.InfluenceCode} [with ETag] -> 404 if null
 // Updatable: DepthThreshold, PerceptionType, ComplianceFactors, Intensity
 // Immutable: InfluenceCode, DomainCode
 ETAG-WRITE _influencesStore:influence:{request.InfluenceCode} <- merged model -> 409 on ETag mismatch
@@ -340,7 +340,7 @@ RETURN (200, InfluenceResponse)
 POST /agency/influence/get | Roles: [developer]
 
 ```
-READ _influencesStore:influence:{request.InfluenceCode}       -> 404 if null
+READ _influencesStore:influence:{request.InfluenceCode} -> 404 if null
 RETURN (200, InfluenceResponse)
 ```
 
@@ -351,9 +351,9 @@ POST /agency/influence/list | Roles: [developer]
 
 ```
 QUERY _influencesStore WHERE $.DomainCode == request.DomainCode (if provided)
-  AND $.IsDeprecated == false (unless request.IncludeDeprecated)
-  AND $.GameServiceId == request.GameServiceId (if provided)
-  [PAGED(request.Page, request.PageSize)]
+ AND $.IsDeprecated == false (unless request.IncludeDeprecated)
+ AND $.GameServiceId == request.GameServiceId (if provided)
+ [PAGED(request.Page, request.PageSize)]
 RETURN (200, ListInfluencesResponse { influences, totalCount })
 ```
 
@@ -363,9 +363,9 @@ RETURN (200, ListInfluencesResponse { influences, totalCount })
 POST /agency/influence/delete | Roles: [developer]
 
 ```
-READ _influencesStore:influence:{request.InfluenceCode}       -> 404 if null
+READ _influencesStore:influence:{request.InfluenceCode} -> 404 if null
 IF existing.IsDeprecated == false
-  -> 400 // Category A: must deprecate before delete (T31)
+ -> 400 // Category A: must deprecate before delete
 DELETE _influencesStore:influence:{request.InfluenceCode}
 PUBLISH agency.influence.deleted { influenceCode }
 RETURN (200, null)
@@ -379,13 +379,13 @@ POST /agency/manifest/get | Roles: [user]
 ```
 READ _manifestCacheStore:manifest:{request.SeedId}
 IF cached AND not expired
-  RETURN (200, ManifestResponse)
+ RETURN (200, ManifestResponse)
 // Cache miss: compute on demand
-CALL ISeedClient.GetCapabilityManifestAsync(request.SeedId)   -> 404 if seed not found
+CALL ISeedClient.GetCapabilityManifestAsync(request.SeedId) -> 404 if seed not found
 IF config.CrossSeedPollinationEnabled
-  CALL ISeedClient.GetAccountSeedsAsync(seed.AccountId)
-  // Apply CrossSeedPollinationFactor to cross-seed depths
-  // Merge: max(primary, crossSeed * factor) per capability path
+ CALL ISeedClient.GetAccountSeedsAsync(seed.AccountId)
+ // Apply CrossSeedPollinationFactor to cross-seed depths
+ // Merge: max(primary, crossSeed * factor) per capability path
 // see helper: ManifestComputeHelper
 QUERY _modulesStore WHERE $.IsDeprecated == false [ORDER BY $.SortOrder ASC]
 QUERY _influencesStore WHERE $.IsDeprecated == false
@@ -401,18 +401,18 @@ RETURN (200, ManifestResponse)
 POST /agency/manifest/recompute | Roles: [developer]
 
 ```
-CALL ISeedClient.GetCapabilityManifestAsync(request.SeedId)   -> 404 if seed not found
+CALL ISeedClient.GetCapabilityManifestAsync(request.SeedId) -> 404 if seed not found
 IF config.CrossSeedPollinationEnabled
-  CALL ISeedClient.GetAccountSeedsAsync(seed.AccountId)
-  // Apply CrossSeedPollinationFactor; merge capabilities
+ CALL ISeedClient.GetAccountSeedsAsync(seed.AccountId)
+ // Apply CrossSeedPollinationFactor; merge capabilities
 // see helper: ManifestComputeHelper
 QUERY _modulesStore WHERE $.IsDeprecated == false [ORDER BY $.SortOrder ASC]
 QUERY _influencesStore WHERE $.IsDeprecated == false
-READ _manifestCacheStore:manifest:{request.SeedId}            // Previous manifest for diff
+READ _manifestCacheStore:manifest:{request.SeedId} // Previous manifest for diff
 WRITE _manifestCacheStore:manifest:{request.SeedId} <- newManifest with TTL
 WRITE _manifestHistoryStore:history:{request.SeedId}:{now} <- AgencyManifestHistoryModel { previous, new, delta }
 IF newManifest differs from previous
-  PUBLISH agency.manifest.updated { seedId, changedModules, changedInfluences }
+ PUBLISH agency.manifest.updated { seedId, changedModules, changedInfluences }
 RETURN (200, ManifestResponse)
 ```
 
@@ -422,10 +422,10 @@ RETURN (200, ManifestResponse)
 POST /agency/manifest/diff | Roles: [user]
 
 ```
-READ _manifestCacheStore:manifest:{request.SeedId}            -> 404 if null
+READ _manifestCacheStore:manifest:{request.SeedId} -> 404 if null
 QUERY _manifestHistoryStore WHERE $.SeedId == request.SeedId
-  AND $.ComputedAt <= request.FromTimestamp
-  [ORDER BY $.ComputedAt DESC] LIMIT 1
+ AND $.ComputedAt <= request.FromTimestamp
+ [ORDER BY $.ComputedAt DESC] LIMIT 1
 // Compute delta between historical snapshot and current manifest
 RETURN (200, ManifestDiffResponse { changedModules, changedInfluences })
 ```
@@ -437,8 +437,8 @@ POST /agency/manifest/history | Roles: [user]
 
 ```
 QUERY _manifestHistoryStore WHERE $.SeedId == request.SeedId
-  [ORDER BY $.ComputedAt DESC]
-  [PAGED(request.Page, request.PageSize)]
+ [ORDER BY $.ComputedAt DESC]
+ [PAGED(request.Page, request.PageSize)]
 RETURN (200, ManifestHistoryResponse { entries, totalCount })
 ```
 
@@ -448,21 +448,21 @@ RETURN (200, ManifestHistoryResponse { entries, totalCount })
 POST /agency/influence/evaluate | Roles: [user]
 
 ```
-READ _influencesStore:influence:{request.InfluenceCode}       -> 404 if null
+READ _influencesStore:influence:{request.InfluenceCode} -> 404 if null
 IF influence.IsDeprecated == true
-  -> 400
-READ _manifestCacheStore:manifest:{request.SeedId}            -> 404 if null
+ -> 400
+READ _manifestCacheStore:manifest:{request.SeedId} -> 404 if null
 // Check influence availability in manifest
 IF influence not available in manifest
-  RETURN (200, InfluenceEvaluationResponse { available: false, reason: "BelowThreshold" })
+ RETURN (200, InfluenceEvaluationResponse { available: false, reason: "BelowThreshold" })
 // Compute compliance estimate
 IF IDispositionClient available (soft resolve)
-  CALL IDispositionClient.GetGuardianFeelingsAsync(request.CharacterId, request.SeedId)
-  // compliance = trust * (1 - resentment * ComplianceResentmentWeight) * familiarityModifier
-  // familiarityModifier = min(1.0, familiarity * ComplianceFamiliarityScale + ComplianceFamiliarityFloor)
+ CALL IDispositionClient.GetGuardianFeelingsAsync(request.CharacterId, request.SeedId)
+ // compliance = trust * (1 - resentment * ComplianceResentmentWeight) * familiarityModifier
+ // familiarityModifier = min(1.0, familiarity * ComplianceFamiliarityScale + ComplianceFamiliarityFloor)
 ELSE
-  complianceBase <- config.DefaultComplianceBase
-READ _manifestCacheStore:rate:{request.SeedId}                // Rate limit check
+ complianceBase <- config.DefaultComplianceBase
+READ _manifestCacheStore:rate:{request.SeedId} // Rate limit check
 RETURN (200, InfluenceEvaluationResponse { available: true, complianceBase, rateLimitRemaining })
 ```
 
@@ -472,26 +472,26 @@ RETURN (200, InfluenceEvaluationResponse { available: true, complianceBase, rate
 POST /agency/influence/execute | Roles: [user]
 
 ```
-READ _influencesStore:influence:{request.InfluenceCode}       -> 404 if null
+READ _influencesStore:influence:{request.InfluenceCode} -> 404 if null
 IF influence.IsDeprecated == true
-  -> 400
+ -> 400
 // Rate limit check (Redis atomic INCR with 1-second TTL)
 READ _manifestCacheStore:rate:{request.SeedId}
 IF rate >= config.InfluenceRateLimitPerSecond
-  PUBLISH agency.influence.rejected { seedId, influenceCode, rejectionReason: "RateLimited" }
-  -> 409
+ PUBLISH agency.influence.rejected { seedId, influenceCode, rejectionReason: "RateLimited" }
+ -> 409
 INCREMENT _manifestCacheStore:rate:{request.SeedId}
 // Manifest availability check
 READ _manifestCacheStore:manifest:{request.SeedId}
 IF manifest null OR influence not available
-  PUBLISH agency.influence.rejected { seedId, influenceCode, rejectionReason: "NotInManifest" }
-  -> 409
+ PUBLISH agency.influence.rejected { seedId, influenceCode, rejectionReason: "NotInManifest" }
+ -> 409
 // Compute compliance
 IF IDispositionClient available (soft resolve)
-  CALL IDispositionClient.GetGuardianFeelingsAsync(request.CharacterId, request.SeedId)
-  // compliance formula (same as EvaluateInfluence)
+ CALL IDispositionClient.GetGuardianFeelingsAsync(request.CharacterId, request.SeedId)
+ // compliance formula (same as EvaluateInfluence)
 ELSE
-  complianceBase <- config.DefaultComplianceBase
+ complianceBase <- config.DefaultComplianceBase
 // Read resistance buildup
 READ _manifestCacheStore:resistance:{request.SeedId}
 // Update influence tracking in Redis
@@ -520,8 +520,8 @@ POST /agency/seed-config/get | Roles: [developer]
 ```
 READ _seedConfigStore:seed-config:{request.GameServiceId}
 IF null
-  // Fall back to service-wide default
-  RETURN (200, SeedConfigResponse { seedTypeCode: config.SeedTypeCode, isDefault: true })
+ // Fall back to service-wide default
+ RETURN (200, SeedConfigResponse { seedTypeCode: config.SeedTypeCode, isDefault: true })
 RETURN (200, SeedConfigResponse { seedTypeCode, isDefault: false })
 ```
 
@@ -539,16 +539,16 @@ WRITE _manifestCacheStore:debounce:{seedId} <- "1" with TTL(config.ManifestRecom
 // After debounce settles (key expires):
 CALL ISeedClient.GetCapabilityManifestAsync(seedId)
 IF config.CrossSeedPollinationEnabled
-  CALL ISeedClient.GetAccountSeedsAsync(accountId)
-  // Apply CrossSeedPollinationFactor; merge capabilities
+ CALL ISeedClient.GetAccountSeedsAsync(accountId)
+ // Apply CrossSeedPollinationFactor; merge capabilities
 // see helper: ManifestComputeHelper
 QUERY _modulesStore WHERE $.IsDeprecated == false [ORDER BY $.SortOrder ASC]
 QUERY _influencesStore WHERE $.IsDeprecated == false
-READ _manifestCacheStore:manifest:{seedId}                    // Previous for diff
+READ _manifestCacheStore:manifest:{seedId} // Previous for diff
 WRITE _manifestCacheStore:manifest:{seedId} <- newManifest with TTL
 WRITE _manifestHistoryStore:history:{seedId}:{now} <- history entry
 IF newManifest != previous
-  PUBLISH agency.manifest.updated { seedId, changedModules, changedInfluences }
+ PUBLISH agency.manifest.updated { seedId, changedModules, changedInfluences }
 ```
 
 ### ManifestHistoryRetentionWorker
@@ -558,5 +558,5 @@ IF newManifest != previous
 ```
 QUERY _manifestHistoryStore WHERE $.ComputedAt < (now - config.ManifestHistoryRetentionDays)
 FOREACH entry in results
-  DELETE _manifestHistoryStore:history:{entry.SeedId}:{entry.ComputedAt}
+ DELETE _manifestHistoryStore:history:{entry.SeedId}:{entry.ComputedAt}
 ```

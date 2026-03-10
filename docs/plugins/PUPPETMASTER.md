@@ -138,40 +138,40 @@ The Puppetmaster plugin provides the infrastructure for **Event Brain actors** -
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         Event Brain Execution Flow                          │
+│ Event Brain Execution Flow │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ABML Behavior Document                                                     │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │ - load_snapshot:                                                     │   │
-│  │     name: attacker                                                   │   │
-│  │     resource_type: character                                         │   │
-│  │     resource_id: ${attacker_id}                                      │   │
-│  │     filter: [character-personality, character-history]               │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                      │                                                      │
-│                      ▼                                                      │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                    LoadSnapshotHandler                               │   │
-│  │  1. Evaluate ${attacker_id} → Guid                                  │   │
-│  │  2. Check ResourceSnapshotCache for cached snapshot                 │   │
-│  │  3. If miss: call IResourceClient.GetSnapshotAsync(filter)          │   │
-│  │  4. Create ResourceArchiveProvider from snapshot entries            │   │
-│  │  5. Register provider as "attacker" in root execution scope         │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                      │                                                      │
-│                      ▼                                                      │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │           ResourceArchiveProvider (IVariableProvider)                │   │
-│  │                                                                      │   │
-│  │  Expression: ${attacker.personality.aggression}                      │   │
-│  │       ├── namespace: "attacker"                                      │   │
-│  │       ├── source: "character-personality"                            │   │
-│  │       └── path: "aggression"                                         │   │
-│  │                                                                      │   │
-│  │  Resolves to: 0.75 (from snapshot data)                              │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
+│ │
+│ ABML Behavior Document │
+│ ┌─────────────────────────────────────────────────────────────────────┐ │
+│ │ - load_snapshot: │ │
+│ │ name: attacker │ │
+│ │ resource_type: character │ │
+│ │ resource_id: ${attacker_id} │ │
+│ │ filter: [character-personality, character-history] │ │
+│ └─────────────────────────────────────────────────────────────────────┘ │
+│ │ │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────────────┐ │
+│ │ LoadSnapshotHandler │ │
+│ │ 1. Evaluate ${attacker_id} → Guid │ │
+│ │ 2. Check ResourceSnapshotCache for cached snapshot │ │
+│ │ 3. If miss: call IResourceClient.GetSnapshotAsync(filter) │ │
+│ │ 4. Create ResourceArchiveProvider from snapshot entries │ │
+│ │ 5. Register provider as "attacker" in root execution scope │ │
+│ └─────────────────────────────────────────────────────────────────────┘ │
+│ │ │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────────────┐ │
+│ │ ResourceArchiveProvider (IVariableProvider) │ │
+│ │ │ │
+│ │ Expression: ${attacker.personality.aggression} │ │
+│ │ ├── namespace: "attacker" │ │
+│ │ ├── source: "character-personality" │ │
+│ │ └── path: "aggression" │ │
+│ │ │ │
+│ │ Resolves to: 0.75 (from snapshot data) │ │
+│ └─────────────────────────────────────────────────────────────────────┘ │
+│ │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -183,18 +183,18 @@ When an Event Brain needs to evaluate multiple characters (e.g., all raid partic
 # Without prefetch: N sequential API calls during foreach
 # With prefetch: 1 batch call + N cache hits
 - prefetch_snapshots:
-    resource_type: character
-    resource_ids: ${participants | map('character_id')}
-    filter: [character-personality]
+ resource_type: character
+ resource_ids: ${participants | map('character_id')}
+ filter: [character-personality]
 
 - foreach:
-    variable: p
-    collection: ${participants}
-    do:
-      - load_snapshot:              # Cache hit - instant
-          name: char
-          resource_type: character
-          resource_id: ${p.character_id}
+ variable: p
+ collection: ${participants}
+ do:
+ - load_snapshot: # Cache hit - instant
+ name: char
+ resource_type: character
+ resource_id: ${p.character_id}
 ```
 
 See [ACTOR.md](ACTOR.md) for the Variable Provider Factory pattern used by Character Brains.
@@ -233,20 +233,20 @@ Loads a resource snapshot and registers it as a variable provider for expression
 **YAML Syntax**:
 ```yaml
 - load_snapshot:
-    name: candidate          # Provider name for expressions (required)
-    resource_type: character # Resource type to load (required)
-    resource_id: ${target_id} # Expression evaluating to GUID (required)
-    filter:                  # Optional: limit to specific source types
-      - character-personality
-      - character-history
+ name: candidate # Provider name for expressions (required)
+ resource_type: character # Resource type to load (required)
+ resource_id: ${target_id} # Expression evaluating to GUID (required)
+ filter: # Optional: limit to specific source types
+ - character-personality
+ - character-history
 ```
 
 **After loading, access via expressions**:
 ```yaml
 - cond:
-    - when: ${candidate.personality.aggression > 0.7}
-      then:
-        - log: "High aggression detected"
+ - when: ${candidate.personality.aggression > 0.7}
+ then:
+ - log: "High aggression detected"
 ```
 
 **Implementation Notes**:
@@ -262,10 +262,10 @@ Spawns a regional watcher for the specified realm via the Puppetmaster service.
 **YAML Syntax**:
 ```yaml
 - spawn_watcher:
-    watcher_type: regional           # Required - watcher type string
-    realm_id: ${event.realmId}       # Required - realm GUID expression
-    behavior_id: watcher-regional    # Optional - behavior document to use
-    into: spawned_watcher_id         # Optional - variable to store watcher ID
+ watcher_type: regional # Required - watcher type string
+ realm_id: ${event.realmId} # Required - realm GUID expression
+ behavior_id: watcher-regional # Optional - behavior document to use
+ into: spawned_watcher_id # Optional - variable to store watcher ID
 ```
 
 **Implementation Notes**:
@@ -281,7 +281,7 @@ Stops a running regional watcher.
 **YAML Syntax**:
 ```yaml
 - stop_watcher:
-    watcher_id: ${watcher_to_stop}   # Required - watcher GUID expression
+ watcher_id: ${watcher_to_stop} # Required - watcher GUID expression
 ```
 
 **Implementation Notes**:
@@ -295,9 +295,9 @@ Queries active watchers with optional filtering.
 **YAML Syntax**:
 ```yaml
 - list_watchers:
-    into: active_watchers            # Required - variable to store results
-    realm_id: ${realm_id}            # Optional - filter by realm
-    watcher_type: regional           # Optional - filter by type
+ into: active_watchers # Required - variable to store results
+ realm_id: ${realm_id} # Optional - filter by realm
+ watcher_type: regional # Optional - filter by type
 ```
 
 **Implementation Notes**:
@@ -312,12 +312,12 @@ Registers a resource change watch in the `WatchRegistry`. When the watched resou
 **YAML Syntax**:
 ```yaml
 - watch:
-    resource_type: character          # Required - resource type to watch
-    resource_id: ${target_id}         # Required - expression evaluating to GUID
-    sources:                          # Optional - filter to specific source types
-      - character-personality
-      - character-history
-    on_change: handle_update          # Optional - flow to invoke on change (default: queued perception)
+ resource_type: character # Required - resource type to watch
+ resource_id: ${target_id} # Required - expression evaluating to GUID
+ sources: # Optional - filter to specific source types
+ - character-personality
+ - character-history
+ on_change: handle_update # Optional - flow to invoke on change (default: queued perception)
 ```
 
 **Implementation Notes**:
@@ -334,8 +334,8 @@ Removes a resource change watch from the `WatchRegistry`.
 **YAML Syntax**:
 ```yaml
 - unwatch:
-    resource_type: character          # Required - resource type to stop watching
-    resource_id: ${target_id}         # Required - expression evaluating to GUID
+ resource_type: character # Required - resource type to stop watching
+ resource_id: ${target_id} # Required - expression evaluating to GUID
 ```
 
 **Implementation Notes**:
@@ -368,31 +368,31 @@ Removes a resource change watch from the `WatchRegistry`.
 ## Visual Aid
 
 ```
-                                 ┌──────────────────────────────────────┐
-                                 │         PuppetmasterService          │
-                                 │            (Singleton, L4)           │
-                                 ├──────────────────────────────────────┤
-                                 │ _activeWatchers: ConcurrentDict      │
-                                 │ _watchersByRealmAndType: ConcurrentDict│
-                                 └──────────────┬───────────────────────┘
-                                                │
-            ┌───────────────────────────────────┼───────────────────────────────────┐
-            │                                   │                                   │
-            ▼                                   ▼                                   ▼
-┌───────────────────────┐      ┌───────────────────────────┐      ┌───────────────────────┐
-│  BehaviorDocumentCache │      │    ResourceSnapshotCache   │      │  DynamicBehaviorProvider│
-│     (Singleton)        │      │       (Singleton)          │      │     (Singleton)        │
-├───────────────────────┤      ├───────────────────────────┤      ├───────────────────────┤
-│ _cache: ConcurrentDict │      │ _cache: ConcurrentDict    │      │ Priority: 100         │
-│ _parser: DocumentParser│      │ _defaultTtl: 5 min        │      │ CanProvide: GUID only │
-└──────────┬────────────┘      └──────────┬────────────────┘      └───────────────────────┘
-           │                              │
-           │ GetOrLoadAsync               │ GetOrLoadAsync
-           ▼                              ▼
-    ┌────────────┐                 ┌────────────┐
-    │ IAssetClient│                │IResourceClient│
-    │    (L3)    │                 │    (L1)    │
-    └────────────┘                 └────────────┘
+ ┌──────────────────────────────────────┐
+ │ PuppetmasterService │
+ │ (Singleton, L4) │
+ ├──────────────────────────────────────┤
+ │ _activeWatchers: ConcurrentDict │
+ │ _watchersByRealmAndType: ConcurrentDict│
+ └──────────────┬───────────────────────┘
+ │
+ ┌───────────────────────────────────┼───────────────────────────────────┐
+ │ │ │
+ ▼ ▼ ▼
+┌───────────────────────┐ ┌───────────────────────────┐ ┌───────────────────────┐
+│ BehaviorDocumentCache │ │ ResourceSnapshotCache │ │ DynamicBehaviorProvider│
+│ (Singleton) │ │ (Singleton) │ │ (Singleton) │
+├───────────────────────┤ ├───────────────────────────┤ ├───────────────────────┤
+│ _cache: ConcurrentDict │ │ _cache: ConcurrentDict │ │ Priority: 100 │
+│ _parser: DocumentParser│ │ _defaultTtl: 5 min │ │ CanProvide: GUID only │
+└──────────┬────────────┘ └──────────┬────────────────┘ └───────────────────────┘
+ │ │
+ │ GetOrLoadAsync │ GetOrLoadAsync
+ ▼ ▼
+ ┌────────────┐ ┌────────────┐
+ │ IAssetClient│ │IResourceClient│
+ │ (L3) │ │ (L1) │
+ └────────────┘ └────────────┘
 ```
 
 ---
@@ -427,19 +427,19 @@ Mappings are declared in event schemas using `x-resource-mapping`:
 ```yaml
 # In lifecycle events (character-events.yaml)
 x-lifecycle:
-  Character:
-    resource_mapping:
-      resource_type: character      # Which resource this affects
-      # resource_id_field defaults to primary key (characterId)
-      # source_type defaults to topic base (character)
+ Character:
+ resource_mapping:
+ resource_type: character # Which resource this affects
+ # resource_id_field defaults to primary key (characterId)
+ # source_type defaults to topic base (character)
 
 # In non-lifecycle events (character-personality-events.yaml)
 PersonalityUpdatedEvent:
-  type: object
-  x-resource-mapping:
-    resource_type: character
-    resource_id_field: characterId
-    source_type: character-personality
+ type: object
+ x-resource-mapping:
+ resource_type: character
+ resource_id_field: characterId
+ source_type: character-personality
 ```
 
 The `generate-resource-mappings.py` script scans all event schemas and generates `bannou-service/Generated/ResourceEventMappings.cs` with the complete mapping registry.
@@ -463,7 +463,7 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 1. **Watcher-Actor Integration**: The `ActorId` field on `WatcherInfo` is always `null`. The TODO comment at line 213 indicates actor spawning is not yet implemented. Watchers don't actually execute any behavior - they're just registered in memory.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/388 -->
 
-2. ~~**Configurable Default Watcher Types**~~: **FIXED** (2026-02-11) - Added `DefaultWatcherTypes` config property (default `["regional"]`). T21 violation: currently set via `PUPPETMASTER_DEFAULT_WATCHER_TYPES` env var as comma-separated string parsed at runtime. Should be defined as a typed array in the configuration schema instead of a parseable string.
+2. ~~**Configurable Default Watcher Types**~~: **FIXED** (2026-02-11) - Added `DefaultWatcherTypes` config property (default `["regional"]`). violation: currently set via `PUPPETMASTER_DEFAULT_WATCHER_TYPES` env var as comma-separated string parsed at runtime. Should be defined as a typed array in the configuration schema instead of a parseable string.
 
 3. ~~**ResourceSnapshotCache TTL Configuration**~~: **FIXED** (2026-02-11) - Added `SnapshotCacheTtlSeconds` config property (default 300s, minimum 1s). ResourceSnapshotCache now injects `PuppetmasterServiceConfiguration` and uses the config value instead of hardcoded 5-minute TTL.
 
@@ -499,7 +499,7 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 
 ### Intentional Quirks (Documented Behavior)
 
-1. ~~**StopWatcher returns success for non-existent watchers**~~: **FIXED** — `StopWatcherAsync` now returns `(StatusCodes.NotFound, null)` when the watcher doesn't exist, per T8 (no filler properties; status code communicates result).
+1. ~~**StopWatcher returns success for non-existent watchers**~~: **FIXED** — `StopWatcherAsync` now returns `(StatusCodes.NotFound, null)` when the watcher doesn't exist, per tenets (no filler properties; status code communicates result).
 
 2. **Watcher uniqueness is per (realm, type)**: Only one watcher per realm/type combination is allowed. `StartWatcherAsync` returns the existing watcher with `AlreadyExisted = true` rather than creating a duplicate.
 
@@ -518,16 +518,16 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 ### Design Considerations (Requires Planning)
 
 1. **In-memory watcher state is lost on restart**: All active watchers are lost when the service restarts. This is acceptable for the current phase but will need distributed state for production. Requires design decisions about:
-   - State store backend (Redis vs MySQL)
-   - Recovery behavior on startup (auto-restart previously active watchers?)
-   - Heartbeat/liveness tracking for watchers
+ - State store backend (Redis vs MySQL)
+ - Recovery behavior on startup (auto-restart previously active watchers?)
+ - Heartbeat/liveness tracking for watchers
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/395 -->
 
 2. **No actor spawning integration**: Watchers are just data structures without actual behavior execution. The full implementation requires:
-   - Spawning actors via `IActorClient`
-   - Passing behavior references to actors
-   - Tracking actor lifecycle (restart on crash)
-   - Correlating watcher IDs with actor IDs
+ - Spawning actors via `IActorClient`
+ - Passing behavior references to actors
+ - Tracking actor lifecycle (restart on crash)
+ - Correlating watcher IDs with actor IDs
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/388 -->
 
 ---
@@ -538,6 +538,6 @@ This section tracks active development work. Managed by `/audit-plugin` workflow
 
 ### Completed
 
-- **ResourceSnapshotCache TTL Configuration** (2026-02-11): Added `SnapshotCacheTtlSeconds` config property to schema, regenerated config class, wired into `ResourceSnapshotCache` constructor. T21 compliance fix.
-- **Configurable Default Watcher Types** (2026-02-11): Issue #389. Added `DefaultWatcherTypes` array config property (default `["regional"]`). Added comma-delimited env var to `string[]` binding support in `IServiceConfiguration` infrastructure. T21 compliance fix.
-- **IActorClient Hard Dependency Pattern** (2026-02-11): Changed `GetService<IActorClient>()` to `GetRequiredService<IActorClient>()` in event handlers. T4 compliance fix — L2 is a hard dependency from L4.
+- **ResourceSnapshotCache TTL Configuration** (2026-02-11): Added `SnapshotCacheTtlSeconds` config property to schema, regenerated config class, wired into `ResourceSnapshotCache` constructor. compliance fix.
+- **Configurable Default Watcher Types** (2026-02-11): Issue #389. Added `DefaultWatcherTypes` array config property (default `["regional"]`). Added comma-delimited env var to `string[]` binding support in `IServiceConfiguration` infrastructure. compliance fix.
+- **IActorClient Hard Dependency Pattern** (2026-02-11): Changed `GetService<IActorClient>()` to `GetRequiredService<IActorClient>()` in event handlers. compliance fix — L2 is a hard dependency from L4.

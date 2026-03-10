@@ -1,0 +1,1320 @@
+openapi: 3.0.4
+info:
+  title: Bannou Achievement Service API
+  description: |
+    Achievement and trophy system with progress tracking and platform synchronization.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU-DESIGN.md for architectural rationale.
+
+    **Polymorphic Entity Model**: Achievements can be earned by accounts, characters,
+    guilds, or actors using `entityId + entityType`.
+
+    **Platform Sync**: Supports synchronization with Steam, Xbox, and PlayStation
+    achievement systems. Platform-specific achievement IDs are mapped via association tables.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+  - target: character
+    sourceType: achievement-progress
+    field: entityId
+    onDelete: cascade
+    cleanup:
+      endpoint: /achievement/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+x-service-layer: GameFeatures
+
+paths:
+  /achievement/definition/create:
+    post:
+      summary: Create a new achievement definition
+      description: |
+        Create a new achievement with specified criteria and platform mappings.
+        Developer-only endpoint.
+      operationId: createAchievementDefinition
+      tags:
+      - Definitions
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAchievementDefinitionRequest'
+      responses:
+        '200':
+          description: Achievement created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementDefinitionResponse'
+        '409':
+          description: Achievement with this ID already exists
+
+  /achievement/definition/get:
+    post:
+      summary: Get achievement definition
+      description: Retrieve details about a specific achievement.
+      operationId: getAchievementDefinition
+      tags:
+      - Definitions
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAchievementDefinitionRequest'
+      responses:
+        '200':
+          description: Achievement definition retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementDefinitionResponse'
+        '404':
+          description: Achievement not found
+
+  /achievement/definition/list:
+    post:
+      summary: List achievement definitions
+      description: List achievements for a game service with optional platform filtering.
+      operationId: listAchievementDefinitions
+      tags:
+      - Definitions
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListAchievementDefinitionsRequest'
+      responses:
+        '200':
+          description: Achievement definitions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAchievementDefinitionsResponse'
+
+  /achievement/definition/update:
+    post:
+      summary: Update achievement definition
+      description: |
+        Update properties of an existing achievement.
+        Developer-only endpoint.
+      operationId: updateAchievementDefinition
+      tags:
+      - Definitions
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAchievementDefinitionRequest'
+      responses:
+        '200':
+          description: Achievement updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementDefinitionResponse'
+        '404':
+          description: Achievement not found
+
+  /achievement/definition/deprecate:
+    post:
+      summary: Deprecate an achievement definition
+      description: |
+        Mark an achievement definition as deprecated (Category B per IMPLEMENTATION TENETS).
+        Deprecated definitions:
+        - Remain queryable for historical data and earned instances
+        - Cannot be used for new progress tracking or unlocks
+        - Persist forever (no delete endpoint — instances outlive template relevance)
+        Idempotent: returns OK if already deprecated.
+      operationId: deprecateAchievementDefinition
+      tags:
+      - Definitions
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateAchievementDefinitionRequest'
+      responses:
+        '200':
+          description: Achievement definition deprecated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementDefinitionResponse'
+        '404':
+          description: Achievement definition not found
+
+  /achievement/definition/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedAchievementDefinitions
+      tags:
+      - Definitions
+      summary: Clean deprecated achievement definitions with zero remaining progress
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        achievement definitions and permanently removes those with zero remaining progress
+        records, subject to an optional grace period. Publishes achievement-definition.deleted
+        events for each removed definition. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: '../common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+
+  /achievement/progress/get:
+    post:
+      summary: Get entity's achievement progress
+      description: Get progress for an entity across all achievements or a specific one.
+      operationId: getAchievementProgress
+      tags:
+      - Progress
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAchievementProgressRequest'
+      responses:
+        '200':
+          description: Progress retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementProgressResponse'
+
+  /achievement/progress/update:
+    post:
+      summary: Update achievement progress
+      description: |
+        Increment progress toward an achievement. If target is reached, auto-unlocks.
+        Service-only endpoint - called by game logic.
+      operationId: updateAchievementProgress
+      tags:
+      - Progress
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAchievementProgressRequest'
+      responses:
+        '200':
+          description: Progress updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAchievementProgressResponse'
+        '404':
+          description: Achievement not found
+
+  /achievement/unlock:
+    post:
+      summary: Directly unlock an achievement
+      description: |
+        Immediately unlock an achievement without progress tracking.
+        Service-only endpoint - used for non-progressive achievements.
+      operationId: unlockAchievement
+      tags:
+      - Progress
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockAchievementRequest'
+      responses:
+        '200':
+          description: Achievement unlocked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlockAchievementResponse'
+        '404':
+          description: Achievement not found
+        '409':
+          description: Achievement already unlocked
+
+  /achievement/list-unlocked:
+    post:
+      summary: List unlocked achievements
+      description: Get all achievements unlocked by an entity.
+      operationId: listUnlockedAchievements
+      tags:
+      - Progress
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListUnlockedAchievementsRequest'
+      responses:
+        '200':
+          description: Unlocked achievements retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUnlockedAchievementsResponse'
+
+  /achievement/platform/sync:
+    post:
+      summary: Manually trigger platform sync
+      description: |
+        Force synchronization of achievements with external platforms.
+        Admin-only endpoint.
+      operationId: syncPlatformAchievements
+      tags:
+      - Platform Sync
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncPlatformAchievementsRequest'
+      responses:
+        '200':
+          description: Sync completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPlatformAchievementsResponse'
+
+  /achievement/platform/status:
+    post:
+      summary: Get platform sync status
+      description: Get the sync status for an entity on a specific platform.
+      operationId: getPlatformSyncStatus
+      tags:
+      - Platform Sync
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPlatformSyncStatusRequest'
+      responses:
+        '200':
+          description: Sync status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformSyncStatusResponse'
+
+  # ============================================================================
+  # Resource Cleanup (lib-resource callbacks)
+  # ============================================================================
+
+  /achievement/cleanup-by-character:
+    post:
+      summary: Delete all achievement progress for a character
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      description: |
+        Deletes all achievement progress records for a specific character across all game services.
+        Called by lib-resource during character deletion cleanup. This is a hard delete.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Progress records deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+
+components:
+  schemas:
+    # ============================================
+    # Shared Enums
+    # ============================================
+
+    AchievementType:
+      type: string
+      description: Type of achievement
+      enum:
+      - Standard
+      - Progressive
+      - Hidden
+      - Secret
+
+    Platform:
+      type: string
+      description: External platform for achievement sync
+      enum:
+      - Steam
+      - Xbox
+      - PlayStation
+      - Internal
+
+    SyncStatus:
+      type: string
+      description: Status of platform synchronization
+      enum:
+      - Pending
+      - Synced
+      - Failed
+      - NotLinked
+
+    PlatformMapping:
+      type: object
+      description: Maps an achievement to a platform-specific ID
+      additionalProperties: false
+      required:
+      - platform
+      - platformAchievementId
+      properties:
+        platform:
+          $ref: '#/components/schemas/Platform'
+          description: External platform
+        platformAchievementId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Platform-specific achievement identifier
+
+    # ============================================
+    # Achievement Definitions
+    # ============================================
+    CreateAchievementDefinitionRequest:
+      type: object
+      description: Request to create a new achievement
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - achievementId
+      - displayName
+      - description
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service owning this achievement
+        achievementId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: "^[a-z0-9_-]+$"
+          description: Unique identifier for this achievement (lowercase, no spaces)
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Human-readable name
+        description:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Description of how to earn this achievement
+        hiddenDescription:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Description shown before achievement is earned (for hidden types)
+        achievementType:
+          $ref: '#/components/schemas/AchievementType'
+          default: Standard
+          description: Classification of the achievement (affects visibility and progress behavior)
+        entityTypes:
+          type: array
+          items:
+            $ref: '../common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Which entity types can earn this achievement
+        progressTarget:
+          type: integer
+          nullable: true
+          description: Target value for progressive achievements
+        points:
+          type: integer
+          default: 10
+          description: Point value of this achievement
+        iconUrl:
+          type: string
+          nullable: true
+          description: URL to achievement icon
+        platforms:
+          type: array
+          items:
+            $ref: '#/components/schemas/Platform'
+          nullable: true
+          description: Platforms where this achievement exists
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
+          nullable: true
+          description: Platform-specific achievement ID mappings
+        prerequisites:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Achievement IDs that must be unlocked first
+        scoreType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Score type code for matching analytics.score.updated events (progressive achievements)
+        milestoneType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Milestone type code for matching analytics.milestone.reached events
+        milestoneValue:
+          type: number
+          format: double
+          nullable: true
+          description: Expected milestone value for matching analytics.milestone.reached events
+        milestoneName:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Expected milestone name for matching analytics.milestone.reached events
+        leaderboardId:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Leaderboard ID for matching leaderboard.rank.changed events
+        rankThreshold:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Rank threshold for leaderboard achievements (unlock when rank <= threshold)
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Game-defined category for UI grouping and filtering (e.g. Combat, Exploration, Social)
+        isActive:
+          type: boolean
+          default: true
+          description: Whether this achievement can be earned
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+
+    GetAchievementDefinitionRequest:
+      type: object
+      description: Request to get an achievement definition
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - achievementId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        achievementId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the achievement
+
+    ListAchievementDefinitionsRequest:
+      type: object
+      description: Request to list achievement definitions
+      additionalProperties: false
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Filter by game-defined category
+        platform:
+          $ref: '#/components/schemas/Platform'
+          nullable: true
+          description: Filter by platform
+        achievementType:
+          $ref: '#/components/schemas/AchievementType'
+          nullable: true
+          description: Filter by achievement classification
+        isActive:
+          type: boolean
+          nullable: true
+          description: Filter by active status
+        includeHidden:
+          type: boolean
+          default: false
+          description: Include hidden achievements in response
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated definitions in results
+
+    ListAchievementDefinitionsResponse:
+      type: object
+      description: Response containing achievement definitions
+      additionalProperties: false
+      required:
+      - achievements
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementDefinitionResponse'
+          description: List of achievement definitions
+
+    UpdateAchievementDefinitionRequest:
+      type: object
+      description: Request to update an achievement definition
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - achievementId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        achievementId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the achievement to update
+        displayName:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: New display name
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: New description
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: New category for UI grouping
+        isActive:
+          type: boolean
+          nullable: true
+          description: New active status
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
+          nullable: true
+          description: Updated platform ID mappings
+        scoreType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Score type code for matching analytics.score.updated events (progressive achievements)
+        milestoneType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Milestone type code for matching analytics.milestone.reached events
+        milestoneValue:
+          type: number
+          format: double
+          nullable: true
+          description: Expected milestone value for matching analytics.milestone.reached events
+        milestoneName:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Expected milestone name for matching analytics.milestone.reached events
+        leaderboardId:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Leaderboard ID for matching leaderboard.rank.changed events
+        rankThreshold:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Rank threshold for leaderboard achievements (unlock when rank <= threshold)
+
+    DeprecateAchievementDefinitionRequest:
+      type: object
+      description: Request to deprecate an achievement definition
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - achievementId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        achievementId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the achievement to deprecate
+        deprecationReason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Audit reason for deprecation, explaining why this achievement is being phased out
+
+    AchievementDefinitionResponse:
+      allOf:
+      - $ref: '#/components/schemas/DeprecationFields'
+      type: object
+      description: Achievement definition details
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - achievementId
+      - displayName
+      - description
+      - achievementType
+      - points
+      - isActive
+      - earnedCount
+      - createdAt
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the owning game service
+        achievementId:
+          type: string
+          description: Unique identifier
+        displayName:
+          type: string
+          description: Human-readable name
+        description:
+          type: string
+          description: How to earn this achievement
+        hiddenDescription:
+          type: string
+          nullable: true
+          description: Description for hidden achievements
+        achievementType:
+          $ref: '#/components/schemas/AchievementType'
+          description: Classification of the achievement
+        category:
+          type: string
+          nullable: true
+          description: Game-defined category for UI grouping and filtering
+        entityTypes:
+          type: array
+          items:
+            $ref: '../common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Allowed entity types
+        progressTarget:
+          type: integer
+          nullable: true
+          description: Target for progressive achievements
+        points:
+          type: integer
+          description: Point value
+        iconUrl:
+          type: string
+          nullable: true
+          description: Achievement icon URL
+        platforms:
+          type: array
+          items:
+            $ref: '#/components/schemas/Platform'
+          nullable: true
+          description: Available platforms
+        platformMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformMapping'
+          nullable: true
+          description: Platform-specific achievement ID mappings
+        prerequisites:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Required achievements
+        scoreType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Score type code for matching analytics.score.updated events (progressive achievements)
+        milestoneType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Milestone type code for matching analytics.milestone.reached events
+        milestoneValue:
+          type: number
+          format: double
+          nullable: true
+          description: Expected milestone value for matching analytics.milestone.reached events
+        milestoneName:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Expected milestone name for matching analytics.milestone.reached events
+        leaderboardId:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Leaderboard ID for matching leaderboard.rank.changed events
+        rankThreshold:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Rank threshold for leaderboard achievements (unlock when rank <= threshold)
+        isActive:
+          type: boolean
+          description: Whether achievement is earnable
+        earnedCount:
+          type: integer
+          format: int64
+          description: How many entities have earned this
+        createdAt:
+          type: string
+          format: date-time
+          description: When the achievement was created
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+
+    # ============================================
+    # Achievement Progress
+    # ============================================
+    GetAchievementProgressRequest:
+      type: object
+      description: Request to get achievement progress
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - entityId
+      - entityType
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Entity type whose progress is requested
+        achievementId:
+          type: string
+          nullable: true
+          description: Specific achievement ID (null for all)
+
+    AchievementProgressResponse:
+      type: object
+      description: Achievement progress for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - progress
+      - totalPoints
+      - unlockedCount
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Entity type that owns this progress summary
+        progress:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementProgress'
+          description: Progress for each achievement
+        totalPoints:
+          type: integer
+          description: Total points from unlocked achievements
+        unlockedCount:
+          type: integer
+          description: Number of unlocked achievements
+
+    AchievementProgress:
+      type: object
+      description: Progress toward a single achievement
+      additionalProperties: false
+      required:
+      - achievementId
+      - displayName
+      - isUnlocked
+      properties:
+        achievementId:
+          type: string
+          description: Achievement identifier
+        displayName:
+          type: string
+          description: Achievement display name
+        currentProgress:
+          type: integer
+          nullable: true
+          description: Current progress (for progressive)
+        targetProgress:
+          type: integer
+          nullable: true
+          description: Target progress (for progressive)
+        percentComplete:
+          type: number
+          format: double
+          nullable: true
+          description: Completion percentage (0-100)
+        isUnlocked:
+          type: boolean
+          description: Whether achievement is unlocked
+        unlockedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When achievement was unlocked
+
+    UpdateAchievementProgressRequest:
+      type: object
+      description: Request to update achievement progress
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - achievementId
+      - entityId
+      - entityType
+      - increment
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        achievementId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the achievement
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Entity type receiving the progress increment
+        increment:
+          type: integer
+          minimum: 1
+          description: Amount to increment progress
+
+    UpdateAchievementProgressResponse:
+      type: object
+      description: Response after updating progress
+      additionalProperties: false
+      required:
+      - previousProgress
+      - newProgress
+      - targetProgress
+      - unlocked
+      properties:
+        previousProgress:
+          type: integer
+          description: Progress before update
+        newProgress:
+          type: integer
+          description: Progress after update
+        targetProgress:
+          type: integer
+          description: Target to unlock
+        unlocked:
+          type: boolean
+          description: Whether this update unlocked the achievement
+        unlockedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Unlock timestamp (if unlocked)
+
+    UnlockAchievementRequest:
+      type: object
+      description: Request to directly unlock an achievement
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - achievementId
+      - entityId
+      - entityType
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        achievementId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the achievement to unlock
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Entity type to unlock the achievement for
+        skipPlatformSync:
+          type: boolean
+          default: false
+          description: Skip syncing to external platforms
+
+    UnlockAchievementResponse:
+      type: object
+      description: Response after unlocking an achievement
+      additionalProperties: false
+      required:
+      - unlockedAt
+      properties:
+        unlockedAt:
+          type: string
+          format: date-time
+          description: Unlock timestamp
+        platformSyncStatus:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/SyncStatus'
+          nullable: true
+          description: Sync status by platform
+
+    ListUnlockedAchievementsRequest:
+      type: object
+      description: Request to list unlocked achievements
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - entityId
+      - entityType
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Entity type whose unlocked achievements are listed
+        platform:
+          $ref: '#/components/schemas/Platform'
+          nullable: true
+          description: Filter by platform
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include achievements earned from deprecated definitions
+
+    ListUnlockedAchievementsResponse:
+      type: object
+      description: Response containing unlocked achievements
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - achievements
+      - totalPoints
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Entity type for the returned unlocked achievements
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnlockedAchievement'
+          description: List of unlocked achievements
+        totalPoints:
+          type: integer
+          description: Total points earned
+
+    UnlockedAchievement:
+      type: object
+      description: An unlocked achievement instance
+      additionalProperties: false
+      required:
+      - achievementId
+      - displayName
+      - description
+      - points
+      - unlockedAt
+      properties:
+        achievementId:
+          type: string
+          description: Achievement identifier
+        displayName:
+          type: string
+          description: Achievement name
+        description:
+          type: string
+          description: Achievement description
+        points:
+          type: integer
+          description: Point value
+        iconUrl:
+          type: string
+          nullable: true
+          description: Achievement icon
+        unlockedAt:
+          type: string
+          format: date-time
+          description: When it was unlocked
+
+    # ============================================
+    # Platform Sync
+    # ============================================
+    SyncPlatformAchievementsRequest:
+      type: object
+      description: Request to sync achievements with external platform
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - entityId
+      - entityType
+      - platform
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity (must be account for platform sync)
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Entity type to sync (must be account for platform links)
+        platform:
+          $ref: '#/components/schemas/Platform'
+          description: External platform to sync achievements to
+
+    SyncPlatformAchievementsResponse:
+      type: object
+      description: Response after platform sync attempt
+      additionalProperties: false
+      required:
+      - platform
+      - synced
+      - failed
+      properties:
+        platform:
+          $ref: '#/components/schemas/Platform'
+          description: Platform targeted by the sync attempt
+        synced:
+          type: integer
+          description: Number of achievements successfully synced
+        failed:
+          type: integer
+          description: Number of sync failures
+        errors:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Error messages for failed syncs
+
+    GetPlatformSyncStatusRequest:
+      type: object
+      description: Request to get platform sync status
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - entityId
+      - entityType
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Entity type whose platform sync status is requested
+        platform:
+          $ref: '#/components/schemas/Platform'
+          nullable: true
+          description: Specific platform (null for all)
+
+    PlatformSyncStatusResponse:
+      type: object
+      description: Platform sync status for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - platforms
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Entity type for the reported platform status
+        platforms:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformStatus'
+          description: Sync status per platform
+
+    PlatformStatus:
+      type: object
+      description: Sync status for a single platform
+      additionalProperties: false
+      required:
+      - platform
+      - isLinked
+      - syncedCount
+      - failedCount
+      properties:
+        platform:
+          $ref: '#/components/schemas/Platform'
+          description: Platform this status entry describes
+        isLinked:
+          type: boolean
+          description: Whether entity is linked to this platform
+        externalId:
+          type: string
+          nullable: true
+          description: External platform user ID
+        syncedCount:
+          type: integer
+          description: Achievements successfully synced
+        pendingCount:
+          type: integer
+          nullable: true
+          description: Achievements pending sync (null when retry queue is not active)
+        failedCount:
+          type: integer
+          description: Achievements that failed to sync
+        lastSyncAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last successful sync timestamp
+        lastError:
+          type: string
+          nullable: true
+          description: Most recent sync error
+
+    # ============================================
+    # Resource Cleanup Models
+    # ============================================
+
+    CleanupByCharacterRequest:
+      type: object
+      description: Request to delete all achievement progress for a character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose achievement progress should be deleted
+
+    CleanupByCharacterResponse:
+      type: object
+      description: Response from cleanup-by-character operation
+      additionalProperties: false
+      required:
+      - progressRecordsDeleted
+      properties:
+        progressRecordsDeleted:
+          type: integer
+          minimum: 0
+          description: Number of progress records deleted across all game services
+    DeprecationFields:
+      type: object
+      description: |
+        Standard deprecation fields for template and definition entities (T31).
+        Compose into response models via allOf. Both Category A (world-building
+        definitions with undeprecate/delete) and Category B (content templates,
+        deprecate-only) use the same three-field model.
+      required:
+      - isDeprecated
+      properties:
+        isDeprecated:
+          type: boolean
+          description: Whether this entity is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the entity was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+
+x-inlined-types:
+- DeprecationFields

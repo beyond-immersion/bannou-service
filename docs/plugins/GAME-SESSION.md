@@ -96,7 +96,7 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 | `CleanupServiceStartupDelaySeconds` | `GAME_SESSION_CLEANUP_SERVICE_STARTUP_DELAY_SECONDS` | `10` | Delay before cleanup service starts |
 | `StartupServiceDelaySeconds` | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | `2` | Delay before subscription cache warmup |
 | `SubscriberSessionRetryMaxAttempts` | `GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS` | `3` | Max retries for ETag-based optimistic concurrency |
-| `SupportedGameServices` | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `generic` | Game service stub names for horizontal scaling partitioning (T21: should be typed array in config schema, not comma-delimited string) |
+| `SupportedGameServices` | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `generic` | Game service stub names for horizontal scaling partitioning (should be typed array in config schema, not comma-delimited string) |
 | `GenericLobbiesEnabled` | `GAME_SESSION_GENERIC_LOBBIES_ENABLED` | `false` | Auto-publish generic shortcuts without subscription (see Generic Lobbies) |
 | `LockTimeoutSeconds` | `GAME_SESSION_LOCK_TIMEOUT_SECONDS` | `60` | Timeout in seconds for distributed session locks |
 
@@ -104,7 +104,7 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 
 ## Horizontal Scaling by Game
 
-The `SupportedGameServices` configuration enables **per-game horizontal scaling** by partitioning which game-session instances handle which games. Currently implemented as a comma-delimited string (T21 violation — should be a typed array in the configuration schema). Filters which `subscription.updated` events the instance processes.
+The `SupportedGameServices` configuration enables **per-game horizontal scaling** by partitioning which game-session instances handle which games. Currently implemented as a comma-delimited string (violation — should be a typed array in the configuration schema). Filters which `subscription.updated` events the instance processes.
 
 ### How It Works
 
@@ -112,21 +112,21 @@ The `SupportedGameServices` configuration enables **per-game horizontal scaling*
 Deployment Topology (example)
 ==============================
 
-Node A (main)                    Node B (arcadia)              Node C (fantasia)
-─────────────────────────────    ─────────────────────────     ─────────────────────────
-SUPPORTED_GAME_SERVICES=generic  SUPPORTED_GAME_SERVICES=      SUPPORTED_GAME_SERVICES=
-                                   arcadia                       fantasia
+Node A (main) Node B (arcadia) Node C (fantasia)
+───────────────────────────── ───────────────────────── ─────────────────────────
+SUPPORTED_GAME_SERVICES=generic SUPPORTED_GAME_SERVICES= SUPPORTED_GAME_SERVICES=
+ arcadia fantasia
 
-Handles:                         Handles:                      Handles:
- • Generic catch-all lobbies      • Arcadia game lobbies        • Fantasia game lobbies
- • Unknown/new games              • Arcadia subscriptions       • Fantasia subscriptions
+Handles: Handles: Handles:
+ • Generic catch-all lobbies • Arcadia game lobbies • Fantasia game lobbies
+ • Unknown/new games • Arcadia subscriptions • Fantasia subscriptions
 
 
 subscription.updated event (stubName="arcadia") published
-    │
-    ├─► Node A: IsOurService("arcadia") → false → ignores
-    ├─► Node B: IsOurService("arcadia") → true  → processes, publishes shortcut
-    └─► Node C: IsOurService("arcadia") → false → ignores
+ │
+ ├─► Node A: IsOurService("arcadia") → false → ignores
+ ├─► Node B: IsOurService("arcadia") → true → processes, publishes shortcut
+ └─► Node C: IsOurService("arcadia") → false → ignores
 ```
 
 ### Configuration
@@ -191,21 +191,21 @@ GAME_SESSION_GENERIC_LOBBIES_ENABLED=true
 WITHOUT GenericLobbiesEnabled (subscription required):
 ──────────────────────────────────────────────────────
 User connects → session.connected event
-    │
-    ├── Check subscriptions for "generic"
-    │   └── Not subscribed? → No shortcut published
-    │
-    └── User must subscribe to "generic" first
+ │
+ ├── Check subscriptions for "generic"
+ │ └── Not subscribed? → No shortcut published
+ │
+ └── User must subscribe to "generic" first
 
 
 WITH GenericLobbiesEnabled:
 ───────────────────────────
 User connects → session.connected event
-    │
-    ├── GenericLobbiesEnabled=true && IsOurService("generic")
-    │   └── Immediately publish generic lobby shortcut
-    │
-    └── User can join generic lobby without any subscription
+ │
+ ├── GenericLobbiesEnabled=true && IsOurService("generic")
+ │ └── Immediately publish generic lobby shortcut
+ │
+ └── User can join generic lobby without any subscription
 ```
 
 ---
@@ -216,82 +216,82 @@ User connects → session.connected event
 Session Types & Lifecycle
 ===========================
 
-  LOBBY (persistent, per-game-service)
-  ┌────────────────────────────────────────────────────────────┐
-  │ Account subscribes to "arcadia"                            │
-  │      │                                                     │
-  │      ▼                                                     │
-  │ session.connected event                                    │
-  │      │                                                     │
-  │      ├── Check _accountSubscriptions cache                 │
-  │      │   (miss? → fetch from SubscriptionClient)           │
-  │      │                                                     │
-  │      ├── Store subscriber session (ETag optimistic retry)  │
-  │      │                                                     │
-  │      └── PublishJoinShortcutAsync                           │
-  │           │                                                │
-  │           ├── GetOrCreateLobbySessionAsync("arcadia")      │
-  │           ├── Generate route GUID + target GUID            │
-  │           └── IClientEventPublisher → ShortcutPublishedEvent│
-  │                                                            │
-  │ Client invokes shortcut → /sessions/join                   │
-  │      │                                                     │
-  │      ├── Validate subscriber session                       │
-  │      ├── Acquire distributed lock                          │
-  │      ├── Set permission state: in_game                     │
-  │      └── Publish player-joined event                       │
-  └────────────────────────────────────────────────────────────┘
+ LOBBY (persistent, per-game-service)
+ ┌────────────────────────────────────────────────────────────┐
+ │ Account subscribes to "arcadia" │
+ │ │ │
+ │ ▼ │
+ │ session.connected event │
+ │ │ │
+ │ ├── Check _accountSubscriptions cache │
+ │ │ (miss? → fetch from SubscriptionClient) │
+ │ │ │
+ │ ├── Store subscriber session (ETag optimistic retry) │
+ │ │ │
+ │ └── PublishJoinShortcutAsync │
+ │ │ │
+ │ ├── GetOrCreateLobbySessionAsync("arcadia") │
+ │ ├── Generate route GUID + target GUID │
+ │ └── IClientEventPublisher → ShortcutPublishedEvent│
+ │ │
+ │ Client invokes shortcut → /sessions/join │
+ │ │ │
+ │ ├── Validate subscriber session │
+ │ ├── Acquire distributed lock │
+ │ ├── Set permission state: in_game │
+ │ └── Publish player-joined event │
+ └────────────────────────────────────────────────────────────┘
 
 
-  MATCHMADE (temporary, created by matchmaking)
-  ┌────────────────────────────────────────────────────────────┐
-  │ MatchmakingService creates session with reservations       │
-  │      │                                                     │
-  │      ├── POST /sessions/create (SessionType=Matchmade,     │
-  │      │   ExpectedPlayers=[A, B, C])                        │
-  │      │                                                     │
-  │      └── POST /sessions/publish-join-shortcut (per player) │
-  │           │                                                │
-  │           └── ShortcutPublishedEvent → WebSocket           │
-  │                                                            │
-  │ Client invokes shortcut → /sessions/join-session           │
-  │      │                                                     │
-  │      ├── Validate reservation token                        │
-  │      ├── Check reservation expiry                          │
-  │      ├── Mark reservation as claimed                       │
-  │      └── (same lock/permission/event flow as lobby)        │
-  │                                                            │
-  │ ReservationCleanupService (periodic background):           │
-  │      │                                                     │
-  │      ├── Find matchmade sessions past expiry               │
-  │      ├── claimedCount < totalReservations?                 │
-  │      │   └── Cancel session, notify players, delete state  │
-  │      └── Publish game-session.cancelled            │
-  └────────────────────────────────────────────────────────────┘
+ MATCHMADE (temporary, created by matchmaking)
+ ┌────────────────────────────────────────────────────────────┐
+ │ MatchmakingService creates session with reservations │
+ │ │ │
+ │ ├── POST /sessions/create (SessionType=Matchmade, │
+ │ │ ExpectedPlayers=[A, B, C]) │
+ │ │ │
+ │ └── POST /sessions/publish-join-shortcut (per player) │
+ │ │ │
+ │ └── ShortcutPublishedEvent → WebSocket │
+ │ │
+ │ Client invokes shortcut → /sessions/join-session │
+ │ │ │
+ │ ├── Validate reservation token │
+ │ ├── Check reservation expiry │
+ │ ├── Mark reservation as claimed │
+ │ └── (same lock/permission/event flow as lobby) │
+ │ │
+ │ ReservationCleanupService (periodic background): │
+ │ │ │
+ │ ├── Find matchmade sessions past expiry │
+ │ ├── claimedCount < totalReservations? │
+ │ │ └── Cancel session, notify players, delete state │
+ │ └── Publish game-session.cancelled │
+ └────────────────────────────────────────────────────────────┘
 
 
 Subscription Cache Architecture
 =================================
 
-  Static ConcurrentDictionary<Guid, HashSet<string>>
-  (AccountId → Set of subscribed stubNames)
-       │
-       ├── Warmed at startup by GameSessionStartupService
-       │   (queries SubscriptionClient for all supported services)
-       │
-       ├── Updated on session.connected (cache miss → fetch)
-       │
-       └── Updated on subscription.updated events
-           (add/remove stubNames based on action + isActive)
+ Static ConcurrentDictionary<Guid, HashSet<string>>
+ (AccountId → Set of subscribed stubNames)
+ │
+ ├── Warmed at startup by GameSessionStartupService
+ │ (queries SubscriptionClient for all supported services)
+ │
+ ├── Updated on session.connected (cache miss → fetch)
+ │
+ └── Updated on subscription.updated events
+ (add/remove stubNames based on action + isActive)
 
-  Distributed Subscriber Sessions (lib-state with ETags):
-       │
-       ├── subscriber-sessions:{accountId} → SubscriberSessionsModel
-       │   (Set of WebSocket session GUIDs for this account)
-       │
-       ├── Written on session.connected (optimistic retry)
-       ├── Read on subscription.updated (find sessions to notify)
-       └── Deleted on session.disconnected
+ Distributed Subscriber Sessions (lib-state with ETags):
+ │
+ ├── subscriber-sessions:{accountId} → SubscriberSessionsModel
+ │ (Set of WebSocket session GUIDs for this account)
+ │
+ ├── Written on session.connected (optimistic retry)
+ ├── Read on subscription.updated (find sessions to notify)
+ └── Deleted on session.disconnected
 ```
 
 ---

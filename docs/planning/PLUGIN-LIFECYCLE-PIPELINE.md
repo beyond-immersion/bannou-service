@@ -34,7 +34,7 @@ Each stage has a clear input, output, and quality gate. Existing skills handle s
 
 **Input**: Service concept, vision alignment, layer classification.
 **Output**: `docs/plugins/{SERVICE}.md` -- comprehensive architectural specification.
-**Gate**: All sections populated; dependencies classified by layer/hardness; state stores designed; events defined; type fields classified per T14 decision tree; known quirks documented.
+**Gate**: All sections populated; dependencies classified by layer/hardness; state stores designed; events defined; type fields classified per IMPLEMENTATION TENETS decision tree; known quirks documented.
 
 **What it answers**:
 - What does this service DO? (overview, architecture)
@@ -114,7 +114,7 @@ Each stage has a clear input, output, and quality gate. Existing skills handle s
 
 **No existing skill**: This is currently manual work guided by SCHEMA-RULES.md. A `/schema-plugin` skill could be created to generate initial schema scaffolding from the deep dive + implementation map, but schema creation involves enough judgment calls (validation keywords, type classifications, reference hierarchy) that full automation may not be desirable. **Recommendation**: Keep schema creation manual for now; consider a skill later if patterns stabilize.
 
-**Critical constraint**: T1 (Schema-First) is inviolable. Schemas MUST exist before any generated code, tests, or implementation. This is the hard gate between "design" and "code."
+**Critical constraint**: Schema-First Development is inviolable. Schemas MUST exist before any generated code, tests, or implementation. This is the hard gate between "design" and "code."
 
 ---
 
@@ -185,7 +185,7 @@ Each stage has a clear input, output, and quality gate. Existing skills handle s
 5. Verify all tests pass
 6. Flag any deviations from the map for review
 
-**Quality standard**: Implementation must follow all tenets (T4 infrastructure libs, T6 service pattern, T7 error handling, T8 return pattern, T9 multi-instance safety, T10 logging, T19 XML docs, T23 async pattern, T25 type safety, T26 no sentinel values, T30 telemetry spans).
+**Quality standard**: Implementation must follow all tenets (infrastructure libs, service pattern, error handling, return pattern, multi-instance safety, logging, XML docs, async pattern, type safety, no sentinel values, telemetry spans).
 
 **Edge case handling**: When implementation discovers something the map didn't anticipate (race condition, Redis behavior nuance, ETag failure path), the implementation should:
 1. Implement the fix
@@ -343,7 +343,7 @@ Categories 3 and 4 are embraced and documented. Categories 1 and 2 indicate insu
 
 **Living Game Worlds / Content Flywheel**: The aspirational plugins (Divine, Agency, Disposition, Hearsay, Lexicon, etc.) are the services that make the content flywheel spin. A formalized pipeline that gets them to production-ready quality predictably and safely accelerates the most critical part of the vision.
 
-**100K Concurrent AI NPCs**: Every new variable provider (${spirit.*}, ${disposition.*}, ${hearsay.*}) must be multi-instance safe, hierarchy compliant, and performance-validated. The audit stage catches T9/T27/T28 violations before they become distributed system bugs at scale.
+**100K Concurrent AI NPCs**: Every new variable provider (${spirit.*}, ${disposition.*}, ${hearsay.*}) must be multi-instance safe, hierarchy compliant, and performance-validated. The audit stage catches multi-instance safety, communication discipline, and cleanup violations before they become distributed system bugs at scale.
 
 **Ship Games Fast**: A repeatable pipeline means each new service follows the same path. No architectural surprises. No rework cycles. The implementation map + TDD approach ensures the first implementation is correct.
 

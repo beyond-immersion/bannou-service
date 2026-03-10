@@ -14,7 +14,7 @@
 
 The Quest service (L2 GameFoundation) provides objective-based gameplay progression as a thin orchestration layer over lib-contract. Translates game-flavored quest semantics (objectives, rewards, quest givers) into Contract infrastructure (milestones, prebound APIs, parties), leveraging Contract's state machine and cleanup orchestration while presenting a player-friendly API. Agnostic to prerequisite sources: L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` for validation without Quest depending on them. Exposes quest data to the Actor service via the Variable Provider Factory pattern for ABML behavior expressions.
 
-**Deprecation Lifecycle (T31 Category B)**: Quest definitions are Category B entities — instances persist independently, so definitions must remain readable forever. Deprecation is one-way (no undeprecate), there is no delete endpoint, and acceptance of deprecated definitions is rejected with `BadRequest` (instance creation guard). Uses triple-field deprecation model: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?). Deprecation is idempotent (returns OK when already deprecated). `ListQuestDefinitions` includes `includeDeprecated` parameter (default: `false`). Deprecation is communicated via `quest.definition.updated` with `changedFields` containing deprecation fields (no dedicated deprecation event per T31). Contract templates are structurally immutable once created (trust guarantee); only quest metadata (name, description, category, difficulty, tags) can be updated.
+**Deprecation Lifecycle (Category B)**: Quest definitions are Category B entities — instances persist independently, so definitions must remain readable forever. Deprecation is one-way (no undeprecate), there is no delete endpoint, and acceptance of deprecated definitions is rejected with `BadRequest` (instance creation guard). Uses triple-field deprecation model: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?). Deprecation is idempotent (returns OK when already deprecated). `ListQuestDefinitions` includes `includeDeprecated` parameter (default: `false`). Deprecation is communicated via `quest.definition.updated` with `changedFields` containing deprecation fields (no dedicated deprecation event per tenets). Contract templates are structurally immutable once created (trust guarantee); only quest metadata (name, description, category, difficulty, tags) can be updated.
 
 ---
 
@@ -46,38 +46,38 @@ The Quest service (L2 GameFoundation) provides objective-based gameplay progress
 ## Visual Aid: Quest-Contract State Mapping
 
 ```
-Quest Service State               Contract Service State
-═══════════════════════           ══════════════════════════
+Quest Service State Contract Service State
+═══════════════════════ ══════════════════════════
 
-┌─────────────────────┐          ┌─────────────────────────┐
-│ QuestDefinitionModel│──creates─▶│ Contract Template       │
-│ - objectives        │          │ - milestones (1:1)      │
-│ - prerequisites     │          │ - prebound APIs         │
-│ - rewards           │          │ - enforcement_mode      │
-└─────────────────────┘          └─────────────────────────┘
-          │                                  │
-          │ accept                           │ create instance
-          ▼                                  ▼
-┌─────────────────────┐          ┌─────────────────────────┐
-│ QuestInstanceModel  │──maps────▶│ Contract Instance       │
-│ - ACTIVE            │          │ - ACTIVE                │
-│ - COMPLETED         │◀─fulfilled│ - FULFILLED             │
-│ - FAILED            │◀──breach──│ - BREACHED              │
-│ - ABANDONED         │◀─terminate│ - TERMINATED            │
-└─────────────────────┘          └─────────────────────────┘
-          │
-          │ per objective
-          ▼
-┌─────────────────────┐          ┌─────────────────────────┐
-│ObjectiveProgressModel│──maps───▶│ Milestone               │
-│ - currentCount      │          │ - completed flag        │
-│ - requiredCount     │─complete─▶│ (via CompleteMilestone) │
-│ - isComplete        │          │                         │
-└─────────────────────┘          └─────────────────────────┘
+┌─────────────────────┐ ┌─────────────────────────┐
+│ QuestDefinitionModel│──creates─▶│ Contract Template │
+│ - objectives │ │ - milestones (1:1) │
+│ - prerequisites │ │ - prebound APIs │
+│ - rewards │ │ - enforcement_mode │
+└─────────────────────┘ └─────────────────────────┘
+ │ │
+ │ accept │ create instance
+ ▼ ▼
+┌─────────────────────┐ ┌─────────────────────────┐
+│ QuestInstanceModel │──maps────▶│ Contract Instance │
+│ - ACTIVE │ │ - ACTIVE │
+│ - COMPLETED │◀─fulfilled│ - FULFILLED │
+│ - FAILED │◀──breach──│ - BREACHED │
+│ - ABANDONED │◀─terminate│ - TERMINATED │
+└─────────────────────┘ └─────────────────────────┘
+ │
+ │ per objective
+ ▼
+┌─────────────────────┐ ┌─────────────────────────┐
+│ObjectiveProgressModel│──maps───▶│ Milestone │
+│ - currentCount │ │ - completed flag │
+│ - requiredCount │─complete─▶│ (via CompleteMilestone) │
+│ - isComplete │ │ │
+└─────────────────────┘ └─────────────────────────┘
 
 Key: objectives ←→ milestones (1:1 mapping)
-     rewards → prebound APIs (executed on contract fulfillment)
-     Quest status ← Contract lifecycle events
+ rewards → prebound APIs (executed on contract fulfillment)
+ Quest status ← Contract lifecycle events
 ```
 
 ---
@@ -94,11 +94,11 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 **QuestProvider** (`IVariableProvider`):
 - Namespace: `quest`
 - Available variables:
-  - `${quest.active_count}` - int: Number of active quests
-  - `${quest.has_active}` - bool: Has any active quest?
-  - `${quest.codes}` - List: Active quest codes
-  - `${quest.active_quests}` - List: Active quest summaries
-  - `${quest.by_code.CODE.*}` - Quest details by code
+ - `${quest.active_count}` - int: Number of active quests
+ - `${quest.has_active}` - bool: Has any active quest?
+ - `${quest.codes}` - List: Active quest codes
+ - `${quest.active_quests}` - List: Active quest summaries
+ - `${quest.by_code.CODE.*}` - Quest details by code
 
 **QuestDataCache** (`IQuestDataCache`):
 - Singleton with ConcurrentDictionary for thread-safety
@@ -145,7 +145,7 @@ None — all previously identified stubs have been implemented.
 4. **Client events for real-time objective tracking** ([#496](https://github.com/beyond-immersion/bannou-service/issues/496)): Push `QuestObjectiveProgressed` and `QuestStatusChanged` (consolidated lifecycle event with status discriminator for accepted/completed/failed/abandoned) client events via `IClientEventPublisher` using the Entity Session Registry (#426, now implemented). Sessions resolved via `character → session` bindings for all questor characters. Published from Quest's event handlers that process Contract state transitions. **Unblocked** — infrastructure dependency (#426) is closed.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/496 -->
 
-5. ~~**T28 character deletion cleanup**~~: **FIXED** (2026-03-08) - Added `x-references` to quest-api.yaml declaring character dependency with CASCADE policy. Generated reference tracking code. `AcceptQuestAsync` now registers character references; `DeleteByCharacterAsync` endpoint abandons active quests (with best-effort contract termination), deletes objective progress, cooldowns, and character index. Cleanup callbacks registered on startup via `QuestServicePlugin`.
+5. ~~**character deletion cleanup**~~: **FIXED** (2026-03-08) - Added `x-references` to quest-api.yaml declaring character dependency with CASCADE policy. Generated reference tracking code. `AcceptQuestAsync` now registers character references; `DeleteByCharacterAsync` endpoint abandons active quests (with best-effort contract termination), deletes objective progress, cooldowns, and character index. Cleanup callbacks registered on startup via `QuestServicePlugin`.
 
 6. **Objective progress durability** ([#562](https://github.com/beyond-immersion/bannou-service/issues/562)): Redis-only progress storage with 5-minute TTL causes silent data loss for long-running quests. Contract milestones are binary and cannot store partial progress. Needs either durable storage or TTL aligned to quest deadline.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/562 -->
@@ -176,15 +176,15 @@ None currently identified.
 ### Design Considerations (Resolved)
 
 1. **Prerequisite architecture (RESOLVED in #320)**: Quest uses a two-tier prerequisite system:
-   - **Built-in (L2)**: `quest_completed`, `currency`, `item` - Quest calls L2 service clients directly with hard dependencies
-   - **Dynamic (via IPrerequisiteProviderFactory)**: `character_level`, `reputation`, `skill`, `magic`, `achievement`, `status_effect`, etc. - L4 (or future L2) services implement `IPrerequisiteProviderFactory`, Quest discovers via `IEnumerable<IPrerequisiteProviderFactory>` DI collection injection, graceful degradation if provider missing
-   - See `docs/planning/QUEST-PLUGIN-ARCHITECTURE.md` and `docs/reference/SERVICE-HIERARCHY.md` for full pattern
+ - **Built-in (L2)**: `quest_completed`, `currency`, `item` - Quest calls L2 service clients directly with hard dependencies
+ - **Dynamic (via IPrerequisiteProviderFactory)**: `character_level`, `reputation`, `skill`, `magic`, `achievement`, `status_effect`, etc. - L4 (or future L2) services implement `IPrerequisiteProviderFactory`, Quest discovers via `IEnumerable<IPrerequisiteProviderFactory>` DI collection injection, graceful degradation if provider missing
+ - See `docs/planning/QUEST-PLUGIN-ARCHITECTURE.md` and `docs/reference/SERVICE-HIERARCHY.md` for full pattern
 
 2. **Reward execution (RESOLVED in #320)**: Rewards execute via Contract prebound APIs:
-   - Quest builds prebound API definitions from `RewardDefinitionModel` at definition creation
-   - APIs attached to final milestone's `onComplete` array
-   - Quest sets `TemplateValues` with resolved wallet/container IDs at quest acceptance (Quest is L2, can call Currency/Inventory directly)
-   - Contract executes prebound APIs on milestone completion - Quest never calls Currency/Inventory for reward distribution
+ - Quest builds prebound API definitions from `RewardDefinitionModel` at definition creation
+ - APIs attached to final milestone's `onComplete` array
+ - Quest sets `TemplateValues` with resolved wallet/container IDs at quest acceptance (Quest is L2, can call Currency/Inventory directly)
+ - Contract executes prebound APIs on milestone completion - Quest never calls Currency/Inventory for reward distribution
 
 ---
 
@@ -199,4 +199,4 @@ None currently identified.
 - [#563](https://github.com/beyond-immersion/bannou-service/issues/563): Contract typed termination reason enum (Contract-side, benefits Quest)
 
 ### Completed
-- [#561](https://github.com/beyond-immersion/bannou-service/issues/561): T28 character deletion cleanup via lib-resource (2026-03-08)
+- [#561](https://github.com/beyond-immersion/bannou-service/issues/561): character deletion cleanup via lib-resource (2026-03-08)

@@ -29,7 +29,7 @@ namespace BeyondImmersion.BannouService.Services;
 /// inject dependencies via constructor following the standardized pattern.
 /// </para>
 /// <para>
-/// See: docs/reference/tenets/FOUNDATION.md (T6: Service Implementation Pattern)
+/// See: docs/reference/tenets/FOUNDATION.md (Service Implementation Pattern)
 /// </para>
 /// </remarks>
 public interface IBannouService

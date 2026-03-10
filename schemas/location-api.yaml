@@ -1396,6 +1396,8 @@ components:
           description: Number of results per page
 
     LocationResponse:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       description: Complete location data returned from API operations
       type: object
       additionalProperties: false
@@ -1406,7 +1408,6 @@ components:
       - name
       - locationType
       - depth
-      - isDeprecated
       - boundsPrecision
       - coordinateMode
       - createdAt
@@ -1441,18 +1442,6 @@ components:
         depth:
           type: integer
           description: Depth in hierarchy (0 for root locations)
-        isDeprecated:
-          type: boolean
-          description: Whether this location is deprecated and cannot be used
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp when this location was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Optional reason for deprecation
         bounds:
           allOf:
           - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'

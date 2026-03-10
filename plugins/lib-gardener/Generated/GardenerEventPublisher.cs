@@ -27,14 +27,14 @@ public static class GardenerEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(GardenerPublishedTopics.ScenarioTemplateCreated, eventData, cancellationToken);
 
-    /// <summary>Published when a scenario template is updated.</summary>
+    /// <summary>Published when a scenario template is updated, including deprecation via changedFields.</summary>
     public static Task<bool> PublishScenarioTemplateUpdatedAsync(
         this IMessageBus messageBus,
         ScenarioTemplateUpdatedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(GardenerPublishedTopics.ScenarioTemplateUpdated, eventData, cancellationToken);
 
-    /// <summary>Published when a scenario template is deleted.</summary>
+    /// <summary>Unused Category B infrastructure — scenario templates are never deleted, only deprecated. Retained for schema completeness.</summary>
     public static Task<bool> PublishScenarioTemplateDeletedAsync(
         this IMessageBus messageBus,
         ScenarioTemplateDeletedEvent eventData,

@@ -31,6 +31,7 @@ info:
 # Output: schemas/Generated/realm-lifecycle-events.yaml
 x-lifecycle:
   Realm:
+    deprecation: true
     model:
       realmId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the realm" }
       code: { type: string, required: true, description: "Short code identifier for the realm used in URLs and references" }
@@ -40,9 +41,6 @@ x-lifecycle:
       category: { type: string, nullable: true, description: "Category classification for organizing realms" }
       isActive: { type: boolean, required: true, description: "Whether the realm is currently active and accessible" }
       isSystemType: { type: boolean, required: true, description: "Whether this realm is a system infrastructure realm (e.g., VOID)" }
-      isDeprecated: { type: boolean, required: true, description: "Whether the realm has been marked as deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the realm was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Explanation for why the realm was deprecated" }
       metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention." }
     resource_mapping:
       resource_type: realm

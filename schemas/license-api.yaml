@@ -188,6 +188,35 @@ paths:
                 $ref: '#/components/schemas/BoardTemplateResponse'
         '404':
           description: Board template not found
+
+  /license/board-template/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedBoardTemplates
+      tags:
+      - BoardTemplate
+      summary: Clean deprecated board templates with zero remaining boards
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        board templates and permanently removes those with zero remaining board instances,
+        subject to an optional grace period. Publishes board-template.deleted events for
+        each removed template. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+
   # ===========================================================================
   # License Definition Management (5 endpoints)
   # ===========================================================================
@@ -906,6 +935,8 @@ components:
           description: Number of items per page. Uses service default if not specified.
 
     BoardTemplateResponse:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Board template with all fields
       additionalProperties: false
@@ -920,7 +951,6 @@ components:
       - adjacencyMode
       - allowedOwnerTypes
       - isActive
-      - isDeprecated
       - createdAt
       properties:
         boardTemplateId:
@@ -964,18 +994,6 @@ components:
         isActive:
           type: boolean
           description: Whether the template is active (can create new board instances)
-        isDeprecated:
-          type: boolean
-          description: Whether this template has been deprecated (Category B — one-way)
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the template was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Reason for deprecation (audit context)
         createdAt:
           type: string
           format: date-time

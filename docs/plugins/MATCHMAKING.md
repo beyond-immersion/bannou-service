@@ -169,85 +169,85 @@ Service lifetime is **Scoped** (per-request). One BackgroundService for interval
 Matchmaking Lifecycle
 ======================
 
-  Player → JoinMatchmaking(queueId, skillRating, properties, query)
-       │
-       ├── Validate queue, ticket limits, exclusive groups
-       ├── Calculate party skill (Highest/Average/Weighted)
-       ├── Save ticket (Status: Searching)
-       ├── Set permission state: in_queue
-       ├── Publish shortcuts (leave, status)
-       ├── Client event: QueueJoinedEvent
-       └── ImmediateMatchCheck? → TryMatchTickets()
-                                     │
-       ┌─────────────────────────────┘
-       │
-  BackgroundService (every ProcessingIntervalSeconds):
-       │
-       ├── ProcessAllQueuesAsync
-       │    │
-       │    ├── For each queue:
-       │    │    ├── Get all Searching tickets
-       │    │    ├── Increment intervalsElapsed
-       │    │    ├── GetCurrentSkillRange(queue, intervals)
-       │    │    │    └── Walk SkillExpansion steps:
-       │    │    │         [intervals=0, range=50]
-       │    │    │         [intervals=2, range=100]
-       │    │    │         [intervals=4, range=200]
-       │    │    │         [intervals=6, range=null (unlimited)]
-       │    │    │
-       │    │    ├── TryMatchTickets(tickets, queue, skillRange)
-       │    │    │    ├── Filter by query compatibility
-       │    │    │    ├── Group by CountMultiple
-       │    │    │    └── Select MinCount..MaxCount tickets within range
-       │    │    │
-       │    │    └── Match found? → FormMatchAsync()
-       │    │         │
-       │    │         ├── Save MatchModel (Status: Pending)
-       │    │         ├── Update tickets (Status: Match_found)
-       │    │         ├── Store pending-match for reconnection
-       │    │         ├── Set permission state: match_pending
-       │    │         ├── Client events: MatchFoundEvent + shortcuts
-       │    │         └── Publish: matchmaking.match-formed
-       │    │
-       │    └── Tickets past MaxIntervals? → CancelTicketInternalAsync(Timeout)
-       │
-       └── Publish stats (every StatsPublishIntervalSeconds)
+ Player → JoinMatchmaking(queueId, skillRating, properties, query)
+ │
+ ├── Validate queue, ticket limits, exclusive groups
+ ├── Calculate party skill (Highest/Average/Weighted)
+ ├── Save ticket (Status: Searching)
+ ├── Set permission state: in_queue
+ ├── Publish shortcuts (leave, status)
+ ├── Client event: QueueJoinedEvent
+ └── ImmediateMatchCheck? → TryMatchTickets()
+ │
+ ┌─────────────────────────────┘
+ │
+ BackgroundService (every ProcessingIntervalSeconds):
+ │
+ ├── ProcessAllQueuesAsync
+ │ │
+ │ ├── For each queue:
+ │ │ ├── Get all Searching tickets
+ │ │ ├── Increment intervalsElapsed
+ │ │ ├── GetCurrentSkillRange(queue, intervals)
+ │ │ │ └── Walk SkillExpansion steps:
+ │ │ │ [intervals=0, range=50]
+ │ │ │ [intervals=2, range=100]
+ │ │ │ [intervals=4, range=200]
+ │ │ │ [intervals=6, range=null (unlimited)]
+ │ │ │
+ │ │ ├── TryMatchTickets(tickets, queue, skillRange)
+ │ │ │ ├── Filter by query compatibility
+ │ │ │ ├── Group by CountMultiple
+ │ │ │ └── Select MinCount..MaxCount tickets within range
+ │ │ │
+ │ │ └── Match found? → FormMatchAsync()
+ │ │ │
+ │ │ ├── Save MatchModel (Status: Pending)
+ │ │ ├── Update tickets (Status: Match_found)
+ │ │ ├── Store pending-match for reconnection
+ │ │ ├── Set permission state: match_pending
+ │ │ ├── Client events: MatchFoundEvent + shortcuts
+ │ │ └── Publish: matchmaking.match-formed
+ │ │
+ │ └── Tickets past MaxIntervals? → CancelTicketInternalAsync(Timeout)
+ │
+ └── Publish stats (every StatsPublishIntervalSeconds)
 
 
 Match Accept/Decline Flow
 ===========================
 
-  MatchFoundEvent → Client shows "Accept/Decline" UI
-       │
-       ├── AcceptMatch (lock: matchmaking-match:{matchId})
-       │    ├── Add to AcceptedPlayers set
-       │    ├── Notify all: MatchPlayerAcceptedEvent
-       │    └── All accepted? → FinalizeMatchAsync()
-       │         │
-       │         ├── CreateGameSession(Matchmade, reservations)
-       │         ├── PublishJoinShortcut per player
-       │         ├── Client events: MatchConfirmedEvent
-       │         ├── Clear permission state
-       │         ├── Cleanup tickets
-       │         └── Publish: matchmaking.match-accepted
-       │
-       └── DeclineMatch
-            ├── CancelMatchAsync (Status: Cancelled)
-            ├── Notify all: MatchCancelledEvent
-            ├── AutoRequeueOnDecline?
-            │    └── Re-create tickets for non-declining players
-            └── Publish: matchmaking.match-declined
+ MatchFoundEvent → Client shows "Accept/Decline" UI
+ │
+ ├── AcceptMatch (lock: matchmaking-match:{matchId})
+ │ ├── Add to AcceptedPlayers set
+ │ ├── Notify all: MatchPlayerAcceptedEvent
+ │ └── All accepted? → FinalizeMatchAsync()
+ │ │
+ │ ├── CreateGameSession(Matchmade, reservations)
+ │ ├── PublishJoinShortcut per player
+ │ ├── Client events: MatchConfirmedEvent
+ │ ├── Clear permission state
+ │ ├── Cleanup tickets
+ │ └── Publish: matchmaking.match-accepted
+ │
+ └── DeclineMatch
+ ├── CancelMatchAsync (Status: Cancelled)
+ ├── Notify all: MatchCancelledEvent
+ ├── AutoRequeueOnDecline?
+ │ └── Re-create tickets for non-declining players
+ └── Publish: matchmaking.match-declined
 
 
 Reconnection Support
 =====================
 
-  session.disconnected → Cancel tickets for THIS session only
-  session.reconnected  → Check pending-match:{accountId}
-       │
-       └── Pending match exists + Status=Pending?
-            ├── Update ticket with new session ID
-            └── Re-send MatchFoundEvent with remaining accept time
+ session.disconnected → Cancel tickets for THIS session only
+ session.reconnected → Check pending-match:{accountId}
+ │
+ └── Pending match exists + Status=Pending?
+ ├── Update ticket with new session ID
+ └── Re-send MatchFoundEvent with remaining accept time
 ```
 
 ---
@@ -279,16 +279,16 @@ Reconnection Support
 1. ~~**Reconnection does not republish accept/decline shortcuts**~~: **FIXED** (2026-03-03) - Added `PublishMatchShortcutsAsync` call in reconnection handler.
 
 **Hardening pass fixes (2026-03-06)**:
-- Fixed T32/T26: `MatchmakingMatchDeclinedEvent` now uses ticket IDs (`DeclinedByTicketId`, `AffectedTicketIds`, `RequeuingTicketIds`) instead of account IDs. Removed `Guid.Empty` sentinel.
-- Fixed T21: Lock timeouts in `MatchmakingService.cs` now use `MatchLockTimeoutSeconds` and `ListLockTimeoutSeconds` configuration properties instead of hardcoded values.
-- Fixed T10: `MatchmakingAlgorithm.MatchesQuery` now logs query parse exceptions at Debug level instead of silently swallowing them.
+- Fixed T32/`MatchmakingMatchDeclinedEvent` now uses ticket IDs (`DeclinedByTicketId`, `AffectedTicketIds`, `RequeuingTicketIds`) instead of account IDs. Removed `Guid.Empty` sentinel.
+- Fixed Lock timeouts in `MatchmakingService.cs` now use `MatchLockTimeoutSeconds` and `ListLockTimeoutSeconds` configuration properties instead of hardcoded values.
+- Fixed `MatchmakingAlgorithm.MatchesQuery` now logs query parse exceptions at Debug level instead of silently swallowing them.
 - Fixed NRT: `QueueResponse.sessionGameType` added to required array; `CreateQueueRequest.partySkillAggregation` marked nullable; `MatchFoundClientEvent.acceptTimeoutSeconds` added to required array.
 - Added validation keywords (minimum/maximum) to all configuration integer properties and minLength to ServerSalt.
 
 **Validation pass fixes (2026-03-06)**:
-- Fixed T32: `MatchFoundClientEvent.partyMembersMatched` (array of account UUIDs) replaced with `partyId` (single party UUID). Account IDs must not leak to clients.
-- Fixed T8: Removed echoed `queueId` from `JoinMatchmakingResponse` — caller already knows the queue they joined.
-- Fixed T8: Removed echoed `matchId` from `AcceptMatchResponse` — caller already knows the match they accepted.
+- Fixed `MatchFoundClientEvent.partyMembersMatched` (array of account UUIDs) replaced with `partyId` (single party UUID). Account IDs must not leak to clients.
+- Fixed Removed echoed `queueId` from `JoinMatchmakingResponse` — caller already knows the queue they joined.
+- Fixed Removed echoed `matchId` from `AcceptMatchResponse` — caller already knows the match they accepted.
 
 ### Intentional Quirks
 
@@ -317,13 +317,13 @@ Reconnection Support
 ### Design Decisions (Require User Input)
 
 <!-- AUDIT:DESIGN_DECISION:2026-03-06 -->
-**B1: Account Identity Boundary (T32)**: Shortcut-gated endpoints (`Join`, `Leave`, `Status`, `Accept`, `Decline`) accept `accountId` in the request body, but these are server-injected via the shortcut system — the client never sends `accountId` directly. This is T32-compliant by design. The `_sessionAccountMap` in `MatchmakingServiceEvents.cs` maps session→account for internal use.
+**B1: Account Identity Boundary**: Shortcut-gated endpoints (`Join`, `Leave`, `Status`, `Accept`, `Decline`) accept `accountId` in the request body, but these are server-injected via the shortcut system — the client never sends `accountId` directly. This is tenet-compliant by design. The `_sessionAccountMap` in `MatchmakingServiceEvents.cs` maps session→account for internal use.
 
 <!-- AUDIT:DESIGN_DECISION:2026-03-06 -->
-**B2: `_sessionAccountMap` is authoritative in-memory state (T9)**: `MatchmakingServiceEvents.cs` maintains a `ConcurrentDictionary<Guid, Guid>` mapping session IDs to account IDs, populated from `session.connected` events. This is NOT loaded from distributed state at startup — if the service restarts, the map is empty until new connect events arrive. This is a T9 violation. Options: (a) call Connect API at startup to load active sessions, (b) use Redis as backing store, (c) accept the gap since disconnect events will still fire for sessions that connected before restart.
+**B2: `_sessionAccountMap` is authoritative in-memory state**: `MatchmakingServiceEvents.cs` maintains a `ConcurrentDictionary<Guid, Guid>` mapping session IDs to account IDs, populated from `session.connected` events. This is NOT loaded from distributed state at startup — if the service restarts, the map is empty until new connect events arrive. This is a violation. Options: (a) call Connect API at startup to load active sessions, (b) use Redis as backing store, (c) accept the gap since disconnect events will still fire for sessions that connected before restart.
 
 <!-- AUDIT:DESIGN_DECISION:2026-03-06 -->
-**B3: Plugin lifecycle telemetry**: Plugin lifecycle methods (`OnRunningAsync`, background service `ExecuteAsync`) do not have `StartActivity` spans. T30 applies to async service endpoint methods; framework lifecycle callbacks are not covered. Not a violation, but could improve observability.
+**B3: Plugin lifecycle telemetry**: Plugin lifecycle methods (`OnRunningAsync`, background service `ExecuteAsync`) do not have `StartActivity` spans. applies to async service endpoint methods; framework lifecycle callbacks are not covered. Not a violation, but could improve observability.
 
 <!-- AUDIT:DESIGN_DECISION:2026-03-06 -->
 **B4: Configuration validation**: Config integer properties now have minimum/maximum in the schema, but there is no runtime validation on startup (e.g., `MatchLockTimeoutSeconds < 5` would be accepted). Best practice but not a tenet violation — schema validation keywords document intent for operators.

@@ -52,7 +52,7 @@ All data types stored in the same logical store, differentiated by key prefix.
 
 Account is a leaf node -- it does not call any other service via lib-mesh clients.
 
-**Account Deletion Cleanup Obligation (per FOUNDATION TENETS)**: Account is exempt from lib-resource reference registration (privacy — no centralized tracking of account references). Instead, every service that stores account-owned data MUST subscribe to `account.deleted` and clean up all data for the deleted account. This is mandatory, not optional. See T28 in FOUNDATION.md for the full pattern and reference implementation (lib-collection).
+**Account Deletion Cleanup Obligation (per FOUNDATION TENETS)**: Account is exempt from lib-resource reference registration (privacy — no centralized tracking of account references). Instead, every service that stores account-owned data MUST subscribe to `account.deleted` and clean up all data for the deleted account. This is mandatory, not optional. See in FOUNDATION.md for the full pattern and reference implementation (lib-collection).
 
 ---
 
@@ -120,24 +120,24 @@ POST /account/list | Roles: [admin]
 // Two execution paths based on provider filter presence
 
 IF request.Provider is null
-  // Standard path: fully server-side via MySQL JSON queries
-  QUERY account-statestore WHERE $.AccountId exists AND $.DeletedAtUnix not exists
-    [+ optional: $.Email contains, $.DisplayName contains, $.IsVerified equals]
-    ORDER BY $.CreatedAtUnix DESC, PAGED(page, pageSize)
-  FOREACH account in results (parallel)
-    READ auth-methods-{accountId}
-  RETURN (200, AccountListResponse)
+ // Standard path: fully server-side via MySQL JSON queries
+ QUERY account-statestore WHERE $.AccountId exists AND $.DeletedAtUnix not exists
+ [+ optional: $.Email contains, $.DisplayName contains, $.IsVerified equals]
+ ORDER BY $.CreatedAtUnix DESC, PAGED(page, pageSize)
+ FOREACH account in results (parallel)
+ READ auth-methods-{accountId}
+ RETURN (200, AccountListResponse)
 ELSE
-  // Provider-filtered path: server query + in-memory filter
-  // Auth methods stored in separate keys, so provider filter cannot be a single JSON query
-  QUERY account-statestore WHERE $.AccountId exists AND $.DeletedAtUnix not exists
-    [+ optional filters] LIMIT config.ProviderFilterMaxScanSize
-  FOREACH batch in results (batched by config.ListBatchSize)
-    FOREACH account in batch (parallel)
-      READ auth-methods-{accountId}
-    FILTER accounts WHERE authMethods contains provider
-  // Sort by CreatedAt descending, paginate in-memory
-  RETURN (200, AccountListResponse)
+ // Provider-filtered path: server query + in-memory filter
+ // Auth methods stored in separate keys, so provider filter cannot be a single JSON query
+ QUERY account-statestore WHERE $.AccountId exists AND $.DeletedAtUnix not exists
+ [+ optional filters] LIMIT config.ProviderFilterMaxScanSize
+ FOREACH batch in results (batched by config.ListBatchSize)
+ FOREACH account in batch (parallel)
+ READ auth-methods-{accountId}
+ FILTER accounts WHERE authMethods contains provider
+ // Sort by CreatedAt descending, paginate in-memory
+ RETURN (200, AccountListResponse)
 
 ---
 
@@ -145,16 +145,16 @@ ELSE
 POST /account/create | Roles: []
 
 IF request.Email is not null
-  LOCK account-lock:account-email:{normalizedEmail}     -> 409 if lock fails
-    READ email-index-{normalizedEmail}                  -> 409 if exists
-    // Fall through to core creation (inside lock scope)
+ LOCK account-lock:account-email:{normalizedEmail} -> 409 if lock fails
+ READ email-index-{normalizedEmail} -> 409 if exists
+ // Fall through to core creation (inside lock scope)
 
 // Core creation (shared by locked email path and unlocked OAuth/Steam path)
 // Assign default "user" role if no roles provided
 // Auto-assign "admin" role if email matches config.AdminEmails or config.AdminEmailDomain
 WRITE account-{newId} <- AccountModel from request
 IF request.Email is not null
-  WRITE email-index-{normalizedEmail} <- accountId
+ WRITE email-index-{normalizedEmail} <- accountId
 PUBLISH account.created { accountId, email, roles, authMethods, createdAt }
 RETURN (200, AccountResponse)
 
@@ -163,8 +163,8 @@ RETURN (200, AccountResponse)
 ### GetAccount
 POST /account/get | Roles: []
 
-READ account-{accountId}                                -> 404 if null
-IF account.DeletedAt has value                          -> 404
+READ account-{accountId} -> 404 if null
+IF account.DeletedAt has value -> 404
 READ auth-methods-{accountId}
 RETURN (200, AccountResponse)
 // Note: PasswordHash is NOT included in the response
@@ -174,14 +174,14 @@ RETURN (200, AccountResponse)
 ### UpdateAccount
 POST /account/update | Roles: []
 
-READ account-{accountId} [with ETag]                    -> 404 if null or deleted
+READ account-{accountId} [with ETag] -> 404 if null or deleted
 // Track changed fields: displayName, roles, metadata
 // Anonymous role auto-management if config.AutoManageAnonymousRole:
-//   removes "anonymous" when adding non-anonymous roles,
-//   adds "anonymous" if roles would be empty
-ETAG-WRITE account-{accountId} <- updated AccountModel  -> 409 if ETag mismatch
+// removes "anonymous" when adding non-anonymous roles,
+// adds "anonymous" if roles would be empty
+ETAG-WRITE account-{accountId} <- updated AccountModel -> 409 if ETag mismatch
 IF changedFields is not empty
-  PUBLISH account.updated { changedFields }
+ PUBLISH account.updated { changedFields }
 READ auth-methods-{accountId}
 RETURN (200, AccountResponse)
 
@@ -190,16 +190,16 @@ RETURN (200, AccountResponse)
 ### DeleteAccount
 POST /account/delete | Roles: []
 
-READ account-{accountId} [with ETag]                    -> 404 if null
+READ account-{accountId} [with ETag] -> 404 if null
 // Soft-delete: set DeletedAt timestamp
-ETAG-WRITE account-{accountId} <- soft-deleted model    -> 409 if ETag mismatch
+ETAG-WRITE account-{accountId} <- soft-deleted model -> 409 if ETag mismatch
 IF account.Email exists
-  DELETE email-index-{normalizedEmail}
+ DELETE email-index-{normalizedEmail}
 READ auth-methods-{accountId}
 IF authMethods exist
-  FOREACH method in authMethods
-    DELETE provider-index-{provider}:{externalId}
-  DELETE auth-methods-{accountId}
+ FOREACH method in authMethods
+ DELETE provider-index-{provider}:{externalId}
+ DELETE auth-methods-{accountId}
 PUBLISH account.deleted { account state, deletedReason }
 RETURN (200)
 
@@ -208,9 +208,9 @@ RETURN (200)
 ### GetAccountByEmail
 POST /account/by-email | Roles: []
 
-READ email-index-{normalizedEmail}                      -> 404 if null
-READ account-{accountId}                                -> 404 if null
-IF account.DeletedAt has value                          -> 404
+READ email-index-{normalizedEmail} -> 404 if null
+READ account-{accountId} -> 404 if null
+IF account.DeletedAt has value -> 404
 READ auth-methods-{accountId}
 RETURN (200, AccountResponse)
 // Note: PasswordHash IS included (Auth service needs it for login verification)
@@ -220,7 +220,7 @@ RETURN (200, AccountResponse)
 ### GetAuthMethods
 POST /account/auth-methods/list | Roles: []
 
-READ account-{accountId}                                -> 404 if null or deleted
+READ account-{accountId} -> 404 if null or deleted
 READ auth-methods-{accountId}
 RETURN (200, AuthMethodsResponse)
 
@@ -229,21 +229,21 @@ RETURN (200, AuthMethodsResponse)
 ### AddAuthMethod
 POST /account/auth-methods/add | Roles: []
 
-READ account-{accountId}                                -> 404 if null or deleted
+READ account-{accountId} -> 404 if null or deleted
 READ auth-methods-{accountId} [with ETag]
-IF request.ExternalId is empty                          -> 400
+IF request.ExternalId is empty -> 400
 // Map OAuthProvider (request enum) -> AuthProvider (storage enum)
 IF mappedProvider+externalId already linked on this account -> 409
 
 // Check if another account owns this provider:externalId
 READ provider-index-{provider}:{externalId}
 IF owned by another account
-  READ account-{existingOwner}
-  IF owner is active (not deleted)                      -> 409
-  // Owner is deleted: orphaned index, safe to overwrite
+ READ account-{existingOwner}
+ IF owner is active (not deleted) -> 409
+ // Owner is deleted: orphaned index, safe to overwrite
 
 // Create new auth method entry
-ETAG-WRITE auth-methods-{accountId} <- updated list     -> 409 if ETag mismatch
+ETAG-WRITE auth-methods-{accountId} <- updated list -> 409 if ETag mismatch
 WRITE provider-index-{provider}:{externalId} <- accountId
 PUBLISH account.updated { changedFields: ["authMethods"] }
 RETURN (200, AuthMethodResponse)
@@ -253,14 +253,14 @@ RETURN (200, AuthMethodResponse)
 ### RemoveAuthMethod
 POST /account/auth-methods/remove | Roles: []
 
-READ account-{accountId}                                -> 404 if null or deleted
+READ account-{accountId} -> 404 if null or deleted
 READ auth-methods-{accountId} [with ETag]
-// Find method by methodId                              -> 404 if not found
+// Find method by methodId -> 404 if not found
 
 // Orphan prevention: reject if last auth method and no password
-IF !hasPassword AND remainingMethods == 0               -> 400
+IF !hasPassword AND remainingMethods == 0 -> 400
 
-ETAG-WRITE auth-methods-{accountId} <- updated list     -> 409 if ETag mismatch
+ETAG-WRITE auth-methods-{accountId} <- updated list -> 409 if ETag mismatch
 DELETE provider-index-{provider}:{externalId}
 PUBLISH account.updated { changedFields: ["authMethods"] }
 RETURN (200)
@@ -270,9 +270,9 @@ RETURN (200)
 ### GetAccountByProvider
 POST /account/by-provider | Roles: []
 
-READ provider-index-{provider}:{externalId}             -> 404 if null
-READ account-{accountId}                                -> 404 if null
-IF account.DeletedAt has value                          -> 404
+READ provider-index-{provider}:{externalId} -> 404 if null
+READ account-{accountId} -> 404 if null
+IF account.DeletedAt has value -> 404
 READ auth-methods-{accountId}
 RETURN (200, AccountResponse)
 
@@ -281,12 +281,12 @@ RETURN (200, AccountResponse)
 ### UpdateProfile
 POST /account/profile/update | Roles: [user]
 
-READ account-{accountId} [with ETag]                    -> 404 if null or deleted
+READ account-{accountId} [with ETag] -> 404 if null or deleted
 // Track changed fields: displayName, metadata
 IF no fields changed
-  READ auth-methods-{accountId}
-  RETURN (200, AccountResponse)                         // early return, no save or event
-ETAG-WRITE account-{accountId} <- updated AccountModel  -> 409 if ETag mismatch
+ READ auth-methods-{accountId}
+ RETURN (200, AccountResponse) // early return, no save or event
+ETAG-WRITE account-{accountId} <- updated AccountModel -> 409 if ETag mismatch
 PUBLISH account.updated { changedFields }
 READ auth-methods-{accountId}
 RETURN (200, AccountResponse)
@@ -296,9 +296,9 @@ RETURN (200, AccountResponse)
 ### UpdatePasswordHash
 POST /account/password/update | Roles: []
 
-READ account-{accountId} [with ETag]                    -> 404 if null or deleted
+READ account-{accountId} [with ETag] -> 404 if null or deleted
 // Store pre-hashed password from Auth service (Account never handles raw passwords)
-ETAG-WRITE account-{accountId} <- updated AccountModel  -> 409 if ETag mismatch
+ETAG-WRITE account-{accountId} <- updated AccountModel -> 409 if ETag mismatch
 PUBLISH account.updated { changedFields: ["passwordHash"] }
 RETURN (200)
 
@@ -307,10 +307,10 @@ RETURN (200)
 ### UpdateMfa
 POST /account/mfa/update | Roles: []
 
-READ account-{accountId} [with ETag]                    -> 404 if null or deleted
+READ account-{accountId} [with ETag] -> 404 if null or deleted
 // Update: mfaEnabled, mfaSecret (AES-256-GCM ciphertext), mfaRecoveryCodes (BCrypt hashes)
 // Auth service encrypts/hashes; Account stores opaque values
-ETAG-WRITE account-{accountId} <- updated AccountModel  -> 409 if ETag mismatch
+ETAG-WRITE account-{accountId} <- updated AccountModel -> 409 if ETag mismatch
 PUBLISH account.updated { changedFields: ["mfaEnabled", "mfaSecret", "mfaRecoveryCodes"] }
 RETURN (200)
 
@@ -321,13 +321,13 @@ POST /account/batch-get | Roles: []
 
 // Max 100 IDs per call (schema-enforced maxItems: 100)
 FOREACH accountId in request.AccountIds (parallel)
-  READ account-{accountId}
-  // Categorize: found, notFound (null or deleted), failed (exception)
+ READ account-{accountId}
+ // Categorize: found, notFound (null or deleted), failed (exception)
 
 // Second parallel pass: load auth methods for found accounts
 FOREACH (accountId, account) in foundAccounts (parallel)
-  READ auth-methods-{accountId}
-  // Per-item error handling: auth method fetch failure -> failed list
+ READ auth-methods-{accountId}
+ // Per-item error handling: auth method fetch failure -> failed list
 
 RETURN (200, BatchGetAccountsResponse { accounts, notFound, failed })
 
@@ -337,8 +337,8 @@ RETURN (200, BatchGetAccountsResponse { accounts, notFound, failed })
 POST /account/count | Roles: []
 
 COUNT account-statestore WHERE $.AccountId exists AND $.DeletedAtUnix not exists
-  [+ optional: $.Email contains, $.DisplayName contains, $.IsVerified equals]
-  [+ optional: $.Roles JSON_CONTAINS role]
+ [+ optional: $.Email contains, $.DisplayName contains, $.IsVerified equals]
+ [+ optional: $.Roles JSON_CONTAINS role]
 RETURN (200, CountAccountsResponse { count })
 
 ---
@@ -346,19 +346,19 @@ RETURN (200, CountAccountsResponse { count })
 ### BulkUpdateRoles
 POST /account/roles/bulk-update | Roles: [admin]
 
-IF neither addRoles nor removeRoles specified            -> 400
+IF neither addRoles nor removeRoles specified -> 400
 
 // Process sequentially (ETag concurrency requires read-modify-write per account)
 FOREACH accountId in request.AccountIds
-  READ account-{accountId} [with ETag]
-  IF null or deleted -> add to failed list, continue
-  // Compute new roles: add addRoles, remove removeRoles
-  // Anonymous role auto-management if config.AutoManageAnonymousRole
-  IF roles unchanged -> add to succeeded list, continue (no event)
-  ETAG-WRITE account-{accountId} <- updated AccountModel
-  IF ETag mismatch -> add to failed list ("Concurrent modification"), continue
-  PUBLISH account.updated { changedFields: ["roles"] }
-  // Per-account exception handling -> add to failed list
+ READ account-{accountId} [with ETag]
+ IF null or deleted -> add to failed list, continue
+ // Compute new roles: add addRoles, remove removeRoles
+ // Anonymous role auto-management if config.AutoManageAnonymousRole
+ IF roles unchanged -> add to succeeded list, continue (no event)
+ ETAG-WRITE account-{accountId} <- updated AccountModel
+ IF ETag mismatch -> add to failed list ("Concurrent modification"), continue
+ PUBLISH account.updated { changedFields: ["roles"] }
+ // Per-account exception handling -> add to failed list
 
 RETURN (200, BulkUpdateRolesResponse { succeeded, failed })
 
@@ -367,9 +367,9 @@ RETURN (200, BulkUpdateRolesResponse { succeeded, failed })
 ### UpdateVerificationStatus
 POST /account/verification/update | Roles: []
 
-READ account-{accountId} [with ETag]                    -> 404 if null or deleted
+READ account-{accountId} [with ETag] -> 404 if null or deleted
 // Set IsVerified flag
-ETAG-WRITE account-{accountId} <- updated AccountModel  -> 409 if ETag mismatch
+ETAG-WRITE account-{accountId} <- updated AccountModel -> 409 if ETag mismatch
 PUBLISH account.updated { changedFields: ["isVerified"] }
 RETURN (200)
 
@@ -378,27 +378,27 @@ RETURN (200)
 ### UpdateEmail
 POST /account/email/update | Roles: []
 
-LOCK account-lock:account-email:{normalizedNewEmail}    -> 409 if lock fails
-  READ email-index-{normalizedNewEmail}                 -> 409 if exists (email taken)
-  READ account-{accountId} [with ETag]                  -> 404 if null or deleted
-  IF newEmail == oldEmail (unchanged)
-    READ auth-methods-{accountId}
-    RETURN (200, AccountResponse)                       // no-op
+LOCK account-lock:account-email:{normalizedNewEmail} -> 409 if lock fails
+ READ email-index-{normalizedNewEmail} -> 409 if exists (email taken)
+ READ account-{accountId} [with ETag] -> 404 if null or deleted
+ IF newEmail == oldEmail (unchanged)
+ READ auth-methods-{accountId}
+ RETURN (200, AccountResponse) // no-op
 
-  // Create new index BEFORE saving account (rollback on ETag failure)
-  WRITE email-index-{normalizedNewEmail} <- accountId
-  // Update: set new email, reset IsVerified to false
-  ETAG-WRITE account-{accountId} <- updated AccountModel
-  IF ETag mismatch
-    DELETE email-index-{normalizedNewEmail}              // rollback new index
-    RETURN (409)
+ // Create new index BEFORE saving account (rollback on ETag failure)
+ WRITE email-index-{normalizedNewEmail} <- accountId
+ // Update: set new email, reset IsVerified to false
+ ETAG-WRITE account-{accountId} <- updated AccountModel
+ IF ETag mismatch
+ DELETE email-index-{normalizedNewEmail} // rollback new index
+ RETURN (409)
 
-  // Success: delete old email index (if account previously had email)
-  IF oldEmail exists
-    DELETE email-index-{oldNormalizedEmail}
-  PUBLISH account.updated { changedFields: ["email", "isVerified"] }
-  READ auth-methods-{accountId}
-  RETURN (200, AccountResponse)
+ // Success: delete old email index (if account previously had email)
+ IF oldEmail exists
+ DELETE email-index-{oldNormalizedEmail}
+ PUBLISH account.updated { changedFields: ["email", "isVerified"] }
+ READ auth-methods-{accountId}
+ RETURN (200, AccountResponse)
 
 ---
 

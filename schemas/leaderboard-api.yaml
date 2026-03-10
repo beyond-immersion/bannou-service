@@ -157,6 +157,34 @@ paths:
         '404':
           description: Leaderboard not found
 
+  /leaderboard/definition/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedLeaderboardDefinitions
+      tags:
+      - Definitions
+      summary: Clean deprecated leaderboard definitions with zero remaining scores
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        leaderboard definitions and permanently removes those with zero remaining scores,
+        subject to an optional grace period. Publishes leaderboard-definition.deleted
+        events for each removed definition. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+
   /leaderboard/score/submit:
     post:
       summary: Submit or update a score
@@ -550,6 +578,8 @@ components:
           description: Reason for deprecation (audit context for Category B entities)
 
     LeaderboardDefinitionResponse:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Leaderboard definition details
       additionalProperties: false
@@ -561,7 +591,6 @@ components:
       - updateMode
       - isSeasonal
       - isPublic
-      - isDeprecated
       - createdAt
       - entryCount
       properties:
@@ -597,18 +626,6 @@ components:
         isPublic:
           type: boolean
           description: Whether the leaderboard is publicly visible
-        isDeprecated:
-          type: boolean
-          description: Whether this definition has been deprecated (Category B — one-way)
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the definition was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Reason for deprecation (audit context)
         currentSeason:
           type: integer
           nullable: true

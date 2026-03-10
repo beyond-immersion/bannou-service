@@ -136,90 +136,85 @@ paths:
         \                \"mode\"\n            ],\n            \"properties\": {\n                \"mode\": {\n          \
         \          \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TransitMode\"\n\
         \                        }\n                    ],\n                    \"description\": \"The transit mode\"\n  \
-        \              }\n            }\n        },\n        \"TransitMode\": {\n            \"type\": \"object\",\n     \
-        \       \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement capabilities
+        \              }\n            }\n        },\n        \"TransitMode\": {\n            \"allOf\": [\n              \
+        \  {\n                    \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement capabilities
         (e.g., walking, horseback, wagon)\",\n            \"required\": [\n                \"code\",\n                \"name\"\
         ,\n                \"description\",\n                \"baseSpeedKmPerGameHour\",\n                \"passengerCapacity\"\
         ,\n                \"cargoCapacityKg\",\n                \"compatibleTerrainTypes\",\n                \"requirements\"\
-        ,\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\",\n                \"isDeprecated\"\
-        ,\n                \"createdAt\",\n                \"modifiedAt\"\n            ],\n            \"properties\": {\n\
-        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        string identifier for this mode (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\")\"\n                },\n\
-        \                \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        display name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Detailed description of this transit mode\"\n                },\n        \
-        \        \"baseSpeedKmPerGameHour\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"minimum\": 0.1,\n                    \"description\": \"Base speed in game-kilometers
-        per game-hour. Used when no terrain-specific speed modifier is defined.\"\n                },\n                \"\
-        terrainSpeedModifiers\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Per-terrain speed multipliers. Null means base speed applies uniformly across
-        all compatible terrain.\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TerrainSpeedModifier\"\
-        \n                    }\n                },\n                \"passengerCapacity\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"How many entities can
-        ride (1 for horse, 20 for ship)\"\n                },\n                \"cargoCapacityKg\": {\n                  \
-        \  \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n    \
-        \                \"description\": \"Weight capacity in game-kg (0 for walking, 500 for wagon)\"\n                },\n\
-        \                \"cargoSpeedPenaltyRate\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                   \
-        \ \"maximum\": 1,\n                    \"description\": \"Per-mode cargo speed penalty rate. Overrides the plugin-level
-        DefaultCargoSpeedPenaltyRate. Null means use plugin config default. 0.0 means no cargo penalty.\"\n              \
-        \  },\n                \"compatibleTerrainTypes\": {\n                    \"type\": \"array\",\n                 \
-        \   \"description\": \"Terrain types this mode can traverse. Empty array means all terrain (e.g., walking, flying).\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    }\n       \
-        \         },\n                \"validEntityTypes\": {\n                    \"type\": \"array\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Entity types allowed to use this mode. Null means
-        no entity type restriction. Characters are not exempt.\",\n                    \"items\": {\n                    \
-        \    \"type\": \"string\"\n                    }\n                },\n                \"requirements\": {\n      \
-        \              \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TransitModeRequirements\"\
-        \n                        }\n                    ],\n                    \"description\": \"Requirements that must
-        be met to use this mode\"\n                },\n                \"fatigueRatePerGameHour\": {\n                   \
-        \ \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n     \
-        \               \"description\": \"Stamina cost per game-hour of travel (0 = no fatigue)\"\n                },\n \
-        \               \"noiseLevelNormalized\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\"\
-        : \"Noise level from 0.0 (silent) to 1.0 (loud) affecting detection risk\"\n                },\n                \"\
-        realmRestrictions\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Realm IDs where this mode is available. Null means available in all realms.\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
-        : \"uuid\"\n                    }\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether this mode is deprecated\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When deprecation occurred.
-        Null if not deprecated.\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why this mode was deprecated.
-        Null if not deprecated.\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Freeform classification tags (e.g.,
-        \\\"mount\\\", \\\"vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    }\n                },\n            \
-        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this mode was registered\"\n                },\n                \"modifiedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this mode was last modified\"\n                }\n            }\n        },\n        \"\
-        TerrainSpeedModifier\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
-        \       \"description\": \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\"\
-        : [\n                \"terrainType\",\n                \"multiplier\"\n            ],\n            \"properties\"\
-        : {\n                \"terrainType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Terrain type code (e.g., \\\"road\\\", \\\"trail\\\", \\\"forest\\\"). Category B content code (game-configurable).\"\
-        \n                },\n                \"multiplier\": {\n                    \"type\": \"number\",\n             \
-        \       \"format\": \"decimal\",\n                    \"minimum\": 0.01,\n                    \"description\": \"\
-        Speed multiplier applied to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)\"\n                }\n\
-        \            }\n        },\n        \"TransitModeRequirements\": {\n            \"type\": \"object\",\n          \
-        \  \"additionalProperties\": false,\n            \"description\": \"Requirements that must be met to use a transit
-        mode (applies to character entities only)\",\n            \"properties\": {\n                \"requiredItemTag\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Item tag required to use this mode (e.g., \\\"mount_horse\\\"). Null means no item needed.\"\n               \
-        \ },\n                \"allowedSpeciesCodes\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Species codes allowed to use this mode. Null means any species.\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    }\n       \
-        \         },\n                \"excludedSpeciesCodes\": {\n                    \"type\": \"array\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Species codes that cannot use this mode. Null
-        means no exclusions.\",\n                    \"items\": {\n                        \"type\": \"string\"\n        \
-        \            }\n                },\n                \"minimumPartySize\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\":
-        \"Minimum party size required (e.g., ocean_vessel requires crew of 3)\"\n                },\n                \"maximumEntitySizeCategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum entity size category allowed (e.g., \\\"small\\\", \\\"medium\\\", \\\"large\\\"). Category B content
-        code. Null means no size restriction.\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\",\n                \"createdAt\"\
+        ,\n                \"modifiedAt\"\n            ],\n            \"properties\": {\n                \"code\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Unique string identifier for this
+        mode (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\")\"\n                },\n                \"name\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
+        \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Detailed description of this transit mode\"\n                },\n                \"baseSpeedKmPerGameHour\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                   \
+        \ \"minimum\": 0.1,\n                    \"description\": \"Base speed in game-kilometers per game-hour. Used when
+        no terrain-specific speed modifier is defined.\"\n                },\n                \"terrainSpeedModifiers\": {\n\
+        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Per-terrain speed multipliers. Null means base speed applies uniformly across all compatible terrain.\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/TerrainSpeedModifier\"\n             \
+        \       }\n                },\n                \"passengerCapacity\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"description\": \"How many entities can ride (1 for horse,
+        20 for ship)\"\n                },\n                \"cargoCapacityKg\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Weight capacity in game-kg (0 for walking, 500 for wagon)\"\n                },\n                \"cargoSpeedPenaltyRate\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                   \
+        \ \"nullable\": true,\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                \
+        \    \"description\": \"Per-mode cargo speed penalty rate. Overrides the plugin-level DefaultCargoSpeedPenaltyRate.
+        Null means use plugin config default. 0.0 means no cargo penalty.\"\n                },\n                \"compatibleTerrainTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"description\": \"Terrain types this mode can
+        traverse. Empty array means all terrain (e.g., walking, flying).\",\n                    \"items\": {\n          \
+        \              \"type\": \"string\"\n                    }\n                },\n                \"validEntityTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Entity types allowed to use this mode. Null means no entity type restriction. Characters are not exempt.\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    }\n         \
+        \       },\n                \"requirements\": {\n                    \"allOf\": [\n                        {\n   \
+        \                         \"$ref\": \"#/$defs/TransitModeRequirements\"\n                        }\n             \
+        \       ],\n                    \"description\": \"Requirements that must be met to use this mode\"\n            \
+        \    },\n                \"fatigueRatePerGameHour\": {\n                    \"type\": \"number\",\n              \
+        \      \"format\": \"decimal\",\n                    \"minimum\": 0,\n                    \"description\": \"Stamina
+        cost per game-hour of travel (0 = no fatigue)\"\n                },\n                \"noiseLevelNormalized\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\"\
+        : 0,\n                    \"maximum\": 1,\n                    \"description\": \"Noise level from 0.0 (silent) to
+        1.0 (loud) affecting detection risk\"\n                },\n                \"realmRestrictions\": {\n            \
+        \        \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Realm
+        IDs where this mode is available. Null means available in all realms.\",\n                    \"items\": {\n     \
+        \                   \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    }\n \
+        \               },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Freeform classification tags (e.g., \\\"mount\\\", \\\"\
+        vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n                    \"items\": {\n       \
+        \                 \"type\": \"string\"\n                    }\n                },\n                \"createdAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"description\": \"When this mode was registered\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this mode was last modified\"\n                }\n            }\n        },\n        \"TerrainSpeedModifier\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\": [\n                \"\
+        terrainType\",\n                \"multiplier\"\n            ],\n            \"properties\": {\n                \"\
+        terrainType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Terrain type code
+        (e.g., \\\"road\\\", \\\"trail\\\", \\\"forest\\\"). Category B content code (game-configurable).\"\n            \
+        \    },\n                \"multiplier\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"decimal\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Speed multiplier applied
+        to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)\"\n                }\n            }\n        },\n\
+        \        \"TransitModeRequirements\": {\n            \"type\": \"object\",\n            \"additionalProperties\":
+        false,\n            \"description\": \"Requirements that must be met to use a transit mode (applies to character entities
+        only)\",\n            \"properties\": {\n                \"requiredItemTag\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Item tag required to use
+        this mode (e.g., \\\"mount_horse\\\"). Null means no item needed.\"\n                },\n                \"allowedSpeciesCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Species codes allowed to use this mode. Null means any species.\",\n                    \"items\": {\n       \
+        \                 \"type\": \"string\"\n                    }\n                },\n                \"excludedSpeciesCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Species codes that cannot use this mode. Null means no exclusions.\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\"\n                    }\n                },\n                \"minimumPartySize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\"\
+        : 1,\n                    \"description\": \"Minimum party size required (e.g., ocean_vessel requires crew of 3)\"\
+        \n                },\n                \"maximumEntitySizeCategory\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Maximum entity size category allowed
+        (e.g., \\\"small\\\", \\\"medium\\\", \\\"large\\\"). Category B content code. Null means no size restriction.\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Register a new transit mode type\",\n    \"description\": \"Register a
         new transit mode type with movement properties, terrain\\ncompatibility, entity restrictions, and requirements. Mode
         codes are\\nunique string identifiers (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\").\\n\",\n    \"tags\"\
@@ -260,90 +255,85 @@ paths:
         \                \"mode\"\n            ],\n            \"properties\": {\n                \"mode\": {\n          \
         \          \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TransitMode\"\n\
         \                        }\n                    ],\n                    \"description\": \"The transit mode\"\n  \
-        \              }\n            }\n        },\n        \"TransitMode\": {\n            \"type\": \"object\",\n     \
-        \       \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement capabilities
+        \              }\n            }\n        },\n        \"TransitMode\": {\n            \"allOf\": [\n              \
+        \  {\n                    \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement capabilities
         (e.g., walking, horseback, wagon)\",\n            \"required\": [\n                \"code\",\n                \"name\"\
         ,\n                \"description\",\n                \"baseSpeedKmPerGameHour\",\n                \"passengerCapacity\"\
         ,\n                \"cargoCapacityKg\",\n                \"compatibleTerrainTypes\",\n                \"requirements\"\
-        ,\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\",\n                \"isDeprecated\"\
-        ,\n                \"createdAt\",\n                \"modifiedAt\"\n            ],\n            \"properties\": {\n\
-        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        string identifier for this mode (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\")\"\n                },\n\
-        \                \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        display name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Detailed description of this transit mode\"\n                },\n        \
-        \        \"baseSpeedKmPerGameHour\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"minimum\": 0.1,\n                    \"description\": \"Base speed in game-kilometers
-        per game-hour. Used when no terrain-specific speed modifier is defined.\"\n                },\n                \"\
-        terrainSpeedModifiers\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Per-terrain speed multipliers. Null means base speed applies uniformly across
-        all compatible terrain.\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TerrainSpeedModifier\"\
-        \n                    }\n                },\n                \"passengerCapacity\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"How many entities can
-        ride (1 for horse, 20 for ship)\"\n                },\n                \"cargoCapacityKg\": {\n                  \
-        \  \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n    \
-        \                \"description\": \"Weight capacity in game-kg (0 for walking, 500 for wagon)\"\n                },\n\
-        \                \"cargoSpeedPenaltyRate\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                   \
-        \ \"maximum\": 1,\n                    \"description\": \"Per-mode cargo speed penalty rate. Overrides the plugin-level
-        DefaultCargoSpeedPenaltyRate. Null means use plugin config default. 0.0 means no cargo penalty.\"\n              \
-        \  },\n                \"compatibleTerrainTypes\": {\n                    \"type\": \"array\",\n                 \
-        \   \"description\": \"Terrain types this mode can traverse. Empty array means all terrain (e.g., walking, flying).\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    }\n       \
-        \         },\n                \"validEntityTypes\": {\n                    \"type\": \"array\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Entity types allowed to use this mode. Null means
-        no entity type restriction. Characters are not exempt.\",\n                    \"items\": {\n                    \
-        \    \"type\": \"string\"\n                    }\n                },\n                \"requirements\": {\n      \
-        \              \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TransitModeRequirements\"\
-        \n                        }\n                    ],\n                    \"description\": \"Requirements that must
-        be met to use this mode\"\n                },\n                \"fatigueRatePerGameHour\": {\n                   \
-        \ \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n     \
-        \               \"description\": \"Stamina cost per game-hour of travel (0 = no fatigue)\"\n                },\n \
-        \               \"noiseLevelNormalized\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\"\
-        : \"Noise level from 0.0 (silent) to 1.0 (loud) affecting detection risk\"\n                },\n                \"\
-        realmRestrictions\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Realm IDs where this mode is available. Null means available in all realms.\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
-        : \"uuid\"\n                    }\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether this mode is deprecated\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When deprecation occurred.
-        Null if not deprecated.\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why this mode was deprecated.
-        Null if not deprecated.\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Freeform classification tags (e.g.,
-        \\\"mount\\\", \\\"vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    }\n                },\n            \
-        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this mode was registered\"\n                },\n                \"modifiedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this mode was last modified\"\n                }\n            }\n        },\n        \"\
-        TerrainSpeedModifier\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
-        \       \"description\": \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\"\
-        : [\n                \"terrainType\",\n                \"multiplier\"\n            ],\n            \"properties\"\
-        : {\n                \"terrainType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Terrain type code (e.g., \\\"road\\\", \\\"trail\\\", \\\"forest\\\"). Category B content code (game-configurable).\"\
-        \n                },\n                \"multiplier\": {\n                    \"type\": \"number\",\n             \
-        \       \"format\": \"decimal\",\n                    \"minimum\": 0.01,\n                    \"description\": \"\
-        Speed multiplier applied to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)\"\n                }\n\
-        \            }\n        },\n        \"TransitModeRequirements\": {\n            \"type\": \"object\",\n          \
-        \  \"additionalProperties\": false,\n            \"description\": \"Requirements that must be met to use a transit
-        mode (applies to character entities only)\",\n            \"properties\": {\n                \"requiredItemTag\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Item tag required to use this mode (e.g., \\\"mount_horse\\\"). Null means no item needed.\"\n               \
-        \ },\n                \"allowedSpeciesCodes\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Species codes allowed to use this mode. Null means any species.\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    }\n       \
-        \         },\n                \"excludedSpeciesCodes\": {\n                    \"type\": \"array\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Species codes that cannot use this mode. Null
-        means no exclusions.\",\n                    \"items\": {\n                        \"type\": \"string\"\n        \
-        \            }\n                },\n                \"minimumPartySize\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\":
-        \"Minimum party size required (e.g., ocean_vessel requires crew of 3)\"\n                },\n                \"maximumEntitySizeCategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum entity size category allowed (e.g., \\\"small\\\", \\\"medium\\\", \\\"large\\\"). Category B content
-        code. Null means no size restriction.\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\",\n                \"createdAt\"\
+        ,\n                \"modifiedAt\"\n            ],\n            \"properties\": {\n                \"code\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Unique string identifier for this
+        mode (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\")\"\n                },\n                \"name\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
+        \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Detailed description of this transit mode\"\n                },\n                \"baseSpeedKmPerGameHour\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                   \
+        \ \"minimum\": 0.1,\n                    \"description\": \"Base speed in game-kilometers per game-hour. Used when
+        no terrain-specific speed modifier is defined.\"\n                },\n                \"terrainSpeedModifiers\": {\n\
+        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Per-terrain speed multipliers. Null means base speed applies uniformly across all compatible terrain.\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/TerrainSpeedModifier\"\n             \
+        \       }\n                },\n                \"passengerCapacity\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"description\": \"How many entities can ride (1 for horse,
+        20 for ship)\"\n                },\n                \"cargoCapacityKg\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Weight capacity in game-kg (0 for walking, 500 for wagon)\"\n                },\n                \"cargoSpeedPenaltyRate\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                   \
+        \ \"nullable\": true,\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                \
+        \    \"description\": \"Per-mode cargo speed penalty rate. Overrides the plugin-level DefaultCargoSpeedPenaltyRate.
+        Null means use plugin config default. 0.0 means no cargo penalty.\"\n                },\n                \"compatibleTerrainTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"description\": \"Terrain types this mode can
+        traverse. Empty array means all terrain (e.g., walking, flying).\",\n                    \"items\": {\n          \
+        \              \"type\": \"string\"\n                    }\n                },\n                \"validEntityTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Entity types allowed to use this mode. Null means no entity type restriction. Characters are not exempt.\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    }\n         \
+        \       },\n                \"requirements\": {\n                    \"allOf\": [\n                        {\n   \
+        \                         \"$ref\": \"#/$defs/TransitModeRequirements\"\n                        }\n             \
+        \       ],\n                    \"description\": \"Requirements that must be met to use this mode\"\n            \
+        \    },\n                \"fatigueRatePerGameHour\": {\n                    \"type\": \"number\",\n              \
+        \      \"format\": \"decimal\",\n                    \"minimum\": 0,\n                    \"description\": \"Stamina
+        cost per game-hour of travel (0 = no fatigue)\"\n                },\n                \"noiseLevelNormalized\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\"\
+        : 0,\n                    \"maximum\": 1,\n                    \"description\": \"Noise level from 0.0 (silent) to
+        1.0 (loud) affecting detection risk\"\n                },\n                \"realmRestrictions\": {\n            \
+        \        \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Realm
+        IDs where this mode is available. Null means available in all realms.\",\n                    \"items\": {\n     \
+        \                   \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    }\n \
+        \               },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Freeform classification tags (e.g., \\\"mount\\\", \\\"\
+        vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n                    \"items\": {\n       \
+        \                 \"type\": \"string\"\n                    }\n                },\n                \"createdAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"description\": \"When this mode was registered\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this mode was last modified\"\n                }\n            }\n        },\n        \"TerrainSpeedModifier\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\": [\n                \"\
+        terrainType\",\n                \"multiplier\"\n            ],\n            \"properties\": {\n                \"\
+        terrainType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Terrain type code
+        (e.g., \\\"road\\\", \\\"trail\\\", \\\"forest\\\"). Category B content code (game-configurable).\"\n            \
+        \    },\n                \"multiplier\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"decimal\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Speed multiplier applied
+        to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)\"\n                }\n            }\n        },\n\
+        \        \"TransitModeRequirements\": {\n            \"type\": \"object\",\n            \"additionalProperties\":
+        false,\n            \"description\": \"Requirements that must be met to use a transit mode (applies to character entities
+        only)\",\n            \"properties\": {\n                \"requiredItemTag\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Item tag required to use
+        this mode (e.g., \\\"mount_horse\\\"). Null means no item needed.\"\n                },\n                \"allowedSpeciesCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Species codes allowed to use this mode. Null means any species.\",\n                    \"items\": {\n       \
+        \                 \"type\": \"string\"\n                    }\n                },\n                \"excludedSpeciesCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Species codes that cannot use this mode. Null means no exclusions.\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\"\n                    }\n                },\n                \"minimumPartySize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\"\
+        : 1,\n                    \"description\": \"Minimum party size required (e.g., ocean_vessel requires crew of 3)\"\
+        \n                },\n                \"maximumEntitySizeCategory\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Maximum entity size category allowed
+        (e.g., \\\"small\\\", \\\"medium\\\", \\\"large\\\"). Category B content code. Null means no size restriction.\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a transit mode by code\",\n    \"description\": \"Retrieve a transit
         mode definition by its unique code.\",\n    \"tags\": [\n        \"Mode\"\n    ],\n    \"deprecated\": false,\n  \
         \  \"operationId\": \"getMode\"\n}"
@@ -390,12 +380,13 @@ paths:
         : [\n                \"modes\"\n            ],\n            \"properties\": {\n                \"modes\": {\n    \
         \                \"type\": \"array\",\n                    \"description\": \"Transit modes matching the query\",\n\
         \                    \"items\": {\n                        \"$ref\": \"#/$defs/TransitMode\"\n                   \
-        \ }\n                }\n            }\n        },\n        \"TransitMode\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement capabilities
-        (e.g., walking, horseback, wagon)\",\n            \"required\": [\n                \"code\",\n                \"name\"\
-        ,\n                \"description\",\n                \"baseSpeedKmPerGameHour\",\n                \"passengerCapacity\"\
-        ,\n                \"cargoCapacityKg\",\n                \"compatibleTerrainTypes\",\n                \"requirements\"\
-        ,\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\",\n                \"isDeprecated\"\
+        \ }\n                }\n            }\n        },\n        \"TransitMode\": {\n            \"allOf\": [\n        \
+        \        {\n                    \"type\": \"object\"\n                }\n            ],\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement
+        capabilities (e.g., walking, horseback, wagon)\",\n            \"required\": [\n                \"code\",\n      \
+        \          \"name\",\n                \"description\",\n                \"baseSpeedKmPerGameHour\",\n            \
+        \    \"passengerCapacity\",\n                \"cargoCapacityKg\",\n                \"compatibleTerrainTypes\",\n \
+        \               \"requirements\",\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\"\
         ,\n                \"createdAt\",\n                \"modifiedAt\"\n            ],\n            \"properties\": {\n\
         \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
         string identifier for this mode (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\")\"\n                },\n\
@@ -435,22 +426,16 @@ paths:
         realmRestrictions\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n      \
         \              \"description\": \"Realm IDs where this mode is available. Null means available in all realms.\",\n\
         \                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
-        : \"uuid\"\n                    }\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether this mode is deprecated\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When deprecation occurred.
-        Null if not deprecated.\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why this mode was deprecated.
-        Null if not deprecated.\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Freeform classification tags (e.g.,
-        \\\"mount\\\", \\\"vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    }\n                },\n            \
-        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this mode was registered\"\n                },\n                \"modifiedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this mode was last modified\"\n                }\n            }\n        },\n        \"\
-        TerrainSpeedModifier\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
-        \       \"description\": \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\"\
+        : \"uuid\"\n                    }\n                },\n                \"tags\": {\n                    \"type\":
+        \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Freeform classification
+        tags (e.g., \\\"mount\\\", \\\"vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n          \
+        \          \"items\": {\n                        \"type\": \"string\"\n                    }\n                },\n\
+        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When this mode was registered\"\n                },\n                \"\
+        modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n     \
+        \               \"description\": \"When this mode was last modified\"\n                }\n            }\n        },\n\
+        \        \"TerrainSpeedModifier\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\"\
         : [\n                \"terrainType\",\n                \"multiplier\"\n            ],\n            \"properties\"\
         : {\n                \"terrainType\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Terrain type code (e.g., \\\"road\\\", \\\"trail\\\", \\\"forest\\\"). Category B content code (game-configurable).\"\
@@ -577,90 +562,85 @@ paths:
         \                \"mode\"\n            ],\n            \"properties\": {\n                \"mode\": {\n          \
         \          \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TransitMode\"\n\
         \                        }\n                    ],\n                    \"description\": \"The transit mode\"\n  \
-        \              }\n            }\n        },\n        \"TransitMode\": {\n            \"type\": \"object\",\n     \
-        \       \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement capabilities
+        \              }\n            }\n        },\n        \"TransitMode\": {\n            \"allOf\": [\n              \
+        \  {\n                    \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement capabilities
         (e.g., walking, horseback, wagon)\",\n            \"required\": [\n                \"code\",\n                \"name\"\
         ,\n                \"description\",\n                \"baseSpeedKmPerGameHour\",\n                \"passengerCapacity\"\
         ,\n                \"cargoCapacityKg\",\n                \"compatibleTerrainTypes\",\n                \"requirements\"\
-        ,\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\",\n                \"isDeprecated\"\
-        ,\n                \"createdAt\",\n                \"modifiedAt\"\n            ],\n            \"properties\": {\n\
-        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        string identifier for this mode (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\")\"\n                },\n\
-        \                \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        display name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Detailed description of this transit mode\"\n                },\n        \
-        \        \"baseSpeedKmPerGameHour\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"minimum\": 0.1,\n                    \"description\": \"Base speed in game-kilometers
-        per game-hour. Used when no terrain-specific speed modifier is defined.\"\n                },\n                \"\
-        terrainSpeedModifiers\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Per-terrain speed multipliers. Null means base speed applies uniformly across
-        all compatible terrain.\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TerrainSpeedModifier\"\
-        \n                    }\n                },\n                \"passengerCapacity\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"How many entities can
-        ride (1 for horse, 20 for ship)\"\n                },\n                \"cargoCapacityKg\": {\n                  \
-        \  \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n    \
-        \                \"description\": \"Weight capacity in game-kg (0 for walking, 500 for wagon)\"\n                },\n\
-        \                \"cargoSpeedPenaltyRate\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                   \
-        \ \"maximum\": 1,\n                    \"description\": \"Per-mode cargo speed penalty rate. Overrides the plugin-level
-        DefaultCargoSpeedPenaltyRate. Null means use plugin config default. 0.0 means no cargo penalty.\"\n              \
-        \  },\n                \"compatibleTerrainTypes\": {\n                    \"type\": \"array\",\n                 \
-        \   \"description\": \"Terrain types this mode can traverse. Empty array means all terrain (e.g., walking, flying).\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    }\n       \
-        \         },\n                \"validEntityTypes\": {\n                    \"type\": \"array\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Entity types allowed to use this mode. Null means
-        no entity type restriction. Characters are not exempt.\",\n                    \"items\": {\n                    \
-        \    \"type\": \"string\"\n                    }\n                },\n                \"requirements\": {\n      \
-        \              \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TransitModeRequirements\"\
-        \n                        }\n                    ],\n                    \"description\": \"Requirements that must
-        be met to use this mode\"\n                },\n                \"fatigueRatePerGameHour\": {\n                   \
-        \ \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n     \
-        \               \"description\": \"Stamina cost per game-hour of travel (0 = no fatigue)\"\n                },\n \
-        \               \"noiseLevelNormalized\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\"\
-        : \"Noise level from 0.0 (silent) to 1.0 (loud) affecting detection risk\"\n                },\n                \"\
-        realmRestrictions\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Realm IDs where this mode is available. Null means available in all realms.\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
-        : \"uuid\"\n                    }\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether this mode is deprecated\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When deprecation occurred.
-        Null if not deprecated.\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why this mode was deprecated.
-        Null if not deprecated.\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Freeform classification tags (e.g.,
-        \\\"mount\\\", \\\"vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    }\n                },\n            \
-        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this mode was registered\"\n                },\n                \"modifiedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this mode was last modified\"\n                }\n            }\n        },\n        \"\
-        TerrainSpeedModifier\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
-        \       \"description\": \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\"\
-        : [\n                \"terrainType\",\n                \"multiplier\"\n            ],\n            \"properties\"\
-        : {\n                \"terrainType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Terrain type code (e.g., \\\"road\\\", \\\"trail\\\", \\\"forest\\\"). Category B content code (game-configurable).\"\
-        \n                },\n                \"multiplier\": {\n                    \"type\": \"number\",\n             \
-        \       \"format\": \"decimal\",\n                    \"minimum\": 0.01,\n                    \"description\": \"\
-        Speed multiplier applied to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)\"\n                }\n\
-        \            }\n        },\n        \"TransitModeRequirements\": {\n            \"type\": \"object\",\n          \
-        \  \"additionalProperties\": false,\n            \"description\": \"Requirements that must be met to use a transit
-        mode (applies to character entities only)\",\n            \"properties\": {\n                \"requiredItemTag\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Item tag required to use this mode (e.g., \\\"mount_horse\\\"). Null means no item needed.\"\n               \
-        \ },\n                \"allowedSpeciesCodes\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Species codes allowed to use this mode. Null means any species.\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    }\n       \
-        \         },\n                \"excludedSpeciesCodes\": {\n                    \"type\": \"array\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Species codes that cannot use this mode. Null
-        means no exclusions.\",\n                    \"items\": {\n                        \"type\": \"string\"\n        \
-        \            }\n                },\n                \"minimumPartySize\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\":
-        \"Minimum party size required (e.g., ocean_vessel requires crew of 3)\"\n                },\n                \"maximumEntitySizeCategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum entity size category allowed (e.g., \\\"small\\\", \\\"medium\\\", \\\"large\\\"). Category B content
-        code. Null means no size restriction.\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\",\n                \"createdAt\"\
+        ,\n                \"modifiedAt\"\n            ],\n            \"properties\": {\n                \"code\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Unique string identifier for this
+        mode (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\")\"\n                },\n                \"name\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
+        \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Detailed description of this transit mode\"\n                },\n                \"baseSpeedKmPerGameHour\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                   \
+        \ \"minimum\": 0.1,\n                    \"description\": \"Base speed in game-kilometers per game-hour. Used when
+        no terrain-specific speed modifier is defined.\"\n                },\n                \"terrainSpeedModifiers\": {\n\
+        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Per-terrain speed multipliers. Null means base speed applies uniformly across all compatible terrain.\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/TerrainSpeedModifier\"\n             \
+        \       }\n                },\n                \"passengerCapacity\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"description\": \"How many entities can ride (1 for horse,
+        20 for ship)\"\n                },\n                \"cargoCapacityKg\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Weight capacity in game-kg (0 for walking, 500 for wagon)\"\n                },\n                \"cargoSpeedPenaltyRate\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                   \
+        \ \"nullable\": true,\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                \
+        \    \"description\": \"Per-mode cargo speed penalty rate. Overrides the plugin-level DefaultCargoSpeedPenaltyRate.
+        Null means use plugin config default. 0.0 means no cargo penalty.\"\n                },\n                \"compatibleTerrainTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"description\": \"Terrain types this mode can
+        traverse. Empty array means all terrain (e.g., walking, flying).\",\n                    \"items\": {\n          \
+        \              \"type\": \"string\"\n                    }\n                },\n                \"validEntityTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Entity types allowed to use this mode. Null means no entity type restriction. Characters are not exempt.\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    }\n         \
+        \       },\n                \"requirements\": {\n                    \"allOf\": [\n                        {\n   \
+        \                         \"$ref\": \"#/$defs/TransitModeRequirements\"\n                        }\n             \
+        \       ],\n                    \"description\": \"Requirements that must be met to use this mode\"\n            \
+        \    },\n                \"fatigueRatePerGameHour\": {\n                    \"type\": \"number\",\n              \
+        \      \"format\": \"decimal\",\n                    \"minimum\": 0,\n                    \"description\": \"Stamina
+        cost per game-hour of travel (0 = no fatigue)\"\n                },\n                \"noiseLevelNormalized\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\"\
+        : 0,\n                    \"maximum\": 1,\n                    \"description\": \"Noise level from 0.0 (silent) to
+        1.0 (loud) affecting detection risk\"\n                },\n                \"realmRestrictions\": {\n            \
+        \        \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Realm
+        IDs where this mode is available. Null means available in all realms.\",\n                    \"items\": {\n     \
+        \                   \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    }\n \
+        \               },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Freeform classification tags (e.g., \\\"mount\\\", \\\"\
+        vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n                    \"items\": {\n       \
+        \                 \"type\": \"string\"\n                    }\n                },\n                \"createdAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"description\": \"When this mode was registered\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this mode was last modified\"\n                }\n            }\n        },\n        \"TerrainSpeedModifier\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\": [\n                \"\
+        terrainType\",\n                \"multiplier\"\n            ],\n            \"properties\": {\n                \"\
+        terrainType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Terrain type code
+        (e.g., \\\"road\\\", \\\"trail\\\", \\\"forest\\\"). Category B content code (game-configurable).\"\n            \
+        \    },\n                \"multiplier\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"decimal\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Speed multiplier applied
+        to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)\"\n                }\n            }\n        },\n\
+        \        \"TransitModeRequirements\": {\n            \"type\": \"object\",\n            \"additionalProperties\":
+        false,\n            \"description\": \"Requirements that must be met to use a transit mode (applies to character entities
+        only)\",\n            \"properties\": {\n                \"requiredItemTag\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Item tag required to use
+        this mode (e.g., \\\"mount_horse\\\"). Null means no item needed.\"\n                },\n                \"allowedSpeciesCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Species codes allowed to use this mode. Null means any species.\",\n                    \"items\": {\n       \
+        \                 \"type\": \"string\"\n                    }\n                },\n                \"excludedSpeciesCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Species codes that cannot use this mode. Null means no exclusions.\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\"\n                    }\n                },\n                \"minimumPartySize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\"\
+        : 1,\n                    \"description\": \"Minimum party size required (e.g., ocean_vessel requires crew of 3)\"\
+        \n                },\n                \"maximumEntitySizeCategory\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Maximum entity size category allowed
+        (e.g., \\\"small\\\", \\\"medium\\\", \\\"large\\\"). Category B content code. Null means no size restriction.\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a transit mode's properties\",\n    \"description\": \"Update properties
         of an existing transit mode. Only provided fields\\nare updated; null fields are left unchanged.\\n\",\n    \"tags\"\
         : [\n        \"Mode\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateMode\"\n}"
@@ -707,90 +687,85 @@ paths:
         \                \"mode\"\n            ],\n            \"properties\": {\n                \"mode\": {\n          \
         \          \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TransitMode\"\n\
         \                        }\n                    ],\n                    \"description\": \"The transit mode\"\n  \
-        \              }\n            }\n        },\n        \"TransitMode\": {\n            \"type\": \"object\",\n     \
-        \       \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement capabilities
+        \              }\n            }\n        },\n        \"TransitMode\": {\n            \"allOf\": [\n              \
+        \  {\n                    \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement capabilities
         (e.g., walking, horseback, wagon)\",\n            \"required\": [\n                \"code\",\n                \"name\"\
         ,\n                \"description\",\n                \"baseSpeedKmPerGameHour\",\n                \"passengerCapacity\"\
         ,\n                \"cargoCapacityKg\",\n                \"compatibleTerrainTypes\",\n                \"requirements\"\
-        ,\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\",\n                \"isDeprecated\"\
-        ,\n                \"createdAt\",\n                \"modifiedAt\"\n            ],\n            \"properties\": {\n\
-        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        string identifier for this mode (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\")\"\n                },\n\
-        \                \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        display name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Detailed description of this transit mode\"\n                },\n        \
-        \        \"baseSpeedKmPerGameHour\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"minimum\": 0.1,\n                    \"description\": \"Base speed in game-kilometers
-        per game-hour. Used when no terrain-specific speed modifier is defined.\"\n                },\n                \"\
-        terrainSpeedModifiers\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Per-terrain speed multipliers. Null means base speed applies uniformly across
-        all compatible terrain.\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TerrainSpeedModifier\"\
-        \n                    }\n                },\n                \"passengerCapacity\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"How many entities can
-        ride (1 for horse, 20 for ship)\"\n                },\n                \"cargoCapacityKg\": {\n                  \
-        \  \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n    \
-        \                \"description\": \"Weight capacity in game-kg (0 for walking, 500 for wagon)\"\n                },\n\
-        \                \"cargoSpeedPenaltyRate\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                   \
-        \ \"maximum\": 1,\n                    \"description\": \"Per-mode cargo speed penalty rate. Overrides the plugin-level
-        DefaultCargoSpeedPenaltyRate. Null means use plugin config default. 0.0 means no cargo penalty.\"\n              \
-        \  },\n                \"compatibleTerrainTypes\": {\n                    \"type\": \"array\",\n                 \
-        \   \"description\": \"Terrain types this mode can traverse. Empty array means all terrain (e.g., walking, flying).\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    }\n       \
-        \         },\n                \"validEntityTypes\": {\n                    \"type\": \"array\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Entity types allowed to use this mode. Null means
-        no entity type restriction. Characters are not exempt.\",\n                    \"items\": {\n                    \
-        \    \"type\": \"string\"\n                    }\n                },\n                \"requirements\": {\n      \
-        \              \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TransitModeRequirements\"\
-        \n                        }\n                    ],\n                    \"description\": \"Requirements that must
-        be met to use this mode\"\n                },\n                \"fatigueRatePerGameHour\": {\n                   \
-        \ \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n     \
-        \               \"description\": \"Stamina cost per game-hour of travel (0 = no fatigue)\"\n                },\n \
-        \               \"noiseLevelNormalized\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\"\
-        : \"Noise level from 0.0 (silent) to 1.0 (loud) affecting detection risk\"\n                },\n                \"\
-        realmRestrictions\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Realm IDs where this mode is available. Null means available in all realms.\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
-        : \"uuid\"\n                    }\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether this mode is deprecated\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When deprecation occurred.
-        Null if not deprecated.\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why this mode was deprecated.
-        Null if not deprecated.\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Freeform classification tags (e.g.,
-        \\\"mount\\\", \\\"vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    }\n                },\n            \
-        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this mode was registered\"\n                },\n                \"modifiedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this mode was last modified\"\n                }\n            }\n        },\n        \"\
-        TerrainSpeedModifier\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
-        \       \"description\": \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\"\
-        : [\n                \"terrainType\",\n                \"multiplier\"\n            ],\n            \"properties\"\
-        : {\n                \"terrainType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Terrain type code (e.g., \\\"road\\\", \\\"trail\\\", \\\"forest\\\"). Category B content code (game-configurable).\"\
-        \n                },\n                \"multiplier\": {\n                    \"type\": \"number\",\n             \
-        \       \"format\": \"decimal\",\n                    \"minimum\": 0.01,\n                    \"description\": \"\
-        Speed multiplier applied to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)\"\n                }\n\
-        \            }\n        },\n        \"TransitModeRequirements\": {\n            \"type\": \"object\",\n          \
-        \  \"additionalProperties\": false,\n            \"description\": \"Requirements that must be met to use a transit
-        mode (applies to character entities only)\",\n            \"properties\": {\n                \"requiredItemTag\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Item tag required to use this mode (e.g., \\\"mount_horse\\\"). Null means no item needed.\"\n               \
-        \ },\n                \"allowedSpeciesCodes\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Species codes allowed to use this mode. Null means any species.\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    }\n       \
-        \         },\n                \"excludedSpeciesCodes\": {\n                    \"type\": \"array\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Species codes that cannot use this mode. Null
-        means no exclusions.\",\n                    \"items\": {\n                        \"type\": \"string\"\n        \
-        \            }\n                },\n                \"minimumPartySize\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\":
-        \"Minimum party size required (e.g., ocean_vessel requires crew of 3)\"\n                },\n                \"maximumEntitySizeCategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum entity size category allowed (e.g., \\\"small\\\", \\\"medium\\\", \\\"large\\\"). Category B content
-        code. Null means no size restriction.\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\",\n                \"createdAt\"\
+        ,\n                \"modifiedAt\"\n            ],\n            \"properties\": {\n                \"code\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Unique string identifier for this
+        mode (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\")\"\n                },\n                \"name\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
+        \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Detailed description of this transit mode\"\n                },\n                \"baseSpeedKmPerGameHour\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                   \
+        \ \"minimum\": 0.1,\n                    \"description\": \"Base speed in game-kilometers per game-hour. Used when
+        no terrain-specific speed modifier is defined.\"\n                },\n                \"terrainSpeedModifiers\": {\n\
+        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Per-terrain speed multipliers. Null means base speed applies uniformly across all compatible terrain.\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/TerrainSpeedModifier\"\n             \
+        \       }\n                },\n                \"passengerCapacity\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"description\": \"How many entities can ride (1 for horse,
+        20 for ship)\"\n                },\n                \"cargoCapacityKg\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Weight capacity in game-kg (0 for walking, 500 for wagon)\"\n                },\n                \"cargoSpeedPenaltyRate\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                   \
+        \ \"nullable\": true,\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                \
+        \    \"description\": \"Per-mode cargo speed penalty rate. Overrides the plugin-level DefaultCargoSpeedPenaltyRate.
+        Null means use plugin config default. 0.0 means no cargo penalty.\"\n                },\n                \"compatibleTerrainTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"description\": \"Terrain types this mode can
+        traverse. Empty array means all terrain (e.g., walking, flying).\",\n                    \"items\": {\n          \
+        \              \"type\": \"string\"\n                    }\n                },\n                \"validEntityTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Entity types allowed to use this mode. Null means no entity type restriction. Characters are not exempt.\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    }\n         \
+        \       },\n                \"requirements\": {\n                    \"allOf\": [\n                        {\n   \
+        \                         \"$ref\": \"#/$defs/TransitModeRequirements\"\n                        }\n             \
+        \       ],\n                    \"description\": \"Requirements that must be met to use this mode\"\n            \
+        \    },\n                \"fatigueRatePerGameHour\": {\n                    \"type\": \"number\",\n              \
+        \      \"format\": \"decimal\",\n                    \"minimum\": 0,\n                    \"description\": \"Stamina
+        cost per game-hour of travel (0 = no fatigue)\"\n                },\n                \"noiseLevelNormalized\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\"\
+        : 0,\n                    \"maximum\": 1,\n                    \"description\": \"Noise level from 0.0 (silent) to
+        1.0 (loud) affecting detection risk\"\n                },\n                \"realmRestrictions\": {\n            \
+        \        \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Realm
+        IDs where this mode is available. Null means available in all realms.\",\n                    \"items\": {\n     \
+        \                   \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    }\n \
+        \               },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Freeform classification tags (e.g., \\\"mount\\\", \\\"\
+        vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n                    \"items\": {\n       \
+        \                 \"type\": \"string\"\n                    }\n                },\n                \"createdAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"description\": \"When this mode was registered\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this mode was last modified\"\n                }\n            }\n        },\n        \"TerrainSpeedModifier\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\": [\n                \"\
+        terrainType\",\n                \"multiplier\"\n            ],\n            \"properties\": {\n                \"\
+        terrainType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Terrain type code
+        (e.g., \\\"road\\\", \\\"trail\\\", \\\"forest\\\"). Category B content code (game-configurable).\"\n            \
+        \    },\n                \"multiplier\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"decimal\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Speed multiplier applied
+        to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)\"\n                }\n            }\n        },\n\
+        \        \"TransitModeRequirements\": {\n            \"type\": \"object\",\n            \"additionalProperties\":
+        false,\n            \"description\": \"Requirements that must be met to use a transit mode (applies to character entities
+        only)\",\n            \"properties\": {\n                \"requiredItemTag\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Item tag required to use
+        this mode (e.g., \\\"mount_horse\\\"). Null means no item needed.\"\n                },\n                \"allowedSpeciesCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Species codes allowed to use this mode. Null means any species.\",\n                    \"items\": {\n       \
+        \                 \"type\": \"string\"\n                    }\n                },\n                \"excludedSpeciesCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Species codes that cannot use this mode. Null means no exclusions.\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\"\n                    }\n                },\n                \"minimumPartySize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\"\
+        : 1,\n                    \"description\": \"Minimum party size required (e.g., ocean_vessel requires crew of 3)\"\
+        \n                },\n                \"maximumEntitySizeCategory\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Maximum entity size category allowed
+        (e.g., \\\"small\\\", \\\"medium\\\", \\\"large\\\"). Category B content code. Null means no size restriction.\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a transit mode\",\n    \"description\": \"Deprecate a transit
         mode. Existing journeys using this mode continue,\\nbut new journeys cannot use it. Sets the triple-field deprecation
         model:\\nisDeprecated=true, deprecatedAt=now, deprecationReason=reason.\\nIdempotent: returns OK if already deprecated
@@ -836,90 +811,85 @@ paths:
         \                \"mode\"\n            ],\n            \"properties\": {\n                \"mode\": {\n          \
         \          \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TransitMode\"\n\
         \                        }\n                    ],\n                    \"description\": \"The transit mode\"\n  \
-        \              }\n            }\n        },\n        \"TransitMode\": {\n            \"type\": \"object\",\n     \
-        \       \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement capabilities
+        \              }\n            }\n        },\n        \"TransitMode\": {\n            \"allOf\": [\n              \
+        \  {\n                    \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A transit mode defining movement capabilities
         (e.g., walking, horseback, wagon)\",\n            \"required\": [\n                \"code\",\n                \"name\"\
         ,\n                \"description\",\n                \"baseSpeedKmPerGameHour\",\n                \"passengerCapacity\"\
         ,\n                \"cargoCapacityKg\",\n                \"compatibleTerrainTypes\",\n                \"requirements\"\
-        ,\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\",\n                \"isDeprecated\"\
-        ,\n                \"createdAt\",\n                \"modifiedAt\"\n            ],\n            \"properties\": {\n\
-        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
-        string identifier for this mode (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\")\"\n                },\n\
-        \                \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        display name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Detailed description of this transit mode\"\n                },\n        \
-        \        \"baseSpeedKmPerGameHour\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"minimum\": 0.1,\n                    \"description\": \"Base speed in game-kilometers
-        per game-hour. Used when no terrain-specific speed modifier is defined.\"\n                },\n                \"\
-        terrainSpeedModifiers\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Per-terrain speed multipliers. Null means base speed applies uniformly across
-        all compatible terrain.\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TerrainSpeedModifier\"\
-        \n                    }\n                },\n                \"passengerCapacity\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"How many entities can
-        ride (1 for horse, 20 for ship)\"\n                },\n                \"cargoCapacityKg\": {\n                  \
-        \  \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n    \
-        \                \"description\": \"Weight capacity in game-kg (0 for walking, 500 for wagon)\"\n                },\n\
-        \                \"cargoSpeedPenaltyRate\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                   \
-        \ \"maximum\": 1,\n                    \"description\": \"Per-mode cargo speed penalty rate. Overrides the plugin-level
-        DefaultCargoSpeedPenaltyRate. Null means use plugin config default. 0.0 means no cargo penalty.\"\n              \
-        \  },\n                \"compatibleTerrainTypes\": {\n                    \"type\": \"array\",\n                 \
-        \   \"description\": \"Terrain types this mode can traverse. Empty array means all terrain (e.g., walking, flying).\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    }\n       \
-        \         },\n                \"validEntityTypes\": {\n                    \"type\": \"array\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Entity types allowed to use this mode. Null means
-        no entity type restriction. Characters are not exempt.\",\n                    \"items\": {\n                    \
-        \    \"type\": \"string\"\n                    }\n                },\n                \"requirements\": {\n      \
-        \              \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TransitModeRequirements\"\
-        \n                        }\n                    ],\n                    \"description\": \"Requirements that must
-        be met to use this mode\"\n                },\n                \"fatigueRatePerGameHour\": {\n                   \
-        \ \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n     \
-        \               \"description\": \"Stamina cost per game-hour of travel (0 = no fatigue)\"\n                },\n \
-        \               \"noiseLevelNormalized\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"decimal\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\"\
-        : \"Noise level from 0.0 (silent) to 1.0 (loud) affecting detection risk\"\n                },\n                \"\
-        realmRestrictions\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Realm IDs where this mode is available. Null means available in all realms.\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
-        : \"uuid\"\n                    }\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether this mode is deprecated\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When deprecation occurred.
-        Null if not deprecated.\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Why this mode was deprecated.
-        Null if not deprecated.\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Freeform classification tags (e.g.,
-        \\\"mount\\\", \\\"vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    }\n                },\n            \
-        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this mode was registered\"\n                },\n                \"modifiedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this mode was last modified\"\n                }\n            }\n        },\n        \"\
-        TerrainSpeedModifier\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
-        \       \"description\": \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\"\
-        : [\n                \"terrainType\",\n                \"multiplier\"\n            ],\n            \"properties\"\
-        : {\n                \"terrainType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Terrain type code (e.g., \\\"road\\\", \\\"trail\\\", \\\"forest\\\"). Category B content code (game-configurable).\"\
-        \n                },\n                \"multiplier\": {\n                    \"type\": \"number\",\n             \
-        \       \"format\": \"decimal\",\n                    \"minimum\": 0.01,\n                    \"description\": \"\
-        Speed multiplier applied to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)\"\n                }\n\
-        \            }\n        },\n        \"TransitModeRequirements\": {\n            \"type\": \"object\",\n          \
-        \  \"additionalProperties\": false,\n            \"description\": \"Requirements that must be met to use a transit
-        mode (applies to character entities only)\",\n            \"properties\": {\n                \"requiredItemTag\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Item tag required to use this mode (e.g., \\\"mount_horse\\\"). Null means no item needed.\"\n               \
-        \ },\n                \"allowedSpeciesCodes\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Species codes allowed to use this mode. Null means any species.\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    }\n       \
-        \         },\n                \"excludedSpeciesCodes\": {\n                    \"type\": \"array\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Species codes that cannot use this mode. Null
-        means no exclusions.\",\n                    \"items\": {\n                        \"type\": \"string\"\n        \
-        \            }\n                },\n                \"minimumPartySize\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\":
-        \"Minimum party size required (e.g., ocean_vessel requires crew of 3)\"\n                },\n                \"maximumEntitySizeCategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum entity size category allowed (e.g., \\\"small\\\", \\\"medium\\\", \\\"large\\\"). Category B content
-        code. Null means no size restriction.\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                \"fatigueRatePerGameHour\",\n                \"noiseLevelNormalized\",\n                \"createdAt\"\
+        ,\n                \"modifiedAt\"\n            ],\n            \"properties\": {\n                \"code\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Unique string identifier for this
+        mode (e.g., \\\"walking\\\", \\\"horseback\\\", \\\"wagon\\\")\"\n                },\n                \"name\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
+        \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Detailed description of this transit mode\"\n                },\n                \"baseSpeedKmPerGameHour\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                   \
+        \ \"minimum\": 0.1,\n                    \"description\": \"Base speed in game-kilometers per game-hour. Used when
+        no terrain-specific speed modifier is defined.\"\n                },\n                \"terrainSpeedModifiers\": {\n\
+        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Per-terrain speed multipliers. Null means base speed applies uniformly across all compatible terrain.\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/TerrainSpeedModifier\"\n             \
+        \       }\n                },\n                \"passengerCapacity\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"description\": \"How many entities can ride (1 for horse,
+        20 for ship)\"\n                },\n                \"cargoCapacityKg\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"decimal\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Weight capacity in game-kg (0 for walking, 500 for wagon)\"\n                },\n                \"cargoSpeedPenaltyRate\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                   \
+        \ \"nullable\": true,\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                \
+        \    \"description\": \"Per-mode cargo speed penalty rate. Overrides the plugin-level DefaultCargoSpeedPenaltyRate.
+        Null means use plugin config default. 0.0 means no cargo penalty.\"\n                },\n                \"compatibleTerrainTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"description\": \"Terrain types this mode can
+        traverse. Empty array means all terrain (e.g., walking, flying).\",\n                    \"items\": {\n          \
+        \              \"type\": \"string\"\n                    }\n                },\n                \"validEntityTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Entity types allowed to use this mode. Null means no entity type restriction. Characters are not exempt.\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    }\n         \
+        \       },\n                \"requirements\": {\n                    \"allOf\": [\n                        {\n   \
+        \                         \"$ref\": \"#/$defs/TransitModeRequirements\"\n                        }\n             \
+        \       ],\n                    \"description\": \"Requirements that must be met to use this mode\"\n            \
+        \    },\n                \"fatigueRatePerGameHour\": {\n                    \"type\": \"number\",\n              \
+        \      \"format\": \"decimal\",\n                    \"minimum\": 0,\n                    \"description\": \"Stamina
+        cost per game-hour of travel (0 = no fatigue)\"\n                },\n                \"noiseLevelNormalized\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"minimum\"\
+        : 0,\n                    \"maximum\": 1,\n                    \"description\": \"Noise level from 0.0 (silent) to
+        1.0 (loud) affecting detection risk\"\n                },\n                \"realmRestrictions\": {\n            \
+        \        \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Realm
+        IDs where this mode is available. Null means available in all realms.\",\n                    \"items\": {\n     \
+        \                   \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    }\n \
+        \               },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Freeform classification tags (e.g., \\\"mount\\\", \\\"\
+        vehicle\\\", \\\"magical\\\", \\\"aquatic\\\"). Null means no tags.\",\n                    \"items\": {\n       \
+        \                 \"type\": \"string\"\n                    }\n                },\n                \"createdAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"description\": \"When this mode was registered\"\n                },\n                \"modifiedAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this mode was last modified\"\n                }\n            }\n        },\n        \"TerrainSpeedModifier\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Per-terrain speed multiplier applied to a mode's base speed\",\n            \"required\": [\n                \"\
+        terrainType\",\n                \"multiplier\"\n            ],\n            \"properties\": {\n                \"\
+        terrainType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Terrain type code
+        (e.g., \\\"road\\\", \\\"trail\\\", \\\"forest\\\"). Category B content code (game-configurable).\"\n            \
+        \    },\n                \"multiplier\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"decimal\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Speed multiplier applied
+        to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)\"\n                }\n            }\n        },\n\
+        \        \"TransitModeRequirements\": {\n            \"type\": \"object\",\n            \"additionalProperties\":
+        false,\n            \"description\": \"Requirements that must be met to use a transit mode (applies to character entities
+        only)\",\n            \"properties\": {\n                \"requiredItemTag\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Item tag required to use
+        this mode (e.g., \\\"mount_horse\\\"). Null means no item needed.\"\n                },\n                \"allowedSpeciesCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Species codes allowed to use this mode. Null means any species.\",\n                    \"items\": {\n       \
+        \                 \"type\": \"string\"\n                    }\n                },\n                \"excludedSpeciesCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Species codes that cannot use this mode. Null means no exclusions.\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\"\n                    }\n                },\n                \"minimumPartySize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\"\
+        : 1,\n                    \"description\": \"Minimum party size required (e.g., ocean_vessel requires crew of 3)\"\
+        \n                },\n                \"maximumEntitySizeCategory\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Maximum entity size category allowed
+        (e.g., \\\"small\\\", \\\"medium\\\", \\\"large\\\"). Category B content code. Null means no size restriction.\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Reverse deprecation of a transit mode\",\n    \"description\": \"Reverse
         deprecation of a transit mode (Category A \\u2014 undeprecate is required).\\nClears isDeprecated, deprecatedAt, deprecationReason.\\
         nIdempotent: returns OK if not currently deprecated.\\n\",\n    \"tags\": [\n        \"Mode\"\n    ],\n    \"deprecated\"\
@@ -4572,6 +4542,8 @@ components:
           items:
             type: string
     TransitMode:
+      allOf:
+      - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: A transit mode defining movement capabilities (e.g., walking, horseback, wagon)
@@ -4586,7 +4558,6 @@ components:
       - requirements
       - fatigueRatePerGameHour
       - noiseLevelNormalized
-      - isDeprecated
       - createdAt
       - modifiedAt
       properties:
@@ -4663,18 +4634,6 @@ components:
           items:
             type: string
             format: uuid
-        isDeprecated:
-          type: boolean
-          description: Whether this mode is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When deprecation occurred. Null if not deprecated.
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Why this mode was deprecated. Null if not deprecated.
         tags:
           type: array
           nullable: true

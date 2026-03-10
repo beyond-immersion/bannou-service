@@ -34,6 +34,13 @@ public static class ItemEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(ItemPublishedTopics.ItemTemplateUpdated, eventData, cancellationToken);
 
+    /// <summary>Unused Category B infrastructure — templates are never deleted. Publisher method exists in generated code but is never called.</summary>
+    public static Task<bool> PublishItemTemplateDeletedAsync(
+        this IMessageBus messageBus,
+        ItemTemplateDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ItemPublishedTopics.ItemTemplateDeleted, eventData, cancellationToken);
+
     /// <summary>Published when a new item instance is created.</summary>
     public static Task<bool> PublishItemInstanceCreatedAsync(
         this IMessageBus messageBus,

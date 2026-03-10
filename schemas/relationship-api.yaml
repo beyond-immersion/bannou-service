@@ -1313,6 +1313,8 @@ components:
 
     # Response Models
     RelationshipTypeResponse:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       description: Complete representation of a relationship type including hierarchy, inverse, and deprecation information
       type: object
       additionalProperties: false
@@ -1321,7 +1323,6 @@ components:
       - code
       - name
       - isBidirectional
-      - isDeprecated
       - depth
       - createdAt
       - updatedAt
@@ -1365,18 +1366,6 @@ components:
         isBidirectional:
           type: boolean
           description: Whether the relationship is the same in both directions (e.g., SIBLING)
-        isDeprecated:
-          type: boolean
-          description: Whether this type is deprecated and cannot be used for new relationships
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp when this type was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Optional reason for deprecation
         depth:
           type: integer
           description: Depth in the hierarchy (0 for root types)

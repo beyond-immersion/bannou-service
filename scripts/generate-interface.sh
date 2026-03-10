@@ -4,7 +4,7 @@
 # This script is part of Bannou's code generation pipeline.
 # DO NOT MODIFY without EXPLICIT user instructions to change code generation.
 #
-# Changes to generation scripts silently break builds across ALL 48 services.
+# Changes to generation scripts silently break builds across ALL 76+ services.
 # An agent once changed namespace strings across 4 scripts in a single commit,
 # breaking every service. If you believe a change is needed:
 #   1. STOP and explain what you think is wrong

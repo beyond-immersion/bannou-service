@@ -13,9 +13,9 @@ using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Events;
 
-public partial class ItemTemplateCreatedEvent : ILifecycleCreatedEvent { }
-public partial class ItemTemplateUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class ItemTemplateDeletedEvent : ILifecycleDeletedEvent { }
+public partial class ItemTemplateCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class ItemTemplateUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class ItemTemplateDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
 
 public partial class ItemInstanceCreatedEvent : ILifecycleCreatedEvent { }
 public partial class ItemInstanceUpdatedEvent : ILifecycleUpdatedEvent { }

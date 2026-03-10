@@ -48,7 +48,7 @@ public class SchemaValidationTests
     /// <summary>
     /// Validates that all enum values in schema files use PascalCase.
     /// Wrong casing breaks NSwag C# code generation and causes serialization mismatches.
-    /// Per SCHEMA-RULES.md and T16 naming conventions.
+    /// Per SCHEMA-RULES.md and QUALITY TENETS naming conventions.
     /// </summary>
     [Fact]
     public void SchemaEnumValues_ArePascalCase()
@@ -166,7 +166,7 @@ public class SchemaValidationTests
     /// <summary>
     /// Validates that every endpoint in API schema files has an x-permissions declaration.
     /// Missing x-permissions means the endpoint is either unprotected or will fail
-    /// permission registration. Per T13.
+    /// permission registration. Per FOUNDATION TENETS.
     /// </summary>
     [Fact]
     public void SchemaEndpoints_HaveXPermissions()

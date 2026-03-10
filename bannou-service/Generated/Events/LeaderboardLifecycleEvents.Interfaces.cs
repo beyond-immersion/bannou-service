@@ -13,6 +13,6 @@ using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Events;
 
-public partial class LeaderboardDefinitionCreatedEvent : ILifecycleCreatedEvent { }
-public partial class LeaderboardDefinitionUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class LeaderboardDefinitionDeletedEvent : ILifecycleDeletedEvent { }
+public partial class LeaderboardDefinitionCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class LeaderboardDefinitionUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class LeaderboardDefinitionDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }

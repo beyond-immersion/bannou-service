@@ -90,7 +90,7 @@
 | lib-character (ICharacterClient) | L2 | Hard | Species code lookup for mode compatibility |
 | lib-species (ISpeciesClient) | L2 | Hard | Species property lookup for mode restriction checks |
 | lib-inventory (IInventoryClient) | L2 | Hard | Item tag checks for mode requirements |
-| lib-resource (IResourceClient) | L1 | Hard | Cleanup callback registration for location/character deletion (T28) |
+| lib-resource (IResourceClient) | L1 | Hard | Cleanup callback registration for location/character deletion |
 | lib-connect (IClientEventPublisher) | L1 | Hard | WebSocket push for journey/discovery/connection-status client events |
 | lib-connect (IEntitySessionRegistry) | L1 | Hard | Entity-to-session routing for client events |
 | ITransitCostModifierProvider (DI collection) | L4 | Soft | Optional cost enrichment from Disposition, Environment, Faction, Hearsay, Ethology |
@@ -99,7 +99,7 @@
 - **Implements** `IVariableProviderFactory` via `TransitVariableProviderFactory` -- provides `${transit.*}` variables to Actor (L2)
 - **Consumes** `ITransitCostModifierProvider` via `IEnumerable<T>` -- L4 services enrich cost calculations
 
-**T28 Resource Cleanup:** Transit declares `x-references` for `location` (CASCADE) and `character` (CASCADE). Cleanup endpoints (`/transit/cleanup-by-location`, `/transit/cleanup-by-character`) are called by lib-resource, not by event subscriptions.
+**Resource Cleanup:** Transit declares `x-references` for `location` (CASCADE) and `character` (CASCADE). Cleanup endpoints (`/transit/cleanup-by-location`, `/transit/cleanup-by-character`) are called by lib-resource, not by event subscriptions.
 
 ---
 
@@ -146,7 +146,7 @@
 | `ICharacterClient` | Species code lookup |
 | `ISpeciesClient` | Species restriction checks |
 | `IInventoryClient` | Item tag checks |
-| `IResourceClient` | T28 cleanup registration |
+| `IResourceClient` | cleanup registration |
 | `IClientEventPublisher` | WebSocket client events |
 | `IEntitySessionRegistry` | Entity-to-session routing |
 | `ITransitConnectionGraphCache` | Per-realm connection graph cache (Singleton helper) |
@@ -203,10 +203,10 @@
 POST /transit/mode/register | Roles: [developer]
 
 ```
-LOCK transit-lock:"mode:{code}"                       -> 409 if fails
-  READ mode-store:"mode:{code}"                       -> 409 if exists
-  WRITE mode-store:"mode:{code}" <- TransitModeModel from request
-  PUBLISH transit.mode.registered { full mode entity }
+LOCK transit-lock:"mode:{code}" -> 409 if fails
+ READ mode-store:"mode:{code}" -> 409 if exists
+ WRITE mode-store:"mode:{code}" <- TransitModeModel from request
+ PUBLISH transit.mode.registered { full mode entity }
 RETURN (200, ModeResponse)
 ```
 
@@ -214,7 +214,7 @@ RETURN (200, ModeResponse)
 POST /transit/mode/get | Roles: [user]
 
 ```
-READ mode-store:"mode:{code}"                         -> 404 if null
+READ mode-store:"mode:{code}" -> 404 if null
 RETURN (200, ModeResponse)
 ```
 
@@ -222,15 +222,15 @@ RETURN (200, ModeResponse)
 POST /transit/mode/list | Roles: [user]
 
 ```
-QUERY mode-store WHERE true  // all modes, filtered in memory
+QUERY mode-store WHERE true // all modes, filtered in memory
 IF !includeDeprecated
-  // filter out deprecated
+ // filter out deprecated
 IF realmId provided
-  // filter by realm restrictions
+ // filter by realm restrictions
 IF terrainType provided
-  // filter by compatible terrain
+ // filter by compatible terrain
 IF tags provided
-  // filter by ALL specified tags
+ // filter by ALL specified tags
 RETURN (200, ListModesResponse)
 ```
 
@@ -238,11 +238,11 @@ RETURN (200, ListModesResponse)
 POST /transit/mode/update | Roles: [developer]
 
 ```
-READ mode-store:"mode:{code}" [with ETag]             -> 404 if null
+READ mode-store:"mode:{code}" [with ETag] -> 404 if null
 // apply non-null field updates, track changedFields
 IF changedFields.Count > 0
-  ETAG-WRITE mode-store:"mode:{code}"                 -> 409 if ETag mismatch
-  PUBLISH transit.mode.updated { mode, changedFields }
+ ETAG-WRITE mode-store:"mode:{code}" -> 409 if ETag mismatch
+ PUBLISH transit.mode.updated { mode, changedFields }
 RETURN (200, ModeResponse)
 ```
 
@@ -250,11 +250,11 @@ RETURN (200, ModeResponse)
 POST /transit/mode/deprecate | Roles: [developer]
 
 ```
-READ mode-store:"mode:{code}" [with ETag]             -> 404 if null
+READ mode-store:"mode:{code}" [with ETag] -> 404 if null
 IF already deprecated
-  RETURN (200, ModeResponse)  // idempotent
+ RETURN (200, ModeResponse) // idempotent
 // set IsDeprecated=true, DeprecatedAt, DeprecationReason
-ETAG-WRITE mode-store:"mode:{code}"                   -> 409 if ETag mismatch
+ETAG-WRITE mode-store:"mode:{code}" -> 409 if ETag mismatch
 PUBLISH transit.mode.updated { mode, changedFields: [isDeprecated, deprecatedAt, deprecationReason] }
 RETURN (200, ModeResponse)
 ```
@@ -263,11 +263,11 @@ RETURN (200, ModeResponse)
 POST /transit/mode/undeprecate | Roles: [developer]
 
 ```
-READ mode-store:"mode:{code}" [with ETag]             -> 404 if null
+READ mode-store:"mode:{code}" [with ETag] -> 404 if null
 IF not deprecated
-  RETURN (200, ModeResponse)  // idempotent
+ RETURN (200, ModeResponse) // idempotent
 // clear IsDeprecated, DeprecatedAt, DeprecationReason
-ETAG-WRITE mode-store:"mode:{code}"                   -> 409 if ETag mismatch
+ETAG-WRITE mode-store:"mode:{code}" -> 409 if ETag mismatch
 PUBLISH transit.mode.updated { mode, changedFields: [isDeprecated, deprecatedAt, deprecationReason] }
 RETURN (200, ModeResponse)
 ```
@@ -276,17 +276,17 @@ RETURN (200, ModeResponse)
 POST /transit/mode/delete | Roles: [developer]
 
 ```
-LOCK transit-lock:"mode:{code}"                       -> 409 if fails
-  READ mode-store:"mode:{code}"                       -> 404 if null
-  IF not deprecated                                   -> 400 (Category A: must deprecate first)
-  QUERY connection-store WHERE compatibleModes contains code
-  IF connections found                                -> 400 (connections reference mode)
-  QUERY journey-archive WHERE primaryModeCode == code AND active status
-  IF archived journeys found                          -> 400 (active journeys use mode)
-  // scan Redis journey index for active journey conflicts
-  IF Redis journey conflict found                     -> 400 (active journeys use mode)
-  DELETE mode-store:"mode:{code}"
-  PUBLISH transit.mode.deleted { code, deletedReason }
+LOCK transit-lock:"mode:{code}" -> 409 if fails
+ READ mode-store:"mode:{code}" -> 404 if null
+ IF not deprecated -> 400 (Category A: must deprecate first)
+ QUERY connection-store WHERE compatibleModes contains code
+ IF connections found -> 400 (connections reference mode)
+ QUERY journey-archive WHERE primaryModeCode == code AND active status
+ IF archived journeys found -> 400 (active journeys use mode)
+ // scan Redis journey index for active journey conflicts
+ IF Redis journey conflict found -> 400 (active journeys use mode)
+ DELETE mode-store:"mode:{code}"
+ PUBLISH transit.mode.deleted { code, deletedReason }
 RETURN (200, DeleteModeResponse)
 ```
 
@@ -296,20 +296,20 @@ POST /transit/mode/check-availability | Roles: [user]
 ```
 QUERY mode-store WHERE !deprecated
 IF modeCode filter provided
-  // filter to specific mode
+ // filter to specific mode
 FOREACH mode in modes
-  // check validEntityTypes against request.entityType
-  IF entityType == "character"
-    CALL ICharacterClient.GetCharacterAsync(entityId)
-    CALL ISpeciesClient.GetSpeciesAsync(speciesCode)
-    // check allowedSpeciesCodes / excludedSpeciesCodes / maximumEntitySizeCategory
-  IF requiredItemTag set
-    CALL IInventoryClient.CheckHasItemTagAsync(entityId, requiredItemTag)
-  // compute effectiveSpeed with cargo penalty
-  // aggregate DI cost modifier providers (graceful degradation)
-  FOREACH provider in _costModifierProviders
-    CALL provider.GetModifierAsync(entityId, entityType, modeCode, connectionId)
-    // sum preferenceCost, multiply speedMultiplier, clamp to config bounds
+ // check validEntityTypes against request.entityType
+ IF entityType == "character"
+ CALL ICharacterClient.GetCharacterAsync(entityId)
+ CALL ISpeciesClient.GetSpeciesAsync(speciesCode)
+ // check allowedSpeciesCodes / excludedSpeciesCodes / maximumEntitySizeCategory
+ IF requiredItemTag set
+ CALL IInventoryClient.CheckHasItemTagAsync(entityId, requiredItemTag)
+ // compute effectiveSpeed with cargo penalty
+ // aggregate DI cost modifier providers (graceful degradation)
+ FOREACH provider in _costModifierProviders
+ CALL provider.GetModifierAsync(entityId, entityType, modeCode, connectionId)
+ // sum preferenceCost, multiply speedMultiplier, clamp to config bounds
 RETURN (200, CheckModeAvailabilityResponse { availableModes })
 ```
 
@@ -317,24 +317,24 @@ RETURN (200, CheckModeAvailabilityResponse { availableModes })
 POST /transit/connection/create | Roles: [developer]
 
 ```
-IF fromLocationId == toLocationId                     -> 400
+IF fromLocationId == toLocationId -> 400
 CALL ILocationClient.GetLocationAsync(fromLocationId) -> 400 if not found
-CALL ILocationClient.GetLocationAsync(toLocationId)   -> 400 if not found
+CALL ILocationClient.GetLocationAsync(toLocationId) -> 400 if not found
 // derive fromRealmId, toRealmId, crossRealm from locations
 FOREACH modeCode in compatibleModes
-  READ mode-store:"mode:{modeCode}"                   -> 400 if not found
+ READ mode-store:"mode:{modeCode}" -> 400 if not found
 IF seasonalAvailability provided
-  CALL IWorldstateClient.GetRealmTimeAsync(realmId)
-  // validate season keys against realm's calendar    -> 400 if invalid season key
+ CALL IWorldstateClient.GetRealmTimeAsync(realmId)
+ // validate season keys against realm's calendar -> 400 if invalid season key
 IF code provided
-  LOCK transit-lock:"connection:code:{code}"          -> 409 if fails
-LOCK transit-lock:"connection:pair:{fromId}:{toId}"   -> 409 if fails
-  // check uniqueness of pair (and reverse for bidirectional)
-  QUERY connection-store WHERE from/to match          -> 409 if exists
-  WRITE connection-store:"connection:{newId}" <- TransitConnectionModel from request
-  // invalidate graph cache for affected realms
-  CALL IResourceClient.RegisterReferenceAsync (fromLocationId, toLocationId)
-  PUBLISH transit.connection.created { full connection entity }
+ LOCK transit-lock:"connection:code:{code}" -> 409 if fails
+LOCK transit-lock:"connection:pair:{fromId}:{toId}" -> 409 if fails
+ // check uniqueness of pair (and reverse for bidirectional)
+ QUERY connection-store WHERE from/to match -> 409 if exists
+ WRITE connection-store:"connection:{newId}" <- TransitConnectionModel from request
+ // invalidate graph cache for affected realms
+ CALL IResourceClient.RegisterReferenceAsync (fromLocationId, toLocationId)
+ PUBLISH transit.connection.created { full connection entity }
 RETURN (200, ConnectionResponse)
 ```
 
@@ -343,10 +343,10 @@ POST /transit/connection/get | Roles: [user]
 
 ```
 IF connectionId provided
-  READ connection-store:"connection:{connectionId}"   -> 404 if null
+ READ connection-store:"connection:{connectionId}" -> 404 if null
 ELSE IF code provided
-  QUERY connection-store WHERE code == code            -> 404 if empty
-ELSE                                                  -> 400
+ QUERY connection-store WHERE code == code -> 404 if empty
+ELSE -> 400
 RETURN (200, ConnectionResponse)
 ```
 
@@ -362,12 +362,12 @@ RETURN (200, QueryConnectionsResponse { connections, totalCount })
 POST /transit/connection/update | Roles: [developer]
 
 ```
-READ connection-store:"connection:{connectionId}" [with ETag]  -> 404 if null
+READ connection-store:"connection:{connectionId}" [with ETag] -> 404 if null
 // apply non-null field updates, track changedFields
 IF changedFields.Count > 0
-  ETAG-WRITE connection-store:"connection:{connectionId}"      -> 409 if ETag mismatch
-  // invalidate graph cache for affected realms
-  PUBLISH transit.connection.updated { connection, changedFields }
+ ETAG-WRITE connection-store:"connection:{connectionId}" -> 409 if ETag mismatch
+ // invalidate graph cache for affected realms
+ PUBLISH transit.connection.updated { connection, changedFields }
 RETURN (200, ConnectionResponse)
 ```
 
@@ -375,14 +375,14 @@ RETURN (200, ConnectionResponse)
 POST /transit/connection/update-status | Roles: [user]
 
 ```
-LOCK transit-lock:"connection-status:{connectionId}"  -> 409 if fails
-  READ connection-store:"connection:{connectionId}" [with ETag]  -> 404 if null
-  IF !forceUpdate AND currentStatus != actual status  -> 400 (STATUS_MISMATCH)
-  // update status, statusReason, statusChangedAt
-  ETAG-WRITE connection-store:"connection:{connectionId}"        -> 409 if ETag mismatch
-  // invalidate graph cache for affected realms
-  PUBLISH transit.connection.status-changed { connectionId, previousStatus, newStatus, reason, forceUpdated }
-  PUSH TransitConnectionStatusChangedClientEvent -> realm sessions (both realms if cross-realm)
+LOCK transit-lock:"connection-status:{connectionId}" -> 409 if fails
+ READ connection-store:"connection:{connectionId}" [with ETag] -> 404 if null
+ IF !forceUpdate AND currentStatus != actual status -> 400 (STATUS_MISMATCH)
+ // update status, statusReason, statusChangedAt
+ ETAG-WRITE connection-store:"connection:{connectionId}" -> 409 if ETag mismatch
+ // invalidate graph cache for affected realms
+ PUBLISH transit.connection.status-changed { connectionId, previousStatus, newStatus, reason, forceUpdated }
+ PUSH TransitConnectionStatusChangedClientEvent -> realm sessions (both realms if cross-realm)
 RETURN (200, ConnectionResponse)
 ```
 
@@ -390,11 +390,11 @@ RETURN (200, ConnectionResponse)
 POST /transit/connection/delete | Roles: [developer]
 
 ```
-READ connection-store:"connection:{connectionId}"     -> 404 if null
+READ connection-store:"connection:{connectionId}" -> 404 if null
 QUERY journey-archive WHERE legs contain connectionId AND active status
-IF active archived journeys found                     -> 400
+IF active archived journeys found -> 400
 // scan Redis journey index for connection conflicts
-IF Redis journey conflict found                       -> 400
+IF Redis journey conflict found -> 400
 DELETE connection-store:"connection:{connectionId}"
 // invalidate graph cache for affected realms
 PUBLISH transit.connection.deleted { full connection, deletedReason }
@@ -407,27 +407,27 @@ POST /transit/connection/bulk-seed | Roles: [developer]
 ```
 // Pass 1: Resolve all unique location codes to IDs via ILocationClient
 FOREACH locationCode in allUniqueCodes
-  CALL ILocationClient.GetLocationByCodeAsync(code)
-  // map code -> locationId, realmId
+ CALL ILocationClient.GetLocationByCodeAsync(code)
+ // map code -> locationId, realmId
 
 // Pass 2: Create/update each connection
 FOREACH entry in connections
-  // validate location codes resolved, same-location check, realm filter
-  FOREACH modeCode in entry.compatibleModes
-    READ mode-store:"mode:{modeCode}"                 -> error if not found
-  LOCK transit-lock on code or pair key               -> skip if fails
-    IF code provided AND existing connection found
-      IF replaceExisting
-        READ connection-store [with ETag]
-        ETAG-WRITE connection-store <- updated fields
-        PUBLISH transit.connection.updated { changedFields }
-        // increment updated count
-      ELSE
-        // skip (already exists)
-    ELSE
-      WRITE connection-store:"connection:{newId}" <- new model
-      PUBLISH transit.connection.created { full entity }
-      // increment created count
+ // validate location codes resolved, same-location check, realm filter
+ FOREACH modeCode in entry.compatibleModes
+ READ mode-store:"mode:{modeCode}" -> error if not found
+ LOCK transit-lock on code or pair key -> skip if fails
+ IF code provided AND existing connection found
+ IF replaceExisting
+ READ connection-store [with ETag]
+ ETAG-WRITE connection-store <- updated fields
+ PUBLISH transit.connection.updated { changedFields }
+ // increment updated count
+ ELSE
+ // skip (already exists)
+ ELSE
+ WRITE connection-store:"connection:{newId}" <- new model
+ PUBLISH transit.connection.created { full entity }
+ // increment created count
 
 // invalidate graph cache for all affected realms
 RETURN (200, BulkSeedConnectionsResponse { created, updated, errors })
@@ -437,22 +437,22 @@ RETURN (200, BulkSeedConnectionsResponse { created, updated, errors })
 POST /transit/journey/create | Roles: [user]
 
 ```
-READ mode-store:"mode:{primaryModeCode}"              -> 404 if null
-IF mode deprecated                                    -> 400
+READ mode-store:"mode:{primaryModeCode}" -> 404 if null
+IF mode deprecated -> 400
 // check mode compatibility via internal check-availability logic
 // validate entity type against mode's validEntityTypes
-CALL ILocationClient.GetLocationAsync(originLocationId)       -> 400 if not found
-CALL ILocationClient.GetLocationAsync(destinationLocationId)  -> 400 if not found
+CALL ILocationClient.GetLocationAsync(originLocationId) -> 400 if not found
+CALL ILocationClient.GetLocationAsync(destinationLocationId) -> 400 if not found
 CALL IWorldstateClient.GetRealmTimeAsync(realmId)
 // invoke route calculator for best path
 CALL ITransitRouteCalculator.CalculateAsync(...)
-IF no routes found                                    -> 400 (NO_ROUTE_AVAILABLE)
+IF no routes found -> 400 (NO_ROUTE_AVAILABLE)
 // build TransitJourneyModel from best route option
 WRITE journey-store:"journey:{newId}" <- TransitJourneyModel
 // add to journey index (optimistic concurrency retry loop)
 READ journey-index-store:"journey-index" [with ETag]
 // append newId to list
-ETAG-WRITE journey-index-store:"journey-index"        // retry on ETag conflict
+ETAG-WRITE journey-index-store:"journey-index" // retry on ETag conflict
 // no event published (first event is departed)
 RETURN (200, JourneyResponse)
 ```
@@ -461,20 +461,20 @@ RETURN (200, JourneyResponse)
 POST /transit/journey/depart | Roles: [user]
 
 ```
-LOCK transit-lock:"journey:{journeyId}"               -> 409 if fails
-  READ journey-store:"journey:{journeyId}"            -> 404 if null
-  IF status != Preparing                              -> 400
-  // validate first leg's connection is open
-  READ connection-store:"connection:{firstLeg.connectionId}"
-  IF connection closed/blocked                        -> 400
-  // transition: Preparing -> InTransit, set actualDepartureGameTime
-  // mark first leg as InProgress
-  WRITE journey-store:"journey:{journeyId}"
-  // report departure position via ILocationClient
-  IF config.AutoUpdateLocationOnTransition
-    CALL ILocationClient.ReportEntityPositionAsync(entityId, originLocationId)
-  PUBLISH transit.journey.departed { journeyId, entity, origin, destination, mode, ETA, partySize, realms }
-  PUSH TransitJourneyUpdatedClientEvent -> entity sessions
+LOCK transit-lock:"journey:{journeyId}" -> 409 if fails
+ READ journey-store:"journey:{journeyId}" -> 404 if null
+ IF status != Preparing -> 400
+ // validate first leg's connection is open
+ READ connection-store:"connection:{firstLeg.connectionId}"
+ IF connection closed/blocked -> 400
+ // transition: Preparing -> InTransit, set actualDepartureGameTime
+ // mark first leg as InProgress
+ WRITE journey-store:"journey:{journeyId}"
+ // report departure position via ILocationClient
+ IF config.AutoUpdateLocationOnTransition
+ CALL ILocationClient.ReportEntityPositionAsync(entityId, originLocationId)
+ PUBLISH transit.journey.departed { journeyId, entity, origin, destination, mode, ETA, partySize, realms }
+ PUSH TransitJourneyUpdatedClientEvent -> entity sessions
 RETURN (200, JourneyResponse)
 ```
 
@@ -482,17 +482,17 @@ RETURN (200, JourneyResponse)
 POST /transit/journey/resume | Roles: [user]
 
 ```
-LOCK transit-lock:"journey:{journeyId}"               -> 409 if fails
-  READ journey-store:"journey:{journeyId}"            -> 404 if null
-  IF status != Interrupted                            -> 400
-  // validate current leg's connection is open
-  READ connection-store:"connection:{currentLeg.connectionId}"
-  IF connection closed/blocked                        -> 400
-  // resolve last unresolved interruption, set durationGameHours
-  // transition: Interrupted -> InTransit
-  WRITE journey-store:"journey:{journeyId}"
-  PUBLISH transit.journey.resumed { journeyId, entity, currentLocation, destination, legIndex, remainingLegs, modeCode }
-  PUSH TransitJourneyUpdatedClientEvent -> entity sessions
+LOCK transit-lock:"journey:{journeyId}" -> 409 if fails
+ READ journey-store:"journey:{journeyId}" -> 404 if null
+ IF status != Interrupted -> 400
+ // validate current leg's connection is open
+ READ connection-store:"connection:{currentLeg.connectionId}"
+ IF connection closed/blocked -> 400
+ // resolve last unresolved interruption, set durationGameHours
+ // transition: Interrupted -> InTransit
+ WRITE journey-store:"journey:{journeyId}"
+ PUBLISH transit.journey.resumed { journeyId, entity, currentLocation, destination, legIndex, remainingLegs, modeCode }
+ PUSH TransitJourneyUpdatedClientEvent -> entity sessions
 RETURN (200, JourneyResponse)
 ```
 
@@ -500,28 +500,28 @@ RETURN (200, JourneyResponse)
 POST /transit/journey/advance | Roles: [user]
 
 ```
-LOCK transit-lock:"journey:{journeyId}"               -> 409 if fails
-  READ journey-store:"journey:{journeyId}"            -> 404 if null
-  IF status != InTransit AND status != AtWaypoint     -> 400
-  // add incidents if provided
-  FOREACH incident in incidents
-    // add TransitInterruptionModel to journey.Interruptions
-  // complete current leg: status = Completed, completedAtGameTime
-  // auto-reveal discoverable connections on completed leg
-  // see helper: TryAutoRevealDiscoveryAsync
-  // report waypoint position via ILocationClient
-  IF config.AutoUpdateLocationOnTransition
-    CALL ILocationClient.ReportEntityPositionAsync(entityId, waypointLocationId)
-  IF final leg
-    // transition: -> Arrived, set actualArrivalGameTime
-    WRITE journey-store:"journey:{journeyId}"
-    PUBLISH transit.journey.arrived { journeyId, entity, origin, destination, mode, totalGameHours, distance, interruptions, legsCompleted }
-    PUSH TransitJourneyUpdatedClientEvent -> entity sessions
-  ELSE
-    // advance to next leg: currentLegIndex++, status = AtWaypoint
-    WRITE journey-store:"journey:{journeyId}"
-    PUBLISH transit.journey.waypoint-reached { journeyId, entity, waypointLocation, nextLocation, legIndex, remainingLegs, connectionId, crossedRealmBoundary }
-    PUSH TransitJourneyUpdatedClientEvent -> entity sessions
+LOCK transit-lock:"journey:{journeyId}" -> 409 if fails
+ READ journey-store:"journey:{journeyId}" -> 404 if null
+ IF status != InTransit AND status != AtWaypoint -> 400
+ // add incidents if provided
+ FOREACH incident in incidents
+ // add TransitInterruptionModel to journey.Interruptions
+ // complete current leg: status = Completed, completedAtGameTime
+ // auto-reveal discoverable connections on completed leg
+ // see helper: TryAutoRevealDiscoveryAsync
+ // report waypoint position via ILocationClient
+ IF config.AutoUpdateLocationOnTransition
+ CALL ILocationClient.ReportEntityPositionAsync(entityId, waypointLocationId)
+ IF final leg
+ // transition: -> Arrived, set actualArrivalGameTime
+ WRITE journey-store:"journey:{journeyId}"
+ PUBLISH transit.journey.arrived { journeyId, entity, origin, destination, mode, totalGameHours, distance, interruptions, legsCompleted }
+ PUSH TransitJourneyUpdatedClientEvent -> entity sessions
+ ELSE
+ // advance to next leg: currentLegIndex++, status = AtWaypoint
+ WRITE journey-store:"journey:{journeyId}"
+ PUBLISH transit.journey.waypoint-reached { journeyId, entity, waypointLocation, nextLocation, legIndex, remainingLegs, connectionId, crossedRealmBoundary }
+ PUSH TransitJourneyUpdatedClientEvent -> entity sessions
 RETURN (200, JourneyResponse)
 ```
 
@@ -529,11 +529,11 @@ RETURN (200, JourneyResponse)
 POST /transit/journey/advance-batch | Roles: [user]
 
 ```
-FOREACH entry in advances  // sequential to preserve same-journeyId ordering
-  // delegate to AdvanceJourneyAsync per entry
-  CALL AdvanceJourneyAsync({ journeyId, arrivedAtGameTime, incidents })
-  // collect BatchAdvanceResult (journeyId, error, journey)
-  // exceptions caught per entry, reported as error string
+FOREACH entry in advances // sequential to preserve same-journeyId ordering
+ // delegate to AdvanceJourneyAsync per entry
+ CALL AdvanceJourneyAsync({ journeyId, arrivedAtGameTime, incidents })
+ // collect BatchAdvanceResult (journeyId, error, journey)
+ // exceptions caught per entry, reported as error string
 RETURN (200, AdvanceBatchResponse { results })
 // Note: 200 always returned; inspect per-entry results for failures
 ```
@@ -542,17 +542,17 @@ RETURN (200, AdvanceBatchResponse { results })
 POST /transit/journey/arrive | Roles: [user]
 
 ```
-LOCK transit-lock:"journey:{journeyId}"               -> 409 if fails
-  READ journey-store:"journey:{journeyId}"            -> 404 if null
-  IF status != InTransit AND status != AtWaypoint     -> 400
-  // mark remaining legs as Skipped (force-arrive)
-  // transition: -> Arrived, set actualArrivalGameTime, statusReason
-  // set currentLocationId = destinationLocationId
-  WRITE journey-store:"journey:{journeyId}"
-  IF config.AutoUpdateLocationOnTransition
-    CALL ILocationClient.ReportEntityPositionAsync(entityId, destinationLocationId)
-  PUBLISH transit.journey.arrived { journeyId, entity, origin, destination, mode, totalGameHours, distance, interruptions, legsCompleted }
-  PUSH TransitJourneyUpdatedClientEvent -> entity sessions
+LOCK transit-lock:"journey:{journeyId}" -> 409 if fails
+ READ journey-store:"journey:{journeyId}" -> 404 if null
+ IF status != InTransit AND status != AtWaypoint -> 400
+ // mark remaining legs as Skipped (force-arrive)
+ // transition: -> Arrived, set actualArrivalGameTime, statusReason
+ // set currentLocationId = destinationLocationId
+ WRITE journey-store:"journey:{journeyId}"
+ IF config.AutoUpdateLocationOnTransition
+ CALL ILocationClient.ReportEntityPositionAsync(entityId, destinationLocationId)
+ PUBLISH transit.journey.arrived { journeyId, entity, origin, destination, mode, totalGameHours, distance, interruptions, legsCompleted }
+ PUSH TransitJourneyUpdatedClientEvent -> entity sessions
 RETURN (200, JourneyResponse)
 ```
 
@@ -560,14 +560,14 @@ RETURN (200, JourneyResponse)
 POST /transit/journey/interrupt | Roles: [user]
 
 ```
-LOCK transit-lock:"journey:{journeyId}"               -> 409 if fails
-  READ journey-store:"journey:{journeyId}"            -> 404 if null
-  IF status != InTransit                              -> 400
-  // add interruption record (legIndex, gameTime, reason, resolved=false)
-  // transition: InTransit -> Interrupted, statusReason
-  WRITE journey-store:"journey:{journeyId}"
-  PUBLISH transit.journey.interrupted { journeyId, entity, currentLocation, legIndex, reason }
-  PUSH TransitJourneyUpdatedClientEvent -> entity sessions
+LOCK transit-lock:"journey:{journeyId}" -> 409 if fails
+ READ journey-store:"journey:{journeyId}" -> 404 if null
+ IF status != InTransit -> 400
+ // add interruption record (legIndex, gameTime, reason, resolved=false)
+ // transition: InTransit -> Interrupted, statusReason
+ WRITE journey-store:"journey:{journeyId}"
+ PUBLISH transit.journey.interrupted { journeyId, entity, currentLocation, legIndex, reason }
+ PUSH TransitJourneyUpdatedClientEvent -> entity sessions
 RETURN (200, JourneyResponse)
 ```
 
@@ -575,15 +575,15 @@ RETURN (200, JourneyResponse)
 POST /transit/journey/abandon | Roles: [user]
 
 ```
-LOCK transit-lock:"journey:{journeyId}"               -> 409 if fails
-  READ journey-store:"journey:{journeyId}"            -> 404 if null
-  IF status == Arrived OR status == Abandoned          -> 400 (terminal)
-  // transition: -> Abandoned, statusReason
-  WRITE journey-store:"journey:{journeyId}"
-  IF config.AutoUpdateLocationOnTransition
-    CALL ILocationClient.ReportEntityPositionAsync(entityId, currentLocationId)
-  PUBLISH transit.journey.abandoned { journeyId, entity, origin, destination, abandonedAtLocation, completedLegs, totalLegs, reason }
-  PUSH TransitJourneyUpdatedClientEvent -> entity sessions
+LOCK transit-lock:"journey:{journeyId}" -> 409 if fails
+ READ journey-store:"journey:{journeyId}" -> 404 if null
+ IF status == Arrived OR status == Abandoned -> 400 (terminal)
+ // transition: -> Abandoned, statusReason
+ WRITE journey-store:"journey:{journeyId}"
+ IF config.AutoUpdateLocationOnTransition
+ CALL ILocationClient.ReportEntityPositionAsync(entityId, currentLocationId)
+ PUBLISH transit.journey.abandoned { journeyId, entity, origin, destination, abandonedAtLocation, completedLegs, totalLegs, reason }
+ PUSH TransitJourneyUpdatedClientEvent -> entity sessions
 RETURN (200, JourneyResponse)
 ```
 
@@ -594,9 +594,9 @@ POST /transit/journey/get | Roles: [user]
 // try Redis first (active journeys)
 READ journey-store:"journey:{journeyId}"
 IF found
-  RETURN (200, JourneyResponse)
+ RETURN (200, JourneyResponse)
 // fallback to MySQL archive
-READ journey-archive:"archive:{journeyId}"            -> 404 if null
+READ journey-archive:"archive:{journeyId}" -> 404 if null
 RETURN (200, JourneyResponse)
 ```
 
@@ -604,7 +604,7 @@ RETURN (200, JourneyResponse)
 POST /transit/journey/query-by-connection | Roles: [user]
 
 ```
-READ connection-store:"connection:{connectionId}"     -> 404 if null
+READ connection-store:"connection:{connectionId}" -> 404 if null
 QUERY journey-archive WHERE legs contain connectionId [AND status filter] PAGED(page, pageSize)
 RETURN (200, ListJourneysResponse { journeys, totalCount })
 // Note: queries archive store only; active Redis journeys not included
@@ -632,15 +632,15 @@ POST /transit/route/calculate | Roles: [user]
 
 ```
 CALL ILocationClient.GetLocationAsync(fromLocationId) -> 400 if not found
-CALL ILocationClient.GetLocationAsync(toLocationId)   -> 400 if not found
+CALL ILocationClient.GetLocationAsync(toLocationId) -> 400 if not found
 CALL IWorldstateClient.GetRealmTimeAsync(fromLocation.realmId)
-  // non-fatal: if unavailable, totalRealMinutes=0, no seasonal warnings
+ // non-fatal: if unavailable, totalRealMinutes=0, no seasonal warnings
 // build RouteCalculationRequest with config defaults
 CALL ITransitRouteCalculator.CalculateAsync(request)
-  // internally: loads graph from cache, runs Yen's k-shortest paths
-  // applies terrain speed modifiers, cargo penalties, seasonal filtering
-  // discovery filtering when entityId provided
-IF no routes found                                    -> 400 (NO_ROUTE_AVAILABLE)
+ // internally: loads graph from cache, runs Yen's k-shortest paths
+ // applies terrain speed modifiers, cargo penalties, seasonal filtering
+ // discovery filtering when entityId provided
+IF no routes found -> 400 (NO_ROUTE_AVAILABLE)
 // map results to TransitRouteOption with rank
 RETURN (200, CalculateRouteResponse { options })
 // Note: pure computation, no state mutation, no DI cost modifiers applied
@@ -650,19 +650,19 @@ RETURN (200, CalculateRouteResponse { options })
 POST /transit/discovery/reveal | Roles: [user]
 
 ```
-READ connection-store:"connection:{connectionId}"     -> 404 if null
-IF !connection.discoverable                           -> 400
-LOCK transit-lock:"discovery:{entityId}:{connectionId}"  -> 409 if fails
-  READ discovery-store:"discovery:{entityId}:{connectionId}"
-  IF already discovered
-    RETURN (200, RevealDiscoveryResponse { isNew: false })
-  WRITE discovery-store:"discovery:{entityId}:{connectionId}" <- new TransitDiscoveryModel
-  // update Redis discovery cache
-  READ discovery-cache:"discovery-cache:{entityId}"
-  // add connectionId to set, save with TTL
-  WRITE discovery-cache:"discovery-cache:{entityId}"
-  PUBLISH transit.discovery.revealed { entityId, connectionId, fromLocationId, toLocationId, source, realms }
-  PUSH TransitDiscoveryRevealedClientEvent -> entity sessions
+READ connection-store:"connection:{connectionId}" -> 404 if null
+IF !connection.discoverable -> 400
+LOCK transit-lock:"discovery:{entityId}:{connectionId}" -> 409 if fails
+ READ discovery-store:"discovery:{entityId}:{connectionId}"
+ IF already discovered
+ RETURN (200, RevealDiscoveryResponse { isNew: false })
+ WRITE discovery-store:"discovery:{entityId}:{connectionId}" <- new TransitDiscoveryModel
+ // update Redis discovery cache
+ READ discovery-cache:"discovery-cache:{entityId}"
+ // add connectionId to set, save with TTL
+ WRITE discovery-cache:"discovery-cache:{entityId}"
+ PUBLISH transit.discovery.revealed { entityId, connectionId, fromLocationId, toLocationId, source, realms }
+ PUSH TransitDiscoveryRevealedClientEvent -> entity sessions
 RETURN (200, RevealDiscoveryResponse { isNew: true })
 ```
 
@@ -672,9 +672,9 @@ POST /transit/discovery/list | Roles: [user]
 ```
 QUERY discovery-store WHERE entityId == entityId
 IF realmId filter provided
-  FOREACH discovery in results
-    READ connection-store:"connection:{connectionId}"
-    // include only connections touching the filtered realm
+ FOREACH discovery in results
+ READ connection-store:"connection:{connectionId}"
+ // include only connections touching the filtered realm
 RETURN (200, ListDiscoveriesResponse { connectionIds })
 ```
 
@@ -683,8 +683,8 @@ POST /transit/discovery/check | Roles: [user]
 
 ```
 FOREACH connectionId in connectionIds
-  READ discovery-store:"discovery:{entityId}:{connectionId}"
-  // build DiscoveryCheckResult { discovered, discoveredAt, source }
+ READ discovery-store:"discovery:{entityId}:{connectionId}"
+ // build DiscoveryCheckResult { discovered, discoveredAt, source }
 RETURN (200, CheckDiscoveriesResponse { results })
 ```
 
@@ -695,20 +695,20 @@ POST /transit/cleanup-by-location | Roles: [] (internal, lib-resource callback)
 // Close all connections referencing the deleted location
 QUERY connection-store WHERE fromLocationId == locationId OR toLocationId == locationId
 FOREACH connection in results
-  // set status = Closed, reason = "location_deleted"
-  WRITE connection-store:"connection:{id}"
-  // invalidate graph cache
-  PUBLISH transit.connection.status-changed { forceUpdated: true }
-  PUSH TransitConnectionStatusChangedClientEvent -> realm sessions
-  CALL IResourceClient.UnregisterReferenceAsync (location references)
+ // set status = Closed, reason = "location_deleted"
+ WRITE connection-store:"connection:{id}"
+ // invalidate graph cache
+ PUBLISH transit.connection.status-changed { forceUpdated: true }
+ PUSH TransitConnectionStatusChangedClientEvent -> realm sessions
+ CALL IResourceClient.UnregisterReferenceAsync (location references)
 
 // Interrupt active archived journeys passing through deleted location
 QUERY journey-archive WHERE legs contain locationId AND active status
 FOREACH journey in results
-  // set status = Interrupted, add interruption record
-  WRITE journey-archive:"archive:{id}"
-  PUBLISH transit.journey.interrupted { reason: "location_deleted" }
-  PUSH TransitJourneyUpdatedClientEvent -> entity sessions
+ // set status = Interrupted, add interruption record
+ WRITE journey-archive:"archive:{id}"
+ PUBLISH transit.journey.interrupted { reason: "location_deleted" }
+ PUSH TransitJourneyUpdatedClientEvent -> entity sessions
 
 // Scan Redis active journeys for the same
 // see helper: ScanRedisJourneysForLocationCleanupAsync
@@ -722,16 +722,16 @@ POST /transit/cleanup-by-character | Roles: [] (internal, lib-resource callback)
 // Clear discovery data
 QUERY discovery-store WHERE entityId == characterId
 FOREACH discovery in results
-  DELETE discovery-store:"discovery:{entityId}:{connectionId}"
+ DELETE discovery-store:"discovery:{entityId}:{connectionId}"
 DELETE discovery-cache:"discovery-cache:{entityId}"
 
 // Abandon active archived journeys for this entity
 QUERY journey-archive WHERE entityId == characterId AND entityType == "character" AND active status
 FOREACH journey in results
-  // set status = Abandoned, reason = "character_deleted"
-  WRITE journey-archive:"archive:{id}"
-  PUBLISH transit.journey.abandoned { reason: "character_deleted" }
-  PUSH TransitJourneyUpdatedClientEvent -> entity sessions
+ // set status = Abandoned, reason = "character_deleted"
+ WRITE journey-archive:"archive:{id}"
+ PUBLISH transit.journey.abandoned { reason: "character_deleted" }
+ PUSH TransitJourneyUpdatedClientEvent -> entity sessions
 
 // Scan Redis active journeys for the same
 // see helper: ScanRedisJourneysForCharacterCleanupAsync
@@ -753,19 +753,19 @@ RETURN (200, null)
 QUERY connection-store WHERE seasonalAvailability != null
 // group connections by realm
 FOREACH realm in groups
-  CALL IWorldstateClient.GetRealmTimeAsync(realmId)
-  FOREACH connection in realmConnections
-    // find matching season entry
-    IF !available AND status != SeasonalClosed
-      // transition to SeasonalClosed (with ETag in worker, bare save in event handler)
-      WRITE connection-store:"connection:{id}"
-      // invalidate graph cache
-      PUBLISH transit.connection.status-changed { forceUpdated: true }
-    ELSE IF available AND status == SeasonalClosed
-      // transition to Open
-      WRITE connection-store:"connection:{id}"
-      // invalidate graph cache
-      PUBLISH transit.connection.status-changed { forceUpdated: true }
+ CALL IWorldstateClient.GetRealmTimeAsync(realmId)
+ FOREACH connection in realmConnections
+ // find matching season entry
+ IF !available AND status != SeasonalClosed
+ // transition to SeasonalClosed (with ETag in worker, bare save in event handler)
+ WRITE connection-store:"connection:{id}"
+ // invalidate graph cache
+ PUBLISH transit.connection.status-changed { forceUpdated: true }
+ ELSE IF available AND status == SeasonalClosed
+ // transition to Open
+ WRITE connection-store:"connection:{id}"
+ // invalidate graph cache
+ PUBLISH transit.connection.status-changed { forceUpdated: true }
 ```
 
 ### JourneyArchivalWorker
@@ -774,22 +774,22 @@ FOREACH realm in groups
 **Purpose**: Archives completed/abandoned journeys from Redis to MySQL. Enforces retention policy on archived journeys.
 
 ```
-LOCK transit-lock:"journey-archival-sweep"            // single-node coordination
-  READ journey-index-store:"journey-index" [with ETag]
-  FOREACH journeyId in index
-    READ journey-store:"journey:{journeyId}"
-    IF status is terminal (Arrived or Abandoned)
-      // check game-time age against JourneyArchiveAfterGameHours
-      CALL IWorldstateClient.GetRealmTimeAsync(realmId)
-      IF old enough for archival
-        WRITE journey-archive:"archive:{journeyId}" <- JourneyArchiveModel
-        DELETE journey-store:"journey:{journeyId}"
-        // remove from index list
-  ETAG-WRITE journey-index-store:"journey-index"      // save cleaned index
+LOCK transit-lock:"journey-archival-sweep" // single-node coordination
+ READ journey-index-store:"journey-index" [with ETag]
+ FOREACH journeyId in index
+ READ journey-store:"journey:{journeyId}"
+ IF status is terminal (Arrived or Abandoned)
+ // check game-time age against JourneyArchiveAfterGameHours
+ CALL IWorldstateClient.GetRealmTimeAsync(realmId)
+ IF old enough for archival
+ WRITE journey-archive:"archive:{journeyId}" <- JourneyArchiveModel
+ DELETE journey-store:"journey:{journeyId}"
+ // remove from index list
+ ETAG-WRITE journey-index-store:"journey-index" // save cleaned index
 
-  // Enforce retention policy
-  IF JourneyArchiveRetentionDays > 0
-    QUERY journey-archive WHERE createdAt < (now - retentionDays)
-    FOREACH expired in results
-      DELETE journey-archive:"archive:{id}"
+ // Enforce retention policy
+ IF JourneyArchiveRetentionDays > 0
+ QUERY journey-archive WHERE createdAt < (now - retentionDays)
+ FOREACH expired in results
+ DELETE journey-archive:"archive:{id}"
 ```

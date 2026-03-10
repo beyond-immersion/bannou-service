@@ -32,7 +32,7 @@ not player avatars.
 **Last Updated**: 2026-03-08 | **Related Plugins**: Mesh (L0), State (L0), Messaging (L0), Orchestrator (L3) | [Full FAQ](faqs/HOW-DOES-THE-MONOSERVICE-ACTUALLY-DEPLOY.md)
 
 Every service is a plugin assembly loaded at startup based on environment
-variables. The same compiled binary runs all 74 services in one process for development,
+variables. The same compiled binary runs all 76+ services in one process for development,
 or one service per container in production. The code does not know or care how it is
 deployed.
 
@@ -51,7 +51,7 @@ cosmocentric simulation with 100,000+ autonomous NPCs that runs whether players 
 No. The scope is a direct consequence of what it's trying to do -- autonomous
 NPCs, a content flywheel, and a reusable game platform each independently require dozens of
 orthogonal services. The engineering discipline exists because this is a solo developer project,
-and a solo developer managing 73 services without structural enforcement would be insane.
+and a solo developer managing 76+ services without structural enforcement would be insane.
 
 ## What Happens When a Client Connects to Bannou? {#what-happens-when-a-client-connects}
 

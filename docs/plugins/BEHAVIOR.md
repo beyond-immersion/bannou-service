@@ -134,7 +134,7 @@ This plugin does not consume external events (confirmed by `x-event-subscription
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IServiceProvider` | Singleton | Service provider for resolving optional L3 dependencies (IAssetClient) at method scope |
 | `IHttpClientFactory` | Singleton | HTTP client for asset upload operations |
-| `ITelemetryProvider` | Singleton | Span instrumentation for async methods (T30 compliance) |
+| `ITelemetryProvider` | Singleton | Span instrumentation for async methods (compliance) |
 | `IEventConsumer` | Scoped | Event consumer registration (no subscriptions - handler call is a no-op) |
 | `IGoapPlanner` (via `GoapPlanner`) | Singleton | A* search for GOAP planning (thread-safe, stateless) |
 | `BehaviorCompiler` | Singleton | ABML-to-bytecode compilation pipeline (thread-safe, stateless) |
@@ -223,12 +223,12 @@ Action "Rest": effect energy += 5
 Forward search: Apply Rest → energy = 8 → Apply Rest → energy = 13 → Goal satisfied
 
 Regressive search would need to:
-  1. Goal: energy >= 10
-  2. Find actions affecting energy → Rest (energy += 5)
-  3. Work backward: Before Rest, need energy >= 5 (10 - 5)
-  4. Still unsatisfied (3 < 5), recurse...
-  5. Need another Rest → Before that, need energy >= 0
-  6. Now current state satisfies
+ 1. Goal: energy >= 10
+ 2. Find actions affecting energy → Rest (energy += 5)
+ 3. Work backward: Before Rest, need energy >= 5 (10 - 5)
+ 4. Still unsatisfied (3 < 5), recurse...
+ 5. Need another Rest → Before that, need energy >= 0
+ 6. Now current state satisfies
 ```
 
 This requires tracking **partial satisfaction** through accumulated deltas, which essentially simulates forward search with extra complexity. The richer expression language trades regressive-search-friendliness for expressiveness.
@@ -243,227 +243,227 @@ This requires tracking **partial satisfaction** through accumulated deltas, whic
 ABML Compilation Pipeline
 ============================
 
-  YAML Source (ABML)
-       |
-       v
-  [Phase 0: DocumentParser]
-       |  Produces AbmlDocument AST
-       |  (metadata, context, flows, goals)
-       v
-  [Phase 1: SemanticAnalyzer]
-       |  Validates: undefined flows, empty conditionals,
-       |  invalid continuation points, unreachable code
-       |  Produces: errors (blocking) + warnings (info)
-       v
-  [Phase 2: AnalyzeDocument]
-       |  Registers input variables from context block
-       |  Each variable -> index in input table
-       |  Default values stored in model builder
-       v
-  [Phase 3: CompileFlows]
-       |  ActionCompilerRegistry dispatches per action type
-       |  Main flow compiled first, then remaining flows
-       |  Emits bytecode via BytecodeEmitter
-       |  Records label offsets, patches forward jumps
-       v
-  [Phase 4: Finalize]
-       |  Emits HALT opcode
-       |  Finalizes continuation points
-       |  Attaches debug info (if enabled)
-       |  Builds: ConstantPool + StringTable + Bytecode
-       v
-  CompilationResult
-       |  Success: byte[] bytecode
-       |  Failure: List<CompilationError>
+ YAML Source (ABML)
+ |
+ v
+ [Phase 0: DocumentParser]
+ | Produces AbmlDocument AST
+ | (metadata, context, flows, goals)
+ v
+ [Phase 1: SemanticAnalyzer]
+ | Validates: undefined flows, empty conditionals,
+ | invalid continuation points, unreachable code
+ | Produces: errors (blocking) + warnings (info)
+ v
+ [Phase 2: AnalyzeDocument]
+ | Registers input variables from context block
+ | Each variable -> index in input table
+ | Default values stored in model builder
+ v
+ [Phase 3: CompileFlows]
+ | ActionCompilerRegistry dispatches per action type
+ | Main flow compiled first, then remaining flows
+ | Emits bytecode via BytecodeEmitter
+ | Records label offsets, patches forward jumps
+ v
+ [Phase 4: Finalize]
+ | Emits HALT opcode
+ | Finalizes continuation points
+ | Attaches debug info (if enabled)
+ | Builds: ConstantPool + StringTable + Bytecode
+ v
+ CompilationResult
+ | Success: byte[] bytecode
+ | Failure: List<CompilationError>
 
 
 Bytecode Instruction Set (BehaviorOpcode)
 ==========================================
 
-  0x00-0x0F: Stack Operations
-    PushConst, PushInput, PushLocal, StoreLocal,
-    Pop, Dup, Swap, PushString
+ 0x00-0x0F: Stack Operations
+ PushConst, PushInput, PushLocal, StoreLocal,
+ Pop, Dup, Swap, PushString
 
-  0x10-0x1F: Arithmetic
-    Add, Sub, Mul, Div, Mod, Neg
+ 0x10-0x1F: Arithmetic
+ Add, Sub, Mul, Div, Mod, Neg
 
-  0x20-0x2F: Comparison
-    Eq, Ne, Lt, Le, Gt, Ge
+ 0x20-0x2F: Comparison
+ Eq, Ne, Lt, Le, Gt, Ge
 
-  0x30-0x3F: Logical
-    And, Or, Not
+ 0x30-0x3F: Logical
+ And, Or, Not
 
-  0x40-0x4F: Control Flow
-    Jmp, JmpIf, JmpUnless, Call, Ret, Halt, SwitchJmp
+ 0x40-0x4F: Control Flow
+ Jmp, JmpIf, JmpUnless, Call, Ret, Halt, SwitchJmp
 
-  0x50-0x5F: Output
-    SetOutput, EmitIntent (action/locomotion/attention/stance/vocalization)
+ 0x50-0x5F: Output
+ SetOutput, EmitIntent (action/locomotion/attention/stance/vocalization)
 
-  0x60-0x6F: Special/Math
-    Rand, RandInt, Lerp, Clamp, Abs, Floor, Ceil, Min, Max
+ 0x60-0x6F: Special/Math
+ Rand, RandInt, Lerp, Clamp, Abs, Floor, Ceil, Min, Max
 
-  0x70-0x7F: Streaming Composition
-    ContinuationPoint, ExtensionAvailable, YieldToExtension
+ 0x70-0x7F: Streaming Composition
+ ContinuationPoint, ExtensionAvailable, YieldToExtension
 
-  0xF0-0xFE: Debug
-    Breakpoint, Trace
+ 0xF0-0xFE: Debug
+ Breakpoint, Trace
 
-  0xFF: Reserved (Nop)
+ 0xFF: Reserved (Nop)
 
 
 GOAP A* Planning
 ==================
 
-  PlanAsync(currentState, goal, actions, options)
-       |
-       +--> Goal already satisfied? --> GoapPlan.Empty()
-       |
-       +--> No actions available? --> null
-       |
-       v
-  [A* Search Loop]
-       |
-       |  openSet: PriorityQueue<PlanNode, float> (by FCost)
-       |  closedSet: HashSet<int> (state hashes)
-       |
-       |  while openSet not empty:
-       |    |
-       |    +--> Check: cancellation, timeout, node limit
-       |    |
-       |    +--> Dequeue lowest-FCost node
-       |    |
-       |    +--> Goal check: SatisfiesGoal() --> goalNode found
-       |    |
-       |    +--> Add to closedSet (skip if duplicate hash)
-       |    |
-       |    +--> Depth limit check
-       |    |
-       |    +--> For each available action:
-       |         |  IsApplicable(currentState)?
-       |         |  Apply effects -> newState
-       |         |  Skip if newStateHash in closedSet
-       |         |  gCost = parent.GCost + action.Cost
-       |         |  hCost = newState.DistanceToGoal(goal) * weight
-       |         |  Enqueue new PlanNode
-       |
-       v
-  ReconstructPlan(goalNode)
-       |  Walk Parent chain from goal -> start
-       |  Reverse to get action order
-       |  GoapPlan(goal, actions, totalCost, stats)
+ PlanAsync(currentState, goal, actions, options)
+ |
+ +--> Goal already satisfied? --> GoapPlan.Empty()
+ |
+ +--> No actions available? --> null
+ |
+ v
+ [A* Search Loop]
+ |
+ | openSet: PriorityQueue<PlanNode, float> (by FCost)
+ | closedSet: HashSet<int> (state hashes)
+ |
+ | while openSet not empty:
+ | |
+ | +--> Check: cancellation, timeout, node limit
+ | |
+ | +--> Dequeue lowest-FCost node
+ | |
+ | +--> Goal check: SatisfiesGoal() --> goalNode found
+ | |
+ | +--> Add to closedSet (skip if duplicate hash)
+ | |
+ | +--> Depth limit check
+ | |
+ | +--> For each available action:
+ | | IsApplicable(currentState)?
+ | | Apply effects -> newState
+ | | Skip if newStateHash in closedSet
+ | | gCost = parent.GCost + action.Cost
+ | | hCost = newState.DistanceToGoal(goal) * weight
+ | | Enqueue new PlanNode
+ |
+ v
+ ReconstructPlan(goalNode)
+ | Walk Parent chain from goal -> start
+ | Reverse to get action order
+ | GoapPlan(goal, actions, totalCost, stats)
 
 
 Urgency-Tiered Planning Parameters
 =====================================
 
-  Urgency [0.0 .... 0.3 .... 0.7 .... 1.0]
-           |  LOW    |  MEDIUM  |   HIGH  |
-           |         |          |         |
-  Depth:   |   10    |    6     |    3    |
-  Timeout: |  100ms  |   50ms   |   20ms  |
-  Nodes:   | 1000    |  500     |  200    |
+ Urgency [0.0 .... 0.3 .... 0.7 .... 1.0]
+ | LOW | MEDIUM | HIGH |
+ | | | |
+ Depth: | 10 | 6 | 3 |
+ Timeout: | 100ms | 50ms | 20ms |
+ Nodes: | 1000 | 500 | 200 |
 
 
 Cognition Pipeline (5 Stages)
 ================================
 
-  Perceptions (from environment/sensors)
-       |
-       v
-  [Stage 1: Attention Filter]
-       |  Priority = urgency * categoryWeight
-       |  Budget-limited selection
-       |  Threat fast-track (urgency > 0.8 -> skip to Stage 5)
-       v
-  [Stage 2: Significance Assessment]
-       |  Score = emotional*0.4 + goalRelevance*0.4 + relationship*0.2
-       |  Above StorageThreshold (0.7)? -> Stage 3
-       v
-  [Stage 3: Memory Formation]
-       |  StoreExperienceAsync() via IMemoryStore
-       |  Keyword-based retrieval for related memories
-       |  Per-entity memory limit (100 default)
-       v
-  [Stage 4: Goal Impact Evaluation]
-       |  Check if perceptions affect current goals
-       |  Determine replanning urgency
-       v
-  [Stage 5: Intention Formation]
-       |  GOAP replanning if goals affected
-       |  Fast-tracked threats arrive here directly
-       |  Output: action intents on channels
+ Perceptions (from environment/sensors)
+ |
+ v
+ [Stage 1: Attention Filter]
+ | Priority = urgency * categoryWeight
+ | Budget-limited selection
+ | Threat fast-track (urgency > 0.8 -> skip to Stage 5)
+ v
+ [Stage 2: Significance Assessment]
+ | Score = emotional*0.4 + goalRelevance*0.4 + relationship*0.2
+ | Above StorageThreshold (0.7)? -> Stage 3
+ v
+ [Stage 3: Memory Formation]
+ | StoreExperienceAsync() via IMemoryStore
+ | Keyword-based retrieval for related memories
+ | Per-entity memory limit (100 default)
+ v
+ [Stage 4: Goal Impact Evaluation]
+ | Check if perceptions affect current goals
+ | Determine replanning urgency
+ v
+ [Stage 5: Intention Formation]
+ | GOAP replanning if goals affected
+ | Fast-tracked threats arrive here directly
+ | Output: action intents on channels
 
 
 BehaviorModelCache (Variant Fallback)
 ========================================
 
-  GetInterpreter(characterId, type, variant="sword-and-shield")
-       |
-       +--> Check ConcurrentDictionary cache
-       |    Key: (characterId, type, variant)
-       |    Hit? -> return cached interpreter
-       |
-       +--> FindBestModel(type, variant)
-       |    1. Try exact variant: "sword-and-shield"
-       |    2. Fallback chain: ["sword-and-shield", "one-handed", "default"]
-       |    3. Try each until model found
-       |
-       +--> Create BehaviorModelInterpreter(model)
-       |    Cache with resolved variant
-       |
-       +--> Return interpreter (per-character, NOT thread-safe)
+ GetInterpreter(characterId, type, variant="sword-and-shield")
+ |
+ +--> Check ConcurrentDictionary cache
+ | Key: (characterId, type, variant)
+ | Hit? -> return cached interpreter
+ |
+ +--> FindBestModel(type, variant)
+ | 1. Try exact variant: "sword-and-shield"
+ | 2. Fallback chain: ["sword-and-shield", "one-handed", "default"]
+ | 3. Try each until model found
+ |
+ +--> Create BehaviorModelInterpreter(model)
+ | Cache with resolved variant
+ |
+ +--> Return interpreter (per-character, NOT thread-safe)
 
 
 Streaming Composition (Continuation Points)
 =============================================
 
-  Base Behavior Execution:
-       |
-  [ContinuationPoint "phase_2"]  <-- Extension attachment point
-       |                              timeout: 5000ms
-       |
-       +--> Extension attached?
-       |    YES: [YieldToExtension] -> Execute extension bytecode
-       |    NO:  Wait until timeout
-       |         -> [Jmp to defaultFlow]
-       |
-  [DefaultFlow: "phase_2_default"]
-       |
-  (Continue execution...)
+ Base Behavior Execution:
+ |
+ [ContinuationPoint "phase_2"] <-- Extension attachment point
+ | timeout: 5000ms
+ |
+ +--> Extension attached?
+ | YES: [YieldToExtension] -> Execute extension bytecode
+ | NO: Wait until timeout
+ | -> [Jmp to defaultFlow]
+ |
+ [DefaultFlow: "phase_2_default"]
+ |
+ (Continue execution...)
 
-  Extension Published via:
-       CinematicExtensionAvailableEvent {
-         characterId, cinematicId,
-         continuationPointName: "phase_2",
-         extensionBytecode: <base64>,
-         expiresAtEpochMs
-       }
+ Extension Published via:
+ CinematicExtensionAvailableEvent {
+ characterId, cinematicId,
+ continuationPointName: "phase_2",
+ extensionBytecode: <base64>,
+ expiresAtEpochMs
+ }
 
 
 Memory Relevance Scoring (Keyword-Based)
 ==========================================
 
-  FindRelevantAsync(entityId, perceptions, limit)
-       |
-       v
-  For each memory x each perception:
-       |
-       +--> CategoryMatch:   0.3 * (category == perception.category ? 1 : 0)
-       |
-       +--> ContentOverlap:  0.4 * (shared words / max word count)
-       |
-       +--> MetadataOverlap: 0.2 * (shared keys / max key count)
-       |
-       +--> RecencyBonus:    0.1 * max(0, 1 - hours_since_creation)
-       |                     (only for memories < 1 hour old)
-       |
-       +--> SignificanceBonus: 0.1 * memory.Significance
-       |
-       v
-  Total = sum of above components
-  Filter: Total >= MinimumRelevanceThreshold (0.1)
-  Sort: descending by relevance
-  Take: limit
+ FindRelevantAsync(entityId, perceptions, limit)
+ |
+ v
+ For each memory x each perception:
+ |
+ +--> CategoryMatch: 0.3 * (category == perception.category ? 1 : 0)
+ |
+ +--> ContentOverlap: 0.4 * (shared words / max word count)
+ |
+ +--> MetadataOverlap: 0.2 * (shared keys / max key count)
+ |
+ +--> RecencyBonus: 0.1 * max(0, 1 - hours_since_creation)
+ | (only for memories < 1 hour old)
+ |
+ +--> SignificanceBonus: 0.1 * memory.Significance
+ |
+ v
+ Total = sum of above components
+ Filter: Total >= MinimumRelevanceThreshold (0.1)
+ Sort: descending by relevance
+ Take: limit
 ```
 
 ---
@@ -531,15 +531,15 @@ Memory Relevance Scoring (Keyword-Based)
 
 ### Bugs (Fix Immediately)
 
-1. ~~**T16 violation: Bundle event topics use Pattern B (forbidden)**~~: **FIXED** — Changed 3 bundle topics in `behavior-events.yaml` from Pattern B (`behavior-bundle.{action}`) to Pattern C (`behavior.bundle.{action}`). Regeneration needed to update generated publisher.
+1. ~~**violation: Bundle event topics use Pattern B (forbidden)**~~: **FIXED** — Changed 3 bundle topics in `behavior-events.yaml` from Pattern B (`behavior-bundle.{action}`) to Pattern C (`behavior.bundle.{action}`). Regeneration needed to update generated publisher.
 
 ### Intentional Quirks
 
 1. **WorldState hash collisions in A* closed set**: The closed set uses `int` hash codes (`GetHashCode()`) for visited-state tracking rather than full state equality. With 32-bit hashes and potentially thousands of world states explored, hash collisions can cause two failure modes:
-   - **False positive (skip valid state)**: If state A and state B hash to the same value, and A is explored first, B will be incorrectly skipped as "already visited" even though it's a different state with different goal distance.
-   - **Missed optimization**: A shorter path to the same logical state might be skipped.
+ - **False positive (skip valid state)**: If state A and state B hash to the same value, and A is explored first, B will be incorrectly skipped as "already visited" even though it's a different state with different goal distance.
+ - **Missed optimization**: A shorter path to the same logical state might be skipped.
 
-   The `ComputeHashCode` implementation orders keys before hashing for determinism, but collision probability follows the birthday problem: with ~77,000 unique states, there's a 50% chance of at least one collision. In practice, the node limits (200-1000) keep exploration well below this threshold, and the timeout bounds provide a safety net. This is a standard performance tradeoff in game AI planners—full state equality comparison on every closed-set check would be prohibitively expensive.
+ The `ComputeHashCode` implementation orders keys before hashing for determinism, but collision probability follows the birthday problem: with ~77,000 unique states, there's a 50% chance of at least one collision. In practice, the node limits (200-1000) keep exploration well below this threshold, and the timeout bounds provide a safety net. This is a standard performance tradeoff in game AI planners—full state equality comparison on every closed-set check would be prohibitively expensive.
 
 2. **Constant pool pre-seeds 0, 1, -1**: `ConstantPoolBuilder.AddCommonConstants()` pre-allocates indices 0-2 for common numeric literals. User constants start at index 3. The pre-seeded constants count against the `CompilerMaxConstants` limit (256 default), so users actually have 253 available slots.
 
@@ -584,7 +584,7 @@ Memory Relevance Scoring (Keyword-Based)
 
 4. ~~**ControlGateManager uses in-memory-only state**~~: **FIXED** (2026-03-08) - Reclassified as Intentional Quirk #15. Investigation confirmed the in-memory state is deliberately chosen: the cinematic coordination system has no API endpoints, so node-local state has no observable consequences. The migration path (Redis-backed `IControlGateRegistry`) is clear and straightforward when cinematics are exposed via API.
 
-5. ~~**VmConfig hardcoded limits not configurable**~~: **FIXED** (2026-03-08) - Investigation found no T21 violation. Of the 5 listed constants: MaxRegisters (256) is a bytecode format constraint (byte-indexed register file, architectural maximum like "bits per byte" — exempt per IMPLEMENTATION TENETS mathematical constants exception); MaxJumpOffset (65535) is a 16-bit instruction encoding constraint (same exemption); MaxInstructions, MaxFunctionArgs, and MaxNestingDepth are dead code (defined in VmConfig but never referenced by any code). DefaultCacheSize (10000, used by behavior-expressions SDK) is in the exempt standalone SDK layer per FOUNDATION TENETS schema-first exceptions. MaxConstants and MaxStrings are already configurable via BehaviorServiceConfiguration.
+5. ~~**VmConfig hardcoded limits not configurable**~~: **FIXED** (2026-03-08) - Investigation found no violation. Of the 5 listed constants: MaxRegisters (256) is a bytecode format constraint (byte-indexed register file, architectural maximum like "bits per byte" — exempt per IMPLEMENTATION TENETS mathematical constants exception); MaxJumpOffset (65535) is a 16-bit instruction encoding constraint (same exemption); MaxInstructions, MaxFunctionArgs, and MaxNestingDepth are dead code (defined in VmConfig but never referenced by any code). DefaultCacheSize (10000, used by behavior-expressions SDK) is in the exempt standalone SDK layer per FOUNDATION TENETS schema-first exceptions. MaxConstants and MaxStrings are already configurable via BehaviorServiceConfiguration.
 
 6. **GOAP planner returns null silently for multiple failure modes**: `PlanAsync` returns `null` without indicating cause when: (a) no actions available, (b) timeout exceeded, (c) cancellation requested, (d) node limit reached without finding goal. Callers cannot distinguish between "no valid plan exists" and "ran out of resources."
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/625 -->
@@ -608,12 +608,12 @@ Sends a command to a Character Brain actor via perception injection. The command
 
 ```yaml
 - actor_command:
-    target: ${attacker.actor_id}    # Required - expression evaluating to actor ID
-    command: engage_target          # Required - command name (identifier)
-    urgency: 0.8                    # Optional - default 0.7
-    params:                         # Optional - command parameters
-      target_id: ${defender.character_id}
-      strategy: aggressive
+ target: ${attacker.actor_id} # Required - expression evaluating to actor ID
+ command: engage_target # Required - command name (identifier)
+ urgency: 0.8 # Optional - default 0.7
+ params: # Optional - command parameters
+ target_id: ${defender.character_id}
+ strategy: aggressive
 ```
 
 **Parameters:**
@@ -628,12 +628,12 @@ Sends a command to a Character Brain actor via perception injection. The command
 
 ```yaml
 flows:
-  on_command_engage_target:
-    actions:
-      - set:
-          variable: current_target
-          value: ${perception.params.target_id}
-      - goto: { flow: combat_engage }
+ on_command_engage_target:
+ actions:
+ - set:
+ variable: current_target
+ value: ${perception.params.target_id}
+ - goto: { flow: combat_engage }
 ```
 
 #### actor_query (request-response)
@@ -642,10 +642,10 @@ Queries a Character Brain actor for its current state/options and stores the res
 
 ```yaml
 - actor_query:
-    target: ${defender.actor_id}    # Required - expression evaluating to actor ID
-    query: combat_readiness         # Required - query type
-    into: defender_status           # Required - variable to store result
-    timeout: 1000                   # Optional - default 1000ms
+ target: ${defender.actor_id} # Required - expression evaluating to actor ID
+ query: combat_readiness # Required - query type
+ into: defender_status # Required - variable to store result
+ timeout: 1000 # Optional - default 1000ms
 ```
 
 **Parameters:**
@@ -669,31 +669,31 @@ Queries a Character Brain actor for its current state/options and stores the res
 
 ```yaml
 flows:
-  coordinate_attack:
-    actions:
-      # Query defender's readiness
-      - actor_query:
-          target: ${defender.actor_id}
-          query: combat_readiness
-          into: defender_status
+ coordinate_attack:
+ actions:
+ # Query defender's readiness
+ - actor_query:
+ target: ${defender.actor_id}
+ query: combat_readiness
+ into: defender_status
 
-      # Conditional based on query result
-      - cond:
-          - when: ${defender_status[0].preference < 0.3}
-            then:
-              # Defender is vulnerable, press the attack
-              - actor_command:
-                  target: ${attacker.actor_id}
-                  command: engage_aggressive
-                  params:
-                    target_id: ${defender.character_id}
-          - else:
-              # Defender is ready, use caution
-              - actor_command:
-                  target: ${attacker.actor_id}
-                  command: engage_defensive
-                  params:
-                    target_id: ${defender.character_id}
+ # Conditional based on query result
+ - cond:
+ - when: ${defender_status[0].preference < 0.3}
+ then:
+ # Defender is vulnerable, press the attack
+ - actor_command:
+ target: ${attacker.actor_id}
+ command: engage_aggressive
+ params:
+ target_id: ${defender.character_id}
+ - else:
+ # Defender is ready, use caution
+ - actor_command:
+ target: ${attacker.actor_id}
+ command: engage_defensive
+ params:
+ target_id: ${defender.character_id}
 ```
 
 ### Resource Loading
@@ -706,12 +706,12 @@ Loads a resource snapshot and registers it as a variable provider for expression
 
 ```yaml
 - load_snapshot:
-    name: candidate              # Required - provider name for expressions
-    resource_type: character     # Required - resource type to load
-    resource_id: ${target_id}    # Required - expression evaluating to GUID
-    filter:                      # Optional - limit to specific source types
-      - character-personality
-      - character-history
+ name: candidate # Required - provider name for expressions
+ resource_type: character # Required - resource type to load
+ resource_id: ${target_id} # Required - expression evaluating to GUID
+ filter: # Optional - limit to specific source types
+ - character-personality
+ - character-history
 ```
 
 **Parameters:**
@@ -723,12 +723,12 @@ Loads a resource snapshot and registers it as a variable provider for expression
 **After loading, access via expressions:**
 ```yaml
 - cond:
-    - when: ${candidate.personality.aggression > 0.7}
-      then:
-        - log: "High aggression detected"
-    - when: ${candidate.history.participations | length > 5}
-      then:
-        - log: "Experienced character"
+ - when: ${candidate.personality.aggression > 0.7}
+ then:
+ - log: "High aggression detected"
+ - when: ${candidate.history.participations | length > 5}
+ then:
+ - log: "Experienced character"
 ```
 
 **Implementation Notes:**
@@ -741,34 +741,34 @@ Loads a resource snapshot and registers it as a variable provider for expression
 **Example - Event Brain loading both participants:**
 ```yaml
 flows:
-  main:
-    actions:
-      # Load attacker data
-      - load_snapshot:
-          name: attacker
-          resource_type: character
-          resource_id: ${attacker_id}
-          filter:
-            - character-personality
-            - character-encounter
+ main:
+ actions:
+ # Load attacker data
+ - load_snapshot:
+ name: attacker
+ resource_type: character
+ resource_id: ${attacker_id}
+ filter:
+ - character-personality
+ - character-encounter
 
-      # Load defender data
-      - load_snapshot:
-          name: defender
-          resource_type: character
-          resource_id: ${defender_id}
-          filter:
-            - character-personality
-            - character-history
+ # Load defender data
+ - load_snapshot:
+ name: defender
+ resource_type: character
+ resource_id: ${defender_id}
+ filter:
+ - character-personality
+ - character-history
 
-      # Use loaded data for decision making
-      - cond:
-          - when: ${attacker.personality.aggression > defender.personality.courage}
-            then:
-              - actor_command:
-                  target: ${defender.actor_id}
-                  command: intimidated
-                  urgency: 0.8
+ # Use loaded data for decision making
+ - cond:
+ - when: ${attacker.personality.aggression > defender.personality.courage}
+ then:
+ - actor_command:
+ target: ${defender.actor_id}
+ command: intimidated
+ urgency: 0.8
 ```
 
 #### resource_templates metadata (automatic filter defaults)
@@ -779,13 +779,13 @@ The `resource_templates` metadata field declares which resource snapshot types a
 ```yaml
 abml: "2.0"
 meta:
-  id: combat-coordinator
-  type: behavior
-  description: Coordinates combat between NPCs
-  resource_templates:
-    - character-personality
-    - character-history
-    - character-encounter
+ id: combat-coordinator
+ type: behavior
+ description: Coordinates combat between NPCs
+ resource_templates:
+ - character-personality
+ - character-history
+ - character-encounter
 ```
 
 **Behavior:**
@@ -803,27 +803,27 @@ meta:
 ```yaml
 abml: "2.0"
 meta:
-  id: encounter-evaluator
-  resource_templates:
-    - character-personality
-    - character-encounter
+ id: encounter-evaluator
+ resource_templates:
+ - character-personality
+ - character-encounter
 
 flows:
-  main:
-    actions:
-      # No filter specified - uses resource_templates as default
-      - load_snapshot:
-          name: candidate
-          resource_type: character
-          resource_id: ${target_id}
-      # Equivalent to:
-      # - load_snapshot:
-      #     name: candidate
-      #     resource_type: character
-      #     resource_id: ${target_id}
-      #     filter:
-      #       - character-personality
-      #       - character-encounter
+ main:
+ actions:
+ # No filter specified - uses resource_templates as default
+ - load_snapshot:
+ name: candidate
+ resource_type: character
+ resource_id: ${target_id}
+ # Equivalent to:
+ # - load_snapshot:
+ # name: candidate
+ # resource_type: character
+ # resource_id: ${target_id}
+ # filter:
+ # - character-personality
+ # - character-encounter
 ```
 
 **Template validation (Issue #294, implemented):** The `IResourceTemplateRegistry` is now fully integrated. The `SemanticAnalyzer` validates that declared template names exist in the registry via `HasTemplate()`, and validates expression paths (e.g., `${candidate.personality.aggression}`) against template schemas via `GetByNamespace()` + `ValidatePath()`. Unregistered templates produce warnings (not errors) since templates may be registered at runtime by plugins that aren't loaded during compilation.
@@ -836,20 +836,20 @@ Batch-loads multiple resource snapshots into cache before iteration. Use before 
 
 ```yaml
 - prefetch_snapshots:
-    resource_type: character
-    resource_ids: ${participants | map('id')}  # Expression → List<Guid>
-    filter:                                     # Optional
-      - character-personality
-      - character-history
+ resource_type: character
+ resource_ids: ${participants | map('id')} # Expression → List<Guid>
+ filter: # Optional
+ - character-personality
+ - character-history
 
 - foreach:
-    variable: candidate
-    collection: ${participants}
-    do:
-      - load_snapshot:        # Cache hit - instant
-          name: char
-          resource_type: character
-          resource_id: ${candidate.id}
+ variable: candidate
+ collection: ${participants}
+ do:
+ - load_snapshot: # Cache hit - instant
+ name: char
+ resource_type: character
+ resource_id: ${candidate.id}
 ```
 
 **Parameters:**
@@ -866,32 +866,32 @@ Batch-loads multiple resource snapshots into cache before iteration. Use before 
 **Example - Prefetch before iterating raid participants:**
 ```yaml
 flows:
-  evaluate_raid:
-    actions:
-      # Prefetch all participant data upfront
-      - prefetch_snapshots:
-          resource_type: character
-          resource_ids: ${raid.participants | map('character_id')}
-          filter:
-            - character-personality
+ evaluate_raid:
+ actions:
+ # Prefetch all participant data upfront
+ - prefetch_snapshots:
+ resource_type: character
+ resource_ids: ${raid.participants | map('character_id')}
+ filter:
+ - character-personality
 
-      # Now iterate - all load_snapshot calls hit cache
-      - foreach:
-          variable: p
-          collection: ${raid.participants}
-          do:
-            - load_snapshot:
-                name: participant
-                resource_type: character
-                resource_id: ${p.character_id}
-                filter:
-                  - character-personality
-            - cond:
-                - when: ${participant.personality.aggression > 0.8}
-                  then:
-                    - actor_command:
-                        target: ${p.actor_id}
-                        command: lead_charge
+ # Now iterate - all load_snapshot calls hit cache
+ - foreach:
+ variable: p
+ collection: ${raid.participants}
+ do:
+ - load_snapshot:
+ name: participant
+ resource_type: character
+ resource_id: ${p.character_id}
+ filter:
+ - character-personality
+ - cond:
+ - when: ${participant.personality.aggression > 0.8}
+ then:
+ - actor_command:
+ target: ${p.actor_id}
+ command: lead_charge
 ```
 
 ### Watcher Management
@@ -906,10 +906,10 @@ Spawns a new regional watcher for the specified realm.
 
 ```yaml
 - spawn_watcher:
-    watcher_type: regional           # Required - watcher type string
-    realm_id: ${event.realmId}       # Required - realm GUID expression
-    behavior_id: watcher-regional    # Optional - behavior document to use
-    into: spawned_watcher_id         # Optional - variable to store watcher ID
+ watcher_type: regional # Required - watcher type string
+ realm_id: ${event.realmId} # Required - realm GUID expression
+ behavior_id: watcher-regional # Optional - behavior document to use
+ into: spawned_watcher_id # Optional - variable to store watcher ID
 ```
 
 **Parameters:**
@@ -921,13 +921,13 @@ Spawns a new regional watcher for the specified realm.
 **Example:**
 ```yaml
 flows:
-  on_realm_activated:
-    actions:
-      - spawn_watcher:
-          watcher_type: regional
-          realm_id: "${event.realmId}"
-          into: regional_watcher_id
-      - log: { message: "Started regional watcher: ${regional_watcher_id}" }
+ on_realm_activated:
+ actions:
+ - spawn_watcher:
+ watcher_type: regional
+ realm_id: "${event.realmId}"
+ into: regional_watcher_id
+ - log: { message: "Started regional watcher: ${regional_watcher_id}" }
 ```
 
 #### stop_watcher
@@ -938,7 +938,7 @@ Stops a running regional watcher.
 
 ```yaml
 - stop_watcher:
-    watcher_id: ${watcher_to_stop}   # Required - watcher GUID expression
+ watcher_id: ${watcher_to_stop} # Required - watcher GUID expression
 ```
 
 **Parameters:**
@@ -947,11 +947,11 @@ Stops a running regional watcher.
 **Example:**
 ```yaml
 flows:
-  handle_stop_watcher:
-    actions:
-      - log: { message: "Stopping watcher: ${event.watcherId}" }
-      - stop_watcher:
-          watcher_id: "${event.watcherId}"
+ handle_stop_watcher:
+ actions:
+ - log: { message: "Stopping watcher: ${event.watcherId}" }
+ - stop_watcher:
+ watcher_id: "${event.watcherId}"
 ```
 
 #### list_watchers
@@ -962,9 +962,9 @@ Queries active watchers with optional filtering and stores results in a variable
 
 ```yaml
 - list_watchers:
-    into: active_watchers            # Required - variable to store results
-    realm_id: ${realm_id}            # Optional - filter by realm
-    watcher_type: regional           # Optional - filter by type
+ into: active_watchers # Required - variable to store results
+ realm_id: ${realm_id} # Optional - filter by realm
+ watcher_type: regional # Optional - filter by type
 ```
 
 **Parameters:**
@@ -983,18 +983,18 @@ Queries active watchers with optional filtering and stores results in a variable
 **Example:**
 ```yaml
 flows:
-  stop_realm_watchers:
-    actions:
-      - list_watchers:
-          into: realm_watchers
-          realm_id: "${event.realmId}"
-      - foreach:
-          variable: watcher
-          collection: "${realm_watchers}"
-          do:
-            - stop_watcher:
-                watcher_id: "${watcher.watcherId}"
-            - log: { message: "Stopped watcher: ${watcher.watcherId}" }
+ stop_realm_watchers:
+ actions:
+ - list_watchers:
+ into: realm_watchers
+ realm_id: "${event.realmId}"
+ - foreach:
+ variable: watcher
+ collection: "${realm_watchers}"
+ do:
+ - stop_watcher:
+ watcher_id: "${watcher.watcherId}"
+ - log: { message: "Stopped watcher: ${watcher.watcherId}" }
 ```
 
 ### Event Publishing
@@ -1007,10 +1007,10 @@ Publishes a typed event using a registered template. Template owners (L3/L4 plug
 
 ```yaml
 - emit_event:
-    template: encounter_resolved        # Required - registered template name
-    encounterId: ${encounter.id}        # Template-specific parameters
-    outcome: ${outcome}
-    durationSeconds: ${duration}
+ template: encounter_resolved # Required - registered template name
+ encounterId: ${encounter.id} # Template-specific parameters
+ outcome: ${outcome}
+ durationSeconds: ${duration}
 ```
 
 **Parameters:**
@@ -1024,15 +1024,15 @@ Templates are registered by the plugin that owns the event type:
 ```csharp
 // In CharacterEncounterServicePlugin.OnRunningAsync:
 _eventTemplateRegistry.Register(new EventTemplate(
-    Name: "encounter_resolved",
-    Topic: "encounter.resolved",
-    EventType: typeof(EncounterResolvedEvent),
-    PayloadTemplate: @"{
-        ""encounterId"": ""{{encounterId}}"",
-        ""outcome"": ""{{outcome}}"",
-        ""durationSeconds"": {{durationSeconds}}
-    }",
-    Description: "Encounter completed with outcome"
+ Name: "encounter_resolved",
+ Topic: "encounter.resolved",
+ EventType: typeof(EncounterResolvedEvent),
+ PayloadTemplate: @"{
+ ""encounterId"": ""{{encounterId}}"",
+ ""outcome"": ""{{outcome}}"",
+ ""durationSeconds"": {{durationSeconds}}
+ }",
+ Description: "Encounter completed with outcome"
 ));
 ```
 
@@ -1053,15 +1053,15 @@ Template-based publishing ensures:
 
 ```yaml
 flows:
-  resolve_combat:
-    actions:
-      # ... combat resolution logic ...
+ resolve_combat:
+ actions:
+ # ... combat resolution logic ...
 
-      - emit_event:
-          template: encounter_resolved
-          encounterId: ${encounter.id}
-          outcome: ${winner == attacker ? 'attacker_victory' : 'defender_victory'}
-          durationSeconds: ${(now - encounter.started_at) / 1000}
+ - emit_event:
+ template: encounter_resolved
+ encounterId: ${encounter.id}
+ outcome: ${winner == attacker ? 'attacker_victory' : 'defender_victory'}
+ durationSeconds: ${(now - encounter.started_at) / 1000}
 ```
 
 ---
@@ -1070,7 +1070,7 @@ flows:
 
 ### Completed
 
-- **2026-03-08**: Fixed stale documentation for Stub #1 (Bundle management partial) and Stub #6 (Bundle lifecycle events not published). Both were factually incorrect — `BehaviorBundleManager` is fully implemented with event publishing. Updated Published Events table to remove incorrect "not yet published" annotations. Fixed GOAP topic typo (`behavior.goap.plan-generated` → `behavior.goap-plan-generated`). Added T16 bug for Pattern B topic naming in bundle events.
+- **2026-03-08**: Fixed stale documentation for Stub #1 (Bundle management partial) and Stub #6 (Bundle lifecycle events not published). Both were factually incorrect — `BehaviorBundleManager` is fully implemented with event publishing. Updated Published Events table to remove incorrect "not yet published" annotations. Fixed GOAP topic typo (`behavior.goap.plan-generated` → `behavior.goap-plan-generated`). Added bug for Pattern B topic naming in bundle events.
 - **2026-03-08**: Wired `BytecodeOptimizer` into `CompilationContext.Finalize()` (Stub #5). The optimizer was fully implemented but never called — added conditional invocation when `EnableOptimizations` is true. Updated Potential Extension #1 to reflect that 3 peephole passes already exist.
 - **2026-03-08**: Registered Behavior Stack subsystem in DI (Stub #7). Added `IIntentStackMerger`, `IBehaviorStackRegistry`, and `ISituationalTriggerManager` as Singletons in `BehaviorServicePlugin.ConfigureServices()`. The subsystem was complete but inactive due to missing DI registrations.
 - **2026-03-08**: Registered `ICutsceneCoordinator` as Singleton in DI (Stub #8). The cutscene coordination subsystem was complete but undiscoverable due to missing DI registration. `SyncPointManager` and `InputWindowManager` are per-session and don't need DI registration.
@@ -1079,7 +1079,7 @@ flows:
 - **2026-03-08**: Fixed misleading Design Consideration #1 (memory store relevance scoring). The original text implied "older memories beyond the limit are never scored" — investigation confirmed those memories don't exist (eviction permanently deletes them per Quirk #4). Reframed to accurately describe the storage/retrieval limit coupling.
 - **2026-03-08**: Added `MaxCostBound` to GOAP planner (Design Consideration #2). Added nullable float property to `PlanningOptions`, cost bound pruning in `GoapPlanner.PlanAsync()`, `maxCostBound` field to `GoapPlanningOptions` API schema, and wired through `BehaviorService.GenerateGoapPlanAsync()`. Backward compatible.
 - **2026-03-08**: Reclassified Design Consideration #4 (ControlGateManager in-memory state) as Intentional Quirk #15. Investigation confirmed the in-memory state is deliberate: cinematic coordination has no API endpoints, so node-local state has no observable consequences. Migration path (Redis-backed `IControlGateRegistry`) is clear for when cinematics are externally exposed.
-- **2026-03-08**: Resolved Design Consideration #5 (VmConfig hardcoded limits). Investigation found no T21 violation: MaxRegisters and MaxJumpOffset are bytecode format architectural constraints (exempt as mathematical constants); MaxInstructions, MaxFunctionArgs, MaxNestingDepth are dead code (defined but never referenced); DefaultCacheSize is in the exempt SDK layer; MaxConstants and MaxStrings are already configurable.
+- **2026-03-08**: Resolved Design Consideration #5 (VmConfig hardcoded limits). Investigation found no violation: MaxRegisters and MaxJumpOffset are bytecode format architectural constraints (exempt as mathematical constants); MaxInstructions, MaxFunctionArgs, MaxNestingDepth are dead code (defined but never referenced); DefaultCacheSize is in the exempt SDK layer; MaxConstants and MaxStrings are already configurable.
 - **2026-03-09**: Reclassified Design Consideration #7 (memory index unconditional save fallback) as Intentional Quirk #17. Investigation of `ActorLocalMemoryStore.AddToMemoryIndexAsync` (lines 271-352) confirmed the unconditional save fallback is an intentional safety valve: actor behavior loops are single-threaded (Quirk #13), making concurrent writes extremely unlikely; losing one concurrent index entry on fallback is less harmful than dropping the memory entirely.
 
 ### AUDIT Markers

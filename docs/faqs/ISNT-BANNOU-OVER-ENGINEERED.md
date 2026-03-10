@@ -5,7 +5,7 @@
 > **Short Answer**: No. The scope is a direct consequence of what it's trying to do -- autonomous
 > NPCs, a content flywheel, and a reusable game platform each independently require dozens of
 > orthogonal services. The engineering discipline exists because this is a solo developer project,
-> and a solo developer managing 73 services without structural enforcement would be insane.
+> and a solo developer managing 76+ services without structural enforcement would be insane.
 
 ---
 
@@ -20,11 +20,11 @@ There's no single named rule that says "thou shalt not exceed N services," but t
 
 The convergence point across all of these is somewhere around **10-15 deeply interconnected services** before a system becomes unmanageable through human discipline alone. Not because of a specific rule, but because that's where cognitive load, dependency graphs, and convention drift simultaneously exceed what people can hold in their heads.
 
-**Bannou has 73 services and 901 endpoints.** It exceeds this threshold by 5x.
+**Bannou has 76+ services and 903+ endpoints.** It exceeds this threshold by 5x.
 
 **Bannou is built by a single developer.**
 
-That combination sounds impossible. It should be. A solo developer cannot hold 73 services in their head. Cannot maintain consistent conventions across 901 endpoints through willpower. Cannot manually track 2,628 possible pairwise dependency relationships. Cannot remember why every service publishes to every event topic.
+That combination sounds impossible. It should be. A solo developer cannot hold 76+ services in their head. Cannot maintain consistent conventions across 903+ endpoints through willpower. Cannot manually track 2,850+ possible pairwise dependency relationships. Cannot remember why every service publishes to every event topic.
 
 So the question isn't "isn't this over-engineered?" The question is "how does one person manage this without going insane?" The answer is: **by making the system manage itself.**
 
@@ -38,11 +38,11 @@ The solo developer context is not a flex. It's an explanation. Specifically, it 
 
 **Why the discipline is so strict.** A 200-person company can afford some convention drift because different teams own different services and tribal knowledge distributes across people. A solo developer has exactly one brain. If a convention isn't generated or validated automatically, it will drift. If a dependency isn't enforced by a compiler or validator, it will form. If documentation isn't structured and maintained alongside code, it will rot. The strictness isn't perfectionism -- it's survival.
 
-**Why the tooling investment is so high.** 185 maintained YAML schemas, custom code generators, a `ServiceHierarchyValidator`, 74 deep dive documents, four tiers of testing, generated clients -- this looks like massive overhead. For a team, it might be. For one person, it's the only reason the system works. The upfront investment in automation pays back every single day because there is nobody else to catch mistakes.
+**Why the tooling investment is so high.** 185 maintained YAML schemas, custom code generators, a `ServiceHierarchyValidator`, 76+ deep dive documents, four tiers of testing, generated clients -- this looks like massive overhead. For a team, it might be. For one person, it's the only reason the system works. The upfront investment in automation pays back every single day because there is nobody else to catch mistakes.
 
 ---
 
-## Why 73 Services Isn't a Choice -- It's a Consequence
+## Why 76+ Services Isn't a Choice -- It's a Consequence
 
 The question assumes you could build what Bannou builds with fewer services. You can't. Here's why:
 
@@ -81,7 +81,7 @@ These aren't over-engineering. They're the difference between "a game that has a
 
 ---
 
-## How One Person Manages 73 Services
+## How One Person Manages 76+ Services
 
 The cognitive load wall is real, but its failure modes are specific and addressable. Bannou addresses every one of them through structural enforcement -- mechanisms that catch mistakes automatically because there is no second developer to catch them manually.
 
@@ -98,11 +98,11 @@ L4: Game Features (behavior, analytics, matchmaking, escrow, ...)
 L5: Extensions (third-party plugins)
 ```
 
-At 73 services with no hierarchy, there are 2,628 possible pairwise dependencies. With the hierarchy, the number of *allowed* dependencies drops dramatically, and the number of *actual* dependencies is far lower still. A Layer 2 service literally cannot import a Layer 4 client -- the code won't compile, the validator will fail, and the deep dive document will flag it.
+At 76+ services with no hierarchy, there are 2,850+ possible pairwise dependencies. With the hierarchy, the number of *allowed* dependencies drops dramatically, and the number of *actual* dependencies is far lower still. A Layer 2 service literally cannot import a Layer 4 client -- the code won't compile, the validator will fail, and the deep dive document will flag it.
 
 When data needs to flow upward (e.g., L4 personality data into L2 actor runtime), it uses the **Variable Provider Factory pattern** -- L2 defines an interface in shared code, L4 implements it, DI discovers implementations at runtime. The dependency is on the interface (shared), not on the implementation (L4). This pattern is used for NPC variable providers, quest prerequisite providers, and behavior document providers.
 
-The hierarchy transforms 73 services from a fully connected graph into a directed acyclic graph with known, enforced boundaries. This is the single most important reason the system doesn't collapse.
+The hierarchy transforms 76+ services from a fully connected graph into a directed acyclic graph with known, enforced boundaries. This is the single most important reason the system doesn't collapse.
 
 ### 2. Schema-First Development (Kills Convention Drift and Schema Drift)
 
@@ -120,7 +120,7 @@ Convention drift is impossible when convention is generated, not hand-written.
 
 ### 3. Deep Dive Documents (Kills Knowledge Silos)
 
-Every one of the 73 services has a comprehensive deep dive document in `docs/plugins/`. These aren't README files -- they're structured technical documents covering:
+Every one of the 76+ services has a comprehensive deep dive document in `docs/plugins/`. These aren't README files -- they're structured technical documents covering:
 
 - Service purpose and layer placement
 - Every endpoint with behavior description
@@ -152,7 +152,7 @@ The key insight is **isolation boundaries match the service hierarchy**. Unit te
 - `http-tester/` tests service interactions via generated HTTP clients.
 - `edge-tester/` tests the full WebSocket protocol path.
 
-This means adding service #74 doesn't make the existing test suite slower or more complex. Its unit tests are isolated. Its integration tests only involve its direct dependencies. The combinatorial explosion is contained by the same hierarchy that contains the dependency graph.
+This means adding service #77 doesn't make the existing test suite slower or more complex. Its unit tests are isolated. Its integration tests only involve its direct dependencies. The combinatorial explosion is contained by the same hierarchy that contains the dependency graph.
 
 ### 5. Plugin Architecture (Kills Deployment Complexity)
 
@@ -170,11 +170,32 @@ ACCOUNT_SERVICE_ENABLED=true
 
 The same binary deploys as a monolith (development), a targeted subset (testing), or fully distributed microservices (production). Services don't know or care how they're deployed. The `PluginLoader` handles assembly loading, DI registration, and layer-ordered startup.
 
-This means 73 services don't mean 73 deployment targets. They mean one binary with 73 feature flags. Local development runs everything in one process. CI runs targeted subsets. Production distributes based on load characteristics.
+This means 76+ services don't mean 73 deployment targets. They mean one binary with 73 feature flags. Local development runs everything in one process. CI runs targeted subsets. Production distributes based on load characteristics.
 
 ### 6. Generated Clients (Kills Integration Drift)
 
 Service-to-service communication uses NSwag-generated client libraries. When a schema changes, both the service implementation AND every client that calls it are regenerated from the same source. There is no scenario where ServiceA thinks ServiceB accepts a string but ServiceB actually expects a GUID -- the generated client enforces type safety at compile time.
+
+### The Common Thread: DRY as Survival Strategy
+
+All six mechanisms above are expressions of the same underlying principle: **Don't Repeat Yourself** (DRY). The term comes from *The Pragmatic Programmer* (Hunt & Thomas, 1999) and states that "every piece of knowledge must have a single, unambiguous, authoritative representation within a system." In most codebases, DRY is an aspiration -- a guideline that developers try to follow when they remember. In Bannou, DRY is a structural necessity. A solo developer managing 76+ services cannot afford to have the same knowledge expressed in two places, because when it changes (and it will), there is nobody to remember to update both.
+
+Look at the six mechanisms through this lens:
+
+| Mechanism | What's Defined Once | What's Generated/Derived |
+|-----------|-------------------|--------------------------|
+| Service Hierarchy | Layer assignments + dependency rules | Compile-time enforcement, validator checks, test isolation boundaries |
+| Schema-First Development | 185 YAML schemas | 400+ generated files: controllers, interfaces, models, clients, configuration (~5:1 amplification) |
+| Deep Dive Documents | Structured knowledge per service | Auditable against actual implementation (single source of truth for human understanding) |
+| Four-Tier Testing | Test isolation boundaries (matching hierarchy) | Each service's test scope is determined by its layer, not manually curated |
+| Plugin Architecture | One binary + environment variables | Any deployment topology from monolith to full distribution |
+| Generated Clients | Schema contract | Type-safe service-to-service communication across all consumers |
+
+The error model is defined once in `common-api.yaml` -- not hand-written in 76+ services. The state store abstraction is defined once in lib-state -- not reimplemented per service. The event publishing pattern is defined once in the generator templates -- not copy-pasted into every event handler. Configuration loading is defined once in the `[ServiceConfiguration]` attribute pattern -- not written 76+ different ways.
+
+The 5:1 amplification ratio (114K lines of YAML producing 579K lines of generated C#) is DRY in its most aggressive form. Those 579K lines of C# don't exist as maintained code -- they're derived artifacts. The actual maintained surface area is the 114K lines of YAML plus the business logic in each service's `*Service.cs`. That's the real size of the system. Everything else is a projection of those definitions.
+
+This is why the "over-engineered" framing misses the point. The generation pipeline, the hierarchy validators, the deep dive auditing, the test isolation boundaries -- these aren't complexity added on top of 76+ services. They're complexity *removed* from 76+ services by ensuring that every decision is made once and propagated mechanically. The alternative -- making the same decision 73 times and hoping for consistency -- is the actual over-engineering, because it requires 73x the maintenance effort for the same outcome.
 
 ---
 
@@ -192,7 +213,7 @@ The implicit suggestion behind "isn't this over-engineered?" is that a simpler s
 
 ## The Real Question
 
-The real question isn't "is 73 services too many?" It's "can one person keep 73 services coherent?" The answer is yes -- but only if the system enforces its own coherence instead of relying on the developer to remember everything.
+The real question isn't "is 76+ services too many?" It's "can one person keep 76+ services coherent?" The answer is yes -- but only if the system enforces its own coherence instead of relying on the developer to remember everything.
 
 Bannou doesn't rely on the developer to "please follow the hierarchy." It enforces the hierarchy with validators, generated code, test isolation boundaries, and a plugin loader that sorts by layer. Convention isn't documented and hoped for -- it's generated. Knowledge isn't in one person's head -- it's in deep dives and schemas that are audited against the actual implementation. Dependencies aren't guidelines that might be forgotten -- they're compile-time constraints that fail the build.
 

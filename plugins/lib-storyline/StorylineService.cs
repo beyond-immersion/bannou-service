@@ -1627,7 +1627,7 @@ public partial class StorylineService : IStorylineService
     }
 
     /// <summary>
-    /// Calculates plan confidence score using config-driven thresholds (T21 compliant).
+    /// Calculates plan confidence score using config-driven thresholds (IMPLEMENTATION TENETS compliant).
     /// </summary>
     private double CalculateConfidence(StorylinePlan plan)
     {
@@ -1700,7 +1700,7 @@ public partial class StorylineService : IStorylineService
     }
 
     /// <summary>
-    /// Identifies potential risks in the plan using config-driven thresholds (T21 compliant).
+    /// Identifies potential risks in the plan using config-driven thresholds (IMPLEMENTATION TENETS compliant).
     /// </summary>
     private IEnumerable<StorylineRisk> IdentifyRisks(StorylinePlan plan)
     {

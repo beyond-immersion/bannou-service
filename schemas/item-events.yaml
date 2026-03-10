@@ -27,6 +27,9 @@ info:
     - topic: item.template.updated
       event: ItemTemplateUpdatedEvent
       description: Published when an item template is updated (including deprecation via changedFields)
+    - topic: item.template.deleted
+      event: ItemTemplateDeletedEvent
+      description: "Unused Category B infrastructure — templates are never deleted. Publisher method exists in generated code but is never called."
 
     # Instance lifecycle events (auto-generated from x-lifecycle)
     - topic: item.instance.created
@@ -73,6 +76,7 @@ info:
 x-lifecycle:
   topic_prefix: item
   ItemTemplate:
+    deprecation: true
     model:
       templateId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the item template" }
       code: { type: string, required: true, description: "Unique item code within game" }
@@ -90,9 +94,6 @@ x-lifecycle:
       hasDurability: { type: boolean, required: true, description: "Whether item has durability system" }
       maxDurability: { type: integer, nullable: true, description: "Maximum durability value (if hasDurability is true)" }
       isActive: { type: boolean, required: true, description: "Whether template is currently active" }
-      isDeprecated: { type: boolean, required: true, description: "Whether template is deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the template was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
       migrationTargetId: { type: string, format: uuid, nullable: true, description: "Template ID to migrate existing instances to" }
     sensitive: []
 

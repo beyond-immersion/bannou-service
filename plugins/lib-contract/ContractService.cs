@@ -1111,7 +1111,7 @@ public partial class ContractService : IContractService
             return (StatusCodes.NotFound, null);
         }
 
-        // Only terminal-state instances can be deleted (per IMPLEMENTATION TENETS: T31 immediate hard delete for instances)
+        // Only terminal-state instances can be deleted (per IMPLEMENTATION TENETS: immediate hard delete for instances)
         var terminalStatuses = new[] { ContractStatus.Fulfilled, ContractStatus.Terminated, ContractStatus.Expired, ContractStatus.Declined };
         if (!terminalStatuses.Contains(model.Status))
         {
@@ -2751,6 +2751,7 @@ public partial class ContractService : IContractService
 
     private async Task PublishTemplateCreatedEventAsync(ContractTemplateModel model, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.contract", "ContractService.PublishTemplateCreatedEventAsync");
         await _messageBus.PublishContractTemplateCreatedAsync(new ContractTemplateCreatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -2775,6 +2776,7 @@ public partial class ContractService : IContractService
     private async Task PublishTemplateUpdatedEventAsync(
         ContractTemplateModel model, List<string> changedFields, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.contract", "ContractService.PublishTemplateUpdatedEventAsync");
         await _messageBus.PublishContractTemplateUpdatedAsync(new ContractTemplateUpdatedEvent
         {
             EventId = Guid.NewGuid(),

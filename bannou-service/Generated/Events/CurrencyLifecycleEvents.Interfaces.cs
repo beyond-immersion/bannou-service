@@ -13,9 +13,9 @@ using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Events;
 
-public partial class CurrencyDefinitionCreatedEvent : ILifecycleCreatedEvent { }
-public partial class CurrencyDefinitionUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class CurrencyDefinitionDeletedEvent : ILifecycleDeletedEvent { }
+public partial class CurrencyDefinitionCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class CurrencyDefinitionUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class CurrencyDefinitionDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
 
 public partial class CurrencyWalletCreatedEvent : ILifecycleCreatedEvent { }
 public partial class CurrencyWalletUpdatedEvent : ILifecycleUpdatedEvent { }

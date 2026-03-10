@@ -22,14 +22,14 @@ Item modifier definition, instance management, and stat computation service (L4 
 
 The question arises: why not store affix data in `ItemInstance.instanceMetadata` and let services read it directly?
 
-**Because that is a T29 violation.** Storing structured affix data in lib-item's freeform metadata field and having lib-craft, lib-loot, and lib-market read it by convention (knowing key names and expected types without schema enforcement) is the exact anti-pattern that FOUNDATION TENETS (T29: No Metadata Bag Contracts) forbids. If lib-affix renames a metadata key, every consuming service breaks silently -- no compiler error, no schema validation failure, no test failure.
+**Because that is a violation.** Storing structured affix data in lib-item's freeform metadata field and having lib-craft, lib-loot, and lib-market read it by convention (knowing key names and expected types without schema enforcement) is the exact anti-pattern that FOUNDATION TENETS (No Metadata Bag Contracts) forbids. If lib-affix renames a metadata key, every consuming service breaks silently -- no compiler error, no schema validation failure, no test failure.
 
 **The correct pattern**: lib-affix owns its domain data in its own typed schema and state stores, and exposes it through its own API. Other services query lib-affix, not metadata blobs from lib-item responses.
 
 | Concern | lib-item (L2) | lib-affix (L4) |
 |---------|---------------|----------------|
 | **What it stores** | Item templates, instances, quantities, binding, container references | Affix definitions AND per-item applied affix state |
-| **What it knows** | "This item exists with this template" | "This item has a T3 fire resistance suffix from the Elemental Defense mod group" |
+| **What it knows** | "This item exists with this template" | "This item has a fire resistance suffix from the Elemental Defense mod group" |
 | **Instance data** | Item properties (quantity, durability, binding) | Applied modifiers (slots, rolled values, states, influences, quality) |
 | **Modification rules** | None for affix data | Mod group exclusivity, slot limits by rarity, influence requirements, state flags |
 | **Computation** | None | Stat aggregation from base + implicits + explicits + quality + sockets |
@@ -40,7 +40,7 @@ lib-item is L2 (GameFoundation) because every game needs items. lib-affix is L4 
 **What they share is identity, not storage**: lib-affix uses the `itemInstanceId` from lib-item as its foreign key. When lib-affix stores affix data for an item, the key is the item instance ID. This means:
 - lib-item owns the item lifecycle (create, destroy)
 - lib-affix owns the modifier lifecycle (initialize, apply, remove, reroll)
-- lib-affix implements `IItemInstanceDestructionListener` to clean up its own state when items are destroyed (DI Listener pattern, not event subscription — high-frequency T28 exception)
+- lib-affix implements `IItemInstanceDestructionListener` to clean up its own state when items are destroyed (DI Listener pattern, not event subscription — high-frequency exception)
 - Other services call lib-affix's API for modifier data, not lib-item's metadata
 
 This follows the same ownership pattern as other L4 services: lib-character-personality owns personality data keyed by characterId, lib-character-encounter owns encounter data keyed by characterId. lib-affix owns affix data keyed by itemInstanceId.
@@ -84,57 +84,57 @@ An affix definition is the template that describes a modifier. It defines what t
 
 ```
 AffixDefinition:
-  definitionId: Guid
-  gameServiceId: Guid          # Scoped per game service (like ItemTemplate)
-  code: string                 # Unique within game service (e.g., "increased_life_t1")
+ definitionId: Guid
+ gameServiceId: Guid # Scoped per game service (like ItemTemplate)
+ code: string # Unique within game service (e.g., "increased_life_t1")
 
-  # Classification
-  slotType: string             # "implicit", "prefix", "suffix", "enchant", or custom
-  modGroup: string             # Exclusivity group (e.g., "IncreasedLife")
-  tier: int                    # 1 = best, higher = weaker (within mod group)
-  category: string             # Broad classification (e.g., "defense", "offense")
-  tags: [string]               # Generation tags for pool filtering
+ # Classification
+ slotType: string # "implicit", "prefix", "suffix", "enchant", or custom
+ modGroup: string # Exclusivity group (e.g., "IncreasedLife")
+ tier: int # 1 = best, higher = weaker (within mod group)
+ category: string # Broad classification (e.g., "defense", "offense")
+ tags: [string] # Generation tags for pool filtering
 
-  # Requirements
-  requiredItemLevel: int       # Minimum item level to spawn
-  requiredInfluences: [string] # Required influence types (empty = no requirement)
-  validItemClasses: [string]   # Item template categories this can appear on
+ # Requirements
+ requiredItemLevel: int # Minimum item level to spawn
+ requiredInfluences: [string] # Required influence types (empty = no requirement)
+ validItemClasses: [string] # Item template categories this can appear on
 
-  # Stat Grants (supports hybrid mods -- multiple grants per definition)
-  statGrants:
-    - statCode: string         # "maximum_life", "fire_resistance", etc.
-      minValue: decimal
-      maxValue: decimal
+ # Stat Grants (supports hybrid mods -- multiple grants per definition)
+ statGrants:
+ - statCode: string # "maximum_life", "fire_resistance", etc.
+ minValue: decimal
+ maxValue: decimal
 
-  # Generation
-  spawnWeight: int             # Base weight for weighted random selection (1000 typical)
-  spawnTagModifiers:           # Per-tag weight multipliers (typed array, not freeform object)
-    - tag: string              #   e.g., "amulet", "ring"
-      weightMultiplier: int    #   e.g., 0 (can't appear), 1500 (more likely)
+ # Generation
+ spawnWeight: int # Base weight for weighted random selection (1000 typical)
+ spawnTagModifiers: # Per-tag weight multipliers (typed array, not freeform object)
+ - tag: string # e.g., "amulet", "ring"
+ weightMultiplier: int # e.g., 0 (can't appear), 1500 (more likely)
 
-  # Display
-  displayName: string          # "of the Godslayer" (suffix), "Blazing" (prefix)
-  displayOrder: int            # Sorting priority within slot type
+ # Display
+ displayName: string # "of the Godslayer" (suffix), "Blazing" (prefix)
+ displayOrder: int # Sorting priority within slot type
 
-  # Deprecation (Category B -- deprecate-only, no delete, no undeprecate)
-  isDeprecated: bool
-  deprecatedAt: DateTimeOffset?
-  deprecationReason: string?
+ # Deprecation (Category B -- deprecate-only, no delete, no undeprecate)
+ isDeprecated: bool
+ deprecatedAt: DateTimeOffset?
+ deprecationReason: string?
 ```
 
 **Key design decisions**:
 
 1. **Slot types are opaque strings**, not enums. "prefix", "suffix", "implicit", "enchant" are conventions -- games define their own slot types. A game might use "rune", "inscription", "blessing" as slot types.
 
-2. **Mod groups enforce exclusivity**: Only one affix from a given mod group can appear on an item. All tiers within a group compete for the same "slot" -- you can't have T1 life AND T3 life on the same item.
+2. **Mod groups enforce exclusivity**: Only one affix from a given mod group can appear on an item. All tiers within a group compete for the same "slot" -- you can't have life AND life on the same item.
 
 3. **Stat grants are a list** (not a single stat): Hybrid mods grant multiple stats from one affix. "Subterranean" prefix grants +Life AND +Mana. One prefix slot, two stat lines. This is fundamental to interesting modifier design.
 
 4. **Spawn tag modifiers** allow per-context weight overrides. A mod might have base weight 1000 but weight 0 on amulets (can't appear there) and weight 1500 on rings (more likely there). This replaces a rigid "valid item classes" list with a weighted probability system. Modeled as a typed array of `{ tag, weightMultiplier }` objects (not freeform `object`/`additionalProperties: true`).
 
-5. **Affix definitions are Category B deprecation** (per IMPLEMENTATION TENETS T31). Definitions are templates where applied affix instances permanently reference the definition ID. Definitions must remain readable forever. No delete endpoint, no undeprecate endpoint. Deprecated definitions cannot be applied to new items (see ApplyAffix deprecation guard below). The `isActive` field is redundant with deprecation and is NOT included -- deprecation IS the mechanism for marking a definition as inactive.
+5. **Affix definitions are Category B deprecation** (per IMPLEMENTATION TENETS). Definitions are templates where applied affix instances permanently reference the definition ID. Definitions must remain readable forever. No delete endpoint, no undeprecate endpoint. Deprecated definitions cannot be applied to new items (see ApplyAffix deprecation guard below). The `isActive` field is redundant with deprecation and is NOT included -- deprecation IS the mechanism for marking a definition as inactive.
 
-6. **Effective rarity is an opaque string** (Category B per T14 decision tree -- game designers define new rarity tiers at deployment time). Default conventions are "normal", "magic", "rare", "unique", but games may define "common/uncommon/rare/legendary" or any other rarity scheme. Not an enum.
+6. **Effective rarity is an opaque string** (Category B per tenets decision tree -- game designers define new rarity tiers at deployment time). Default conventions are "normal", "magic", "rare", "unique", but games may define "common/uncommon/rare/legendary" or any other rarity scheme. Not an enum.
 
 ### Affix Instance Data (The Instance Layer)
 
@@ -142,41 +142,41 @@ Each item managed by lib-affix has a corresponding record in Affix's own instanc
 
 ```
 AffixInstanceModel:
-  itemInstanceId: Guid         # Foreign key to lib-item (NOT a Guid owned by Affix)
-  gameServiceId: Guid
-  effectiveRarity: string      # Opaque string (Category B per T14 -- game-configurable rarity codes; defaults: "normal", "magic", "rare", "unique")
-  itemLevel: int               # Set at creation time (from source level)
+ itemInstanceId: Guid # Foreign key to lib-item (NOT a Guid owned by Affix)
+ gameServiceId: Guid
+ effectiveRarity: string # Opaque string (Category B per tenets -- game-configurable rarity codes; defaults: "normal", "magic", "rare", "unique")
+ itemLevel: int # Set at creation time (from source level)
 
-  implicitSlots: [AffixSlotModel]
-  prefixSlots: [AffixSlotModel]
-  suffixSlots: [AffixSlotModel]
-  enchantSlots: [AffixSlotModel]
+ implicitSlots: [AffixSlotModel]
+ prefixSlots: [AffixSlotModel]
+ suffixSlots: [AffixSlotModel]
+ enchantSlots: [AffixSlotModel]
 
-  influences: [string]         # Leyline attunement types unlocking exclusive pools
-  states: AffixStatesModel     # Boolean flags gating valid operations
-  quality: int                 # 0-30, affects stat computation
+ influences: [string] # Leyline attunement types unlocking exclusive pools
+ states: AffixStatesModel # Boolean flags gating valid operations
+ quality: int # 0-30, affects stat computation
 
 AffixSlotModel:
-  definitionId: Guid
-  definitionCode: string       # Denormalized for display efficiency
-  modGroup: string             # Denormalized for exclusivity validation efficiency
-  rolledValues: [decimal]      # One per stat grant in the definition
-  isFractured: bool            # Permanently locked -- cannot be removed
+ definitionId: Guid
+ definitionCode: string # Denormalized for display efficiency
+ modGroup: string # Denormalized for exclusivity validation efficiency
+ rolledValues: [decimal] # One per stat grant in the definition
+ isFractured: bool # Permanently locked -- cannot be removed
 
 AffixStatesModel:
-  isCorrupted: bool
-  isMirrored: bool
-  isSplit: bool
-  isIdentified: bool
-  isSynthesized: bool
+ isCorrupted: bool
+ isMirrored: bool
+ isSplit: bool
+ isIdentified: bool
+ isSynthesized: bool
 ```
 
 **Lifecycle**:
 - **Created** by `InitializeItemAffixes` (called by lib-loot after creating the item) or by `ApplyAffix` on an item that has no affix instance yet
 - **Modified** by `ApplyAffix`, `RemoveAffix`, `RerollValues`, and state-change operations
-- **Destroyed** when lib-affix's `IItemInstanceDestructionListener` receives in-process cleanup notification from lib-item (high-frequency T28 exception; orphan reconciliation worker as durability guarantee)
+- **Destroyed** when lib-affix's `IItemInstanceDestructionListener` receives in-process cleanup notification from lib-item (high-frequency exception; orphan reconciliation worker as durability guarantee)
 
-**Why this matters for T29 compliance**: Every service that needs affix data calls lib-affix's API. lib-craft calls `/affix/apply` to add modifiers during crafting. lib-loot calls `/affix/generate/set` then `/affix/initialize` to create affixed items. lib-market subscribes to `affix.modifier.applied` events to maintain its trade index. No service parses metadata blobs. No service knows affix key names by convention. If Affix restructures its internal model, no other service breaks.
+**Why this matters for compliance**: Every service that needs affix data calls lib-affix's API. lib-craft calls `/affix/apply` to add modifiers during crafting. lib-loot calls `/affix/generate/set` then `/affix/initialize` to create affixed items. lib-market subscribes to `affix.modifier.applied` events to maintain its trade index. No service parses metadata blobs. No service knows affix key names by convention. If Affix restructures its internal model, no other service breaks.
 
 ### Affix Slots and Limits
 
@@ -201,18 +201,18 @@ Mod groups prevent conflicting modifiers. Every affix definition belongs to exac
 
 ### Tiers and Item Level Gating
 
-Within a mod group, tiers represent power levels. T1 is the best, T12+ the weakest. Tiers are gated by item level:
+Within a mod group, tiers represent power levels. is the best,+ the weakest. Tiers are gated by item level:
 
 ```
 Mod Group: "IncreasedLife"
-  T1: +110-119 Life, requires iLvl 86, weight 200
-  T2: +100-109 Life, requires iLvl 82, weight 250
-  T3: +90-99  Life, requires iLvl 74, weight 400
-  T4: +80-89  Life, requires iLvl 64, weight 800
-  ...
+ +110-119 Life, requires iLvl 86, weight 200
+ +100-109 Life, requires iLvl 82, weight 250
+ +90-99 Life, requires iLvl 74, weight 400
+ +80-89 Life, requires iLvl 64, weight 800
+ ...
 ```
 
-When generating an affix for an iLvl 75 item, T1 and T2 are excluded (item level too low). T3 through T4+ are valid, and T3 enters the weighted pool at weight 400 while T4 enters at weight 800 (lower tiers are more likely).
+When generating an affix for an iLvl 75 item, and are excluded (item level too low). through+ are valid, and enters the weighted pool at weight 400 while enters at weight 800 (lower tiers are more likely).
 
 **Item level** is stored on the affix instance (in `AffixInstanceModel.itemLevel`), set at instance creation time (typically from the source's level: monster level for drops, zone level for chests, recipe output level for crafting).
 
@@ -222,18 +222,18 @@ The core algorithm for affix generation:
 
 ```
 GenerateAffix(itemClass, itemLevel, slotType, existingAffixes, influences, weightModifiers):
-  1. Load all definitions matching (gameServiceId, slotType, validItemClasses includes itemClass)
-  2. Filter: requiredItemLevel <= itemLevel
-  3. Filter: requiredInfluences subset of influences (or empty)
-  4. Filter: modGroup NOT IN existing affix mod groups
-  5. For each remaining definition:
-     a. Start with base spawnWeight
-     b. Apply spawnTagModifiers for the item class
-     c. Apply external weightModifiers (passed by caller)
-     d. If weight <= 0, exclude
-  6. Weighted random selection from the remaining pool
-  7. Roll values: for each statGrant, random uniform between minValue and maxValue
-  8. Return (definitionId, rolledValues)
+ 1. Load all definitions matching (gameServiceId, slotType, validItemClasses includes itemClass)
+ 2. Filter: requiredItemLevel <= itemLevel
+ 3. Filter: requiredInfluences subset of influences (or empty)
+ 4. Filter: modGroup NOT IN existing affix mod groups
+ 5. For each remaining definition:
+ a. Start with base spawnWeight
+ b. Apply spawnTagModifiers for the item class
+ c. Apply external weightModifiers (passed by caller)
+ d. If weight <= 0, exclude
+ 6. Weighted random selection from the remaining pool
+ 7. Roll values: for each statGrant, random uniform between minValue and maxValue
+ 8. Return (definitionId, rolledValues)
 ```
 
 **Performance at scale**: For 100K NPCs making economic decisions, affix pool generation must be fast. The pool computation (steps 1-5) is definition-level data that doesn't change per item instance. Pre-computed pools are cached in Redis by `{gameServiceId}:{itemClass}:{slotType}:{ilvlBucket}:{influenceSet}`, with TTL measured in hours. Only the final weighted selection and value rolling are per-instance operations.
@@ -269,10 +269,10 @@ Influences are properties on items that unlock exclusive affix pools:
 
 ```
 Item: "Shaper-influenced Vaal Regalia" (body armour)
-  influences: ["shaper"]
-  -> unlocks Shaper-exclusive affixes (e.g., "Nearby enemies have -9% fire resistance")
-  -> these affixes have requiredInfluences: ["shaper"]
-  -> normal affixes remain available alongside exclusive ones
+ influences: ["shaper"]
+ -> unlocks Shaper-exclusive affixes (e.g., "Nearby enemies have -9% fire resistance")
+ -> these affixes have requiredInfluences: ["shaper"]
+ -> normal affixes remain available alongside exclusive ones
 ```
 
 An item can have multiple influences (e.g., dual-influenced items), unlocking affixes from multiple exclusive pools. Influence types are opaque strings defined per game. Influences are stored on the affix instance and modified via `/affix/influence/set`.
@@ -340,111 +340,111 @@ Sockets are purely a stat computation concern for lib-affix. The physical contai
 Affix Service Architecture (Own-Instance-Store Model)
 ======================================================
 
-  DEFINITION LAYER (owned by lib-affix, MySQL + Redis cache)
-  +-----------------------------------------------------------------+
-  |  AffixDefinition           ImplicitMapping                      |
-  |  +--------------------+    +---------------------------+        |
-  |  | code: "life_t1"    |    | itemTemplateCode:         |        |
-  |  | slotType: "prefix"  |    |   "body_armour_regalia"  |        |
-  |  | modGroup:           |    | implicits:                |        |
-  |  |   "IncreasedLife"   |    |   - ruby_fire_res         |        |
-  |  | statGrants:         |    |   - mithril_magic_res     |        |
-  |  |   life: 110-119     |    +---------------------------+        |
-  |  | spawnWeight: 200    |                                         |
-  |  +--------------------+                                         |
-  +-----------------------------------------------------------------+
-           |
-           | GenerateAffixSet / ApplyAffix
-           v
-  INSTANCE LAYER (owned by lib-affix, MySQL + Redis cache)
-  +-----------------------------------------------------------------+
-  |  AffixInstanceModel (keyed by itemInstanceId)                   |
-  |  +-----------------------------------------------------------+ |
-  |  | itemInstanceId: 3fa8...                                    | |
-  |  | effectiveRarity: "rare"                                    | |
-  |  | itemLevel: 75                                              | |
-  |  | prefixSlots:                                               | |
-  |  |   [0] IncreasedLife T3, rolledValues: [95]                 | |
-  |  |   [1] AddedPhysDmg T4, rolledValues: [12, 22]             | |
-  |  |   [2] IncreasedES T4, rolledValues: [72]                   | |
-  |  | suffixSlots:                                               | |
-  |  |   [0] FireResistance T2, rolledValues: [38] [FRACTURED]    | |
-  |  |   [1] AttackSpeed T5, rolledValues: [6]                    | |
-  |  |   [2] CritChance T3, rolledValues: [22]                    | |
-  |  | implicitSlots:                                              | |
-  |  |   [0] ruby_fire_res, rolledValues: [28]                    | |
-  |  | states: {corrupted: false, mirrored: false, ...}            | |
-  |  | quality: 20                                                 | |
-  |  +-----------------------------------------------------------+ |
-  +-----------------------------------------------------------------+
-           |
-           | Typed API (no metadata convention)
-           v
-  +------------------+  +------------------+  +------------------+
-  | lib-craft (L4)   |  | lib-loot (L4)    |  | lib-market (L4)  |
-  | Calls /affix/    |  | Calls /affix/    |  | Calls /affix/    |
-  | apply, remove,   |  | generate/set,    |  | item/get,        |
-  | reroll, state/set|  | initialize       |  | compute-stats,   |
-  +------------------+  +------------------+  | estimate-value   |
-                                               +------------------+
+ DEFINITION LAYER (owned by lib-affix, MySQL + Redis cache)
+ +-----------------------------------------------------------------+
+ | AffixDefinition ImplicitMapping |
+ | +--------------------+ +---------------------------+ |
+ | | code: "life_t1" | | itemTemplateCode: | |
+ | | slotType: "prefix" | | "body_armour_regalia" | |
+ | | modGroup: | | implicits: | |
+ | | "IncreasedLife" | | - ruby_fire_res | |
+ | | statGrants: | | - mithril_magic_res | |
+ | | life: 110-119 | +---------------------------+ |
+ | | spawnWeight: 200 | |
+ | +--------------------+ |
+ +-----------------------------------------------------------------+
+ |
+ | GenerateAffixSet / ApplyAffix
+ v
+ INSTANCE LAYER (owned by lib-affix, MySQL + Redis cache)
+ +-----------------------------------------------------------------+
+ | AffixInstanceModel (keyed by itemInstanceId) |
+ | +-----------------------------------------------------------+ |
+ | | itemInstanceId: 3fa8... | |
+ | | effectiveRarity: "rare" | |
+ | | itemLevel: 75 | |
+ | | prefixSlots: | |
+ | | [0] IncreasedLife, rolledValues: [95] | |
+ | | [1] AddedPhysDmg, rolledValues: [12, 22] | |
+ | | [2] IncreasedES, rolledValues: [72] | |
+ | | suffixSlots: | |
+ | | [0] FireResistance, rolledValues: [38] [FRACTURED] | |
+ | | [1] AttackSpeed, rolledValues: [6] | |
+ | | [2] CritChance, rolledValues: [22] | |
+ | | implicitSlots: | |
+ | | [0] ruby_fire_res, rolledValues: [28] | |
+ | | states: {corrupted: false, mirrored: false, ...} | |
+ | | quality: 20 | |
+ | +-----------------------------------------------------------+ |
+ +-----------------------------------------------------------------+
+ |
+ | Typed API (no metadata convention)
+ v
+ +------------------+ +------------------+ +------------------+
+ | lib-craft (L4) | | lib-loot (L4) | | lib-market (L4) |
+ | Calls /affix/ | | Calls /affix/ | | Calls /affix/ |
+ | apply, remove, | | generate/set, | | item/get, |
+ | reroll, state/set| | initialize | | compute-stats, |
+ +------------------+ +------------------+ | estimate-value |
+ +------------------+
 
 
 Loot Drop Creation Flow (Orchestrated by lib-loot)
 ====================================================
 
-  lib-loot generates a rare drop:
-       |
-       +-- 1. /affix/generate/set
-       |      (itemClass, iLvl, rarity, influences)
-       |      Returns: AffixSetData (slots with definitions + rolled values)
-       |
-       +-- 2. /item/instance/create
-       |      (templateId, containerId, ...)
-       |      Returns: itemInstanceId
-       |
-       +-- 3. /affix/initialize
-       |      (itemInstanceId, affixSetData)
-       |      Creates AffixInstanceModel in lib-affix's store
-       |      Publishes affix.instance.initialized
-       |
-       +-- Item now exists in lib-item; affixes exist in lib-affix
-           Any service needing affix data calls lib-affix's API
+ lib-loot generates a rare drop:
+ |
+ +-- 1. /affix/generate/set
+ | (itemClass, iLvl, rarity, influences)
+ | Returns: AffixSetData (slots with definitions + rolled values)
+ |
+ +-- 2. /item/instance/create
+ | (templateId, containerId, ...)
+ | Returns: itemInstanceId
+ |
+ +-- 3. /affix/initialize
+ | (itemInstanceId, affixSetData)
+ | Creates AffixInstanceModel in lib-affix's store
+ | Publishes affix.instance.initialized
+ |
+ +-- Item now exists in lib-item; affixes exist in lib-affix
+ Any service needing affix data calls lib-affix's API
 
 
 Equipment Stat Computation Flow
 =================================
 
-  /affix/equipment/compute (entityId, entityType)
-       |
-       +-- 1. IInventoryClient.ListContainers
-       |      (ownerType, ownerId, filter: isEquipmentSlot=true)
-       |      Returns: equipment containers
-       |
-       +-- 2. For each equipped item:
-       |      |
-       |      +-- Load AffixInstanceModel from own store
-       |      |
-       |      +-- Compute: base template stats
-       |      |          + implicit rolled values
-       |      |          + prefix rolled values
-       |      |          + suffix rolled values
-       |      |          + enchant rolled values
-       |      |          + quality modifier
-       |      |
-       |      +-- If sockets (IncludeSocketStatsInEquipment):
-       |             IInventoryClient.GetContainer(itemContainer, children)
-       |             For each socket child container:
-       |               Load socketed gem's AffixInstanceModel
-       |               Add gem stat grants to item total
-       |
-       +-- 3. Aggregate per-stat totals across all equipment
-       |
-       +-- 4. Cache in Redis (TTL: EquipmentStatsCacheTtlSeconds)
-       |
-       +-- Return EquipmentStatsModel:
-              { "maximum_life": 245, "fire_resistance": 66,
-                "attack_speed": 6, "crit_chance": 22, ... }
-              + per-item breakdown for UI
+ /affix/equipment/compute (entityId, entityType)
+ |
+ +-- 1. IInventoryClient.ListContainers
+ | (ownerType, ownerId, filter: isEquipmentSlot=true)
+ | Returns: equipment containers
+ |
+ +-- 2. For each equipped item:
+ | |
+ | +-- Load AffixInstanceModel from own store
+ | |
+ | +-- Compute: base template stats
+ | | + implicit rolled values
+ | | + prefix rolled values
+ | | + suffix rolled values
+ | | + enchant rolled values
+ | | + quality modifier
+ | |
+ | +-- If sockets (IncludeSocketStatsInEquipment):
+ | IInventoryClient.GetContainer(itemContainer, children)
+ | For each socket child container:
+ | Load socketed gem's AffixInstanceModel
+ | Add gem stat grants to item total
+ |
+ +-- 3. Aggregate per-stat totals across all equipment
+ |
+ +-- 4. Cache in Redis (TTL: EquipmentStatsCacheTtlSeconds)
+ |
+ +-- Return EquipmentStatsModel:
+ { "maximum_life": 245, "fire_resistance": 66,
+ "attack_speed": 6, "crit_chance": 22, ... }
+ + per-item breakdown for UI
 ```
 
 ---
@@ -468,7 +468,7 @@ Equipment Stat Computation Flow
 - Implement `affix-instance-cache` Redis store
 - Implement `InitializeItemAffixes` for batch affix instance creation
 - Implement `GetAffixInstance` with cache read-through
-- Implement `IItemInstanceDestructionListener` for in-process instance cleanup (high-frequency T28 exception; register as `Singleton` in plugin startup)
+- Implement `IItemInstanceDestructionListener` for in-process instance cleanup (high-frequency exception; register as `Singleton` in plugin startup)
 - Implement `ApplyAffix` with full validation (mod groups, slot limits, item states)
 - Implement `RemoveAffix` with state flag checks
 - Implement `RerollValues` for value re-randomization
@@ -560,7 +560,7 @@ None. Plugin is aspirational -- no code exists to have bugs.
 
 12. **Equipment and effect stats are computed independently**: lib-affix computes equipment stats (base + affixes + sockets + quality). lib-status computes temporary effects (buffs, debuffs, blessings) and seed-derived capabilities. Consumers query both services independently. If unified queries are later needed, the `IEquipmentStatsContributor` DI pattern (Potential Extension #6) provides a clean integration path without coupling the services.
 
-13. **Applied affixes are snapshots, not live references**: If a definition's stat grant ranges change (e.g., T3 life changed from 90-99 to 85-94), existing items with that affix retain their original rolled values. There is no automatic re-computation or migration. lib-affix treats applied affixes as snapshots at application time.
+13. **Applied affixes are snapshots, not live references**: If a definition's stat grant ranges change (e.g., life changed from 90-99 to 85-94), existing items with that affix retain their original rolled values. There is no automatic re-computation or migration. lib-affix treats applied affixes as snapshots at application time.
 
 14. **Implicit mappings are forward-only**: When implicit mappings change, newly created items get the new values, but existing items are unaffected. There is no mechanism to "re-roll" existing items' implicits unless the caller explicitly calls the application endpoints.
 
@@ -568,7 +568,7 @@ None. Plugin is aspirational -- no code exists to have bugs.
 
 16. **Equipment detection depends on inventory container flags**: The `AffixItemEvaluationProviderFactory` queries lib-inventory for equipment-type containers via `IInventoryClient.ListContainersAsync(ownerType, ownerId, isEquipmentSlot: true)`. Which container types count as equipment slots is game-specific, determined by how containers are created during game setup.
 
-17. **Orphan reconciliation provides durability guarantee**: The `IItemInstanceDestructionListener` provides guaranteed in-process delivery on the node that processes the deletion, but if deletion occurs on a node where lib-affix is not loaded (unusual but possible in partitioned deployments), or if the listener throws, affix instances become orphaned. The orphan reconciliation background worker periodically scans affix instances, batch-checks item existence via `IItemClient`, and deletes orphaned records. This is the durability guarantee required by FOUNDATION TENETS (T28 High-Frequency Instance Lifecycle Exception). Configuration: `OrphanReconciliationIntervalMinutes` (default: 60), `OrphanReconciliationBatchSize` (default: 500).
+17. **Orphan reconciliation provides durability guarantee**: The `IItemInstanceDestructionListener` provides guaranteed in-process delivery on the node that processes the deletion, but if deletion occurs on a node where lib-affix is not loaded (unusual but possible in partitioned deployments), or if the listener throws, affix instances become orphaned. The orphan reconciliation background worker periodically scans affix instances, batch-checks item existence via `IItemClient`, and deletes orphaned records. This is the durability guarantee required by FOUNDATION TENETS (High-Frequency Instance Lifecycle Exception). Configuration: `OrphanReconciliationIntervalMinutes` (default: 60), `OrphanReconciliationBatchSize` (default: 500).
 
 18. **Socket detection uses container type convention**: Equipment stat computation identifies socket child containers by the `"socket"` container type string in lib-inventory. This is a shared naming convention between lib-affix and the socket creation flow (orchestrated by the caller). If lib-inventory changes container type naming, socket detection breaks -- mitigated by both sides agreeing on the convention string.
 

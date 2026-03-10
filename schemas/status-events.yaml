@@ -73,6 +73,7 @@ info:
 x-lifecycle:
   topic_prefix: status
   StatusTemplate:
+    deprecation: true
     model:
       statusTemplateId: { type: string, format: uuid, primary: true, required: true, description: "Unique status template identifier" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this template is scoped to" }
@@ -82,9 +83,6 @@ x-lifecycle:
       stackable: { type: boolean, required: true, description: "Whether this status can stack" }
       maxStacks: { type: integer, required: true, description: "Maximum number of stacks" }
       stackBehavior: { $ref: 'status-api.yaml#/components/schemas/StackBehavior', required: true, description: "How multiple applications interact" }
-      isDeprecated: { type: boolean, required: true, description: "Whether this template is deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When this template was deprecated" }
-      deprecationReason: { type: string, maxLength: 500, nullable: true, description: "Why this template was deprecated" }
     sensitive:
     - contractTemplateId
 

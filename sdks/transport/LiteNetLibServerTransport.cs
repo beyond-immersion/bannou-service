@@ -48,7 +48,7 @@ public sealed class LiteNetLibServerTransport : IGameServerTransport, INetEventL
             throw new InvalidOperationException($"Failed to start LiteNetLib server on port {_config.Port}");
         }
 
-        // Yield to ensure proper async behavior per IMPLEMENTATION TENETS (T23)
+        // Yield to ensure proper async behavior per IMPLEMENTATION TENETS
         await Task.Yield();
 
         // Run a lightweight poll loop; caller is expected to call PollEvents externally if desired.

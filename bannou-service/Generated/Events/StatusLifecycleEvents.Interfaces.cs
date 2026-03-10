@@ -13,6 +13,6 @@ using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Events;
 
-public partial class StatusTemplateCreatedEvent : ILifecycleCreatedEvent { }
-public partial class StatusTemplateUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class StatusTemplateDeletedEvent : ILifecycleDeletedEvent { }
+public partial class StatusTemplateCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class StatusTemplateUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class StatusTemplateDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }

@@ -109,7 +109,7 @@ public class TenetComplianceTests
 
     #endregion
 
-    #region Async Disposal Pattern Tests (Implementation Tenets - T24)
+    #region Async Disposal Pattern Tests (Implementation Tenets)
 
     [Fact]
     public void RabbitMQMessageBus_ImplementsIAsyncDisposable()
@@ -214,12 +214,12 @@ public class TenetComplianceTests
 
     #endregion
 
-    #region No Direct Environment Access Tests (Implementation Tenets - T21)
+    #region No Direct Environment Access Tests (Implementation Tenets)
 
     [Fact]
     public void MessagingServiceTypes_DoNotDirectlyAccessEnvironment()
     {
-        // T21: Services should use configuration classes, not direct Environment access
+        // Implementation Tenets: Services should use configuration classes, not direct Environment access
         var publicTypes = MessagingAssembly.GetExportedTypes()
             .Where(t => t.IsClass && !t.IsAbstract)
             .Where(t => t.Namespace?.StartsWith("BeyondImmersion.BannouService.Messaging") == true);
@@ -260,12 +260,12 @@ public class TenetComplianceTests
 
     #endregion
 
-    #region Thread Safety Tests (Implementation Tenets - T9)
+    #region Thread Safety Tests (Implementation Tenets)
 
     [Fact]
     public void RabbitMQMessageSubscriber_UsesConcurrentDictionary()
     {
-        // T9: Multi-instance safety requires concurrent collections
+        // Implementation Tenets: Multi-instance safety requires concurrent collections
         var fields = typeof(RabbitMQMessageSubscriber)
             .GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -280,7 +280,7 @@ public class TenetComplianceTests
     [Fact]
     public void MessageRetryBuffer_UsesConcurrentQueue()
     {
-        // T9: Buffer should use concurrent collection for thread safety
+        // Implementation Tenets: Buffer should use concurrent collection for thread safety
         var fields = typeof(MessageRetryBuffer)
             .GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -345,12 +345,12 @@ public class TenetComplianceTests
 
     #endregion
 
-    #region Logging Pattern Tests (Quality Tenets - T10)
+    #region Logging Pattern Tests (Quality Tenets)
 
     [Fact]
     public void MessagingClasses_InjectILogger()
     {
-        // T10: Structured logging requires ILogger injection
+        // Quality Tenets: Structured logging requires ILogger injection
         var servicesToCheck = new[]
         {
             typeof(RabbitMQMessageBus),
@@ -372,7 +372,7 @@ public class TenetComplianceTests
                 p.ParameterType.GetGenericTypeDefinition() == typeof(Microsoft.Extensions.Logging.ILogger<>));
 
             Assert.True(hasLogger,
-                $"{serviceType.Name} must inject ILogger<{serviceType.Name}> for structured logging (T10).");
+                $"{serviceType.Name} must inject ILogger<{serviceType.Name}> for structured logging (Quality Tenets).");
         }
     }
 

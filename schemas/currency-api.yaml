@@ -174,6 +174,34 @@ paths:
       x-permissions:
       - role: developer
 
+  /currency/definition/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedCurrencyDefinitions
+      tags:
+      - Currency Definition
+      summary: Clean deprecated currency definitions with zero remaining wallets
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        currency definitions and permanently removes those with zero remaining wallets,
+        subject to an optional grace period. Publishes currency-definition.deleted events
+        for each removed definition. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+
   # ===========================================================================
   # Wallet (6 endpoints)
   # ===========================================================================
@@ -1423,6 +1451,8 @@ components:
           description: Reason for deprecation (audit context for Category B entities)
 
     CurrencyDefinitionResponse:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Currency definition details
       additionalProperties: false
@@ -1439,7 +1469,6 @@ components:
       - linkedToItem
       - isBaseCurrency
       - isActive
-      - isDeprecated
       - createdAt
       properties:
         definitionId:
@@ -1586,19 +1615,6 @@ components:
         isActive:
           type: boolean
           description: Whether definition is active
-        isDeprecated:
-          type: boolean
-          description: Whether definition is deprecated (Category B — one-way)
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the definition was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time

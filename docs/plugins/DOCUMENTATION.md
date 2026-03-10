@@ -63,168 +63,168 @@ Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, Op
 Search Index Rebuild (Startup)
 ================================
 
-  SearchIndexRebuildService (BackgroundService, runs once)
-       |
-       |-- Wait: SearchIndexRebuildStartupDelaySeconds (5s default)
-       |
-       |-- Discover namespaces:
-       |    |-- Read "all-namespaces" (HashSet<string>)
-       |    |-- Read "repo-bindings" (HashSet<string>)
-       |    |-- Union both sets
-       |
-       |-- For each namespace:
-       |    |-- ISearchIndexService.RebuildIndexAsync(namespaceId)
-       |    |    |-- Read "ns-docs:{ns}" for document ID list
-       |    |    |-- For each docId: read document from store
-       |    |    |-- Build inverted index (terms -> docIds)
-       |    |    |-- Build category index
-       |    |    |-- Track tag counts
-       |    |    |-- Return indexed count
-       |    |
-       |    |-- Log: "{count} documents indexed"
-       |
-       |-- Log: "rebuild complete: {total} documents across {n} namespaces"
-       |-- Exit (one-shot)
+ SearchIndexRebuildService (BackgroundService, runs once)
+ |
+ |-- Wait: SearchIndexRebuildStartupDelaySeconds (5s default)
+ |
+ |-- Discover namespaces:
+ | |-- Read "all-namespaces" (HashSet<string>)
+ | |-- Read "repo-bindings" (HashSet<string>)
+ | |-- Union both sets
+ |
+ |-- For each namespace:
+ | |-- ISearchIndexService.RebuildIndexAsync(namespaceId)
+ | | |-- Read "ns-docs:{ns}" for document ID list
+ | | |-- For each docId: read document from store
+ | | |-- Build inverted index (terms -> docIds)
+ | | |-- Build category index
+ | | |-- Track tag counts
+ | | |-- Return indexed count
+ | |
+ | |-- Log: "{count} documents indexed"
+ |
+ |-- Log: "rebuild complete: {total} documents across {n} namespaces"
+ |-- Exit (one-shot)
 
 
 Trashcan Lifecycle
 ====================
 
-  CreateDocument ─────────────────────────────────> Active Document
-       |                                                   |
-       |                                         DeleteDocument
-       |                                                   |
-       |                                                   v
-       |                                     TrashedDocument {
-       |                                       Document: StoredDocument
-       |                                       DeletedAt: now
-       |                                       ExpiresAt: now + TrashcanTtlDays
-       |                                     }
-       |                                                   |
-       |                                    ┌──────────────┼──────────────┐
-       |                                    |              |              |
-       |                              RecoverDocument   PurgeTrashcan   Expiry
-       |                                    |              |              |
-       |                                    v              v              v
-       |                              Restore to       Permanent      Lazy cleanup
-       |                              Active           Delete         during List
-       |                              (slug check)     (immediate)    (on access)
+ CreateDocument ─────────────────────────────────> Active Document
+ | |
+ | DeleteDocument
+ | |
+ | v
+ | TrashedDocument {
+ | Document: StoredDocument
+ | DeletedAt: now
+ | ExpiresAt: now + TrashcanTtlDays
+ | }
+ | |
+ | ┌──────────────┼──────────────┐
+ | | | |
+ | RecoverDocument PurgeTrashcan Expiry
+ | | | |
+ | v v v
+ | Restore to Permanent Lazy cleanup
+ | Active Delete during List
+ | (slug check) (immediate) (on access)
 
 
 Repository Binding & Sync
 ============================
 
-  BindRepository(namespace, repoUrl, branch, patterns...)
-       |
-       |-- Create RepositoryBinding (status: Pending)
-       |-- Save to "repo-binding:{namespace}"
-       |-- Add namespace to "repo-bindings" registry
-       |
-       |              RepositorySyncSchedulerService (periodic)
-       |                         |
-       |          ┌──────────────┼──────────────┐
-       |          |                             |
-       |    Check bindings:               CleanupStale:
-       |    - Read "repo-bindings"        - Scan GitStoragePath
-       |    - For each: check NextSyncAt  - Find GUID dirs not in registry
-       |    - If due: trigger sync        - Delete if older than CleanupHours
-       |    - Respect MaxSyncsPerCycle
-       |          |
-       |          v
-  SyncRepository / ExecuteSyncAsync(binding, force, trigger)
-       |
-       |-- Acquire distributed lock: "repo-sync:{namespace}" (30 min TTL)
-       |    |-- Fail? Return "Sync already in progress"
-       |
-       |-- Set status = Syncing
-       |-- Publish DocumentationSyncStartedEvent
-       |
-       |-- IGitSyncService.SyncRepositoryAsync(url, branch, localPath)
-       |    |-- Clone (if not exists) or Pull (if exists)
-       |    |-- Return commitHash, success flag
-       |
-       |-- If !force && commitHash unchanged → skip (no-op)
-       |
-       |-- GetMatchingFilesAsync(localPath, filePatterns, excludePatterns)
-       |    |-- Apply MaxDocumentsPerSync limit
-       |
-       |-- For each file:
-       |    |-- ReadFileContentAsync → raw content
-       |    |-- IContentTransformService.TransformFile()
-       |    |    |-- ParseFrontmatter (YAML: title, category, tags, slug, draft...)
-       |    |    |-- ExtractContent (strip frontmatter block)
-       |    |    |-- GenerateSlug (path-based if no frontmatter override)
-       |    |    |-- DetermineCategory (frontmatter > path mapping > dir inference > default)
-       |    |    |-- GenerateVoiceSummary (first paragraph, strip markdown, truncate)
-       |    |
-       |    |-- Skip if draft
-       |    |-- Create or update document in state store
-       |    |-- Track processed slugs
-       |
-       |-- Delete orphan documents (slugs not in processed set)
-       |    |-- SKIPPED if file list was truncated
-       |
-       |-- Update binding: status=Synced, LastSyncAt, LastCommitHash, NextSyncAt
-       |-- Publish DocumentationSyncCompletedEvent
-       |-- Release lock (via await using)
+ BindRepository(namespace, repoUrl, branch, patterns...)
+ |
+ |-- Create RepositoryBinding (status: Pending)
+ |-- Save to "repo-binding:{namespace}"
+ |-- Add namespace to "repo-bindings" registry
+ |
+ | RepositorySyncSchedulerService (periodic)
+ | |
+ | ┌──────────────┼──────────────┐
+ | | |
+ | Check bindings: CleanupStale:
+ | - Read "repo-bindings" - Scan GitStoragePath
+ | - For each: check NextSyncAt - Find GUID dirs not in registry
+ | - If due: trigger sync - Delete if older than CleanupHours
+ | - Respect MaxSyncsPerCycle
+ | |
+ | v
+ SyncRepository / ExecuteSyncAsync(binding, force, trigger)
+ |
+ |-- Acquire distributed lock: "repo-sync:{namespace}" (30 min TTL)
+ | |-- Fail? Return "Sync already in progress"
+ |
+ |-- Set status = Syncing
+ |-- Publish DocumentationSyncStartedEvent
+ |
+ |-- IGitSyncService.SyncRepositoryAsync(url, branch, localPath)
+ | |-- Clone (if not exists) or Pull (if exists)
+ | |-- Return commitHash, success flag
+ |
+ |-- If !force && commitHash unchanged → skip (no-op)
+ |
+ |-- GetMatchingFilesAsync(localPath, filePatterns, excludePatterns)
+ | |-- Apply MaxDocumentsPerSync limit
+ |
+ |-- For each file:
+ | |-- ReadFileContentAsync → raw content
+ | |-- IContentTransformService.TransformFile()
+ | | |-- ParseFrontmatter (YAML: title, category, tags, slug, draft...)
+ | | |-- ExtractContent (strip frontmatter block)
+ | | |-- GenerateSlug (path-based if no frontmatter override)
+ | | |-- DetermineCategory (frontmatter > path mapping > dir inference > default)
+ | | |-- GenerateVoiceSummary (first paragraph, strip markdown, truncate)
+ | |
+ | |-- Skip if draft
+ | |-- Create or update document in state store
+ | |-- Track processed slugs
+ |
+ |-- Delete orphan documents (slugs not in processed set)
+ | |-- SKIPPED if file list was truncated
+ |
+ |-- Update binding: status=Synced, LastSyncAt, LastCommitHash, NextSyncAt
+ |-- Publish DocumentationSyncCompletedEvent
+ |-- Release lock (via await using)
 
 
 Namespace Organization
 ========================
 
-  ┌─────────────────────────────────────────────────────────────┐
-  |                      Redis (doc: prefix)                     |
-  |                                                              |
-  |  all-namespaces: {"bannou", "arcadia-docs", "api-ref"}      |
-  |  repo-bindings:  {"arcadia-docs", "api-ref"}                |
-  |                                                              |
-  |  ┌─── Namespace: "bannou" (manual) ──────────────────────┐  |
-  |  |  ns-docs:bannou → [guid1, guid2, guid3]               |  |
-  |  |  bannou:guid1 → StoredDocument{...}                    |  |
-  |  |  slug-idx:bannou:getting-started → "guid1"             |  |
-  |  |  ns-trash:bannou → [guid4]                             |  |
-  |  |  trash:bannou:guid4 → TrashedDocument{...}             |  |
-  |  └────────────────────────────────────────────────────────┘  |
-  |                                                              |
-  |  ┌─── Namespace: "arcadia-docs" (repo-bound) ────────────┐  |
-  |  |  repo-binding:arcadia-docs → RepositoryBinding{...}    |  |
-  |  |  ns-docs:arcadia-docs → [guid5, guid6, ...]           |  |
-  |  |  arcadia-docs:guid5 → StoredDocument{...}              |  |
-  |  |  slug-idx:arcadia-docs:guides/npc → "guid5"           |  |
-  |  |  archive:list:arcadia-docs → [archId1]                 |  |
-  |  |  archive:archId1 → DocumentationArchive{...}           |  |
-  |  └────────────────────────────────────────────────────────┘  |
-  └─────────────────────────────────────────────────────────────┘
+ ┌─────────────────────────────────────────────────────────────┐
+ | Redis (doc: prefix) |
+ | |
+ | all-namespaces: {"bannou", "arcadia-docs", "api-ref"} |
+ | repo-bindings: {"arcadia-docs", "api-ref"} |
+ | |
+ | ┌─── Namespace: "bannou" (manual) ──────────────────────┐ |
+ | | ns-docs:bannou → [guid1, guid2, guid3] | |
+ | | bannou:guid1 → StoredDocument{...} | |
+ | | slug-idx:bannou:getting-started → "guid1" | |
+ | | ns-trash:bannou → [guid4] | |
+ | | trash:bannou:guid4 → TrashedDocument{...} | |
+ | └────────────────────────────────────────────────────────┘ |
+ | |
+ | ┌─── Namespace: "arcadia-docs" (repo-bound) ────────────┐ |
+ | | repo-binding:arcadia-docs → RepositoryBinding{...} | |
+ | | ns-docs:arcadia-docs → [guid5, guid6, ...] | |
+ | | arcadia-docs:guid5 → StoredDocument{...} | |
+ | | slug-idx:arcadia-docs:guides/npc → "guid5" | |
+ | | archive:list:arcadia-docs → [archId1] | |
+ | | archive:archId1 → DocumentationArchive{...} | |
+ | └────────────────────────────────────────────────────────┘ |
+ └─────────────────────────────────────────────────────────────┘
 
 
 Archive System
 ================
 
-  CreateDocumentationArchive(namespace, owner, description)
-       |
-       |-- GetAllNamespaceDocumentsAsync() → List<StoredDocument>
-       |    (404 if no documents)
-       |
-       |-- CreateArchiveBundleAsync() → byte[] (GZipped JSON)
-       |    |-- Serialize all documents to JSON
-       |    |-- Compress with GZip
-       |
-       |-- Upload to Asset Service:
-       |    |-- RequestBundleUploadAsync() → uploadUrl, uploadId
-       |    |-- PUT bundleData to uploadUrl
-       |    |-- Store BundleAssetId on success
-       |    |-- Graceful failure: archive stored without bundle upload
-       |
-       |-- Save DocumentationArchive to state store
-       |-- Publish DocumentationArchiveCreatedEvent
-       |
-  RestoreDocumentationArchive(archiveId)
-       |
-       |-- Get archive metadata
-       |-- Verify namespace not bound (403 if bound)
-       |-- Download bundle from Asset Service (GetBundle → downloadUrl)
-       |-- GET bundleData from downloadUrl
-       |-- RestoreFromBundleAsync() → decompress, deserialize, create docs
+ CreateDocumentationArchive(namespace, owner, description)
+ |
+ |-- GetAllNamespaceDocumentsAsync() → List<StoredDocument>
+ | (404 if no documents)
+ |
+ |-- CreateArchiveBundleAsync() → byte[] (GZipped JSON)
+ | |-- Serialize all documents to JSON
+ | |-- Compress with GZip
+ |
+ |-- Upload to Asset Service:
+ | |-- RequestBundleUploadAsync() → uploadUrl, uploadId
+ | |-- PUT bundleData to uploadUrl
+ | |-- Store BundleAssetId on success
+ | |-- Graceful failure: archive stored without bundle upload
+ |
+ |-- Save DocumentationArchive to state store
+ |-- Publish DocumentationArchiveCreatedEvent
+ |
+ RestoreDocumentationArchive(archiveId)
+ |
+ |-- Get archive metadata
+ |-- Verify namespace not bound (403 if bound)
+ |-- Download bundle from Asset Service (GetBundle → downloadUrl)
+ |-- GET bundleData from downloadUrl
+ |-- RestoreFromBundleAsync() → decompress, deserialize, create docs
 ```
 
 ---
@@ -238,7 +238,7 @@ Archive System
 
 ## Potential Extensions
 
-1. **Semantic search with embeddings**: Implement vector embeddings for document content. Store embeddings in Redis Vector Similarity Search (VSS) and use cosine similarity for natural language queries in `QueryAsync`. Blocker: requires choosing an embedding provider and adding the HTTP client dependency — no external AI service integration exists in Bannou yet. Configuration properties (`AiEnhancementsEnabled`, `AiEmbeddingsModel`) were previously defined but removed as a T21 violation (never wired); they would need to be re-added to the schema when implementation begins. Note: this is a **retrieval** optimization (matching queries to existing documents), not content generation — it does not conflict with the formal-theory-over-AI principle (see [WHY-DOESNT-BANNOU-USE-AI-FOR-CONTENT-GENERATION.md](../../faqs/WHY-DOESNT-BANNOU-USE-AI-FOR-CONTENT-GENERATION.md)).
+1. **Semantic search with embeddings**: Implement vector embeddings for document content. Store embeddings in Redis Vector Similarity Search (VSS) and use cosine similarity for natural language queries in `QueryAsync`. Blocker: requires choosing an embedding provider and adding the HTTP client dependency — no external AI service integration exists in Bannou yet. Configuration properties (`AiEnhancementsEnabled`, `AiEmbeddingsModel`) were previously defined but removed as a violation (never wired); they would need to be re-added to the schema when implementation begins. Note: this is a **retrieval** optimization (matching queries to existing documents), not content generation — it does not conflict with the formal-theory-over-AI principle (see [WHY-DOESNT-BANNOU-USE-AI-FOR-CONTENT-GENERATION.md](../../faqs/WHY-DOESNT-BANNOU-USE-AI-FOR-CONTENT-GENERATION.md)).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/525 -->
 
 2. **Webhook-triggered sync**: Add webhook endpoint for git push notifications (GitHub/GitLab webhooks) to trigger immediate sync instead of waiting for the scheduler interval.

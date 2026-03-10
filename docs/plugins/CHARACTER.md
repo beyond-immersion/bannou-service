@@ -65,29 +65,29 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 Character Key Architecture (Realm-Partitioned)
 ================================================
 
-  GET /character/get (by ID only)
-       │
-       ▼
-  character-global-index:{characterId}
-       │ returns realmId
-       ▼
-  character:{realmId}:{characterId}
-       │ returns CharacterModel
-       ▼
-  [CharacterResponse]
+ GET /character/get (by ID only)
+ │
+ ▼
+ character-global-index:{characterId}
+ │ returns realmId
+ ▼
+ character:{realmId}:{characterId}
+ │ returns CharacterModel
+ ▼
+ [CharacterResponse]
 
 
-  GET /character/by-realm (realm query)
-       │
-       ▼
-  IJsonQueryableStateStore<CharacterModel>
-       │ JsonQueryPagedAsync(conditions, offset, limit)
-       │ conditions: $.RealmId, $.Status, $.SpeciesId
-       ▼
-  MySQL: WHERE JSON_EXTRACT(...) with LIMIT/OFFSET
-       │ returns page of CharacterModel + TotalCount
-       ▼
-  [CharacterListResponse]
+ GET /character/by-realm (realm query)
+ │
+ ▼
+ IJsonQueryableStateStore<CharacterModel>
+ │ JsonQueryPagedAsync(conditions, offset, limit)
+ │ conditions: $.RealmId, $.Status, $.SpeciesId
+ ▼
+ MySQL: WHERE JSON_EXTRACT(...) with LIMIT/OFFSET
+ │ returns page of CharacterModel + TotalCount
+ ▼
+ [CharacterListResponse]
 ```
 
 ---
@@ -102,7 +102,7 @@ None currently tracked.
 
 1. **Batch compression**: Compress multiple dead characters in one operation. Would need to be implemented in Resource service as a batch variant of `/resource/compress/execute`.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
-2. **Character purge background service**: Automated purge of characters eligible for cleanup (zero references past grace period). Dead `CharacterRetentionDays` config was removed (T21 violation); new config with clear semantics should be designed when this is implemented. Deferred until operational need arises.
+2. **Character purge background service**: Automated purge of characters eligible for cleanup (zero references past grace period). Dead `CharacterRetentionDays` config was removed (violation); new config with clear semantics should be designed when this is implemented. Deferred until operational need arises.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/263 -->
 
 ---

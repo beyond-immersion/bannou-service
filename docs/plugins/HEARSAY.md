@@ -32,30 +32,30 @@ In Persona 5, rumors literally change reality. In Bannou, rumors change NPC *per
 Every belief has the same structure regardless of domain:
 
 ```
-BeliefDomain enum: Norm, Character, Location       # System-owned (IMPLEMENTATION TENETS Category C)
+BeliefDomain enum: Norm, Character, Location # System-owned (IMPLEMENTATION TENETS Category C)
 SourceChannel enum: DirectObservation, OfficialDecree, TrustedContact, SocialContact, Rumor, CulturalOsmosis
 
 BeliefEntry:
-  beliefId:           Guid            # Unique identifier
-  characterId:        Guid            # Who holds this belief
-  domain:             BeliefDomain    # Norm, Character, or Location
-  subjectEntityId:    Guid            # What the belief is about (locationId for Norm/Location, characterId for Character)
-  claimCode:          string          # What they believe (opaque game-defined string)
-  believedValue:      float           # Magnitude (penalty, danger, trust, etc.)
-  confidence:         float           # 0.0 (pure hearsay) to 1.0 (directly observed)
-  valence:            float           # -1.0 (negative) to +1.0 (positive)
-  sourceChannel:      SourceChannel   # How they learned it
-  sourceEntityId:     Guid?           # Who told them (null for osmosis/observation)
-  acquiredAt:         DateTime        # When they first heard it
-  lastReinforcedAt:   DateTime        # When confidence was last boosted
-  decayRate:          float           # How fast confidence degrades (domain-specific)
+ beliefId: Guid # Unique identifier
+ characterId: Guid # Who holds this belief
+ domain: BeliefDomain # Norm, Character, or Location
+ subjectEntityId: Guid # What the belief is about (locationId for Norm/Location, characterId for Character)
+ claimCode: string # What they believe (opaque game-defined string)
+ believedValue: float # Magnitude (penalty, danger, trust, etc.)
+ confidence: float # 0.0 (pure hearsay) to 1.0 (directly observed)
+ valence: float # -1.0 (negative) to +1.0 (positive)
+ sourceChannel: SourceChannel # How they learned it
+ sourceEntityId: Guid? # Who told them (null for osmosis/observation)
+ acquiredAt: DateTime # When they first heard it
+ lastReinforcedAt: DateTime # When confidence was last boosted
+ decayRate: float # How fast confidence degrades (domain-specific)
 ```
 
 **Type safety notes (per IMPLEMENTATION TENETS)**:
-- `domain` is a `BeliefDomain` enum, not a string. Three system-owned behavioral modes that require code changes to extend (T14 Category C).
-- `sourceChannel` is a `SourceChannel` enum, not a string. Six system-defined acquisition modes with hardcoded confidence ranges and per-channel processing logic (T14 Category C). PascalCase values per T16.
-- `subjectEntityId` is a `Guid`, not a composite string. For the Norm domain, this is the locationId and `claimCode` holds the violation type code. For Character and Location domains, this is the target entity's ID. The former composite `{locationId}:{violationType}` pattern violated T25 (GUIDs must be `Guid` type, never embedded in strings).
-- `claimCode` remains an opaque `string` (T14 Category B — game designers define new claim codes at deployment time).
+- `domain` is a `BeliefDomain` enum, not a string. Three system-owned behavioral modes that require code changes to extend (Category C).
+- `sourceChannel` is a `SourceChannel` enum, not a string. Six system-defined acquisition modes with hardcoded confidence ranges and per-channel processing logic (Category C). PascalCase values per tenets.
+- `subjectEntityId` is a `Guid`, not a composite string. For the Norm domain, this is the locationId and `claimCode` holds the violation type code. For Character and Location domains, this is the target entity's ID. The former composite `{locationId}:{violationType}` pattern violated (GUIDs must be `Guid` type, never embedded in strings).
+- `claimCode` remains an opaque `string` (Category B — game designers define new claim codes at deployment time).
 
 ### Subject Keys by Domain
 
@@ -108,45 +108,45 @@ The motivating use case, played out step by step:
 
 ```
 Day 0: New faction (Harbor Authority) takes over Docks District
-       replacing Old Guard
-  ┌────────────────────────────────────────────────────────┐
-  │ FACTION (actual):  theft: 15, contraband: 12          │
-  │ HEARSAY (NPC in Docks): theft: 7, contraband: 3      │  ← still Old Guard values
-  │ HEARSAY (NPC in countryside): (no beliefs about Docks)│
-  └────────────────────────────────────────────────────────┘
+ replacing Old Guard
+ ┌────────────────────────────────────────────────────────┐
+ │ FACTION (actual): theft: 15, contraband: 12 │
+ │ HEARSAY (NPC in Docks): theft: 7, contraband: 3 │ ← still Old Guard values
+ │ HEARSAY (NPC in countryside): (no beliefs about Docks)│
+ └────────────────────────────────────────────────────────┘
 
 Day 1-3: Official decree propagation
-  - Harbor Authority publishes faction.territory.claimed event
-  - Hearsay listens and creates `OfficialDecree` channel beliefs
-    for NPCs physically present in the Docks District
-  - Confidence: 0.7 (they heard the announcement but haven't
-    internalized the specifics yet)
-  - NPCs in adjacent districts get "rumor" channel beliefs
-    (confidence 0.3) -- they heard something changed
-  - NPCs far away: unaware
+ - Harbor Authority publishes faction.territory.claimed event
+ - Hearsay listens and creates `OfficialDecree` channel beliefs
+ for NPCs physically present in the Docks District
+ - Confidence: 0.7 (they heard the announcement but haven't
+ internalized the specifics yet)
+ - NPCs in adjacent districts get "rumor" channel beliefs
+ (confidence 0.3) -- they heard something changed
+ - NPCs far away: unaware
 
 Day 7-14: Social propagation via encounters
-  - When NPC A (who knows) has an encounter with NPC B (who doesn't),
-    the encounter event triggers belief propagation
-  - NPC B receives the claim at `SocialContact` confidence (0.3-0.5)
-  - NPCs who traveled to the Docks and returned bring higher-confidence
-    knowledge (0.6-0.7) to their home district
-  - Telephone-game distortion: some NPCs hear exaggerated penalties
-    ("they're hanging smugglers!") creating beliefs with inflated
-    believedValue but low confidence
+ - When NPC A (who knows) has an encounter with NPC B (who doesn't),
+ the encounter event triggers belief propagation
+ - NPC B receives the claim at `SocialContact` confidence (0.3-0.5)
+ - NPCs who traveled to the Docks and returned bring higher-confidence
+ knowledge (0.6-0.7) to their home district
+ - Telephone-game distortion: some NPCs hear exaggerated penalties
+ ("they're hanging smugglers!") creating beliefs with inflated
+ believedValue but low confidence
 
 Day 14-30: Convergence
-  - Background worker drifts beliefs toward reality for proximate NPCs
-  - NPCs in the Docks converge to actual norms (confidence → 0.9+)
-  - NPCs who visited once converge more slowly
-  - NPCs who only heard rumors may still have distorted beliefs
+ - Background worker drifts beliefs toward reality for proximate NPCs
+ - NPCs in the Docks converge to actual norms (confidence → 0.9+)
+ - NPCs who visited once converge more slowly
+ - NPCs who only heard rumors may still have distorted beliefs
 
 Day 30+: Steady state
-  - Most local NPCs have accurate beliefs
-  - Distant NPCs who haven't visited may still operate on old info
-  - The transition period creates emergent narrative: NPCs who
-    violated "new" laws they didn't know about, NPCs who fled
-    based on exaggerated rumors, NPCs who exploited the confusion
+ - Most local NPCs have accurate beliefs
+ - Distant NPCs who haven't visited may still operate on old info
+ - The transition period creates emergent narrative: NPCs who
+ violated "new" laws they didn't know about, NPCs who fled
+ based on exaggerated rumors, NPCs who exploited the confusion
 ```
 
 ---
@@ -173,13 +173,13 @@ He cannot decide whether to approach, avoid, trust, or fear her.
 Kael has never met Mira, but:
 
 1. His guildmate told him "Mira is a skilled healer" (trusted_contact, 0.6)
-   → Belief: { subject: Mira, claim: "skilled_healer", value: 0.8, confidence: 0.6 }
+ → Belief: { subject: Mira, claim: "skilled_healer", value: 0.8, confidence: 0.6 }
 
 2. A stranger in the tavern said "Mira killed a man in cold blood" (rumor, 0.2)
-   → Belief: { subject: Mira, claim: "dangerous", value: 0.7, confidence: 0.2 }
+ → Belief: { subject: Mira, claim: "dangerous", value: 0.7, confidence: 0.2 }
 
 3. Nobody has mentioned her honesty
-   → No belief about trustworthiness (absence of information)
+ → No belief about trustworthiness (absence of information)
 
 Result: Kael knows Mira is probably a good healer (moderate confidence)
 and has heard she might be dangerous (low confidence). He has no
@@ -193,20 +193,20 @@ When Kael eventually meets Mira, the systems compose:
 
 ```
 BEFORE meeting:
-  ${hearsay.character.MIRA.dangerous}     = 0.7 (value) * 0.2 (confidence) = 0.14
-  ${hearsay.character.MIRA.skilled_healer} = 0.8 * 0.6 = 0.48
-  ${encounters.sentiment.MIRA}           = 0.0 (never met)
+ ${hearsay.character.MIRA.dangerous} = 0.7 (value) * 0.2 (confidence) = 0.14
+ ${hearsay.character.MIRA.skilled_healer} = 0.8 * 0.6 = 0.48
+ ${encounters.sentiment.MIRA} = 0.0 (never met)
 
 AFTER meeting (positive encounter):
-  ${hearsay.character.MIRA.dangerous}     = CORRECTED: confidence drops to 0.05
-  ${hearsay.character.MIRA.skilled_healer} = REINFORCED: confidence rises to 0.85
-  ${encounters.sentiment.MIRA}           = 0.6 (positive encounter)
-  ${hearsay.character.MIRA.trustworthy}   = NEW: 0.7 confidence from observation
+ ${hearsay.character.MIRA.dangerous} = CORRECTED: confidence drops to 0.05
+ ${hearsay.character.MIRA.skilled_healer} = REINFORCED: confidence rises to 0.85
+ ${encounters.sentiment.MIRA} = 0.6 (positive encounter)
+ ${hearsay.character.MIRA.trustworthy} = NEW: 0.7 confidence from observation
 
 ABML can compose both:
-  effective_trust = ${encounters.sentiment.MIRA} * 0.6
-                  + ${hearsay.character.MIRA.trustworthy} * 0.3
-                  + ${hearsay.character.MIRA.dangerous} * -0.1
+ effective_trust = ${encounters.sentiment.MIRA} * 0.6
+ + ${hearsay.character.MIRA.trustworthy} * 0.3
+ + ${hearsay.character.MIRA.dangerous} * -0.1
 ```
 
 ---
@@ -221,25 +221,25 @@ Locations currently have no "perceived danger" or "reputation" attached to them.
 NPC "Aldric" has heard about the Blackmire Swamp:
 
 1. His mother warned him as a child: "Never go to the swamp"
-   → { subject: blackmire, claim: "dangerous", value: 0.9, confidence: 0.5,
-      source: `TrustedContact`, decayRate: 0.01 }  ← slow decay (childhood memory)
+ → { subject: blackmire, claim: "dangerous", value: 0.9, confidence: 0.5,
+ source: `TrustedContact`, decayRate: 0.01 } ← slow decay (childhood memory)
 
 2. A traveling merchant said: "I lost my horse in the swamp"
-   → { subject: blackmire, claim: "dangerous", value: 0.6, confidence: 0.3,
-      source: `SocialContact` }
+ → { subject: blackmire, claim: "dangerous", value: 0.6, confidence: 0.3,
+ source: `SocialContact` }
 
 3. A rumor says there's buried treasure there:
-   → { subject: blackmire, claim: "profitable", value: 0.8, confidence: 0.15,
-      source: "rumor" }
+ → { subject: blackmire, claim: "profitable", value: 0.8, confidence: 0.15,
+ source: "rumor" }
 
 Effect on behavior:
-  - GOAP travel cost to Blackmire: base_cost + (danger_belief * danger_weight)
-  - Anxiety state modification: stress increases proportional to
-    believed danger * confidence as NPC approaches
-  - Personality interaction: low-courage NPC avoids entirely;
-    high-courage NPC may seek it out (face your fears)
-  - The treasure rumor creates a cost/benefit tension:
-    danger says "avoid", greed says "go"
+ - GOAP travel cost to Blackmire: base_cost + (danger_belief * danger_weight)
+ - Anxiety state modification: stress increases proportional to
+ believed danger * confidence as NPC approaches
+ - Personality interaction: low-courage NPC avoids entirely;
+ high-courage NPC may seek it out (face your fears)
+ - The treasure rumor creates a cost/benefit tension:
+ danger says "avoid", greed says "go"
 ```
 
 ### Anxiety and the Fear Gradient
@@ -249,18 +249,18 @@ Location beliefs don't just modify GOAP travel costs -- they affect the NPC's em
 ```
 NPC approaches a location they believe is dangerous:
 
-Distance: 1000m  → Mild unease (stress +0.05)
-Distance: 500m   → Growing anxiety (stress +0.15, comfort -0.1)
-Distance: 100m   → High anxiety (stress +0.3, comfort -0.2, fear +0.2)
-At location       → Peak stress, unless direct observation corrects the belief
+Distance: 1000m → Mild unease (stress +0.05)
+Distance: 500m → Growing anxiety (stress +0.15, comfort -0.1)
+Distance: 100m → High anxiety (stress +0.3, comfort -0.2, fear +0.2)
+At location → Peak stress, unless direct observation corrects the belief
 
 The gradient is proportional to:
-  believedDanger * confidence * (1.0 - personality.courage)
+ believedDanger * confidence * (1.0 - personality.courage)
 
 A brave NPC with low-confidence beliefs feels minor stress.
 A timid NPC with high-confidence beliefs may turn around and flee.
 A NPC who faces their fear and finds the location safe gets a
-  confidence CORRECTION and a personality boost (courage +0.05).
+ confidence CORRECTION and a personality boost (courage +0.05).
 ```
 
 This creates natural character development moments: the timid NPC who forces themselves through the scary swamp and discovers it's not so bad grows as a character. The overconfident NPC who ignores rumors of danger and gets attacked learns to respect hearsay. These arcs emerge from the belief system without any scripted narrative.
@@ -279,21 +279,21 @@ The delta between belief and reality is the formal definition of dramatic irony.
 
 ```
 Regional Watcher query:
-  "Find characters whose beliefs significantly diverge from reality"
+ "Find characters whose beliefs significantly diverge from reality"
 
 Results:
-  - Aldric believes Mira killed a man (confidence 0.2, reality: false)
-    → DRAMATIC IRONY: Mira is actually a pacifist healer
-    → Scenario hook: "The False Accusation"
+ - Aldric believes Mira killed a man (confidence 0.2, reality: false)
+ → DRAMATIC IRONY: Mira is actually a pacifist healer
+ → Scenario hook: "The False Accusation"
 
-  - Kael believes the Docks are still under Old Guard rules (confidence 0.8)
-    → DRAMATIC IRONY: New regime will arrest him for activities
-      that were legal last week
-    → Scenario hook: "Ignorance of the Law"
+ - Kael believes the Docks are still under Old Guard rules (confidence 0.8)
+ → DRAMATIC IRONY: New regime will arrest him for activities
+ that were legal last week
+ → Scenario hook: "Ignorance of the Law"
 
-  - Elara heard treasure lies in the Blackmire (confidence 0.15)
-    → DRAMATIC IRONY: The rumor was planted by bandits to lure victims
-    → Scenario hook: "The Trap"
+ - Elara heard treasure lies in the Blackmire (confidence 0.15)
+ → DRAMATIC IRONY: The rumor was planted by bandits to lure victims
+ → Scenario hook: "The Trap"
 ```
 
 ### 2. Rumor-Driven Scenario Triggering
@@ -303,21 +303,21 @@ Rumors can be scenario preconditions. The Storyline plugin's scenario definition
 ```yaml
 # Scenario: "The Witch Hunt"
 conditions:
-  characterRequirements:
-    - archetype: accused
-      constraints:
-        hearsay:
-          # At least 3 NPCs must believe the accused is "cursed"
-          beliefAbout: "cursed"
-          minBelievers: 3
-          minAverageConfidence: 0.4
+ characterRequirements:
+ - archetype: accused
+ constraints:
+ hearsay:
+ # At least 3 NPCs must believe the accused is "cursed"
+ beliefAbout: "cursed"
+ minBelievers: 3
+ minAverageConfidence: 0.4
 
-  worldRequirements:
-    - type: hearsay_saturation
-      # The rumor must have spread to at least 30% of local NPCs
-      claim: "cursed"
-      locationId: "${accused.current_location}"
-      saturationThreshold: 0.3
+ worldRequirements:
+ - type: hearsay_saturation
+ # The rumor must have spread to at least 30% of local NPCs
+ claim: "cursed"
+ locationId: "${accused.current_location}"
+ saturationThreshold: 0.3
 ```
 
 When enough NPCs believe a character is cursed, a witch hunt scenario becomes available. The regional watcher can choose to trigger it. The scenario is emergent from social dynamics, not scripted.
@@ -328,21 +328,21 @@ The storyline composer extracts `NarrativeState` from compressed archives for st
 
 ```yaml
 narrative_state_extraction:
-  # Existing: personality, history, encounters
-  character_personality: { honesty: 0.8, courage: -0.3 }
-  character_history: { trauma: "lost_family", goals: ["find_truth"] }
+ # Existing: personality, history, encounters
+ character_personality: { honesty: 0.8, courage: -0.3 }
+ character_history: { trauma: "lost_family", goals: ["find_truth"] }
 
-  # NEW from hearsay: what did they believe vs. reality?
-  belief_deltas:
-    - subject: "village_elder"
-      believed: { trustworthy: 0.9 }
-      reality: { betrayer: true }
-      narrative_weight: HIGH  # Major dramatic irony -- story seed
+ # NEW from hearsay: what did they believe vs. reality?
+ belief_deltas:
+ - subject: "village_elder"
+ believed: { trustworthy: 0.9 }
+ reality: { betrayer: true }
+ narrative_weight: HIGH # Major dramatic irony -- story seed
 
-    - subject: "blackmire_swamp"
-      believed: { cursed: 0.7 }
-      reality: { abandoned_settlement: true }
-      narrative_weight: MEDIUM  # Mystery seed
+ - subject: "blackmire_swamp"
+ believed: { cursed: 0.7 }
+ reality: { abandoned_settlement: true }
+ narrative_weight: MEDIUM # Mystery seed
 ```
 
 These belief deltas become GOAP preconditions for storyline planning. A `betrayal_discovery` story action requires a character who trusted someone who actually betrayed them. A `face_fears` action requires a character with high-confidence location danger beliefs. The story system's A* planner finds action sequences that resolve these dramatic tensions.
@@ -354,38 +354,38 @@ Regional watcher gods can inject rumors to create narrative conditions:
 ```yaml
 # God of Mischief behavior document (ABML)
 flows:
-  stir_trouble:
-    # Find a prosperous, stable community
-    - api_call:
-        service: faction
-        endpoint: /faction/norm/query-applicable
-        data:
-          characterId: "${random_local}"
-          locationId: "${my_region.center}"
-        result: norms
+ stir_trouble:
+ # Find a prosperous, stable community
+ - api_call:
+ service: faction
+ endpoint: /faction/norm/query-applicable
+ data:
+ characterId: "${random_local}"
+ locationId: "${my_region.center}"
+ result: norms
 
-    - cond:
-        - when: "${norms.mergedMap.size > 5}"  # Well-governed area
-          then:
-            # Inject a destabilizing rumor
-            - api_call:
-                service: hearsay
-                endpoint: /hearsay/rumor/inject
-                data:
-                  locationId: "${my_region.center}"
-                  domain: "norm"
-                  claimCode: "execution_for_minor_offense"
-                  believedValue: 50.0  # Extremely harsh
-                  targetRadius: 500  # meters
-                  propagationSpeed: "fast"
-                  sourceAttribution: null  # Anonymous rumor
+ - cond:
+ - when: "${norms.mergedMap.size > 5}" # Well-governed area
+ then:
+ # Inject a destabilizing rumor
+ - api_call:
+ service: hearsay
+ endpoint: /hearsay/rumor/inject
+ data:
+ locationId: "${my_region.center}"
+ domain: "norm"
+ claimCode: "execution_for_minor_offense"
+ believedValue: 50.0 # Extremely harsh
+ targetRadius: 500 # meters
+ propagationSpeed: "fast"
+ sourceAttribution: null # Anonymous rumor
 
-            # Watch what happens (check back in a few days)
-            - set:
-                "pending_observations.${my_region.center}":
-                  injected_at: "${now}"
-                  expected_effect: "merchant_flight"
-                  check_after: "P3D"
+ # Watch what happens (check back in a few days)
+ - set:
+ "pending_observations.${my_region.center}":
+ injected_at: "${now}"
+ expected_effect: "merchant_flight"
+ check_after: "P3D"
 ```
 
 The god creates narrative opportunities by manipulating social information. If merchants flee based on false rumors of harsh enforcement, the economy shifts, which creates real consequences, which feeds back into the content flywheel.
@@ -555,7 +555,7 @@ Archives belief state for character compression. On restore, beliefs are NOT res
 | Service | Role |
 |---------|------|
 | `ILogger<HearsayService>` | Structured logging |
-| `ITelemetryProvider` | Distributed tracing span creation (L0, per IMPLEMENTATION TENETS T30) |
+| `ITelemetryProvider` | Distributed tracing span creation (L0, per IMPLEMENTATION TENETS) |
 | `HearsayServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (creates 4 stores) |
 | `IMessageBus` | Event publishing |
@@ -675,86 +675,86 @@ Implements `IVariableProviderFactory` (via `HearsayProviderFactory`) providing t
 
 ```yaml
 flows:
-  evaluate_travel:
-    # Should I take the shortcut through the swamp?
-    - cond:
-        # I've heard it's very dangerous and I believe it
-        - when: "${hearsay.location.BLACKMIRE.danger > 0.6
-                  && hearsay.location.BLACKMIRE.danger.confidence > 0.4}"
-          then:
-            - cond:
-                # But I'm brave enough to handle it
-                - when: "${personality.courage > 0.5}"
-                  then:
-                    - call: take_shortcut  # Face your fears
-                    - set:
-                        stress: "${stress + hearsay.location.BLACKMIRE.danger * 0.3}"
-                # I'm not brave enough -- take the long way
-                - otherwise:
-                    - call: take_safe_route
+ evaluate_travel:
+ # Should I take the shortcut through the swamp?
+ - cond:
+ # I've heard it's very dangerous and I believe it
+ - when: "${hearsay.location.BLACKMIRE.danger > 0.6
+ && hearsay.location.BLACKMIRE.danger.confidence > 0.4}"
+ then:
+ - cond:
+ # But I'm brave enough to handle it
+ - when: "${personality.courage > 0.5}"
+ then:
+ - call: take_shortcut # Face your fears
+ - set:
+ stress: "${stress + hearsay.location.BLACKMIRE.danger * 0.3}"
+ # I'm not brave enough -- take the long way
+ - otherwise:
+ - call: take_safe_route
 
-        # I haven't heard anything about it (no belief = no fear)
-        - when: "${!hearsay.location.BLACKMIRE.has_heard_of}"
-          then:
-            - call: take_shortcut  # Ignorance is bliss
+ # I haven't heard anything about it (no belief = no fear)
+ - when: "${!hearsay.location.BLACKMIRE.has_heard_of}"
+ then:
+ - call: take_shortcut # Ignorance is bliss
 
-        # I heard it's fine (low danger belief)
-        - otherwise:
-            - call: take_shortcut
+ # I heard it's fine (low danger belief)
+ - otherwise:
+ - call: take_shortcut
 
-  evaluate_trade_partner:
-    # Should I trade with this person?
-    - cond:
-        # I've heard they're dishonest
-        - when: "${hearsay.character.TRADER.dishonest > 0.5
-                  && hearsay.character.TRADER.dishonest.confidence > 0.3}"
-          then:
-            - cond:
-                # But I've also dealt with them personally
-                - when: "${encounters.sentiment.TRADER > 0.3}"
-                  then:
-                    - call: trade_cautiously  # Personal experience overrides hearsay
-                - otherwise:
-                    - call: decline_trade  # Trust the rumor
+ evaluate_trade_partner:
+ # Should I trade with this person?
+ - cond:
+ # I've heard they're dishonest
+ - when: "${hearsay.character.TRADER.dishonest > 0.5
+ && hearsay.character.TRADER.dishonest.confidence > 0.3}"
+ then:
+ - cond:
+ # But I've also dealt with them personally
+ - when: "${encounters.sentiment.TRADER > 0.3}"
+ then:
+ - call: trade_cautiously # Personal experience overrides hearsay
+ - otherwise:
+ - call: decline_trade # Trust the rumor
 
-        # I've heard they're trustworthy
-        - when: "${hearsay.character.TRADER.trustworthy > 0.5}"
-          then:
-            - call: trade_willingly
+ # I've heard they're trustworthy
+ - when: "${hearsay.character.TRADER.trustworthy > 0.5}"
+ then:
+ - call: trade_willingly
 
-        # No information -- use personality to decide
-        - otherwise:
-            - cond:
-                - when: "${personality.agreeableness > 0.3}"
-                  then:
-                    - call: trade_willingly  # Generally trusting
-                - otherwise:
-                    - call: trade_cautiously  # Generally suspicious
+ # No information -- use personality to decide
+ - otherwise:
+ - cond:
+ - when: "${personality.agreeableness > 0.3}"
+ then:
+ - call: trade_willingly # Generally trusting
+ - otherwise:
+ - call: trade_cautiously # Generally suspicious
 
-  consider_norm_compliance:
-    # Use hearsay for fuzzy norms instead of perfect-knowledge obligations
-    - cond:
-        # I believe theft is very costly here
-        - when: "${hearsay.norm.believed_cost.theft > 10
-                  && hearsay.norm.confidence.theft > 0.5}"
-          then:
-            - call: buy_item  # Don't risk it
+ consider_norm_compliance:
+ # Use hearsay for fuzzy norms instead of perfect-knowledge obligations
+ - cond:
+ # I believe theft is very costly here
+ - when: "${hearsay.norm.believed_cost.theft > 10
+ && hearsay.norm.confidence.theft > 0.5}"
+ then:
+ - call: buy_item # Don't risk it
 
-        # I'm not sure about the rules here
-        - when: "${hearsay.norm.believed_cost.theft > 5
-                  && hearsay.norm.confidence.theft < 0.3}"
-          then:
-            - cond:
-                - when: "${personality.honesty > 0.5}"
-                  then:
-                    - call: buy_item  # Better safe than sorry
-                - otherwise:
-                    - call: steal_item  # Low confidence? Risk it.
+ # I'm not sure about the rules here
+ - when: "${hearsay.norm.believed_cost.theft > 5
+ && hearsay.norm.confidence.theft < 0.3}"
+ then:
+ - cond:
+ - when: "${personality.honesty > 0.5}"
+ then:
+ - call: buy_item # Better safe than sorry
+ - otherwise:
+ - call: steal_item # Low confidence? Risk it.
 
-        # I haven't heard of any theft penalties here
-        - when: "${!hearsay.norm.has_belief.theft}"
-          then:
-            - call: steal_item  # Ignorance enables crime
+ # I haven't heard of any theft penalties here
+ - when: "${!hearsay.norm.has_belief.theft}"
+ then:
+ - call: steal_item # Ignorance enables crime
 ```
 
 ---
@@ -767,58 +767,58 @@ Belief identity and propagation are owned here. Actual norm data comes from Fact
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                   HEARSAY INFORMATION FLOW                           │
-│                                                                      │
-│  GROUND TRUTH SOURCES:                                               │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
-│  │ Faction  │  │Character │  │ Location │  │Obligation│            │
-│  │  (norms) │  │Encounter │  │  (data)  │  │(violations)│           │
-│  │          │  │(sentiment)│  │          │  │          │            │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘            │
-│       │              │              │              │                  │
-│       │    events trigger           │              │                  │
-│       │    propagation              │              │                  │
-│       ▼              ▼              ▼              ▼                  │
-│  ┌───────────────────────────────────────────────────────────┐       │
-│  │                    HEARSAY SERVICE                         │       │
-│  │                                                            │       │
-│  │  ┌─────────────────────┐  ┌──────────────────────────┐   │       │
-│  │  │   BELIEF STORE      │  │   PROPAGATION ENGINE     │   │       │
-│  │  │                     │  │                          │   │       │
-│  │  │ Per-character cache  │  │  Propagation waves       │   │       │
-│  │  │ of what they THINK  │  │  (rumors spreading       │   │       │
-│  │  │ they know about:    │  │   through social network) │   │       │
-│  │  │  - norms            │  │                          │   │       │
-│  │  │  - other characters │  │  Convergence worker      │   │       │
-│  │  │  - locations        │  │  (beliefs drift toward   │   │       │
-│  │  │                     │  │   reality over time)     │   │       │
-│  │  └──────────┬──────────┘  │                          │   │       │
-│  │             │              │  Decay worker            │   │       │
-│  │             │              │  (old beliefs fade)      │   │       │
-│  │             │              └──────────────────────────┘   │       │
-│  └─────────────┼────────────────────────────────────────────┘       │
-│                │                                                     │
-│                ▼                                                     │
-│  ┌───────────────────────────────────────────────────────────┐       │
-│  │              HearsayProviderFactory                        │       │
-│  │              IVariableProviderFactory                      │       │
-│  │                                                            │       │
-│  │  ${hearsay.norm.believed_cost.<type>}                     │       │
-│  │  ${hearsay.character.<id>.reputation}                     │       │
-│  │  ${hearsay.location.<id>.danger}          ──────► Actor   │       │
-│  │  ${hearsay.location.fear_gradient}                (L2)    │       │
-│  │  ${hearsay.norm.awareness_ratio}                  ABML    │       │
-│  │                                                   GOAP    │       │
-│  └───────────────────────────────────────────────────────────┘       │
-│                                                                      │
-│  INJECTION POINTS:                                                   │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                          │
-│  │ God      │  │ NPC      │  │ Player   │                          │
-│  │ Actors   │  │ Gossip   │  │ Spread   │                          │
-│  │ (inject  │  │ (natural │  │ (actions │                          │
-│  │  rumor)  │  │  spread) │  │  create  │                          │
-│  │          │  │          │  │  beliefs) │                          │
-│  └──────────┘  └──────────┘  └──────────┘                          │
+│ HEARSAY INFORMATION FLOW │
+│ │
+│ GROUND TRUTH SOURCES: │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│ │ Faction │ │Character │ │ Location │ │Obligation│ │
+│ │ (norms) │ │Encounter │ │ (data) │ │(violations)│ │
+│ │ │ │(sentiment)│ │ │ │ │ │
+│ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ │
+│ │ │ │ │ │
+│ │ events trigger │ │ │
+│ │ propagation │ │ │
+│ ▼ ▼ ▼ ▼ │
+│ ┌───────────────────────────────────────────────────────────┐ │
+│ │ HEARSAY SERVICE │ │
+│ │ │ │
+│ │ ┌─────────────────────┐ ┌──────────────────────────┐ │ │
+│ │ │ BELIEF STORE │ │ PROPAGATION ENGINE │ │ │
+│ │ │ │ │ │ │ │
+│ │ │ Per-character cache │ │ Propagation waves │ │ │
+│ │ │ of what they THINK │ │ (rumors spreading │ │ │
+│ │ │ they know about: │ │ through social network) │ │ │
+│ │ │ - norms │ │ │ │ │
+│ │ │ - other characters │ │ Convergence worker │ │ │
+│ │ │ - locations │ │ (beliefs drift toward │ │ │
+│ │ │ │ │ reality over time) │ │ │
+│ │ └──────────┬──────────┘ │ │ │ │
+│ │ │ │ Decay worker │ │ │
+│ │ │ │ (old beliefs fade) │ │ │
+│ │ │ └──────────────────────────┘ │ │
+│ └─────────────┼────────────────────────────────────────────┘ │
+│ │ │
+│ ▼ │
+│ ┌───────────────────────────────────────────────────────────┐ │
+│ │ HearsayProviderFactory │ │
+│ │ IVariableProviderFactory │ │
+│ │ │ │
+│ │ ${hearsay.norm.believed_cost.<type>} │ │
+│ │ ${hearsay.character.<id>.reputation} │ │
+│ │ ${hearsay.location.<id>.danger} ──────► Actor │ │
+│ │ ${hearsay.location.fear_gradient} (L2) │ │
+│ │ ${hearsay.norm.awareness_ratio} ABML │ │
+│ │ GOAP │ │
+│ └───────────────────────────────────────────────────────────┘ │
+│ │
+│ INJECTION POINTS: │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│ │ God │ │ NPC │ │ Player │ │
+│ │ Actors │ │ Gossip │ │ Spread │ │
+│ │ (inject │ │ (natural │ │ (actions │ │
+│ │ rumor) │ │ spread) │ │ create │ │
+│ │ │ │ │ │ beliefs) │ │
+│ └──────────┘ └──────────┘ └──────────┘ │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -826,51 +826,51 @@ Belief identity and propagation are owned here. Actual norm data comes from Fact
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    BELIEF LIFECYCLE                                    │
-│                                                                      │
-│  ACQUISITION                                                         │
-│  ┌─────────┐   ┌─────────────┐   ┌─────────────┐                   │
-│  │ Direct  │   │ Official   │   │ Rumor      │                     │
-│  │ Observe │   │ Decree     │   │ Injection  │                     │
-│  │ c: 0.9  │   │ c: 0.75   │   │ c: 0.2    │                     │
-│  └────┬────┘   └─────┬─────┘   └─────┬─────┘                     │
-│       │               │               │                              │
-│       └───────────────┼───────────────┘                              │
-│                       ▼                                              │
-│                 ┌───────────┐                                        │
-│                 │  BELIEF   │                                        │
-│                 │  ENTRY    │                                        │
-│                 │  c: 0.xx  │                                        │
-│                 └─────┬─────┘                                        │
-│                       │                                              │
-│       ┌───────────────┼───────────────┐                              │
-│       ▼               ▼               ▼                              │
-│  REINFORCEMENT   DECAY          CORRECTION                          │
-│  ┌─────────┐   ┌─────────┐   ┌─────────┐                          │
-│  │ Same    │   │ Time    │   │ Direct  │                           │
-│  │ claim   │   │ passes, │   │ observe │                           │
-│  │ new     │   │ no      │   │ contra- │                           │
-│  │ source  │   │ reinf.  │   │ diction │                           │
-│  │ c: ↑    │   │ c: ↓    │   │ c: ↓↓↓  │                          │
-│  └─────────┘   └─────────┘   └────┬────┘                          │
-│                       │            │                                 │
-│                       ▼            ▼                                 │
-│                 ┌───────────┐ ┌───────────┐                         │
-│                 │ EXPIRED   │ │ NEW BELIEF │                         │
-│                 │ (below    │ │ (corrected │                         │
-│                 │ threshold)│ │  high conf)│                         │
-│                 └───────────┘ └───────────┘                         │
-│                                                                      │
-│  CONVERGENCE (background worker)                                     │
-│  ┌──────────────────────────────────────────────┐                   │
-│  │ For NPCs proximate to belief subject:         │                   │
-│  │   believed_value drifts toward actual_value   │                   │
-│  │   confidence increases toward ground truth    │                   │
-│  │   Rate depends on:                            │                   │
-│  │     - distance to subject                     │                   │
-│  │     - social connectedness                    │                   │
-│  │     - personality.openness                    │                   │
-│  └──────────────────────────────────────────────┘                   │
+│ BELIEF LIFECYCLE │
+│ │
+│ ACQUISITION │
+│ ┌─────────┐ ┌─────────────┐ ┌─────────────┐ │
+│ │ Direct │ │ Official │ │ Rumor │ │
+│ │ Observe │ │ Decree │ │ Injection │ │
+│ │ c: 0.9 │ │ c: 0.75 │ │ c: 0.2 │ │
+│ └────┬────┘ └─────┬─────┘ └─────┬─────┘ │
+│ │ │ │ │
+│ └───────────────┼───────────────┘ │
+│ ▼ │
+│ ┌───────────┐ │
+│ │ BELIEF │ │
+│ │ ENTRY │ │
+│ │ c: 0.xx │ │
+│ └─────┬─────┘ │
+│ │ │
+│ ┌───────────────┼───────────────┐ │
+│ ▼ ▼ ▼ │
+│ REINFORCEMENT DECAY CORRECTION │
+│ ┌─────────┐ ┌─────────┐ ┌─────────┐ │
+│ │ Same │ │ Time │ │ Direct │ │
+│ │ claim │ │ passes, │ │ observe │ │
+│ │ new │ │ no │ │ contra- │ │
+│ │ source │ │ reinf. │ │ diction │ │
+│ │ c: ↑ │ │ c: ↓ │ │ c: ↓↓↓ │ │
+│ └─────────┘ └─────────┘ └────┬────┘ │
+│ │ │ │
+│ ▼ ▼ │
+│ ┌───────────┐ ┌───────────┐ │
+│ │ EXPIRED │ │ NEW BELIEF │ │
+│ │ (below │ │ (corrected │ │
+│ │ threshold)│ │ high conf)│ │
+│ └───────────┘ └───────────┘ │
+│ │
+│ CONVERGENCE (background worker) │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ For NPCs proximate to belief subject: │ │
+│ │ believed_value drifts toward actual_value │ │
+│ │ confidence increases toward ground truth │ │
+│ │ Rate depends on: │ │
+│ │ - distance to subject │ │
+│ │ - social connectedness │ │
+│ │ - personality.openness │ │
+│ └──────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -878,54 +878,54 @@ Belief identity and propagation are owned here. Actual norm data comes from Fact
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                  HEARSAY → STORYLINE BRIDGE                          │
-│                                                                      │
-│  Regional Watcher (God of Tragedy)                                   │
-│  ┌──────────────────────────────────────────────┐                   │
-│  │ "I want to find dramatic irony..."            │                   │
-│  │                                                │                   │
-│  │ api_call:                                      │                   │
-│  │   service: hearsay                            │                   │
-│  │   endpoint: /hearsay/belief/query-delta       │                   │
-│  │   data:                                        │                   │
-│  │     domain: "character"                        │                   │
-│  │     locationId: "${my_region}"                 │                   │
-│  │     minDeltaMagnitude: 0.5                    │                   │
-│  │     minNarrativeWeight: "MEDIUM"              │                   │
-│  └──────────────────────┬───────────────────────┘                   │
-│                          │                                           │
-│                          ▼                                           │
-│  ┌──────────────────────────────────────────────┐                   │
-│  │ Results:                                      │                   │
-│  │                                                │                   │
-│  │ 1. Kael believes Mira is dangerous (0.7)      │                   │
-│  │    Reality: Mira is a pacifist healer          │                   │
-│  │    Delta: 1.4 | Weight: HIGH                  │                   │
-│  │    → Scenario seed: "The False Accusation"    │                   │
-│  │                                                │                   │
-│  │ 2. Aldric believes old laws apply (0.8)        │                   │
-│  │    Reality: New faction, new laws              │                   │
-│  │    Delta: 0.6 | Weight: MEDIUM                │                   │
-│  │    → Scenario seed: "Ignorance of the Law"    │                   │
-│  │                                                │                   │
-│  │ 3. Elara believes treasure in swamp (0.15)    │                   │
-│  │    Reality: Bandit trap                        │                   │
-│  │    Delta: 0.95 | Weight: HIGH                 │                   │
-│  │    → Scenario seed: "The Trap"                │                   │
-│  └──────────────────────┬───────────────────────┘                   │
-│                          │                                           │
-│                          ▼                                           │
-│  ┌──────────────────────────────────────────────┐                   │
-│  │ Watcher queries Storyline plugin:             │                   │
-│  │   /storyline/scenario/find-matching           │                   │
-│  │   with hearsay-derived candidate data         │                   │
-│  │                                                │                   │
-│  │ Storyline's lazy phase evaluation uses         │                   │
-│  │ current hearsay state in each phase:           │                   │
-│  │   "Has the character learned the truth yet?"   │                   │
-│  │   If yes → storyline adapts (twist resolved)  │                   │
-│  │   If no → storyline escalates (deeper irony)  │                   │
-│  └──────────────────────────────────────────────┘                   │
+│ HEARSAY → STORYLINE BRIDGE │
+│ │
+│ Regional Watcher (God of Tragedy) │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ "I want to find dramatic irony..." │ │
+│ │ │ │
+│ │ api_call: │ │
+│ │ service: hearsay │ │
+│ │ endpoint: /hearsay/belief/query-delta │ │
+│ │ data: │ │
+│ │ domain: "character" │ │
+│ │ locationId: "${my_region}" │ │
+│ │ minDeltaMagnitude: 0.5 │ │
+│ │ minNarrativeWeight: "MEDIUM" │ │
+│ └──────────────────────┬───────────────────────┘ │
+│ │ │
+│ ▼ │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ Results: │ │
+│ │ │ │
+│ │ 1. Kael believes Mira is dangerous (0.7) │ │
+│ │ Reality: Mira is a pacifist healer │ │
+│ │ Delta: 1.4 | Weight: HIGH │ │
+│ │ → Scenario seed: "The False Accusation" │ │
+│ │ │ │
+│ │ 2. Aldric believes old laws apply (0.8) │ │
+│ │ Reality: New faction, new laws │ │
+│ │ Delta: 0.6 | Weight: MEDIUM │ │
+│ │ → Scenario seed: "Ignorance of the Law" │ │
+│ │ │ │
+│ │ 3. Elara believes treasure in swamp (0.15) │ │
+│ │ Reality: Bandit trap │ │
+│ │ Delta: 0.95 | Weight: HIGH │ │
+│ │ → Scenario seed: "The Trap" │ │
+│ └──────────────────────┬───────────────────────┘ │
+│ │ │
+│ ▼ │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ Watcher queries Storyline plugin: │ │
+│ │ /storyline/scenario/find-matching │ │
+│ │ with hearsay-derived candidate data │ │
+│ │ │ │
+│ │ Storyline's lazy phase evaluation uses │ │
+│ │ current hearsay state in each phase: │ │
+│ │ "Has the character learned the truth yet?" │ │
+│ │ If yes → storyline adapts (twist resolved) │ │
+│ │ If no → storyline escalates (deeper irony) │ │
+│ └──────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1035,15 +1035,15 @@ The question arises: why not add belief filtering to Obligation or temporal prop
 The pipeline with hearsay:
 ```
 Faction (what IS true) ─────────────────────────────────► Convergence target
-                                                              │
+ │
 Hearsay (what NPC THINKS is true) ──► ${hearsay.*} ──► Actor cognition
-                                                              │
+ │
 Obligation (what it COSTS to violate) ── ${obligations.*} ────┘
 
 Behavior authors choose:
-  - ${obligations.*} only  → perfect-information moral reasoning (current behavior)
-  - ${hearsay.*} only      → fuzzy social perception without formal costs
-  - both                   → full pipeline with uncertainty and consequences
+ - ${obligations.*} only → perfect-information moral reasoning (current behavior)
+ - ${hearsay.*} only → fuzzy social perception without formal costs
+ - both → full pipeline with uncertainty and consequences
 ```
 
 ---
@@ -1086,9 +1086,9 @@ Behavior authors choose:
 
 6. **Personality integration depth**: How much should personality affect belief mechanics? Current plan: openness affects receptivity, conscientiousness affects verification tendency. Could extend to: neuroticism amplifies negative beliefs, agreeableness biases toward positive interpretations, etc. The mapping should be data-driven (like obligation's trait-to-violation mapping), not hardcoded.
 
-7. **x-permissions per endpoint** *(audit finding, deferred)*: Should the deep dive explicitly specify `x-permissions` for all 18 endpoints, or is the current style (noting `developer` role where applicable, everything else implicitly `[]` per "internal-only, never internet-facing") sufficient? T13 mandates x-permissions on schema endpoints; the deep dive currently documents role requirements implicitly. Resolve during schema creation.
+7. **x-permissions per endpoint** *(audit finding, deferred)*: Should the deep dive explicitly specify `x-permissions` for all 18 endpoints, or is the current style (noting `developer` role where applicable, everything else implicitly `[]` per "internal-only, never internet-facing") sufficient? mandates x-permissions on schema endpoints; the deep dive currently documents role requirements implicitly. Resolve during schema creation.
 
-8. **ConvergenceProximityRadius units in property name** *(audit finding, deferred)*: T16 requires "include units in time-based names" but does not explicitly extend this to distance properties. Current name `ConvergenceProximityRadius` documents "in meters" in its description. Decide whether to rename to `ConvergenceProximityRadiusMeters` for consistency.
+8. **ConvergenceProximityRadius units in property name** *(audit finding, deferred)*: requires "include units in time-based names" but does not explicitly extend this to distance properties. Current name `ConvergenceProximityRadius` documents "in meters" in its description. Decide whether to rename to `ConvergenceProximityRadiusMeters` for consistency.
 
 9. **GitHub issue cross-references** *(audit finding, deferred)*: Related issues (#410 Obligation/Faction architecture, #435 sovereignty transfer, #440 scenario system design, #454 Lexicon NPC communication, #385 content flywheel pipeline) are aligned with the deep dive but not referenced by number. Decide whether to add issue references to the Work Tracking section for traceability.
 

@@ -34,18 +34,18 @@ Every feeling has the same structure regardless of target entity type:
 
 ```
 FeelingEntry:
-  feelingId:       Guid          # Unique identifier
-  characterId:     Guid          # Who feels this
-  targetType:      EntityType    # $ref: EntityType (Character, Location, Faction, Organization, etc.)
-  targetId:        Guid          # Entity ID of the target (e.g., characterId, locationId, factionId)
-  axis:            string        # Emotional axis (opaque string, e.g., "trust", "fear", "warmth")
-  effectiveValue:  float         # Computed: clamp(baseValue + modifier, -1.0, 1.0) — range [-1.0, 1.0]
-  baseValue:       float         # Computed from source services — range [-1.0, 1.0]
-  modifier:        float         # Persistent emotional residue — range [-1.0, 1.0]
-  modifierDecayRate: float       # How fast the modifier decays toward 0 (per day) — range [0.0, 1.0]
-  lastSynthesizedAt: DateTime    # When base was last recomputed from sources
-  lastModifiedAt:    DateTime    # When modifier was last changed
-  sourceBreakdown: SynthesisBreakdown  # Typed breakdown of source contributions to base value
+ feelingId: Guid # Unique identifier
+ characterId: Guid # Who feels this
+ targetType: EntityType # $ref: EntityType (Character, Location, Faction, Organization, etc.)
+ targetId: Guid # Entity ID of the target (e.g., characterId, locationId, factionId)
+ axis: string # Emotional axis (opaque string, e.g., "trust", "fear", "warmth")
+ effectiveValue: float # Computed: clamp(baseValue + modifier, -1.0, 1.0) — range [-1.0, 1.0]
+ baseValue: float # Computed from source services — range [-1.0, 1.0]
+ modifier: float # Persistent emotional residue — range [-1.0, 1.0]
+ modifierDecayRate: float # How fast the modifier decays toward 0 (per day) — range [0.0, 1.0]
+ lastSynthesizedAt: DateTime # When base was last recomputed from sources
+ lastModifiedAt: DateTime # When modifier was last changed
+ sourceBreakdown: SynthesisBreakdown # Typed breakdown of source contributions to base value
 ```
 
 ### SynthesisBreakdown Model
@@ -54,14 +54,14 @@ Typed breakdown of source contributions to a feeling's base value (per FOUNDATIO
 
 ```
 SynthesisBreakdown:
-  encounterContribution:    float   # Weighted encounter sentiment signal — range [-1.0, 1.0]
-  hearsayContribution:      float   # Weighted hearsay belief signal — range [-1.0, 1.0]
-  relationshipContribution: float   # Weighted relationship type signal — range [-1.0, 1.0]
-  personalityContribution:  float   # Weighted personality bias signal — range [-1.0, 1.0]
-  encounterWeight:          float   # Effective weight used (after redistribution) — range [0.0, 1.0]
-  hearsayWeight:            float   # Effective weight used — range [0.0, 1.0]
-  relationshipWeight:       float   # Effective weight used — range [0.0, 1.0]
-  personalityWeight:        float   # Effective weight used — range [0.0, 1.0]
+ encounterContribution: float # Weighted encounter sentiment signal — range [-1.0, 1.0]
+ hearsayContribution: float # Weighted hearsay belief signal — range [-1.0, 1.0]
+ relationshipContribution: float # Weighted relationship type signal — range [-1.0, 1.0]
+ personalityContribution: float # Weighted personality bias signal — range [-1.0, 1.0]
+ encounterWeight: float # Effective weight used (after redistribution) — range [0.0, 1.0]
+ hearsayWeight: float # Effective weight used — range [0.0, 1.0]
+ relationshipWeight: float # Effective weight used — range [0.0, 1.0]
+ personalityWeight: float # Effective weight used — range [0.0, 1.0]
 ```
 
 Each contribution field stores the signal value from that source BEFORE weighting. The effective weights reflect redistribution when sources are unavailable (e.g., if hearsay is missing, its weight redistributes to other sources proportionally). `base = sum(contribution_i * weight_i)`.
@@ -86,10 +86,10 @@ The base value is computed from available source services. Each source contribut
 
 ```
 base("trust", character, MIRA) =
-    w_encounter * encounterTrustSignal(MIRA)
-  + w_hearsay   * hearsayTrustSignal(MIRA)
-  + w_relationship * relationshipTrustSignal(MIRA)
-  + w_personality * personalityTrustBias()
+ w_encounter * encounterTrustSignal(MIRA)
+ + w_hearsay * hearsayTrustSignal(MIRA)
+ + w_relationship * relationshipTrustSignal(MIRA)
+ + w_personality * personalityTrustBias()
 ```
 
 Where:
@@ -135,10 +135,10 @@ Guardian spirit feelings use `targetType: Character` with `targetId` set to the 
 
 ```yaml
 - when: "${disposition.guardian.resentment > 0.6 && disposition.guardian.trust < 0.3}"
-  then:
-    - call: resist_spirit_nudge
-    - set:
-        compliance_multiplier: "${0.2}"  # Barely responsive to the spirit
+ then:
+ - call: resist_spirit_nudge
+ - set:
+ compliance_multiplier: "${0.2}" # Barely responsive to the spirit
 ```
 
 ---
@@ -155,18 +155,18 @@ Drives represent intrinsic, long-term aspirational goals:
 
 ```
 DriveEntry:
-  driveId:         Guid          # Unique identifier
-  characterId:     Guid          # Who has this drive
-  driveCode:       string        # Opaque string (e.g., "master_craft", "protect_family", "gain_wealth")
-  category:        string        # "mastery", "social", "survival", "identity", "exploration"
-  intensity:       float         # 0.0 (dormant) to 1.0 (consuming obsession) — range [0.0, 1.0]
-  satisfaction:    float         # 0.0 (unfulfilled) to 1.0 (fully satisfied) — range [0.0, 1.0]
-  frustration:     float         # 0.0 (no obstacles) to 1.0 (blocked at every turn) — range [0.0, 1.0]
-  originType:      DriveOriginType  # How this drive formed: Personality, Experience, Backstory, Circumstance
-  originEventId:   Guid?         # The event/experience that catalyzed this drive (null for personality-innate)
-  acquiredAt:      DateTime      # When the drive formed
-  lastProgressAt:  DateTime?     # When satisfaction last increased
-  lastFrustrationAt: DateTime?   # When frustration last increased
+ driveId: Guid # Unique identifier
+ characterId: Guid # Who has this drive
+ driveCode: string # Opaque string (e.g., "master_craft", "protect_family", "gain_wealth")
+ category: string # "mastery", "social", "survival", "identity", "exploration"
+ intensity: float # 0.0 (dormant) to 1.0 (consuming obsession) — range [0.0, 1.0]
+ satisfaction: float # 0.0 (unfulfilled) to 1.0 (fully satisfied) — range [0.0, 1.0]
+ frustration: float # 0.0 (no obstacles) to 1.0 (blocked at every turn) — range [0.0, 1.0]
+ originType: DriveOriginType # How this drive formed: Personality, Experience, Backstory, Circumstance
+ originEventId: Guid? # The event/experience that catalyzed this drive (null for personality-innate)
+ acquiredAt: DateTime # When the drive formed
+ lastProgressAt: DateTime? # When satisfaction last increased
+ lastFrustrationAt: DateTime? # When frustration last increased
 ```
 
 ### Drive Categories
@@ -208,15 +208,15 @@ Drives modify GOAP goal priorities without replacing the existing goal system:
 ```yaml
 # Without drives: GOAP evaluates goals purely on immediate utility
 goals:
-  - find_food:       utility = hunger * 10
-  - patrol_area:     utility = duty * 5
-  - practice_craft:  utility = skill_gap * 3
+ - find_food: utility = hunger * 10
+ - patrol_area: utility = duty * 5
+ - practice_craft: utility = skill_gap * 3
 
 # With drives: drive intensity adds bonus utility to aligned goals
 goals:
-  - find_food:       utility = hunger * 10 + (drive.survival.gain_wealth ? intensity * 2 : 0)
-  - patrol_area:     utility = duty * 5 + (drive.social.protect_family ? intensity * 4 : 0)
-  - practice_craft:  utility = skill_gap * 3 + (drive.mastery.master_craft ? intensity * 8 : 0)
+ - find_food: utility = hunger * 10 + (drive.survival.gain_wealth ? intensity * 2 : 0)
+ - patrol_area: utility = duty * 5 + (drive.social.protect_family ? intensity * 4 : 0)
+ - practice_craft: utility = skill_gap * 3 + (drive.mastery.master_craft ? intensity * 8 : 0)
 ```
 
 The `master_craft` drive doesn't create a quest. It makes the character CHOOSE to practice crafting more often, prioritize craft-related opportunities, and feel frustrated when unable to craft. This is the "chasing your dreams" mechanic: intrinsic motivation expressed through goal priority modulation.
@@ -229,56 +229,56 @@ The motivating use case, played out step by step:
 
 ```
 Day 1: Kael becomes a blacksmith's apprentice
-  ┌────────────────────────────────────────────────────────┐
-  │ PERSONALITY: conscientiousness=0.7, openness=0.5      │
-  │ BACKSTORY: origin=mining_village, occupation=apprentice│
-  │ DRIVES: none (new character, no strong aspirations)   │
-  │ FEELINGS: warmth toward master (0.3, relationship)    │
-  └────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────┐
+ │ PERSONALITY: conscientiousness=0.7, openness=0.5 │
+ │ BACKSTORY: origin=mining_village, occupation=apprentice│
+ │ DRIVES: none (new character, no strong aspirations) │
+ │ FEELINGS: warmth toward master (0.3, relationship) │
+ └────────────────────────────────────────────────────────┘
 
 Day 7: Kael forges his first blade successfully
-  - Experience event: CRAFT_SUCCESS, intensity=0.6
-  - Drive formation check: conscientiousness > 0.5 AND
-    domain_engagement("craft") > 3 sessions
-  - NEW DRIVE: master_craft (category: mastery,
-    intensity: 0.3, origin: experience)
-  - Feeling shift: warmth toward master +0.1 (gratitude modifier)
+ - Experience event: CRAFT_SUCCESS, intensity=0.6
+ - Drive formation check: conscientiousness > 0.5 AND
+ domain_engagement("craft") > 3 sessions
+ - NEW DRIVE: master_craft (category: mastery,
+ intensity: 0.3, origin: experience)
+ - Feeling shift: warmth toward master +0.1 (gratitude modifier)
 
 Day 30: Kael sees a master-crafted sword at the market
-  - Experience event: WITNESSED_MASTERY, intensity=0.8
-  - Drive reinforcement: master_craft intensity 0.3 → 0.5
-  - Drive frustration: satisfaction low (0.1), gap between
-    current skill and witnessed mastery creates frustration 0.3
-  - GOAP impact: practice_craft utility bonus = 0.5 * 8 = +4.0
-    Kael now CHOOSES to practice more, without any quest telling him to
+ - Experience event: WITNESSED_MASTERY, intensity=0.8
+ - Drive reinforcement: master_craft intensity 0.3 → 0.5
+ - Drive frustration: satisfaction low (0.1), gap between
+ current skill and witnessed mastery creates frustration 0.3
+ - GOAP impact: practice_craft utility bonus = 0.5 * 8 = +4.0
+ Kael now CHOOSES to practice more, without any quest telling him to
 
 Day 90: Master praises Kael's work publicly
-  - Experience event: SOCIAL_RECOGNITION, intensity=0.7
-  - Drive satisfaction: master_craft satisfaction 0.1 → 0.3
-  - Feeling shift: respect toward master +0.15 (earned admiration)
-  - NEW DRIVE: earn_respect (category: social, intensity: 0.2,
-    catalyzed by the recognition experience)
+ - Experience event: SOCIAL_RECOGNITION, intensity=0.7
+ - Drive satisfaction: master_craft satisfaction 0.1 → 0.3
+ - Feeling shift: respect toward master +0.15 (earned admiration)
+ - NEW DRIVE: earn_respect (category: social, intensity: 0.2,
+ catalyzed by the recognition experience)
 
 Day 180: Rival apprentice steals credit for Kael's design
-  - Experience event: BETRAYAL, intensity=0.6
-  - Feeling shift: resentment toward rival +0.4 (shock modifier,
-    high decay rate -- Kael isn't the grudge-holding type)
-  - Feeling shift: trust toward rival -0.5 (shock modifier,
-    slow decay rate -- trust is hard to rebuild)
-  - Drive intensification: prove_worth (NEW, identity category,
-    intensity: 0.4, catalyzed by betrayal)
-  - Drive frustration: master_craft frustration +0.2
-    (stolen credit undermines progress toward mastery)
+ - Experience event: BETRAYAL, intensity=0.6
+ - Feeling shift: resentment toward rival +0.4 (shock modifier,
+ high decay rate -- Kael isn't the grudge-holding type)
+ - Feeling shift: trust toward rival -0.5 (shock modifier,
+ slow decay rate -- trust is hard to rebuild)
+ - Drive intensification: prove_worth (NEW, identity category,
+ intensity: 0.4, catalyzed by betrayal)
+ - Drive frustration: master_craft frustration +0.2
+ (stolen credit undermines progress toward mastery)
 
 Year 2: Kael creates his masterwork
-  - Experience event: CRAFT_MASTERY, intensity=1.0
-  - Drive satisfaction: master_craft satisfaction → 0.9
-  - Drive intensity begins to decay (goal nearly achieved)
-  - Feeling shift: warmth toward master → deep gratitude
-  - Content flywheel: when Kael eventually dies, his drive
-    history ("aspired to mastery, achieved it through
-    perseverance despite betrayal") becomes narrative material
-    for the Storyline composer
+ - Experience event: CRAFT_MASTERY, intensity=1.0
+ - Drive satisfaction: master_craft satisfaction → 0.9
+ - Drive intensity begins to decay (goal nearly achieved)
+ - Feeling shift: warmth toward master → deep gratitude
+ - Content flywheel: when Kael eventually dies, his drive
+ history ("aspired to mastery, achieved it through
+ perseverance despite betrayal") becomes narrative material
+ for the Storyline composer
 ```
 
 This entire arc emerged from system interaction. No quest chain orchestrated it. No scenario script authored "Kael should aspire to mastery." The drive formed because his personality (high conscientiousness) met his circumstance (apprentice) and his experience (successful crafting). The drive shaped his daily behavior (choosing to practice), his emotional responses (frustration at the gap, gratitude for recognition), and ultimately his life story (the masterwork).
@@ -295,44 +295,44 @@ The guardian spirit dimension deserves special attention because it is the mecha
 
 ```
 Session 1: Spirit possesses a new character (Elara, personality: peaceful, creative)
-  ┌────────────────────────────────────────────────────────┐
-  │ disposition.guardian.trust       = 0.0 (stranger)      │
-  │ disposition.guardian.resentment  = 0.0 (no history)    │
-  │ disposition.guardian.familiarity = 0.0 (just met)      │
-  │ disposition.guardian.gratitude   = 0.0 (nothing yet)   │
-  │ disposition.guardian.defiance    = 0.0 (no reason)     │
-  └────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────┐
+ │ disposition.guardian.trust = 0.0 (stranger) │
+ │ disposition.guardian.resentment = 0.0 (no history) │
+ │ disposition.guardian.familiarity = 0.0 (just met) │
+ │ disposition.guardian.gratitude = 0.0 (nothing yet) │
+ │ disposition.guardian.defiance = 0.0 (no reason) │
+ └────────────────────────────────────────────────────────┘
 
 Sessions 2-5: Spirit guides Elara toward crafting (aligned with creativity)
-  - Spirit alignment signal: POSITIVE (creative character → creative pursuits)
-  - trust: 0.0 → 0.2 (the spirit's guidance feels right)
-  - familiarity: 0.0 → 0.15 (accumulating shared experience)
-  - gratitude: 0.0 → 0.1 (good outcomes from guidance)
-  - Compliance: HIGH (character trusts the spirit's direction)
+ - Spirit alignment signal: POSITIVE (creative character → creative pursuits)
+ - trust: 0.0 → 0.2 (the spirit's guidance feels right)
+ - familiarity: 0.0 → 0.15 (accumulating shared experience)
+ - gratitude: 0.0 → 0.1 (good outcomes from guidance)
+ - Compliance: HIGH (character trusts the spirit's direction)
 
 Sessions 6-8: Spirit pushes Elara into a bar fight (against personality)
-  - Spirit alignment signal: NEGATIVE (peaceful character → violence)
-  - resentment: 0.0 → 0.3 (SHOCK modifier -- being forced into violence)
-  - trust: 0.2 → 0.1 (the spirit's guidance feels wrong)
-  - defiance: 0.0 → 0.15 (beginning to resist)
-  - Compliance: REDUCED (character hesitates before following)
+ - Spirit alignment signal: NEGATIVE (peaceful character → violence)
+ - resentment: 0.0 → 0.3 (SHOCK modifier -- being forced into violence)
+ - trust: 0.2 → 0.1 (the spirit's guidance feels wrong)
+ - defiance: 0.0 → 0.15 (beginning to resist)
+ - Compliance: REDUCED (character hesitates before following)
 
 Sessions 9-10: Spirit guides Elara to help an injured traveler (aligned)
-  - Spirit alignment signal: POSITIVE (peaceful character → helping)
-  - trust: 0.1 → 0.2 (recovering, but scar tissue from the fight)
-  - resentment: 0.3 → 0.25 (modifier decay -- time heals)
-  - gratitude: 0.1 → 0.15 (good outcome again)
-  - Compliance: MODERATE (trust rebuilding, but slower than initial)
-  - Note: resentment modifier decays slowly -- the memory of
-    being forced to fight lingers even as trust rebuilds
+ - Spirit alignment signal: POSITIVE (peaceful character → helping)
+ - trust: 0.1 → 0.2 (recovering, but scar tissue from the fight)
+ - resentment: 0.3 → 0.25 (modifier decay -- time heals)
+ - gratitude: 0.1 → 0.15 (good outcome again)
+ - Compliance: MODERATE (trust rebuilding, but slower than initial)
+ - Note: resentment modifier decays slowly -- the memory of
+ being forced to fight lingers even as trust rebuilds
 
 Long-term: Consistent aligned guidance
-  - familiarity: → 0.6+ (deep bond)
-  - trust: → 0.5+ (earned through consistent alignment)
-  - resentment: → 0.0 (fully decayed if not reinforced)
-  - Compliance: HIGH (strong collaborative relationship)
-  - The character WANTS to follow the spirit's guidance because
-    it consistently leads to outcomes aligned with who they are
+ - familiarity: → 0.6+ (deep bond)
+ - trust: → 0.5+ (earned through consistent alignment)
+ - resentment: → 0.0 (fully decayed if not reinforced)
+ - Compliance: HIGH (strong collaborative relationship)
+ - The character WANTS to follow the spirit's guidance because
+ it consistently leads to outcomes aligned with who they are
 ```
 
 ### Guilt as Composite Feeling (GH #410)
@@ -347,8 +347,8 @@ Long-term: Consistent aligned guidance
 The composite feeling pattern means guilt is detectable in ABML via:
 ```yaml
 - when: "${disposition.character.SELF.resentment > 0.4 && disposition.character.SELF.trust < -0.2}"
-  then:
-    - call: seek_redemption  # Guilt-driven behavior
+ then:
+ - call: seek_redemption # Guilt-driven behavior
 ```
 
 This avoids adding a dedicated "guilt" axis while still providing mechanically distinct guilty behavior. The `obligation.violation.reported` consumed event triggers these modifier shifts (see Consumed Events). Personality traits modulate the magnitude: high conscientiousness → stronger guilt modifiers, low conscientiousness → weaker.
@@ -360,10 +360,10 @@ The spirit alignment signal is computed by comparing the spirit's recent nudge d
 ```
 alignmentScore = 0.0
 for each recentNudge in last N spirit actions:
-    nudgeCategory = categorize(nudge)  # "violence", "social", "craft", "trade", etc.
-    personalityMatch = personalityAffinityForCategory(character, nudgeCategory)
-    outcome = nudge.outcome  # "positive", "negative", "neutral"
-    alignmentScore += personalityMatch * outcomeWeight(outcome)
+ nudgeCategory = categorize(nudge) # "violence", "social", "craft", "trade", etc.
+ personalityMatch = personalityAffinityForCategory(character, nudgeCategory)
+ outcome = nudge.outcome # "positive", "negative", "neutral"
+ alignmentScore += personalityMatch * outcomeWeight(outcome)
 alignmentScore /= N
 ```
 
@@ -382,20 +382,20 @@ Feelings create preconditions for emotionally-driven scenarios:
 ```yaml
 # Scenario: "The Reckoning"
 conditions:
-  characterRequirements:
-    - archetype: protagonist
-      constraints:
-        disposition:
-          # Character must harbor deep resentment toward someone
-          feeling:
-            targetType: "character"
-            axis: "resentment"
-            minValue: 0.6
-          # AND have a drive for justice or redemption
-          drive:
-            category: "identity"
-            codes: ["seek_justice", "redeem_past", "prove_worth"]
-            minIntensity: 0.4
+ characterRequirements:
+ - archetype: protagonist
+ constraints:
+ disposition:
+ # Character must harbor deep resentment toward someone
+ feeling:
+ targetType: "character"
+ axis: "resentment"
+ minValue: 0.6
+ # AND have a drive for justice or redemption
+ drive:
+ category: "identity"
+ codes: ["seek_justice", "redeem_past", "prove_worth"]
+ minIntensity: 0.4
 ```
 
 ### 2. Drive Fulfillment as Narrative Arc Resolution
@@ -404,20 +404,20 @@ The Storyline composer can identify characters whose drives are near fulfillment
 
 ```yaml
 # Regional Watcher query:
-#   "Find characters at emotional turning points"
+# "Find characters at emotional turning points"
 
 results:
-  - Kael: master_craft drive at satisfaction 0.85
-    → Near-fulfillment scenario: "The Final Test"
-    → Will he achieve mastery or fall at the last hurdle?
+ - Kael: master_craft drive at satisfaction 0.85
+ → Near-fulfillment scenario: "The Final Test"
+ → Will he achieve mastery or fall at the last hurdle?
 
-  - Elara: protect_family drive at frustration 0.9
-    → Near-abandonment scenario: "The Breaking Point"
-    → Will she give up or find a new way?
+ - Elara: protect_family drive at frustration 0.9
+ → Near-abandonment scenario: "The Breaking Point"
+ → Will she give up or find a new way?
 
-  - Aldric: no active drives (intensity all < 0.1)
-    → Catalyst scenario: "The Call to Adventure"
-    → Something must shake him out of complacency
+ - Aldric: no active drives (intensity all < 0.1)
+ → Catalyst scenario: "The Call to Adventure"
+ → Something must shake him out of complacency
 ```
 
 ### 3. Feeling Archives in the Content Flywheel
@@ -426,30 +426,30 @@ When characters are compressed, their feeling and drive history becomes narrativ
 
 ```yaml
 character_archive_enrichment:
-  # Existing: personality, history, encounters
-  character_personality: { honesty: 0.8, courage: -0.3 }
-  character_history: { trauma: "lost_family", goals: ["find_truth"] }
+ # Existing: personality, history, encounters
+ character_personality: { honesty: 0.8, courage: -0.3 }
+ character_history: { trauma: "lost_family", goals: ["find_truth"] }
 
-  # NEW from disposition: how they FELT and what they ASPIRED TO
-  disposition_feelings:
-    - target: "guild_master"
-      axis: "gratitude"
-      value: 0.9
-      narrative_weight: HIGH  # Deep emotional bond
-    - target: "guardian"
-      axis: "trust"
-      value: 0.7
-      narrative_weight: MEDIUM  # Strong spirit-character bond
+ # NEW from disposition: how they FELT and what they ASPIRED TO
+ disposition_feelings:
+ - target: "guild_master"
+ axis: "gratitude"
+ value: 0.9
+ narrative_weight: HIGH # Deep emotional bond
+ - target: "guardian"
+ axis: "trust"
+ value: 0.7
+ narrative_weight: MEDIUM # Strong spirit-character bond
 
-  disposition_drives:
-    - drive: "master_craft"
-      final_satisfaction: 0.9
-      final_intensity: 0.2  # Decaying -- nearly fulfilled
-      narrative_weight: HIGH  # Life's work achieved
-    - drive: "prove_worth"
-      final_satisfaction: 0.3
-      final_frustration: 0.7
-      narrative_weight: HIGH  # Unfinished business -- story seed!
+ disposition_drives:
+ - drive: "master_craft"
+ final_satisfaction: 0.9
+ final_intensity: 0.2 # Decaying -- nearly fulfilled
+ narrative_weight: HIGH # Life's work achieved
+ - drive: "prove_worth"
+ final_satisfaction: 0.3
+ final_frustration: 0.7
+ narrative_weight: HIGH # Unfinished business -- story seed!
 ```
 
 "This character died with an unfulfilled drive to prove their worth" is a tragedy seed. "This character achieved mastery through decades of dedication" is an inspiration seed. The Storyline composer's GOAP planner can use drive fulfillment/frustration as preconditions for narrative actions.
@@ -466,13 +466,13 @@ Hearsay: Kael now meets Mira, she heals him
 Encounter: positive encounter recorded
 Hearsay: "dangerous" belief CORRECTED (confidence drops)
 Disposition: warmth toward Mira RISES (encounter + correction)
-            fear toward Mira DROPS (direct experience overrides)
+ fear toward Mira DROPS (direct experience overrides)
 
 Hearsay: Kael hears Mira killed someone (confidence 0.5)
 Disposition: fear RISES AGAIN (hearsay signal)
-            trust DROPS (conflicting signals)
-            But modifier from positive encounter persists --
-            Kael's personal experience resists the rumor
+ trust DROPS (conflicting signals)
+ But modifier from positive encounter persists --
+ Kael's personal experience resists the rumor
 
 This is how the same external information produces different
 feelings in different characters. A paranoid character would
@@ -567,8 +567,8 @@ weight their personal experience higher.
 
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
-| `targetType` (on FeelingEntry) | A (Entity Reference) | `$ref: EntityType` | Valid values are all Bannou entity types (Character, Location, Faction, Organization, etc.). Guardian spirits ARE Characters in the NEXIUS system realm — no special target type needed. Per T14 test 4: all valid values are Bannou entity types → use `$ref: EntityType`. |
-| `targetId` (on FeelingEntry) | — | `Guid` | Entity ID of the target. For guardian spirit feelings, this is the spirit's characterId in the NEXIUS system realm. Always a proper Guid, never a sentinel value (per T26). |
+| `targetType` (on FeelingEntry) | A (Entity Reference) | `$ref: EntityType` | Valid values are all Bannou entity types (Character, Location, Faction, Organization, etc.). Guardian spirits ARE Characters in the NEXIUS system realm — no special target type needed. Per test 4: all valid values are Bannou entity types → use `$ref: EntityType`. |
+| `targetId` (on FeelingEntry) | — | `Guid` | Entity ID of the target. For guardian spirit feelings, this is the spirit's characterId in the NEXIUS system realm. Always a proper Guid, never a sentinel value (per). |
 | `axis` (on FeelingEntry) | B (Content Code) | Opaque string | Emotional axis codes ("trust", "fear", "warmth", "respect", "resentment", etc.); game-configurable per target type, extensible without schema changes |
 | `driveCode` (on DriveEntry) | B (Content Code) | Opaque string | Drive type codes ("master_craft", "protect_family", "gain_wealth"); emergent from gameplay, extensible without schema changes |
 | `category` (on DriveEntry) | B (Content Code) | Opaque string | Drive category codes ("mastery", "social", "survival", "identity", "exploration"); game-configurable grouping for GOAP priority mapping |
@@ -699,7 +699,7 @@ Archives feeling and drive state for character compression. On restore, drives a
 
 ## API Endpoints (Implementation Notes)
 
-### Endpoint Permissions (x-permissions per T13)
+### Endpoint Permissions (x-permissions per tenets)
 
 All endpoints MUST declare `x-permissions` in the schema. Disposition is internal-only (never internet-facing):
 
@@ -824,113 +824,113 @@ Implements `IVariableProviderFactory` (via `DispositionProviderFactory`) providi
 
 ```yaml
 flows:
-  evaluate_social_interaction:
-    # Should I approach this person?
-    - cond:
-        # I have strong positive feelings about them
-        - when: "${disposition.character.TARGET.composite > 0.4}"
-          then:
-            - call: approach_warmly
-            - set:
-                dialogue_tone: "friendly"
+ evaluate_social_interaction:
+ # Should I approach this person?
+ - cond:
+ # I have strong positive feelings about them
+ - when: "${disposition.character.TARGET.composite > 0.4}"
+ then:
+ - call: approach_warmly
+ - set:
+ dialogue_tone: "friendly"
 
-        # I resent them deeply
-        - when: "${disposition.character.TARGET.resentment > 0.6}"
-          then:
-            - cond:
-                # But I'm not confrontational by nature
-                - when: "${personality.aggression < 0.3}"
-                  then:
-                    - call: avoid_interaction
-                - otherwise:
-                    - call: confront
+ # I resent them deeply
+ - when: "${disposition.character.TARGET.resentment > 0.6}"
+ then:
+ - cond:
+ # But I'm not confrontational by nature
+ - when: "${personality.aggression < 0.3}"
+ then:
+ - call: avoid_interaction
+ - otherwise:
+ - call: confront
 
-        # I've never met them but have heard things (hearsay + disposition)
-        - when: "${disposition.character.TARGET.has_feelings
-                  && !encounters.has_met.TARGET}"
-          then:
-            - call: approach_cautiously
-            - set:
-                dialogue_tone: "guarded"
+ # I've never met them but have heard things (hearsay + disposition)
+ - when: "${disposition.character.TARGET.has_feelings
+ && !encounters.has_met.TARGET}"
+ then:
+ - call: approach_cautiously
+ - set:
+ dialogue_tone: "guarded"
 
-        # No information at all
-        - otherwise:
-            - cond:
-                - when: "${personality.agreeableness > 0.3}"
-                  then:
-                    - call: approach_neutrally
-                - otherwise:
-                    - call: ignore
+ # No information at all
+ - otherwise:
+ - cond:
+ - when: "${personality.agreeableness > 0.3}"
+ then:
+ - call: approach_neutrally
+ - otherwise:
+ - call: ignore
 
-  pursue_drive:
-    # Do I practice my craft today?
-    - cond:
-        # My master_craft drive is urgent
-        - when: "${disposition.drive.has_drive.master_craft
-                  && disposition.drive.master_craft.urgency > 0.5}"
-          then:
-            # Drive urgency overrides other low-priority goals
-            - call: practice_crafting
-            - set:
-                activity_reason: "driven_by_aspiration"
+ pursue_drive:
+ # Do I practice my craft today?
+ - cond:
+ # My master_craft drive is urgent
+ - when: "${disposition.drive.has_drive.master_craft
+ && disposition.drive.master_craft.urgency > 0.5}"
+ then:
+ # Drive urgency overrides other low-priority goals
+ - call: practice_crafting
+ - set:
+ activity_reason: "driven_by_aspiration"
 
-        # My drive is satisfied -- I can relax
-        - when: "${disposition.drive.has_drive.master_craft
-                  && disposition.drive.master_craft.satisfaction > 0.8}"
-          then:
-            - call: do_something_else
-            - set:
-                mood: "content"
+ # My drive is satisfied -- I can relax
+ - when: "${disposition.drive.has_drive.master_craft
+ && disposition.drive.master_craft.satisfaction > 0.8}"
+ then:
+ - call: do_something_else
+ - set:
+ mood: "content"
 
-        # No craft drive -- do it only if assigned
-        - otherwise:
-            - call: check_work_obligations
+ # No craft drive -- do it only if assigned
+ - otherwise:
+ - call: check_work_obligations
 
-  respond_to_spirit:
-    # How do I respond to the guardian spirit's nudge?
-    - cond:
-        # High trust, low resentment -- happy to comply
-        - when: "${disposition.guardian.compliance > 0.7}"
-          then:
-            - call: follow_spirit_guidance
-            - set:
-                response_delay: "${0.1}"  # Quick response
+ respond_to_spirit:
+ # How do I respond to the guardian spirit's nudge?
+ - cond:
+ # High trust, low resentment -- happy to comply
+ - when: "${disposition.guardian.compliance > 0.7}"
+ then:
+ - call: follow_spirit_guidance
+ - set:
+ response_delay: "${0.1}" # Quick response
 
-        # Moderate compliance -- hesitate but follow
-        - when: "${disposition.guardian.compliance > 0.3}"
-          then:
-            - call: hesitate_then_follow
-            - set:
-                response_delay: "${1.0 - disposition.guardian.compliance}"
+ # Moderate compliance -- hesitate but follow
+ - when: "${disposition.guardian.compliance > 0.3}"
+ then:
+ - call: hesitate_then_follow
+ - set:
+ response_delay: "${1.0 - disposition.guardian.compliance}"
 
-        # Low compliance -- resist
-        - when: "${disposition.guardian.compliance < 0.3
-                  && disposition.guardian.defiance > 0.5}"
-          then:
-            - call: resist_spirit_nudge
-            - emit:
-                channel: "spirit_resistance"
-                value: "character_refused"
+ # Low compliance -- resist
+ - when: "${disposition.guardian.compliance < 0.3
+ && disposition.guardian.defiance > 0.5}"
+ then:
+ - call: resist_spirit_nudge
+ - emit:
+ channel: "spirit_resistance"
+ value: "character_refused"
 
-        # Very low compliance -- act autonomously
-        - otherwise:
-            - call: act_on_own_judgment
-            - set:
-                autonomy_mode: true
+ # Very low compliance -- act autonomously
+ - otherwise:
+ - call: act_on_own_judgment
+ - set:
+ autonomy_mode: true
 
-  layabout_behavior:
-    # Character with no drives -- reactive, minimal effort
-    - cond:
-        - when: "${disposition.drive.active_count == 0}"
-          then:
-            - cond:
-                # Not even hungry? Do nothing.
-                - when: "${hunger < 0.3 && fatigue < 0.5}"
-                  then:
-                    - call: idle_lounge
-                # Basic survival only
-                - otherwise:
-                    - call: meet_basic_needs
+ layabout_behavior:
+ # Character with no drives -- reactive, minimal effort
+ - cond:
+ - when: "${disposition.drive.active_count == 0}"
+ then:
+ - cond:
+ # Not even hungry? Do nothing.
+ - when: "${hunger < 0.3 && fatigue < 0.5}"
+ then:
+ - call: idle_lounge
+ # Basic survival only
+ - otherwise:
+ - call: meet_basic_needs
 ```
 
 ---
@@ -943,48 +943,48 @@ Disposition does not replace any existing service. Encounter sentiment, personal
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    FEELING SYNTHESIS PIPELINE                          │
-│                                                                      │
-│  SOURCE DATA:                                                         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
-│  │Encounter │  │ Hearsay  │  │Relation- │  │Personal- │            │
-│  │Sentiment │  │ Beliefs  │  │  ship    │  │  ity     │            │
-│  │(factual) │  │ (heard)  │  │ (bonds)  │  │ (self)   │            │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘            │
-│       │ w=0.35       │ w=0.25      │ w=0.25      │ w=0.15           │
-│       └──────────────┼─────────────┼─────────────┘                  │
-│                      ▼                                               │
-│              ┌───────────────┐                                       │
-│              │  BASE VALUE   │ ← Weighted sum of source signals      │
-│              │  (computed)   │   Recomputed periodically or on event │
-│              └───────┬───────┘                                       │
-│                      │                                               │
-│                      │ + ┌───────────────┐                           │
-│                      │   │   MODIFIER    │ ← Persistent emotional    │
-│                      │   │  (residue)    │   residue from events.    │
-│                      │   │              │   Decays toward 0 over    │
-│                      │   │  Reinforced  │   time unless reinforced. │
-│                      │   │  by events   │                           │
-│                      │   └───────┬───────┘                           │
-│                      │           │                                   │
-│                      ▼           ▼                                   │
-│              ┌───────────────────────────┐                           │
-│              │    EFFECTIVE VALUE        │                           │
-│              │  clamp(base + modifier,   │                           │
-│              │        -1.0, 1.0)         │ ──────► ${disposition.*}  │
-│              └───────────────────────────┘        Variable Provider  │
-│                                                                      │
-│  CHARACTER A (aggressive, paranoid):                                  │
-│    encounter(neutral) + personality(distrust) = base: -0.2          │
-│    + modifier(betrayal shock): -0.4                                  │
-│    = effective: -0.6 (distrustful)                                  │
-│                                                                      │
-│  CHARACTER B (agreeable, trusting):                                   │
-│    encounter(neutral) + personality(trust) = base: +0.2             │
-│    + modifier(none): 0.0                                             │
-│    = effective: +0.2 (mildly trusting)                              │
-│                                                                      │
-│  Same encounter data → different feelings. That's the point.        │
+│ FEELING SYNTHESIS PIPELINE │
+│ │
+│ SOURCE DATA: │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│ │Encounter │ │ Hearsay │ │Relation- │ │Personal- │ │
+│ │Sentiment │ │ Beliefs │ │ ship │ │ ity │ │
+│ │(factual) │ │ (heard) │ │ (bonds) │ │ (self) │ │
+│ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ │
+│ │ w=0.35 │ w=0.25 │ w=0.25 │ w=0.15 │
+│ └──────────────┼─────────────┼─────────────┘ │
+│ ▼ │
+│ ┌───────────────┐ │
+│ │ BASE VALUE │ ← Weighted sum of source signals │
+│ │ (computed) │ Recomputed periodically or on event │
+│ └───────┬───────┘ │
+│ │ │
+│ │ + ┌───────────────┐ │
+│ │ │ MODIFIER │ ← Persistent emotional │
+│ │ │ (residue) │ residue from events. │
+│ │ │ │ Decays toward 0 over │
+│ │ │ Reinforced │ time unless reinforced. │
+│ │ │ by events │ │
+│ │ └───────┬───────┘ │
+│ │ │ │
+│ ▼ ▼ │
+│ ┌───────────────────────────┐ │
+│ │ EFFECTIVE VALUE │ │
+│ │ clamp(base + modifier, │ │
+│ │ -1.0, 1.0) │ ──────► ${disposition.*} │
+│ └───────────────────────────┘ Variable Provider │
+│ │
+│ CHARACTER A (aggressive, paranoid): │
+│ encounter(neutral) + personality(distrust) = base: -0.2 │
+│ + modifier(betrayal shock): -0.4 │
+│ = effective: -0.6 (distrustful) │
+│ │
+│ CHARACTER B (agreeable, trusting): │
+│ encounter(neutral) + personality(trust) = base: +0.2 │
+│ + modifier(none): 0.0 │
+│ = effective: +0.2 (mildly trusting) │
+│ │
+│ Same encounter data → different feelings. That's the point. │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -992,53 +992,53 @@ Disposition does not replace any existing service. Encounter sentiment, personal
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                       DRIVE LIFECYCLE                                  │
-│                                                                      │
-│  FORMATION                                                           │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
-│  │Personality│  │Experience│  │Backstory │  │Circum-   │            │
-│  │ -innate  │  │-catalyzed│  │ -seeded  │  │ stance   │            │
-│  │  (traits │  │  (event  │  │ (GOAL or │  │ (poverty,│            │
-│  │  + domain│  │  triggers│  │  TRAUMA  │  │  success,│            │
-│  │  engage) │  │  new aim)│  │  → drive)│  │  etc.)   │            │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘            │
-│       └──────────────┼─────────────┼─────────────┘                  │
-│                      ▼                                               │
-│               ┌─────────────┐                                        │
-│               │  NEW DRIVE  │  intensity: 0.2-0.5                    │
-│               │  satisfaction: 0.0                                   │
-│               │  frustration: 0.0                                    │
-│               └──────┬──────┘                                        │
-│                      │                                               │
-│       ┌──────────────┼──────────────┐                                │
-│       ▼              ▼              ▼                                │
-│  SATISFACTION    FRUSTRATION    DORMANCY                              │
-│  ┌─────────┐   ┌─────────┐   ┌─────────┐                           │
-│  │Progress │   │Blocked  │   │No events│                            │
-│  │toward   │   │undermined│  │neither  │                            │
-│  │the goal │   │can't act│   │progress │                            │
-│  │         │   │         │   │nor block│                            │
-│  │sat: ↑   │   │frus: ↑  │   │int: ↓   │                           │
-│  │int: ↑   │   │int: ↑↑  │   │         │                           │
-│  └────┬────┘   └────┬────┘   └────┬────┘                           │
-│       │              │              │                                │
-│       ▼              ▼              ▼                                │
-│  ┌─────────┐   ┌─────────┐   ┌─────────┐                           │
-│  │FULFILLED│   │ABANDONED │   │ REMOVED │                           │
-│  │sat > 0.9│   │frus > 0.9│   │int < 0.05│                          │
-│  │int → ↓  │   │int → ↓↓ │   │         │                           │
-│  │(mission │   │(gave up) │   │(forgot) │                           │
-│  │ complete)│   │         │   │         │                           │
-│  └─────────┘   └─────────┘   └─────────┘                           │
-│                                                                      │
-│  GOAP INTEGRATION:                                                   │
-│  ┌──────────────────────────────────────────────┐                   │
-│  │ urgency = intensity * (1 - sat) * (1 + frus)  │                   │
-│  │                                                │                   │
-│  │ High urgency → GOAP goal priority bonus        │                   │
-│  │ Character CHOOSES to pursue their dream        │                   │
-│  │ No quest needed. No script. Just motivation.   │                   │
-│  └──────────────────────────────────────────────┘                   │
+│ DRIVE LIFECYCLE │
+│ │
+│ FORMATION │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│ │Personality│ │Experience│ │Backstory │ │Circum- │ │
+│ │ -innate │ │-catalyzed│ │ -seeded │ │ stance │ │
+│ │ (traits │ │ (event │ │ (GOAL or │ │ (poverty,│ │
+│ │ + domain│ │ triggers│ │ TRAUMA │ │ success,│ │
+│ │ engage) │ │ new aim)│ │ → drive)│ │ etc.) │ │
+│ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ │
+│ └──────────────┼─────────────┼─────────────┘ │
+│ ▼ │
+│ ┌─────────────┐ │
+│ │ NEW DRIVE │ intensity: 0.2-0.5 │
+│ │ satisfaction: 0.0 │
+│ │ frustration: 0.0 │
+│ └──────┬──────┘ │
+│ │ │
+│ ┌──────────────┼──────────────┐ │
+│ ▼ ▼ ▼ │
+│ SATISFACTION FRUSTRATION DORMANCY │
+│ ┌─────────┐ ┌─────────┐ ┌─────────┐ │
+│ │Progress │ │Blocked │ │No events│ │
+│ │toward │ │undermined│ │neither │ │
+│ │the goal │ │can't act│ │progress │ │
+│ │ │ │ │ │nor block│ │
+│ │sat: ↑ │ │frus: ↑ │ │int: ↓ │ │
+│ │int: ↑ │ │int: ↑↑ │ │ │ │
+│ └────┬────┘ └────┬────┘ └────┬────┘ │
+│ │ │ │ │
+│ ▼ ▼ ▼ │
+│ ┌─────────┐ ┌─────────┐ ┌─────────┐ │
+│ │FULFILLED│ │ABANDONED │ │ REMOVED │ │
+│ │sat > 0.9│ │frus > 0.9│ │int < 0.05│ │
+│ │int → ↓ │ │int → ↓↓ │ │ │ │
+│ │(mission │ │(gave up) │ │(forgot) │ │
+│ │ complete)│ │ │ │ │ │
+│ └─────────┘ └─────────┘ └─────────┘ │
+│ │
+│ GOAP INTEGRATION: │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ urgency = intensity * (1 - sat) * (1 + frus) │ │
+│ │ │ │
+│ │ High urgency → GOAP goal priority bonus │ │
+│ │ Character CHOOSES to pursue their dream │ │
+│ │ No quest needed. No script. Just motivation. │ │
+│ └──────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1046,74 +1046,74 @@ Disposition does not replace any existing service. Encounter sentiment, personal
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                  GUARDIAN SPIRIT RELATIONSHIP                          │
-│                                                                      │
-│  SPIRIT ACTIONS                   CHARACTER RESPONSE                 │
-│  ┌─────────────┐                                                    │
-│  │ Spirit nudge │───────┐                                            │
-│  │ "go fight"   │       │                                            │
-│  └─────────────┘       │                                            │
-│                         ▼                                            │
-│               ┌─────────────────┐                                    │
-│               │ ALIGNMENT CHECK │                                    │
-│               │                 │                                    │
-│               │ personality:    │                                    │
-│               │   peaceful=0.8  │                                    │
-│               │                 │                                    │
-│               │ nudge category: │                                    │
-│               │   violence      │                                    │
-│               │                 │                                    │
-│               │ alignment:      │                                    │
-│               │   NEGATIVE      │                                    │
-│               └────────┬────────┘                                    │
-│                        │                                             │
-│                        ▼                                             │
-│               ┌─────────────────┐                                    │
-│               │ FEELING UPDATE  │                                    │
-│               │                 │                                    │
-│               │ trust: -0.05    │                                    │
-│               │ resentment: +0.1│                                    │
-│               │ defiance: +0.05 │                                    │
-│               └────────┬────────┘                                    │
-│                        │                                             │
-│                        ▼                                             │
-│               ┌─────────────────┐                                    │
-│               │   COMPLIANCE    │                                    │
-│               │   COMPUTATION   │                                    │
-│               │                 │                                    │
-│               │ compliance =    │                                    │
-│               │   trust * 0.4   │                                    │
-│               │ + fam * 0.2     │                                    │
-│               │ - resent * 0.3  │                                    │
-│               │ - defiance * 0.1│                                    │
-│               │                 │                                    │
-│               │ = 0.35 (LOW)    │                                    │
-│               └────────┬────────┘                                    │
-│                        │                                             │
-│                        ▼                                             │
-│               ┌─────────────────┐                                    │
-│               │ BEHAVIOR RESULT │                                    │
-│               │                 │                                    │
-│               │ compliance 0.35:│                                    │
-│               │ → HESITATE      │                                    │
-│               │ → 65% chance    │                                    │
-│               │   to resist     │                                    │
-│               │ → Visible delay │                                    │
-│               │   before acting │                                    │
-│               └─────────────────┘                                    │
-│                                                                      │
-│  OVER TIME:                                                          │
-│  ┌──────────────────────────────────────────────┐                   │
-│  │ Aligned guidance → trust ↑, resentment ↓     │                   │
-│  │ Misaligned guidance → trust ↓, resentment ↑  │                   │
-│  │ Good outcomes → gratitude ↑, trust ↑          │                   │
-│  │ Bad outcomes → trust ↓                       │                   │
-│  │ Consistent alignment → familiarity ↑          │                   │
-│  │ Prolonged misalignment → defiance ↑           │                   │
-│  │                                                │                   │
-│  │ The player must EARN the character's trust.    │                   │
-│  │ This IS the dual-agency training system.       │                   │
-│  └──────────────────────────────────────────────┘                   │
+│ GUARDIAN SPIRIT RELATIONSHIP │
+│ │
+│ SPIRIT ACTIONS CHARACTER RESPONSE │
+│ ┌─────────────┐ │
+│ │ Spirit nudge │───────┐ │
+│ │ "go fight" │ │ │
+│ └─────────────┘ │ │
+│ ▼ │
+│ ┌─────────────────┐ │
+│ │ ALIGNMENT CHECK │ │
+│ │ │ │
+│ │ personality: │ │
+│ │ peaceful=0.8 │ │
+│ │ │ │
+│ │ nudge category: │ │
+│ │ violence │ │
+│ │ │ │
+│ │ alignment: │ │
+│ │ NEGATIVE │ │
+│ └────────┬────────┘ │
+│ │ │
+│ ▼ │
+│ ┌─────────────────┐ │
+│ │ FEELING UPDATE │ │
+│ │ │ │
+│ │ trust: -0.05 │ │
+│ │ resentment: +0.1│ │
+│ │ defiance: +0.05 │ │
+│ └────────┬────────┘ │
+│ │ │
+│ ▼ │
+│ ┌─────────────────┐ │
+│ │ COMPLIANCE │ │
+│ │ COMPUTATION │ │
+│ │ │ │
+│ │ compliance = │ │
+│ │ trust * 0.4 │ │
+│ │ + fam * 0.2 │ │
+│ │ - resent * 0.3 │ │
+│ │ - defiance * 0.1│ │
+│ │ │ │
+│ │ = 0.35 (LOW) │ │
+│ └────────┬────────┘ │
+│ │ │
+│ ▼ │
+│ ┌─────────────────┐ │
+│ │ BEHAVIOR RESULT │ │
+│ │ │ │
+│ │ compliance 0.35:│ │
+│ │ → HESITATE │ │
+│ │ → 65% chance │ │
+│ │ to resist │ │
+│ │ → Visible delay │ │
+│ │ before acting │ │
+│ └─────────────────┘ │
+│ │
+│ OVER TIME: │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ Aligned guidance → trust ↑, resentment ↓ │ │
+│ │ Misaligned guidance → trust ↓, resentment ↑ │ │
+│ │ Good outcomes → gratitude ↑, trust ↑ │ │
+│ │ Bad outcomes → trust ↓ │ │
+│ │ Consistent alignment → familiarity ↑ │ │
+│ │ Prolonged misalignment → defiance ↑ │ │
+│ │ │ │
+│ │ The player must EARN the character's trust. │ │
+│ │ This IS the dual-agency training system. │ │
+│ └──────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1230,14 +1230,14 @@ The question arises: why not add feelings to Character-Encounter or drives to Ch
 
 The pipeline with disposition:
 ```
-Encounter (what HAPPENED)     ─┐
-Hearsay (what I've HEARD)     ─┤
-Personality (who I AM)        ─┤──► DISPOSITION ──► ${disposition.*} ──► Actor
-Relationship (formal BONDS)   ─┤    (how I FEEL)                         ABML
-History (my PAST)             ─┤    (what I WANT)                        GOAP
-                               │
-                               └──► DRIVES ──► GOAP goal priority modulation
-                                    (what I ASPIRE to)
+Encounter (what HAPPENED) ─┐
+Hearsay (what I've HEARD) ─┤
+Personality (who I AM) ─┤──► DISPOSITION ──► ${disposition.*} ──► Actor
+Relationship (formal BONDS) ─┤ (how I FEEL) ABML
+History (my PAST) ─┤ (what I WANT) GOAP
+ │
+ └──► DRIVES ──► GOAP goal priority modulation
+ (what I ASPIRE to)
 ```
 
 ---

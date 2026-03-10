@@ -24,9 +24,9 @@ components:
       - category
       - connectivityMode
       - status
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -54,19 +54,6 @@ components:
         status: &id007
           $ref: ../gardener-api.yaml#/components/schemas/TemplateStatus
           description: "Current lifecycle status"
-        isDeprecated: &id008
-          type: boolean
-          description: "Whether the scenario template is deprecated"
-        deprecatedAt: &id009
-          type: string
-          format: date-time
-          nullable: true
-          description: "When the scenario template was deprecated"
-        deprecationReason: &id010
-          type: string
-          nullable: true
-          maxLength: 500
-          description: "Reason for deprecation"
         createdAt:
           type: string
           format: date-time
@@ -75,6 +62,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the scenario template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     ScenarioTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -92,9 +92,9 @@ components:
       - category
       - connectivityMode
       - status
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -108,9 +108,6 @@ components:
         category: *id005
         connectivityMode: *id006
         status: *id007
-        isDeprecated: *id008
-        deprecatedAt: *id009
-        deprecationReason: *id010
         createdAt:
           type: string
           format: date-time
@@ -119,6 +116,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the scenario template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -141,9 +151,9 @@ components:
       - category
       - connectivityMode
       - status
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -156,9 +166,6 @@ components:
         category: *id005
         connectivityMode: *id006
         status: *id007
-        isDeprecated: *id008
-        deprecatedAt: *id009
-        deprecationReason: *id010
         createdAt:
           type: string
           format: date-time
@@ -167,6 +174,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the scenario template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

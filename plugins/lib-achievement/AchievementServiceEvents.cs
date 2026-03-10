@@ -97,7 +97,7 @@ public partial class AchievementService
                     continue;
                 }
 
-                // FOUNDATION TENETS - T29 compliance: typed field instead of metadata bag
+                // FOUNDATION TENETS compliance: typed field instead of metadata bag
                 if (string.IsNullOrEmpty(definition.ScoreType))
                 {
                     continue;
@@ -200,7 +200,7 @@ public partial class AchievementService
                     continue;
                 }
 
-                // FOUNDATION TENETS - T29 compliance: typed fields instead of metadata bag
+                // FOUNDATION TENETS compliance: typed fields instead of metadata bag
                 if (string.IsNullOrEmpty(definition.MilestoneType))
                 {
                     continue;
@@ -314,7 +314,7 @@ public partial class AchievementService
                     continue;
                 }
 
-                // FOUNDATION TENETS - T29 compliance: typed fields instead of metadata bag
+                // FOUNDATION TENETS compliance: typed fields instead of metadata bag
                 if (string.IsNullOrEmpty(definition.LeaderboardId))
                 {
                     continue;

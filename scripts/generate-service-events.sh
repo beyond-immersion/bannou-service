@@ -4,7 +4,7 @@
 # This script is part of Bannou's code generation pipeline.
 # DO NOT MODIFY without EXPLICIT user instructions to change code generation.
 #
-# Changes to generation scripts silently break builds across ALL 48 services.
+# Changes to generation scripts silently break builds across ALL 76+ services.
 # An agent once changed namespace strings across 4 scripts in a single commit,
 # breaking every service. If you believe a change is needed:
 #   1. STOP and explain what you think is wrong
@@ -19,6 +19,10 @@
 # These models are placed in bannou-service/Generated/Events/ so all services can reference them
 # Also generates lifecycle event models (from x-lifecycle in *-events.yaml)
 # Excludes: *-client-events.yaml, common-events.yaml
+#
+# Usage: ./generate-service-events.sh [service-name]
+#   No arguments: process all services
+#   With argument: process only the named service (e.g., ./generate-service-events.sh account)
 
 set -e
 
@@ -29,7 +33,14 @@ cd "$SCRIPT_DIR"
 # Source common utilities
 source "./common.sh"
 
-log_info "📡 Generating service-specific event models"
+# Optional service name filter
+REQUESTED_SERVICE="${1:-}"
+
+if [ -n "$REQUESTED_SERVICE" ]; then
+    log_info "📡 Generating event models for service: $REQUESTED_SERVICE"
+else
+    log_info "📡 Generating service-specific event models (all services)"
+fi
 
 # Find NSwag executable and ensure DOTNET_ROOT is set
 require_nswag
@@ -86,6 +97,12 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
     # Extract service name from filename
     FILENAME=$(basename "$EVENTS_SCHEMA")
     SERVICE_NAME="${FILENAME%-events.yaml}"
+
+    # Skip if a specific service was requested and this isn't it
+    if [ -n "$REQUESTED_SERVICE" ] && [ "$SERVICE_NAME" != "$REQUESTED_SERVICE" ]; then
+        continue
+    fi
+
     SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
 
     OUTPUT_FILE="${TARGET_DIR}/${SERVICE_PASCAL}EventsModels.cs"
@@ -195,6 +212,11 @@ for LIFECYCLE_SCHEMA in ../schemas/Generated/*-lifecycle-events.yaml; do
     # Extract service name from filename (e.g., "account-lifecycle-events.yaml" -> "account")
     LIFECYCLE_FILENAME=$(basename "$LIFECYCLE_SCHEMA")
     LIFECYCLE_SERVICE_NAME="${LIFECYCLE_FILENAME%-lifecycle-events.yaml}"
+
+    # Skip if a specific service was requested and this isn't it
+    if [ -n "$REQUESTED_SERVICE" ] && [ "$LIFECYCLE_SERVICE_NAME" != "$REQUESTED_SERVICE" ]; then
+        continue
+    fi
 
     if generate_lifecycle_event_models "$LIFECYCLE_SERVICE_NAME"; then
         LIFECYCLE_GENERATED_COUNT=$((LIFECYCLE_GENERATED_COUNT + 1))

@@ -64,6 +64,7 @@ info:
 x-lifecycle:
   topic_prefix: license
   LicenseBoardTemplate:
+    deprecation: true
     model:
       boardTemplateId: { type: string, format: uuid, primary: true, required: true, description: "Unique board template identifier" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this template belongs to" }
@@ -73,9 +74,6 @@ x-lifecycle:
       boardContractTemplateId: { type: string, format: uuid, required: true, description: "Contract template that controls unlock behavior" }
       adjacencyMode: { $ref: 'license-api.yaml#/components/schemas/AdjacencyMode', required: true, description: "Grid traversal mode for this template" }
       isActive: { type: boolean, required: true, description: "Whether the template is active" }
-      isDeprecated: { type: boolean, required: true, description: "Whether this template has been deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the template was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
       createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
     sensitive: []
 

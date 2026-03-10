@@ -26,50 +26,50 @@ Three services together form the complete knowledge system: **Lexicon** = what t
 Lexicon organizes world knowledge into four interconnected structures:
 
 ```
-                    ┌──────────────────────────────────┐
-                    │           CATEGORIES              │
-                    │  (hierarchical classification)     │
-                    │                                    │
-                    │  animal                            │
-                    │  └── mammal                        │
-                    │      └── quadruped_mammal          │
-                    │          └── canine                │
-                    └──────────────┬───────────────────┘
-                                   │ categorized as
-                    ┌──────────────▼───────────────────┐
-                    │           ENTRIES                  │
-                    │  (things that can be known about)  │
-                    │                                    │
-                    │  wolf, fire, iron, moonstone,      │
-                    │  The Witch of the Wolves,          │
-                    │  pack_hunting, climbing            │
-                    └──┬───────────────────────────┬──┘
-                       │ has                        │ linked to
-        ┌──────────────▼───────────────┐  ┌────────▼──────────────────┐
-        │           TRAITS              │  │       ASSOCIATIONS        │
-        │  (structured characteristics) │  │  (typed bidirectional     │
-        │                               │  │   links between entries)  │
-        │  fur, four_legged,            │  │                           │
-        │  pack_hunter, predator,       │  │  wolf ↔ Witch of Wolves  │
-        │  muted_colors, long_teeth     │  │  (summoned_by / summons) │
-        │                               │  │                           │
-        │  Each trait has a scope       │  │  wolf ↔ dog               │
-        │  (which categories share it)  │  │  (related_species)        │
-        └──────────────┬───────────────┘  └───────────────────────────┘
-                       │ implies
-        ┌──────────────▼───────────────┐
-        │         STRATEGIES            │
-        │  (action-relevant knowledge   │
-        │   linked to traits/categories)│
-        │                               │
-        │  climb_to_escape              │
-        │    works_against: ground_bound│
-        │    requires: nearby_climbable │
-        │                               │
-        │  make_loud_noise              │
-        │    works_against: noise_averse│
-        │    requires: nothing          │
-        └───────────────────────────────┘
+ ┌──────────────────────────────────┐
+ │ CATEGORIES │
+ │ (hierarchical classification) │
+ │ │
+ │ animal │
+ │ └── mammal │
+ │ └── quadruped_mammal │
+ │ └── canine │
+ └──────────────┬───────────────────┘
+ │ categorized as
+ ┌──────────────▼───────────────────┐
+ │ ENTRIES │
+ │ (things that can be known about) │
+ │ │
+ │ wolf, fire, iron, moonstone, │
+ │ The Witch of the Wolves, │
+ │ pack_hunting, climbing │
+ └──┬───────────────────────────┬──┘
+ │ has │ linked to
+ ┌──────────────▼───────────────┐ ┌────────▼──────────────────┐
+ │ TRAITS │ │ ASSOCIATIONS │
+ │ (structured characteristics) │ │ (typed bidirectional │
+ │ │ │ links between entries) │
+ │ fur, four_legged, │ │ │
+ │ pack_hunter, predator, │ │ wolf ↔ Witch of Wolves │
+ │ muted_colors, long_teeth │ │ (summoned_by / summons) │
+ │ │ │ │
+ │ Each trait has a scope │ │ wolf ↔ dog │
+ │ (which categories share it) │ │ (related_species) │
+ └──────────────┬───────────────┘ └───────────────────────────┘
+ │ implies
+ ┌──────────────▼───────────────┐
+ │ STRATEGIES │
+ │ (action-relevant knowledge │
+ │ linked to traits/categories)│
+ │ │
+ │ climb_to_escape │
+ │ works_against: ground_bound│
+ │ requires: nearby_climbable │
+ │ │
+ │ make_loud_noise │
+ │ works_against: noise_averse│
+ │ requires: nothing │
+ └───────────────────────────────┘
 ```
 
 ### Entries
@@ -78,19 +78,19 @@ An entry is anything that can be known about. Entries are not limited to physica
 
 ```
 LexiconEntry:
-  entryCode:       string        # Unique identifier (opaque string, not enum — Category B per T14 test 1)
-  gameServiceId:   Guid          # Scope to a specific game service
-  displayKey:      string        # Localization key for display name
-  categoryCode:    string        # Primary category this entry belongs to
-  entryType:       string        # "species", "object", "material", "phenomenon",
-                                 # "individual", "behavior", "concept" (opaque, extensible — Category B per T14 test 1)
-  sourceType:      string?       # Optional: cross-reference to source service entity type (see DC#1)
-  sourceId:        string?       # Optional: cross-reference to source service entity ID (see DC#2)
-  discoveryLevels: int           # How many progressive tiers of information exist (1-10)
-  isDeprecated:    bool          # Category A deprecation (T31): entry codes stored by Collection, Hearsay, Disposition
-  deprecatedAt:    DateTime?     # When deprecation occurred (null if not deprecated)
-  deprecationReason: string?     # Why deprecated (mandatory for Category A)
-  createdAt:       DateTime
+ entryCode: string # Unique identifier (opaque string, not enum — Category B per tenets test 1)
+ gameServiceId: Guid # Scope to a specific game service
+ displayKey: string # Localization key for display name
+ categoryCode: string # Primary category this entry belongs to
+ entryType: string # "species", "object", "material", "phenomenon",
+ # "individual", "behavior", "concept" (opaque, extensible — Category B per tenets test 1)
+ sourceType: string? # Optional: cross-reference to source service entity type (see DC#1)
+ sourceId: string? # Optional: cross-reference to source service entity ID (see DC#2)
+ discoveryLevels: int # How many progressive tiers of information exist (1-10)
+ isDeprecated: bool # Category A deprecation: entry codes stored by Collection, Hearsay, Disposition
+ deprecatedAt: DateTime? # When deprecation occurred (null if not deprecated)
+ deprecationReason: string? # Why deprecated (mandatory for Category A)
+ createdAt: DateTime
 ```
 
 Entry codes are the lookup keys. In Arcadia's metaphysical interpretation, entry codes ARE the True Names -- the logos identifiers for what things are. But lib-lexicon is agnostic to that interpretation.
@@ -103,12 +103,12 @@ Traits are structured characteristics that entries possess. A trait is not a fre
 
 ```
 LexiconTrait:
-  traitCode:       string        # Unique identifier (opaque string)
-  entryCode:       string        # Which entry has this trait
-  value:           string?       # Optional value (e.g., "gray" for color, "4" for leg_count)
-  confidence:      float         # 0.0-1.0 how definitively this trait applies (1.0 = always)
-  scopeCode:       string?       # Category at which this trait is shared (null = entry-specific)
-  discoveryTier:   int           # At what Collection discovery level this trait is revealed
+ traitCode: string # Unique identifier (opaque string)
+ entryCode: string # Which entry has this trait
+ value: string? # Optional value (e.g., "gray" for color, "4" for leg_count)
+ confidence: float # 0.0-1.0 how definitively this trait applies (1.0 = always)
+ scopeCode: string? # Category at which this trait is shared (null = entry-specific)
+ discoveryTier: int # At what Collection discovery level this trait is revealed
 ```
 
 **Trait scoping through categories**: The `scopeCode` field is what enables the user's core insight -- that escape strategies are shared across categories, not individually assigned. When a trait has `scopeCode: "quadruped_mammal"`, it means this trait applies to ALL entries in that category, not just this specific entry:
@@ -116,28 +116,28 @@ LexiconTrait:
 ```yaml
 # Wolf entry traits:
 - traitCode: "fur"
-  scopeCode: null              # Wolf-specific (not all canines have thick fur)
-  discoveryTier: 1
+ scopeCode: null # Wolf-specific (not all canines have thick fur)
+ discoveryTier: 1
 
 - traitCode: "four_legged"
-  scopeCode: "quadruped_mammal"  # Shared with ALL quadruped mammals
-  discoveryTier: 1
+ scopeCode: "quadruped_mammal" # Shared with ALL quadruped mammals
+ discoveryTier: 1
 
 - traitCode: "pack_hunter"
-  scopeCode: null              # Wolf-specific (foxes are solitary canines)
-  discoveryTier: 2
+ scopeCode: null # Wolf-specific (foxes are solitary canines)
+ discoveryTier: 2
 
 - traitCode: "predator"
-  scopeCode: null              # Wolf-specific within canines
-  discoveryTier: 1
+ scopeCode: null # Wolf-specific within canines
+ discoveryTier: 1
 
 - traitCode: "muted_colors"
-  scopeCode: null              # Wolf-specific
-  discoveryTier: 2
+ scopeCode: null # Wolf-specific
+ discoveryTier: 2
 
 - traitCode: "long_teeth"
-  scopeCode: "canine"          # Shared with all canines
-  discoveryTier: 1
+ scopeCode: "canine" # Shared with all canines
+ discoveryTier: 1
 ```
 
 When GOAP asks "what traits does this wolf have?", Lexicon returns both the wolf's direct traits AND traits inherited from its category chain (quadruped_mammal, mammal, animal, etc.). The category hierarchy IS the trait inheritance mechanism.
@@ -148,50 +148,50 @@ Categories form a hierarchical taxonomy. Every entry belongs to exactly one prim
 
 ```
 LexiconCategory:
-  categoryCode:    string        # Unique identifier
-  gameServiceId:   Guid
-  parentCode:      string?       # Parent category (null = root)
-  depth:           int           # Computed depth in tree (0 = root)
-  displayKey:      string        # Localization key
+ categoryCode: string # Unique identifier
+ gameServiceId: Guid
+ parentCode: string? # Parent category (null = root)
+ depth: int # Computed depth in tree (0 = root)
+ displayKey: string # Localization key
 ```
 
 Example hierarchy:
 ```
 entity (root)
 ├── living
-│   ├── animal
-│   │   ├── fish
-│   │   ├── bird
-│   │   ├── reptile
-│   │   ├── mammal
-│   │   │   ├── quadruped_mammal
-│   │   │   │   ├── canine
-│   │   │   │   ├── feline
-│   │   │   │   ├── bovine
-│   │   │   │   └── equine
-│   │   │   ├── primate
-│   │   │   └── aquatic_mammal
-│   │   └── insect
-│   └── plant
-│       ├── tree
-│       ├── herb
-│       └── fungus
+│ ├── animal
+│ │ ├── fish
+│ │ ├── bird
+│ │ ├── reptile
+│ │ ├── mammal
+│ │ │ ├── quadruped_mammal
+│ │ │ │ ├── canine
+│ │ │ │ ├── feline
+│ │ │ │ ├── bovine
+│ │ │ │ └── equine
+│ │ │ ├── primate
+│ │ │ └── aquatic_mammal
+│ │ └── insect
+│ └── plant
+│ ├── tree
+│ ├── herb
+│ └── fungus
 ├── object
-│   ├── weapon
-│   ├── tool
-│   ├── material
-│   └── consumable
+│ ├── weapon
+│ ├── tool
+│ ├── material
+│ └── consumable
 ├── phenomenon
-│   ├── weather
-│   ├── magical
-│   └── geological
+│ ├── weather
+│ ├── magical
+│ └── geological
 ├── individual
-│   ├── named_npc
-│   └── named_creature
+│ ├── named_npc
+│ └── named_creature
 └── concept
-    ├── technique
-    ├── social_structure
-    └── natural_law
+ ├── technique
+ ├── social_structure
+ └── natural_law
 ```
 
 Categories are game-defined seed data. lib-lexicon provides the tree structure; games populate it with their world's taxonomy.
@@ -202,16 +202,16 @@ Associations are typed, bidirectional links between entries. They encode relatio
 
 ```
 LexiconAssociation:
-  associationId:   Guid
-  entryCodeA:      string        # First entry
-  entryCodeB:      string        # Second entry
-  typeCode:        string        # "summons", "related_species", "crafted_from",
-                                 # "found_in", "weak_to", "employs" (opaque)
-  strengthA:       float         # How strongly A implies B (0.0-1.0)
-  strengthB:       float         # How strongly B implies A (0.0-1.0)
-  discoveryTierA:  int           # At what discovery level of A this association is known
-  discoveryTierB:  int           # At what discovery level of B this association is known
-  metadata:        object?       # Type-specific extra data
+ associationId: Guid
+ entryCodeA: string # First entry
+ entryCodeB: string # Second entry
+ typeCode: string # "summons", "related_species", "crafted_from",
+ # "found_in", "weak_to", "employs" (opaque)
+ strengthA: float # How strongly A implies B (0.0-1.0)
+ strengthB: float # How strongly B implies A (0.0-1.0)
+ discoveryTierA: int # At what discovery level of A this association is known
+ discoveryTierB: int # At what discovery level of B this association is known
+ metadata: object? # Type-specific extra data
 ```
 
 **Asymmetric strength**: The Witch of the Wolves seeing → wolves is strength 1.0 (she always brings wolves). Seeing wolves → the witch might be near is strength 0.3 (most wolves are just wolves, but 30% of the time it means the witch is involved). This asymmetry is critical for GOAP threat assessment.
@@ -224,52 +224,52 @@ Strategies are action-relevant knowledge that connects traits and categories to 
 
 ```
 LexiconStrategy:
-  strategyCode:    string        # "climb_to_escape", "make_loud_noise", "play_dead"
-  gameServiceId:   Guid
-  displayKey:      string
-  appliesTo:       string        # Trait code or category code this strategy counters
-  appliesToType:   AppliesToType  # Trait or Category (service-specific enum)
-  effectiveness:   float         # 0.0-1.0 base effectiveness
-  preconditions:   StrategyPrecondition[]?  # Typed preconditions (FOUNDATION TENETS: no metadata bags)
-  discoveryTier:   int           # At what discovery level of the target this strategy is known
+ strategyCode: string # "climb_to_escape", "make_loud_noise", "play_dead"
+ gameServiceId: Guid
+ displayKey: string
+ appliesTo: string # Trait code or category code this strategy counters
+ appliesToType: AppliesToType # Trait or Category (service-specific enum)
+ effectiveness: float # 0.0-1.0 base effectiveness
+ preconditions: StrategyPrecondition[]? # Typed preconditions (FOUNDATION TENETS: no metadata bags)
+ discoveryTier: int # At what discovery level of the target this strategy is known
 
 AppliesToType:
-  enum: [Trait, Category]        # Service-specific enum (PascalCase)
+ enum: [Trait, Category] # Service-specific enum (PascalCase)
 
 StrategyPrecondition:
-  preconditionType:  string      # "requires_nearby", "requires_capability", "requires_item" (opaque, extensible)
-  targetCode:        string      # What is required (e.g., "climbable_surface", "combat_skill")
-  description:       string?     # Optional human-readable description
+ preconditionType: string # "requires_nearby", "requires_capability", "requires_item" (opaque, extensible)
+ targetCode: string # What is required (e.g., "climbable_surface", "combat_skill")
+ description: string? # Optional human-readable description
 ```
 
 **Inheritance through categories**: Strategies attached to a category apply to all entries in that category and its descendants:
 
 ```yaml
 strategies:
-  - strategyCode: "kill"
-    appliesTo: "animal"
-    appliesToType: Category
-    effectiveness: 0.8
-    preconditions:
-      - preconditionType: "requires_capability"
-        targetCode: "combat_capability"
-    discoveryTier: 1         # You know you can fight animals immediately
+ - strategyCode: "kill"
+ appliesTo: "animal"
+ appliesToType: Category
+ effectiveness: 0.8
+ preconditions:
+ - preconditionType: "requires_capability"
+ targetCode: "combat_capability"
+ discoveryTier: 1 # You know you can fight animals immediately
 
-  - strategyCode: "make_loud_noise"
-    appliesTo: "noise_averse"
-    appliesToType: Trait
-    effectiveness: 0.6
-    preconditions: null       # No equipment needed
-    discoveryTier: 2         # Takes some experience to learn
+ - strategyCode: "make_loud_noise"
+ appliesTo: "noise_averse"
+ appliesToType: Trait
+ effectiveness: 0.6
+ preconditions: null # No equipment needed
+ discoveryTier: 2 # Takes some experience to learn
 
-  - strategyCode: "climb_to_escape"
-    appliesTo: "ground_bound"
-    appliesToType: Trait
-    effectiveness: 0.9
-    preconditions:
-      - preconditionType: "requires_nearby"
-        targetCode: "climbable_surface"
-    discoveryTier: 3         # Requires understanding of the creature's limitations
+ - strategyCode: "climb_to_escape"
+ appliesTo: "ground_bound"
+ appliesToType: Trait
+ effectiveness: 0.9
+ preconditions:
+ - preconditionType: "requires_nearby"
+ targetCode: "climbable_surface"
+ discoveryTier: 3 # Requires understanding of the creature's limitations
 ```
 
 When an NPC encounters a wolf, GOAP receives: "wolf has trait `ground_bound` (inherited from quadruped_mammal category) → strategy `climb_to_escape` is viable if a climbable surface is nearby." The NPC doesn't need to have been told specifically "climb to escape wolves" -- the knowledge generalizes from category membership.
@@ -285,74 +285,74 @@ The motivating use case, played out step by step:
 ```
 Setup: The Witch of the Wolves is a legendary figure.
 Lexicon entries:
-  - wolf: category=canine, traits=[pack_hunter, predator, ground_bound, ...]
-  - witch_of_the_wolves: category=named_npc, traits=[magic_user, wolf_affinity, ...]
-  - Associations:
-      wolf ↔ witch_of_the_wolves
-        typeCode: "summoned_by"
-        strengthA: 0.3  (wolves → witch: 30% implication)
-        strengthB: 1.0  (witch → wolves: 100% implication)
+ - wolf: category=canine, traits=[pack_hunter, predator, ground_bound, ...]
+ - witch_of_the_wolves: category=named_npc, traits=[magic_user, wolf_affinity, ...]
+ - Associations:
+ wolf ↔ witch_of_the_wolves
+ typeCode: "summoned_by"
+ strengthA: 0.3 (wolves → witch: 30% implication)
+ strengthB: 1.0 (witch → wolves: 100% implication)
 
 Day 1: Farmer Kael sees wolves near his village
-  ┌────────────────────────────────────────────────────────┐
-  │ Actor perceives: entity_type=wolf nearby                │
-  │ Lexicon query: "what do I know about wolves?"           │
-  │ Collection gates: Kael has discoveryLevel=2 for wolves  │
-  │                                                         │
-  │ Result:                                                  │
-  │   traits: [predator, pack_hunter, ground_bound, fur]    │
-  │   strategies: [climb_to_escape(0.9), kill(0.8),         │
-  │                make_loud_noise(0.6)]                     │
-  │   associations: [] (discoveryTier=4, not yet reached)   │
-  │                                                         │
-  │ GOAP action: flee → climb nearest tree                  │
-  │ Disposition: fear toward wolf concept reinforced         │
-  └────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────┐
+ │ Actor perceives: entity_type=wolf nearby │
+ │ Lexicon query: "what do I know about wolves?" │
+ │ Collection gates: Kael has discoveryLevel=2 for wolves │
+ │ │
+ │ Result: │
+ │ traits: [predator, pack_hunter, ground_bound, fur] │
+ │ strategies: [climb_to_escape(0.9), kill(0.8), │
+ │ make_loud_noise(0.6)] │
+ │ associations: [] (discoveryTier=4, not yet reached) │
+ │ │
+ │ GOAP action: flee → climb nearest tree │
+ │ Disposition: fear toward wolf concept reinforced │
+ └────────────────────────────────────────────────────────┘
 
 Day 30: Village elder tells Kael about the Witch of the Wolves
-  ┌────────────────────────────────────────────────────────┐
-  │ Hearsay: Kael acquires belief about witch_of_the_wolves │
-  │ Collection: Kael gains discoveryLevel=1 for the witch   │
-  │ Lexicon association NOW VISIBLE:                        │
-  │   witch_of_the_wolves → wolf (strength 1.0)            │
-  │                                                         │
-  │ Kael now knows: the witch is associated with wolves     │
-  │ But does not yet know the reverse (wolves → witch)      │
-  └────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────┐
+ │ Hearsay: Kael acquires belief about witch_of_the_wolves │
+ │ Collection: Kael gains discoveryLevel=1 for the witch │
+ │ Lexicon association NOW VISIBLE: │
+ │ witch_of_the_wolves → wolf (strength 1.0) │
+ │ │
+ │ Kael now knows: the witch is associated with wolves │
+ │ But does not yet know the reverse (wolves → witch) │
+ └────────────────────────────────────────────────────────┘
 
 Day 45: Wolves appear again. Kael has deeper wolf knowledge now.
-  ┌────────────────────────────────────────────────────────┐
-  │ Actor perceives: wolf pack nearby (again)               │
-  │ Collection: wolf discoveryLevel has risen to 4          │
-  │   (through encounters + hearsay + study)                │
-  │                                                         │
-  │ Lexicon query NOW returns:                              │
-  │   associations: [witch_of_the_wolves (strength 0.3)]   │
-  │                                                         │
-  │ GOAP threat assessment: wolf danger + 0.3 probability   │
-  │   that the Witch of the Wolves is involved              │
-  │ Disposition: dread toward location increases             │
-  │ Behavior: Kael not only climbs a tree but also          │
-  │   WATCHES for signs of the witch                        │
-  │                                                         │
-  │ This is the bidirectional storytelling in action:        │
-  │   wolves → anticipate witch (learned knowledge)         │
-  │   witch → anticipate wolves (earlier hearsay)           │
-  └────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────┐
+ │ Actor perceives: wolf pack nearby (again) │
+ │ Collection: wolf discoveryLevel has risen to 4 │
+ │ (through encounters + hearsay + study) │
+ │ │
+ │ Lexicon query NOW returns: │
+ │ associations: [witch_of_the_wolves (strength 0.3)] │
+ │ │
+ │ GOAP threat assessment: wolf danger + 0.3 probability │
+ │ that the Witch of the Wolves is involved │
+ │ Disposition: dread toward location increases │
+ │ Behavior: Kael not only climbs a tree but also │
+ │ WATCHES for signs of the witch │
+ │ │
+ │ This is the bidirectional storytelling in action: │
+ │ wolves → anticipate witch (learned knowledge) │
+ │ witch → anticipate wolves (earlier hearsay) │
+ └────────────────────────────────────────────────────────┘
 
 Day 60: The Witch actually appears. Kael was right to be afraid.
-  ┌────────────────────────────────────────────────────────┐
-  │ Encounter: witch_of_the_wolves confirmed                │
-  │ Hearsay: belief confidence increases                    │
-  │ Collection: witch discoveryLevel rises                  │
-  │ Disposition: fear reinforced (shock modifier)           │
-  │                                                         │
-  │ Content flywheel: Kael's experience with the Witch      │
-  │   becomes narrative material. When compressed, his      │
-  │   archive includes "feared the Witch, was right."       │
-  │   Storyline can generate: "A farmer who survived        │
-  │   the Witch of the Wolves" as a future NPC backstory.   │
-  └────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────┐
+ │ Encounter: witch_of_the_wolves confirmed │
+ │ Hearsay: belief confidence increases │
+ │ Collection: witch discoveryLevel rises │
+ │ Disposition: fear reinforced (shock modifier) │
+ │ │
+ │ Content flywheel: Kael's experience with the Witch │
+ │ becomes narrative material. When compressed, his │
+ │ archive includes "feared the Witch, was right." │
+ │ Storyline can generate: "A farmer who survived │
+ │ the Witch of the Wolves" as a future NPC backstory. │
+ └────────────────────────────────────────────────────────┘
 ```
 
 ### Scenario: Trait-Based Generalization
@@ -361,39 +361,39 @@ Day 60: The Witch actually appears. Kael was right to be afraid.
 Setup: A character encounters an unknown creature for the first time.
 
 Day 1: Scout Elara encounters a creature she's never seen: a "duskfang"
-  ┌────────────────────────────────────────────────────────┐
-  │ Actor perceives: unknown entity                         │
-  │ Collection: discoveryLevel=0 for duskfang (never seen) │
-  │                                                         │
-  │ HOWEVER: Elara can observe traits directly:             │
-  │   visual: four_legged, fur, long_teeth, dark_colors    │
-  │                                                         │
-  │ Lexicon trait-based query (reverse lookup):             │
-  │   "What categories have four_legged + fur + long_teeth?"│
-  │   Result: canine (87% match), feline (62% match)       │
-  │                                                         │
-  │ Elara doesn't know WHAT it is, but she knows            │
-  │   it's probably canine-like. Category strategies apply:  │
-  │   ground_bound → climb_to_escape is likely viable       │
-  │   predator → it's probably dangerous                    │
-  │                                                         │
-  │ GOAP: treat as canine-threat, apply canine strategies   │
-  │ Collection: duskfang discoveryLevel → 1 (first sighting)│
-  └────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────┐
+ │ Actor perceives: unknown entity │
+ │ Collection: discoveryLevel=0 for duskfang (never seen) │
+ │ │
+ │ HOWEVER: Elara can observe traits directly: │
+ │ visual: four_legged, fur, long_teeth, dark_colors │
+ │ │
+ │ Lexicon trait-based query (reverse lookup): │
+ │ "What categories have four_legged + fur + long_teeth?"│
+ │ Result: canine (87% match), feline (62% match) │
+ │ │
+ │ Elara doesn't know WHAT it is, but she knows │
+ │ it's probably canine-like. Category strategies apply: │
+ │ ground_bound → climb_to_escape is likely viable │
+ │ predator → it's probably dangerous │
+ │ │
+ │ GOAP: treat as canine-threat, apply canine strategies │
+ │ Collection: duskfang discoveryLevel → 1 (first sighting)│
+ └────────────────────────────────────────────────────────┘
 
 Day 5: Elara observes duskfangs hunting. They DON'T hunt in packs.
-  ┌────────────────────────────────────────────────────────┐
-  │ Observation contradicts canine default: solitary hunter │
-  │ Collection: duskfang discoveryLevel → 2                 │
-  │ Character's working model updates:                      │
-  │   "Like a canine but hunts alone"                       │
-  │   Strategy adjustment: pack_avoidance unnecessary       │
-  │                                                         │
-  │ This is how progressive discovery works:                │
-  │   Level 1: category guess from visual traits            │
-  │   Level 2: specific trait confirmation/correction       │
-  │   Level 3+: deeper knowledge (weaknesses, habits, etc.) │
-  └────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────┐
+ │ Observation contradicts canine default: solitary hunter │
+ │ Collection: duskfang discoveryLevel → 2 │
+ │ Character's working model updates: │
+ │ "Like a canine but hunts alone" │
+ │ Strategy adjustment: pack_avoidance unnecessary │
+ │ │
+ │ This is how progressive discovery works: │
+ │ Level 1: category guess from visual traits │
+ │ Level 2: specific trait confirmation/correction │
+ │ Level 3+: deeper knowledge (weaknesses, habits, etc.) │
+ └────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -403,16 +403,16 @@ Day 5: Elara observes duskfangs hunting. They DON'T hunt in packs.
 Lexicon stores what IS true. Collection determines how much of that truth a specific character has access to. The integration is straightforward:
 
 ```
-Lexicon                    Collection                   Actor
-┌─────────────────┐       ┌──────────────────┐        ┌─────────────┐
-│ wolf entry:      │       │ character X:      │        │ Variable    │
-│  tier 1: basic   │       │  wolf: level 2    │───────►│ Provider    │
-│  tier 2: habits  │◄──────│  (gated access)   │        │ composites  │
-│  tier 3: tactics │       │                   │        │ all three:  │
-│  tier 4: assocs  │       │ character Y:      │        │ Lexicon +   │
-│  tier 5: secrets │       │  wolf: level 5    │───────►│ Collection +│
-│                   │       │  (full access)    │        │ Hearsay     │
-└─────────────────┘       └──────────────────┘        └─────────────┘
+Lexicon Collection Actor
+┌─────────────────┐ ┌──────────────────┐ ┌─────────────┐
+│ wolf entry: │ │ character X: │ │ Variable │
+│ tier 1: basic │ │ wolf: level 2 │───────►│ Provider │
+│ tier 2: habits │◄──────│ (gated access) │ │ composites │
+│ tier 3: tactics │ │ │ │ all three: │
+│ tier 4: assocs │ │ character Y: │ │ Lexicon + │
+│ tier 5: secrets │ │ wolf: level 5 │───────►│ Collection +│
+│ │ │ (full access) │ │ Hearsay │
+└─────────────────┘ └──────────────────┘ └─────────────┘
 ```
 
 **Collection's discoveryLevels field on entry templates maps directly to Lexicon's discoveryTier on traits, strategies, and associations.** Collection already has the `AdvanceDiscovery` endpoint and publishes "revealed information keys" events. Those keys map to Lexicon trait codes, strategy codes, and association IDs that become accessible at that tier.
@@ -427,50 +427,50 @@ The ultimate consumer of Lexicon data is the GOAP planner, which needs structure
 
 ```
 Perception: "wolf detected 15m north"
-       │
-       ▼
+ │
+ ▼
 Lexicon Provider: "what do I know about wolves?"
-       │
-       ├── traits: [predator, pack_hunter, ground_bound, noise_averse]
-       ├── strategies: [climb(0.9, requires:climbable), noise(0.6), kill(0.8)]
-       └── associations: [witch_of_wolves(0.3)]
-       │
-       ▼
+ │
+ ├── traits: [predator, pack_hunter, ground_bound, noise_averse]
+ ├── strategies: [climb(0.9, requires:climbable), noise(0.6), kill(0.8)]
+ └── associations: [witch_of_wolves(0.3)]
+ │
+ ▼
 GOAP World State enrichment:
-       threat.nearby = true
-       threat.type = "predator"
-       threat.pack = true
-       threat.ground_bound = true
-       threat.noise_averse = true
-       threat.association.witch_of_wolves = 0.3
-       environment.has_climbable = true (from Mapping)
-       │
-       ▼
+ threat.nearby = true
+ threat.type = "predator"
+ threat.pack = true
+ threat.ground_bound = true
+ threat.noise_averse = true
+ threat.association.witch_of_wolves = 0.3
+ environment.has_climbable = true (from Mapping)
+ │
+ ▼
 GOAP Action evaluation:
-       climb_to_escape:
-         precondition: environment.has_climbable ✓ AND threat.ground_bound ✓
-         effect: safe = true
-         cost: 2 (base) + personality modifier
-         effectiveness: 0.9 (from Lexicon strategy)
+ climb_to_escape:
+ precondition: environment.has_climbable ✓ AND threat.ground_bound ✓
+ effect: safe = true
+ cost: 2 (base) + personality modifier
+ effectiveness: 0.9 (from Lexicon strategy)
 
-       make_loud_noise:
-         precondition: threat.noise_averse ✓
-         effect: threat_deterred = true (temporary)
-         cost: 1
-         effectiveness: 0.6
+ make_loud_noise:
+ precondition: threat.noise_averse ✓
+ effect: threat_deterred = true (temporary)
+ cost: 1
+ effectiveness: 0.6
 
-       fight:
-         precondition: threat.type == "predator" ✓
-         effect: threat_eliminated = true
-         cost: 8 (pack_hunter = multiple enemies)
-         effectiveness: 0.3 (against pack)
-       │
-       ▼
+ fight:
+ precondition: threat.type == "predator" ✓
+ effect: threat_eliminated = true
+ cost: 8 (pack_hunter = multiple enemies)
+ effectiveness: 0.3 (against pack)
+ │
+ ▼
 GOAP selects: climb_to_escape (lowest cost, highest effectiveness)
-       │
-       ▼
+ │
+ ▼
 Personality filter: character with courage > 0.8 might override
-       to fight instead (drive: prove_worth from Disposition)
+ to fight instead (drive: prove_worth from Disposition)
 ```
 
 **Strategies map to GOAP action templates.** The GOAP planner doesn't hardcode "if wolf then climb." Instead, it evaluates strategies from Lexicon against the current world state. New strategies can be added via seed data without changing behavior code.
@@ -485,61 +485,61 @@ Lexicon's most non-obvious contribution is solving the **knowledge transfer band
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                   KNOWLEDGE TRANSFER BANDWIDTH                         │
-│                                                                      │
-│  EXPENSIVE: Direct Demonstration                                     │
-│  ────────────────────────────────                                    │
-│  Master butcher slaughters an animal. Apprentice watches.            │
-│  Perception pipeline processes every step. Collection advances.      │
-│  Requires: both NPCs running full cognition, master performing       │
-│  the action, apprentice perceiving each substep.                     │
-│  Result: CONFIRMED knowledge (high fidelity, high cost)              │
-│                                                                      │
-│  Master does it ──► Apprentice perceives ──► Collection advances     │
-│                                               (confirmed, tier +1)   │
-│                                                                      │
-│  ────────────────────────────────────────────────────────────────    │
-│                                                                      │
-│  MEDIUM: Structured Verbal Teaching (via Lexicon vocabulary)         │
-│  ───────────────────────────────────────────────────────────         │
-│  Master TELLS apprentice: "iron is malleable when heated."           │
-│  This is not a vague rumor -- it's a specific Lexicon trait          │
-│  (malleable_when_heated on entry iron) transmitted via Hearsay.      │
-│  The apprentice now has a BELIEF about a STRUCTURED FACT.            │
-│  Unconfirmed until practiced. Cheap to transmit.                     │
-│  Result: UNCONFIRMED belief (structured, low cost)                   │
-│                                                                      │
-│  Master tells ──► Hearsay belief ──► Unconfirmed (structured)        │
-│                   (Lexicon vocab)         │                           │
-│                                          ▼                           │
-│                                    Practice it yourself              │
-│                                          │                           │
-│                                          ▼                           │
-│                                    Hearsay confirmed +               │
-│                                    Collection advances               │
-│                                                                      │
-│  ────────────────────────────────────────────────────────────────    │
-│                                                                      │
-│  CHEAP: Inference from Lexicon Associations                          │
-│  ──────────────────────────────────────────                          │
-│  Apprentice learns "iron is malleable when heated."                  │
-│  Lexicon associations: iron ↔ steel (related_material, 0.8).        │
-│  Steel shares category workable_metal with iron.                     │
-│  Apprentice INFERS: "steel might also be malleable when heated."     │
-│  Self-generated Hearsay belief, low confidence.                      │
-│  Result: SPECULATIVE hypothesis (may be right or wrong)              │
-│                                                                      │
-│  Known fact ──► Lexicon association ──► Self-generated Hearsay       │
-│  about iron      (iron ≈ steel)         about steel (low confidence) │
-│                                              │                       │
-│                                              ▼                       │
-│                                        Test hypothesis               │
-│                                              │                       │
-│                                         ┌────┴────┐                  │
-│                                         ▼         ▼                  │
-│                                     Confirmed   Corrected            │
-│                                    (Collection  (Hearsay             │
-│                                     advances)   updated)             │
+│ KNOWLEDGE TRANSFER BANDWIDTH │
+│ │
+│ EXPENSIVE: Direct Demonstration │
+│ ──────────────────────────────── │
+│ Master butcher slaughters an animal. Apprentice watches. │
+│ Perception pipeline processes every step. Collection advances. │
+│ Requires: both NPCs running full cognition, master performing │
+│ the action, apprentice perceiving each substep. │
+│ Result: CONFIRMED knowledge (high fidelity, high cost) │
+│ │
+│ Master does it ──► Apprentice perceives ──► Collection advances │
+│ (confirmed, tier +1) │
+│ │
+│ ──────────────────────────────────────────────────────────────── │
+│ │
+│ MEDIUM: Structured Verbal Teaching (via Lexicon vocabulary) │
+│ ─────────────────────────────────────────────────────────── │
+│ Master TELLS apprentice: "iron is malleable when heated." │
+│ This is not a vague rumor -- it's a specific Lexicon trait │
+│ (malleable_when_heated on entry iron) transmitted via Hearsay. │
+│ The apprentice now has a BELIEF about a STRUCTURED FACT. │
+│ Unconfirmed until practiced. Cheap to transmit. │
+│ Result: UNCONFIRMED belief (structured, low cost) │
+│ │
+│ Master tells ──► Hearsay belief ──► Unconfirmed (structured) │
+│ (Lexicon vocab) │ │
+│ ▼ │
+│ Practice it yourself │
+│ │ │
+│ ▼ │
+│ Hearsay confirmed + │
+│ Collection advances │
+│ │
+│ ──────────────────────────────────────────────────────────────── │
+│ │
+│ CHEAP: Inference from Lexicon Associations │
+│ ────────────────────────────────────────── │
+│ Apprentice learns "iron is malleable when heated." │
+│ Lexicon associations: iron ↔ steel (related_material, 0.8). │
+│ Steel shares category workable_metal with iron. │
+│ Apprentice INFERS: "steel might also be malleable when heated." │
+│ Self-generated Hearsay belief, low confidence. │
+│ Result: SPECULATIVE hypothesis (may be right or wrong) │
+│ │
+│ Known fact ──► Lexicon association ──► Self-generated Hearsay │
+│ about iron (iron ≈ steel) about steel (low confidence) │
+│ │ │
+│ ▼ │
+│ Test hypothesis │
+│ │ │
+│ ┌────┴────┐ │
+│ ▼ ▼ │
+│ Confirmed Corrected │
+│ (Collection (Hearsay │
+│ advances) updated) │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -567,28 +567,28 @@ When a character learns a confirmed fact about entry A, and Lexicon shows a stro
 
 ```
 CONFIRMED: iron has trait malleable_when_heated
-           (Collection discovery level 3 for iron)
+ (Collection discovery level 3 for iron)
 
 ASSOCIATION: iron ↔ steel
-             typeCode: "related_material"
-             strength: 0.8
-             shared category: workable_metal
+ typeCode: "related_material"
+ strength: 0.8
+ shared category: workable_metal
 
 INFERENCE: steel MIGHT have trait malleable_when_heated
-           → self-generated Hearsay belief
-           → confidence = association_strength * trait_confidence
-           → confidence = 0.8 * 1.0 = 0.8 (high confidence hypothesis)
+ → self-generated Hearsay belief
+ → confidence = association_strength * trait_confidence
+ → confidence = 0.8 * 1.0 = 0.8 (high confidence hypothesis)
 
 CONFIRMATION PATH:
-  → Character heats steel and hammers it
-  → Steel bends → hypothesis confirmed
-  → Collection discovery for steel advances
-  → Hearsay belief upgraded to confirmed knowledge
-  OR
-  → Steel shatters → hypothesis WRONG
-  → Hearsay belief corrected
-  → Character learns steel ≠ iron in this regard
-  → This NEGATIVE result is itself valuable knowledge
+ → Character heats steel and hammers it
+ → Steel bends → hypothesis confirmed
+ → Collection discovery for steel advances
+ → Hearsay belief upgraded to confirmed knowledge
+ OR
+ → Steel shatters → hypothesis WRONG
+ → Hearsay belief corrected
+ → Character learns steel ≠ iron in this regard
+ → This NEGATIVE result is itself valuable knowledge
 ```
 
 The inference quality depends on:
@@ -601,93 +601,93 @@ The inference quality depends on:
 
 ```
 Day 1: Apprentice Kael begins working under Master Blacksmith Theron
-  ┌────────────────────────────────────────────────────────────────┐
-  │ Kael's knowledge state:                                        │
-  │   iron: Collection discovery=0, no Hearsay beliefs             │
-  │   steel: Collection discovery=0, no Hearsay beliefs            │
-  │   hammer: Collection discovery=0                               │
-  │   bellows: Collection discovery=0                              │
-  └────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────┐
+ │ Kael's knowledge state: │
+ │ iron: Collection discovery=0, no Hearsay beliefs │
+ │ steel: Collection discovery=0, no Hearsay beliefs │
+ │ hammer: Collection discovery=0 │
+ │ bellows: Collection discovery=0 │
+ └────────────────────────────────────────────────────────────────┘
 
 Day 3: Theron TELLS Kael about iron (structured verbal teaching)
-  ┌────────────────────────────────────────────────────────────────┐
-  │ Theron has: iron discovery=5 (mastery)                         │
-  │ Teaching quality: HIGH (deep Lexicon familiarity)               │
-  │                                                                │
-  │ Transmitted Hearsay beliefs (keyed to Lexicon vocabulary):     │
-  │   iron.malleable_when_heated (confidence: 0.9, unconfirmed)    │
-  │   iron.brittle_when_cold (confidence: 0.9, unconfirmed)        │
-  │   iron.requires_bellows_heat (confidence: 0.9, unconfirmed)    │
-  │   iron.pairs_with_charcoal (confidence: 0.8, unconfirmed)      │
-  │                                                                │
-  │ Kael now BELIEVES these things but hasn't DONE them yet.       │
-  │ Collection discovery for iron: still 0 (no firsthand experience)│
-  │ Hearsay: 4 structured beliefs about iron, high confidence       │
-  └────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────┐
+ │ Theron has: iron discovery=5 (mastery) │
+ │ Teaching quality: HIGH (deep Lexicon familiarity) │
+ │ │
+ │ Transmitted Hearsay beliefs (keyed to Lexicon vocabulary): │
+ │ iron.malleable_when_heated (confidence: 0.9, unconfirmed) │
+ │ iron.brittle_when_cold (confidence: 0.9, unconfirmed) │
+ │ iron.requires_bellows_heat (confidence: 0.9, unconfirmed) │
+ │ iron.pairs_with_charcoal (confidence: 0.8, unconfirmed) │
+ │ │
+ │ Kael now BELIEVES these things but hasn't DONE them yet. │
+ │ Collection discovery for iron: still 0 (no firsthand experience)│
+ │ Hearsay: 4 structured beliefs about iron, high confidence │
+ └────────────────────────────────────────────────────────────────┘
 
 Day 5: Kael watches Theron heat and hammer iron (direct demonstration)
-  ┌────────────────────────────────────────────────────────────────┐
-  │ Perception pipeline: Kael observes heating + hammering          │
-  │ Collection: iron discovery → 1 (firsthand observation)          │
-  │ Hearsay: iron.malleable_when_heated CONFIRMED (confidence → 1.0)│
-  │                                                                │
-  │ Note: the verbal teaching made the demonstration MORE valuable. │
-  │ Kael knew WHAT to watch for because Theron told him.           │
-  │ Without the teaching, Kael sees "hot metal bends"              │
-  │ With the teaching, Kael sees "ah, THAT'S what malleable means" │
-  └────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────┐
+ │ Perception pipeline: Kael observes heating + hammering │
+ │ Collection: iron discovery → 1 (firsthand observation) │
+ │ Hearsay: iron.malleable_when_heated CONFIRMED (confidence → 1.0)│
+ │ │
+ │ Note: the verbal teaching made the demonstration MORE valuable. │
+ │ Kael knew WHAT to watch for because Theron told him. │
+ │ Without the teaching, Kael sees "hot metal bends" │
+ │ With the teaching, Kael sees "ah, THAT'S what malleable means" │
+ └────────────────────────────────────────────────────────────────┘
 
 Day 10: Kael heats and hammers iron himself (practice confirms)
-  ┌────────────────────────────────────────────────────────────────┐
-  │ Collection: iron discovery → 2 (firsthand practice)             │
-  │ Remaining Hearsay beliefs about iron: starting to confirm       │
-  │                                                                │
-  │ INFERENCE TRIGGERS:                                             │
-  │   Lexicon association: iron ↔ steel (related_material, 0.8)    │
-  │   Kael's confirmed trait: iron.malleable_when_heated            │
-  │   HYPOTHESIS: steel.malleable_when_heated (confidence 0.8)      │
-  │   → Self-generated Hearsay belief about steel                   │
-  │                                                                │
-  │ Kael hasn't touched steel yet, but he WONDERS about it.         │
-  │ His GOAP planner can now plan: "if I need to shape steel,       │
-  │ heating it first is probably the right approach."               │
-  └────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────┐
+ │ Collection: iron discovery → 2 (firsthand practice) │
+ │ Remaining Hearsay beliefs about iron: starting to confirm │
+ │ │
+ │ INFERENCE TRIGGERS: │
+ │ Lexicon association: iron ↔ steel (related_material, 0.8) │
+ │ Kael's confirmed trait: iron.malleable_when_heated │
+ │ HYPOTHESIS: steel.malleable_when_heated (confidence 0.8) │
+ │ → Self-generated Hearsay belief about steel │
+ │ │
+ │ Kael hasn't touched steel yet, but he WONDERS about it. │
+ │ His GOAP planner can now plan: "if I need to shape steel, │
+ │ heating it first is probably the right approach." │
+ └────────────────────────────────────────────────────────────────┘
 
 Day 20: Kael asks Theron about steel (teaching + inference validation)
-  ┌────────────────────────────────────────────────────────────────┐
-  │ Kael: "Does steel work like iron when heated?"                  │
-  │ Theron teaches: steel traits (structured verbal teaching)       │
-  │                                                                │
-  │ Kael's hypothesis about steel.malleable_when_heated:            │
-  │   was: self-generated Hearsay (confidence 0.8)                  │
-  │   now: teacher-confirmed Hearsay (confidence 0.95)              │
-  │                                                                │
-  │ Theron ALSO teaches:                                            │
-  │   steel.harder_than_iron (NEW knowledge, not inferred)          │
-  │   steel.requires_higher_heat (CORRECTION to iron assumption)    │
-  │                                                                │
-  │ The inference was RIGHT that steel is malleable when heated,     │
-  │ but WRONG that the same heat level works. This partial           │
-  │ correctness is exactly how real learning works.                  │
-  └────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────┐
+ │ Kael: "Does steel work like iron when heated?" │
+ │ Theron teaches: steel traits (structured verbal teaching) │
+ │ │
+ │ Kael's hypothesis about steel.malleable_when_heated: │
+ │ was: self-generated Hearsay (confidence 0.8) │
+ │ now: teacher-confirmed Hearsay (confidence 0.95) │
+ │ │
+ │ Theron ALSO teaches: │
+ │ steel.harder_than_iron (NEW knowledge, not inferred) │
+ │ steel.requires_higher_heat (CORRECTION to iron assumption) │
+ │ │
+ │ The inference was RIGHT that steel is malleable when heated, │
+ │ but WRONG that the same heat level works. This partial │
+ │ correctness is exactly how real learning works. │
+ └────────────────────────────────────────────────────────────────┘
 
 Day 30: Kael attempts to work steel based on combined knowledge
-  ┌────────────────────────────────────────────────────────────────┐
-  │ Kael's knowledge state:                                        │
-  │   iron: Collection discovery=3, most Hearsay confirmed         │
-  │   steel: Collection discovery=0, several Hearsay beliefs       │
-  │          (from teaching + self-inference)                       │
-  │                                                                │
-  │ Kael heats steel to iron temperature → TOO COLD                │
-  │   → steel.requires_higher_heat CONFIRMED through failure        │
-  │   → Collection: steel discovery → 1                             │
-  │   → Learning from failure is the most memorable kind            │
-  │                                                                │
-  │ Kael increases heat → steel becomes workable                    │
-  │   → steel.malleable_when_heated CONFIRMED                      │
-  │   → Collection: steel discovery → 2                             │
-  │   → The inference from iron → steel was correct!                │
-  └────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────┐
+ │ Kael's knowledge state: │
+ │ iron: Collection discovery=3, most Hearsay confirmed │
+ │ steel: Collection discovery=0, several Hearsay beliefs │
+ │ (from teaching + self-inference) │
+ │ │
+ │ Kael heats steel to iron temperature → TOO COLD │
+ │ → steel.requires_higher_heat CONFIRMED through failure │
+ │ → Collection: steel discovery → 1 │
+ │ → Learning from failure is the most memorable kind │
+ │ │
+ │ Kael increases heat → steel becomes workable │
+ │ → steel.malleable_when_heated CONFIRMED │
+ │ → Collection: steel discovery → 2 │
+ │ → The inference from iron → steel was correct! │
+ └────────────────────────────────────────────────────────────────┘
 ```
 
 ### Why This Matters for NPC Intelligence
@@ -713,12 +713,12 @@ The same pipeline supports deception. A rival blacksmith could teach:
 
 ```
 Rival tells Kael: "copper is brittle, don't bother with it"
-  → Hearsay belief: copper.brittle (confidence 0.7, from teaching)
-  → Lexicon ground truth: copper.malleable (contradiction!)
-  → Kael BELIEVES copper is brittle until he works it himself
-  → If he avoids copper entirely, the lie persists indefinitely
-  → If he tests it, Hearsay corrected → trust toward rival drops (Disposition)
-  → This is drama generated from the knowledge system, not scripted
+ → Hearsay belief: copper.brittle (confidence 0.7, from teaching)
+ → Lexicon ground truth: copper.malleable (contradiction!)
+ → Kael BELIEVES copper is brittle until he works it himself
+ → If he avoids copper entirely, the lie persists indefinitely
+ → If he tests it, Hearsay corrected → trust toward rival drops (Disposition)
+ → This is drama generated from the knowledge system, not scripted
 ```
 
 The system doesn't distinguish between honest teaching and lies at the transmission level. Both create Hearsay beliefs. Only firsthand experience (Collection discovery) or conflicting testimony (multiple Hearsay sources) can correct false beliefs. A character with high `trust` toward the teacher (Disposition) weights their teaching higher. A character with low trust demands more evidence before believing.
@@ -835,7 +835,7 @@ The system doesn't distinguish between honest teaching and lies at the transmiss
 
 **Lexicon entries as resources** (other services register references to entry codes via lib-resource):
 
-Lexicon entries are referenced persistently by Collection (L2, discovery levels), Hearsay (L4, beliefs), Disposition (L4, feelings), and Obligation (L4, cost modifiers). Per T28, these dependent services must declare `x-references` targeting `lexicon-entry` resource type and implement cleanup callbacks via `ISeededResourceProvider`. The `DeleteEntry` flow calls `ExecuteCleanupAsync` via lib-resource before deletion to trigger these callbacks.
+Lexicon entries are referenced persistently by Collection (L2, discovery levels), Hearsay (L4, beliefs), Disposition (L4, feelings), and Obligation (L4, cost modifiers). Per, these dependent services must declare `x-references` targeting `lexicon-entry` resource type and implement cleanup callbacks via `ISeededResourceProvider`. The `DeleteEntry` flow calls `ExecuteCleanupAsync` via lib-resource before deletion to trigger these callbacks.
 
 ---
 
@@ -881,7 +881,7 @@ Lexicon entries are referenced persistently by Collection (L2, discovery levels)
 
 - **UpdateEntry** (`/lexicon/entry/update`): Updates entry metadata (display key, category reassignment, discovery levels). Category reassignment triggers trait inheritance recalculation. Acquires distributed lock.
 
-- **DeprecateEntry** (`/lexicon/entry/deprecate`): Category A deprecation (T31). Sets `isDeprecated`, `deprecatedAt`, `deprecationReason`. Idempotent: returns OK if already deprecated. Publishes `entry.updated` event with `changedFields` containing deprecation fields. Deprecated entries are excluded from query results by default and rejected when referenced by new associations or traits.
+- **DeprecateEntry** (`/lexicon/entry/deprecate`): Category A deprecation. Sets `isDeprecated`, `deprecatedAt`, `deprecationReason`. Idempotent: returns OK if already deprecated. Publishes `entry.updated` event with `changedFields` containing deprecation fields. Deprecated entries are excluded from query results by default and rejected when referenced by new associations or traits.
 
 - **UndeprecateEntry** (`/lexicon/entry/undeprecate`): Reverses deprecation (Category A allows undeprecation). Idempotent: returns OK if not deprecated.
 
@@ -976,93 +976,93 @@ Unlike other variable providers that load a fixed character profile, the Lexicon
 
 ```yaml
 flows:
-  assess_threat:
-    # NPC perceives an entity -- what do I know about it?
-    - cond:
-        # I know this thing and it's a predator
-        - when: "${lexicon.TARGET.known && lexicon.TARGET.has_trait.predator}"
-          then:
-            - cond:
-                # I know how to counter it
-                - when: "${lexicon.TARGET.strategy_count > 0
-                          && lexicon.TARGET.best_strategy == 'climb_to_escape'
-                          && lexicon.TARGET.strategy.climb_to_escape.viable}"
-                  then:
-                    - call: execute_strategy
-                    - set:
-                        strategy: "climb_to_escape"
-                        confidence: "${lexicon.TARGET.strategy.climb_to_escape.effectiveness}"
+ assess_threat:
+ # NPC perceives an entity -- what do I know about it?
+ - cond:
+ # I know this thing and it's a predator
+ - when: "${lexicon.TARGET.known && lexicon.TARGET.has_trait.predator}"
+ then:
+ - cond:
+ # I know how to counter it
+ - when: "${lexicon.TARGET.strategy_count > 0
+ && lexicon.TARGET.best_strategy == 'climb_to_escape'
+ && lexicon.TARGET.strategy.climb_to_escape.viable}"
+ then:
+ - call: execute_strategy
+ - set:
+ strategy: "climb_to_escape"
+ confidence: "${lexicon.TARGET.strategy.climb_to_escape.effectiveness}"
 
-                # I know it's dangerous but don't know how to counter it
-                - when: "${lexicon.TARGET.strategy_count == 0}"
-                  then:
-                    - call: flee_blindly
-                    - set:
-                        panic_level: "${1.0 - lexicon.TARGET.familiarity}"
+ # I know it's dangerous but don't know how to counter it
+ - when: "${lexicon.TARGET.strategy_count == 0}"
+ then:
+ - call: flee_blindly
+ - set:
+ panic_level: "${1.0 - lexicon.TARGET.familiarity}"
 
-        # I've never seen this before -- observe traits
-        - when: "${!lexicon.TARGET.known}"
-          then:
-            # Check observable traits against known categories
-            - cond:
-                - when: "${lexicon.TARGET.is_category.predator}"
-                  then:
-                    - call: treat_as_threat
-                - otherwise:
-                    - call: approach_cautiously
+ # I've never seen this before -- observe traits
+ - when: "${!lexicon.TARGET.known}"
+ then:
+ # Check observable traits against known categories
+ - cond:
+ - when: "${lexicon.TARGET.is_category.predator}"
+ then:
+ - call: treat_as_threat
+ - otherwise:
+ - call: approach_cautiously
 
-  anticipate_associations:
-    # After identifying a threat, check for associated dangers
-    - when: "${lexicon.TARGET.association_count > 0}"
-      then:
-        - for_each: association in "${lexicon.TARGET.associations}"
-          do:
-            - when: "${association.strength > 0.3}"
-              then:
-                - call: increase_vigilance
-                - set:
-                    watch_for: "${association.entry_code}"
-                    probability: "${association.strength}"
+ anticipate_associations:
+ # After identifying a threat, check for associated dangers
+ - when: "${lexicon.TARGET.association_count > 0}"
+ then:
+ - for_each: association in "${lexicon.TARGET.associations}"
+ do:
+ - when: "${association.strength > 0.3}"
+ then:
+ - call: increase_vigilance
+ - set:
+ watch_for: "${association.entry_code}"
+ probability: "${association.strength}"
 
-  apply_hypothesized_knowledge:
-    # Working with an unfamiliar material -- do I have hypotheses?
-    - cond:
-        # I have confirmed knowledge (firsthand experience)
-        - when: "${lexicon.TARGET.known && lexicon.TARGET.discovery_level >= 3}"
-          then:
-            - call: apply_confirmed_technique
-            - set:
-                confidence: "${lexicon.TARGET.familiarity}"
+ apply_hypothesized_knowledge:
+ # Working with an unfamiliar material -- do I have hypotheses?
+ - cond:
+ # I have confirmed knowledge (firsthand experience)
+ - when: "${lexicon.TARGET.known && lexicon.TARGET.discovery_level >= 3}"
+ then:
+ - call: apply_confirmed_technique
+ - set:
+ confidence: "${lexicon.TARGET.familiarity}"
 
-        # I have hypothesized traits from a similar material
-        - when: "${lexicon.TARGET.hypothesis_count > 0
-                  && lexicon.TARGET.hypothesized.malleable_when_heated}"
-          then:
-            - cond:
-                # High confidence hypothesis -- try it
-                - when: "${lexicon.TARGET.hypothesis.malleable_when_heated.confidence > 0.7}"
-                  then:
-                    - call: attempt_technique_from_hypothesis
-                    - set:
-                        technique: "heat_then_shape"
-                        source: "${lexicon.TARGET.hypothesis.malleable_when_heated.source_entry}"
-                        expect_success: true
+ # I have hypothesized traits from a similar material
+ - when: "${lexicon.TARGET.hypothesis_count > 0
+ && lexicon.TARGET.hypothesized.malleable_when_heated}"
+ then:
+ - cond:
+ # High confidence hypothesis -- try it
+ - when: "${lexicon.TARGET.hypothesis.malleable_when_heated.confidence > 0.7}"
+ then:
+ - call: attempt_technique_from_hypothesis
+ - set:
+ technique: "heat_then_shape"
+ source: "${lexicon.TARGET.hypothesis.malleable_when_heated.source_entry}"
+ expect_success: true
 
-                # Low confidence -- be cautious
-                - otherwise:
-                    - call: experiment_carefully
-                    - set:
-                        technique: "heat_then_shape"
-                        expect_success: false
+ # Low confidence -- be cautious
+ - otherwise:
+ - call: experiment_carefully
+ - set:
+ technique: "heat_then_shape"
+ expect_success: false
 
-        # No knowledge at all -- ask someone or experiment blindly
-        - otherwise:
-            - cond:
-                - when: "${hearsay.nearby_expert.exists}"
-                  then:
-                    - call: ask_for_teaching
-                - otherwise:
-                    - call: trial_and_error
+ # No knowledge at all -- ask someone or experiment blindly
+ - otherwise:
+ - cond:
+ - when: "${hearsay.nearby_expert.exists}"
+ then:
+ - call: ask_for_teaching
+ - otherwise:
+ - call: trial_and_error
 ```
 
 ---
@@ -1073,45 +1073,45 @@ flows:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│               TRAIT INHERITANCE VIA CATEGORY HIERARCHY                  │
-│                                                                      │
-│  CATEGORY TREE          SCOPED TRAITS              ENTRY: wolf       │
-│  ─────────────         ─────────────              ────────────       │
-│                                                                      │
-│  animal ◄─────────── escape: kill (eff: 0.8)    ┌──────────────┐    │
-│  └── mammal ◄──────── scare: loud_noise (0.6)   │ Direct traits│    │
-│      └── quadruped ◄─ escape: climb (eff: 0.9)  │  fur         │    │
-│          └── canine ◄─ trait: long_teeth          │  pack_hunter │    │
-│              └── wolf ◄─── (this entry)           │  muted_colors│    │
-│                                                   │  predator    │    │
-│                                                   └──────────────┘    │
-│                                                                      │
-│  COMPUTED MANIFEST for wolf:                                         │
-│  ┌──────────────────────────────────────────────────────────────┐    │
-│  │ TRAITS (direct + inherited):                                  │    │
-│  │   fur (direct)                    discoveryTier: 1            │    │
-│  │   pack_hunter (direct)            discoveryTier: 2            │    │
-│  │   muted_colors (direct)           discoveryTier: 2            │    │
-│  │   predator (direct)               discoveryTier: 1            │    │
-│  │   long_teeth (from: canine)       discoveryTier: 1            │    │
-│  │   ground_bound (from: quadruped)  discoveryTier: 1            │    │
-│  │   noise_averse (from: mammal)     discoveryTier: 2            │    │
-│  │                                                               │    │
-│  │ STRATEGIES (from traits + categories):                        │    │
-│  │   kill          (from: animal)     eff: 0.8  tier: 1          │    │
-│  │   loud_noise    (from: mammal)     eff: 0.6  tier: 2          │    │
-│  │   climb_to_esc  (from: quadruped)  eff: 0.9  tier: 3          │    │
-│  │                                                               │    │
-│  │ FILTERED BY COLLECTION DISCOVERY LEVEL:                       │    │
-│  │   Character A (level 1): sees predator, ground_bound, kill    │    │
-│  │   Character B (level 3): sees all traits + all strategies     │    │
-│  │   Character C (level 5): sees everything + secret weaknesses  │    │
-│  └──────────────────────────────────────────────────────────────┘    │
-│                                                                      │
-│  The same category-scoped traits and strategies apply to ALL         │
-│  entries in that category. Add a "duskfang" to canine and it         │
-│  automatically inherits long_teeth, ground_bound, noise_averse,      │
-│  and all category-level strategies -- without per-entry assignment.   │
+│ TRAIT INHERITANCE VIA CATEGORY HIERARCHY │
+│ │
+│ CATEGORY TREE SCOPED TRAITS ENTRY: wolf │
+│ ───────────── ───────────── ──────────── │
+│ │
+│ animal ◄─────────── escape: kill (eff: 0.8) ┌──────────────┐ │
+│ └── mammal ◄──────── scare: loud_noise (0.6) │ Direct traits│ │
+│ └── quadruped ◄─ escape: climb (eff: 0.9) │ fur │ │
+│ └── canine ◄─ trait: long_teeth │ pack_hunter │ │
+│ └── wolf ◄─── (this entry) │ muted_colors│ │
+│ │ predator │ │
+│ └──────────────┘ │
+│ │
+│ COMPUTED MANIFEST for wolf: │
+│ ┌──────────────────────────────────────────────────────────────┐ │
+│ │ TRAITS (direct + inherited): │ │
+│ │ fur (direct) discoveryTier: 1 │ │
+│ │ pack_hunter (direct) discoveryTier: 2 │ │
+│ │ muted_colors (direct) discoveryTier: 2 │ │
+│ │ predator (direct) discoveryTier: 1 │ │
+│ │ long_teeth (from: canine) discoveryTier: 1 │ │
+│ │ ground_bound (from: quadruped) discoveryTier: 1 │ │
+│ │ noise_averse (from: mammal) discoveryTier: 2 │ │
+│ │ │ │
+│ │ STRATEGIES (from traits + categories): │ │
+│ │ kill (from: animal) eff: 0.8 tier: 1 │ │
+│ │ loud_noise (from: mammal) eff: 0.6 tier: 2 │ │
+│ │ climb_to_esc (from: quadruped) eff: 0.9 tier: 3 │ │
+│ │ │ │
+│ │ FILTERED BY COLLECTION DISCOVERY LEVEL: │ │
+│ │ Character A (level 1): sees predator, ground_bound, kill │ │
+│ │ Character B (level 3): sees all traits + all strategies │ │
+│ │ Character C (level 5): sees everything + secret weaknesses │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+│ │
+│ The same category-scoped traits and strategies apply to ALL │
+│ entries in that category. Add a "duskfang" to canine and it │
+│ automatically inherits long_teeth, ground_bound, noise_averse, │
+│ and all category-level strategies -- without per-entry assignment. │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1250,19 +1250,19 @@ The question arises: why not add characteristics to Species, traits to Item, or 
 
 The pipeline with Lexicon:
 ```
-Species (wolf EXISTS)                   ─┐
-Item (iron sword EXISTS)                ─┤
-Location (Dark Forest EXISTS)           ─┤
-                                         │
+Species (wolf EXISTS) ─┐
+Item (iron sword EXISTS) ─┤
+Location (Dark Forest EXISTS) ─┤
+ │
 Lexicon (wolf IS: predator, pack_hunter, ─┤──► Actor ABML/GOAP
-         ground_bound, canine; iron IS:  │    "I know what this is
-         heavy, conductive, forgeable;   │     and how to deal with it"
-         Dark Forest IS: forested,       │
-         dim_light, has_wildlife)        │
-                                         │
-Collection (I've SEEN wolves,           ─┤
-            level 3 discovery)           │
-                                         │
+ ground_bound, canine; iron IS: │ "I know what this is
+ heavy, conductive, forgeable; │ and how to deal with it"
+ Dark Forest IS: forested, │
+ dim_light, has_wildlife) │
+ │
+Collection (I've SEEN wolves, ─┤
+ level 3 discovery) │
+ │
 Hearsay (I've HEARD wolves breathe fire)─┘
 ```
 
@@ -1296,7 +1296,7 @@ Hearsay (I've HEARD wolves breathe fire)─┘
 
 10. **Bulk seeding is idempotent**: Re-seeding with the same data does not create duplicates. Existing entries are updated, new entries are created. This supports iterative world-building during development.
 
-11. **Traits and strategies do not have deprecation**: Per T31 decision tree, traits are sub-entity components of entries (no persistent external references) and strategies are not referenced by ID in other services' persistent storage. Both use immediate delete. If Obligation later stores strategy codes persistently, strategies should be revisited for Category A deprecation.
+11. **Traits and strategies do not have deprecation**: Per decision tree, traits are sub-entity components of entries (no persistent external references) and strategies are not referenced by ID in other services' persistent storage. Both use immediate delete. If Obligation later stores strategy codes persistently, strategies should be revisited for Category A deprecation.
 
 12. **No client events**: Lexicon is internal-only, never internet-facing. All data reaches clients through the Actor variable provider, not direct WebSocket push. No `lexicon-client-events.yaml` is needed.
 
@@ -1328,19 +1328,19 @@ Hearsay (I've HEARD wolves breathe fire)─┘
 
 11. **Hearsay-Lexicon provider composition order**: The variable provider composites Lexicon ground truth, Collection discovery gating, and Hearsay beliefs. The composition order matters: should confirmed Lexicon traits override contradicting Hearsay beliefs, or should Hearsay override Lexicon (because characters act on beliefs, not truth)? The current proposal says Hearsay overrides for behavior and Lexicon provides ground truth for god-level queries, but this means the `${lexicon.*}` namespace might return subjectively wrong data. The alternative is separate namespaces: `${lexicon.*}` for ground truth and `${knowledge.*}` for the composited character perspective. This needs design.
 
-12. **`sourceType` typing**: Should `sourceType` on entries be `EntityType` enum (if all valid values are Bannou entity types — T14 test 4), a Lexicon-specific enum (if non-entity source types like "phenomenon" or "concept" exist), or remain an opaque string (if the set is truly open-ended and game-configurable)? The answer depends on whether entries can cross-reference non-entity concepts. If all source references are to L2 entities (Species, Item, Location), `EntityType` is correct per T14. If non-entity sources exist, a Lexicon-specific enum or opaque string is needed.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-06: sourceType typing — T14 test 4 vs non-entity sources -->
+12. **`sourceType` typing**: Should `sourceType` on entries be `EntityType` enum (if all valid values are Bannou entity types — test 4), a Lexicon-specific enum (if non-entity source types like "phenomenon" or "concept" exist), or remain an opaque string (if the set is truly open-ended and game-configurable)? The answer depends on whether entries can cross-reference non-entity concepts. If all source references are to L2 entities (Species, Item, Location), `EntityType` is correct per tenets. If non-entity sources exist, a Lexicon-specific enum or opaque string is needed.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06: sourceType typing — test 4 vs non-entity sources -->
 
-13. **`sourceId` typing**: Should `sourceId` be `Guid?` (per T25 — Bannou entity IDs are always GUIDs) or `string?` (if some source references use non-GUID identifiers like Lexicon entry codes)? If all source references are to Guid-identified Bannou entities, `sourceId` must be `Guid?` per T25. If cross-referencing Lexicon entries by code is a valid use case, `string?` is needed with a T25 exception comment.
+13. **`sourceId` typing**: Should `sourceId` be `Guid?` (per — Bannou entity IDs are always GUIDs) or `string?` (if some source references use non-GUID identifiers like Lexicon entry codes)? If all source references are to Guid-identified Bannou entities, `sourceId` must be `Guid?` per tenets. If cross-referencing Lexicon entries by code is a valid use case, `string?` is needed with a exception comment.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-06: sourceId typing — depends on sourceType resolution -->
 
-14. **`metadata: object?` on LexiconAssociation**: T29 prohibits metadata bags as cross-service data contracts, but is ambiguous on same-service metadata where the service itself reads keys. Options: (a) remove the field entirely and model any type-specific data as explicit schema fields, (b) keep as client-only pass-through with required T29 description, (c) define typed variants per association type code. Decision depends on whether Lexicon's own code (variable provider) needs to inspect association metadata keys.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-06: association metadata — T29 same-service ambiguity -->
+14. **`metadata: object?` on LexiconAssociation**: prohibits metadata bags as cross-service data contracts, but is ambiguous on same-service metadata where the service itself reads keys. Options: (a) remove the field entirely and model any type-specific data as explicit schema fields, (b) keep as client-only pass-through with required description, (c) define typed variants per association type code. Decision depends on whether Lexicon's own code (variable provider) needs to inspect association metadata keys.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06: association metadata — same-service ambiguity -->
 
-15. **Category deprecation**: T31's decision tree asks about "OTHER services/entities" storing the entity's ID. Category codes are stored by entries and traits within Lexicon itself, but no external service stores category codes persistently. This makes the T31 test ambiguous for categories. Options: (a) Category A deprecation (treating entries as "other entities" relative to categories), (b) no deprecation with "must be empty or deprecated" delete guards, (c) reparent-on-delete only (current quirk #9 behavior). Current design uses deprecation for consistency with entries.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-06: category deprecation — T31 "other services" test ambiguity -->
+15. **Category deprecation**:'s decision tree asks about "OTHER services/entities" storing the entity's ID. Category codes are stored by entries and traits within Lexicon itself, but no external service stores category codes persistently. This makes the test ambiguous for categories. Options: (a) Category A deprecation (treating entries as "other entities" relative to categories), (b) no deprecation with "must be empty or deprecated" delete guards, (c) reparent-on-delete only (current quirk #9 behavior). Current design uses deprecation for consistency with entries.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-06: category deprecation — "other services" test ambiguity -->
 
-16. **`discoveryLevels` naming**: The entry field `discoveryLevels` (total tier count) is inconsistent with `discoveryTier` (specific tier) on child entities. Renaming to `maxDiscoveryTier` would improve consistency but is a naming preference, not a tenet requirement. T16 does not settle property name semantics beyond format conventions.
+16. **`discoveryLevels` naming**: The entry field `discoveryLevels` (total tier count) is inconsistent with `discoveryTier` (specific tier) on child entities. Renaming to `maxDiscoveryTier` would improve consistency but is a naming preference, not a tenet requirement. does not settle property name semantics beyond format conventions.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-06: discoveryLevels rename to maxDiscoveryTier -->
 
 17. **Compression callback**: Should Lexicon provide a `x-compression-callback` for character archives? Lexicon is global reference data, not per-character data. Collection owns per-character discovery state. The question is whether "what this character knew" (derived from Collection discovery levels + Lexicon queries) is meaningful for the content flywheel. Likely answer: no — Collection handles per-character archival. But not mechanically mandated by any tenet.

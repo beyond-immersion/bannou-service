@@ -247,7 +247,7 @@ public partial class LeaderboardService
                 continue;
             }
 
-            // Use typed fields instead of metadata bag per FOUNDATION TENETS (T29)
+            // Use typed fields instead of metadata bag per FOUNDATION TENETS
             var typedValue = typedFieldSelector == "scoreType" ? definition.ScoreType : definition.RatingType;
             if (string.IsNullOrEmpty(typedValue))
             {

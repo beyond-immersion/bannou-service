@@ -53,30 +53,30 @@ The [Behavioral Bootstrap](../guides/BEHAVIORAL-BOOTSTRAP.md) pattern originally
 God-actor lifecycle (dynamic binding):
 
 1. Actor spawned (event brain, no character)
-   ├── ABML behavior document references ${personality.*} etc.
-   │   (resolves to null/empty -- no character to load from)
-   ├── Uses load_snapshot: for ad-hoc mortal data
-   └── Operates as regional watcher / garden tender
+ ├── ABML behavior document references ${personality.*} etc.
+ │ (resolves to null/empty -- no character to load from)
+ ├── Uses load_snapshot: for ad-hoc mortal data
+ └── Operates as regional watcher / garden tender
 
 2. Divine character created in system realm
-   ├── Character record, species: "divine", realm: PANTHEON
-   ├── Personality traits seeded from deity configuration
-   └── Backstory/history from deity mythology
+ ├── Character record, species: "divine", realm: PANTHEON
+ ├── Personality traits seeded from deity configuration
+ └── Backstory/history from deity mythology
 
 3. POST /actor/bind-character (actorId, divineCharacterId)
-   ├── CharacterId set on running ActorRunner
-   ├── Per-character perception subscription established
-   ├── ActorCharacterBoundEvent published
-   └── Next tick: variable providers activate
+ ├── CharacterId set on running ActorRunner
+ ├── Per-character perception subscription established
+ ├── ActorCharacterBoundEvent published
+ └── Next tick: variable providers activate
 
 4. God-actor (character brain, bound to divine system realm character)
-   ├── ${personality.*}     ← CharacterPersonality (the god's own quantified personality)
-   ├── ${encounters.*}      ← CharacterEncounter (memories of mortal interactions)
-   ├── ${backstory.*}       ← CharacterHistory (the god's mythology and divine history)
-   ├── ${quest.*}           ← Quest (divine quests the god is tracking)
-   ├── ${world.*}           ← Worldstate (current game time, season)
-   ├── ${obligations.*}     ← Obligation (divine contracts the god is bound by)
-   └── ...can still use load_snapshot: for ad-hoc mortal data (event brain capability)
+ ├── ${personality.*} ← CharacterPersonality (the god's own quantified personality)
+ ├── ${encounters.*} ← CharacterEncounter (memories of mortal interactions)
+ ├── ${backstory.*} ← CharacterHistory (the god's mythology and divine history)
+ ├── ${quest.*} ← Quest (divine quests the god is tracking)
+ ├── ${world.*} ← Worldstate (current game time, season)
+ ├── ${obligations.*} ← Obligation (divine contracts the god is bound by)
+ └── ...can still use load_snapshot: for ad-hoc mortal data (event brain capability)
 ```
 
 The ABML behavior document supports both modes from the start. Before binding, expressions like `${personality.mercy}` evaluate to null and the behavior falls through to default paths. After binding, the same expressions return real data and the god makes richer, personality-driven decisions. No behavior document swap is needed -- the same document, progressively richer data.
@@ -92,20 +92,20 @@ Gods in the system realm can manifest avatars in physical realms -- separate Cha
 ```
 DIVINE_REALM (system realm, isSystemType: true)
 ├── Moira (Character, species: "Fate Weaver", alive)
-│   └── Actor (character brain, long-running, PERMANENT binding)
-│       ├── Perceives world events globally via watch system
-│       ├── Decides to manifest in the physical world
-│       └── Calls /divine/avatar/manifest (spends divinity, creates avatar)
+│ └── Actor (character brain, long-running, PERMANENT binding)
+│ ├── Perceives world events globally via watch system
+│ ├── Decides to manifest in the physical world
+│ └── Calls /divine/avatar/manifest (spends divinity, creates avatar)
 │
 ARCADIA (physical realm)
 └── "The Veiled Oracle" (Character, species: "Human", alive)
-    ├── Created by Divine service (orchestrates character + relationship + actor)
-    ├── Linked to Moira via Relationship (divine_manifestation type)
-    └── Actor (character brain, SEPARATE independent instance)
-        ├── Personality derived from Moira's, filtered through mortal form
-        ├── Interacts with players and NPCs as any character would
-        ├── Can be killed → death archive feeds content flywheel
-        └── Moira perceives avatar death via watch system, reacts
+ ├── Created by Divine service (orchestrates character + relationship + actor)
+ ├── Linked to Moira via Relationship (divine_manifestation type)
+ └── Actor (character brain, SEPARATE independent instance)
+ ├── Personality derived from Moira's, filtered through mortal form
+ ├── Interacts with players and NPCs as any character would
+ ├── Can be killed → death archive feeds content flywheel
+ └── Moira perceives avatar death via watch system, reacts
 ```
 
 The god-actor's character brain binding to its divine character is **permanent once established and never changes**. The binding can be established either at spawn time (if the divine character already exists) or at runtime via `BindCharacterAsync` (if the character is created after the actor starts). The avatar is a separate character with its own separate actor. When the avatar dies, the avatar's actor stops, but the god-actor continues uninterrupted with full access to its own `${personality.*}`, `${encounters.*}`, etc.
@@ -127,18 +127,18 @@ When the god's watch system detects the avatar's death, it should call `/divine/
 ```yaml
 # Avatar manifestation (in god's behavior document)
 - call: /divine/avatar/manifest
-    with:
-      deityId: ${self.deity_id}
-      realmId: ${target_realm_id}
-      name: ${avatar_name}
-      speciesId: ${mortal_species_id}
-      behaviorDocumentId: ${avatar_behavior_ref}
-    into: avatar_result
+ with:
+ deityId: ${self.deity_id}
+ realmId: ${target_realm_id}
+ name: ${avatar_name}
+ speciesId: ${mortal_species_id}
+ behaviorDocumentId: ${avatar_behavior_ref}
+ into: avatar_result
 
 # Watch the avatar for lifecycle events
 - watch:
-    resource_type: character
-    resource_id: ${avatar_result.avatarCharacterId}
+ resource_type: character
+ resource_id: ${avatar_result.avatarCharacterId}
 ```
 
 This keeps avatar lifecycle within Divine's orchestration domain -- costs, cooldowns, tracking, and economy are all mediated by the service that owns the god's persistent state, not scattered across raw API calls in behavior documents.
@@ -174,8 +174,8 @@ Almost nothing in the codebase. The changes are:
 2. **Register a divine species** in that realm -- seed data, not code
 3. **Divine implementation**: When creating a deity, also create a Character in the divine realm; store `characterId` on `DeityModel` -- part of planned implementation (currently stubbed)
 4. **God-actor character binding**: Two options, both enabled by dynamic character binding:
-   - **Option A (character-first)**: Create divine Character before spawning actor; spawn with `characterId` already set. Simpler but requires character to exist at spawn time.
-   - **Option B (bind-later)**: Spawn actor as event brain first, create divine Character during deity setup, then call `/actor/bind-character` to bind at runtime. More flexible -- the actor can start doing basic work (monitoring event streams) before its divine character exists. The ABML behavior document handles both states naturally (null-safe `${personality.*}` expressions fall through to defaults until binding activates providers).
+ - **Option A (character-first)**: Create divine Character before spawning actor; spawn with `characterId` already set. Simpler but requires character to exist at spawn time.
+ - **Option B (bind-later)**: Spawn actor as event brain first, create divine Character during deity setup, then call `/actor/bind-character` to bind at runtime. More flexible -- the actor can start doing basic work (monitoring event streams) before its divine character exists. The ABML behavior document handles both states naturally (null-safe `${personality.*}` expressions fall through to defaults until binding activates providers).
 5. **Avatar behaviors**: Author ABML behavior documents for manifestation lifecycle -- pure content authoring
 6. **Seed data**: A `divine_manifestation` relationship type, a `divine` species, divine personality trait profiles -- all registered on startup
 
@@ -296,7 +296,7 @@ Paginated queries by entityId+entityType or deityId+tier use `IJsonQueryableStat
 |-------|---------|--------|
 | `analytics.score.updated` | `HandleAnalyticsScoreUpdated` | Maps analytics categories to domain codes, queues divinity generation events for domain-relevant deities (soft dependency -- no-op if Analytics disabled) |
 
-### Resource Cleanup (T28)
+### Resource Cleanup
 
 Character and game-service deletion cleanup is handled via `x-references` cleanup endpoints, NOT via event subscriptions.
 
@@ -409,53 +409,53 @@ All endpoints are service-to-service (`x-permissions: []`). Called by lib-resour
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                     Divine Service Composability                      │
+│ Divine Service Composability │
 ├──────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  lib-divine (L4) ── "What a god IS"                                  │
-│  ┌──────────────┐                                                    │
-│  │ DeityModel    │──── identity, domains, personality, status         │
-│  │ BlessingModel │──── blessing records linking deities to entities   │
-│  │ AttentionSlot │──── which characters a god is "watching"           │
-│  └──────┬───────┘                                                    │
-│         │ orchestrates                                                │
-│         ▼                                                            │
-│  ┌─────────────────────────────────────────────────────────────┐     │
-│  │ Existing Primitives (L0/L1/L2)                               │     │
-│  │                                                               │     │
-│  │  Currency ──── divinity wallets (credit/debit/balance)        │     │
-│  │  Seed ──────── domain power growth (progressive influence)    │     │
-│  │  Relationship ─ follower bonds (deity↔character)              │     │
-│  │  Collection ── permanent blessings (Greater/Supreme)          │     │
-│  └─────────────────────────────────────────────────────────────┘     │
-│         │ soft dependencies (L4)                                      │
-│         ▼                                                            │
-│  ┌─────────────────────────────────────────────────────────────┐     │
-│  │ Optional Features (L4, graceful degradation)                  │     │
-│  │                                                               │     │
-│  │  Puppetmaster ─ deity watcher actor lifecycle                 │     │
-│  │  Status ─────── temporary blessings (Minor/Standard)          │     │
-│  │  Analytics ──── domain-relevant divinity generation            │     │
-│  └─────────────────────────────────────────────────────────────┘     │
-│                                                                      │
-│  Background Workers                                                  │
-│  ┌─────────────────────┐  ┌───────────────────────────┐             │
-│  │ AttentionWorker      │  │ DivinityGenerationWorker   │             │
-│  │ Decays idle slots    │  │ Batches events → credits   │             │
-│  │ Frees capacity       │  │ Aggregates per deity       │             │
-│  └─────────────────────┘  └───────────────────────────┘             │
-│                                                                      │
-│  God Influence Paths (Two Sides of the Same Coin)                    │
-│                                                                      │
-│  Realm-Tending (via Puppetmaster):                                   │
-│  God's Actor monitors realm events → decides → publishes             │
-│  Character's Actor consumes consequences → adjusts behavior          │
-│  (gods act through intermediaries, never directly)                    │
-│                                                                      │
-│  Garden-Tending (via Gardener):                                      │
-│  God's Actor monitors player drift/events → decides → calls          │
-│  Gardener APIs (spawn POI, manage transitions, shift bindings)       │
-│  (same actor, same decision-making, different toolbox)               │
+│ │
+│ lib-divine (L4) ── "What a god IS" │
+│ ┌──────────────┐ │
+│ │ DeityModel │──── identity, domains, personality, status │
+│ │ BlessingModel │──── blessing records linking deities to entities │
+│ │ AttentionSlot │──── which characters a god is "watching" │
+│ └──────┬───────┘ │
+│ │ orchestrates │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ Existing Primitives (L0/L1/L2) │ │
+│ │ │ │
+│ │ Currency ──── divinity wallets (credit/debit/balance) │ │
+│ │ Seed ──────── domain power growth (progressive influence) │ │
+│ │ Relationship ─ follower bonds (deity↔character) │ │
+│ │ Collection ── permanent blessings (Greater/Supreme) │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│ │ soft dependencies (L4) │
+│ ▼ │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ Optional Features (L4, graceful degradation) │ │
+│ │ │ │
+│ │ Puppetmaster ─ deity watcher actor lifecycle │ │
+│ │ Status ─────── temporary blessings (Minor/Standard) │ │
+│ │ Analytics ──── domain-relevant divinity generation │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│ │
+│ Background Workers │
+│ ┌─────────────────────┐ ┌───────────────────────────┐ │
+│ │ AttentionWorker │ │ DivinityGenerationWorker │ │
+│ │ Decays idle slots │ │ Batches events → credits │ │
+│ │ Frees capacity │ │ Aggregates per deity │ │
+│ └─────────────────────┘ └───────────────────────────┘ │
+│ │
+│ God Influence Paths (Two Sides of the Same Coin) │
+│ │
+│ Realm-Tending (via Puppetmaster): │
+│ God's Actor monitors realm events → decides → publishes │
+│ Character's Actor consumes consequences → adjusts behavior │
+│ (gods act through intermediaries, never directly) │
+│ │
+│ Garden-Tending (via Gardener): │
+│ God's Actor monitors player drift/events → decides → calls │
+│ Gardener APIs (spawn POI, manage transitions, shift bindings) │
+│ (same actor, same decision-making, different toolbox) │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 

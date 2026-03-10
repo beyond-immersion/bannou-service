@@ -222,6 +222,11 @@ public partial class AchievementController
     "$ref": "#/$defs/AchievementDefinitionResponse",
     "$defs": {
         "AchievementDefinitionResponse": {
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
             "type": "object",
             "description": "Achievement definition details",
             "additionalProperties": false,
@@ -233,7 +238,6 @@ public partial class AchievementController
                 "achievementType",
                 "points",
                 "isActive",
-                "isDeprecated",
                 "earnedCount",
                 "createdAt"
             ],
@@ -355,22 +359,6 @@ public partial class AchievementController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether achievement is earnable"
-                },
-                "isDeprecated": {
-                    "type": "boolean",
-                    "description": "Whether this definition is deprecated and should not be used for new progress"
-                },
-                "deprecatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When deprecation occurred, null if not deprecated"
-                },
-                "deprecationReason": {
-                    "type": "string",
-                    "nullable": true,
-                    "maxLength": 500,
-                    "description": "Audit reason for deprecation, null if not deprecated"
                 },
                 "earnedCount": {
                     "type": "integer",
@@ -528,6 +516,11 @@ public partial class AchievementController
     "$ref": "#/$defs/AchievementDefinitionResponse",
     "$defs": {
         "AchievementDefinitionResponse": {
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
             "type": "object",
             "description": "Achievement definition details",
             "additionalProperties": false,
@@ -539,7 +532,6 @@ public partial class AchievementController
                 "achievementType",
                 "points",
                 "isActive",
-                "isDeprecated",
                 "earnedCount",
                 "createdAt"
             ],
@@ -661,22 +653,6 @@ public partial class AchievementController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether achievement is earnable"
-                },
-                "isDeprecated": {
-                    "type": "boolean",
-                    "description": "Whether this definition is deprecated and should not be used for new progress"
-                },
-                "deprecatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When deprecation occurred, null if not deprecated"
-                },
-                "deprecationReason": {
-                    "type": "string",
-                    "nullable": true,
-                    "maxLength": 500,
-                    "description": "Audit reason for deprecation, null if not deprecated"
                 },
                 "earnedCount": {
                     "type": "integer",
@@ -895,6 +871,11 @@ public partial class AchievementController
             }
         },
         "AchievementDefinitionResponse": {
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
             "type": "object",
             "description": "Achievement definition details",
             "additionalProperties": false,
@@ -906,7 +887,6 @@ public partial class AchievementController
                 "achievementType",
                 "points",
                 "isActive",
-                "isDeprecated",
                 "earnedCount",
                 "createdAt"
             ],
@@ -1028,22 +1008,6 @@ public partial class AchievementController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether achievement is earnable"
-                },
-                "isDeprecated": {
-                    "type": "boolean",
-                    "description": "Whether this definition is deprecated and should not be used for new progress"
-                },
-                "deprecatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When deprecation occurred, null if not deprecated"
-                },
-                "deprecationReason": {
-                    "type": "string",
-                    "nullable": true,
-                    "maxLength": 500,
-                    "description": "Audit reason for deprecation, null if not deprecated"
                 },
                 "earnedCount": {
                     "type": "integer",
@@ -1300,6 +1264,11 @@ public partial class AchievementController
     "$ref": "#/$defs/AchievementDefinitionResponse",
     "$defs": {
         "AchievementDefinitionResponse": {
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
             "type": "object",
             "description": "Achievement definition details",
             "additionalProperties": false,
@@ -1311,7 +1280,6 @@ public partial class AchievementController
                 "achievementType",
                 "points",
                 "isActive",
-                "isDeprecated",
                 "earnedCount",
                 "createdAt"
             ],
@@ -1433,22 +1401,6 @@ public partial class AchievementController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether achievement is earnable"
-                },
-                "isDeprecated": {
-                    "type": "boolean",
-                    "description": "Whether this definition is deprecated and should not be used for new progress"
-                },
-                "deprecatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When deprecation occurred, null if not deprecated"
-                },
-                "deprecationReason": {
-                    "type": "string",
-                    "nullable": true,
-                    "maxLength": 500,
-                    "description": "Audit reason for deprecation, null if not deprecated"
                 },
                 "earnedCount": {
                     "type": "integer",
@@ -1612,6 +1564,11 @@ public partial class AchievementController
     "$ref": "#/$defs/AchievementDefinitionResponse",
     "$defs": {
         "AchievementDefinitionResponse": {
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
             "type": "object",
             "description": "Achievement definition details",
             "additionalProperties": false,
@@ -1623,7 +1580,6 @@ public partial class AchievementController
                 "achievementType",
                 "points",
                 "isActive",
-                "isDeprecated",
                 "earnedCount",
                 "createdAt"
             ],
@@ -1746,22 +1702,6 @@ public partial class AchievementController
                     "type": "boolean",
                     "description": "Whether achievement is earnable"
                 },
-                "isDeprecated": {
-                    "type": "boolean",
-                    "description": "Whether this definition is deprecated and should not be used for new progress"
-                },
-                "deprecatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When deprecation occurred, null if not deprecated"
-                },
-                "deprecationReason": {
-                    "type": "string",
-                    "nullable": true,
-                    "maxLength": 500,
-                    "description": "Audit reason for deprecation, null if not deprecated"
-                },
                 "earnedCount": {
                     "type": "integer",
                     "format": "int64",
@@ -1876,6 +1816,76 @@ public partial class AchievementController
             _DeprecateAchievementDefinition_Info,
             _DeprecateAchievementDefinition_RequestSchema,
             _DeprecateAchievementDefinition_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CleanDeprecatedAchievementDefinitions
+
+    private static readonly string _CleanDeprecatedAchievementDefinitions_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object"
+}
+""";
+
+    private static readonly string _CleanDeprecatedAchievementDefinitions_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object"
+}
+""";
+
+    private static readonly string _CleanDeprecatedAchievementDefinitions_Info = """
+{
+    "summary": "Clean deprecated achievement definitions with zero remaining progress",
+    "description": "Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\nachievement definitions and permanently removes those with zero remaining progress\nrecords, subject to an optional grace period. Publishes achievement-definition.deleted\nevents for each removed definition. Idempotent and safe to call at any frequency.\nSupports dry-run mode for admin panel preview.\n",
+    "tags": [
+        "Definitions"
+    ],
+    "deprecated": false,
+    "operationId": "cleanDeprecatedAchievementDefinitions"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanDeprecatedAchievementDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/clean-deprecated/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedAchievementDefinitions_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Achievement",
+            "POST",
+            "/achievement/definition/clean-deprecated",
+            _CleanDeprecatedAchievementDefinitions_Info));
+
+    /// <summary>Returns request schema for CleanDeprecatedAchievementDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/clean-deprecated/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedAchievementDefinitions_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Achievement",
+            "POST",
+            "/achievement/definition/clean-deprecated",
+            "request-schema",
+            _CleanDeprecatedAchievementDefinitions_RequestSchema));
+
+    /// <summary>Returns response schema for CleanDeprecatedAchievementDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/clean-deprecated/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedAchievementDefinitions_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Achievement",
+            "POST",
+            "/achievement/definition/clean-deprecated",
+            "response-schema",
+            _CleanDeprecatedAchievementDefinitions_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanDeprecatedAchievementDefinitions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/achievement/definition/clean-deprecated/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedAchievementDefinitions_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Achievement",
+            "POST",
+            "/achievement/definition/clean-deprecated",
+            _CleanDeprecatedAchievementDefinitions_Info,
+            _CleanDeprecatedAchievementDefinitions_RequestSchema,
+            _CleanDeprecatedAchievementDefinitions_ResponseSchema));
 
     #endregion
 

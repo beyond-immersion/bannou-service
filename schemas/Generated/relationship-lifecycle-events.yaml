@@ -181,10 +181,10 @@ components:
       - code
       - name
       - isBidirectional
-      - isDeprecated
       - depth
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -229,22 +229,10 @@ components:
         isBidirectional: &id019
           type: boolean
           description: "Whether the relationship applies equally in both directions"
-        isDeprecated: &id020
-          type: boolean
-          description: "Whether this relationship type is deprecated and should not be used for new relationships"
-        deprecatedAt: &id021
-          type: string
-          format: date-time
-          nullable: true
-          description: "Timestamp when the relationship type was deprecated"
-        deprecationReason: &id022
-          type: string
-          nullable: true
-          description: "Explanation for why the relationship type was deprecated"
-        depth: &id023
+        depth: &id020
           type: integer
           description: "Hierarchy depth level from the root relationship type"
-        metadata: &id024
+        metadata: &id021
           type: object
           additionalProperties: true
           nullable: true
@@ -258,6 +246,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the relationship type was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this relationship type is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the relationship type was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     RelationshipTypeUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -272,10 +273,10 @@ components:
       - code
       - name
       - isBidirectional
-      - isDeprecated
       - depth
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -292,11 +293,8 @@ components:
         inverseTypeId: *id017
         inverseTypeCode: *id018
         isBidirectional: *id019
-        isDeprecated: *id020
-        deprecatedAt: *id021
-        deprecationReason: *id022
-        depth: *id023
-        metadata: *id024
+        depth: *id020
+        metadata: *id021
         createdAt:
           type: string
           format: date-time
@@ -305,6 +303,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the relationship type was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this relationship type is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the relationship type was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -324,10 +335,10 @@ components:
       - code
       - name
       - isBidirectional
-      - isDeprecated
       - depth
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -343,11 +354,8 @@ components:
         inverseTypeId: *id017
         inverseTypeCode: *id018
         isBidirectional: *id019
-        isDeprecated: *id020
-        deprecatedAt: *id021
-        deprecationReason: *id022
-        depth: *id023
-        metadata: *id024
+        depth: *id020
+        metadata: *id021
         createdAt:
           type: string
           format: date-time
@@ -356,6 +364,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the relationship type was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this relationship type is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the relationship type was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

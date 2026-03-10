@@ -23,9 +23,9 @@ components:
       - gameServiceId
       - isActive
       - isSystemType
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -59,19 +59,7 @@ components:
         isSystemType: &id008
           type: boolean
           description: "Whether this realm is a system infrastructure realm (e.g., VOID)"
-        isDeprecated: &id009
-          type: boolean
-          description: "Whether the realm has been marked as deprecated"
-        deprecatedAt: &id010
-          type: string
-          format: date-time
-          nullable: true
-          description: "Timestamp when the realm was deprecated"
-        deprecationReason: &id011
-          type: string
-          nullable: true
-          description: "Explanation for why the realm was deprecated"
-        metadata: &id012
+        metadata: &id009
           type: object
           additionalProperties: true
           nullable: true
@@ -84,6 +72,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the realm was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this realm is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the realm was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
       x-resource-mapping:
         resource_type: realm
         resource_id_field: realmId
@@ -105,9 +106,9 @@ components:
       - gameServiceId
       - isActive
       - isSystemType
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -122,10 +123,7 @@ components:
         category: *id006
         isActive: *id007
         isSystemType: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
-        metadata: *id012
+        metadata: *id009
         createdAt:
           type: string
           format: date-time
@@ -134,6 +132,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the realm was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this realm is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the realm was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -160,9 +171,9 @@ components:
       - gameServiceId
       - isActive
       - isSystemType
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -176,10 +187,7 @@ components:
         category: *id006
         isActive: *id007
         isSystemType: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
-        metadata: *id012
+        metadata: *id009
         createdAt:
           type: string
           format: date-time
@@ -188,6 +196,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the realm was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this realm is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the realm was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

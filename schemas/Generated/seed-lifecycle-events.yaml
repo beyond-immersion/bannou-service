@@ -193,9 +193,9 @@ components:
       - bondCardinality
       - bondPermanent
       - sameOwnerGrowthMultiplier
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -231,18 +231,6 @@ components:
           type: number
           format: float
           description: "Cross-pollination multiplier"
-        isDeprecated: &id019
-          type: boolean
-          description: "Whether this seed type is deprecated"
-        deprecatedAt: &id020
-          type: string
-          format: date-time
-          nullable: true
-          description: "When the seed type was deprecated"
-        deprecationReason: &id021
-          type: string
-          nullable: true
-          description: "Reason for deprecation"
         createdAt:
           type: string
           format: date-time
@@ -251,6 +239,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the seed type was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this seed type is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the seed type was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     SeedTypeUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -268,9 +269,9 @@ components:
       - bondCardinality
       - bondPermanent
       - sameOwnerGrowthMultiplier
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -285,9 +286,6 @@ components:
         bondCardinality: *id016
         bondPermanent: *id017
         sameOwnerGrowthMultiplier: *id018
-        isDeprecated: *id019
-        deprecatedAt: *id020
-        deprecationReason: *id021
         createdAt:
           type: string
           format: date-time
@@ -296,6 +294,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the seed type was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this seed type is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the seed type was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -318,9 +329,9 @@ components:
       - bondCardinality
       - bondPermanent
       - sameOwnerGrowthMultiplier
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -334,9 +345,6 @@ components:
         bondCardinality: *id016
         bondPermanent: *id017
         sameOwnerGrowthMultiplier: *id018
-        isDeprecated: *id019
-        deprecatedAt: *id020
-        deprecationReason: *id021
         createdAt:
           type: string
           format: date-time
@@ -345,6 +353,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the seed type was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this seed type is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the seed type was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

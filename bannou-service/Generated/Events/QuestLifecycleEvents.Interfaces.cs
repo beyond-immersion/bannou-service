@@ -13,6 +13,6 @@ using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Events;
 
-public partial class QuestDefinitionCreatedEvent : ILifecycleCreatedEvent { }
-public partial class QuestDefinitionUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class QuestDefinitionDeletedEvent : ILifecycleDeletedEvent { }
+public partial class QuestDefinitionCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class QuestDefinitionUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class QuestDefinitionDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }

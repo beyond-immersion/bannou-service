@@ -62,8 +62,8 @@ L1: App Foundation (7 plugins)     Account, Auth, Chat, Connect, Permission, Con
 L2: Game Foundation (17 plugins)   Character, Realm, Species, Location, Currency, Item, Inventory,
                                    Actor, Quest, Seed, Collection, Transit, Worldstate, and more
 L3: App Features (6 plugins)       Asset, Orchestrator, Documentation, Website, Voice, Broadcast
-L4: Game Features (41 plugins)     Behavior, Puppetmaster, Matchmaking, Escrow, Faction, Divine,
-                                   Dungeon, Craft, Trade, Workshop, Music, Storyline, and 29 more
+L4: Game Features (42+ plugins)    Behavior, Puppetmaster, Matchmaking, Escrow, Faction, Divine,
+                                   Dungeon, Craft, Trade, Workshop, Music, Storyline, and 30 more
 L5: Extensions (developer-created) Game-specific vocabulary, simplified APIs, genre kits
 ```
 

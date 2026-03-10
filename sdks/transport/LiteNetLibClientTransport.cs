@@ -46,7 +46,7 @@ public sealed class LiteNetLibClientTransport : IGameClientTransport, INetEventL
         _netManager.Start();
         _serverPeer = _netManager.Connect(host, port, "GameTransport");
 
-        // Yield to ensure proper async behavior per IMPLEMENTATION TENETS (T23)
+        // Yield to ensure proper async behavior per IMPLEMENTATION TENETS
         await Task.Yield();
 
         // Fire-and-forget: background task runs until cancellation or disconnect.

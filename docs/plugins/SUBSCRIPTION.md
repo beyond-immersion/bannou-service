@@ -45,46 +45,46 @@ Client events are routed via `IEntitySessionRegistry.PublishToEntitySessionsAsyn
 State Key Relationships & Index Cleanup
 ========================================
 
-  account-subscriptions:{accountId}     service-subscriptions:{serviceId}
-           │                                      │
-           │  (List<Guid>)                        │  (List<Guid>)
-           ▼                                      ▼
-     ┌─────────────────────────────────────────────────┐
-     │              subscription:{id}                   │
-     │           (SubscriptionDataModel)               │
-     │                                                 │
-     │  ┌─ SubscriptionId: Guid                        │
-     │  ├─ AccountId: Guid                             │
-     │  ├─ ServiceId: Guid                             │
-     │  ├─ StubName: string (denormalized)             │
-     │  ├─ DisplayName: string (denormalized)          │
-     │  ├─ StartDateUnix: long                         │
-     │  ├─ ExpirationDateUnix: long?                   │
-     │  ├─ IsActive: bool                              │
-     │  ├─ CancelledAtUnix: long?                      │
-     │  ├─ CancellationReason: string?                 │
-     │  ├─ CreatedAtUnix: long                         │
-     │  └─ UpdatedAtUnix: long?                        │
-     └─────────────────────────────────────────────────┘
-                          ▲
-                          │  (Guid in list)
-                          │
-              subscription-index (global)
-                          │
-      ┌───────────────────┼───────────────────┐
-      │                   │                   │
-      ▼                   ▼                   ▼
- [Expiration Worker]  [Deleted?]         [Inactive/No Expiry]
-      │                   │                   │
-      │  Marks expired    │  Remove from      │  Remove from
-      │  subscriptions    │  index            │  index
-      │  as inactive      │                   │
-      └───────────────────┴───────────────────┘
+ account-subscriptions:{accountId} service-subscriptions:{serviceId}
+ │ │
+ │ (List<Guid>) │ (List<Guid>)
+ ▼ ▼
+ ┌─────────────────────────────────────────────────┐
+ │ subscription:{id} │
+ │ (SubscriptionDataModel) │
+ │ │
+ │ ┌─ SubscriptionId: Guid │
+ │ ├─ AccountId: Guid │
+ │ ├─ ServiceId: Guid │
+ │ ├─ StubName: string (denormalized) │
+ │ ├─ DisplayName: string (denormalized) │
+ │ ├─ StartDateUnix: long │
+ │ ├─ ExpirationDateUnix: long? │
+ │ ├─ IsActive: bool │
+ │ ├─ CancelledAtUnix: long? │
+ │ ├─ CancellationReason: string? │
+ │ ├─ CreatedAtUnix: long │
+ │ └─ UpdatedAtUnix: long? │
+ └─────────────────────────────────────────────────┘
+ ▲
+ │ (Guid in list)
+ │
+ subscription-index (global)
+ │
+ ┌───────────────────┼───────────────────┐
+ │ │ │
+ ▼ ▼ ▼
+ [Expiration Worker] [Deleted?] [Inactive/No Expiry]
+ │ │ │
+ │ Marks expired │ Remove from │ Remove from
+ │ subscriptions │ index │ index
+ │ as inactive │ │
+ └───────────────────┴───────────────────┘
 
-  NOTE: account-subscriptions and service-subscriptions indexes
-        are NEVER cleaned - they grow indefinitely with cancelled
-        and expired entries. Only subscription-index is maintained
-        by the expiration worker.
+ NOTE: account-subscriptions and service-subscriptions indexes
+ are NEVER cleaned - they grow indefinitely with cancelled
+ and expired entries. Only subscription-index is maintained
+ by the expiration worker.
 ```
 
 ---
@@ -148,9 +148,9 @@ None identified.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/517 -->
 2. **No subscription deletion endpoint**: There is no endpoint to permanently delete subscription records. The indexes grow indefinitely with cancelled/expired entries. This may be intentional (audit trail) but should be documented as a design decision.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/518 -->
-3. **Account deletion does not cascade to subscriptions**: When an account is deleted, subscription records persist as orphans. Per T28's Account Deletion Cleanup Obligation, Subscription MUST subscribe to `account.deleted` and clean up all subscriptions for the deleted account. This is the established pattern — accounts are the one entity where event-based cleanup is mandatory because lib-resource cannot track account references (privacy constraint). **Not yet implemented** — see [#566](https://github.com/beyond-immersion/bannou-service/issues/566). Reference implementation: `lib-collection/CollectionServiceEvents.cs`.
+3. **Account deletion does not cascade to subscriptions**: When an account is deleted, subscription records persist as orphans. Per's Account Deletion Cleanup Obligation, Subscription MUST subscribe to `account.deleted` and clean up all subscriptions for the deleted account. This is the established pattern — accounts are the one entity where event-based cleanup is mandatory because lib-resource cannot track account references (privacy constraint). **Not yet implemented** — see [#566](https://github.com/beyond-immersion/bannou-service/issues/566). Reference implementation: `lib-collection/CollectionServiceEvents.cs`.
 <!-- AUDIT:TODO:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/566 -->
-4. **GameService deletion does not cascade to subscriptions**: When a GameService is deleted, subscription records referencing that `serviceId` persist as orphans. No lib-resource reference registration exists. This is a standard T28 case — Subscription should register references with lib-resource and implement `ISeededResourceProvider` for cleanup callbacks.
+4. **GameService deletion does not cascade to subscriptions**: When a GameService is deleted, subscription records referencing that `serviceId` persist as orphans. No lib-resource reference registration exists. This is a standard case — Subscription should register references with lib-resource and implement `ISeededResourceProvider` for cleanup callbacks.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/567 -->
 
 ---

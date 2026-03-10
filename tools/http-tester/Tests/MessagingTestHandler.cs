@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
 /// <summary>
 /// Concrete message type for tap integration tests.
-/// Required by T5 - no anonymous types for events.
+/// Required by FOUNDATION TENETS - no anonymous types for events.
 /// </summary>
 public record TapTestMessage(string Message, string Source, DateTimeOffset Timestamp);
 

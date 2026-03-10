@@ -555,8 +555,6 @@ public partial class LicenseService : ILicenseService
         DeprecateBoardTemplateRequest body,
         CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.DeprecateBoardTemplateAsync");
-
         var template = await _boardTemplateStore.GetAsync(
             BuildTemplateKey(body.BoardTemplateId),
             cancellationToken);

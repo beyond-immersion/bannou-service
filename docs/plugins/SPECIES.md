@@ -38,7 +38,7 @@ Species has no Category A (entity reference) fields -- species are referenced by
 
 ### Architectural Role in the NPC Intelligence Stack
 
-Species provides the biological identity that higher-layer services build on. Ethology (L4) uses species codes to define behavioral archetypes — structured behavioral baselines exposed as the `${nature.*}` variable namespace to the Actor behavior system. Character-Lifecycle (L4) uses species data to determine lifecycle templates (aging stages, fertility, longevity, heritable traits). Species itself is deliberately game-agnostic: `traitModifiers` and `metadata` are untyped `object?` fields that no Bannou plugin reads by convention (per T29). Higher-layer services that need structured species data own it in their own state stores — Ethology owns behavioral archetypes, Character-Lifecycle owns lifecycle templates.
+Species provides the biological identity that higher-layer services build on. Ethology (L4) uses species codes to define behavioral archetypes — structured behavioral baselines exposed as the `${nature.*}` variable namespace to the Actor behavior system. Character-Lifecycle (L4) uses species data to determine lifecycle templates (aging stages, fertility, longevity, heritable traits). Species itself is deliberately game-agnostic: `traitModifiers` and `metadata` are untyped `object?` fields that no Bannou plugin reads by convention (per). Higher-layer services that need structured species data own it in their own state stores — Ethology owns behavioral archetypes, Character-Lifecycle owns lifecycle templates.
 
 ---
 
@@ -57,71 +57,71 @@ Species provides the biological identity that higher-layer services build on. Et
 Species Lifecycle
 ==================
 
-  CreateSpecies(code, name, realmIds, traitModifiers, ...)
-       │
-       ├── Normalize code to UPPERCASE
-       ├── Validate realm existence (if realmIds provided)
-       ├── Check code index for conflict
-       ├── Save species model
-       ├── Update indexes: code-index, realm-index, all-species
-       └── Publish: species.created
+ CreateSpecies(code, name, realmIds, traitModifiers, ...)
+ │
+ ├── Normalize code to UPPERCASE
+ ├── Validate realm existence (if realmIds provided)
+ ├── Check code index for conflict
+ ├── Save species model
+ ├── Update indexes: code-index, realm-index, all-species
+ └── Publish: species.created
 
 
 Deprecation & Merge Flow
 ==========================
 
-  DeprecateSpecies(speciesId, deprecationReason)
-       │
-       ├── Acquire distributed lock on {speciesId}
-       ├── Set IsDeprecated=true, DeprecatedAt, DeprecationReason
-       └── Publish: species.updated (ChangedFields: [isDeprecated, ...])
-            │
-            ▼
-  MergeSpecies(sourceId, targetId, deleteAfterMerge?)
-       │
-       ├── Acquire two distributed locks (lower GUID first)
-       ├── Validate: source is deprecated, target exists, target NOT deprecated
-       │
-       ├── Paginated character migration loop:
-       │    ├── ListCharacters(speciesId=source, page, pageSize=MergePageSize)
-       │    ├── For each character:
-       │    │    └── UpdateCharacter(speciesId=target)
-       │    │         ├── Success → migratedCount++
-       │    │         └── Failure → failedEntityIds.Add(characterId)
-       │    └── Next page until all migrated
-       │
-       ├── deleteAfterMerge && no failures? → DeleteSpecies(source)
-       └── Publish: species.merged (MergedCharacterCount)
-            │
-            ▼
-  DeleteSpecies(speciesId)   [if not auto-deleted by merge]
-       │
-       ├── Acquire distributed lock on {speciesId}
-       ├── Check: species is deprecated (BadRequest if not)
-       ├── Check: no remaining character references (Conflict if any)
-       ├── Check: no higher-layer references via lib-resource (Conflict if any)
-       ├── Execute cleanup callbacks via lib-resource (ALL_REQUIRED)
-       ├── Remove from all indexes
-       └── Publish: species.deleted
+ DeprecateSpecies(speciesId, deprecationReason)
+ │
+ ├── Acquire distributed lock on {speciesId}
+ ├── Set IsDeprecated=true, DeprecatedAt, DeprecationReason
+ └── Publish: species.updated (ChangedFields: [isDeprecated, ...])
+ │
+ ▼
+ MergeSpecies(sourceId, targetId, deleteAfterMerge?)
+ │
+ ├── Acquire two distributed locks (lower GUID first)
+ ├── Validate: source is deprecated, target exists, target NOT deprecated
+ │
+ ├── Paginated character migration loop:
+ │ ├── ListCharacters(speciesId=source, page, pageSize=MergePageSize)
+ │ ├── For each character:
+ │ │ └── UpdateCharacter(speciesId=target)
+ │ │ ├── Success → migratedCount++
+ │ │ └── Failure → failedEntityIds.Add(characterId)
+ │ └── Next page until all migrated
+ │
+ ├── deleteAfterMerge && no failures? → DeleteSpecies(source)
+ └── Publish: species.merged (MergedCharacterCount)
+ │
+ ▼
+ DeleteSpecies(speciesId) [if not auto-deleted by merge]
+ │
+ ├── Acquire distributed lock on {speciesId}
+ ├── Check: species is deprecated (BadRequest if not)
+ ├── Check: no remaining character references (Conflict if any)
+ ├── Check: no higher-layer references via lib-resource (Conflict if any)
+ ├── Execute cleanup callbacks via lib-resource (ALL_REQUIRED)
+ ├── Remove from all indexes
+ └── Publish: species.deleted
 
 
 State Store Layout
 ===================
 
-  ┌─ species store ─────────────────────────────────────────┐
-  │                                                          │
-  │  species:{speciesId} → SpeciesModel                      │
-  │    ├── Code (uppercase, unique)                          │
-  │    ├── Name, Description, Category                       │
-  │    ├── IsPlayable, BaseLifespan, MaturityAge             │
-  │    ├── TraitModifiers (object, game-specific)            │
-  │    ├── RealmIds (list of assigned realms)                 │
-  │    └── IsDeprecated, DeprecatedAt, DeprecationReason     │
-  │                                                          │
-  │  code-index:{CODE} → speciesId (string)                  │
-  │  realm-index:{realmId} → [speciesId, speciesId, ...]     │
-  │  all-species → [speciesId, speciesId, ...]               │
-  └──────────────────────────────────────────────────────────┘
+ ┌─ species store ─────────────────────────────────────────┐
+ │ │
+ │ species:{speciesId} → SpeciesModel │
+ │ ├── Code (uppercase, unique) │
+ │ ├── Name, Description, Category │
+ │ ├── IsPlayable, BaseLifespan, MaturityAge │
+ │ ├── TraitModifiers (object, game-specific) │
+ │ ├── RealmIds (list of assigned realms) │
+ │ └── IsDeprecated, DeprecatedAt, DeprecationReason │
+ │ │
+ │ code-index:{CODE} → speciesId (string) │
+ │ realm-index:{realmId} → [speciesId, speciesId, ...] │
+ │ all-species → [speciesId, speciesId, ...] │
+ └──────────────────────────────────────────────────────────┘
 ```
 
 ---

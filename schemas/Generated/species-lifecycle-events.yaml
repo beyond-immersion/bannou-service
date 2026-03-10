@@ -21,9 +21,9 @@ components:
       - code
       - name
       - isPlayable
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -50,37 +50,25 @@ components:
         isPlayable: &id006
           type: boolean
           description: "Whether players can create characters of this species"
-        isDeprecated: &id007
-          type: boolean
-          description: "Whether this species is deprecated and should not be used for new characters"
-        deprecatedAt: &id008
-          type: string
-          format: date-time
-          nullable: true
-          description: "Timestamp when the species was deprecated"
-        deprecationReason: &id009
-          type: string
-          nullable: true
-          description: "Explanation for why the species was deprecated"
-        baseLifespan: &id010
+        baseLifespan: &id007
           type: integer
           nullable: true
           description: "Average lifespan in years for this species"
-        maturityAge: &id011
+        maturityAge: &id008
           type: integer
           nullable: true
           description: "Age at which members of this species reach maturity"
-        traitModifiers: &id012
+        traitModifiers: &id009
           type: object
           additionalProperties: true
           nullable: true
           description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
-        realmIds: &id013
+        realmIds: &id010
           type: array
           items: {type: string, format: uuid}
           nullable: true
           description: "IDs of realms where this species can exist"
-        metadata: &id014
+        metadata: &id011
           type: object
           additionalProperties: true
           nullable: true
@@ -93,6 +81,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the species was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this species is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the species was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     SpeciesUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -107,9 +108,9 @@ components:
       - code
       - name
       - isPlayable
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -122,14 +123,11 @@ components:
         description: *id004
         category: *id005
         isPlayable: *id006
-        isDeprecated: *id007
-        deprecatedAt: *id008
-        deprecationReason: *id009
-        baseLifespan: *id010
-        maturityAge: *id011
-        traitModifiers: *id012
-        realmIds: *id013
-        metadata: *id014
+        baseLifespan: *id007
+        maturityAge: *id008
+        traitModifiers: *id009
+        realmIds: *id010
+        metadata: *id011
         createdAt:
           type: string
           format: date-time
@@ -138,6 +136,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the species was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this species is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the species was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -157,9 +168,9 @@ components:
       - code
       - name
       - isPlayable
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -171,14 +182,11 @@ components:
         description: *id004
         category: *id005
         isPlayable: *id006
-        isDeprecated: *id007
-        deprecatedAt: *id008
-        deprecationReason: *id009
-        baseLifespan: *id010
-        maturityAge: *id011
-        traitModifiers: *id012
-        realmIds: *id013
-        metadata: *id014
+        baseLifespan: *id007
+        maturityAge: *id008
+        traitModifiers: *id009
+        realmIds: *id010
+        metadata: *id011
         createdAt:
           type: string
           format: date-time
@@ -187,6 +195,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the species was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this species is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the species was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService;
 
@@ -457,11 +472,118 @@ public partial class ResourceArchiveBase
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
+
+}
+
+/// <summary>
+/// Standard deprecation fields for template and definition entities (T31).
+/// <br/>Compose into response models via allOf. Both Category A (world-building
+/// <br/>definitions with undeprecate/delete) and Category B (content templates,
+/// <br/>deprecate-only) use the same three-field model.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeprecationFields
+{
+
+    /// <summary>
+    /// Whether this entity is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the entity was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Shared request for Category B deprecation cleanup sweep. Iterates all
+/// <br/>deprecated entities of the target type and removes those with zero remaining
+/// <br/>instances, subject to an optional grace period. Used by all Category B
+/// <br/>services via their clean-deprecated endpoint.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanDeprecatedRequest
+{
+
+    /// <summary>
+    /// Minimum days since deprecation before cleanup is eligible. 0 = immediate cleanup of any deprecated entity with zero instances.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gracePeriodDays")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int GracePeriodDays { get; set; } = 0;
+
+    /// <summary>
+    /// If true, report what would be cleaned without actually deleting. Useful for admin panel preview before committing to cleanup.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = false;
+
+}
+
+/// <summary>
+/// Result summary from a Category B deprecation cleanup sweep.
+/// <br/>Returned by all Category B clean-deprecated endpoints.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanDeprecatedResponse
+{
+
+    /// <summary>
+    /// Number of deprecated entities removed (or eligible, if dryRun)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cleaned")]
+    public int Cleaned { get; set; } = default!;
+
+    /// <summary>
+    /// Number of deprecated entities still having active instances or within grace period
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("remaining")]
+    public int Remaining { get; set; } = default!;
+
+    /// <summary>
+    /// Number of entities that failed during cleanup processing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errors")]
+    public int Errors { get; set; } = default!;
+
+    /// <summary>
+    /// IDs of successfully cleaned (or eligible) entities
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cleanedIds")]
+    public System.Collections.Generic.ICollection<System.Guid> CleanedIds { get; set; } = default!;
 
 }
 

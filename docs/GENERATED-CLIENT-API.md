@@ -2315,7 +2315,7 @@ Seeded narrative generation from compressed archives using the storyline SDKs.
 | `GetScenariodefinitionAsync` | `GetScenarioDefinitionRequest` | `GetScenarioDefinitionResponse` | Get a scenario definition by ID or code |
 | `ListScenariodefinitionsAsync` | `ListScenarioDefinitionsRequest` | `ListScenarioDefinitionsResponse` | List scenario definitions |
 | `UpdateScenariodefinitionAsync` | `UpdateScenarioDefinitionRequest` | `ScenarioDefinition` | Update a scenario definition |
-| `DeprecatescenariodefinitionEventAsync` | `DeprecateScenarioDefinitionRequest` | *(fire-and-forget)* | Deprecate a scenario definition |
+| `DeprecatescenariodefinitionAsync` | `DeprecateScenarioDefinitionRequest` | `ScenarioDefinition` | Deprecate a scenario definition |
 
 ### Scenario Discovery
 

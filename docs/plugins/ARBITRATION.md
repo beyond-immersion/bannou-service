@@ -307,69 +307,69 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ```
 +-----------------------------------------------------------------------+
-|                    ARBITRATION CASE LIFECYCLE                           |
-|                                                                        |
-|   FILED                                                                |
-|   ┌─────────────┐                                                     |
-|   │ Jurisdiction │─── rejected ───► DISMISSED (no jurisdiction)        |
-|   │ validated    │                                                     |
-|   │ Template     │─── sovereign has no ──► DISMISSED (no template)     |
-|   │ selected     │    governance data                                  |
-|   │ Contract     │                                                     |
-|   │ created      │─── accepted ───► SERVICE                            |
-|   └─────────────┘                    │                                 |
-|                                      ▼                                 |
-|   SERVICE                  RESPONSE                                    |
-|   ┌─────────────┐         ┌─────────────┐                             |
-|   │ Respondent   │────────►│ Respondent   │                            |
-|   │ notified     │ timeout │ responds or  │                            |
-|   │ Deadline set │────┐    │ defaults     │                            |
-|   └─────────────┘    │    └──────┬───────┘                             |
-|                       │           │                                     |
-|                       ▼           ▼                                     |
-|              DEFAULT PROC    EVIDENCE                                   |
-|              (petitioner     ┌─────────────┐                           |
-|               favored)       │ Both parties │                           |
-|                    │         │ submit       │                           |
-|                    │         │ evidence     │                           |
-|                    │         └──────┬───────┘                           |
-|                    │                │                                    |
-|                    │         HEARING (if required)                       |
-|                    │         ┌─────────────┐                           |
-|                    │         │ Arbiter      │                           |
-|                    │         │ reviews      │                           |
-|                    │         └──────┬───────┘                           |
-|                    │                │                                    |
-|                    ▼                ▼                                    |
-|              ┌─────────────────────────┐                               |
-|              │        RULING           │                                |
-|              │  Arbiter issues ruling  │                                |
-|              │  Consequences executed  │                                |
-|              └───────────┬─────────────┘                               |
-|                          │                                              |
-|                   APPEAL WINDOW                                         |
-|                   ┌──────┴──────┐                                      |
-|                   │             │                                       |
-|                appeal       no appeal                                   |
-|                   │             │                                       |
-|                   ▼             ▼                                       |
-|              APPELLATE     ENFORCEMENT                                  |
-|              (restart at   ┌─────────────┐                             |
-|               evidence     │ Consequences │                            |
-|               phase with   │ verified     │                            |
-|               higher       │ Obligations  │                            |
-|               authority)   │ activated    │                            |
-|                            └──────┬───────┘                            |
-|                                   │                                     |
-|                                   ▼                                     |
-|                              ┌─────────┐                               |
-|                              │ CLOSED  │                                |
-|                              └─────────┘                               |
-|                                                                        |
-|   TERMINAL STATES:                                                     |
-|   - Closed (ruling enforced -- normal completion)                      |
-|   - Dismissed (no jurisdiction, no template, arbiter dismissal)        |
-|   - Withdrawn (petitioner withdraws)                                   |
+| ARBITRATION CASE LIFECYCLE |
+| |
+| FILED |
+| ┌─────────────┐ |
+| │ Jurisdiction │─── rejected ───► DISMISSED (no jurisdiction) |
+| │ validated │ |
+| │ Template │─── sovereign has no ──► DISMISSED (no template) |
+| │ selected │ governance data |
+| │ Contract │ |
+| │ created │─── accepted ───► SERVICE |
+| └─────────────┘ │ |
+| ▼ |
+| SERVICE RESPONSE |
+| ┌─────────────┐ ┌─────────────┐ |
+| │ Respondent │────────►│ Respondent │ |
+| │ notified │ timeout │ responds or │ |
+| │ Deadline set │────┐ │ defaults │ |
+| └─────────────┘ │ └──────┬───────┘ |
+| │ │ |
+| ▼ ▼ |
+| DEFAULT PROC EVIDENCE |
+| (petitioner ┌─────────────┐ |
+| favored) │ Both parties │ |
+| │ │ submit │ |
+| │ │ evidence │ |
+| │ └──────┬───────┘ |
+| │ │ |
+| │ HEARING (if required) |
+| │ ┌─────────────┐ |
+| │ │ Arbiter │ |
+| │ │ reviews │ |
+| │ └──────┬───────┘ |
+| │ │ |
+| ▼ ▼ |
+| ┌─────────────────────────┐ |
+| │ RULING │ |
+| │ Arbiter issues ruling │ |
+| │ Consequences executed │ |
+| └───────────┬─────────────┘ |
+| │ |
+| APPEAL WINDOW |
+| ┌──────┴──────┐ |
+| │ │ |
+| appeal no appeal |
+| │ │ |
+| ▼ ▼ |
+| APPELLATE ENFORCEMENT |
+| (restart at ┌─────────────┐ |
+| evidence │ Consequences │ |
+| phase with │ verified │ |
+| higher │ Obligations │ |
+| authority) │ activated │ |
+| └──────┬───────┘ |
+| │ |
+| ▼ |
+| ┌─────────┐ |
+| │ CLOSED │ |
+| └─────────┘ |
+| |
+| TERMINAL STATES: |
+| - Closed (ruling enforced -- normal completion) |
+| - Dismissed (no jurisdiction, no template, arbiter dismissal) |
+| - Withdrawn (petitioner withdraws) |
 +-----------------------------------------------------------------------+
 ```
 
@@ -377,47 +377,47 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ```
 +-----------------------------------------------------------------------+
-|                    JURISDICTION RESOLUTION                              |
-|                                                                        |
-|   Location: "Docks District" + Case Type: "dissolution"               |
-|        │                                                               |
-|        ▼                                                               |
-|   Check cache: arb:cache:juris:{locationId}:{caseType}                |
-|        │                                                               |
-|        ├── HIT ──► Return cached resolution                            |
-|        │                                                               |
-|        └── MISS ──► Resolve from Faction                               |
-|                       │                                                |
-|                       ▼                                                |
-|               Query: "Who controls this location?"                     |
-|               ┌─────────────────────────────────┐                     |
-|               │ Harbor Authority (Delegated)     │                     |
-|               │ Controls Docks District          │                     |
-|               │ Has governance for: trade_dispute │                    |
-|               │ NO governance for: dissolution   │                     |
-|               └─────────────┬───────────────────┘                     |
-|                             │                                          |
-|                  No governance for this case type                       |
-|                  Walk up to sovereign                                   |
-|                             │                                          |
-|                             ▼                                          |
-|               ┌─────────────────────────────────┐                     |
-|               │ Kingdom of Arcadia (Sovereign)   │                    |
-|               │ Sovereign over this territory    │                     |
-|               │ Has governance for: dissolution  │                     |
-|               │ Template: "dissolution-standard" │                     |
-|               │ Params: { waitingPeriod: 30,     │                    |
-|               │           division: "equal" }    │                     |
-|               └─────────────────────────────────┘                     |
-|                             │                                          |
-|                             ▼                                          |
-|               Cache result, return to caller                           |
-|                                                                        |
-|   EDGE CASE: Enclave sovereignty                                       |
-|   If "Docks District" contains "Dwarven Quarter" (nested location)    |
-|   AND "Dwarven Enclave" (Sovereign) controls "Dwarven Quarter"        |
-|   THEN cases filed AT "Dwarven Quarter" use enclave's governance      |
-|   (enclave sovereignty overrides outer sovereign within its boundary)  |
+| JURISDICTION RESOLUTION |
+| |
+| Location: "Docks District" + Case Type: "dissolution" |
+| │ |
+| ▼ |
+| Check cache: arb:cache:juris:{locationId}:{caseType} |
+| │ |
+| ├── HIT ──► Return cached resolution |
+| │ |
+| └── MISS ──► Resolve from Faction |
+| │ |
+| ▼ |
+| Query: "Who controls this location?" |
+| ┌─────────────────────────────────┐ |
+| │ Harbor Authority (Delegated) │ |
+| │ Controls Docks District │ |
+| │ Has governance for: trade_dispute │ |
+| │ NO governance for: dissolution │ |
+| └─────────────┬───────────────────┘ |
+| │ |
+| No governance for this case type |
+| Walk up to sovereign |
+| │ |
+| ▼ |
+| ┌─────────────────────────────────┐ |
+| │ Kingdom of Arcadia (Sovereign) │ |
+| │ Sovereign over this territory │ |
+| │ Has governance for: dissolution │ |
+| │ Template: "dissolution-standard" │ |
+| │ Params: { waitingPeriod: 30, │ |
+| │ division: "equal" } │ |
+| └─────────────────────────────────┘ |
+| │ |
+| ▼ |
+| Cache result, return to caller |
+| |
+| EDGE CASE: Enclave sovereignty |
+| If "Docks District" contains "Dwarven Quarter" (nested location) |
+| AND "Dwarven Enclave" (Sovereign) controls "Dwarven Quarter" |
+| THEN cases filed AT "Dwarven Quarter" use enclave's governance |
+| (enclave sovereignty overrides outer sovereign within its boundary) |
 +-----------------------------------------------------------------------+
 ```
 
@@ -427,46 +427,46 @@ Case identity and lifecycle are owned here. Jurisdiction determination uses Fact
 
 ```
 +-----------------------------------------------------------------------+
-|                    ARBITRATION ORCHESTRATION                            |
-|                                                                        |
-|   lib-arbitration orchestrates:                                        |
-|                                                                        |
-|   ┌──────────┐  jurisdiction   ┌──────────┐                          |
-|   │ Faction  │◄───────────────│Arbitration│                           |
-|   │ (L4)     │  sovereignty    │ (L4)     │                           |
-|   │          │  governance     │          │                           |
-|   └──────────┘  authority      │  CASE    │                           |
-|                                │  RECORD  │                           |
-|   ┌──────────┐  procedural    │  ───────  │                           |
-|   │ Contract │◄───────────────│ caseId   │                           |
-|   │ (L1)     │  template      │ type     │                           |
-|   │          │  milestones     │ parties  │                           |
-|   └──────────┘  prebound APIs  │ arbiter  │                           |
-|                                │ contract │                           |
-|   ┌──────────┐  asset         │ status   │                           |
-|   │ Escrow   │◄───────────────│ ruling   │                           |
-|   │ (L4)     │  division      └────┬─────┘                           |
-|   └──────────┘                     │                                   |
-|                                    │ ruling consequences               |
-|   ┌──────────┐  ongoing           │                                   |
-|   │Obligation│◄────────────────────┤                                   |
-|   │ (L4)     │  obligations        │                                   |
-|   └──────────┘                     │                                   |
-|                                    │                                   |
-|   ┌──────────┐  status             │                                   |
-|   │Relation- │◄────────────────────┤                                   |
-|   │ship (L2) │  changes            │                                   |
-|   └──────────┘                     │                                   |
-|                                    │                                   |
-|   ┌──────────┐  fines              │                                   |
-|   │ Currency │◄────────────────────┤                                   |
-|   │ (L2)     │  penalties          │                                   |
-|   └──────────┘                     │                                   |
-|                                    │                                   |
-|   ┌──────────┐  divine             │                                   |
-|   │Puppet-   │◄────────────────────┘                                   |
-|   │master(L4)│  arbitration                                            |
-|   └──────────┘                                                         |
+| ARBITRATION ORCHESTRATION |
+| |
+| lib-arbitration orchestrates: |
+| |
+| ┌──────────┐ jurisdiction ┌──────────┐ |
+| │ Faction │◄───────────────│Arbitration│ |
+| │ (L4) │ sovereignty │ (L4) │ |
+| │ │ governance │ │ |
+| └──────────┘ authority │ CASE │ |
+| │ RECORD │ |
+| ┌──────────┐ procedural │ ─────── │ |
+| │ Contract │◄───────────────│ caseId │ |
+| │ (L1) │ template │ type │ |
+| │ │ milestones │ parties │ |
+| └──────────┘ prebound APIs │ arbiter │ |
+| │ contract │ |
+| ┌──────────┐ asset │ status │ |
+| │ Escrow │◄───────────────│ ruling │ |
+| │ (L4) │ division └────┬─────┘ |
+| └──────────┘ │ |
+| │ ruling consequences |
+| ┌──────────┐ ongoing │ |
+| │Obligation│◄────────────────────┤ |
+| │ (L4) │ obligations │ |
+| └──────────┘ │ |
+| │ |
+| ┌──────────┐ status │ |
+| │Relation- │◄────────────────────┤ |
+| │ship (L2) │ changes │ |
+| └──────────┘ │ |
+| │ |
+| ┌──────────┐ fines │ |
+| │ Currency │◄────────────────────┤ |
+| │ (L2) │ penalties │ |
+| └──────────┘ │ |
+| │ |
+| ┌──────────┐ divine │ |
+| │Puppet- │◄────────────────────┘ |
+| │master(L4)│ arbitration |
+| └──────────┘ |
 +-----------------------------------------------------------------------+
 ```
 
@@ -625,53 +625,53 @@ The following changes to lib-faction are prerequisites for lib-arbitration (docu
 An arbitration case progresses through a defined lifecycle, mapped onto Contract milestones:
 
 ```
-CASE LIFECYCLE                           CONTRACT MILESTONE MAPPING
-=================                        ==========================
+CASE LIFECYCLE CONTRACT MILESTONE MAPPING
+================= ==========================
 
 Filed ──────────────────────────────────► Milestone 1: filing_accepted
-  │  Petitioner submits case              (prebound: validate jurisdiction,
-  │  Jurisdiction determined              create case record, notify respondent)
-  │  Procedural template selected
-  │
-  ▼
+ │ Petitioner submits case (prebound: validate jurisdiction,
+ │ Jurisdiction determined create case record, notify respondent)
+ │ Procedural template selected
+ │
+ ▼
 Service ────────────────────────────────► Milestone 2: service_confirmed
-  │  Respondent formally notified          (prebound: record service timestamp,
-  │  Response deadline set                 start response timer)
-  │
-  ▼
+ │ Respondent formally notified (prebound: record service timestamp,
+ │ Response deadline set start response timer)
+ │
+ ▼
 Response ───────────────────────────────► Milestone 3: response_received
-  │  Respondent accepts, contests,         (prebound: record response type,
-  │  or defaults (deadline expires)        update case state)
-  │
-  ▼
+ │ Respondent accepts, contests, (prebound: record response type,
+ │ or defaults (deadline expires) update case state)
+ │
+ ▼
 Evidence ───────────────────────────────► Milestone 4: evidence_closed
-  │  Both parties submit evidence          (prebound: close evidence window,
-  │  Witnesses recorded                    notify arbiter)
-  │  Evidence window closes
-  │
-  ▼
+ │ Both parties submit evidence (prebound: close evidence window,
+ │ Witnesses recorded notify arbiter)
+ │ Evidence window closes
+ │
+ ▼
 Hearing (optional) ─────────────────────► Milestone 5: hearing_completed
-  │  Arbiter reviews evidence              (prebound: record hearing outcome,
-  │  Parties may present arguments         advance to ruling)
-  │  (NPC arbiter uses GOAP to decide)
-  │
-  ▼
+ │ Arbiter reviews evidence (prebound: record hearing outcome,
+ │ Parties may present arguments advance to ruling)
+ │ (NPC arbiter uses GOAP to decide)
+ │
+ ▼
 Ruling ─────────────────────────────────► Milestone 6: ruling_issued
-  │  Arbiter issues ruling                 (prebound: execute ruling consequences
-  │  Consequences executed                 via downstream service APIs)
-  │  Appeal window opens
-  │
-  ▼
+ │ Arbiter issues ruling (prebound: execute ruling consequences
+ │ Consequences executed via downstream service APIs)
+ │ Appeal window opens
+ │
+ ▼
 Appeal Window ──────────────────────────► Milestone 7: appeal_window_closed
-  │  Parties may appeal to higher          (prebound: finalize or escalate)
-  │  sovereign (if exists)
-  │
-  ▼
+ │ Parties may appeal to higher (prebound: finalize or escalate)
+ │ sovereign (if exists)
+ │
+ ▼
 Enforcement ────────────────────────────► Milestone 8: enforcement_confirmed
-  │  Ruling consequences verified          (prebound: verify downstream state,
-  │  Ongoing obligations activated         close case)
-  │
-  ▼
+ │ Ruling consequences verified (prebound: verify downstream state,
+ │ Ongoing obligations activated close case)
+ │
+ ▼
 Closed ─────────────────────────────────► Contract Fulfilled
 ```
 
@@ -696,38 +696,38 @@ Arbitration does not contain case-type-specific logic. All case behavior comes f
 
 ```
 1. Case filed at Location X
-        │
-        ▼
+ │
+ ▼
 2. lib-arbitration queries lib-faction:
-   "Who is sovereign at Location X?"
-   "What governance data does the sovereign
-    have for case type 'dissolution'?"
-        │
-        ▼
+ "Who is sovereign at Location X?"
+ "What governance data does the sovereign
+ have for case type 'dissolution'?"
+ │
+ ▼
 3. Faction returns:
-   {
-     caseType: "dissolution",
-     templateCode: "dissolution-standard",
-     governanceParameters: {
-       waitingPeriodDays: 30,
-       defaultAssetDivision: "equal",
-       appealWindowDays: 14,
-       requiresHearing: false,
-       defaultOnNoResponse: "PetitionerFavored"
-     }
-   }
-        │
-        ▼
+ {
+ caseType: "dissolution",
+ templateCode: "dissolution-standard",
+ governanceParameters: {
+ waitingPeriodDays: 30,
+ defaultAssetDivision: "equal",
+ appealWindowDays: 14,
+ requiresHearing: false,
+ defaultOnNoResponse: "PetitionerFavored"
+ }
+ }
+ │
+ ▼
 4. lib-arbitration creates Contract instance
-   from template "dissolution-standard"
-   with governance parameters merged into
-   template values (via Contract's
-   SetTemplateValues API)
-        │
-        ▼
+ from template "dissolution-standard"
+ with governance parameters merged into
+ template values (via Contract's
+ SetTemplateValues API)
+ │
+ ▼
 5. Contract's milestone state machine
-   drives the case lifecycle
-   (prebound APIs execute consequences)
+ drives the case lifecycle
+ (prebound APIs execute consequences)
 ```
 
 ### Governance Parameters
@@ -791,24 +791,24 @@ Asset division in arbitration follows the same pattern as Escrow's existing arbi
 
 ```
 Ruling includes asset division terms
-        │
-        ▼
+ │
+ ▼
 lib-arbitration creates Escrow instance
-  - Type: two-party (petitioner, respondent)
-  - Trust mode: arbiter (the case arbiter)
-  - Assets: from shared organization assets
-    (via lib-organization) or directly held
-  - Division rule: from governance parameters
-        │
-        ▼
+ - Type: two-party (petitioner, respondent)
+ - Trust mode: arbiter (the case arbiter)
+ - Assets: from shared organization assets
+ (via lib-organization) or directly held
+ - Division rule: from governance parameters
+ │
+ ▼
 Escrow collects deposits
-  (assets moved into custody)
-        │
-        ▼
+ (assets moved into custody)
+ │
+ ▼
 Arbiter resolves Escrow per ruling terms
-  (API call from Contract prebound execution)
-        │
-        ▼
+ (API call from Contract prebound execution)
+ │
+ ▼
 Escrow releases to parties per division
 ```
 
@@ -848,21 +848,21 @@ For cases involving sovereignty disputes or where mortal authority is contested,
 
 ```
 Case filed with divine arbitration request
-        │
-        ▼
+ │
+ ▼
 lib-arbitration publishes arbitration.case.divine-requested event
-        │
-        ▼
+ │
+ ▼
 Regional watcher (via Puppetmaster) perceives the request
-  - God's aesthetic preferences evaluate the case
-  - Domain relevance: god of justice more likely to intervene
-    than god of war (unless it's a combat dispute)
-        │
-        ▼
+ - God's aesthetic preferences evaluate the case
+ - Domain relevance: god of justice more likely to intervene
+ than god of war (unless it's a combat dispute)
+ │
+ ▼
 God accepts or ignores
-  - Accept: god actor issues ruling via Arbitration API
-    (ruling carries divine authority weight)
-  - Ignore: case falls back to mortal arbiter selection
+ - Accept: god actor issues ruling via Arbitration API
+ (ruling carries divine authority weight)
+ - Ignore: case falls back to mortal arbiter selection
 ```
 
 Divine arbitration is never guaranteed. Gods have their own priorities, attention budgets, and domain preferences. Requesting divine arbitration is a petition, not a command.
@@ -906,7 +906,7 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 
 5. **Deadline enforcement model**: The deadline worker checks for expired milestones periodically. This means deadlines are enforced with up to `DefaultDeadlineCheckIntervalMinutes` latency. For time-sensitive proceedings (criminal cases, emergency exile), the worker may need shorter intervals. This is configurable per deployment but not per case.
 
-6. ~~**Evidence model design**~~: **FIXED** (2026-03-08) - Schema Creation Guidance (added during L4 audit) resolved this: evidence `content` must be a typed model, NOT `additionalProperties: true` (per FOUNDATION TENETS T29). Remaining options are typed per evidence type or discriminated union — both are valid and will be decided during Phase 2 schema creation. The generic key-value approach is eliminated.
+6. ~~**Evidence model design**~~: **FIXED** (2026-03-08) - Schema Creation Guidance (added during L4 audit) resolved this: evidence `content` must be a typed model, NOT `additionalProperties: true` (per FOUNDATION TENETS). Remaining options are typed per evidence type or discriminated union — both are valid and will be decided during Phase 2 schema creation. The generic key-value approach is eliminated.
 
 7. **Household split integration**: The dissolution case type's consequence includes household fragmentation, which is a cross-cutting concern involving Organization (if it exists), Relationship, Character, and Seed. The boundary between "arbitration ruling consequence" and "household split mechanic" needs clear delineation. Arbitration issues the ruling; the household split is executed by the downstream services in response.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/436 -->
@@ -936,7 +936,7 @@ When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitratio
 - `x-lifecycle` for `ArbitrationCase` entity with `topic_prefix: arbitration` (generates created/updated/deleted lifecycle events with Pattern C topics: `arbitration.case.created`, etc. — without `topic_prefix`, the entity `ArbitrationCase` would produce forbidden Pattern B topics like `arbitration-case.created`)
 - `x-event-subscriptions` for all 6 consumed events (contract milestones, faction territory)
 - `x-event-publications` for all domain-specific events
-- All domain-specific events use `allOf` with `BaseServiceEvent` (per FOUNDATION TENETS T5 — both Quest and Divine follow this pattern)
+- All domain-specific events use `allOf` with `BaseServiceEvent` (per FOUNDATION TENETS — both Quest and Divine follow this pattern)
 - All event topic strings use kebab-case (no underscores)
 
 ### Configuration Schema (`arbitration-configuration.yaml`)
@@ -955,7 +955,7 @@ When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitratio
 
 ## Work Tracking
 
-Plugin is in pre-implementation phase. Prerequisites must be completed before schema creation can begin. Deep dive L4-audited (2026-03-05): all spec violations fixed in-document. Documentation audit (2026-03-08): fixed incorrect event schema guidance (was advising against `allOf` with `BaseServiceEvent`, contradicting T5 — both Quest and Divine use the mandated `allOf` pattern). Documentation audit (2026-03-08): resolved DC #6 (evidence model design) — Schema Creation Guidance already eliminated the generic key-value option per T29; remaining choice (typed per type vs discriminated union) deferred to Phase 2 schema creation. Documentation audit (2026-03-08): fixed Configuration table inconsistency — dropped redundant `Default` prefix from deadline worker config property names and env vars to match Schema Creation Guidance. Added AUDIT marker to DC #7 (household split integration) linking to existing issue #436. Documentation audit (2026-03-08): added `topic_prefix: arbitration` requirement to Schema Creation Guidance events section — without it, `ArbitrationCase` lifecycle would produce forbidden Pattern B topics (`arbitration-case.created`) instead of correct Pattern C (`arbitration.case.created`). Documentation audit (2026-03-08): created master implementation tracking issue [#615](https://github.com/beyond-immersion/bannou-service/issues/615) for Phases 2-6 (blocked by #601, #605).
+Plugin is in pre-implementation phase. Prerequisites must be completed before schema creation can begin. Deep dive L4-audited (2026-03-05): all spec violations fixed in-document. Documentation audit (2026-03-08): fixed incorrect event schema guidance (was advising against `allOf` with `BaseServiceEvent`, contradicting — both Quest and Divine use the mandated `allOf` pattern). Documentation audit (2026-03-08): resolved DC #6 (evidence model design) — Schema Creation Guidance already eliminated the generic key-value option per tenets; remaining choice (typed per type vs discriminated union) deferred to Phase 2 schema creation. Documentation audit (2026-03-08): fixed Configuration table inconsistency — dropped redundant `Default` prefix from deadline worker config property names and env vars to match Schema Creation Guidance. Added AUDIT marker to DC #7 (household split integration) linking to existing issue #436. Documentation audit (2026-03-08): added `topic_prefix: arbitration` requirement to Schema Creation Guidance events section — without it, `ArbitrationCase` lifecycle would produce forbidden Pattern B topics (`arbitration-case.created`) instead of correct Pattern C (`arbitration.case.created`). Documentation audit (2026-03-08): created master implementation tracking issue [#615](https://github.com/beyond-immersion/bannou-service/issues/615) for Phases 2-6 (blocked by #601, #605).
 
 ### Prerequisites (blocking)
 

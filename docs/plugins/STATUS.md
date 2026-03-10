@@ -17,7 +17,7 @@ Unified entity effects query layer (L4 GameFeatures) aggregating temporary contr
 
 ## The Unified Effects Layer (Architectural Target)
 
-> **Status**: All 19 status endpoints are fully implemented (including T31 Category A deprecation lifecycle). The two-source architecture (item-based + seed-derived), grant flow with stacking, contract integration, and seed effects cache are operational. lib-divine is the first active consumer. The broader vision described below -- Status as THE universal effects query point for everything from combat buffs to death penalties to divine blessings -- is the architectural target these systems serve.
+> **Status**: All 19 status endpoints are fully implemented (including Category A deprecation lifecycle). The two-source architecture (item-based + seed-derived), grant flow with stacking, contract integration, and seed effects cache are operational. lib-divine is the first active consumer. The broader vision described below -- Status as THE universal effects query point for everything from combat buffs to death penalties to divine blessings -- is the architectural target these systems serve.
 
 ### Status Is THE Single Query Point for "What Effects Does This Entity Have?"
 
@@ -274,24 +274,24 @@ The `GrantStatusAsync` flow is the most complex operation:
 1. Acquire distributed lock: `entity:{entityType}:{entityId}`
 2. Load status template by `statusTemplateCode` + `gameServiceId`
 3. Find or auto-create status container for entity:
-   - Query containers by `entityId` + `entityType` + `gameServiceId`
-   - If none: create inventory container (type: `status_effects`, ownerType: `Other`, constraint: unlimited), save container record with dual keys
+ - Query containers by `entityId` + `entityType` + `gameServiceId`
+ - If none: create inventory container (type: `status_effects`, ownerType: `Other`, constraint: unlimited), save container record with dual keys
 4. Query existing instances for entity + template code from MySQL
 5. If existing instances found, apply stacking behavior:
-   - `ignore`: return existing, publish `status.grant-failed`
-   - `replace`: remove existing (destroy item, cancel contract, delete record), proceed with new grant
-   - `refresh_duration` / `increase_intensity`: increment stack count, reset timer on item, cancel + recreate contract if applicable, publish `status.stacked`
-   - `independent`: check `maxStacks` limit, create entirely new item + contract + instance record per stack
+ - `ignore`: return existing, publish `status.grant-failed`
+ - `replace`: remove existing (destroy item, cancel contract, delete record), proceed with new grant
+ - `refresh_duration` / `increase_intensity`: increment stack count, reset timer on item, cancel + recreate contract if applicable, publish `status.stacked`
+ - `independent`: check `maxStacks` limit, create entirely new item + contract + instance record per stack
 6. Check `MaxStatusesPerEntity` limit
 7. Calculate `expiresAt`: `durationOverrideSeconds` > template `defaultDurationSeconds` > config `DefaultStatusDurationSeconds` > null (permanent)
 8. **Create item instance** (saga-ordered -- easily reversible):
-   - `IItemClient.CreateItemInstanceAsync(templateId, containerId, realmId=gameServiceId, quantity=1)`
-   - Note: `RealmId` is set to `GameServiceId` as a partition key (per Collection pattern), not as an actual realm reference
+ - `IItemClient.CreateItemInstanceAsync(templateId, containerId, realmId=gameServiceId, quantity=1)`
+ - Note: `RealmId` is set to `GameServiceId` as a partition key (per Collection pattern), not as an actual realm reference
 9. **Contract lifecycle** (if template has `contractTemplateId` -- data-gated, skipped when template has no contract):
-   - Create contract instance with saga compensation (destroy item if contract fails)
-   - Set template values from grant request metadata
-   - Auto-propose + consent (single-party)
-   - Complete "apply" milestone (triggers prebound APIs)
+ - Create contract instance with saga compensation (destroy item if contract fails)
+ - Set template values from grant request metadata
+ - Auto-propose + consent (single-party)
+ - Complete "apply" milestone (triggers prebound APIs)
 10. Save `StatusInstanceModel` to MySQL
 11. Invalidate active status cache (cache will be rebuilt from MySQL on next read)
 12. Publish `status.granted` event
@@ -303,71 +303,71 @@ The `GrantStatusAsync` flow is the most complex operation:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    Status Service Architecture                          │
-│                                                                         │
-│  ┌─────────────┐    ┌──────────────┐    ┌──────────────────────────┐   │
-│  │ Caller (L4) │───>│ GrantStatus  │───>│ Template Lookup (MySQL)  │   │
-│  └─────────────┘    └──────┬───────┘    └──────────────────────────┘   │
-│                            │                                            │
-│                            ▼                                            │
-│                   ┌────────────────┐                                    │
-│                   │ Find/Create    │──> IInventoryClient.               │
-│                   │ Container      │    CreateContainerAsync             │
-│                   └────────┬───────┘    (type: status_effects)          │
-│                            │                                            │
-│                            ▼                                            │
-│              ┌─────────────────────────┐                                │
-│              │ Check Stacking Behavior │                                │
-│              │ ignore/replace/refresh/ │                                │
-│              │ increase/independent    │                                │
-│              └────────────┬────────────┘                                │
-│                           │                                             │
-│              ┌────────────▼────────────┐                                │
-│              │ Create Item (saga step) │──> IItemClient.                │
-│              │ (reversible on failure) │    CreateItemInstanceAsync      │
-│              └────────────┬────────────┘    (with expiresAt for TTL)    │
-│                           │                                             │
-│              ┌────────────▼────────────┐                                │
-│              │ Create Contract         │──> IContractClient (data-gated │
-│              │ (compensate item on     │    by contractTemplateId; saga: │
-│              │  failure)               │     destroy item on failure)    │
-│              └────────────┬────────────┘                                │
-│                           │                                             │
-│              ┌────────────▼────────────┐   ┌──────────────────────────┐│
-│              │ Save Instance (MySQL)   │   │ Active Cache (Redis)     ││
-│              │ + Invalidate Cache      │──>│ Rebuilt on miss from     ││
-│              └────────────┬────────────┘   │ MySQL instances          ││
-│                           │                └──────────────────────────┘│
-│                           ▼                                            │
-│              ┌─────────────────────────┐                               │
-│              │ Publish status.granted  │──> IMessageBus                │
-│              └─────────────────────────┘                               │
-│                                                                        │
-│  ═══════════════════════════════════════════════════════════════════    │
-│  UNIFIED EFFECTS QUERY                                                 │
-│                                                                        │
-│  ┌─────────────┐    ┌──────────────────┐    ┌─────────────────────┐   │
-│  │ GetEffects  │───>│ Active Cache     │    │ Seed Effects Cache  │   │
-│  │ (unified)   │    │ (item-based)     │    │ (seed-derived)      │   │
-│  └─────────────┘    │ Redis TTL: 60s   │    │ Redis TTL: 300s     │   │
-│         │           └────────┬─────────┘    └──────────┬──────────┘   │
-│         │                    │                          │              │
-│         │           On miss: │ rebuild from    On miss: │ query        │
-│         │                    │ MySQL instances          │ ISeedClient  │
-│         │                    ▼                          ▼              │
-│         └─────> Merge with EffectSource attribution                   │
-│                 (item_based vs seed_derived)                           │
-│                                                                        │
-│  ═══════════════════════════════════════════════════════════════════    │
-│  EXPIRATION (blocked on #407)                                          │
-│                                                                        │
-│  lib-item decay worker ──> item.expired event ──> Status cleans up    │
-│  (manages expiresAt)       (not yet published)    instance records     │
-│                                                    + publishes          │
-│                                                    status.expired       │
-│                                                                        │
-│  Contract-backed statuses: contract prebound API calls /status/remove  │
-│  on milestone expiry (Status never polls contracts)                    │
+│ Status Service Architecture │
+│ │
+│ ┌─────────────┐ ┌──────────────┐ ┌──────────────────────────┐ │
+│ │ Caller (L4) │───>│ GrantStatus │───>│ Template Lookup (MySQL) │ │
+│ └─────────────┘ └──────┬───────┘ └──────────────────────────┘ │
+│ │ │
+│ ▼ │
+│ ┌────────────────┐ │
+│ │ Find/Create │──> IInventoryClient. │
+│ │ Container │ CreateContainerAsync │
+│ └────────┬───────┘ (type: status_effects) │
+│ │ │
+│ ▼ │
+│ ┌─────────────────────────┐ │
+│ │ Check Stacking Behavior │ │
+│ │ ignore/replace/refresh/ │ │
+│ │ increase/independent │ │
+│ └────────────┬────────────┘ │
+│ │ │
+│ ┌────────────▼────────────┐ │
+│ │ Create Item (saga step) │──> IItemClient. │
+│ │ (reversible on failure) │ CreateItemInstanceAsync │
+│ └────────────┬────────────┘ (with expiresAt for TTL) │
+│ │ │
+│ ┌────────────▼────────────┐ │
+│ │ Create Contract │──> IContractClient (data-gated │
+│ │ (compensate item on │ by contractTemplateId; saga: │
+│ │ failure) │ destroy item on failure) │
+│ └────────────┬────────────┘ │
+│ │ │
+│ ┌────────────▼────────────┐ ┌──────────────────────────┐│
+│ │ Save Instance (MySQL) │ │ Active Cache (Redis) ││
+│ │ + Invalidate Cache │──>│ Rebuilt on miss from ││
+│ └────────────┬────────────┘ │ MySQL instances ││
+│ │ └──────────────────────────┘│
+│ ▼ │
+│ ┌─────────────────────────┐ │
+│ │ Publish status.granted │──> IMessageBus │
+│ └─────────────────────────┘ │
+│ │
+│ ═══════════════════════════════════════════════════════════════════ │
+│ UNIFIED EFFECTS QUERY │
+│ │
+│ ┌─────────────┐ ┌──────────────────┐ ┌─────────────────────┐ │
+│ │ GetEffects │───>│ Active Cache │ │ Seed Effects Cache │ │
+│ │ (unified) │ │ (item-based) │ │ (seed-derived) │ │
+│ └─────────────┘ │ Redis TTL: 60s │ │ Redis TTL: 300s │ │
+│ │ └────────┬─────────┘ └──────────┬──────────┘ │
+│ │ │ │ │
+│ │ On miss: │ rebuild from On miss: │ query │
+│ │ │ MySQL instances │ ISeedClient │
+│ │ ▼ ▼ │
+│ └─────> Merge with EffectSource attribution │
+│ (item_based vs seed_derived) │
+│ │
+│ ═══════════════════════════════════════════════════════════════════ │
+│ EXPIRATION (blocked on #407) │
+│ │
+│ lib-item decay worker ──> item.expired event ──> Status cleans up │
+│ (manages expiresAt) (not yet published) instance records │
+│ + publishes │
+│ status.expired │
+│ │
+│ Contract-backed statuses: contract prebound API calls /status/remove │
+│ on milestone expiry (Status never polls contracts) │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -384,7 +384,7 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 ### Missing Implementation
 
-- ~~**DeleteStatusTemplate endpoint**~~: **IMPLEMENTED** (2026-03-07) - Added `DeprecateStatusTemplateAsync`, `UndeprecateStatusTemplateAsync`, and `DeleteStatusTemplateAsync` endpoints following T31 Category A deprecation lifecycle. Grants are rejected for deprecated templates.
+- ~~**DeleteStatusTemplate endpoint**~~: **IMPLEMENTED** (2026-03-07) - Added `DeprecateStatusTemplateAsync`, `UndeprecateStatusTemplateAsync`, and `DeleteStatusTemplateAsync` endpoints following Category A deprecation lifecycle. Grants are rejected for deprecated templates.
 
 - **Cache warming**: `CacheWarmingEnabled` config property exists and is checked in the constructor (logs a message when true), but no actual cache warming logic is implemented. Setting it to `true` has no functional effect beyond the log message.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/412 -->
@@ -424,7 +424,7 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Missing account cleanup callback registration**~~: **FIXED** (2026-02-12) - Added account cleanup callback registration in `StatusServicePlugin.RegisterResourceCleanupCallbacksAsync`. Both character and account callbacks now register independently with separate try-catch blocks. The `CleanupByOwnerAsync` endpoint was already polymorphic and required no changes. **Note**: Per the updated T28 Account Deletion Cleanup Obligation, account cleanup should use `account.deleted` event subscription rather than lib-resource registration (privacy constraint — lib-resource must not track account references). The `CleanupByOwnerAsync` endpoint can remain as-is (polymorphic), but the account `x-references` entry in `status-api.yaml` should be removed and replaced with an `account.deleted` event handler that calls the same cleanup endpoint internally. Character cleanup continues to use lib-resource as normal.
+1. ~~**Missing account cleanup callback registration**~~: **FIXED** (2026-02-12) - Added account cleanup callback registration in `StatusServicePlugin.RegisterResourceCleanupCallbacksAsync`. Both character and account callbacks now register independently with separate try-catch blocks. The `CleanupByOwnerAsync` endpoint was already polymorphic and required no changes. **Note**: Per the updated Account Deletion Cleanup Obligation, account cleanup should use `account.deleted` event subscription rather than lib-resource registration (privacy constraint — lib-resource must not track account references). The `CleanupByOwnerAsync` endpoint can remain as-is (polymorphic), but the account `x-references` entry in `status-api.yaml` should be removed and replaced with an `account.deleted` event handler that calls the same cleanup endpoint internally. Character cleanup continues to use lib-resource as normal.
 
 2. ~~**SeedStatusTemplatesAsync skips item template validation**~~: **FIXED** (2026-02-12) - Added item template validation in `SeedStatusTemplatesAsync`. Templates referencing non-existent item templates are now skipped with a warning log and counted as "skipped" in the response, consistent with the idempotent seeding pattern.
 
@@ -458,7 +458,7 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 - **AUDIT:NEEDS_DESIGN — Dead config #412: implement inactive check or remove config property**: `InactiveCheckIntervalSeconds` exists in the configuration schema but is not wired to any functionality. Decision needed: implement the inactive status check feature using this config, or remove the config property from the schema?
 
-- ~~**T8 echoed fields in query responses**~~: **FIXED** (2026-03-09) - Removed `entityId` and `entityType` from `GetEffectsResponse` and `SeedEffectsResponse`. Caller already knows what they requested per IMPLEMENTATION TENETS.
+- ~~**echoed fields in query responses**~~: **FIXED** (2026-03-09) - Removed `entityId` and `entityType` from `GetEffectsResponse` and `SeedEffectsResponse`. Caller already knows what they requested per IMPLEMENTATION TENETS.
 
 ---
 
@@ -509,14 +509,14 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 - **SeedStatusTemplatesAsync item template validation** (2026-02-12) - Added item template validation in seed endpoint
 - **SeedStatusTemplatesAsync game service validation** (2026-02-12) - Added game service existence validation in seed endpoint
 - **Hardening pass** (2026-03-07):
-  - Fixed cache key casing mismatch in `StatusSeedEvolutionListener` (PascalCase → matching `StatusService.SeedEffectsCacheKey`)
-  - Fixed hardcoded `EntityType.Character` in contract creation/termination (now uses actual entity type)
-  - Fixed metadata type-narrowing (`Dictionary<string, object>?` → `object?` per T25/T29)
-  - Fixed client event name from `status.effect-changed` to `status.effect.changed` (Pattern C)
-  - Added T31 Category A deprecation lifecycle (3 new endpoints, grant guard, `includeDeprecated` filter)
-  - Added `TemplateDeprecated` to `GrantFailureReason` enum
-  - Added `maxLength` to all string properties, `maxItems` to all array properties, `maximum`/`minimum` to numeric properties
-  - Moved `x-references` under `info:` block, fixed cleanup endpoint permissions to `[]`
-  - Removed T29-violating metadata description mentioning Divine integration convention
-  - Added hierarchy validation test
-  - Migrated `entityType` documentation from "opaque strings" to `EntityType` enum
+ - Fixed cache key casing mismatch in `StatusSeedEvolutionListener` (PascalCase → matching `StatusService.SeedEffectsCacheKey`)
+ - Fixed hardcoded `EntityType.Character` in contract creation/termination (now uses actual entity type)
+ - Fixed metadata type-narrowing (`Dictionary<string, object>?` → `object?` per tenets)
+ - Fixed client event name from `status.effect-changed` to `status.effect.changed` (Pattern C)
+ - Added Category A deprecation lifecycle (3 new endpoints, grant guard, `includeDeprecated` filter)
+ - Added `TemplateDeprecated` to `GrantFailureReason` enum
+ - Added `maxLength` to all string properties, `maxItems` to all array properties, `maximum`/`minimum` to numeric properties
+ - Moved `x-references` under `info:` block, fixed cleanup endpoint permissions to `[]`
+ - Removed-violating metadata description mentioning Divine integration convention
+ - Added hierarchy validation test
+ - Migrated `entityType` documentation from "opaque strings" to `EntityType` enum

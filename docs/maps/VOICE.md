@@ -56,7 +56,7 @@
 **Notes:**
 - Voice is a **leaf node** — no other plugin calls `IVoiceClient`. Future consumers (lib-broadcast L3, lib-showtime L4) will subscribe to events.
 - No lib-resource integration — voice rooms are ephemeral session-scoped Redis state with TTL/eviction lifecycle.
-- External infrastructure (Kamailio, RTPEngine) accessed directly via `RtpEngineClient` (permitted per T4).
+- External infrastructure (Kamailio, RTPEngine) accessed directly via `RtpEngineClient` (permitted per FOUNDATION TENETS).
 
 ---
 
@@ -127,16 +127,16 @@
 POST /voice/room/create | Roles: []
 
 ```
-LOCK voice-lock:"session-room:{sessionId}"                   -> 409 if fails
-  READ _stringStore:"voice:session-room:{sessionId}"          -> 409 if already exists
-  // Determine maxParticipants: use config P2PMaxParticipants if request value is 0
-  WRITE _roomStore:"voice:room:{roomId}" <- new VoiceRoomData from request
-  WRITE _stringStore:"voice:session-room:{sessionId}" <- roomId
-  // Register creator as first participant
-  CALL _endpointRegistry.RegisterAsync(roomId, sessionId, sipEndpoint, displayName)
-  CALL _permissionClient.UpdateSessionStateAsync({ state: "in_room" })
-  PUBLISH voice.room.created { roomId, sessionId, tier, maxParticipants }
-  RETURN (200, VoiceRoomResponse)
+LOCK voice-lock:"session-room:{sessionId}" -> 409 if fails
+ READ _stringStore:"voice:session-room:{sessionId}" -> 409 if already exists
+ // Determine maxParticipants: use config P2PMaxParticipants if request value is 0
+ WRITE _roomStore:"voice:room:{roomId}" <- new VoiceRoomData from request
+ WRITE _stringStore:"voice:session-room:{sessionId}" <- roomId
+ // Register creator as first participant
+ CALL _endpointRegistry.RegisterAsync(roomId, sessionId, sipEndpoint, displayName)
+ CALL _permissionClient.UpdateSessionStateAsync({ state: "in_room" })
+ PUBLISH voice.room.created { roomId, sessionId, tier, maxParticipants }
+ RETURN (200, VoiceRoomResponse)
 ```
 
 ---
@@ -145,7 +145,7 @@ LOCK voice-lock:"session-room:{sessionId}"                   -> 409 if fails
 POST /voice/room/get | Roles: []
 
 ```
-READ _roomStore:"voice:room:{roomId}"                        -> 404 if null
+READ _roomStore:"voice:room:{roomId}" -> 404 if null
 CALL _endpointRegistry.GetRoomParticipantsAsync(roomId)
 RETURN (200, VoiceRoomResponse)
 ```
@@ -158,48 +158,48 @@ POST /voice/room/join | Roles: [user]
 ```
 READ _roomStore:"voice:room:{roomId}"
 IF room == null AND AdHocRoomsEnabled
-  LOCK voice-lock:"room-create:{roomId}"                     -> 409 if fails
-    READ _roomStore:"voice:room:{roomId}"                    // double-check after lock
-    IF still null
-      WRITE _roomStore:"voice:room:{roomId}" <- new VoiceRoomData (autoCleanup=true)
-      WRITE _stringStore:"voice:session-room:{sessionId}" <- roomId
-      PUBLISH voice.room.created { roomId, sessionId, tier: P2P, maxParticipants }
+ LOCK voice-lock:"room-create:{roomId}" -> 409 if fails
+ READ _roomStore:"voice:room:{roomId}" // double-check after lock
+ IF still null
+ WRITE _roomStore:"voice:room:{roomId}" <- new VoiceRoomData (autoCleanup=true)
+ WRITE _stringStore:"voice:session-room:{sessionId}" <- roomId
+ PUBLISH voice.room.created { roomId, sessionId, tier: P2P, maxParticipants }
 ELSE IF room == null
-  RETURN (404, null)
+ RETURN (404, null)
 
 IF room.Password != null AND request.Password != room.Password
-  RETURN (403, null)
+ RETURN (403, null)
 
 CALL _endpointRegistry.GetParticipantCountAsync(roomId)
 IF room.Tier == Scaled
-  CALL _scaledTierCoordinator.CanAcceptNewParticipantAsync(roomId, count)  -> 409 if full
+ CALL _scaledTierCoordinator.CanAcceptNewParticipantAsync(roomId, count) -> 409 if full
 ELSE // P2P
-  CALL _p2pCoordinator.CanAcceptNewParticipantAsync(roomId, count)
-  IF !canAccept AND ScaledTierEnabled AND TierUpgradeEnabled
-    // Synchronous upgrade attempt
-    CALL TryUpgradeToScaledTierAsync(roomId, roomData)
-    READ _roomStore:"voice:room:{roomId}"                    -> 500 if null after upgrade
-  ELSE IF !canAccept
-    RETURN (409, null)
+ CALL _p2pCoordinator.CanAcceptNewParticipantAsync(roomId, count)
+ IF !canAccept AND ScaledTierEnabled AND TierUpgradeEnabled
+ // Synchronous upgrade attempt
+ CALL TryUpgradeToScaledTierAsync(roomId, roomData)
+ READ _roomStore:"voice:room:{roomId}" -> 500 if null after upgrade
+ ELSE IF !canAccept
+ RETURN (409, null)
 
-CALL _endpointRegistry.RegisterAsync(roomId, sessionId, sipEndpoint, displayName)  -> 409 if already registered
+CALL _endpointRegistry.RegisterAsync(roomId, sessionId, sipEndpoint, displayName) -> 409 if already registered
 CALL _permissionClient.UpdateSessionStateAsync({ state: "in_room" })
 
 IF room.Tier == Scaled
-  PUBLISH voice.peer.joined { roomId, peerSessionId, currentCount }
-  RETURN (200, JoinVoiceRoomResponse { tier: Scaled, peers: [], rtpServerUri })
+ PUBLISH voice.peer.joined { roomId, peerSessionId, currentCount }
+ RETURN (200, JoinVoiceRoomResponse { tier: Scaled, peers: [], rtpServerUri })
 ELSE // P2P
-  CALL _p2pCoordinator.GetMeshPeersForNewJoinAsync(roomId, sessionId)
-  IF peers.Count > 0
-    CALL _permissionClient.UpdateSessionStateAsync({ state: "ringing" })  // for joiner
-  CALL _p2pCoordinator.ShouldUpgradeToScaledAsync(roomId, newCount)
-  PUBLISH voice.peer.joined { roomId, peerSessionId, currentCount }
-  // see helper: NotifyPeerJoinedAsync
-  CALL NotifyPeerJoinedAsync(roomId, sessionId, sipEndpoint, displayName)
-  IF shouldUpgrade
-    // Fire-and-forget background tier upgrade (CancellationToken.None)
-    // TryUpgradeToScaledTierAsync runs asynchronously
-  RETURN (200, JoinVoiceRoomResponse { tier: P2P, peers, stunServers, tierUpgradePending })
+ CALL _p2pCoordinator.GetMeshPeersForNewJoinAsync(roomId, sessionId)
+ IF peers.Count > 0
+ CALL _permissionClient.UpdateSessionStateAsync({ state: "ringing" }) // for joiner
+ CALL _p2pCoordinator.ShouldUpgradeToScaledAsync(roomId, newCount)
+ PUBLISH voice.peer.joined { roomId, peerSessionId, currentCount }
+ // see helper: NotifyPeerJoinedAsync
+ CALL NotifyPeerJoinedAsync(roomId, sessionId, sipEndpoint, displayName)
+ IF shouldUpgrade
+ // Fire-and-forget background tier upgrade (CancellationToken.None)
+ // TryUpgradeToScaledTierAsync runs asynchronously
+ RETURN (200, JoinVoiceRoomResponse { tier: P2P, peers, stunServers, tierUpgradePending })
 ```
 
 ---
@@ -208,20 +208,20 @@ ELSE // P2P
 POST /voice/room/leave | Roles: [user; state: voice=in_room]
 
 ```
-CALL _endpointRegistry.UnregisterAsync(roomId, sessionId)    -> 404 if null
+CALL _endpointRegistry.UnregisterAsync(roomId, sessionId) -> 404 if null
 CALL _permissionClient.ClearSessionStateAsync({ sessionId, service: "voice" })
 CALL _endpointRegistry.GetParticipantCountAsync(roomId)
 PUBLISH voice.peer.left { roomId, peerSessionId, remainingCount }
 // see helper: NotifyPeerLeftAsync
 CALL NotifyPeerLeftAsync(roomId, sessionId, displayName, remainingCount)
 
-LOCK voice-lock:"broadcast-consent:{roomId}"                 // non-fatal if fails (logs warning)
-  READ _roomStore:"voice:room:{roomId}"
-  IF broadcastState != Inactive
-    // see helper: StopBroadcastInternalAsync
-    CALL StopBroadcastInternalAsync(roomId, roomData, reason: ConsentRevoked)
-  IF remainingCount == 0 AND roomData.AutoCleanup
-    WRITE _roomStore:"voice:room:{roomId}" <- set LastParticipantLeftAt
+LOCK voice-lock:"broadcast-consent:{roomId}" // non-fatal if fails (logs warning)
+ READ _roomStore:"voice:room:{roomId}"
+ IF broadcastState != Inactive
+ // see helper: StopBroadcastInternalAsync
+ CALL StopBroadcastInternalAsync(roomId, roomData, reason: ConsentRevoked)
+ IF remainingCount == 0 AND roomData.AutoCleanup
+ WRITE _roomStore:"voice:room:{roomId}" <- set LastParticipantLeftAt
 RETURN (200)
 ```
 
@@ -231,20 +231,20 @@ RETURN (200)
 POST /voice/room/delete | Roles: []
 
 ```
-READ _roomStore:"voice:room:{roomId}"                        -> 404 if null
+READ _roomStore:"voice:room:{roomId}" -> 404 if null
 // deleteReason defaults to Manual if request.Reason is null
 
 IF broadcastState != Inactive
-  LOCK voice-lock:"broadcast-consent:{roomId}"               // non-fatal if fails
-    READ _roomStore:"voice:room:{roomId}"                    // fresh read inside lock
-    IF broadcastState != Inactive
-      // see helper: StopBroadcastInternalAsync
-      CALL StopBroadcastInternalAsync(roomId, roomData, reason: RoomClosed)
+ LOCK voice-lock:"broadcast-consent:{roomId}" // non-fatal if fails
+ READ _roomStore:"voice:room:{roomId}" // fresh read inside lock
+ IF broadcastState != Inactive
+ // see helper: StopBroadcastInternalAsync
+ CALL StopBroadcastInternalAsync(roomId, roomData, reason: RoomClosed)
 
 CALL _endpointRegistry.GetRoomParticipantsAsync(roomId)
 CALL _endpointRegistry.ClearRoomAsync(roomId)
 IF room.Tier == Scaled AND rtpServerUri != null
-  CALL _scaledTierCoordinator.ReleaseRtpServerAsync(roomId)
+ CALL _scaledTierCoordinator.ReleaseRtpServerAsync(roomId)
 
 DELETE _roomStore:"voice:room:{roomId}"
 DELETE _stringStore:"voice:session-room:{roomData.SessionId}"
@@ -252,7 +252,7 @@ DELETE _stringStore:"voice:session-room:{roomData.SessionId}"
 // see helper: NotifyRoomClosedAsync
 CALL NotifyRoomClosedAsync(roomId, participants, deleteReason)
 FOREACH participant in participants
-  CALL _permissionClient.ClearSessionStateAsync({ sessionId, service: "voice" })
+ CALL _permissionClient.ClearSessionStateAsync({ sessionId, service: "voice" })
 
 PUBLISH voice.room.deleted { roomId, reason: deleteReason }
 RETURN (200)
@@ -264,7 +264,7 @@ RETURN (200)
 POST /voice/peer/heartbeat | Roles: []
 
 ```
-CALL _endpointRegistry.UpdateHeartbeatAsync(roomId, sessionId)  -> 404 if false
+CALL _endpointRegistry.UpdateHeartbeatAsync(roomId, sessionId) -> 404 if false
 RETURN (200)
 ```
 
@@ -274,10 +274,10 @@ RETURN (200)
 POST /voice/peer/answer | Roles: [user; state: voice=ringing]
 
 ```
-CALL _endpointRegistry.GetParticipantAsync(roomId, targetSessionId)  -> 404 if null
-CALL _endpointRegistry.GetParticipantAsync(roomId, senderSessionId)  // for display name
+CALL _endpointRegistry.GetParticipantAsync(roomId, targetSessionId) -> 404 if null
+CALL _endpointRegistry.GetParticipantAsync(roomId, senderSessionId) // for display name
 PUSH VoicePeerUpdatedClientEvent to [targetSessionId] {
-  roomId, peer: { peerSessionId: senderSessionId, sdpOffer: sdpAnswer, displayName, iceCandidates }
+ roomId, peer: { peerSessionId: senderSessionId, sdpOffer: sdpAnswer, displayName, iceCandidates }
 }
 // Note: SdpOffer field intentionally carries the SDP answer
 RETURN (200)
@@ -289,20 +289,20 @@ RETURN (200)
 POST /voice/room/broadcast/request | Roles: [user; state: voice=in_room]
 
 ```
-LOCK voice-lock:"broadcast-consent:{roomId}"                 -> 409 if fails
-  READ _roomStore:"voice:room:{roomId}"                      -> 404 if null
-  IF broadcastState != Inactive
-    RETURN (409, null)
-  CALL _endpointRegistry.GetRoomParticipantsAsync(roomId)
-  IF participants.Count == 0
-    RETURN (409, null)
-  WRITE _roomStore:"voice:room:{roomId}" <- BroadcastState=Pending, RequestedBy, ConsentedSessions=empty, RequestedAt
-  FOREACH participant in participants
-    CALL _permissionClient.UpdateSessionStateAsync({ state: "consent_pending" })
-  PUSH VoiceBroadcastConsentRequestClientEvent to [all participants] {
-    roomId, requestedBySessionId, requestedByDisplayName
-  }
-  RETURN (200, BroadcastConsentStatus { state: Pending })
+LOCK voice-lock:"broadcast-consent:{roomId}" -> 409 if fails
+ READ _roomStore:"voice:room:{roomId}" -> 404 if null
+ IF broadcastState != Inactive
+ RETURN (409, null)
+ CALL _endpointRegistry.GetRoomParticipantsAsync(roomId)
+ IF participants.Count == 0
+ RETURN (409, null)
+ WRITE _roomStore:"voice:room:{roomId}" <- BroadcastState=Pending, RequestedBy, ConsentedSessions=empty, RequestedAt
+ FOREACH participant in participants
+ CALL _permissionClient.UpdateSessionStateAsync({ state: "consent_pending" })
+ PUSH VoiceBroadcastConsentRequestClientEvent to [all participants] {
+ roomId, requestedBySessionId, requestedByDisplayName
+ }
+ RETURN (200, BroadcastConsentStatus { state: Pending })
 ```
 
 ---
@@ -311,33 +311,33 @@ LOCK voice-lock:"broadcast-consent:{roomId}"                 -> 409 if fails
 POST /voice/room/broadcast/consent | Roles: [user; state: voice=consent_pending]
 
 ```
-LOCK voice-lock:"broadcast-consent:{roomId}"                 -> 409 if fails
-  READ _roomStore:"voice:room:{roomId}"                      -> 404 if null
-  IF broadcastState != Pending
-    RETURN (409, null)
-  CALL _endpointRegistry.GetRoomParticipantsAsync(roomId)
+LOCK voice-lock:"broadcast-consent:{roomId}" -> 409 if fails
+ READ _roomStore:"voice:room:{roomId}" -> 404 if null
+ IF broadcastState != Pending
+ RETURN (409, null)
+ CALL _endpointRegistry.GetRoomParticipantsAsync(roomId)
 
-  IF !consented  // participant declined
-    WRITE _roomStore:"voice:room:{roomId}" <- BroadcastState=Inactive, clear consent data
-    // see helper: ClearConsentPendingStatesAsync
-    CALL ClearConsentPendingStatesAsync(participantSessionIds)
-    PUBLISH voice.broadcast.declined { roomId, declinedBySessionId }
-    // see helper: PublishBroadcastConsentUpdateAsync
-    CALL PublishBroadcastConsentUpdateAsync(state: Inactive, declined display name)
-    RETURN (200, BroadcastConsentStatus { state: Inactive })
+ IF !consented // participant declined
+ WRITE _roomStore:"voice:room:{roomId}" <- BroadcastState=Inactive, clear consent data
+ // see helper: ClearConsentPendingStatesAsync
+ CALL ClearConsentPendingStatesAsync(participantSessionIds)
+ PUBLISH voice.broadcast.declined { roomId, declinedBySessionId }
+ // see helper: PublishBroadcastConsentUpdateAsync
+ CALL PublishBroadcastConsentUpdateAsync(state: Inactive, declined display name)
+ RETURN (200, BroadcastConsentStatus { state: Inactive })
 
-  // Add session to consented set
-  IF consentedSessions.IsSupersetOf(participantSessionIds)  // all consented
-    WRITE _roomStore:"voice:room:{roomId}" <- BroadcastState=Approved
-    CALL ClearConsentPendingStatesAsync(participantSessionIds)
-    PUBLISH voice.broadcast.approved { roomId, requestedBySessionId, rtpAudioEndpoint }
-    CALL PublishBroadcastConsentUpdateAsync(state: Approved)
-    RETURN (200, BroadcastConsentStatus { state: Approved })
+ // Add session to consented set
+ IF consentedSessions.IsSupersetOf(participantSessionIds) // all consented
+ WRITE _roomStore:"voice:room:{roomId}" <- BroadcastState=Approved
+ CALL ClearConsentPendingStatesAsync(participantSessionIds)
+ PUBLISH voice.broadcast.approved { roomId, requestedBySessionId, rtpAudioEndpoint }
+ CALL PublishBroadcastConsentUpdateAsync(state: Approved)
+ RETURN (200, BroadcastConsentStatus { state: Approved })
 
-  // Partial consent — still waiting
-  WRITE _roomStore:"voice:room:{roomId}" <- add sessionId to ConsentedSessions
-  CALL PublishBroadcastConsentUpdateAsync(state: Pending, progress)
-  RETURN (200, BroadcastConsentStatus { state: Pending })
+ // Partial consent — still waiting
+ WRITE _roomStore:"voice:room:{roomId}" <- add sessionId to ConsentedSessions
+ CALL PublishBroadcastConsentUpdateAsync(state: Pending, progress)
+ RETURN (200, BroadcastConsentStatus { state: Pending })
 ```
 
 ---
@@ -346,13 +346,13 @@ LOCK voice-lock:"broadcast-consent:{roomId}"                 -> 409 if fails
 POST /voice/room/broadcast/stop | Roles: [user; state: voice=in_room]
 
 ```
-LOCK voice-lock:"broadcast-consent:{roomId}"                 -> 409 if fails
-  READ _roomStore:"voice:room:{roomId}"                      -> 404 if null
-  IF broadcastState == Inactive
-    RETURN (404)
-  // see helper: StopBroadcastInternalAsync
-  CALL StopBroadcastInternalAsync(roomId, roomData, reason: Manual)
-  RETURN (200)
+LOCK voice-lock:"broadcast-consent:{roomId}" -> 409 if fails
+ READ _roomStore:"voice:room:{roomId}" -> 404 if null
+ IF broadcastState == Inactive
+ RETURN (404)
+ // see helper: StopBroadcastInternalAsync
+ CALL StopBroadcastInternalAsync(roomId, roomData, reason: Manual)
+ RETURN (200)
 ```
 
 ---
@@ -361,7 +361,7 @@ LOCK voice-lock:"broadcast-consent:{roomId}"                 -> 409 if fails
 POST /voice/room/broadcast/status | Roles: [user; state: voice=in_room]
 
 ```
-READ _roomStore:"voice:room:{roomId}"                        -> 404 if null
+READ _roomStore:"voice:room:{roomId}" -> 404 if null
 CALL _endpointRegistry.GetRoomParticipantsAsync(roomId)
 // pendingIds = all participant session IDs minus consented session IDs
 RETURN (200, BroadcastConsentStatus { state, consentedSessionIds, pendingSessionIds, requestedBySessionId, rtpAudioEndpoint })
@@ -378,33 +378,33 @@ RETURN (200, BroadcastConsentStatus { state, consentedSessionIds, pendingSession
 
 ```
 FOREACH roomId in _endpointRegistry.GetAllTrackedRoomIds()
-  READ _roomStore:"voice:room:{roomId}"                      // skip if null
+ READ _roomStore:"voice:room:{roomId}" // skip if null
 
-  // 1. Stale participant eviction
-  FOREACH participant WHERE LastHeartbeat > heartbeatTimeout
-    CALL _endpointRegistry.UnregisterAsync(roomId, sessionId)
-    PUBLISH voice.peer.left { roomId, peerSessionId, remainingCount }
-    PUSH VoicePeerLeftClientEvent to remaining peers
-    CALL _permissionClient.ClearSessionStateAsync(sessionId)
-    IF room now empty AND AutoCleanup
-      WRITE _roomStore:"voice:room:{roomId}" <- set LastParticipantLeftAt
-  IF any eviction broke broadcast consent
-    WRITE _roomStore:"voice:room:{roomId}" <- BroadcastState=Inactive
-    PUBLISH voice.broadcast.stopped { reason: ConsentRevoked }
-    IF was Pending: restore in_room permission for remaining
-    PUSH VoiceBroadcastConsentUpdateClientEvent (state: Inactive)
+ // 1. Stale participant eviction
+ FOREACH participant WHERE LastHeartbeat > heartbeatTimeout
+ CALL _endpointRegistry.UnregisterAsync(roomId, sessionId)
+ PUBLISH voice.peer.left { roomId, peerSessionId, remainingCount }
+ PUSH VoicePeerLeftClientEvent to remaining peers
+ CALL _permissionClient.ClearSessionStateAsync(sessionId)
+ IF room now empty AND AutoCleanup
+ WRITE _roomStore:"voice:room:{roomId}" <- set LastParticipantLeftAt
+ IF any eviction broke broadcast consent
+ WRITE _roomStore:"voice:room:{roomId}" <- BroadcastState=Inactive
+ PUBLISH voice.broadcast.stopped { reason: ConsentRevoked }
+ IF was Pending: restore in_room permission for remaining
+ PUSH VoiceBroadcastConsentUpdateClientEvent (state: Inactive)
 
-  // 2. Empty room auto-delete
-  IF AutoCleanup AND LastParticipantLeftAt > gracePeriod AND count == 0
-    CALL _endpointRegistry.ClearRoomAsync(roomId)
-    DELETE _roomStore:"voice:room:{roomId}"
-    DELETE _stringStore:"voice:session-room:{sessionId}"
-    PUBLISH voice.room.deleted { reason: Empty }
+ // 2. Empty room auto-delete
+ IF AutoCleanup AND LastParticipantLeftAt > gracePeriod AND count == 0
+ CALL _endpointRegistry.ClearRoomAsync(roomId)
+ DELETE _roomStore:"voice:room:{roomId}"
+ DELETE _stringStore:"voice:session-room:{sessionId}"
+ PUBLISH voice.room.deleted { reason: Empty }
 
-  // 3. Broadcast consent timeout
-  IF BroadcastState == Pending AND BroadcastRequestedAt > consentTimeout
-    WRITE _roomStore:"voice:room:{roomId}" <- BroadcastState=Inactive
-    FOREACH participant: restore in_room permission
-    PUBLISH voice.broadcast.declined { declinedBySessionId: null }
-    PUSH VoiceBroadcastConsentUpdateClientEvent (state: Inactive)
+ // 3. Broadcast consent timeout
+ IF BroadcastState == Pending AND BroadcastRequestedAt > consentTimeout
+ WRITE _roomStore:"voice:room:{roomId}" <- BroadcastState=Inactive
+ FOREACH participant: restore in_room permission
+ PUBLISH voice.broadcast.declined { declinedBySessionId: null }
+ PUSH VoiceBroadcastConsentUpdateClientEvent (state: Inactive)
 ```

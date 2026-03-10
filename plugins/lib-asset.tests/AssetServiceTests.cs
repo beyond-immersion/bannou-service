@@ -1963,7 +1963,7 @@ public class AssetServiceTests
         // Act
         var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
 
-        // Assert - Should return Conflict with null result per T8 (error responses return null)
+        // Assert - Should return Conflict with null result per IMPLEMENTATION TENETS (error responses return null)
         Assert.Equal(StatusCodes.Conflict, status);
         Assert.Null(result);
     }

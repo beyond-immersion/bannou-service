@@ -85,71 +85,71 @@ The plugin bridges HTTP requests to SDK calls. SDK types are exposed directly in
 Scenario Execution Flow (TriggerScenarioAsync)
 =================================================
 
-  Regional Watcher           StorylineService                  Redis                MySQL
-  (god-actor)
-       │                         │                              │                    │
-       │  POST /scenario/trigger │                              │                    │
-       │ ──────────────────────>│                              │                    │
-       │                         │  Check idempotency key       │                    │
-       │                         │ ────────────────────────────>│ (idemp store)      │
-       │                         │  <── null (not duplicate) ───│                    │
-       │                         │                              │                    │
-       │                         │  Acquire distributed lock    │                    │
-       │                         │ ────────────────────────────>│ (lock store)       │
-       │                         │  <── lock acquired ──────────│                    │
-       │                         │                              │                    │
-       │                         │  Get scenario definition     │                    │
-       │                         │ ────────────────────────────>│ (cache store)      │
-       │                         │  <── cache miss ─────────────│                    │
-       │                         │ ────────────────────────────────────────────────>│
-       │                         │  <── definition ────────────────────────────────│
-       │                         │  populate cache ────────────>│                    │
-       │                         │                              │                    │
-       │                         │  Check cooldown              │                    │
-       │                         │ ────────────────────────────>│ (cooldown store)   │
-       │                         │  <── null (no cooldown) ─────│                    │
-       │                         │                              │                    │
-       │                         │  Check active count          │                    │
-       │                         │ ────────────────────────────>│ (active store)     │
-       │                         │  <── count < max ────────────│                    │
-       │                         │                              │                    │
-       │                         │  Save execution record       │                    │
-       │                         │ ────────────────────────────────────────────────>│
-       │                         │  Add to active set ─────────>│                    │
-       │                         │  Store idempotency key ─────>│                    │
-       │                         │                              │                    │
-       │                         │  Publish scenario.triggered  │                    │
-       │                         │  Apply mutations (L4 clients)│                    │
-       │                         │  Spawn quests (L4 client)    │                    │
-       │                         │                              │                    │
-       │                         │  Update execution: Completed │                    │
-       │                         │ ────────────────────────────────────────────────>│
-       │                         │  Remove from active set ────>│                    │
-       │                         │  Set cooldown with TTL ─────>│                    │
-       │                         │                              │                    │
-       │                         │  Publish scenario.completed  │                    │
-       │  <── TriggerResponse ───│                              │                    │
+ Regional Watcher StorylineService Redis MySQL
+ (god-actor)
+ │ │ │ │
+ │ POST /scenario/trigger │ │ │
+ │ ──────────────────────>│ │ │
+ │ │ Check idempotency key │ │
+ │ │ ────────────────────────────>│ (idemp store) │
+ │ │ <── null (not duplicate) ───│ │
+ │ │ │ │
+ │ │ Acquire distributed lock │ │
+ │ │ ────────────────────────────>│ (lock store) │
+ │ │ <── lock acquired ──────────│ │
+ │ │ │ │
+ │ │ Get scenario definition │ │
+ │ │ ────────────────────────────>│ (cache store) │
+ │ │ <── cache miss ─────────────│ │
+ │ │ ────────────────────────────────────────────────>│
+ │ │ <── definition ────────────────────────────────│
+ │ │ populate cache ────────────>│ │
+ │ │ │ │
+ │ │ Check cooldown │ │
+ │ │ ────────────────────────────>│ (cooldown store) │
+ │ │ <── null (no cooldown) ─────│ │
+ │ │ │ │
+ │ │ Check active count │ │
+ │ │ ────────────────────────────>│ (active store) │
+ │ │ <── count < max ────────────│ │
+ │ │ │ │
+ │ │ Save execution record │ │
+ │ │ ────────────────────────────────────────────────>│
+ │ │ Add to active set ─────────>│ │
+ │ │ Store idempotency key ─────>│ │
+ │ │ │ │
+ │ │ Publish scenario.triggered │ │
+ │ │ Apply mutations (L4 clients)│ │
+ │ │ Spawn quests (L4 client) │ │
+ │ │ │ │
+ │ │ Update execution: Completed │ │
+ │ │ ────────────────────────────────────────────────>│
+ │ │ Remove from active set ────>│ │
+ │ │ Set cooldown with TTL ─────>│ │
+ │ │ │ │
+ │ │ Publish scenario.completed │ │
+ │ <── TriggerResponse ───│ │ │
 
 
 State Store Key Relationships
 ================================
 
-  Plan Stores (Redis, ephemeral):
-    storyline:plan:{planId}           → CachedPlan (TTL from config)
-    storyline:plan:cache:{cacheKey}   → CachedPlan (deterministic cache)
-    storyline:idx:realm:{realmId}     → Sorted Set (planId → timestamp score)
+ Plan Stores (Redis, ephemeral):
+ storyline:plan:{planId} → CachedPlan (TTL from config)
+ storyline:plan:cache:{cacheKey} → CachedPlan (deterministic cache)
+ storyline:idx:realm:{realmId} → Sorted Set (planId → timestamp score)
 
-  Scenario Stores:
-    MySQL (durable):
-      {scenarioId}                    → ScenarioDefinitionModel
-      {executionId}                   → ScenarioExecutionModel
+ Scenario Stores:
+ MySQL (durable):
+ {scenarioId} → ScenarioDefinitionModel
+ {executionId} → ScenarioExecutionModel
 
-    Redis (ephemeral):
-      storyline:scenario:cache:{scenarioId}        → ScenarioDefinitionModel (TTL read-through)
-      storyline:scenario:cd:cooldown:{charId}:{scenarioId} → CooldownMarker (TTL)
-      storyline:scenario:active:active:{charId}    → Set<ActiveScenarioEntry>
-      storyline:scenario:idemp:{idempotencyKey}    → IdempotencyMarker (TTL)
-      storyline:lock:lock:{charId}:{scenarioId}    → Distributed lock
+ Redis (ephemeral):
+ storyline:scenario:cache:{scenarioId} → ScenarioDefinitionModel (TTL read-through)
+ storyline:scenario:cd:cooldown:{charId}:{scenarioId} → CooldownMarker (TTL)
+ storyline:scenario:active:active:{charId} → Set<ActiveScenarioEntry>
+ storyline:scenario:idemp:{idempotencyKey} → IdempotencyMarker (TTL)
+ storyline:lock:lock:{charId}:{scenarioId} → Distributed lock
 ```
 
 ---
@@ -224,18 +224,18 @@ None identified.
 
 12. **Scenario trigger immediately completes**: The current implementation applies all mutations and spawns all quests synchronously within `TriggerScenarioAsync`, then marks the execution as `Completed`. This is a Phase 1 simplification; true multi-phase execution with background progression is a future capability (see Stubs #6).
 
-### Deprecation Lifecycle (T31 Category B)
+### Deprecation Lifecycle (Category B)
 
-Scenario definitions are **Category B entities** — scenario executions reference definitions by ID, and existing executions must continue to function after a definition is deprecated. Per T31:
+Scenario definitions are **Category B entities** — scenario executions reference definitions by ID, and existing executions must continue to function after a definition is deprecated. Per:
 
 - **Deprecation is one-way**: Once deprecated, a scenario definition cannot be undeprecated. No undeprecate endpoint exists.
 - **No delete endpoint**: Scenario definitions persist forever. Only deprecation is supported.
 - **Instance creation guard**: `TriggerScenarioAsync` rejects deprecated scenario definitions with `BadRequest` (see Quirk #8).
 - **Storage model**: Scenario definitions use triple-field deprecation: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?).
-- **Idempotent deprecation**: Deprecating an already-deprecated definition returns `OK` (not `Conflict`).
+- **Idempotent deprecation**: Deprecating an already-deprecated definition returns `OK` with the entity body (not `Conflict`).
 - **List filtering**: `ListScenarioDefinitions` includes `includeDeprecated` parameter (default: `false`).
 - **Discovery exclusion**: `FindAvailableScenarios` excludes deprecated definitions from results (filtered alongside `Enabled`).
-- **Events**: Deprecation is communicated via `storyline.scenario-definition.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per T31).
+- **Events**: Deprecation is communicated via `storyline.scenario-definition.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per tenets).
 - **Deprecation disables**: `DeprecateScenarioDefinitionAsync` also sets `Enabled = false` as a defense-in-depth measure (see Quirk #8).
 
 ### Design Considerations (Requires Planning)
@@ -263,12 +263,12 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **Hardening pass (2026-03-09)** - Comprehensive tenet compliance audit and fixes:
-  - T8: Removed `Found` boolean from `GetPlanResponse` and `GetScenarioDefinitionResponse`; `GetPlanAsync` returns `NotFound` on miss
-  - T13: Changed `x-permissions` on `/storyline/get-compress-data` to `[]` (service-to-service only)
-  - T25/T1: Changed `StorylinePlanComposedEvent` fields `goal`, `arcType`, `primarySpectrum` from `type: string` to `$ref` enum types
-  - T25: `ScenarioMutation.experienceType` and `backstoryElementType` changed from `type: string` to Storyline-owned enums (`StorylineExperienceType`, `StorylineBackstoryElementType`) with A2 boundary `MapByName` mapping to CharacterPersonality/CharacterHistory enums; `EnumMappingValidator` subset tests added
-  - T21: Removed dead config property `ScenarioFitScoreRecommendThreshold`
-  - T5: Replaced all inline topic strings with `StorylinePublishedTopics` constants
-  - T6: Replaced all inline key construction with `Build*Key()` methods (`BuildPlanKey`, `BuildPlanIndexKey`, `BuildScenarioDefinitionKey`, `BuildExecutionKey`, `BuildCooldownKey`, `BuildActiveKey`, `BuildLockResource`)
-  - T16: Fixed lifecycle event names to use Pattern C (`storyline.scenario-definition.{action}`) without `Storyline` prefix
-  - T16: Renamed topic `storyline.composed` → `storyline.plan.composed` (Pattern C multi-entity naming); event model renamed `StorylineComposedEvent` → `StorylinePlanComposedEvent`
+ - Removed `Found` boolean from `GetPlanResponse` and `GetScenarioDefinitionResponse`; `GetPlanAsync` returns `NotFound` on miss
+ - Changed `x-permissions` on `/storyline/get-compress-data` to `[]` (service-to-service only)
+ - T25/Changed `StorylinePlanComposedEvent` fields `goal`, `arcType`, `primarySpectrum` from `type: string` to `$ref` enum types
+ - `ScenarioMutation.experienceType` and `backstoryElementType` changed from `type: string` to Storyline-owned enums (`StorylineExperienceType`, `StorylineBackstoryElementType`) with A2 boundary `MapByName` mapping to CharacterPersonality/CharacterHistory enums; `EnumMappingValidator` subset tests added
+ - Removed dead config property `ScenarioFitScoreRecommendThreshold`
+ - Replaced all inline topic strings with `StorylinePublishedTopics` constants
+ - Replaced all inline key construction with `Build*Key()` methods (`BuildPlanKey`, `BuildPlanIndexKey`, `BuildScenarioDefinitionKey`, `BuildExecutionKey`, `BuildCooldownKey`, `BuildActiveKey`, `BuildLockResource`)
+ - Fixed lifecycle event names to use Pattern C (`storyline.scenario-definition.{action}`) without `Storyline` prefix
+ - Renamed topic `storyline.composed` → `storyline.plan.composed` (Pattern C multi-entity naming); event model renamed `StorylineComposedEvent` → `StorylinePlanComposedEvent`

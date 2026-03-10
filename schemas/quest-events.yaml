@@ -59,6 +59,7 @@ info:
 x-lifecycle:
   topic_prefix: quest
   QuestDefinition:
+    deprecation: true
     model:
       definitionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the quest definition" }
       contractTemplateId: { type: string, format: uuid, required: true, description: "Underlying contract template ID" }
@@ -72,9 +73,6 @@ x-lifecycle:
       cooldownSeconds: { type: integer, nullable: true, description: "Cooldown for repeatable quests" }
       deadlineSeconds: { type: integer, nullable: true, description: "Time limit" }
       maxQuestors: { type: integer, required: true, description: "Max party size" }
-      isDeprecated: { type: boolean, required: true, description: "Whether definition is deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the definition was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
       createdAt: { type: string, format: date-time, required: true, description: "Creation timestamp" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this definition belongs to" }
     sensitive: []

@@ -119,7 +119,7 @@ This plugin does not consume external events.
 POST /realm/get | Roles: [user]
 
 ```
-READ realm:{realmId}                            -> 404 if null
+READ realm:{realmId} -> 404 if null
 RETURN (200, RealmResponse)
 ```
 
@@ -129,8 +129,8 @@ RETURN (200, RealmResponse)
 POST /realm/get-by-code | Roles: [user]
 
 ```
-READ code-index:{CODE_UPPERCASE}                -> 404 if null or invalid GUID
-READ realm:{realmId}                            -> 404 if null (logs warning: data inconsistency)
+READ code-index:{CODE_UPPERCASE} -> 404 if null or invalid GUID
+READ realm:{realmId} -> 404 if null (logs warning: data inconsistency)
 RETURN (200, RealmResponse)
 ```
 
@@ -140,10 +140,10 @@ RETURN (200, RealmResponse)
 POST /realm/list | Roles: [user]
 
 ```
-READ all-realms                                 -> empty list if null
+READ all-realms -> empty list if null
 IF allRealmIds is empty
-  RETURN (200, RealmListResponse { realms: [], totalCount: 0 })
-READ (bulk) realm:{id} for each ID              // via LoadRealmsByIdsAsync
+ RETURN (200, RealmListResponse { realms: [], totalCount: 0 })
+READ (bulk) realm:{id} for each ID // via LoadRealmsByIdsAsync
 // In-memory filtering: includeDeprecated, category, isActive
 // In-memory pagination: skip/take
 RETURN (200, RealmListResponse)
@@ -156,9 +156,9 @@ POST /realm/exists | Roles: [user]
 
 ```
 READ realm:{realmId}
-IF model == null                                   -> 404
+IF model == null -> 404
 RETURN (200, RealmExistsResponse { isActive: model.IsActive && !model.IsDeprecated })
-// T8: 200 = exists, 404 = not found. No `exists` boolean needed.
+// 200 = exists, 404 = not found. No `exists` boolean needed.
 ```
 
 ---
@@ -168,10 +168,10 @@ POST /realm/exists-batch | Roles: [user]
 
 ```
 IF realmIds is empty
-  RETURN (200, RealmsExistBatchResponse { allExist: true, allActive: true })
-READ (bulk) realm:{id} for each ID              // via LoadRealmsByIdsAsync
+ RETURN (200, RealmsExistBatchResponse { allExist: true, allActive: true })
+READ (bulk) realm:{id} for each ID // via LoadRealmsByIdsAsync
 FOREACH realmId in request.RealmIds
-  // Build per-ID result; track invalidRealmIds and deprecatedRealmIds
+ // Build per-ID result; track invalidRealmIds and deprecatedRealmIds
 RETURN (200, RealmsExistBatchResponse { results, allExist, allActive, invalidRealmIds, deprecatedRealmIds })
 ```
 
@@ -181,15 +181,15 @@ RETURN (200, RealmsExistBatchResponse { results, allExist, allActive, invalidRea
 POST /realm/create | Roles: [admin]
 
 ```
-READ code-index:{CODE_UPPERCASE}                -> 409 if already exists
+READ code-index:{CODE_UPPERCASE} -> 409 if already exists
 WRITE realm:{newRealmId} <- RealmModel from request
 WRITE code-index:{CODE_UPPERCASE} <- realmId string
 // AddToRealmListAsync (ETag retry loop up to OptimisticRetryAttempts)
 READ all-realms [with ETag]
 ETAG-WRITE all-realms <- updated list with new ID
 IF config.AutoInitializeWorldstateClock
-  CALL IWorldstateClient.InitializeRealmClockAsync(realmId, calendarTemplateCode)
-  // Failure logged as warning, creation proceeds
+ CALL IWorldstateClient.InitializeRealmClockAsync(realmId, calendarTemplateCode)
+ // Failure logged as warning, creation proceeds
 PUBLISH realm.created { full realm state }
 RETURN (200, RealmResponse)
 ```
@@ -201,12 +201,12 @@ POST /realm/update | Roles: [admin]
 
 ```
 // Retry loop up to OptimisticRetryAttempts
-READ realm:{realmId} [with ETag]                -> 404 if null
+READ realm:{realmId} [with ETag] -> 404 if null
 // Smart field tracking: only apply non-null fields that differ from current
 IF no fields changed
-  RETURN (200, RealmResponse)                   // no-op, no write, no event
-ETAG-WRITE realm:{realmId} <- updated model     -> retry on ETag mismatch
-IF all retries exhausted                        -> 409
+ RETURN (200, RealmResponse) // no-op, no write, no event
+ETAG-WRITE realm:{realmId} <- updated model -> retry on ETag mismatch
+IF all retries exhausted -> 409
 PUBLISH realm.updated { full state, changedFields }
 RETURN (200, RealmResponse)
 ```
@@ -217,14 +217,14 @@ RETURN (200, RealmResponse)
 POST /realm/delete | Roles: [admin]
 
 ```
-READ realm:{realmId}                            -> 404 if null
-IF !model.IsDeprecated                          -> 400 (must deprecate first)
+READ realm:{realmId} -> 404 if null
+IF !model.IsDeprecated -> 400 (must deprecate first)
 CALL IResourceClient.CheckReferencesAsync(realm, realmId)
-  // ApiException 404 = no references (normal)
-  // ApiException other = 503 (fail-closed)
+ // ApiException 404 = no references (normal)
+ // ApiException other = 503 (fail-closed)
 IF references exist
-  CALL IResourceClient.ExecuteCleanupAsync(realm, realmId, AllRequired)
-  IF !cleanup.Success                           -> 409
+ CALL IResourceClient.ExecuteCleanupAsync(realm, realmId, AllRequired)
+ IF !cleanup.Success -> 409
 DELETE realm:{realmId}
 DELETE code-index:{CODE}
 // RemoveFromRealmListAsync (ETag retry loop)
@@ -241,12 +241,12 @@ POST /realm/deprecate | Roles: [admin]
 
 ```
 // Retry loop up to OptimisticRetryAttempts
-READ realm:{realmId} [with ETag]                -> 404 if null
+READ realm:{realmId} [with ETag] -> 404 if null
 IF already deprecated
-  RETURN (200, RealmResponse)                   // idempotent
+ RETURN (200, RealmResponse) // idempotent
 // Set IsDeprecated=true, DeprecatedAt=now, DeprecationReason=body.Reason
-ETAG-WRITE realm:{realmId} <- updated model     -> retry on ETag mismatch
-IF all retries exhausted                        -> 409
+ETAG-WRITE realm:{realmId} <- updated model -> retry on ETag mismatch
+IF all retries exhausted -> 409
 PUBLISH realm.updated { changedFields: [isDeprecated, deprecatedAt, deprecationReason] }
 RETURN (200, RealmResponse)
 ```
@@ -258,12 +258,12 @@ POST /realm/undeprecate | Roles: [admin]
 
 ```
 // Retry loop up to OptimisticRetryAttempts
-READ realm:{realmId} [with ETag]                -> 404 if null
+READ realm:{realmId} [with ETag] -> 404 if null
 IF not deprecated
-  RETURN (200, RealmResponse)                   // idempotent
+ RETURN (200, RealmResponse) // idempotent
 // Clear IsDeprecated, DeprecatedAt, DeprecationReason
-ETAG-WRITE realm:{realmId} <- updated model     -> retry on ETag mismatch
-IF all retries exhausted                        -> 409
+ETAG-WRITE realm:{realmId} <- updated model -> retry on ETag mismatch
+IF all retries exhausted -> 409
 PUBLISH realm.updated { changedFields: [isDeprecated, deprecatedAt, deprecationReason] }
 RETURN (200, RealmResponse)
 ```
@@ -274,42 +274,42 @@ RETURN (200, RealmResponse)
 POST /realm/merge | Roles: [admin]
 
 ```
-IF sourceRealmId == targetRealmId               -> 400
-LOCK realm-lock:merge:{smallerId}:{largerId}    -> 409 if lock fails
-  READ realm:{sourceRealmId}                    -> 404 if null
-  IF !source.IsDeprecated                       -> 400
-  IF source.IsSystemType                        -> 400
-  READ realm:{targetRealmId}                    -> 404 if null
+IF sourceRealmId == targetRealmId -> 400
+LOCK realm-lock:merge:{smallerId}:{largerId} -> 409 if lock fails
+ READ realm:{sourceRealmId} -> 404 if null
+ IF !source.IsDeprecated -> 400
+ IF source.IsSystemType -> 400
+ READ realm:{targetRealmId} -> 404 if null
 
-  // Phase A: Species Migration
-  // Page-1-always loop (successful migrations remove from source)
-  FOREACH page of species from ISpeciesClient.ListSpeciesByRealmAsync(source)
-    FOREACH species
-      CALL ISpeciesClient.AddSpeciesToRealmAsync(species, target)
-      CALL ISpeciesClient.RemoveSpeciesFromRealmAsync(species, source)
-      // Individual failures tracked, do not abort
+ // Phase A: Species Migration
+ // Page-1-always loop (successful migrations remove from source)
+ FOREACH page of species from ISpeciesClient.ListSpeciesByRealmAsync(source)
+ FOREACH species
+ CALL ISpeciesClient.AddSpeciesToRealmAsync(species, target)
+ CALL ISpeciesClient.RemoveSpeciesFromRealmAsync(species, source)
+ // Individual failures tracked, do not abort
 
-  // Phase B: Location Migration (root-first)
-  FOREACH page of roots from ILocationClient.ListRootLocationsAsync(source)
-    FOREACH root
-      CALL ILocationClient.GetLocationDescendantsAsync(root)
-      CALL ILocationClient.TransferLocationToRealmAsync(root, target)
-      FOREACH descendant sorted by depth (shallowest first)
-        CALL ILocationClient.TransferLocationToRealmAsync(descendant, target)
-        IF descendant has parent
-          CALL ILocationClient.SetLocationParentAsync(descendant, parent)
+ // Phase B: Location Migration (root-first)
+ FOREACH page of roots from ILocationClient.ListRootLocationsAsync(source)
+ FOREACH root
+ CALL ILocationClient.GetLocationDescendantsAsync(root)
+ CALL ILocationClient.TransferLocationToRealmAsync(root, target)
+ FOREACH descendant sorted by depth (shallowest first)
+ CALL ILocationClient.TransferLocationToRealmAsync(descendant, target)
+ IF descendant has parent
+ CALL ILocationClient.SetLocationParentAsync(descendant, parent)
 
-  // Phase C: Character Migration
-  // Page-1-always loop
-  FOREACH page of characters from ICharacterClient.GetCharactersByRealmAsync(source)
-    FOREACH character
-      CALL ICharacterClient.TransferCharacterToRealmAsync(character, target)
-      // Individual failures tracked, do not abort
+ // Phase C: Character Migration
+ // Page-1-always loop
+ FOREACH page of characters from ICharacterClient.GetCharactersByRealmAsync(source)
+ FOREACH character
+ CALL ICharacterClient.TransferCharacterToRealmAsync(character, target)
+ // Individual failures tracked, do not abort
 
-  PUBLISH realm.merged { sourceRealmId, targetRealmId, migration counts }
+ PUBLISH realm.merged { sourceRealmId, targetRealmId, migration counts }
 
-  IF body.DeleteAfterMerge && totalFailed == 0
-    // Calls self.DeleteRealmAsync (includes resource check, publishes realm.deleted)
+ IF body.DeleteAfterMerge && totalFailed == 0
+ // Calls self.DeleteRealmAsync (includes resource check, publishes realm.deleted)
 
 RETURN (200, MergeRealmsResponse { per-type migrated/failed counts, sourceDeleted })
 ```
@@ -321,25 +321,25 @@ POST /realm/seed | Roles: [admin]
 
 ```
 FOREACH seedRealm in body.Realms
-  READ code-index:{CODE_UPPERCASE}
-  IF exists AND body.UpdateExisting
-    // ETag retry loop up to OptimisticRetryAttempts
-    READ realm:{existingId} [with ETag]
-    // Apply changed fields (same smart tracking as UpdateRealm)
-    IF fields changed
-      ETAG-WRITE realm:{existingId} <- updated model
-      PUBLISH realm.updated { changedFields }
-    // Increment updated (or skipped if no changes)
-  ELSE IF exists AND !body.UpdateExisting
-    // Increment skipped
-  ELSE
-    // Delegate to CreateRealmAsync
-    WRITE realm:{newId} <- RealmModel from seed
-    WRITE code-index:{CODE} <- newId
-    ETAG-WRITE all-realms <- list with new ID
-    PUBLISH realm.created { full state }
-    // Increment created
-  // Per-realm exceptions caught, added to errors list
+ READ code-index:{CODE_UPPERCASE}
+ IF exists AND body.UpdateExisting
+ // ETag retry loop up to OptimisticRetryAttempts
+ READ realm:{existingId} [with ETag]
+ // Apply changed fields (same smart tracking as UpdateRealm)
+ IF fields changed
+ ETAG-WRITE realm:{existingId} <- updated model
+ PUBLISH realm.updated { changedFields }
+ // Increment updated (or skipped if no changes)
+ ELSE IF exists AND !body.UpdateExisting
+ // Increment skipped
+ ELSE
+ // Delegate to CreateRealmAsync
+ WRITE realm:{newId} <- RealmModel from seed
+ WRITE code-index:{CODE} <- newId
+ ETAG-WRITE all-realms <- list with new ID
+ PUBLISH realm.created { full state }
+ // Increment created
+ // Per-realm exceptions caught, added to errors list
 RETURN (200, SeedRealmsResponse { created, updated, skipped, errors })
 ```
 
@@ -350,7 +350,7 @@ POST /realm/get-location-compress-context | Roles: [developer]
 
 ```
 CALL ILocationClient.GetLocationAsync(locationId) -> 404 if ApiException(404)
-READ realm:{location.RealmId}                     -> 404 if null
+READ realm:{location.RealmId} -> 404 if null
 RETURN (200, RealmLocationArchiveContext { realmId, realmName, realmCode, realmDescription })
 ```
 

@@ -25,9 +25,9 @@ components:
       - boardContractTemplateId
       - adjacencyMode
       - isActive
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -60,18 +60,6 @@ components:
         isActive: &id008
           type: boolean
           description: "Whether the template is active"
-        isDeprecated: &id009
-          type: boolean
-          description: "Whether this template has been deprecated"
-        deprecatedAt: &id010
-          type: string
-          format: date-time
-          nullable: true
-          description: "When the template was deprecated"
-        deprecationReason: &id011
-          type: string
-          nullable: true
-          description: "Reason for deprecation"
         createdAt:
           type: string
           format: date-time
@@ -80,6 +68,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the license board template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this license board template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the license board template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     LicenseBoardTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -98,9 +99,9 @@ components:
       - boardContractTemplateId
       - adjacencyMode
       - isActive
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -115,9 +116,6 @@ components:
         boardContractTemplateId: *id006
         adjacencyMode: *id007
         isActive: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
         createdAt:
           type: string
           format: date-time
@@ -126,6 +124,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the license board template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this license board template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the license board template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -149,9 +160,9 @@ components:
       - boardContractTemplateId
       - adjacencyMode
       - isActive
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -165,9 +176,6 @@ components:
         boardContractTemplateId: *id006
         adjacencyMode: *id007
         isActive: *id008
-        isDeprecated: *id009
-        deprecatedAt: *id010
-        deprecationReason: *id011
         createdAt:
           type: string
           format: date-time
@@ -176,6 +184,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the license board template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this license board template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the license board template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true
@@ -203,31 +224,31 @@ components:
           type: string
           default: license.board.created
           description: 'Event type identifier: license.board.created'
-        boardId: &id012
+        boardId: &id009
           type: string
           format: uuid
           description: "Unique board instance identifier"
-        ownerType: &id013
+        ownerType: &id010
           $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Type of entity that owns this board"
-        ownerId: &id014
+        ownerId: &id011
           type: string
           format: uuid
           description: "Entity that owns this board"
-        realmId: &id015
+        realmId: &id012
           type: string
           format: uuid
           nullable: true
           description: "Realm context for this board"
-        boardTemplateId: &id016
+        boardTemplateId: &id013
           type: string
           format: uuid
           description: "Board template this instance was created from"
-        gameServiceId: &id017
+        gameServiceId: &id014
           type: string
           format: uuid
           description: "Game service this board belongs to"
-        containerId: &id018
+        containerId: &id015
           type: string
           format: uuid
           description: "Inventory container holding unlocked license items"
@@ -263,13 +284,13 @@ components:
           type: string
           default: license.board.updated
           description: 'Event type identifier: license.board.updated'
-        boardId: *id012
-        ownerType: *id013
-        ownerId: *id014
-        realmId: *id015
-        boardTemplateId: *id016
-        gameServiceId: *id017
-        containerId: *id018
+        boardId: *id009
+        ownerType: *id010
+        ownerId: *id011
+        realmId: *id012
+        boardTemplateId: *id013
+        gameServiceId: *id014
+        containerId: *id015
         createdAt:
           type: string
           format: date-time
@@ -306,13 +327,13 @@ components:
           type: string
           default: license.board.deleted
           description: 'Event type identifier: license.board.deleted'
-        boardId: *id012
-        ownerType: *id013
-        ownerId: *id014
-        realmId: *id015
-        boardTemplateId: *id016
-        gameServiceId: *id017
-        containerId: *id018
+        boardId: *id009
+        ownerType: *id010
+        ownerId: *id011
+        realmId: *id012
+        boardTemplateId: *id013
+        gameServiceId: *id014
+        containerId: *id015
         createdAt:
           type: string
           format: date-time

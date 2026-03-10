@@ -49,17 +49,15 @@ info:
 x-lifecycle:
   topic_prefix: leaderboard
   LeaderboardDefinition:
+    deprecation: true
     model:
       gameServiceId: { type: string, format: uuid, required: true, description: "ID of the owning game service" }
       leaderboardId: { type: string, primary: true, required: true, description: "Unique identifier for this leaderboard" }
       displayName: { type: string, required: true, description: "Human-readable name" }
-      sortOrder: { type: string, required: true, description: "Score sort order" }
-      updateMode: { type: string, required: true, description: "Score update mode" }
+      sortOrder: { $ref: 'leaderboard-api.yaml#/components/schemas/SortOrder', required: true, description: "Score sort order" }
+      updateMode: { $ref: 'leaderboard-api.yaml#/components/schemas/UpdateMode', required: true, description: "Score update mode" }
       isSeasonal: { type: boolean, required: true, description: "Whether the leaderboard is seasonal" }
       isPublic: { type: boolean, required: true, description: "Whether the leaderboard is publicly visible" }
-      isDeprecated: { type: boolean, required: true, description: "Whether this definition has been deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the definition was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
       createdAt: { type: string, format: date-time, required: true, description: "When the definition was created" }
     sensitive: []
 

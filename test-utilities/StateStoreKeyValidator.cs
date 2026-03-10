@@ -6,7 +6,7 @@ using Xunit;
 namespace BeyondImmersion.BannouService.TestUtilities;
 
 /// <summary>
-/// Validates state store key builder patterns per FOUNDATION TENETS (T6):
+/// Validates state store key builder patterns per FOUNDATION TENETS:
 /// - Key prefixes must be private const string fields
 /// - Keys must be constructed via internal static Build*Key() methods
 /// - Builder visibility must be internal static (not private static)

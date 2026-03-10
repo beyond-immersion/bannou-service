@@ -949,7 +949,7 @@ public partial class SaveLoadService : ISaveLoadService
         var compressionTypeEnum = CompressionType.None;
         if (deltaSize > _configuration.AutoCompressThresholdBytes)
         {
-            // Configuration already provides typed enum (T25 compliant)
+            // Configuration already provides typed enum (IMPLEMENTATION TENETS compliant)
             compressionTypeEnum = _configuration.DefaultCompressionType;
             var deltaCompressionLevel = compressionTypeEnum == CompressionType.Brotli
                 ? _configuration.BrotliCompressionLevel
@@ -1254,7 +1254,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
         }
 
-        // Compress the reconstructed data - config already provides typed enum (T25 compliant)
+        // Compress the reconstructed data - config already provides typed enum (IMPLEMENTATION TENETS compliant)
         var compressionTypeEnum = _configuration.DefaultCompressionType;
         var collapseCompressionLevel = compressionTypeEnum == CompressionType.Brotli
             ? _configuration.BrotliCompressionLevel
@@ -1863,7 +1863,7 @@ public partial class SaveLoadService : ISaveLoadService
         // Create new version in target slot
         var newVersionNumber = (targetSlot.LatestVersion ?? 0) + 1;
         var contentHash = Hashing.ContentHasher.ComputeHash(sourceData);
-        // Configuration already provides typed enum (T25 compliant)
+        // Configuration already provides typed enum (IMPLEMENTATION TENETS compliant)
         var compressionTypeEnum = _configuration.DefaultCompressionType;
         var copyCompressionLevel = compressionTypeEnum == CompressionType.Brotli
             ? _configuration.BrotliCompressionLevel

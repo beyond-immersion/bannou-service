@@ -70,7 +70,7 @@ No DI provider/listener interfaces implemented or consumed. No typed service cli
 |-------|-----------|---------|
 | `contract.template.created` | `ContractTemplateCreatedEvent` | CreateContractTemplate |
 | `contract.template.updated` | `ContractTemplateUpdatedEvent` | UpdateContractTemplate |
-| `contract.template.deleted` | `ContractTemplateDeletedEvent` | Unused Category B infrastructure — contract templates are never deleted (T31) |
+| `contract.template.deleted` | `ContractTemplateDeletedEvent` | Unused Category B infrastructure — contract templates are never deleted |
 | `contract.instance.created` | `ContractInstanceCreatedEvent` | CreateContractInstance |
 | `contract.instance.updated` | `ContractInstanceUpdatedEvent` | ProposeContractInstance, ConsentToContract, TerminateContractInstance, GetContractInstanceStatus (lazy), CompleteMilestone, FailMilestone, GetMilestone (lazy), ReportBreach, UpdateContractMetadata, LockContract, UnlockContract, TransferContractParty, SetContractTemplateValues, ExecuteContract |
 | `contract.instance.deleted` | `ContractInstanceDeletedEvent` | DeleteContractInstance |
@@ -164,11 +164,11 @@ This plugin does not consume external events. Schema declares `x-event-subscript
 POST /contract/template/create | Roles: [admin]
 
 ```
-IF request.milestones.Count > config.MaxMilestonesPerTemplate       -> 400
+IF request.milestones.Count > config.MaxMilestonesPerTemplate -> 400
 FOREACH milestone in request.milestones
-  IF milestone.onComplete.Count > config.MaxPreboundApisPerMilestone -> 400
-  IF milestone.onExpire.Count > config.MaxPreboundApisPerMilestone   -> 400
-READ contract-statestore:template-code:{code}                       -> 409 if exists
+ IF milestone.onComplete.Count > config.MaxPreboundApisPerMilestone -> 400
+ IF milestone.onExpire.Count > config.MaxPreboundApisPerMilestone -> 400
+READ contract-statestore:template-code:{code} -> 409 if exists
 WRITE contract-statestore:template:{templateId} <- ContractTemplateModel from request
 WRITE contract-statestore:template-code:{code} <- templateId
 // AddToListAsync acquires index:{all-templates} lock (15s)
@@ -181,11 +181,11 @@ RETURN (200, ContractTemplateResponse)
 POST /contract/template/get | Roles: [user]
 
 ```
-IF request.templateId is null AND request.code is null               -> 400
+IF request.templateId is null AND request.code is null -> 400
 IF request.code provided
-  READ contract-statestore:template-code:{code}                      -> 404 if null
-  // resolved templateId from code index
-READ contract-statestore:template:{templateId}                       -> 404 if null
+ READ contract-statestore:template-code:{code} -> 404 if null
+ // resolved templateId from code index
+READ contract-statestore:template:{templateId} -> 404 if null
 RETURN (200, ContractTemplateResponse)
 ```
 
@@ -195,10 +195,10 @@ POST /contract/template/list | Roles: [user]
 ```
 READ contract-statestore:all-templates -> templateIds
 FOREACH templateId in templateIds
-  READ contract-statestore:template:{templateId}
-  IF !request.includeDeprecated AND model.IsDeprecated -> skip
-  IF request.realmId filter -> skip if mismatch
-  IF request.searchTerm -> skip if name/description not matching (case-insensitive)
+ READ contract-statestore:template:{templateId}
+ IF !request.includeDeprecated AND model.IsDeprecated -> skip
+ IF request.realmId filter -> skip if mismatch
+ IF request.searchTerm -> skip if name/description not matching (case-insensitive)
 // Cursor-based pagination: cursor = base64({ offset })
 // Page size defaults to config.DefaultPageSize
 RETURN (200, ListContractTemplatesResponse { templates, nextCursor, hasMore })
@@ -208,7 +208,7 @@ RETURN (200, ListContractTemplatesResponse { templates, nextCursor, hasMore })
 POST /contract/template/update | Roles: [admin]
 
 ```
-READ contract-statestore:template:{templateId}                       -> 404 if null
+READ contract-statestore:template:{templateId} -> 404 if null
 // Track changed fields for event
 IF request.name provided -> update, track "name"
 IF request.description provided -> update, track "description"
@@ -222,8 +222,8 @@ RETURN (200, ContractTemplateResponse)
 POST /contract/template/deprecate | Roles: [admin]
 
 ```
-READ contract-statestore:template:{templateId}                       -> 404 if null
-IF template.IsDeprecated == true                                     -> 200 (idempotent, per IMPLEMENTATION TENETS)
+READ contract-statestore:template:{templateId} -> 404 if null
+IF template.IsDeprecated == true -> 200 (idempotent, per IMPLEMENTATION TENETS)
 // Sets IsDeprecated=true, DeprecatedAt=now, DeprecationReason from request.reason
 WRITE contract-statestore:template:{templateId} <- updated ContractTemplateModel
 PUBLISH contract.template.updated { templateId, code, changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"] }
@@ -234,21 +234,21 @@ RETURN (200, ContractTemplateResponse)
 POST /contract/instance/create | Roles: [user]
 
 ```
-READ contract-statestore:template:{templateId}                       -> 404 if null
-IF template.IsDeprecated                                             -> 400 (Category B instance creation guard)
-IF request.parties.Count > config.MaxPartiesPerContract              -> 400
+READ contract-statestore:template:{templateId} -> 404 if null
+IF template.IsDeprecated -> 400 (Category B instance creation guard)
+IF request.parties.Count > config.MaxPartiesPerContract -> 400
 IF config.MaxActiveContractsPerEntity > 0
-  FOREACH party in request.parties
-    READ contract-statestore:party-idx:{entityType}:{entityId}
-    // Count active contracts (Draft/Proposed/Pending/Active)
-    IF activeCount >= config.MaxActiveContractsPerEntity              -> 409
+ FOREACH party in request.parties
+ READ contract-statestore:party-idx:{entityType}:{entityId}
+ // Count active contracts (Draft/Proposed/Pending/Active)
+ IF activeCount >= config.MaxActiveContractsPerEntity -> 409
 // Merge terms: instance terms override template defaults per config.TermsMergeMode
 // Build milestone instances from template milestone definitions
 WRITE contract-statestore:instance:{contractId} <- ContractInstanceModel (status=Draft)
 WRITE contract-statestore:template-idx:{templateId} <- append contractId
 WRITE contract-statestore:status-idx:Draft <- append contractId
 FOREACH party in parties
-  WRITE contract-statestore:party-idx:{entityType}:{entityId} <- append contractId
+ WRITE contract-statestore:party-idx:{entityType}:{entityId} <- append contractId
 PUBLISH contract.instance.created { contractId, templateId, templateCode, status, createdAt }
 RETURN (200, ContractInstanceResponse)
 ```
@@ -258,14 +258,14 @@ POST /contract/instance/propose | Roles: [user]
 
 ```
 LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if fails
-  READ contract-statestore:instance:{contractId} [with ETag]         -> 404 if null
-  IF status != Draft                                                  -> 400
-  // Set status=Proposed, ProposedAt=now, consent deadline
-  WRITE contract-statestore:status-idx:Draft <- remove contractId
-  WRITE contract-statestore:status-idx:Proposed <- append contractId
-  ETAG-WRITE contract-statestore:instance:{contractId}               -> 409 if ETag mismatch
-  PUBLISH contract.proposed { contractId, templateId, templateCode, parties }
-  PUBLISH contract.instance.updated { contractId, status, changedFields=["status","proposedAt"] }
+ READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+ IF status != Draft -> 400
+ // Set status=Proposed, ProposedAt=now, consent deadline
+ WRITE contract-statestore:status-idx:Draft <- remove contractId
+ WRITE contract-statestore:status-idx:Proposed <- append contractId
+ ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
+ PUBLISH contract.proposed { contractId, templateId, templateCode, parties }
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["status","proposedAt"] }
 RETURN (200, ContractInstanceResponse)
 ```
 
@@ -274,40 +274,40 @@ POST /contract/instance/consent | Roles: [user]
 
 ```
 LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if fails
-  READ contract-statestore:instance:{contractId} [with ETag]         -> 404 if null
-  IF instance.GuardianId is set                                       -> 403
-  IF status != Proposed AND status != Pending                         -> 400
-  // Lazy consent deadline check
-  IF status == Proposed AND now > ProposedAt + DefaultConsentTimeoutDays
-    // Transition to Expired
-    WRITE contract-statestore:status-idx:Proposed <- remove contractId
-    ETAG-WRITE contract-statestore:instance:{contractId} <- status=Expired
-    PUBLISH contract.expired { contractId, templateCode }
-    PUBLISH contract.instance.updated { contractId, status, changedFields=["status"] }
-    RETURN (400, null)
-  // Find party by entityId+entityType
-  IF party not found                                                  -> 400
-  IF party already consented                                          -> 400
-  // Record consent with timestamp
-  IF not all required parties consented
-    ETAG-WRITE contract-statestore:instance:{contractId}             -> 409 if ETag mismatch
-    PUBLISH contract.consent-received { contractId, role, remainingConsentsNeeded }
-  ELSE // all consented
-    PUBLISH contract.consent-received { contractId, role, remainingConsentsNeeded: 0 }
-    PUBLISH contract.accepted { contractId, templateCode, parties }
-    IF effectiveFrom is null OR effectiveFrom <= now
-      // Immediate activation
-      // Activate first milestone
-      WRITE contract-statestore:status-idx:{oldStatus} <- remove contractId
-      WRITE contract-statestore:status-idx:Active <- append contractId
-      ETAG-WRITE contract-statestore:instance:{contractId} <- status=Active
-      PUBLISH contract.activated { contractId, templateCode, parties }
-    ELSE
-      // Future activation
-      WRITE contract-statestore:status-idx:{oldStatus} <- remove contractId
-      WRITE contract-statestore:status-idx:Pending <- append contractId
-      ETAG-WRITE contract-statestore:instance:{contractId} <- status=Pending
-    PUBLISH contract.instance.updated { contractId, status, changedFields=["consentStatus","status","acceptedAt","effectiveFrom"] }
+ READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+ IF instance.GuardianId is set -> 403
+ IF status != Proposed AND status != Pending -> 400
+ // Lazy consent deadline check
+ IF status == Proposed AND now > ProposedAt + DefaultConsentTimeoutDays
+ // Transition to Expired
+ WRITE contract-statestore:status-idx:Proposed <- remove contractId
+ ETAG-WRITE contract-statestore:instance:{contractId} <- status=Expired
+ PUBLISH contract.expired { contractId, templateCode }
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["status"] }
+ RETURN (400, null)
+ // Find party by entityId+entityType
+ IF party not found -> 400
+ IF party already consented -> 400
+ // Record consent with timestamp
+ IF not all required parties consented
+ ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
+ PUBLISH contract.consent-received { contractId, role, remainingConsentsNeeded }
+ ELSE // all consented
+ PUBLISH contract.consent-received { contractId, role, remainingConsentsNeeded: 0 }
+ PUBLISH contract.accepted { contractId, templateCode, parties }
+ IF effectiveFrom is null OR effectiveFrom <= now
+ // Immediate activation
+ // Activate first milestone
+ WRITE contract-statestore:status-idx:{oldStatus} <- remove contractId
+ WRITE contract-statestore:status-idx:Active <- append contractId
+ ETAG-WRITE contract-statestore:instance:{contractId} <- status=Active
+ PUBLISH contract.activated { contractId, templateCode, parties }
+ ELSE
+ // Future activation
+ WRITE contract-statestore:status-idx:{oldStatus} <- remove contractId
+ WRITE contract-statestore:status-idx:Pending <- append contractId
+ ETAG-WRITE contract-statestore:instance:{contractId} <- status=Pending
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["consentStatus","status","acceptedAt","effectiveFrom"] }
 RETURN (200, ContractInstanceResponse)
 ```
 
@@ -315,7 +315,7 @@ RETURN (200, ContractInstanceResponse)
 POST /contract/instance/get | Roles: [user]
 
 ```
-READ contract-statestore:instance:{contractId}                       -> 404 if null
+READ contract-statestore:instance:{contractId} -> 404 if null
 // Plain read -- no lazy state transitions
 RETURN (200, ContractInstanceResponse)
 ```
@@ -324,18 +324,18 @@ RETURN (200, ContractInstanceResponse)
 POST /contract/instance/query | Roles: [user]
 
 ```
-IF no filter provided (no partyEntityId, templateId, or statuses)    -> 400
+IF no filter provided (no partyEntityId, templateId, or statuses) -> 400
 IF request.partyEntityId provided
-  READ contract-statestore:party-idx:{entityType}:{entityId} -> contractIds
+ READ contract-statestore:party-idx:{entityType}:{entityId} -> contractIds
 ELSE IF request.templateId provided
-  READ contract-statestore:template-idx:{templateId} -> contractIds
+ READ contract-statestore:template-idx:{templateId} -> contractIds
 ELSE
-  // Union of status indexes
-  FOREACH status in request.statuses
-    READ contract-statestore:status-idx:{status} -> merge into contractIds
+ // Union of status indexes
+ FOREACH status in request.statuses
+ READ contract-statestore:status-idx:{status} -> merge into contractIds
 FOREACH contractId in contractIds
-  READ contract-statestore:instance:{contractId}
-  // Apply additional filters (status, templateCode) in memory
+ READ contract-statestore:instance:{contractId}
+ // Apply additional filters (status, templateCode) in memory
 // Cursor-based pagination: cursor = base64({ offset })
 // Page size defaults to config.DefaultPageSize
 RETURN (200, QueryContractInstancesResponse { contracts, nextCursor, hasMore })
@@ -346,17 +346,17 @@ POST /contract/instance/terminate | Roles: [user]
 
 ```
 LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if fails
-  READ contract-statestore:instance:{contractId} [with ETag]         -> 404 if null
-  IF instance.GuardianId is set                                       -> 403
-  IF status not in [Draft, Proposed, Pending, Active]                 -> 400
-  IF requestingEntity not a party                                     -> 400
-  // Transition to Terminated
-  WRITE contract-statestore:status-idx:{oldStatus} <- remove contractId
-  FOREACH party in parties
-    WRITE contract-statestore:party-idx:{entityType}:{entityId} <- remove contractId
-  ETAG-WRITE contract-statestore:instance:{contractId} <- status=Terminated, TerminatedAt=now
-  PUBLISH contract.terminated { contractId, templateCode, requestingEntityId, reason }
-  PUBLISH contract.instance.updated { contractId, status, changedFields=["status","terminatedAt"] }
+ READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+ IF instance.GuardianId is set -> 403
+ IF status not in [Draft, Proposed, Pending, Active] -> 400
+ IF requestingEntity not a party -> 400
+ // Transition to Terminated
+ WRITE contract-statestore:status-idx:{oldStatus} <- remove contractId
+ FOREACH party in parties
+ WRITE contract-statestore:party-idx:{entityType}:{entityId} <- remove contractId
+ ETAG-WRITE contract-statestore:instance:{contractId} <- status=Terminated, TerminatedAt=now
+ PUBLISH contract.terminated { contractId, templateCode, requestingEntityId, reason }
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["status","terminatedAt"] }
 RETURN (200, ContractInstanceResponse)
 ```
 
@@ -364,15 +364,15 @@ RETURN (200, ContractInstanceResponse)
 POST /contract/instance/delete | Roles: [developer]
 
 ```
-READ contract-statestore:instance:{contractId}                          -> 404 if null
-IF status not in [Fulfilled, Terminated, Expired, Declined]             -> 400
+READ contract-statestore:instance:{contractId} -> 404 if null
+IF status not in [Fulfilled, Terminated, Expired, Declined] -> 400
 DELETE contract-statestore:instance:{contractId}
 WRITE contract-statestore:status-idx:{status} <- remove contractId
 WRITE contract-statestore:template-idx:{templateId} <- remove contractId
 FOREACH party in parties
-  WRITE contract-statestore:party-idx:{entityType}:{entityId} <- remove contractId
+ WRITE contract-statestore:party-idx:{entityType}:{entityId} <- remove contractId
 FOREACH breachId in instance.BreachIds
-  DELETE contract-statestore:breach:{breachId}
+ DELETE contract-statestore:breach:{breachId}
 PUBLISH contract.instance.deleted { contractId, templateCode, status, deletedReason }
 RETURN 200
 ```
@@ -381,32 +381,32 @@ RETURN 200
 POST /contract/instance/get-status | Roles: [user]
 
 ```
-READ contract-statestore:instance:{contractId} [with ETag]           -> 404 if null
+READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
 // Lazy enforcement block
 IF status == Pending AND effectiveFrom <= now
-  // Activate first milestone
-  WRITE contract-statestore:status-idx:Pending <- remove contractId
-  WRITE contract-statestore:status-idx:Active <- append contractId
-  ETAG-WRITE contract-statestore:instance:{contractId} <- status=Active
-  PUBLISH contract.activated { contractId, templateCode, parties }
-  PUBLISH contract.instance.updated { contractId, status, changedFields=["status"] }
+ // Activate first milestone
+ WRITE contract-statestore:status-idx:Pending <- remove contractId
+ WRITE contract-statestore:status-idx:Active <- append contractId
+ ETAG-WRITE contract-statestore:instance:{contractId} <- status=Active
+ PUBLISH contract.activated { contractId, templateCode, parties }
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["status"] }
 IF status == Active AND effectiveUntil <= now
-  // Expire contract
-  WRITE contract-statestore:status-idx:Active <- remove contractId
-  ETAG-WRITE contract-statestore:instance:{contractId} <- status=Expired
-  PUBLISH contract.expired { contractId, templateCode, effectiveUntil }
-  PUBLISH contract.instance.updated { contractId, status, changedFields=["status"] }
+ // Expire contract
+ WRITE contract-statestore:status-idx:Active <- remove contractId
+ ETAG-WRITE contract-statestore:instance:{contractId} <- status=Expired
+ PUBLISH contract.expired { contractId, templateCode, effectiveUntil }
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["status"] }
 IF status == Active
-  FOREACH milestone in active milestones with deadline
-    IF now > milestone.ActivatedAt + ParseIsoDuration(milestone.Deadline)
-      // see helper: ProcessOverdueMilestone
-      // Marks milestone Failed, publishes milestone.failed, may trigger breach
-  IF anyProcessed
-    PUBLISH contract.instance.updated { contractId, status, changedFields=["milestones","status"] }
+ FOREACH milestone in active milestones with deadline
+ IF now > milestone.ActivatedAt + ParseIsoDuration(milestone.Deadline)
+ // see helper: ProcessOverdueMilestone
+ // Marks milestone Failed, publishes milestone.failed, may trigger breach
+ IF anyProcessed
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["milestones","status"] }
 // Build status response: milestone progress, pending consents, active breaches
 FOREACH breachId in instance.BreachIds
-  READ contract-statestore:breach:{breachId}
-  // Filter to active breaches (Detected, CurePeriod)
+ READ contract-statestore:breach:{breachId}
+ // Filter to active breaches (Detected, CurePeriod)
 RETURN (200, ContractInstanceStatusResponse)
 ```
 
@@ -415,24 +415,24 @@ POST /contract/milestone/complete | Roles: [developer]
 
 ```
 LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if fails
-  READ contract-statestore:instance:{contractId} [with ETag]         -> 404 if null
-  IF status != Active                                                 -> 400
-  // Find milestone by code
-  IF milestone not found                                              -> 404
-  IF milestone in terminal state (Completed/Failed/Skipped)           -> 400
-  // Mark milestone Completed
-  // Execute onComplete prebound APIs in batches
-  // see helper: ExecutePreboundApisBatched
-  // Activate next milestone by sequence if exists
-  IF all required milestones completed
-    // Transition contract to Fulfilled
-    WRITE contract-statestore:status-idx:Active <- remove contractId
-    FOREACH party in parties
-      WRITE contract-statestore:party-idx:{entityType}:{entityId} <- remove contractId
-    PUBLISH contract.fulfilled { contractId, templateCode, parties, milestonesCompleted }
-  ETAG-WRITE contract-statestore:instance:{contractId}               -> 409 if ETag mismatch
-  PUBLISH contract.milestone.completed { contractId, milestoneCode, preboundApisExecuted }
-  PUBLISH contract.instance.updated { contractId, status, changedFields=["milestones"(,"status")] }
+ READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+ IF status != Active -> 400
+ // Find milestone by code
+ IF milestone not found -> 404
+ IF milestone in terminal state (Completed/Failed/Skipped) -> 400
+ // Mark milestone Completed
+ // Execute onComplete prebound APIs in batches
+ // see helper: ExecutePreboundApisBatched
+ // Activate next milestone by sequence if exists
+ IF all required milestones completed
+ // Transition contract to Fulfilled
+ WRITE contract-statestore:status-idx:Active <- remove contractId
+ FOREACH party in parties
+ WRITE contract-statestore:party-idx:{entityType}:{entityId} <- remove contractId
+ PUBLISH contract.fulfilled { contractId, templateCode, parties, milestonesCompleted }
+ ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
+ PUBLISH contract.milestone.completed { contractId, milestoneCode, preboundApisExecuted }
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["milestones"(,"status")] }
 RETURN (200, MilestoneResponse)
 ```
 
@@ -441,19 +441,19 @@ POST /contract/milestone/fail | Roles: [developer]
 
 ```
 LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if fails
-  READ contract-statestore:instance:{contractId} [with ETag]         -> 404 if null
-  IF status != Active                                                 -> 400
-  IF milestone not found                                              -> 404
-  IF milestone in terminal state                                      -> 400
-  IF milestone.Required
-    // Mark Failed, set triggeredBreach=true
-  ELSE
-    // Mark Skipped, triggeredBreach=false
-  // Execute onExpire prebound APIs in batches
-  // Check breach threshold -> auto-terminate if exceeded
-  ETAG-WRITE contract-statestore:instance:{contractId}               -> 409 if ETag mismatch
-  PUBLISH contract.milestone.failed { contractId, milestoneCode, wasRequired, triggeredBreach }
-  PUBLISH contract.instance.updated { contractId, status, changedFields=["milestones"] }
+ READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+ IF status != Active -> 400
+ IF milestone not found -> 404
+ IF milestone in terminal state -> 400
+ IF milestone.Required
+ // Mark Failed, set triggeredBreach=true
+ ELSE
+ // Mark Skipped, triggeredBreach=false
+ // Execute onExpire prebound APIs in batches
+ // Check breach threshold -> auto-terminate if exceeded
+ ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
+ PUBLISH contract.milestone.failed { contractId, milestoneCode, wasRequired, triggeredBreach }
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["milestones"] }
 RETURN (200, MilestoneResponse)
 ```
 
@@ -461,13 +461,13 @@ RETURN (200, MilestoneResponse)
 POST /contract/milestone/get | Roles: [user]
 
 ```
-READ contract-statestore:instance:{contractId}                       -> 404 if null
+READ contract-statestore:instance:{contractId} -> 404 if null
 // Find milestone by code
-IF milestone not found                                                -> 404
+IF milestone not found -> 404
 // Lazy deadline enforcement
 IF milestone is active AND has deadline AND deadline exceeded
-  // see helper: ProcessOverdueMilestone
-  PUBLISH contract.instance.updated { contractId, status, changedFields=["milestones","status"] }
+ // see helper: ProcessOverdueMilestone
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["milestones","status"] }
 RETURN (200, MilestoneResponse)
 ```
 
@@ -476,19 +476,19 @@ POST /contract/breach/report | Roles: [user]
 
 ```
 LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if fails
-  READ contract-statestore:instance:{contractId} [with ETag]         -> 404 if null
-  IF status != Active                                                 -> 400
-  // Build BreachModel
-  IF terms.GracePeriodForCure (parsed as ISO 8601 duration)
-    // status=CurePeriod, CureDeadline=now + duration
-  ELSE
-    // status=Detected
-  WRITE contract-statestore:breach:{breachId} <- BreachModel
-  // Add breachId to instance.BreachIds, increment BreachCount
-  ETAG-WRITE contract-statestore:instance:{contractId}               -> 409 if ETag mismatch
-  PUBLISH contract.breach.detected { contractId, breachId, breachType, cureDeadline }
-  PUBLISH contract.instance.updated { contractId, status, changedFields=["breachIds"] }
-  // Check breach threshold -> auto-terminate if exceeded
+ READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+ IF status != Active -> 400
+ // Build BreachModel
+ IF terms.GracePeriodForCure (parsed as ISO 8601 duration)
+ // status=CurePeriod, CureDeadline=now + duration
+ ELSE
+ // status=Detected
+ WRITE contract-statestore:breach:{breachId} <- BreachModel
+ // Add breachId to instance.BreachIds, increment BreachCount
+ ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
+ PUBLISH contract.breach.detected { contractId, breachId, breachType, cureDeadline }
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["breachIds"] }
+ // Check breach threshold -> auto-terminate if exceeded
 RETURN (200, BreachResponse)
 ```
 
@@ -497,14 +497,14 @@ POST /contract/breach/cure | Roles: [developer]
 
 ```
 LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if fails
-  READ contract-statestore:instance:{contractId} [with ETag]         -> 404 if null
-  READ contract-statestore:breach:{breachId}                         -> 404 if null
-  IF breach not in curable state (already cured or past grace)        -> 400
-  // Mark breach Cured, set CuredAt
-  WRITE contract-statestore:breach:{breachId} <- updated
-  // Decrement instance BreachCount
-  ETAG-WRITE contract-statestore:instance:{contractId}               -> 409 if ETag mismatch
-  PUBLISH contract.breach.cured { contractId, breachId, cureEvidence }
+ READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+ READ contract-statestore:breach:{breachId} -> 404 if null
+ IF breach not in curable state (already cured or past grace) -> 400
+ // Mark breach Cured, set CuredAt
+ WRITE contract-statestore:breach:{breachId} <- updated
+ // Decrement instance BreachCount
+ ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
+ PUBLISH contract.breach.cured { contractId, breachId, cureEvidence }
 RETURN (200, BreachResponse)
 ```
 
@@ -512,9 +512,9 @@ RETURN (200, BreachResponse)
 POST /contract/breach/get | Roles: [user]
 
 ```
-READ contract-statestore:instance:{contractId}                       -> 404 if null
-READ contract-statestore:breach:{breachId}                           -> 404 if null
-IF breach does not belong to this contract                            -> 400
+READ contract-statestore:instance:{contractId} -> 404 if null
+READ contract-statestore:breach:{breachId} -> 404 if null
+IF breach does not belong to this contract -> 400
 RETURN (200, BreachResponse)
 ```
 
@@ -523,13 +523,13 @@ POST /contract/metadata/update | Roles: [developer]
 
 ```
 // No distributed lock -- relies on ETag only
-READ contract-statestore:instance:{contractId} [with ETag]           -> 404 if null
-IF status in terminal states (Fulfilled/Terminated/Expired)           -> 400
+READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+IF status in terminal states (Fulfilled/Terminated/Expired) -> 400
 IF request.metadataType == InstanceData
-  // Update instance.GameMetadata.InstanceData
+ // Update instance.GameMetadata.InstanceData
 ELSE // RuntimeState
-  // Update instance.GameMetadata.RuntimeState
-ETAG-WRITE contract-statestore:instance:{contractId}                 -> 409 if ETag mismatch
+ // Update instance.GameMetadata.RuntimeState
+ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
 PUBLISH contract.instance.updated { contractId, status, changedFields=["gameMetadata"] }
 RETURN (200, ContractMetadataResponse)
 ```
@@ -538,7 +538,7 @@ RETURN (200, ContractMetadataResponse)
 POST /contract/metadata/get | Roles: [user]
 
 ```
-READ contract-statestore:instance:{contractId}                       -> 404 if null
+READ contract-statestore:instance:{contractId} -> 404 if null
 RETURN (200, ContractMetadataResponse { instanceData, runtimeState })
 ```
 
@@ -548,15 +548,15 @@ POST /contract/check-constraint | Roles: [user]
 ```
 READ contract-statestore:party-idx:{entityType}:{entityId} -> contractIds
 FOREACH contractId in contractIds
-  READ contract-statestore:instance:{contractId}
-  // Filter to Active status only
+ READ contract-statestore:instance:{contractId}
+ // Filter to Active status only
 IF request.constraintType == Exclusivity
-  // Check terms.Exclusivity boolean on active contracts
+ // Check terms.Exclusivity boolean on active contracts
 ELSE IF request.constraintType == NonCompete
-  // Check terms.NonCompete boolean on active contracts
+ // Check terms.NonCompete boolean on active contracts
 ELSE IF request.constraintType == TimeCommitment
-  // Check date range overlaps for contracts with TimeCommitment=true
-  // and TimeCommitmentType=Exclusive
+ // Check date range overlaps for contracts with TimeCommitment=true
+ // and TimeCommitmentType=Exclusive
 RETURN (200, CheckConstraintResponse { allowed, conflictingContracts, reason })
 ```
 
@@ -566,10 +566,10 @@ POST /contract/query-active | Roles: [user]
 ```
 READ contract-statestore:party-idx:{entityType}:{entityId} -> contractIds
 FOREACH contractId in contractIds
-  READ contract-statestore:instance:{contractId}
-  // Filter to Active status
-  IF request.templateCodes provided
-    // Wildcard prefix matching: TrimEnd('*') + StartsWith
+ READ contract-statestore:instance:{contractId}
+ // Filter to Active status
+ IF request.templateCodes provided
+ // Wildcard prefix matching: TrimEnd('*') + StartsWith
 // Cursor-based pagination: cursor = base64({ offset })
 RETURN (200, QueryActiveContractsResponse { contracts })
 ```
@@ -579,16 +579,16 @@ POST /contract/lock | Roles: [developer]
 
 ```
 IF request.idempotencyKey provided
-  READ contract-statestore:idempotency:lock:{key}
-  IF cached -> RETURN (200, cached response)
-READ contract-statestore:instance:{contractId} [with ETag]           -> 404 if null
+ READ contract-statestore:idempotency:lock:{key}
+ IF cached -> RETURN (200, cached response)
+READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
 READ contract-statestore:template:{templateId}
-IF template.Transferable != true                                      -> 400
-IF instance.GuardianId is set                                         -> 409
+IF template.Transferable != true -> 400
+IF instance.GuardianId is set -> 409
 // Set GuardianId, GuardianType, LockedAt
-ETAG-WRITE contract-statestore:instance:{contractId}                 -> 409 if ETag mismatch
+ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
 IF request.idempotencyKey provided
-  WRITE contract-statestore:idempotency:lock:{key} <- response (TTL: IdempotencyTtlSeconds)
+ WRITE contract-statestore:idempotency:lock:{key} <- response (TTL: IdempotencyTtlSeconds)
 PUBLISH contract.locked { contractId, guardianId, guardianType }
 PUBLISH contract.instance.updated { contractId, status, changedFields=["guardianId","guardianType","lockedAt"] }
 RETURN (200, LockContractResponse)
@@ -599,15 +599,15 @@ POST /contract/unlock | Roles: [developer]
 
 ```
 IF request.idempotencyKey provided
-  READ contract-statestore:idempotency:unlock:{key}
-  IF cached -> RETURN (200, cached response)
-READ contract-statestore:instance:{contractId} [with ETag]           -> 404 if null
-IF not locked                                                         -> 400
-IF request.guardianId != instance.GuardianId                          -> 403
+ READ contract-statestore:idempotency:unlock:{key}
+ IF cached -> RETURN (200, cached response)
+READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+IF not locked -> 400
+IF request.guardianId != instance.GuardianId -> 403
 // Clear GuardianId, GuardianType, LockedAt
-ETAG-WRITE contract-statestore:instance:{contractId}                 -> 409 if ETag mismatch
+ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
 IF request.idempotencyKey provided
-  WRITE contract-statestore:idempotency:unlock:{key} <- response (TTL: IdempotencyTtlSeconds)
+ WRITE contract-statestore:idempotency:unlock:{key} <- response (TTL: IdempotencyTtlSeconds)
 PUBLISH contract.unlocked { contractId, previousGuardianId, previousGuardianType }
 PUBLISH contract.instance.updated { contractId, status, changedFields=["guardianId","guardianType","lockedAt"] }
 RETURN (200, UnlockContractResponse)
@@ -618,21 +618,21 @@ POST /contract/transfer-party | Roles: [developer]
 
 ```
 IF request.idempotencyKey provided
-  READ contract-statestore:idempotency:transfer:{key}
-  IF cached -> RETURN (200, cached response)
-READ contract-statestore:instance:{contractId} [with ETag]           -> 404 if null
-IF status != Active                                                   -> 400
-IF locked AND request.guardianId != instance.GuardianId               -> 403
+ READ contract-statestore:idempotency:transfer:{key}
+ IF cached -> RETURN (200, cached response)
+READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+IF status != Active -> 400
+IF locked AND request.guardianId != instance.GuardianId -> 403
 READ contract-statestore:template:{templateId}
-IF template.Transferable != true                                      -> 400
+IF template.Transferable != true -> 400
 // Find party by fromEntityId/fromEntityType
-IF party not found                                                    -> 404
+IF party not found -> 404
 // Update party EntityId/EntityType to new entity
 WRITE contract-statestore:party-idx:{oldType}:{oldId} <- remove contractId
 WRITE contract-statestore:party-idx:{newType}:{newId} <- append contractId
-ETAG-WRITE contract-statestore:instance:{contractId}                 -> 409 if ETag mismatch
+ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
 IF request.idempotencyKey provided
-  WRITE contract-statestore:idempotency:transfer:{key} <- response (TTL: IdempotencyTtlSeconds)
+ WRITE contract-statestore:idempotency:transfer:{key} <- response (TTL: IdempotencyTtlSeconds)
 PUBLISH contract.party.transferred { contractId, role, fromEntityId, toEntityId }
 PUBLISH contract.instance.updated { contractId, status, changedFields=["parties"] }
 RETURN (200, TransferContractPartyResponse)
@@ -642,7 +642,7 @@ RETURN (200, TransferContractPartyResponse)
 POST /contract/clause-type/register | Roles: [admin]
 
 ```
-READ contract-statestore:clause-type:{typeCode}                      -> 409 if exists
+READ contract-statestore:clause-type:{typeCode} -> 409 if exists
 // Ensure built-in clause types (asset_requirement, currency_transfer, item_transfer, fee)
 // see helper: EnsureBuiltInClauseTypes
 WRITE contract-statestore:clause-type:{typeCode} <- ClauseTypeModel from request
@@ -659,9 +659,9 @@ POST /contract/clause-type/list | Roles: [developer]
 // see helper: EnsureBuiltInClauseTypes
 READ contract-statestore:all-clause-types -> typeCodes
 FOREACH typeCode in typeCodes
-  READ contract-statestore:clause-type:{typeCode}
-  IF request.category filter -> skip if mismatch
-  IF request.includeBuiltIn == false -> skip if isBuiltIn
+ READ contract-statestore:clause-type:{typeCode}
+ IF request.category filter -> skip if mismatch
+ IF request.includeBuiltIn == false -> skip if isBuiltIn
 RETURN (200, ListClauseTypesResponse { clauseTypes })
 ```
 
@@ -669,13 +669,13 @@ RETURN (200, ListClauseTypesResponse { clauseTypes })
 POST /contract/instance/set-template-values | Roles: [developer]
 
 ```
-READ contract-statestore:instance:{contractId} [with ETag]           -> 404 if null
-IF status != Active                                                   -> 400
-IF instance.GuardianId is set                                         -> 400
+READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+IF status != Active -> 400
+IF instance.GuardianId is set -> 400
 FOREACH key in request.templateValues.Keys
-  IF key does not match pattern ^[A-Za-z0-9_]+$                      -> 400
+ IF key does not match pattern ^[A-Za-z0-9_]+$ -> 400
 // Merge provided values into instance.TemplateValues (additive)
-ETAG-WRITE contract-statestore:instance:{contractId}                 -> 409 if ETag mismatch
+ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
 PUBLISH contract.templatevalues.set { contractId, keys }
 PUBLISH contract.instance.updated { contractId, status, changedFields=["templateValues"] }
 RETURN (200, SetTemplateValuesResponse { contractId, valueCount })
@@ -685,15 +685,15 @@ RETURN (200, SetTemplateValuesResponse { contractId, valueCount })
 POST /contract/instance/check-asset-requirements | Roles: [developer]
 
 ```
-READ contract-statestore:instance:{contractId}                       -> 404 if null
-READ contract-statestore:template:{templateId}                       -> 404 if null
-IF instance.TemplateValues is empty                                   -> 400
+READ contract-statestore:instance:{contractId} -> 404 if null
+READ contract-statestore:template:{templateId} -> 404 if null
+IF instance.TemplateValues is empty -> 400
 // Parse clauses from template terms, filter for asset_requirement type
 FOREACH clause in assetRequirementClauses
-  // Resolve checkLocation via template value substitution
-  // Query balance via IServiceNavigator -> clause type handler endpoint
-  CALL _navigator.ExecutePreboundApiAsync(handler.endpoint, payload)
-  // Compare current balance against required amount
+ // Resolve checkLocation via template value substitution
+ // Query balance via IServiceNavigator -> clause type handler endpoint
+ CALL _navigator.ExecutePreboundApiAsync(handler.endpoint, payload)
+ // Compare current balance against required amount
 RETURN (200, CheckAssetRequirementsResponse { allSatisfied, byParty })
 ```
 
@@ -702,30 +702,30 @@ POST /contract/instance/execute | Roles: [developer]
 
 ```
 IF request.idempotencyKey provided
-  READ contract-statestore:idempotency:execute:{key}
-  IF cached -> RETURN (200, cached response)
+ READ contract-statestore:idempotency:execute:{key}
+ IF cached -> RETURN (200, cached response)
 LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if fails
-  READ contract-statestore:instance:{contractId} [with ETag]         -> 404 if null
-  IF status != Fulfilled                                              -> 400
-  IF instance.ExecutedAt is set                                       -> RETURN (200, already executed)
-  IF instance.TemplateValues is empty                                 -> 400
-  READ contract-statestore:template:{templateId}
-  // Parse clauses from template terms
-  // Separate into fees (execute first) and distributions (execute second)
-  FOREACH clause in feeClauses
-    // Resolve amounts (flat/percentage/remainder)
-    // Template value substitution for wallet IDs
-    CALL _navigator.ExecutePreboundApiAsync(handler.endpoint, transferPayload)
-    // Record DistributionRecordModel (succeeded or failed)
-  FOREACH clause in distributionClauses
-    // Same pattern: resolve, substitute, execute, record
-    CALL _navigator.ExecutePreboundApiAsync(handler.endpoint, transferPayload)
-  // Set ExecutedAt, ExecutionIdempotencyKey, distributions
-  ETAG-WRITE contract-statestore:instance:{contractId}               -> 409 if ETag mismatch
-  IF request.idempotencyKey provided
-    WRITE contract-statestore:idempotency:execute:{key} <- response (TTL: IdempotencyTtlSeconds)
-  PUBLISH contract.executed { contractId, templateCode, distributionCount, distributionResults }
-  PUBLISH contract.instance.updated { contractId, status, changedFields=["executedAt","executionIdempotencyKey","executionDistributions"] }
+ READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
+ IF status != Fulfilled -> 400
+ IF instance.ExecutedAt is set -> RETURN (200, already executed)
+ IF instance.TemplateValues is empty -> 400
+ READ contract-statestore:template:{templateId}
+ // Parse clauses from template terms
+ // Separate into fees (execute first) and distributions (execute second)
+ FOREACH clause in feeClauses
+ // Resolve amounts (flat/percentage/remainder)
+ // Template value substitution for wallet IDs
+ CALL _navigator.ExecutePreboundApiAsync(handler.endpoint, transferPayload)
+ // Record DistributionRecordModel (succeeded or failed)
+ FOREACH clause in distributionClauses
+ // Same pattern: resolve, substitute, execute, record
+ CALL _navigator.ExecutePreboundApiAsync(handler.endpoint, transferPayload)
+ // Set ExecutedAt, ExecutionIdempotencyKey, distributions
+ ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
+ IF request.idempotencyKey provided
+ WRITE contract-statestore:idempotency:execute:{key} <- response (TTL: IdempotencyTtlSeconds)
+ PUBLISH contract.executed { contractId, templateCode, distributionCount, distributionResults }
+ PUBLISH contract.instance.updated { contractId, status, changedFields=["executedAt","executionIdempotencyKey","executionDistributions"] }
 RETURN (200, ExecuteContractResponse { contractId, distributions })
 ```
 
@@ -745,17 +745,17 @@ RETURN (200, ExecuteContractResponse { contractId, distributions })
 // Phase 1: Pending contracts
 READ contract-statestore:status-idx:Pending -> contractIds
 FOREACH contractId in contractIds
-  // Calls GetContractInstanceStatusAsync which triggers Pending->Active lazy transition
+ // Calls GetContractInstanceStatusAsync which triggers Pending->Active lazy transition
 
 // Phase 2: Active contracts
 READ contract-statestore:status-idx:Active -> contractIds
 FOREACH contractId in contractIds
-  // Calls GetContractInstanceStatusAsync which triggers:
-  //   - Active->Expired (effectiveUntil passed)
-  //   - Overdue milestone enforcement
-  // Check payment schedule
-  IF instance has PaymentSchedule AND NextPaymentDue <= now
-    // Advance payment: publish contract.payment.due, set NextPaymentDue to next interval
-    PUBLISH contract.payment.due { contractId, templateCode, paymentSchedule, paymentNumber }
-    ETAG-WRITE contract-statestore:instance:{contractId}
+ // Calls GetContractInstanceStatusAsync which triggers:
+ // - Active->Expired (effectiveUntil passed)
+ // - Overdue milestone enforcement
+ // Check payment schedule
+ IF instance has PaymentSchedule AND NextPaymentDue <= now
+ // Advance payment: publish contract.payment.due, set NextPaymentDue to next interval
+ PUBLISH contract.payment.due { contractId, templateCode, paymentSchedule, paymentNumber }
+ ETAG-WRITE contract-statestore:instance:{contractId}
 ```

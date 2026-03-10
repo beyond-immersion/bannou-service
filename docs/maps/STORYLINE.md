@@ -375,7 +375,7 @@ POST /storyline/scenario/deprecate | Roles: [developer]
 ```
 // see helper: GetScenarioDefinitionWithCacheAsync
 READ scenario definition by ID (cache -> MySQL fallback)         -> 404 if null
-IF existing.IsDeprecated == true                                 -> 200 (idempotent, per IMPLEMENTATION TENETS)
+IF existing.IsDeprecated == true                                 -> 200 + entity body (idempotent, per IMPLEMENTATION TENETS)
 
 existing.IsDeprecated = true
 existing.DeprecatedAt = now
@@ -388,7 +388,7 @@ WRITE _scenarioDefinitionStore:{scenarioId} <- updated model
 DELETE _scenarioCacheStore:{scenarioId}
 PUBLISH storyline.scenario-definition.updated { scenarioId, code, name, ..., changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason", "enabled"] }
 
-RETURN (200)
+RETURN (200, ScenarioDefinition)
 ```
 
 ### FindAvailableScenarios

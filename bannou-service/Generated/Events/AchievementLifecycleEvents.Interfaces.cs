@@ -13,6 +13,6 @@ using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Events;
 
-public partial class AchievementDefinitionCreatedEvent : ILifecycleCreatedEvent { }
-public partial class AchievementDefinitionUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class AchievementDefinitionDeletedEvent : ILifecycleDeletedEvent { }
+public partial class AchievementDefinitionCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class AchievementDefinitionUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class AchievementDefinitionDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }

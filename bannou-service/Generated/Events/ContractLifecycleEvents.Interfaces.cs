@@ -13,9 +13,9 @@ using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Events;
 
-public partial class ContractTemplateCreatedEvent : ILifecycleCreatedEvent { }
-public partial class ContractTemplateUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class ContractTemplateDeletedEvent : ILifecycleDeletedEvent { }
+public partial class ContractTemplateCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class ContractTemplateUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class ContractTemplateDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
 
 public partial class ContractInstanceCreatedEvent : ILifecycleCreatedEvent { }
 public partial class ContractInstanceUpdatedEvent : ILifecycleUpdatedEvent { }

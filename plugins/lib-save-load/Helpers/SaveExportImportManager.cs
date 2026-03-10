@@ -414,7 +414,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
             // Create version
             var contentHash = Hashing.ContentHasher.ComputeHash(data);
-            // Configuration already provides typed enum (T25 compliant)
+            // Configuration already provides typed enum (IMPLEMENTATION TENETS compliant)
             var compressionTypeEnum = _configuration.DefaultCompressionType;
             var importCompressionLevel = compressionTypeEnum == CompressionType.Brotli
                 ? _configuration.BrotliCompressionLevel

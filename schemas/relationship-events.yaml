@@ -57,6 +57,7 @@ x-lifecycle:
       endedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the relationship ended, if applicable" }
       metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention." }
   RelationshipType:
+    deprecation: true
     model:
       relationshipTypeId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the relationship type" }
       code: { type: string, required: true, description: "Machine-readable code for the relationship type" }
@@ -68,9 +69,6 @@ x-lifecycle:
       inverseTypeId: { type: string, format: uuid, nullable: true, description: "ID of the inverse relationship type for asymmetric relationships" }
       inverseTypeCode: { type: string, nullable: true, description: "Code of the inverse relationship type" }
       isBidirectional: { type: boolean, required: true, description: "Whether the relationship applies equally in both directions" }
-      isDeprecated: { type: boolean, required: true, description: "Whether this relationship type is deprecated and should not be used for new relationships" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the relationship type was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Explanation for why the relationship type was deprecated" }
       depth: { type: integer, required: true, description: "Hierarchy depth level from the root relationship type" }
       metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention." }
 

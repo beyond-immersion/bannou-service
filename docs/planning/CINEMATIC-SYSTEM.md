@@ -495,7 +495,7 @@ With the cinematic system in place, the Combat Dream becomes implementable. More
 
 Every domain follows the same pattern: **behavioral decision -> GOAP-driven composition -> formal grammar execution -> client rendering**. ABML is the universal authoring language across all of them.
 
-The remaining work in Bannou -- implementing Divine, wiring up Transit/Environment variable providers, building Organization GOAP, fixing the Affix T29 violation -- is all "implement what's designed." The cinematic system is the last place where the design itself is incomplete.
+The remaining work in Bannou -- implementing Divine, wiring up Transit/Environment variable providers, building Organization GOAP, fixing the Affix metadata bag violation -- is all "implement what's designed." The cinematic system is the last place where the design itself is incomplete.
 
 After this, there are no more architectural gaps. Only implementation.
 

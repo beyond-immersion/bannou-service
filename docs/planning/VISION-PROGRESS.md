@@ -164,7 +164,7 @@ This ensures multi-instance consistency and makes death/birth rates tunable per 
 
 **Original concern**: Whether economic entities and character-dependent data clean up correctly.
 
-**Resolution**: All L4 services correctly use lib-resource `x-references` cleanup callbacks (per T28) instead of event subscriptions. No L4 service subscribes to `character.deleted`. Resource orchestrates cleanup atomically via prebound APIs with distributed locks.
+**Resolution**: All L4 services correctly use lib-resource `x-references` cleanup callbacks (per FOUNDATION TENETS) instead of event subscriptions. No L4 service subscribes to `character.deleted`. Resource orchestrates cleanup atomically via prebound APIs with distributed locks.
 
 ### R9. The Combat Dream: Cinematic Plugin + ABML as Universal Authoring Language
 
@@ -273,11 +273,11 @@ NPCs can now reason about "Can I get from A to B? How long will it take?" and "W
 
 **Question**: What is the implementation timeline for Divine? Should it be the next major implementation target given how many systems depend on it?
 
-### O2. Affix Metadata Bag Convention (T29 Violation) [SIGNIFICANT]
+### O2. Affix Metadata Bag Convention (FOUNDATION TENETS Violation) [SIGNIFICANT]
 
 **Priority**: P1 -- acknowledged tenet violation that must be resolved before implementation
 
-**Details**: The Affix service stores affix instance data in `ItemInstance.instanceMetadata.affixes` and documents a convention for Craft, Loot, and Market to read it by key name. The deep dive itself acknowledges this is a T29 violation ("No Metadata Bag Contracts").
+**Details**: The Affix service stores affix instance data in `ItemInstance.instanceMetadata.affixes` and documents a convention for Craft, Loot, and Market to read it by key name. The deep dive itself acknowledges this is a FOUNDATION TENETS violation ("No Metadata Bag Contracts").
 
 This is the exact anti-pattern the tenets exist to prevent: cross-service data sharing via untyped JSON with key-name conventions. No schema enforcement, no compile-time safety, no lifecycle management.
 
@@ -448,7 +448,7 @@ This distinction matters: Puppetmaster's gap is arguably smaller (integrate `IAc
 | Service | Score | What Works | What's Blocked |
 |---|---|---|---|
 | **Puppetmaster** (L4, 55%) | Behavior document cache (TTL-based via IAssetClient), watch system (dual-indexed WatchRegistry), event handlers (realm lifecycle, behavior hot-reload, actor cleanup), resource snapshot cache, ABML action handlers (LoadSnapshot, PrefetchSnapshots, SpawnWatcher, StopWatcher, ListWatchers) | **Watcher-actor spawning**: `ActorId` on `WatcherInfo` is always null (TODO at line 213). Watchers are data structures only — `StartWatcherAsync` creates in-memory `ConcurrentDictionary` entries but spawns no actors and executes no behavior. All watcher state is in-memory (lost on restart, no multi-instance coordination). |
-| **Divine** (L4, 25%) | Complete schema (22 endpoints), 5 state store definitions (MySQL + Redis), configuration class (18 properties), event schema (11 lifecycle/domain events), type field classification (T25 compliant), resource cleanup endpoints defined | **ALL 22 endpoints return `NotImplemented`**. Zero implementation logic. No background workers (`DivineAttentionWorker`, `DivinityGenerationWorker` undefined). No event handlers. No plugin startup registration for seed types, currencies, relationship types, or collection/status templates. |
+| **Divine** (L4, 25%) | Complete schema (22 endpoints), 5 state store definitions (MySQL + Redis), configuration class (18 properties), event schema (11 lifecycle/domain events), type field classification (type safety compliant), resource cleanup endpoints defined | **ALL 22 endpoints return `NotImplemented`**. Zero implementation logic. No background workers (`DivineAttentionWorker`, `DivinityGenerationWorker` undefined). No event handlers. No plugin startup registration for seed types, currencies, relationship types, or collection/status templates. |
 | **Gardener** (L4, 62%) | Void/discovery garden: enter/leave with distributed lock, POI system (weighted scoring: affinity + diversity + narrative + random), scenario lifecycle (enter, complete, abandon, chain, enter-together for pairs), template CRUD with deprecation, deployment phase config, 15 event types published, `ISeedEvolutionListener` for growth notifications, background workers (5s garden tick, 30s scenario lifecycle) | No divine actor integration (fixed-interval workers instead of ABML-driven orchestration), no client events schema (players must poll), no garden-to-garden transitions, no multiple garden types (only void/discovery), no entity session registry integration, no Puppetmaster notification on scenario start, no prerequisite validation on scenario entry. |
 
 ### Recommended Implementation Sequence
@@ -624,11 +624,11 @@ Two new planning documents expand R9's architectural analysis:
 ### Storyline Service Hardened
 
 Storyline (L4, 85%) has completed a comprehensive tenet compliance pass:
-- T8 compliance (return pattern corrections)
-- T13 compliance (x-permissions for service-only endpoints)
-- T25/T1 compliance (enum type safety, A2 SDK boundary mapping with EnumMappingValidator tests)
-- T16 compliance (lifecycle event naming Pattern C, topic naming)
-- T31 compliance (Category B deprecation lifecycle)
+- Return pattern corrections
+- x-permissions for service-only endpoints
+- Enum type safety, A2 SDK boundary mapping with EnumMappingValidator tests
+- Lifecycle event naming Pattern C, topic naming
+- Category B deprecation lifecycle
 
 The content flywheel's **narrative generation stage** is now production-ready. Iterative composition (multi-phase streaming execution) and direct content flywheel wiring (Puppetmaster → Storyline integration) remain as Phase 2/3 enhancements.
 
@@ -665,7 +665,7 @@ The 76-service architecture is remarkably coherent. The audit has resolved 11 of
 
 The remaining open issues are:
 - **One critical blocker** (O1: Divine is stubbed -- blocks behavioral bootstrap, system realms, and content flywheel; note: Puppetmaster watcher-actor spawning is the first-order blocker, Divine is second-order)
-- **One significant design decision** (O2: Affix metadata T29 violation)
+- **One significant design decision** (O2: Affix metadata bag violation)
 - **Three moderate gaps** (O3: Environment variable provider; O4: Organization economic GOAP; O7: Social variable provider not yet designed -- NPCs can't perceive or react to social communication)
 - **Three minor items** (O5: Loot hierarchy fix; O6: Variable provider scaling plan; O8: ITransitCostModifierProvider has zero implementations -- NPC route decisions ignore dynamic conditions)
 

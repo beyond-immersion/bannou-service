@@ -264,7 +264,7 @@ Standard CRUD on faction entities with code-uniqueness enforcement per game serv
 
 ### Cleanup Endpoints (3 endpoints)
 
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS, T28):
+Resource-managed cleanup via lib-resource (per FOUNDATION TENETS,):
 
 - **CleanupByCharacter** (`/faction/cleanup-by-character`): Removes all memberships for a character. Returns count of memberships removed.
 - **CleanupByRealm** (`/faction/cleanup-by-realm`): Removes all factions in a realm and cascades (memberships, territory claims, norms).
@@ -321,69 +321,69 @@ The territory variable requires knowing the character's current location, which 
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                   Norm Resolution Hierarchy                          │
+│ Norm Resolution Hierarchy │
 ├──────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  Character "Kael" at Location "Docks District"                       │
-│                                                                      │
-│  1. Guild Factions (direct memberships):                             │
-│     ┌─────────────────────────────┐                                  │
-│     │ Merchant Guild (member)     │ → theft: 15, deception: 10       │
-│     │ Dockworkers Union (recruit) │ → violence: 5                    │
-│     └─────────────────────────────┘                                  │
-│                                                                      │
-│  2. Location Controlling Faction:                                    │
-│     ┌─────────────────────────────┐                                  │
-│     │ Harbor Authority            │ → contraband: 12, trespass: 8    │
-│     │ (controls Docks District)   │ → theft: 10 (overridden by #1)  │
-│     └─────────────────────────────┘                                  │
-│                                                                      │
-│  3. Realm Baseline Faction:                                          │
-│     ┌─────────────────────────────┐                                  │
-│     │ Arcadian Cultural Council   │ → disrespect: 5, violence: 3    │
-│     │ (realm baseline)            │ → theft: 7 (overridden by #1)   │
-│     └─────────────────────────────┘   violence: 3 (overridden by #1)│
-│                                                                      │
-│  Merged Norm Map (most specific wins):                               │
-│  ┌─────────────────────────────────────────────────┐                 │
-│  │ theft:      15  (Merchant Guild - membership)   │                 │
-│  │ deception:  10  (Merchant Guild - membership)   │                 │
-│  │ violence:    5  (Dockworkers Union - membership)│                 │
-│  │ contraband: 12  (Harbor Authority - territory)  │                 │
-│  │ trespass:    8  (Harbor Authority - territory)  │                 │
-│  │ disrespect:  5  (Cultural Council - baseline)   │                 │
-│  └─────────────────────────────────────────────────┘                 │
-│                                                                      │
-│  → Passed to lib-obligation for personality-weighted cost modifiers  │
-│  → Fed into GOAP planner as dynamic action cost adjustments          │
+│ │
+│ Character "Kael" at Location "Docks District" │
+│ │
+│ 1. Guild Factions (direct memberships): │
+│ ┌─────────────────────────────┐ │
+│ │ Merchant Guild (member) │ → theft: 15, deception: 10 │
+│ │ Dockworkers Union (recruit) │ → violence: 5 │
+│ └─────────────────────────────┘ │
+│ │
+│ 2. Location Controlling Faction: │
+│ ┌─────────────────────────────┐ │
+│ │ Harbor Authority │ → contraband: 12, trespass: 8 │
+│ │ (controls Docks District) │ → theft: 10 (overridden by #1) │
+│ └─────────────────────────────┘ │
+│ │
+│ 3. Realm Baseline Faction: │
+│ ┌─────────────────────────────┐ │
+│ │ Arcadian Cultural Council │ → disrespect: 5, violence: 3 │
+│ │ (realm baseline) │ → theft: 7 (overridden by #1) │
+│ └─────────────────────────────┘ violence: 3 (overridden by #1)│
+│ │
+│ Merged Norm Map (most specific wins): │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ theft: 15 (Merchant Guild - membership) │ │
+│ │ deception: 10 (Merchant Guild - membership) │ │
+│ │ violence: 5 (Dockworkers Union - membership)│ │
+│ │ contraband: 12 (Harbor Authority - territory) │ │
+│ │ trespass: 8 (Harbor Authority - territory) │ │
+│ │ disrespect: 5 (Cultural Council - baseline) │ │
+│ └─────────────────────────────────────────────────┘ │
+│ │
+│ → Passed to lib-obligation for personality-weighted cost modifiers │
+│ → Fed into GOAP planner as dynamic action cost adjustments │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                Collection→Seed Growth Pipeline                       │
+│ Collection→Seed Growth Pipeline │
 ├──────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  Member NPC completes trade                                          │
-│       │                                                              │
-│       ▼                                                              │
-│  Collection entry unlocked ("faction-deeds", tag: "commerce:trade")  │
-│       │                                                              │
-│       ├──► Member's personal seed growth (existing pipeline)         │
-│       │                                                              │
-│       └──► ICollectionUnlockListener (lib-faction)                   │
-│            Tag prefix "commerce" matches faction seed mapping         │
-│                 │                                                     │
-│                 ▼                                                     │
-│            lib-seed API: RecordGrowth(factionSeedId, "commerce", 1.5)│
-│                 │                                                     │
-│                 ▼                                                     │
-│            ISeedEvolutionListener fires:                              │
-│            - Phase changed: nascent → established                     │
-│            - Capability unlocked: "norm.define"                       │
-│                 │                                                     │
-│                 ▼                                                     │
-│            Faction can now define enforceable norms                   │
+│ │
+│ Member NPC completes trade │
+│ │ │
+│ ▼ │
+│ Collection entry unlocked ("faction-deeds", tag: "commerce:trade") │
+│ │ │
+│ ├──► Member's personal seed growth (existing pipeline) │
+│ │ │
+│ └──► ICollectionUnlockListener (lib-faction) │
+│ Tag prefix "commerce" matches faction seed mapping │
+│ │ │
+│ ▼ │
+│ lib-seed API: RecordGrowth(factionSeedId, "commerce", 1.5)│
+│ │ │
+│ ▼ │
+│ ISeedEvolutionListener fires: │
+│ - Phase changed: nascent → established │
+│ - Capability unlocked: "norm.define" │
+│ │ │
+│ ▼ │
+│ Faction can now define enforceable norms │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -424,7 +424,7 @@ None currently.
 
 6. **Dual-key storage pattern**: Factions are saved under both a primary key (by ID) and a lookup key (by game service + code), following the established Collection/Seed pattern.
 
-7. **No event subscriptions -- DI listeners only**: Cross-service integration uses `ISeedEvolutionListener` and `ICollectionUnlockListener` DI provider patterns (per FOUNDATION TENETS, T27) instead of broadcast event subscriptions. Resource cleanup uses `x-references` callbacks (per FOUNDATION TENETS, T28), not `character.deleted` / `realm.deleted` event subscriptions.
+7. **No event subscriptions -- DI listeners only**: Cross-service integration uses `ISeedEvolutionListener` and `ICollectionUnlockListener` DI provider patterns (per FOUNDATION TENETS,) instead of broadcast event subscriptions. Resource cleanup uses `x-references` callbacks (per FOUNDATION TENETS,), not `character.deleted` / `realm.deleted` event subscriptions.
 
 8. **Cascading delete does not publish individual norm/territory events**: `DeleteFactionAsync` cascades norm and territory deletions by directly deleting from stores without publishing individual `faction.norm.deleted` or `faction.territory.released` events. The `faction.deleted` lifecycle event is published to signal that the entire entity (and all child data) was removed. Consumers that need to react to norm deletions should listen for `faction.deleted` and treat it as implying all norms are gone.
 
@@ -445,43 +445,43 @@ None currently.
 
 6. **Faction sovereignty: authorityLevel field and governance data model (prerequisite for lib-arbitration)**: The current norm resolution hierarchy treats all factions equally -- norms differ only in numerical weight and hierarchy position (most specific wins). This breaks down when factions **contradict** each other on binary or procedural questions (e.g., a guild permits divorce but the territorial sovereign forbids it). The resolution is distinguishing **legal authority** from **social influence** via a new `authorityLevel` field on FactionModel:
 
-    | Level | Meaning | Enforcement Power |
-    |-------|---------|-------------------|
-    | **Influence** | Default. Social norms only. | Cannot arbitrate or enforce legally. Imposes GOAP cost modifiers and reputation damage only. |
-    | **Delegated** | Authority granted by a sovereign. | Inherits sovereign's law. Can add local rules within scope of delegation. Can arbitrate within delegated jurisdiction. |
-    | **Sovereign** | Law-making authority. | Final word within controlled territory. Defines what is legal vs. illegal. Can arbitrate, exile, impose legal penalties. |
+ | Level | Meaning | Enforcement Power |
+ |-------|---------|-------------------|
+ | **Influence** | Default. Social norms only. | Cannot arbitrate or enforce legally. Imposes GOAP cost modifiers and reputation damage only. |
+ | **Delegated** | Authority granted by a sovereign. | Inherits sovereign's law. Can add local rules within scope of delegation. Can arbitrate within delegated jurisdiction. |
+ | **Sovereign** | Law-making authority. | Final word within controlled territory. Defines what is legal vs. illegal. Can arbitrate, exile, impose legal penalties. |
 
-    **Norm resolution changes from "most specific wins" to authority-aware hierarchy**:
-    1. Find the sovereign in the territory hierarchy (walk up faction parents until Sovereign)
-    2. Sovereign's norms = LAWS (high enforcement weight, triggers guard/justice system)
-    3. Delegated authority norms = LOCAL LAWS (override sovereign on specifics, inherit on gaps)
-    4. Influence norms = SOCIAL COSTS (existing behavior -- GOAP cost modifiers, reputation damage)
-    5. Guild membership norms = PERSONAL OBLIGATIONS (existing behavior)
-    6. A nested sovereign (enclave) overrides the outer sovereign completely within its territory
+ **Norm resolution changes from "most specific wins" to authority-aware hierarchy**:
+ 1. Find the sovereign in the territory hierarchy (walk up faction parents until Sovereign)
+ 2. Sovereign's norms = LAWS (high enforcement weight, triggers guard/justice system)
+ 3. Delegated authority norms = LOCAL LAWS (override sovereign on specifics, inherit on gaps)
+ 4. Influence norms = SOCIAL COSTS (existing behavior -- GOAP cost modifiers, reputation damage)
+ 5. Guild membership norms = PERSONAL OBLIGATIONS (existing behavior)
+ 6. A nested sovereign (enclave) overrides the outer sovereign completely within its territory
 
-    **IsRealmBaseline integration**: The realm baseline faction should automatically be Sovereign -- it's the realm-wide legal authority by definition. `DesignateRealmBaseline` should set `AuthorityLevel = Sovereign` (or validate that it's already Sovereign). A realm can have multiple Sovereign factions (the baseline + enclaves), but only one realm baseline.
+ **IsRealmBaseline integration**: The realm baseline faction should automatically be Sovereign -- it's the realm-wide legal authority by definition. `DesignateRealmBaseline` should set `AuthorityLevel = Sovereign` (or validate that it's already Sovereign). A realm can have multiple Sovereign factions (the baseline + enclaves), but only one realm baseline.
 
-    **Enclave sovereignty**: Sovereignty applies at the location boundary. Nesting is naturally bounded by lib-location's hierarchy and `MaxHierarchyDepth` (currently 5). A dwarven enclave controlling a nested Location node within a human kingdom switches legal jurisdiction at the boundary -- same as existing territory-controlling faction transitions. `QueryApplicableNorms` already takes a `locationId` parameter; the sovereignty enhancement changes how it interprets the controlling faction's authority level.
+ **Enclave sovereignty**: Sovereignty applies at the location boundary. Nesting is naturally bounded by lib-location's hierarchy and `MaxHierarchyDepth` (currently 5). A dwarven enclave controlling a nested Location node within a human kingdom switches legal jurisdiction at the boundary -- same as existing territory-controlling faction transitions. `QueryApplicableNorms` already takes a `locationId` parameter; the sovereignty enhancement changes how it interprets the controlling faction's authority level.
 
-    **Governance data model (procedural norms)**: Sovereign and Delegated factions gain a new norm type alongside cost norms: `{ caseType, templateCode, governanceParameters }`, gated by `governance.arbitrate.*` seed capability. This associates case types (opaque strings like `dissolution`, `criminal_proceeding`, `trade_dispute`) with contract template codes in lib-contract. lib-arbitration queries this governance data to instantiate the correct procedural template for cases filed within the jurisdiction.
+ **Governance data model (procedural norms)**: Sovereign and Delegated factions gain a new norm type alongside cost norms: `{ caseType, templateCode, governanceParameters }`, gated by `governance.arbitrate.*` seed capability. This associates case types (opaque strings like `dissolution`, `criminal_proceeding`, `trade_dispute`) with contract template codes in lib-contract. lib-arbitration queries this governance data to instantiate the correct procedural template for cases filed within the jurisdiction.
 
-    **New endpoints needed**: (a) Delegation endpoint for sovereign factions to grant `Delegated` authority to child factions, (b) `QueryGovernanceData` -- given a location and case type, resolve the jurisdictional faction and return its procedural template reference and governance parameters.
+ **New endpoints needed**: (a) Delegation endpoint for sovereign factions to grant `Delegated` authority to child factions, (b) `QueryGovernanceData` -- given a location and case type, resolve the jurisdictional faction and return its procedural template reference and governance parameters.
 
-    **Sovereignty acquisition paths** (initial implementation: first two only):
-    - Realm baseline: `DesignateRealmBaseline` automatically sets Sovereign
-    - Delegation: sovereign grants Delegated authority to a child faction
-    - Conquest: seed-gated `sovereignty.claim` capability at dominant growth phase (future)
-    - Treaty: via lib-arbitration `sovereignty_recognition` case type (future)
-    - Divine mandate: via Puppetmaster regional watcher (future)
+ **Sovereignty acquisition paths** (initial implementation: first two only):
+ - Realm baseline: `DesignateRealmBaseline` automatically sets Sovereign
+ - Delegation: sovereign grants Delegated authority to a child faction
+ - Conquest: seed-gated `sovereignty.claim` capability at dominant growth phase (future)
+ - Treaty: via lib-arbitration `sovereignty_recognition` case type (future)
+ - Divine mandate: via Puppetmaster regional watcher (future)
 
-    **Backward-compatible**: If no sovereign exists (sovereignty not yet implemented for a deployment), `QueryApplicableNorms` continues with the existing "most specific wins" behavior -- all norms are social/personal. The legal channel only activates when a Sovereign faction exists.
+ **Backward-compatible**: If no sovereign exists (sovereignty not yet implemented for a deployment), `QueryApplicableNorms` continues with the existing "most specific wins" behavior -- all norms are social/personal. The legal channel only activates when a Sovereign faction exists.
 
-    This is the single largest prerequisite for lib-arbitration. See the [Arbitration deep dive's Faction Sovereignty Dependency section](ARBITRATION.md#faction-sovereignty-dependency) for the complete list of changes from lib-arbitration's perspective, and the [Obligation deep dive's multi-channel costs design consideration](OBLIGATION.md#design-considerations-requires-planning) for how costs become authority-tagged.
+ This is the single largest prerequisite for lib-arbitration. See the [Arbitration deep dive's Faction Sovereignty Dependency section](ARBITRATION.md#faction-sovereignty-dependency) for the complete list of changes from lib-arbitration's perspective, and the [Obligation deep dive's multi-channel costs design consideration](OBLIGATION.md#design-considerations-requires-planning) for how costs become authority-tagged.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/601 -->
 
 ## Work Tracking
 
 - **GitHub Issue**: [#410 - Feature: Second Thoughts -- Prospective Consequence Evaluation for NPC Cognition](https://github.com/beyond-immersion/bannou-service/issues/410)
-  - lib-faction was extracted from the original lib-moral proposal during architecture review
-  - Part of the larger lib-obligation + lib-faction system for NPC "second thoughts" cognition
-  - All 31 endpoints are now fully implemented (faction CRUD, membership, territory, norms, cleanup, compression)
+ - lib-faction was extracted from the original lib-moral proposal during architecture review
+ - Part of the larger lib-obligation + lib-faction system for NPC "second thoughts" cognition
+ - All 31 endpoints are now fully implemented (faction CRUD, membership, territory, norms, cleanup, compression)

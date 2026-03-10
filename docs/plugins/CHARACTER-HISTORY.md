@@ -61,7 +61,7 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 | `eventCategory` | C (System State) | `EventCategory` enum | Finite set of historical event categories (WAR, NATURAL_DISASTER, POLITICAL, ECONOMIC, RELIGIOUS, CULTURAL, PERSONAL). System-defined; drives query filtering and summarization logic. |
 | `role` | C (System State) | `ParticipationRole` enum | Finite set of participation roles (LEADER, COMBATANT, VICTIM, WITNESS, BENEFICIARY, CONSPIRATOR, HERO, SURVIVOR). System-defined; drives text summarization templates. |
 | `elementType` | C (System State) | `BackstoryElementType` enum | Finite set of backstory element categories (ORIGIN, OCCUPATION, TRAINING, TRAUMA, ACHIEVEMENT, SECRET, GOAL, FEAR, BELIEF). System-defined; used as keyed dimensions in behavior system lookups. |
-| `relatedEntityType` | A (Entity Reference) | `EntityType` enum (nullable) | References the type of a related entity (location, organization, character) on a backstory element. Uses `$ref: 'common-api.yaml#/components/schemas/EntityType'` with `nullable: true` per T14 decision tree test 4 (all valid values are Bannou entity types). |
+| `relatedEntityType` | A (Entity Reference) | `EntityType` enum (nullable) | References the type of a related entity (location, organization, character) on a backstory element. Uses `$ref: 'common-api.yaml#/components/schemas/EntityType'` with `nullable: true` per tenets decision tree test 4 (all valid values are Bannou entity types). |
 
 ---
 
@@ -153,13 +153,13 @@ The `CharacterHistoryTemplate` provides compile-time validation for `${candidate
 ### Compression Support
 
 - **GetCompressData** (`/character-history/get-compress-data`): Called by Resource service during hierarchical character compression. Returns `HistoryCompressData` containing:
-  - `hasParticipations`: Whether any historical participations exist
-  - `participations`: List of `ParticipationResponse` records
-  - `hasBackstory`: Whether backstory document exists
-  - `backstory`: `BackstoryResponse` if exists
-  - `participationCount`: Total participation count
+ - `hasParticipations`: Whether any historical participations exist
+ - `participations`: List of `ParticipationResponse` records
+ - `hasBackstory`: Whether backstory document exists
+ - `backstory`: `BackstoryResponse` if exists
+ - `participationCount`: Total participation count
 
-  Returns NotFound only if BOTH participations and backstory are absent.
+ Returns NotFound only if BOTH participations and backstory are absent.
 
 - **RestoreFromArchive** (`/character-history/restore-from-archive`): Called by Resource service during decompression. Accepts Base64-encoded GZip JSON of `HistoryCompressData`. Restores participations and backstory to state store if they don't already exist (idempotent). Returns counts of restored items.
 
@@ -173,45 +173,45 @@ The `CharacterHistoryTemplate` provides compile-time validation for `${candidate
 Backstory Element Model
 ========================
 
-  SetBackstory(characterId=C1, elements=[...], replaceExisting=false)
-       │
-       ▼
-  ┌─────────────────────────────────────────┐
-  │ backstory-C1                            │
-  │                                         │
-  │ Elements:                               │
-  │ ┌─────────┬──────────┬─────────┬──────┐│
-  │ │  Type   │   Key    │  Value  │Streng││
-  │ ├─────────┼──────────┼─────────┼──────┤│
-  │ │ ORIGIN  │ homeland │ north.. │ 0.9  ││
-  │ │ TRAUMA  │ battle   │ siege.. │ 0.7  ││
-  │ │ GOAL    │ revenge  │ avenge..│ 0.8  ││
-  │ │ FEAR    │ fire     │ burns..│ 0.6  ││
-  │ └─────────┴──────────┴─────────┴──────┘│
-  │                                         │
-  │ CreatedAtUnix: 1706000000              │
-  │ UpdatedAtUnix: 1706500000              │
-  └─────────────────────────────────────────┘
+ SetBackstory(characterId=C1, elements=[...], replaceExisting=false)
+ │
+ ▼
+ ┌─────────────────────────────────────────┐
+ │ backstory-C1 │
+ │ │
+ │ Elements: │
+ │ ┌─────────┬──────────┬─────────┬──────┐│
+ │ │ Type │ Key │ Value │Streng││
+ │ ├─────────┼──────────┼─────────┼──────┤│
+ │ │ ORIGIN │ homeland │ north.. │ 0.9 ││
+ │ │ TRAUMA │ battle │ siege.. │ 0.7 ││
+ │ │ GOAL │ revenge │ avenge..│ 0.8 ││
+ │ │ FEAR │ fire │ burns..│ 0.6 ││
+ │ └─────────┴──────────┴─────────┴──────┘│
+ │ │
+ │ CreatedAtUnix: 1706000000 │
+ │ UpdatedAtUnix: 1706500000 │
+ └─────────────────────────────────────────┘
 
-  Merge Logic (replaceExisting=false):
-    New element with type=ORIGIN, key=homeland → UPDATE existing
-    New element with type=BELIEF, key=honor   → APPEND new
+ Merge Logic (replaceExisting=false):
+ New element with type=ORIGIN, key=homeland → UPDATE existing
+ New element with type=BELIEF, key=honor → APPEND new
 
 
 Text Summarization
 ===================
 
-  SummarizeHistory(characterId=C1, maxBackstoryPoints=3, maxLifeEvents=2)
-       │
-       ▼
-  Backstory (top 3 by strength):
-    "From the northlands"         ← ORIGIN: homeland → northlands
-    "Seeks to avenge their kin"   ← GOAL: revenge → avenge their kin
-    "Experienced the siege"       ← TRAUMA: battle → the siege
+ SummarizeHistory(characterId=C1, maxBackstoryPoints=3, maxLifeEvents=2)
+ │
+ ▼
+ Backstory (top 3 by strength):
+ "From the northlands" ← ORIGIN: homeland → northlands
+ "Seeks to avenge their kin" ← GOAL: revenge → avenge their kin
+ "Experienced the siege" ← TRAUMA: battle → the siege
 
-  Participations (top 2 by significance):
-    "led the Battle of Stormgate"     ← LEADER + "Battle of Stormgate"
-    "survived the Great Plague"       ← SURVIVOR + "Great Plague"
+ Participations (top 2 by significance):
+ "led the Battle of Stormgate" ← LEADER + "Battle of Stormgate"
+ "survived the Great Plague" ← SURVIVOR + "Great Plague"
 ```
 
 ---
@@ -257,7 +257,7 @@ None.
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Metadata stored as `object?`**~~: **Resolved** - Participation metadata is client-only opaque data. No Bannou plugin reads specific keys by convention. Schema descriptions updated per FOUNDATION TENETS (T29).
+1. ~~**Metadata stored as `object?`**~~: **Resolved** - Participation metadata is client-only opaque data. No Bannou plugin reads specific keys by convention. Schema descriptions updated per FOUNDATION TENETS.
 
 2. ~~**AddBackstoryElement is upsert**~~: **Resolved** ([#311](https://github.com/beyond-immersion/bannou-service/issues/311), closed 2026-02-08) - Upsert semantics are intentional. No downstream consumer needs to distinguish element-added vs element-updated; lib-analytics aggregates events without this distinction, and lib-actor uses cache-based reads (not events). Adding the distinction would be premature complexity.
 

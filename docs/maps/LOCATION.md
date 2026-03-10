@@ -169,8 +169,8 @@ POST /location/get | Roles: [user]
 ```
 READ cache:location:{locationId}
 IF cache miss
-  READ store:location:{locationId}                -> 404 if null
-  WRITE cache:location:{locationId} <- model (TTL: CacheTtlSeconds)
+ READ store:location:{locationId} -> 404 if null
+ WRITE cache:location:{locationId} <- model (TTL: CacheTtlSeconds)
 RETURN (200, LocationResponse)
 ```
 
@@ -178,13 +178,13 @@ RETURN (200, LocationResponse)
 POST /location/get-by-code | Roles: [user]
 
 ```
-READ store:code-index:{realmId}:{CODE_UPPER}      -> 404 if null/empty
+READ store:code-index:{realmId}:{CODE_UPPER} -> 404 if null/empty
 // Parse stored string as Guid
-IF parse fails                                     -> 404
+IF parse fails -> 404
 READ cache:location:{parsedLocationId}
 IF cache miss
-  READ store:location:{parsedLocationId}           -> 404 if null
-  WRITE cache:location:{parsedLocationId} <- model (TTL: CacheTtlSeconds)
+ READ store:location:{parsedLocationId} -> 404 if null
+ WRITE cache:location:{parsedLocationId} <- model (TTL: CacheTtlSeconds)
 RETURN (200, LocationResponse)
 ```
 
@@ -192,8 +192,8 @@ RETURN (200, LocationResponse)
 POST /location/list | Roles: [user]
 
 ```
-READ store:realm-index:{realmId}                   // null → empty list
-READ BULK cache+store for all locationIds           // cache-first, backfill misses
+READ store:realm-index:{realmId} // null → empty list
+READ BULK cache+store for all locationIds // cache-first, backfill misses
 IF !includeDeprecated: filter out deprecated
 IF locationType specified: filter by type
 // In-memory pagination
@@ -204,8 +204,8 @@ RETURN (200, LocationListResponse)
 POST /location/list-by-realm | Roles: [user]
 
 ```
-READ store:realm-index:{realmId}                   // null → empty list
-IF empty                                           -> RETURN (200, empty LocationListResponse)
+READ store:realm-index:{realmId} // null → empty list
+IF empty -> RETURN (200, empty LocationListResponse)
 READ BULK cache+store for all locationIds
 IF !includeDeprecated: filter out deprecated
 IF locationType specified: filter by type
@@ -217,9 +217,9 @@ RETURN (200, LocationListResponse)
 POST /location/list-by-parent | Roles: [user]
 
 ```
-READ store:location:{parentLocationId}             -> 404 if null
+READ store:location:{parentLocationId} -> 404 if null
 READ store:parent-index:{parentModel.RealmId}:{parentLocationId}
-IF empty                                           -> RETURN (200, empty LocationListResponse)
+IF empty -> RETURN (200, empty LocationListResponse)
 READ BULK cache+store for all childIds
 IF !includeDeprecated: filter out deprecated
 IF locationType specified: filter by type
@@ -231,8 +231,8 @@ RETURN (200, LocationListResponse)
 POST /location/list-root | Roles: [user]
 
 ```
-READ store:root-locations:{realmId}                // null → empty list
-IF empty                                           -> RETURN (200, empty LocationListResponse)
+READ store:root-locations:{realmId} // null → empty list
+IF empty -> RETURN (200, empty LocationListResponse)
 READ BULK cache+store for all rootIds
 IF !includeDeprecated: filter out deprecated
 IF locationType specified: filter by type
@@ -244,15 +244,15 @@ RETURN (200, LocationListResponse)
 POST /location/get-ancestors | Roles: [user]
 
 ```
-READ store:location:{locationId}                   -> 404 if null
+READ store:location:{locationId} -> 404 if null
 ancestors = []
 currentParentId = model.ParentLocationId
 FOREACH depth up to config.MaxAncestorDepth
-  IF currentParentId is null: break
-  READ store:location:{currentParentId}
-  IF null: break                                   // log warning, corrupted data
-  ancestors.add(parent)
-  currentParentId = parent.ParentLocationId
+ IF currentParentId is null: break
+ READ store:location:{currentParentId}
+ IF null: break // log warning, corrupted data
+ ancestors.add(parent)
+ currentParentId = parent.ParentLocationId
 RETURN (200, LocationListResponse from ancestors)
 ```
 
@@ -260,7 +260,7 @@ RETURN (200, LocationListResponse from ancestors)
 POST /location/get-descendants | Roles: [user]
 
 ```
-READ store:location:{locationId}                   -> 404 if null
+READ store:location:{locationId} -> 404 if null
 maxDepth = request.MaxDepth ?? config.DefaultDescendantMaxDepth
 // cap at config.MaxDescendantDepth for safety
 // see helper: CollectDescendantsAsync (recursive)
@@ -279,24 +279,24 @@ RETURN (200, LocationListResponse)
 POST /location/validate-territory | Roles: [user]
 
 ```
-READ store:location:{locationId}                   -> 404 if null
+READ store:location:{locationId} -> 404 if null
 // Build hierarchy set: location + all ancestors
 hierarchySet = { locationId }
 currentParentId = model.ParentLocationId
 FOREACH depth up to config.MaxAncestorDepth
-  IF currentParentId is null: break
-  READ store:location:{currentParentId}
-  IF null: break
-  hierarchySet.add(currentParentId)
-  currentParentId = parent.ParentLocationId
+ IF currentParentId is null: break
+ READ store:location:{currentParentId}
+ IF null: break
+ hierarchySet.add(currentParentId)
+ currentParentId = parent.ParentLocationId
 // Check overlap with territoryLocationIds
 mode = request.TerritoryMode ?? Exclusive
 IF mode == Exclusive
-  IF any overlap: isValid = false, set violationReason + matchedTerritoryId
-  ELSE: isValid = true
+ IF any overlap: isValid = false, set violationReason + matchedTerritoryId
+ ELSE: isValid = true
 IF mode == Inclusive
-  IF any overlap: isValid = true, set matchedTerritoryId
-  ELSE: isValid = false, set violationReason
+ IF any overlap: isValid = true, set matchedTerritoryId
+ ELSE: isValid = false, set violationReason
 RETURN (200, ValidateTerritoryResponse { isValid, violationReason?, matchedTerritoryId? })
 ```
 
@@ -305,24 +305,24 @@ POST /location/exists | Roles: [user]
 
 ```
 READ store:location:{locationId}
-IF null                                            -> 404
+IF null -> 404
 RETURN (200, LocationExistsResponse { isActive: !model.IsDeprecated, realmId: model.RealmId })
-// T8: 200 = exists, 404 = not found. No `exists` boolean needed.
+// 200 = exists, 404 = not found. No `exists` boolean needed.
 ```
 
 ### QueryLocationsByPosition
 POST /location/query/by-position | Roles: [user]
 
 ```
-READ store:realm-index:{realmId}                   // null → empty list
-IF empty                                           -> RETURN (200, empty LocationListResponse)
+READ store:realm-index:{realmId} // null → empty list
+IF empty -> RETURN (200, empty LocationListResponse)
 matches = []
 FOREACH locationId in realmIndex
-  READ cache:location:{locationId}                 // cache-first via GetLocationWithCacheAsync
-  IF model.Bounds == null: skip
-  IF model.BoundsPrecision == None: skip
-  IF maxDepth specified AND model.Depth > maxDepth: skip
-  IF position within model.Bounds (AABB containment): matches.add(model)
+ READ cache:location:{locationId} // cache-first via GetLocationWithCacheAsync
+ IF model.Bounds == null: skip
+ IF model.BoundsPrecision == None: skip
+ IF maxDepth specified AND model.Depth > maxDepth: skip
+ IF position within model.Bounds (AABB containment): matches.add(model)
 // Sort matches by Depth descending (most specific first)
 // In-memory pagination
 RETURN (200, LocationListResponse)
@@ -332,27 +332,27 @@ RETURN (200, LocationListResponse)
 POST /location/create | Roles: [admin]
 
 ```
-CALL _realmClient.RealmExistsAsync(realmId)        -> 400 if not found/inactive
-READ store:code-index:{realmId}:{CODE_UPPER}       -> 409 if already exists
+CALL _realmClient.RealmExistsAsync(realmId) -> 400 if not found/inactive
+READ store:code-index:{realmId}:{CODE_UPPER} -> 409 if already exists
 IF parentLocationId specified
-  READ store:location:{parentLocationId}           -> 400 if not found
-  IF parentModel.RealmId != realmId                -> 400 cross-realm parent
-  depth = parentModel.Depth + 1
+ READ store:location:{parentLocationId} -> 400 if not found
+ IF parentModel.RealmId != realmId -> 400 cross-realm parent
+ depth = parentModel.Depth + 1
 ELSE
-  depth = 0
+ depth = 0
 WRITE store:location:{newId} <- new LocationModel
 WRITE store:code-index:{realmId}:{CODE_UPPER} <- locationId string
 LOCK lock:realm-index:{realmId}
-  READ store:realm-index:{realmId}
-  WRITE store:realm-index:{realmId} <- add locationId
+ READ store:realm-index:{realmId}
+ WRITE store:realm-index:{realmId} <- add locationId
 IF parentLocationId specified
-  LOCK lock:parent-index:{realmId}:{parentId}
-    READ store:parent-index:{realmId}:{parentId}
-    WRITE store:parent-index:{realmId}:{parentId} <- add locationId
+ LOCK lock:parent-index:{realmId}:{parentId}
+ READ store:parent-index:{realmId}:{parentId}
+ WRITE store:parent-index:{realmId}:{parentId} <- add locationId
 ELSE
-  LOCK lock:root-locations:{realmId}
-    READ store:root-locations:{realmId}
-    WRITE store:root-locations:{realmId} <- add locationId
+ LOCK lock:root-locations:{realmId}
+ READ store:root-locations:{realmId}
+ WRITE store:root-locations:{realmId} <- add locationId
 WRITE cache:location:{locationId} <- model (TTL: CacheTtlSeconds)
 PUBLISH location.created { full model fields }
 RETURN (200, LocationResponse)
@@ -362,11 +362,11 @@ RETURN (200, LocationResponse)
 POST /location/update | Roles: [admin]
 
 ```
-READ store:location:{locationId}                   -> 404 if null
+READ store:location:{locationId} -> 404 if null
 changedFields = []
 // Apply each non-null field from request, track changes
 IF no fields changed
-  RETURN (200, LocationResponse)                   // current state, no event
+ RETURN (200, LocationResponse) // current state, no event
 WRITE store:location:{locationId} <- updated model
 WRITE cache:location:{locationId} <- model (TTL: CacheTtlSeconds)
 PUBLISH location.updated { model, changedFields }
@@ -378,27 +378,27 @@ RETURN (200, LocationResponse)
 POST /location/set-parent | Roles: [admin]
 
 ```
-READ store:location:{locationId}                   -> 404 if null
-IF model.ParentLocationId == newParentId           -> RETURN (200, LocationResponse) // idempotent
-READ store:location:{newParentLocationId}          -> 400 if not found
-IF parent.RealmId != model.RealmId                 -> 400 cross-realm
+READ store:location:{locationId} -> 404 if null
+IF model.ParentLocationId == newParentId -> RETURN (200, LocationResponse) // idempotent
+READ store:location:{newParentLocationId} -> 400 if not found
+IF parent.RealmId != model.RealmId -> 400 cross-realm
 // Circular reference check via CollectDescendantsAsync
-IF locationId is descendant of newParent           -> 400 circular reference
+IF locationId is descendant of newParent -> 400 circular reference
 oldParentId = model.ParentLocationId
 model.ParentLocationId = newParentId
 model.Depth = parent.Depth + 1
 WRITE store:location:{locationId} <- updated model
 IF oldParentId was null
-  LOCK lock:root-locations:{realmId}
-    READ + WRITE: remove locationId from root-locations
+ LOCK lock:root-locations:{realmId}
+ READ + WRITE: remove locationId from root-locations
 ELSE
-  LOCK lock:parent-index:{realmId}:{oldParentId}
-    READ + WRITE/DELETE: remove locationId from old parent-index
+ LOCK lock:parent-index:{realmId}:{oldParentId}
+ READ + WRITE/DELETE: remove locationId from old parent-index
 LOCK lock:parent-index:{realmId}:{newParentId}
-  READ + WRITE: add locationId to new parent-index
+ READ + WRITE: add locationId to new parent-index
 IF depth changed
-  // see helper: UpdateDescendantDepthsAsync
-  // Recursively updates all descendants' depth, saves to store, invalidates cache
+ // see helper: UpdateDescendantDepthsAsync
+ // Recursively updates all descendants' depth, saves to store, invalidates cache
 WRITE cache:location:{locationId} <- model (TTL: CacheTtlSeconds)
 PUBLISH location.updated { model, changedFields: [parentLocationId, depth] }
 PUSH location.updated client event to observing sessions
@@ -409,19 +409,19 @@ RETURN (200, LocationResponse)
 POST /location/remove-parent | Roles: [admin]
 
 ```
-READ store:location:{locationId}                   -> 404 if null
-IF model.ParentLocationId is null                  -> RETURN (200, LocationResponse) // idempotent
+READ store:location:{locationId} -> 404 if null
+IF model.ParentLocationId is null -> RETURN (200, LocationResponse) // idempotent
 oldParentId = model.ParentLocationId
 oldDepth = model.Depth
 model.ParentLocationId = null
 model.Depth = 0
 WRITE store:location:{locationId} <- updated model
 LOCK lock:parent-index:{realmId}:{oldParentId}
-  READ + WRITE/DELETE: remove locationId from old parent-index
+ READ + WRITE/DELETE: remove locationId from old parent-index
 LOCK lock:root-locations:{realmId}
-  READ + WRITE: add locationId to root-locations
+ READ + WRITE: add locationId to root-locations
 IF oldDepth != 0
-  // see helper: UpdateDescendantDepthsAsync
+ // see helper: UpdateDescendantDepthsAsync
 WRITE cache:location:{locationId} <- model (TTL: CacheTtlSeconds)
 PUBLISH location.updated { model, changedFields: [parentLocationId, depth] }
 PUSH location.updated client event to observing sessions
@@ -432,25 +432,25 @@ RETURN (200, LocationResponse)
 POST /location/delete | Roles: [admin]
 
 ```
-READ store:location:{locationId}                   -> 404 if null
-IF !model.IsDeprecated                             -> 400 must deprecate first (Category A)
-READ store:parent-index:{realmId}:{locationId}     -> 409 if has children
+READ store:location:{locationId} -> 404 if null
+IF !model.IsDeprecated -> 400 must deprecate first (Category A)
+READ store:parent-index:{realmId}:{locationId} -> 409 if has children
 CALL _resourceClient.CheckReferencesAsync(location, locationId)
-  // catch ApiException 404: no references (normal, continue)
-  // catch other ApiException: log error, publish error event -> 503
+ // catch ApiException 404: no references (normal, continue)
+ // catch other ApiException: log error, publish error event -> 503
 IF referenceCount > 0
-  CALL _resourceClient.ExecuteCleanupAsync(AllRequired)
-  IF !cleanup.Success                              -> 409 cleanup blocked
+ CALL _resourceClient.ExecuteCleanupAsync(AllRequired)
+ IF !cleanup.Success -> 409 cleanup blocked
 DELETE store:location:{locationId}
 DELETE store:code-index:{realmId}:{CODE_UPPER}
 LOCK lock:realm-index:{realmId}
-  READ + WRITE: remove locationId from realm-index
+ READ + WRITE: remove locationId from realm-index
 IF model.ParentLocationId is null
-  LOCK lock:root-locations:{realmId}
-    READ + WRITE: remove locationId from root-locations
+ LOCK lock:root-locations:{realmId}
+ READ + WRITE: remove locationId from root-locations
 ELSE
-  LOCK lock:parent-index:{realmId}:{parentId}
-    READ + WRITE/DELETE: remove locationId from parent-index
+ LOCK lock:parent-index:{realmId}:{parentId}
+ READ + WRITE/DELETE: remove locationId from parent-index
 DELETE cache:location:{locationId}
 PUBLISH location.deleted { full model snapshot }
 RETURN 200
@@ -460,8 +460,8 @@ RETURN 200
 POST /location/deprecate | Roles: [admin]
 
 ```
-READ store:location:{locationId}                   -> 404 if null
-IF model.IsDeprecated                              -> RETURN (200, LocationResponse) // idempotent
+READ store:location:{locationId} -> 404 if null
+IF model.IsDeprecated -> RETURN (200, LocationResponse) // idempotent
 model.IsDeprecated = true
 model.DeprecatedAt = now
 model.DeprecationReason = request.Reason
@@ -476,8 +476,8 @@ RETURN (200, LocationResponse)
 POST /location/undeprecate | Roles: [admin]
 
 ```
-READ store:location:{locationId}                   -> 404 if null
-IF !model.IsDeprecated                             -> RETURN (200, LocationResponse) // idempotent
+READ store:location:{locationId} -> 404 if null
+IF !model.IsDeprecated -> RETURN (200, LocationResponse) // idempotent
 model.IsDeprecated = false
 model.DeprecatedAt = null
 model.DeprecationReason = null
@@ -492,20 +492,20 @@ RETURN (200, LocationResponse)
 POST /location/transfer-realm | Roles: [admin]
 
 ```
-READ store:location:{locationId}                   -> 404 if null
-IF model.RealmId == targetRealmId                  -> RETURN (200, LocationResponse) // idempotent
-CALL _realmClient.RealmExistsAsync(targetRealmId)  -> 404 if not found/inactive
+READ store:location:{locationId} -> 404 if null
+IF model.RealmId == targetRealmId -> RETURN (200, LocationResponse) // idempotent
+CALL _realmClient.RealmExistsAsync(targetRealmId) -> 404 if not found/inactive
 READ store:code-index:{targetRealmId}:{CODE_UPPER} -> 409 if code collision
 // Remove from source realm indexes
 DELETE store:code-index:{oldRealmId}:{CODE_UPPER}
 LOCK lock:realm-index:{oldRealmId}
-  READ + WRITE: remove locationId from old realm-index
+ READ + WRITE: remove locationId from old realm-index
 IF model.ParentLocationId specified
-  LOCK lock:parent-index:{oldRealmId}:{parentId}
-    READ + WRITE/DELETE: remove from old parent-index
+ LOCK lock:parent-index:{oldRealmId}:{parentId}
+ READ + WRITE/DELETE: remove from old parent-index
 ELSE
-  LOCK lock:root-locations:{oldRealmId}
-    READ + WRITE: remove from old root-locations
+ LOCK lock:root-locations:{oldRealmId}
+ READ + WRITE: remove from old root-locations
 // Update model: new realm, clear parent, depth = 0
 model.RealmId = targetRealmId
 model.ParentLocationId = null
@@ -514,9 +514,9 @@ WRITE store:location:{locationId} <- updated model
 WRITE store:code-index:{targetRealmId}:{CODE_UPPER} <- locationId string
 // Add to target realm indexes
 LOCK lock:realm-index:{targetRealmId}
-  READ + WRITE: add locationId to target realm-index
+ READ + WRITE: add locationId to target realm-index
 LOCK lock:root-locations:{targetRealmId}
-  READ + WRITE: add locationId to target root-locations
+ READ + WRITE: add locationId to target root-locations
 DELETE cache:location:{locationId}
 PUBLISH location.updated { model, changedFields: [realmId, parentLocationId, depth] }
 RETURN (200, LocationResponse)
@@ -530,37 +530,37 @@ POST /location/seed | Roles: [admin]
 realmCodeToId = {}
 failedRealmCodes = {}
 FOREACH unique realmCode in request.Locations
-  CALL _realmClient.GetRealmByCodeAsync(realmCode)
-  IF success: realmCodeToId[code] = realmId
-  ELSE: failedRealmCodes.add(code), record error
+ CALL _realmClient.GetRealmByCodeAsync(realmCode)
+ IF success: realmCodeToId[code] = realmId
+ ELSE: failedRealmCodes.add(code), record error
 
 created = 0, updated = 0, skipped = 0, errors = []
 
 // Pass 1: Create/update locations without parents
 FOREACH seedLocation in request.Locations
-  IF realmCode in failedRealmCodes: skip, record error
-  READ store:code-index:{realmId}:{CODE_UPPER}
-  IF exists AND updateExisting
-    READ store:location:{existingId}
-    IF fields changed
-      // Update spatial and metadata fields
-      WRITE store:location:{existingId} <- updated model
-      WRITE cache:location:{existingId} <- model
-      PUBLISH location.updated { model, changedFields }
-      PUSH location.updated client event
-      updated++
-    ELSE
-      skipped++
-  ELSE IF exists AND !updateExisting
-    skipped++
-  ELSE
-    // Delegate to CreateLocationAsync (full create flow with indexes + events)
-    created++
+ IF realmCode in failedRealmCodes: skip, record error
+ READ store:code-index:{realmId}:{CODE_UPPER}
+ IF exists AND updateExisting
+ READ store:location:{existingId}
+ IF fields changed
+ // Update spatial and metadata fields
+ WRITE store:location:{existingId} <- updated model
+ WRITE cache:location:{existingId} <- model
+ PUBLISH location.updated { model, changedFields }
+ PUSH location.updated client event
+ updated++
+ ELSE
+ skipped++
+ ELSE IF exists AND !updateExisting
+ skipped++
+ ELSE
+ // Delegate to CreateLocationAsync (full create flow with indexes + events)
+ created++
 
 // Pass 2: Set parent relationships
 FOREACH seedLocation with parentLocationCode
-  // Resolve parentCode from pass 1 results
-  // Delegate to SetLocationParentAsync (full parent-set flow with circular check, indexes, events)
+ // Resolve parentCode from pass 1 results
+ // Delegate to SetLocationParentAsync (full parent-set flow with circular check, indexes, events)
 
 RETURN (200, SeedLocationsResponse { created, updated, skipped, errors })
 ```
@@ -569,27 +569,27 @@ RETURN (200, SeedLocationsResponse { created, updated, skipped, errors })
 POST /location/report-entity-position | Roles: [developer]
 
 ```
-READ cache:location:{locationId}                   -> 404 if null (via GetLocationWithCacheAsync)
+READ cache:location:{locationId} -> 404 if null (via GetLocationWithCacheAsync)
 IF request.PreviousLocationId specified
-  previousLocationId = request.PreviousLocationId  // caller-hint fast path
+ previousLocationId = request.PreviousLocationId // caller-hint fast path
 ELSE
-  READ presence:entity-location:{entityType}:{entityId}
-  previousLocationId = existing?.LocationId
+ READ presence:entity-location:{entityType}:{entityId}
+ previousLocationId = existing?.LocationId
 WRITE presence:entity-location:{entityType}:{entityId} <- EntityPresenceModel (TTL: EntityPresenceTtlSeconds)
-  // realmId = request.RealmId ?? location.RealmId
-IF previousLocationId != locationId                // actual location change
-  WRITE set:location-entities:{locationId} <- add "{entityType}:{entityId}"
-  WRITE set:location-entities:__index__ <- add locationId
-  IF previousLocationId != null
-    WRITE set:location-entities:{previousLocationId} <- remove "{entityType}:{entityId}"
-    PUBLISH location.entity-departed { entityType, entityId, previousLocationId, realmId, reportedBy }
-    PUSH location.presence-changed to sessions observing previousLocationId { changeType: Departed }
-  PUBLISH location.entity-arrived { entityType, entityId, locationId, realmId, reportedBy }
-  PUSH location.presence-changed to sessions observing locationId { changeType: Arrived }
-  RETURN (200, ReportEntityPositionResponse { arrivedAt: locationId, departedFrom: previousLocationId })
+ // realmId = request.RealmId ?? location.RealmId
+IF previousLocationId != locationId // actual location change
+ WRITE set:location-entities:{locationId} <- add "{entityType}:{entityId}"
+ WRITE set:location-entities:__index__ <- add locationId
+ IF previousLocationId != null
+ WRITE set:location-entities:{previousLocationId} <- remove "{entityType}:{entityId}"
+ PUBLISH location.entity-departed { entityType, entityId, previousLocationId, realmId, reportedBy }
+ PUSH location.presence-changed to sessions observing previousLocationId { changeType: Departed }
+ PUBLISH location.entity-arrived { entityType, entityId, locationId, realmId, reportedBy }
+ PUSH location.presence-changed to sessions observing locationId { changeType: Arrived }
+ RETURN (200, ReportEntityPositionResponse { arrivedAt: locationId, departedFrom: previousLocationId })
 ELSE
-  // TTL refresh only — no events
-  RETURN (200, ReportEntityPositionResponse {})
+ // TTL refresh only — no events
+ RETURN (200, ReportEntityPositionResponse {})
 ```
 
 ### GetEntityLocation
@@ -598,7 +598,7 @@ POST /location/get-entity-location | Roles: [user]
 ```
 READ presence:entity-location:{entityType}:{entityId}
 IF null
-  RETURN (200, GetEntityLocationResponse {})       // empty — no active presence
+ RETURN (200, GetEntityLocationResponse {}) // empty — no active presence
 RETURN (200, GetEntityLocationResponse { locationId, realmId, reportedAt, reportedBy })
 ```
 
@@ -611,8 +611,8 @@ READ set:location-entities:{locationId} -> all members
 IF entityType filter specified: filter by type
 // In-memory pagination, capped at config.MaxEntitiesPerLocationQuery
 FOREACH paged entry
-  READ presence:entity-location:{entityType}:{entityId}  // hydrate metadata
-  // null presence = stale member (TTL expired, not yet cleaned); include with null metadata
+ READ presence:entity-location:{entityType}:{entityId} // hydrate metadata
+ // null presence = stale member (TTL expired, not yet cleaned); include with null metadata
 RETURN (200, ListEntitiesAtLocationResponse { entities, totalCount, locationId })
 ```
 
@@ -622,7 +622,7 @@ POST /location/clear-entity-position | Roles: [developer]
 ```
 READ presence:entity-location:{entityType}:{entityId}
 IF null
-  RETURN (200, ClearEntityPositionResponse { previousLocationId: null }) // idempotent
+ RETURN (200, ClearEntityPositionResponse { previousLocationId: null }) // idempotent
 DELETE presence:entity-location:{entityType}:{entityId}
 WRITE set:location-entities:{existing.LocationId} <- remove "{entityType}:{entityId}"
 PUBLISH location.entity-departed { entityType, entityId, existing.LocationId, realmId, reportedBy }
@@ -634,13 +634,13 @@ RETURN (200, ClearEntityPositionResponse { previousLocationId: existing.Location
 POST /location/get-compress-data | Roles: [developer]
 
 ```
-READ cache:location:{locationId}                   -> 404 if null (via GetLocationWithCacheAsync)
-IF !model.IsDeprecated                             -> 400 must be deprecated
+READ cache:location:{locationId} -> 404 if null (via GetLocationWithCacheAsync)
+IF !model.IsDeprecated -> 400 must be deprecated
 IF model.ParentLocationId specified
-  READ cache:location:{parentLocationId}           // parent context (one level up)
-READ store:parent-index:{realmId}:{locationId}     // children of this location
+ READ cache:location:{parentLocationId} // parent context (one level up)
+READ store:parent-index:{realmId}:{locationId} // children of this location
 FOREACH childId in childIndex
-  READ cache:location:{childId}                    // child codes for summary
+ READ cache:location:{childId} // child codes for summary
 RETURN (200, LocationBaseArchive { location data, parent context, childrenCount, childrenCodes })
 ```
 
@@ -656,24 +656,24 @@ RETURN (200, LocationBaseArchive { location data, parent context, childrenCount,
 ```
 WAIT startup delay
 LOOP (while not cancelled)
-  READ set:location-entities:__index__ -> all location ID strings
-  IF empty: wait interval, continue
-  FOREACH locationIdStr in index
-    IF not valid Guid: mark for index removal, continue
-    READ set:location-entities:{locationId} -> all members
-    IF empty: mark location for index removal, continue
-    FOREACH member in members
-      // Parse as "{entityType}:{entityId}"
-      IF malformed: mark stale
-      ELSE
-        READ presence:entity-location:{entityType}:{entityId}
-        IF null (TTL expired): mark stale
-    FOREACH staleMember
-      WRITE set:location-entities:{locationId} <- remove staleMember
-    IF all members stale
-      DELETE set:location-entities:{locationId}
-      mark location for index removal
-  FOREACH emptyLocationId
-    WRITE set:location-entities:__index__ <- remove emptyLocationId
-  WAIT cleanup interval
+ READ set:location-entities:__index__ -> all location ID strings
+ IF empty: wait interval, continue
+ FOREACH locationIdStr in index
+ IF not valid Guid: mark for index removal, continue
+ READ set:location-entities:{locationId} -> all members
+ IF empty: mark location for index removal, continue
+ FOREACH member in members
+ // Parse as "{entityType}:{entityId}"
+ IF malformed: mark stale
+ ELSE
+ READ presence:entity-location:{entityType}:{entityId}
+ IF null (TTL expired): mark stale
+ FOREACH staleMember
+ WRITE set:location-entities:{locationId} <- remove staleMember
+ IF all members stale
+ DELETE set:location-entities:{locationId}
+ mark location for index removal
+ FOREACH emptyLocationId
+ WRITE set:location-entities:__index__ <- remove emptyLocationId
+ WAIT cleanup interval
 ```

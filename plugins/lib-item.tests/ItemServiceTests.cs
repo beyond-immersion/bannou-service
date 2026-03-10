@@ -2021,7 +2021,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
-        // Per T8: Error responses return null, status code is sufficient
+        // Per IMPLEMENTATION TENETS: Error responses return null, status code is sufficient
         Assert.Null(response);
     }
 
@@ -2081,7 +2081,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var (status, response) = await service.UseItemAsync(request);
 
         // Assert - Helper catches exception and returns null, causing BadRequest;
-        // per T8, error response is null
+        // per IMPLEMENTATION TENETS, error response is null
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
     }
@@ -2153,7 +2153,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.UseItemAsync(request);
 
-        // Assert - Per T8, error response is null, status code is sufficient
+        // Assert - Per IMPLEMENTATION TENETS, error response is null, status code is sufficient
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
     }
@@ -2561,7 +2561,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.UseItemAsync(request);
 
-        // Assert - Per T8, error response is null, status code is sufficient
+        // Assert - Per IMPLEMENTATION TENETS, error response is null, status code is sufficient
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
 
@@ -2646,7 +2646,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
-        // Per T8: Error responses return null, status code is sufficient
+        // Per IMPLEMENTATION TENETS: Error responses return null, status code is sufficient
         Assert.Null(response);
     }
 
@@ -2829,7 +2829,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.UseItemAsync(request);
 
-        // Assert - Use failed but item was consumed (per T8, error response is null)
+        // Assert - Use failed but item was consumed (per IMPLEMENTATION TENETS, error response is null)
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
 
@@ -2934,7 +2934,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.UseItemAsync(request);
 
-        // Assert - Use failed but handler was invoked (per T8, error response is null)
+        // Assert - Use failed but handler was invoked (per IMPLEMENTATION TENETS, error response is null)
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
 
@@ -3026,7 +3026,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         var (status, response) = await service.UseItemStepAsync(request);
 
-        // Assert - Per T8, error response is null, status code is sufficient
+        // Assert - Per IMPLEMENTATION TENETS, error response is null, status code is sufficient
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
     }

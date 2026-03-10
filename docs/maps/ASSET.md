@@ -72,7 +72,7 @@
 **Notes**:
 - `IOrchestratorClient` is constructor-injected (hard dependency) despite being a peer L3 service. Asset will fail to start if Orchestrator is not registered.
 - No lib-resource integration (no `x-references`). Asset is a leaf node — no external services consume its events.
-- MinIO/S3 SDK usage is the documented T4 exception: lib-asset IS the storage infrastructure lib.
+- MinIO/S3 SDK usage is the documented exception: lib-asset IS the storage infrastructure lib.
 
 ---
 
@@ -160,16 +160,16 @@ POST /assets/upload/request | Roles: [user]
 
 ```
 IF filename empty OR size <= 0 OR size > MaxUploadSizeMb OR contentType empty
-  RETURN (400, null)
+ RETURN (400, null)
 IF contentType is forbidden
-  RETURN (400, null)
+ RETURN (400, null)
 IF size > MultipartThresholdMb
-  // Multipart upload path
-  CALL _storageProvider.InitiateMultipartUploadAsync(bucket, tempPath)
+ // Multipart upload path
+ CALL _storageProvider.InitiateMultipartUploadAsync(bucket, tempPath)
 ELSE
-  // Single upload path
-  CALL _storageProvider.GenerateUploadUrlAsync(bucket, tempPath, ttl)
-WRITE _uploadSessionStore:{UploadSessionKeyPrefix}{uploadId} <- UploadSession from request  // with TTL
+ // Single upload path
+ CALL _storageProvider.GenerateUploadUrlAsync(bucket, tempPath, ttl)
+WRITE _uploadSessionStore:{UploadSessionKeyPrefix}{uploadId} <- UploadSession from request // with TTL
 PUBLISH asset.upload.requested { uploadId, owner, filename, size, contentType, isMultipart }
 RETURN (200, UploadResponse)
 ```
@@ -178,17 +178,17 @@ RETURN (200, UploadResponse)
 POST /assets/upload/complete | Roles: [user]
 
 ```
-READ _uploadSessionStore:{UploadSessionKeyPrefix}{uploadId}             -> 404 if null
+READ _uploadSessionStore:{UploadSessionKeyPrefix}{uploadId} -> 404 if null
 IF session expired
-  RETURN (400, null)
+ RETURN (400, null)
 IF session.IsMultipart
-  IF parts count != session.PartCount
-    RETURN (400, null)
-  CALL _storageProvider.CompleteMultipartUploadAsync(bucket, key, uploadId, parts)
+ IF parts count != session.PartCount
+ RETURN (400, null)
+ CALL _storageProvider.CompleteMultipartUploadAsync(bucket, key, uploadId, parts)
 ELSE
-  CALL _storageProvider.ObjectExistsAsync(bucket, tempKey)              -> 404 if false
+ CALL _storageProvider.ObjectExistsAsync(bucket, tempKey) -> 404 if false
 // Compute SHA-256 hash by streaming the object
-CALL _storageProvider.GetObjectAsync(bucket, tempKey)                   // stream to hash
+CALL _storageProvider.GetObjectAsync(bucket, tempKey) // stream to hash
 // Derive canonical storage key: assets/{contentType}/{basename}-{sha256}.{ext}
 CALL _storageProvider.CopyObjectAsync(bucket, tempKey, finalKey)
 CALL _storageProvider.DeleteObjectAsync(bucket, tempKey)
@@ -198,18 +198,18 @@ WRITE _internalAssetRecordStore:{AssetKeyPrefix}{assetId} <- InternalAssetRecord
 // Index by realm + content type (optimistic concurrency retry loop)
 READ _stringListIndexStore:{AssetIndexKeyPrefix}{realm}:{contentType} [with ETag]
 ETAG-WRITE _stringListIndexStore:{AssetIndexKeyPrefix}{realm}:{contentType} <- updated list
-  // retries up to IndexOptimisticRetryMaxAttempts on ETag mismatch
+ // retries up to IndexOptimisticRetryMaxAttempts on ETag mismatch
 IF size > LargeFileThresholdMb AND contentType is processable
-  PUBLISH asset.processing.queued { assetId, processingType }
-  // see DelegateToProcessingPoolAsync helper
-  CALL _processorPoolManager.GetAvailableCountAsync(poolType)
-  IF available
-    CALL _orchestratorClient.AcquireProcessorAsync(poolType)
-    PUBLISH asset.processing.job.{poolType} { assetId, storageKey, processorId, leaseId }
-  ELSE
-    PUBLISH asset.processing.retry { assetId, retryCount, maxRetries }
+ PUBLISH asset.processing.queued { assetId, processingType }
+ // see DelegateToProcessingPoolAsync helper
+ CALL _processorPoolManager.GetAvailableCountAsync(poolType)
+ IF available
+ CALL _orchestratorClient.AcquireProcessorAsync(poolType)
+ PUBLISH asset.processing.job.{poolType} { assetId, storageKey, processorId, leaseId }
+ ELSE
+ PUBLISH asset.processing.retry { assetId, retryCount, maxRetries }
 ELSE
-  PUBLISH asset.ready { assetId, bucket, key, contentHash }
+ PUBLISH asset.ready { assetId, bucket, key, contentHash }
 PUBLISH asset.upload.completed { assetId, uploadId, owner, bucket, key, size, contentHash }
 DELETE _uploadSessionStore:{UploadSessionKeyPrefix}{uploadId}
 RETURN (200, AssetMetadata)
@@ -219,7 +219,7 @@ RETURN (200, AssetMetadata)
 POST /assets/get | Roles: [user]
 
 ```
-READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}                -> 404 if null
+READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId} -> 404 if null
 CALL _storageProvider.GenerateDownloadUrlAsync(bucket, storageKey, ttl)
 RETURN (200, AssetWithDownloadUrl)
 ```
@@ -228,7 +228,7 @@ RETURN (200, AssetWithDownloadUrl)
 POST /assets/delete | Roles: [admin]
 
 ```
-READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}                -> 404 if null
+READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId} -> 404 if null
 CALL _storageProvider.DeleteObjectAsync(bucket, storageKey)
 DELETE _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
 // Remove from realm+contentType index (optimistic concurrency retry loop)
@@ -244,10 +244,10 @@ POST /assets/list-versions | Roles: [user]
 ```
 READ _stringListIndexStore:{AssetIndexKeyPrefix}{realm}:{contentType}
 IF null OR empty
-  RETURN (404, null)
+ RETURN (404, null)
 // Paginate results from index
 FOREACH assetId in page
-  READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
+ READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
 RETURN (200, AssetVersionList)
 ```
 
@@ -256,14 +256,14 @@ POST /assets/search | Roles: [user]
 
 ```
 IF _assetMetadataSearchStore is available
-  // RedisSearch full-text query path
-  CALL _assetMetadataSearchStore.SearchAsync(query, filters)
+ // RedisSearch full-text query path
+ CALL _assetMetadataSearchStore.SearchAsync(query, filters)
 ELSE
-  // Fallback: load realm+contentType index, filter in-memory
-  READ _stringListIndexStore:{AssetIndexKeyPrefix}{realm}:{contentType}
-  FOREACH assetId in index
-    READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
-  // Filter by tags, content type in memory; paginate
+ // Fallback: load realm+contentType index, filter in-memory
+ READ _stringListIndexStore:{AssetIndexKeyPrefix}{realm}:{contentType}
+ FOREACH assetId in index
+ READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
+ // Filter by tags, content type in memory; paginate
 RETURN (200, AssetSearchResult)
 ```
 
@@ -272,11 +272,11 @@ POST /assets/bulk-get | Roles: [user]
 
 ```
 IF assetIds count > MaxBulkGetAssets
-  RETURN (400, null)
+ RETURN (400, null)
 FOREACH assetId in request.assetIds (parallel)
-  READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
-  IF found AND request.includeDownloadUrls
-    CALL _storageProvider.GenerateDownloadUrlAsync(bucket, storageKey, ttl)
+ READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
+ IF found AND request.includeDownloadUrls
+ CALL _storageProvider.GenerateDownloadUrlAsync(bucket, storageKey, ttl)
 // Collect found assets and missing IDs
 RETURN (200, BulkGetAssetsResponse)
 ```
@@ -287,17 +287,17 @@ POST /bundles/create | Roles: [user]
 ```
 // Validate all asset IDs exist
 FOREACH assetId in request.assetIds
-  READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
+ READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
 IF any missing
-  RETURN (400, null)
+ RETURN (400, null)
 IF ProcessingMode == Pool
-  // Delegate to processing pool
-  WRITE _bundleCreationJobStore:{jobId} <- BundleCreationJob
-  PUBLISH asset.bundle.create { jobId, bundleId, version, assetIds, compression }
-  RETURN (200, CreateBundleResponse)  // status: Queued
+ // Delegate to processing pool
+ WRITE _bundleCreationJobStore:{jobId} <- BundleCreationJob
+ PUBLISH asset.bundle.create { jobId, bundleId, version, assetIds, compression }
+ RETURN (200, CreateBundleResponse) // status: Queued
 // Inline assembly path
 FOREACH assetId in request.assetIds
-  CALL _storageProvider.GetObjectAsync(bucket, storageKey)              // stream assets
+ CALL _storageProvider.GetObjectAsync(bucket, storageKey) // stream assets
 CALL _bundleConverter.BuildBundleAsync(assets, compression)
 CALL _storageProvider.UploadObjectAsync(bucket, bundlePath, bundleBytes)
 WRITE _bundleMetadataStore:{BundleKeyPrefix}{bundleId} <- BundleMetadata
@@ -306,8 +306,8 @@ READ _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} [with ETag]
 ETAG-WRITE _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} <- updated list
 // Index each asset's reverse lookup (optimistic concurrency retry per asset)
 FOREACH assetId in request.assetIds
-  READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} [with ETag]
-  ETAG-WRITE _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} <- updated index
+ READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} [with ETag]
+ ETAG-WRITE _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} <- updated index
 PUBLISH asset.bundle.created { bundleId, version, bucket, key, size, assetCount, compression, owner }
 RETURN (200, CreateBundleResponse)
 ```
@@ -316,18 +316,18 @@ RETURN (200, CreateBundleResponse)
 POST /bundles/get | Roles: [user]
 
 ```
-READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}                   -> 404 if null
+READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId} -> 404 if null
 IF bundle.LifecycleStatus == Deleted
-  RETURN (404, null)
+ RETURN (404, null)
 IF request.format == Zip
-  // Check or generate ZIP conversion cache
-  CALL _storageProvider.ObjectExistsAsync(bucket, zipCachePath)
-  IF not cached
-    CALL _bundleConverter.ConvertToZipAsync(bundleStream)
-    CALL _storageProvider.UploadObjectAsync(bucket, zipCachePath, zipBytes)
+ // Check or generate ZIP conversion cache
+ CALL _storageProvider.ObjectExistsAsync(bucket, zipCachePath)
+ IF not cached
+ CALL _bundleConverter.ConvertToZipAsync(bundleStream)
+ CALL _storageProvider.UploadObjectAsync(bucket, zipCachePath, zipBytes)
 // Generate download token and presigned URL
 CALL _storageProvider.GenerateDownloadUrlAsync(bucket, path, ttl)
-WRITE _bundleDownloadTokenStore:{DownloadTokenKeyPrefix}{token} <- BundleDownloadToken  // with TTL
+WRITE _bundleDownloadTokenStore:{DownloadTokenKeyPrefix}{token} <- BundleDownloadToken // with TTL
 RETURN (200, BundleWithDownloadUrl)
 ```
 
@@ -336,9 +336,9 @@ POST /bundles/upload/request | Roles: [user]
 
 ```
 IF filename empty OR invalid extension (.bannou/.zip required)
-  RETURN (400, null)
+ RETURN (400, null)
 CALL _storageProvider.GenerateUploadUrlAsync(bucket, uploadPath, ttl)
-WRITE _bundleUploadSessionStore:{BundleUploadSessionKeyPrefix}{uploadId} <- BundleUploadSession  // with TTL
+WRITE _bundleUploadSessionStore:{BundleUploadSessionKeyPrefix}{uploadId} <- BundleUploadSession // with TTL
 RETURN (200, UploadResponse)
 ```
 
@@ -348,37 +348,37 @@ POST /bundles/metabundle/create | Roles: [user]
 ```
 // Validate all source bundles exist and are active
 FOREACH bundleId in request.sourceBundleIds
-  READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
-  IF null OR deleted
-    RETURN (400, null)
+ READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
+ IF null OR deleted
+ RETURN (400, null)
 // Count total assets across all source bundles + standalone assets
 IF totalAssets > MetabundleAsyncAssetCountThreshold
-  OR sourceBundleCount > MetabundleAsyncSourceBundleThreshold
-  OR estimatedSize > MetabundleAsyncSizeBytesThreshold
-  // Async path: queue job for background processing
-  WRITE _metabundleJobStore:{MetabundleJobKeyPrefix}{jobId} <- MetabundleJob { status: Queued }
-  PUBLISH asset.metabundle.job.queued { jobId, metabundleId, sourceBundleCount, assetCount }
-  RETURN (200, CreateMetabundleResponse)  // with jobId for polling
+ OR sourceBundleCount > MetabundleAsyncSourceBundleThreshold
+ OR estimatedSize > MetabundleAsyncSizeBytesThreshold
+ // Async path: queue job for background processing
+ WRITE _metabundleJobStore:{MetabundleJobKeyPrefix}{jobId} <- MetabundleJob { status: Queued }
+ PUBLISH asset.metabundle.job.queued { jobId, metabundleId, sourceBundleCount, assetCount }
+ RETURN (200, CreateMetabundleResponse) // with jobId for polling
 ELSE
-  // Sync path: assemble immediately via StreamingBundleWriter
-  FOREACH sourceBundleId in request.sourceBundleIds
-    CALL _storageProvider.GetObjectAsync(bucket, bundlePath)            // stream bundle
-    // Extract and stream assets into new metabundle
-  FOREACH standaloneAssetId in request.standaloneAssetIds
-    CALL _storageProvider.GetObjectAsync(bucket, assetPath)
-  CALL _storageProvider.UploadObjectAsync(bucket, metabundlePath, stream)
-  WRITE _bundleMetadataStore:{BundleKeyPrefix}{metabundleId} <- BundleMetadata
-  // Index metabundle by realm and per-asset reverse indexes
-  PUBLISH asset.bundle.created { metabundleId, version, bucket, key, size, assetCount }
-  PUBLISH asset.metabundle.created { metabundleId, sourceBundleCount, assetCount, realm }
-  RETURN (200, CreateMetabundleResponse)  // with downloadUrl
+ // Sync path: assemble immediately via StreamingBundleWriter
+ FOREACH sourceBundleId in request.sourceBundleIds
+ CALL _storageProvider.GetObjectAsync(bucket, bundlePath) // stream bundle
+ // Extract and stream assets into new metabundle
+ FOREACH standaloneAssetId in request.standaloneAssetIds
+ CALL _storageProvider.GetObjectAsync(bucket, assetPath)
+ CALL _storageProvider.UploadObjectAsync(bucket, metabundlePath, stream)
+ WRITE _bundleMetadataStore:{BundleKeyPrefix}{metabundleId} <- BundleMetadata
+ // Index metabundle by realm and per-asset reverse indexes
+ PUBLISH asset.bundle.created { metabundleId, version, bucket, key, size, assetCount }
+ PUBLISH asset.metabundle.created { metabundleId, sourceBundleCount, assetCount, realm }
+ RETURN (200, CreateMetabundleResponse) // with downloadUrl
 ```
 
 ### GetJobStatus
 POST /bundles/job/status | Roles: [user]
 
 ```
-READ _metabundleJobStore:{MetabundleJobKeyPrefix}{jobId}                -> 404 if null
+READ _metabundleJobStore:{MetabundleJobKeyPrefix}{jobId} -> 404 if null
 RETURN (200, GetJobStatusResponse)
 ```
 
@@ -386,9 +386,9 @@ RETURN (200, GetJobStatusResponse)
 POST /bundles/job/cancel | Roles: [user]
 
 ```
-READ _metabundleJobStore:{MetabundleJobKeyPrefix}{jobId}                -> 404 if null
+READ _metabundleJobStore:{MetabundleJobKeyPrefix}{jobId} -> 404 if null
 IF job.Status == Completed OR job.Status == Failed
-  RETURN (400, null)
+ RETURN (400, null)
 WRITE _metabundleJobStore:{MetabundleJobKeyPrefix}{jobId} <- job { status: Cancelled }
 RETURN (200, CancelJobResponse)
 // NOTE: Cancellation is advisory only — in-progress jobs may complete despite cancellation
@@ -399,20 +399,20 @@ POST /bundles/resolve | Roles: [user]
 
 ```
 IF assetIds count > MaxResolutionAssets
-  RETURN (400, null)
+ RETURN (400, null)
 // Build candidate set: for each asset, find which bundles contain it
 FOREACH assetId in request.assetIds
-  READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId}
+ READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId}
 // Greedy set-cover algorithm: pick bundle covering most uncovered assets, repeat
 FOREACH iteration until all covered or no candidates
-  // Select bundle with maximum uncovered asset coverage
-  // Prefer metabundles when request.preferMetabundles is true
-  READ _bundleMetadataStore:{BundleKeyPrefix}{bestBundleId}
-  CALL _storageProvider.GenerateDownloadUrlAsync(bucket, path, ttl)
+ // Select bundle with maximum uncovered asset coverage
+ // Prefer metabundles when request.preferMetabundles is true
+ READ _bundleMetadataStore:{BundleKeyPrefix}{bestBundleId}
+ CALL _storageProvider.GenerateDownloadUrlAsync(bucket, path, ttl)
 // For remaining uncovered assets, generate standalone download URLs if includeStandalone
 FOREACH uncoveredAssetId
-  READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
-  CALL _storageProvider.GenerateDownloadUrlAsync(bucket, storageKey, ttl)
+ READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
+ CALL _storageProvider.GenerateDownloadUrlAsync(bucket, storageKey, ttl)
 RETURN (200, ResolveBundlesResponse)
 ```
 
@@ -422,10 +422,10 @@ POST /bundles/query/by-asset | Roles: [user]
 ```
 READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId}
 IF null OR empty
-  RETURN (200, QueryBundlesByAssetResponse)  // empty results
+ RETURN (200, QueryBundlesByAssetResponse) // empty results
 FOREACH bundleId in index (paginated)
-  READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
-  // Filter by bundleType if specified
+ READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
+ // Filter by bundleType if specified
 RETURN (200, QueryBundlesByAssetResponse)
 ```
 
@@ -433,14 +433,14 @@ RETURN (200, QueryBundlesByAssetResponse)
 POST /bundles/update | Roles: [user]
 
 ```
-READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId} [with ETag]       -> 404 if null
+READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId} [with ETag] -> 404 if null
 IF bundle.LifecycleStatus == Deleted
-  RETURN (400, null)
+ RETURN (400, null)
 // Apply updates: name, description, tags (replace/add/remove)
 // Increment MetadataVersion
 // Append version record to history sorted set
 WRITE _bundleVersionRecordCacheStore:{BundleVersionKeyPrefix}{bundleId}
-  <- AddToSortedSetAsync(version, StoredBundleVersionRecord)
+ <- AddToSortedSetAsync(version, StoredBundleVersionRecord)
 // Trim history to MaxBundleVersions
 ETAG-WRITE _bundleMetadataStore:{BundleKeyPrefix}{bundleId} <- updated bundle
 PUBLISH asset.bundle.updated { bundleId, version, previousVersion, changes, updatedBy }
@@ -451,27 +451,27 @@ RETURN (200, UpdateBundleResponse)
 POST /bundles/delete | Roles: [user]
 
 ```
-READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}                   -> 404 if null
+READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId} -> 404 if null
 IF bundle.LifecycleStatus == Deleted
-  RETURN (400, null)
+ RETURN (400, null)
 IF request.permanent
-  // Immediate permanent deletion
-  CALL _storageProvider.DeleteObjectAsync(bucket, storageKey)
-  DELETE _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
-  // Clean up per-asset reverse indexes
-  FOREACH assetId in bundle.AssetIds
-    READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} [with ETag]
-    ETAG-WRITE _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} <- remove bundleId
-  PUBLISH asset.bundle.deleted { bundleId, permanent: true }
+ // Immediate permanent deletion
+ CALL _storageProvider.DeleteObjectAsync(bucket, storageKey)
+ DELETE _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
+ // Clean up per-asset reverse indexes
+ FOREACH assetId in bundle.AssetIds
+ READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} [with ETag]
+ ETAG-WRITE _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} <- remove bundleId
+ PUBLISH asset.bundle.deleted { bundleId, permanent: true }
 ELSE
-  // Soft delete: mark deleted, add to cleanup queue
-  WRITE _bundleMetadataStore:{BundleKeyPrefix}{bundleId} <- bundle { LifecycleStatus: Deleted, DeletedAt: now }
-  WRITE _bundleMetadataCacheStore:{BundleKeyPrefix}deleted-bundles-index
-    <- AddToSortedSetAsync(deletedAt.ToUnixTimeSeconds(), bundleId)
-  // Remove from realm index (optimistic concurrency retry)
-  READ _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} [with ETag]
-  ETAG-WRITE _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} <- remove bundleId
-  PUBLISH asset.bundle.deleted { bundleId, permanent: false, retentionUntil }
+ // Soft delete: mark deleted, add to cleanup queue
+ WRITE _bundleMetadataStore:{BundleKeyPrefix}{bundleId} <- bundle { LifecycleStatus: Deleted, DeletedAt: now }
+ WRITE _bundleMetadataCacheStore:{BundleKeyPrefix}deleted-bundles-index
+ <- AddToSortedSetAsync(deletedAt.ToUnixTimeSeconds(), bundleId)
+ // Remove from realm index (optimistic concurrency retry)
+ READ _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} [with ETag]
+ ETAG-WRITE _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} <- remove bundleId
+ PUBLISH asset.bundle.deleted { bundleId, permanent: false, retentionUntil }
 RETURN (200, DeleteBundleResponse)
 ```
 
@@ -479,14 +479,14 @@ RETURN (200, DeleteBundleResponse)
 POST /bundles/restore | Roles: [user]
 
 ```
-READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}                   -> 404 if null
+READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId} -> 404 if null
 IF bundle.LifecycleStatus != Deleted
-  RETURN (400, null)
+ RETURN (400, null)
 // Restore: clear deletion, re-index
 WRITE _bundleMetadataStore:{BundleKeyPrefix}{bundleId} <- bundle { LifecycleStatus: Active, DeletedAt: null }
 // Remove from deleted-bundles-index sorted set
 WRITE _bundleMetadataCacheStore:{BundleKeyPrefix}deleted-bundles-index
-  <- RemoveFromSortedSetAsync(bundleId)
+ <- RemoveFromSortedSetAsync(bundleId)
 // Add back to realm index (optimistic concurrency retry)
 READ _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} [with ETag]
 ETAG-WRITE _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} <- add bundleId
@@ -500,9 +500,9 @@ POST /bundles/query | Roles: [user]
 ```
 READ _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm}
 FOREACH bundleId in index
-  READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
+ READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
 // Filter by: lifecycle status, tags, tagExists/tagNotExists, createdAfter/Before,
-//            nameContains, owner, bundleType, includeDeleted
+// nameContains, owner, bundleType, includeDeleted
 // Sort by sortField (CreatedAt/UpdatedAt/Name/Size) in sortOrder (Asc/Desc)
 // Paginate by limit/offset
 RETURN (200, QueryBundlesResponse)
@@ -512,12 +512,12 @@ RETURN (200, QueryBundlesResponse)
 POST /bundles/list-versions | Roles: [user]
 
 ```
-READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}                   -> 404 if null
+READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId} -> 404 if null
 // Load version history from sorted set
 READ _bundleVersionRecordCacheStore:{BundleVersionKeyPrefix}{bundleId}
-  <- GetSortedSetRangeByScoreAsync(offset, limit)
+ <- GetSortedSetRangeByScoreAsync(offset, limit)
 COUNT _bundleVersionRecordCacheStore:{BundleVersionKeyPrefix}{bundleId}
-  <- GetSortedSetCountAsync()
+ <- GetSortedSetCountAsync()
 RETURN (200, ListBundleVersionsResponse)
 ```
 
@@ -533,22 +533,22 @@ RETURN (200, ListBundleVersionsResponse)
 ```
 // Query deleted-bundles-index for entries older than DeletedBundleRetentionDays
 READ _bundleMetadataCacheStore:{BundleKeyPrefix}deleted-bundles-index
-  <- GetSortedSetRangeByScoreAsync(0, cutoffTimestamp)
+ <- GetSortedSetRangeByScoreAsync(0, cutoffTimestamp)
 FOREACH bundleId in expired entries
-  READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
-  IF found
-    CALL _storageProvider.DeleteObjectAsync(bucket, storageKey)
-    DELETE _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
-    // Clean up per-asset reverse indexes
-    FOREACH assetId in bundle.AssetIds
-      READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} [with ETag]
-      ETAG-WRITE _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} <- remove bundleId
-    // Delete version history
-    DELETE _bundleVersionRecordCacheStore:{BundleVersionKeyPrefix}{bundleId}
-    PUBLISH asset.bundle.deleted { bundleId, permanent: true }
-  // Remove from deleted-bundles-index
-  WRITE _bundleMetadataCacheStore:{BundleKeyPrefix}deleted-bundles-index
-    <- RemoveFromSortedSetAsync(bundleId)
+ READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
+ IF found
+ CALL _storageProvider.DeleteObjectAsync(bucket, storageKey)
+ DELETE _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
+ // Clean up per-asset reverse indexes
+ FOREACH assetId in bundle.AssetIds
+ READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} [with ETag]
+ ETAG-WRITE _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} <- remove bundleId
+ // Delete version history
+ DELETE _bundleVersionRecordCacheStore:{BundleVersionKeyPrefix}{bundleId}
+ PUBLISH asset.bundle.deleted { bundleId, permanent: true }
+ // Remove from deleted-bundles-index
+ WRITE _bundleMetadataCacheStore:{BundleKeyPrefix}deleted-bundles-index
+ <- RemoveFromSortedSetAsync(bundleId)
 ```
 
 ### ZipCacheCleanupWorker
@@ -559,8 +559,8 @@ FOREACH bundleId in expired entries
 ```
 CALL _storageProvider.ListObjectsAsync(bucket, BundleZipCachePathPrefix)
 FOREACH object in results
-  IF object.LastModified older than ZipCacheTtlHours
-    CALL _storageProvider.DeleteObjectAsync(bucket, object.Key)
+ IF object.LastModified older than ZipCacheTtlHours
+ CALL _storageProvider.DeleteObjectAsync(bucket, object.Key)
 // No state store operations — pure storage cleanup
 ```
 
@@ -570,29 +570,29 @@ FOREACH object in results
 
 ```
 IF ProcessingMode == Api
-  // Worker disabled in API-only mode
-  RETURN
+ // Worker disabled in API-only mode
+ RETURN
 
 IF ProcessorNodeId is set
-  // Processor node mode: register with pool, maintain heartbeat
-  CALL _processorPoolManager.RegisterNodeAsync(poolType, nodeId, capacity)
-  LOOP every ProcessorHeartbeatIntervalSeconds
-    CALL _processorPoolManager.UpdateHeartbeatAsync(poolType, nodeId, currentLoad)
-    IF idle for ProcessorIdleTimeoutSeconds consecutive heartbeats
-      CALL IHostApplicationLifetime.StopApplication()  // self-terminate
+ // Processor node mode: register with pool, maintain heartbeat
+ CALL _processorPoolManager.RegisterNodeAsync(poolType, nodeId, capacity)
+ LOOP every ProcessorHeartbeatIntervalSeconds
+ CALL _processorPoolManager.UpdateHeartbeatAsync(poolType, nodeId, currentLoad)
+ IF idle for ProcessorIdleTimeoutSeconds consecutive heartbeats
+ CALL IHostApplicationLifetime.StopApplication() // self-terminate
 
-  // Handle processing jobs dispatched via asset.processing.job.{poolType}
-  // On job receipt:
-  READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
-  CALL processor.ProcessAsync(context)  // TextureProcessor/ModelProcessor/AudioProcessor
-  WRITE _internalAssetRecordStore:{AssetKeyPrefix}{assetId} <- updated processingStatus
-  CALL _orchestratorClient.ReleaseProcessorAsync(leaseId)
-  PUBLISH asset.processing.completed { assetId, processingType, success }
-  IF success
-    PUBLISH asset.ready { assetId, bucket, key, contentHash }
+ // Handle processing jobs dispatched via asset.processing.job.{poolType}
+ // On job receipt:
+ READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
+ CALL processor.ProcessAsync(context) // TextureProcessor/ModelProcessor/AudioProcessor
+ WRITE _internalAssetRecordStore:{AssetKeyPrefix}{assetId} <- updated processingStatus
+ CALL _orchestratorClient.ReleaseProcessorAsync(leaseId)
+ PUBLISH asset.processing.completed { assetId, processingType, success }
+ IF success
+ PUBLISH asset.ready { assetId, bucket, key, contentHash }
 
-  // On shutdown:
-  CALL _processorPoolManager.SetDrainingAsync(poolType, nodeId)
-  // Wait up to ShutdownDrainTimeoutMinutes for active jobs
-  CALL _processorPoolManager.RemoveNodeAsync(poolType, nodeId)
+ // On shutdown:
+ CALL _processorPoolManager.SetDrainingAsync(poolType, nodeId)
+ // Wait up to ShutdownDrainTimeoutMinutes for active jobs
+ CALL _processorPoolManager.RemoveNodeAsync(poolType, nodeId)
 ```

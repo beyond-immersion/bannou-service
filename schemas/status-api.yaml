@@ -1033,6 +1033,8 @@ components:
           description: Status template to delete (must be deprecated first)
 
     StatusTemplateResponse:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Status template with all fields
       additionalProperties: false
@@ -1047,7 +1049,6 @@ components:
       - maxStacks
       - stackBehavior
       - itemTemplateId
-      - isDeprecated
       - createdAt
       properties:
         statusTemplateId:
@@ -1102,19 +1103,6 @@ components:
           format: uuid
           nullable: true
           description: Asset identifier for this status effect's icon
-        isDeprecated:
-          type: boolean
-          description: Whether this template is deprecated and unavailable for new grants
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When this template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          maxLength: 500
-          nullable: true
-          description: Why this template was deprecated (null if not deprecated)
         createdAt:
           type: string
           format: date-time

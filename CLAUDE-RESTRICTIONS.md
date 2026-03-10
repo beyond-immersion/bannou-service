@@ -27,7 +27,7 @@
 **The forbidden pattern**: Reading a tenet rule, searching the codebase for code that contradicts it, finding violations in other files, and concluding "this is an established pattern, so it's not a violation." This is backwards — finding more violations proves the problem is widespread, it does NOT prove the tenet is wrong.
 
 **Rules**:
-1. **NEVER search the codebase to validate or invalidate a tenet finding.** If T16 says `{entity}.{action}` and the code uses `entity.sub.action`, that is a violation. Period. You do not get to grep for other three-part topics to build a case that the tenet "doesn't really mean that."
+1. **NEVER search the codebase to validate or invalidate a tenet finding.** If the QUALITY TENETS naming conventions say `{entity}.{action}` and the code uses `entity.sub.action`, that is a violation. Period. You do not get to grep for other three-part topics to build a case that the tenet "doesn't really mean that."
 2. **If existing code contradicts a tenet, that is an ADDITIONAL violation to report**, not evidence that the original finding is a false positive.
 3. **A "false positive" means the tenet genuinely does not apply to the situation** (e.g., the code is in a category the tenet explicitly exempts). It does NOT mean "other code also does this" or "this seems like it should be okay."
 4. **Do not soften findings.** Do not downgrade violations to "quality improvements" or "informational" or "medium-priority." If the tenet says X and the code does not-X, it is a violation at the severity the tenet defines.
@@ -48,7 +48,7 @@
 **What IS a false positive** (exhaustive list):
 - The tenet explicitly defines an exception that covers this case (cite the exception text)
 - The finding is factually wrong (the code actually does comply — the agent misread it)
-- The tenet applies to a different category of code than what was found (e.g., T30 spans on synchronous methods — T30 explicitly says "Only async methods need spans")
+- The tenet applies to a different category of code than what was found (e.g., IMPLEMENTATION TENETS spans on synchronous methods — the telemetry tenet explicitly says "Only async methods need spans")
 
 **What is NOT a false positive**:
 - "Other services do it this way" — that's more violations, not fewer
@@ -61,8 +61,8 @@
 **Why this is the most important rule**: Every other rule in this document protects against adding bad code. This rule protects against **certifying existing bad code as correct**. A missed violation is bad; a missed violation stamped "false positive" is catastrophic, because it immunizes the violation against future audits. When the next hardening pass finds the same issue, it will see your "false positive" evaluation and skip it again. The violation becomes permanent.
 
 **Incident log** (add new incidents here):
-1. T16 three-part event topics: Grepped actor/asset/puppetmaster, found same pattern, dismissed as "established." Result: topic naming violations in 3+ services blessed as correct.
-2. ~~T13 x-permissions on L4 write endpoints~~: **RETRACTED** (2026-03-06) — Original finding was based on a documentation error in SCHEMA-RULES.md that described `x-permissions: []` as "Explicitly public (rare)." Investigation of issue #580 revealed `[]` actually means "not exposed to WebSocket clients" (service-to-service only). The `[]` on L4 write endpoints was correct all along — those endpoints are called by event handlers via lib-mesh, not by WebSocket clients. The documentation error has been fixed in SCHEMA-RULES.md, FOUNDATION.md T13, and TENETS.md.
+1. QUALITY TENETS three-part event topics: Grepped actor/asset/puppetmaster, found same pattern, dismissed as "established." Result: topic naming violations in 3+ services blessed as correct.
+2. ~~FOUNDATION TENETS x-permissions on L4 write endpoints~~: **RETRACTED** (2026-03-06) — Original finding was based on a documentation error in SCHEMA-RULES.md that described `x-permissions: []` as "Explicitly public (rare)." Investigation of issue #580 revealed `[]` actually means "not exposed to WebSocket clients" (service-to-service only). The `[]` on L4 write endpoints was correct all along — those endpoints are called by event handlers via lib-mesh, not by WebSocket clients. The documentation error has been fixed in SCHEMA-RULES.md, FOUNDATION.md, and TENETS.md.
 
 ---
 
@@ -122,7 +122,7 @@ Then use the Read tool on `/tmp/output.txt`.
 3. **Set timeouts proportional to the command.** Full regeneration (`generate-all-services.sh`) needs 300000ms minimum. Full builds need 120000ms. Do not use the default 120000ms timeout for commands you know are longer.
 4. **If a background command completed, read its output file** — do not re-run the command to see what happened.
 
-**Why this rule exists:** Claude repeatedly ran `generate-all-services.sh` (a 3+ minute command touching 55 services) three times in succession — once to generate, then twice more just to grep different patterns from the output. Each re-run wasted 3+ minutes and put unnecessary load on the system. One redirect-to-file would have made the output available for unlimited examination at zero cost.
+**Why this rule exists:** Claude repeatedly ran `generate-all-services.sh` (a 3+ minute command touching 76+ services) three times in succession — once to generate, then twice more just to grep different patterns from the output. Each re-run wasted 3+ minutes and put unnecessary load on the system. One redirect-to-file would have made the output available for unlimited examination at zero cost.
 
 **The pattern to avoid:**
 ```bash
@@ -213,7 +213,7 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 
 **What this covers**: ALL files in `scripts/` — shell scripts (`generate-*.sh`, `common.sh`), Python scripts (`generate-*.py`, `resolve-*.py`, `extract-*.py`, `embed-*.py`), and NSwag templates (`templates/nswag/`).
 
-**Why this rule exists**: An agent once changed namespace strings across 4 generation scripts in a single commit, silently breaking all 48 services. The agent believed `.Common` was the correct namespace for common types when it was actually `.BannouService` — a mistake that cascaded into 22 compile errors and hours of debugging. Generation scripts are the foundation of the entire codebase; a wrong namespace, output path, or exclusion rule breaks everything downstream.
+**Why this rule exists**: An agent once changed namespace strings across 4 generation scripts in a single commit, silently breaking all 76+ services. The agent believed `.Common` was the correct namespace for common types when it was actually `.BannouService` — a mistake that cascaded into 22 compile errors and hours of debugging. Generation scripts are the foundation of the entire codebase; a wrong namespace, output path, or exclusion rule breaks everything downstream.
 
 **Rules**:
 1. **NEVER modify generation scripts** unless the user explicitly says "change the code generation to..."
@@ -255,7 +255,7 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 
 ## ⛔ NO CONVENTION-BASED CROSS-SERVICE DATA SHARING ⛔
 
-**Follow T29 (No Metadata Bag Contracts) in `docs/reference/tenets/FOUNDATION.md` TO THE LETTER.** T29 covers the eight failures of metadata bag contracts, the only two legitimate uses for `additionalProperties: true`, the correct service-owned binding pattern, per-layer scenario guidance, and detection/enforcement rules. It is comprehensive and authoritative.
+**Follow FOUNDATION TENETS (No Metadata Bag Contracts) in `docs/reference/tenets/FOUNDATION.md` TO THE LETTER.** The No Metadata Bag Contracts tenet covers the eight failures of metadata bag contracts, the only two legitimate uses for `additionalProperties: true`, the correct service-owned binding pattern, per-layer scenario guidance, and detection/enforcement rules. It is comprehensive and authoritative.
 
 **Known existing violations** (tracked for remediation, not precedent): GitHub Issue #308 tracks the systemic `additionalProperties: true` problem. Existing violations in affix metadata, contract CustomTerms, and others are tracked for migration to typed schemas. **These are technical debt to fix, not patterns to follow.**
 
@@ -321,12 +321,12 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 
 5. **SELF-CONTAINED VERIFICATION**: State how the implementer verifies the fix is correct. Usually: "Run `dotnet build plugins/lib-foo/lib-foo.csproj --no-restore` — must compile with zero errors and zero new warnings."
 
-**Why this rule exists**: Claude repeatedly created shallow task descriptions like "Fix T7 violation in AccountService" or "Update error handling per IMPLEMENTATION TENETS." These forced every implementer (human or agent) to re-read the tenet documents, re-discover the affected files, re-identify the line numbers, and re-derive the fix from scratch — duplicating hours of audit work that had already been done. The audit agent already found all of this information; the task description must preserve it. A task that requires additional research to execute is not a task — it's a second audit disguised as a task.
+**Why this rule exists**: Claude repeatedly created shallow task descriptions like "Fix error handling violation in AccountService" or "Update error handling per IMPLEMENTATION TENETS." These forced every implementer (human or agent) to re-read the tenet documents, re-discover the affected files, re-identify the line numbers, and re-derive the fix from scratch — duplicating hours of audit work that had already been done. The audit agent already found all of this information; the task description must preserve it. A task that requires additional research to execute is not a task — it's a second audit disguised as a task.
 
 **The compound waste pattern**:
 - Audit agent spends 5 minutes finding violation, reading tenet, identifying files and lines, understanding the fix
-- Task is created as "Fix T7 in FooService"
-- Implementing agent spends 5 minutes re-reading T7, re-finding the files, re-understanding the violation
+- Task is created as "Fix error handling in FooService"
+- Implementing agent spends 5 minutes re-reading the error handling tenet, re-finding the files, re-understanding the violation
 - That's 10 minutes for a 5-minute task — 50% waste, and the implementing agent may miss context the audit agent had
 
 **Note**: PreToolUse hooks on `TaskCreate` and `TodoWrite` will remind you of this format. The hooks do not block — they are nudges, not gates.

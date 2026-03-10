@@ -967,35 +967,36 @@ paths:
         \                \"nullable\": true,\n                    \"description\": \"Location code within the realm\"\n  \
         \              }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Full scenario template with all fields\",\n            \"required\": [\n                \"scenarioTemplateId\"\
-        ,\n                \"code\",\n                \"displayName\",\n                \"description\",\n               \
-        \ \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n                \"allowedPhases\"\
-        ,\n                \"maxConcurrentInstances\",\n                \"status\",\n                \"createdAt\",\n    \
-        \            \"updatedAt\"\n            ],\n            \"properties\": {\n                \"scenarioTemplateId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier for this template\"\n                },\n                \"code\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Unique template code\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Template description\"\n                },\n                \"category\"\
-        : {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n                    \"description\": \"Primary gameplay
-        category\"\n                },\n                \"subcategory\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Subcategory within the primary category\"\
-        \n                },\n                \"domainWeights\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\n                    },\n     \
-        \               \"description\": \"Growth domain weights\"\n                },\n                \"minGrowthPhase\"\
+        ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"allOf\": [\n                {\n      \
+        \              \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n      \
+        \      \"description\": \"Full scenario template with all fields\",\n            \"required\": [\n               \
+        \ \"scenarioTemplateId\",\n                \"code\",\n                \"displayName\",\n                \"description\"\
+        ,\n                \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n    \
+        \            \"allowedPhases\",\n                \"maxConcurrentInstances\",\n                \"status\",\n      \
+        \          \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n        \
+        \        \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for this template\"\n                },\n      \
+        \          \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique template
+        code\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n      \
+        \              \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Template description\"\n      \
+        \          },\n                \"category\": {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n    \
+        \                \"description\": \"Primary gameplay category\"\n                },\n                \"subcategory\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Minimum seed growth phase\"\n                },\n                \"connectivityMode\": {\n                   \
-        \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
-        \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
-        \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
-        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
-        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
-        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        : \"Subcategory within the primary category\"\n                },\n                \"domainWeights\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\
+        \n                    },\n                    \"description\": \"Growth domain weights\"\n                },\n   \
+        \             \"minGrowthPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Minimum seed growth phase\"\n                },\n                \"\
+        connectivityMode\": {\n                    \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\"\
+        : \"World connectivity mode\"\n                },\n                \"allowedPhases\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n  \
+        \                  },\n                    \"description\": \"Deployment phases where this template is available.
+        Always contains explicit values (never empty).\"\n                },\n                \"maxConcurrentInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\
+        \n                },\n                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\
+        \n                },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
         \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
         \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
@@ -1106,35 +1107,36 @@ paths:
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Template ID to retrieve\"\
         \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Full scenario template with all fields\",\n            \"required\": [\n                \"scenarioTemplateId\"\
-        ,\n                \"code\",\n                \"displayName\",\n                \"description\",\n               \
-        \ \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n                \"allowedPhases\"\
-        ,\n                \"maxConcurrentInstances\",\n                \"status\",\n                \"createdAt\",\n    \
-        \            \"updatedAt\"\n            ],\n            \"properties\": {\n                \"scenarioTemplateId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier for this template\"\n                },\n                \"code\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Unique template code\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Template description\"\n                },\n                \"category\"\
-        : {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n                    \"description\": \"Primary gameplay
-        category\"\n                },\n                \"subcategory\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Subcategory within the primary category\"\
-        \n                },\n                \"domainWeights\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\n                    },\n     \
-        \               \"description\": \"Growth domain weights\"\n                },\n                \"minGrowthPhase\"\
+        ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"allOf\": [\n                {\n      \
+        \              \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n      \
+        \      \"description\": \"Full scenario template with all fields\",\n            \"required\": [\n               \
+        \ \"scenarioTemplateId\",\n                \"code\",\n                \"displayName\",\n                \"description\"\
+        ,\n                \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n    \
+        \            \"allowedPhases\",\n                \"maxConcurrentInstances\",\n                \"status\",\n      \
+        \          \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n        \
+        \        \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for this template\"\n                },\n      \
+        \          \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique template
+        code\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n      \
+        \              \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Template description\"\n      \
+        \          },\n                \"category\": {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n    \
+        \                \"description\": \"Primary gameplay category\"\n                },\n                \"subcategory\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Minimum seed growth phase\"\n                },\n                \"connectivityMode\": {\n                   \
-        \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
-        \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
-        \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
-        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
-        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
-        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        : \"Subcategory within the primary category\"\n                },\n                \"domainWeights\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\
+        \n                    },\n                    \"description\": \"Growth domain weights\"\n                },\n   \
+        \             \"minGrowthPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Minimum seed growth phase\"\n                },\n                \"\
+        connectivityMode\": {\n                    \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\"\
+        : \"World connectivity mode\"\n                },\n                \"allowedPhases\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n  \
+        \                  },\n                    \"description\": \"Deployment phases where this template is available.
+        Always contains explicit values (never empty).\"\n                },\n                \"maxConcurrentInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\
+        \n                },\n                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\
+        \n                },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
         \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
         \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
@@ -1244,35 +1246,36 @@ paths:
         \            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n         \
         \           \"description\": \"Template code to look up\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Full scenario template with all fields\",\n            \"required\": [\n                \"scenarioTemplateId\"\
-        ,\n                \"code\",\n                \"displayName\",\n                \"description\",\n               \
-        \ \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n                \"allowedPhases\"\
-        ,\n                \"maxConcurrentInstances\",\n                \"status\",\n                \"createdAt\",\n    \
-        \            \"updatedAt\"\n            ],\n            \"properties\": {\n                \"scenarioTemplateId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier for this template\"\n                },\n                \"code\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Unique template code\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Template description\"\n                },\n                \"category\"\
-        : {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n                    \"description\": \"Primary gameplay
-        category\"\n                },\n                \"subcategory\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Subcategory within the primary category\"\
-        \n                },\n                \"domainWeights\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\n                    },\n     \
-        \               \"description\": \"Growth domain weights\"\n                },\n                \"minGrowthPhase\"\
+        ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"allOf\": [\n                {\n      \
+        \              \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n      \
+        \      \"description\": \"Full scenario template with all fields\",\n            \"required\": [\n               \
+        \ \"scenarioTemplateId\",\n                \"code\",\n                \"displayName\",\n                \"description\"\
+        ,\n                \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n    \
+        \            \"allowedPhases\",\n                \"maxConcurrentInstances\",\n                \"status\",\n      \
+        \          \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n        \
+        \        \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for this template\"\n                },\n      \
+        \          \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique template
+        code\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n      \
+        \              \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Template description\"\n      \
+        \          },\n                \"category\": {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n    \
+        \                \"description\": \"Primary gameplay category\"\n                },\n                \"subcategory\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Minimum seed growth phase\"\n                },\n                \"connectivityMode\": {\n                   \
-        \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
-        \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
-        \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
-        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
-        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
-        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        : \"Subcategory within the primary category\"\n                },\n                \"domainWeights\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\
+        \n                    },\n                    \"description\": \"Growth domain weights\"\n                },\n   \
+        \             \"minGrowthPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Minimum seed growth phase\"\n                },\n                \"\
+        connectivityMode\": {\n                    \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\"\
+        : \"World connectivity mode\"\n                },\n                \"allowedPhases\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n  \
+        \                  },\n                    \"description\": \"Deployment phases where this template is available.
+        Always contains explicit values (never empty).\"\n                },\n                \"maxConcurrentInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\
+        \n                },\n                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\
+        \n                },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
         \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
         \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
@@ -1414,35 +1417,36 @@ paths:
         \n                },\n                \"page\": {\n                    \"type\": \"integer\",\n                  \
         \  \"description\": \"Current page number\"\n                },\n                \"pageSize\": {\n               \
         \     \"type\": \"integer\",\n                    \"description\": \"Items per page\"\n                }\n       \
-        \     }\n        },\n        \"ScenarioTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Full scenario template with all fields\",\n            \"required\": [\n                \"scenarioTemplateId\"\
-        ,\n                \"code\",\n                \"displayName\",\n                \"description\",\n               \
-        \ \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n                \"allowedPhases\"\
-        ,\n                \"maxConcurrentInstances\",\n                \"status\",\n                \"createdAt\",\n    \
-        \            \"updatedAt\"\n            ],\n            \"properties\": {\n                \"scenarioTemplateId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier for this template\"\n                },\n                \"code\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Unique template code\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Template description\"\n                },\n                \"category\"\
-        : {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n                    \"description\": \"Primary gameplay
-        category\"\n                },\n                \"subcategory\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Subcategory within the primary category\"\
-        \n                },\n                \"domainWeights\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\n                    },\n     \
-        \               \"description\": \"Growth domain weights\"\n                },\n                \"minGrowthPhase\"\
+        \     }\n        },\n        \"ScenarioTemplateResponse\": {\n            \"allOf\": [\n                {\n      \
+        \              \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n      \
+        \      \"description\": \"Full scenario template with all fields\",\n            \"required\": [\n               \
+        \ \"scenarioTemplateId\",\n                \"code\",\n                \"displayName\",\n                \"description\"\
+        ,\n                \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n    \
+        \            \"allowedPhases\",\n                \"maxConcurrentInstances\",\n                \"status\",\n      \
+        \          \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n        \
+        \        \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for this template\"\n                },\n      \
+        \          \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique template
+        code\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n      \
+        \              \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Template description\"\n      \
+        \          },\n                \"category\": {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n    \
+        \                \"description\": \"Primary gameplay category\"\n                },\n                \"subcategory\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Minimum seed growth phase\"\n                },\n                \"connectivityMode\": {\n                   \
-        \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
-        \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
-        \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
-        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
-        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
-        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        : \"Subcategory within the primary category\"\n                },\n                \"domainWeights\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\
+        \n                    },\n                    \"description\": \"Growth domain weights\"\n                },\n   \
+        \             \"minGrowthPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Minimum seed growth phase\"\n                },\n                \"\
+        connectivityMode\": {\n                    \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\"\
+        : \"World connectivity mode\"\n                },\n                \"allowedPhases\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n  \
+        \                  },\n                    \"description\": \"Deployment phases where this template is available.
+        Always contains explicit values (never empty).\"\n                },\n                \"maxConcurrentInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\
+        \n                },\n                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\
+        \n                },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
         \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
         \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
@@ -1619,35 +1623,36 @@ paths:
         \                 \"description\": \"Location code within the realm\"\n                }\n            }\n        }\n\
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Full scenario template with all fields\",\n            \"required\": [\n                \"scenarioTemplateId\"\
-        ,\n                \"code\",\n                \"displayName\",\n                \"description\",\n               \
-        \ \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n                \"allowedPhases\"\
-        ,\n                \"maxConcurrentInstances\",\n                \"status\",\n                \"createdAt\",\n    \
-        \            \"updatedAt\"\n            ],\n            \"properties\": {\n                \"scenarioTemplateId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier for this template\"\n                },\n                \"code\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Unique template code\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Template description\"\n                },\n                \"category\"\
-        : {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n                    \"description\": \"Primary gameplay
-        category\"\n                },\n                \"subcategory\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Subcategory within the primary category\"\
-        \n                },\n                \"domainWeights\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\n                    },\n     \
-        \               \"description\": \"Growth domain weights\"\n                },\n                \"minGrowthPhase\"\
+        ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"allOf\": [\n                {\n      \
+        \              \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n      \
+        \      \"description\": \"Full scenario template with all fields\",\n            \"required\": [\n               \
+        \ \"scenarioTemplateId\",\n                \"code\",\n                \"displayName\",\n                \"description\"\
+        ,\n                \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n    \
+        \            \"allowedPhases\",\n                \"maxConcurrentInstances\",\n                \"status\",\n      \
+        \          \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n        \
+        \        \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for this template\"\n                },\n      \
+        \          \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique template
+        code\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n      \
+        \              \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Template description\"\n      \
+        \          },\n                \"category\": {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n    \
+        \                \"description\": \"Primary gameplay category\"\n                },\n                \"subcategory\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Minimum seed growth phase\"\n                },\n                \"connectivityMode\": {\n                   \
-        \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
-        \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
-        \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
-        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
-        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
-        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        : \"Subcategory within the primary category\"\n                },\n                \"domainWeights\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\
+        \n                    },\n                    \"description\": \"Growth domain weights\"\n                },\n   \
+        \             \"minGrowthPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Minimum seed growth phase\"\n                },\n                \"\
+        connectivityMode\": {\n                    \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\"\
+        : \"World connectivity mode\"\n                },\n                \"allowedPhases\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n  \
+        \                  },\n                    \"description\": \"Deployment phases where this template is available.
+        Always contains explicit values (never empty).\"\n                },\n                \"maxConcurrentInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\
+        \n                },\n                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\
+        \n                },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
         \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
         \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
@@ -1764,35 +1769,36 @@ paths:
         \  \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for
         deprecation (recommended for audit trail)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioTemplateResponse\"\
-        ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Full scenario template with all fields\",\n            \"required\": [\n                \"scenarioTemplateId\"\
-        ,\n                \"code\",\n                \"displayName\",\n                \"description\",\n               \
-        \ \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n                \"allowedPhases\"\
-        ,\n                \"maxConcurrentInstances\",\n                \"status\",\n                \"createdAt\",\n    \
-        \            \"updatedAt\"\n            ],\n            \"properties\": {\n                \"scenarioTemplateId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier for this template\"\n                },\n                \"code\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Unique template code\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Template description\"\n                },\n                \"category\"\
-        : {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n                    \"description\": \"Primary gameplay
-        category\"\n                },\n                \"subcategory\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Subcategory within the primary category\"\
-        \n                },\n                \"domainWeights\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\n                    },\n     \
-        \               \"description\": \"Growth domain weights\"\n                },\n                \"minGrowthPhase\"\
+        ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"allOf\": [\n                {\n      \
+        \              \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n      \
+        \      \"description\": \"Full scenario template with all fields\",\n            \"required\": [\n               \
+        \ \"scenarioTemplateId\",\n                \"code\",\n                \"displayName\",\n                \"description\"\
+        ,\n                \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n    \
+        \            \"allowedPhases\",\n                \"maxConcurrentInstances\",\n                \"status\",\n      \
+        \          \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n        \
+        \        \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for this template\"\n                },\n      \
+        \          \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique template
+        code\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n      \
+        \              \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Template description\"\n      \
+        \          },\n                \"category\": {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n    \
+        \                \"description\": \"Primary gameplay category\"\n                },\n                \"subcategory\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Minimum seed growth phase\"\n                },\n                \"connectivityMode\": {\n                   \
-        \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
-        \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
-        \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
-        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
-        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
-        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        : \"Subcategory within the primary category\"\n                },\n                \"domainWeights\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\
+        \n                    },\n                    \"description\": \"Growth domain weights\"\n                },\n   \
+        \             \"minGrowthPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Minimum seed growth phase\"\n                },\n                \"\
+        connectivityMode\": {\n                    \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\"\
+        : \"World connectivity mode\"\n                },\n                \"allowedPhases\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n  \
+        \                  },\n                    \"description\": \"Deployment phases where this template is available.
+        Always contains explicit values (never empty).\"\n                },\n                \"maxConcurrentInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\
+        \n                },\n                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\
+        \n                },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
         \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
         \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
@@ -1872,6 +1878,43 @@ paths:
         status to Deprecated, preventing new instances.\\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no
         undeprecate,\\nno delete. Idempotent \\u2014 returns OK if already deprecated.\\n\",\n    \"tags\": [\n        \"\
         Template Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deprecateTemplate\"\n}"
+  /gardener/template/clean-deprecated:
+    post:
+      operationId: cleanDeprecatedTemplates
+      tags:
+      - Template Management
+      summary: Clean deprecated scenario templates with zero remaining instances
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        scenario templates and permanently removes those with zero remaining garden
+        instances, subject to an optional grace period. Publishes template.deleted events
+        for each removed template. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean deprecated scenario templates with zero remaining instances\",\n\
+        \    \"description\": \"Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\\nscenario templates
+        and permanently removes those with zero remaining garden\\ninstances, subject to an optional grace period. Publishes
+        template.deleted events\\nfor each removed template. Idempotent and safe to call at any frequency.\\nSupports dry-run
+        mode for admin panel preview.\\n\",\n    \"tags\": [\n        \"Template Management\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"cleanDeprecatedTemplates\"\n}"
   /gardener/phase/get:
     post:
       summary: Get deployment phase configuration
@@ -3030,6 +3073,8 @@ components:
             format: float
           description: Partial growth awarded based on time spent
     ScenarioTemplateResponse:
+      allOf:
+      - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Full scenario template with all fields
       required:

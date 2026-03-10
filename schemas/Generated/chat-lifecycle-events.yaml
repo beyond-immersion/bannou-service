@@ -177,9 +177,9 @@ components:
       - persistenceMode
       - allowAnonymousSenders
       - status
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -208,19 +208,6 @@ components:
         status: &id016
           $ref: ../chat-api.yaml#/components/schemas/RoomTypeStatus
           description: "Current lifecycle status of the room type"
-        isDeprecated: &id017
-          type: boolean
-          description: "Whether the room type is deprecated"
-        deprecatedAt: &id018
-          type: string
-          format: date-time
-          nullable: true
-          description: "When the room type was deprecated"
-        deprecationReason: &id019
-          type: string
-          nullable: true
-          maxLength: 500
-          description: "Reason for deprecation"
         createdAt:
           type: string
           format: date-time
@@ -229,6 +216,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the chat room type was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this chat room type is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the chat room type was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     ChatRoomTypeUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -245,9 +245,9 @@ components:
       - persistenceMode
       - allowAnonymousSenders
       - status
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -261,9 +261,6 @@ components:
         persistenceMode: *id014
         allowAnonymousSenders: *id015
         status: *id016
-        isDeprecated: *id017
-        deprecatedAt: *id018
-        deprecationReason: *id019
         createdAt:
           type: string
           format: date-time
@@ -272,6 +269,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the chat room type was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this chat room type is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the chat room type was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -293,9 +303,9 @@ components:
       - persistenceMode
       - allowAnonymousSenders
       - status
-      - isDeprecated
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -308,9 +318,6 @@ components:
         persistenceMode: *id014
         allowAnonymousSenders: *id015
         status: *id016
-        isDeprecated: *id017
-        deprecatedAt: *id018
-        deprecationReason: *id019
         createdAt:
           type: string
           format: date-time
@@ -319,6 +326,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the chat room type was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this chat room type is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the chat room type was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

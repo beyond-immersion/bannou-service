@@ -248,156 +248,156 @@ Service lifetime is **Scoped** (per-request). Two background services implemente
 Escrow State Machine (13 states)
 ==================================
 
-  ┌──────────────────┐
-  │ Pending_deposits │──────────────┐
-  └────────┬─────────┘              │
-           │ deposit(s)             │ cancel/expire
-           ▼                        ▼
-  ┌──────────────────┐      ┌──────────────┐
-  │ Partially_funded │─────►│  Cancelled   │ (terminal)
-  └────────┬─────────┘      └──────────────┘
-           │ all required deposits
-           ▼                        ┌──────────────┐
-  ┌──────────────────┐      ┌──────►│   Expired    │ (terminal)
-  │     Funded       │──┐   │      └──────────────┘
-  └────────┬─────────┘  │   │
-           │             │   │ (from any non-terminal pre-release state)
-           │ consent     │   │
-           ▼             │   │
-  ┌──────────────────┐   │   │
-  │ Pending_consent  │───┤   │
-  └────────┬─────────┘   │   │
-           │ threshold    │   │
-           │ met          │   │
-           ▼              │   │
-  ┌──────────────────┐    │ dispute
-  │Pending_condition │────┤   │
-  └────┬───────┬─────┘   │   │
-       │       │          │   │
-       │       │ fail     │   │
-       │       ▼          │   │
-       │  ┌──────────────┐│   │
-       │  │Valid. failed  ││   │     ┌──────────────┐
-       │  └───┬──────────┘│   │  ┌─►│   Refunded   │ (terminal)
-       │      │ reaffirm  │   │  │  └──────────────┘
-       │      └─(back)────┘   │  │
-       │                      ▼  │
-       │ condition    ┌──────────────┐
-       │ met          │   Disputed   │──────────┐
-       ▼              └──────────────┘          │ resolve
-  ┌──────────────────┐          │               ▼
-  │    Finalizing    │──────────┤      ┌──────────────────┐
-  └────────┬─────────┘          │      │ Released/Refunded│
-           │                    │      │  (per arbiter)   │
-           ▼                    │      └──────────────────┘
-  ┌──────────────────┐          │
-  │    Releasing     │          │
-  └────────┬─────────┘          │
-           │                    ▼
-           ▼              ┌──────────────┐
-  ┌──────────────────┐    │   Refunding  │
-  │    Released      │    └──────┬───────┘
-  │   (terminal)     │           │
-  └──────────────────┘           ▼
-                          ┌──────────────┐
-                          │   Refunded   │
-                          │  (terminal)  │
-                          └──────────────┘
+ ┌──────────────────┐
+ │ Pending_deposits │──────────────┐
+ └────────┬─────────┘ │
+ │ deposit(s) │ cancel/expire
+ ▼ ▼
+ ┌──────────────────┐ ┌──────────────┐
+ │ Partially_funded │─────►│ Cancelled │ (terminal)
+ └────────┬─────────┘ └──────────────┘
+ │ all required deposits
+ ▼ ┌──────────────┐
+ ┌──────────────────┐ ┌──────►│ Expired │ (terminal)
+ │ Funded │──┐ │ └──────────────┘
+ └────────┬─────────┘ │ │
+ │ │ │ (from any non-terminal pre-release state)
+ │ consent │ │
+ ▼ │ │
+ ┌──────────────────┐ │ │
+ │ Pending_consent │───┤ │
+ └────────┬─────────┘ │ │
+ │ threshold │ │
+ │ met │ │
+ ▼ │ │
+ ┌──────────────────┐ │ dispute
+ │Pending_condition │────┤ │
+ └────┬───────┬─────┘ │ │
+ │ │ │ │
+ │ │ fail │ │
+ │ ▼ │ │
+ │ ┌──────────────┐│ │
+ │ │Valid. failed ││ │ ┌──────────────┐
+ │ └───┬──────────┘│ │ ┌─►│ Refunded │ (terminal)
+ │ │ reaffirm │ │ │ └──────────────┘
+ │ └─(back)────┘ │ │
+ │ ▼ │
+ │ condition ┌──────────────┐
+ │ met │ Disputed │──────────┐
+ ▼ └──────────────┘ │ resolve
+ ┌──────────────────┐ │ ▼
+ │ Finalizing │──────────┤ ┌──────────────────┐
+ └────────┬─────────┘ │ │ Released/Refunded│
+ │ │ │ (per arbiter) │
+ ▼ │ └──────────────────┘
+ ┌──────────────────┐ │
+ │ Releasing │ │
+ └────────┬─────────┘ │
+ │ ▼
+ ▼ ┌──────────────┐
+ ┌──────────────────┐ │ Refunding │
+ │ Released │ └──────┬───────┘
+ │ (terminal) │ │
+ └──────────────────┘ ▼
+ ┌──────────────┐
+ │ Refunded │
+ │ (terminal) │
+ └──────────────┘
 
-  Terminal States: Released, Refunded, Expired, Cancelled
+ Terminal States: Released, Refunded, Expired, Cancelled
 
 
 Token System (full_consent mode)
 ===================================
 
-  CreateEscrow
-       │
-       ├── For each party with expected deposits:
-       │    ├── Generate 32 random bytes
-       │    ├── Combine with "{escrowId}:{partyId}:Deposit" context
-       │    ├── SHA-256 hash → deposit token (Base64)
-       │    ├── SHA-256(token) → token hash (stored in Redis)
-       │    └── Return plain token to caller
-       │
-       ├── For each consent-required party:
-       │    ├── Same process with TokenType.Release
-       │    └── Release tokens stored, returned on full funding
-       │
-       └── Token Validation (on deposit/consent):
-            ├── SHA-256(submitted token) → hash
-            ├── Lookup hash in escrow-tokens store
-            ├── Verify: escrowId, partyId, tokenType match
-            ├── Verify: not already used
-            ├── Mark as used + timestamp
-            └── Proceed with operation
+ CreateEscrow
+ │
+ ├── For each party with expected deposits:
+ │ ├── Generate 32 random bytes
+ │ ├── Combine with "{escrowId}:{partyId}:Deposit" context
+ │ ├── SHA-256 hash → deposit token (Base64)
+ │ ├── SHA-256(token) → token hash (stored in Redis)
+ │ └── Return plain token to caller
+ │
+ ├── For each consent-required party:
+ │ ├── Same process with TokenType.Release
+ │ └── Release tokens stored, returned on full funding
+ │
+ └── Token Validation (on deposit/consent):
+ ├── SHA-256(submitted token) → hash
+ ├── Lookup hash in escrow-tokens store
+ ├── Verify: escrowId, partyId, tokenType match
+ ├── Verify: not already used
+ ├── Mark as used + timestamp
+ └── Proceed with operation
 
 
 Consent Flow
 ==============
 
-  After Funded state:
-       │
-       ├── Party A consents (Release) ────► ConsentsReceived = 1
-       │    (validates release token in full_consent mode)
-       │
-       ├── Party B consents (Release) ────► ConsentsReceived = 2
-       │
-       ├── ConsentsReceived >= RequiredConsentsForRelease?
-       │    ├── No BoundContractId → Finalizing
-       │    └── Has BoundContractId → Pending_condition
-       │
-       ├── Party X consents (Refund) ─────► Refunding
-       │    (any consent-required party can trigger)
-       │
-       └── Party Y consents (Dispute) ────► Disputed
-            (any party can dispute)
+ After Funded state:
+ │
+ ├── Party A consents (Release) ────► ConsentsReceived = 1
+ │ (validates release token in full_consent mode)
+ │
+ ├── Party B consents (Release) ────► ConsentsReceived = 2
+ │
+ ├── ConsentsReceived >= RequiredConsentsForRelease?
+ │ ├── No BoundContractId → Finalizing
+ │ └── Has BoundContractId → Pending_condition
+ │
+ ├── Party X consents (Refund) ─────► Refunding
+ │ (any consent-required party can trigger)
+ │
+ └── Party Y consents (Dispute) ────► Disputed
+ (any party can dispute)
 
 
 Deposit/Release/Refund Lifecycle
 ==================================
 
-  ┌─────────┐        ┌──────────────────┐        ┌─────────────┐
-  │  Party  │ deposit│    Escrow Svc    │ event  │  Currency/  │
-  │         │───────►│                  │───────►│  Inventory  │
-  └─────────┘        │                  │        │  Service    │
-                     │                  │        └─────────────┘
-                     │  (holds assets   │
-                     │   as records,    │
-                     │   no physical    │
-                     │   movement)      │
-                     │                  │
-  ┌─────────┐ release│                  │ event  ┌─────────────┐
-  │Initiator│───────►│  Status→Released │───────►│  Currency/  │
-  │ /System │        │                  │        │  Inventory  │
-  └─────────┘        └──────────────────┘        │  (executes  │
-                                                  │   transfer) │
-                                                  └─────────────┘
+ ┌─────────┐ ┌──────────────────┐ ┌─────────────┐
+ │ Party │ deposit│ Escrow Svc │ event │ Currency/ │
+ │ │───────►│ │───────►│ Inventory │
+ └─────────┘ │ │ │ Service │
+ │ │ └─────────────┘
+ │ (holds assets │
+ │ as records, │
+ │ no physical │
+ │ movement) │
+ │ │
+ ┌─────────┐ release│ │ event ┌─────────────┐
+ │Initiator│───────►│ Status→Released │───────►│ Currency/ │
+ │ /System │ │ │ │ Inventory │
+ └─────────┘ └──────────────────┘ │ (executes │
+ │ transfer) │
+ └─────────────┘
 
-  Note: Escrow service is a COORDINATION layer.
-  It tracks what should move where, but downstream
-  services execute the actual asset movements.
+ Note: Escrow service is a COORDINATION layer.
+ It tracks what should move where, but downstream
+ services execute the actual asset movements.
 
 
 Dispute Resolution
 =====================
 
-  ┌──────────┐  dispute  ┌──────────────┐
-  │  Party   │──────────►│   Disputed   │
-  └──────────┘           └──────┬───────┘
-                                │
-                         ┌──────▼───────┐
-                         │   Arbiter    │
-                         │   resolves   │
-                         └──────┬───────┘
-                                │
-              ┌─────────────────┼────────────────┐
-              │                 │                 │
-              ▼                 ▼                 ▼
-     ┌────────────┐   ┌────────────┐   ┌────────────────┐
-     │  Released  │   │  Refunded  │   │     Split      │
-     │ (original  │   │ (return to │   │ (custom alloc  │
-     │  allocat.) │   │ depositors)│   │  per arbiter)  │
-     └────────────┘   └────────────┘   └────────────────┘
+ ┌──────────┐ dispute ┌──────────────┐
+ │ Party │──────────►│ Disputed │
+ └──────────┘ └──────┬───────┘
+ │
+ ┌──────▼───────┐
+ │ Arbiter │
+ │ resolves │
+ └──────┬───────┘
+ │
+ ┌─────────────────┼────────────────┐
+ │ │ │
+ ▼ ▼ ▼
+ ┌────────────┐ ┌────────────┐ ┌────────────────┐
+ │ Released │ │ Refunded │ │ Split │
+ │ (original │ │ (return to │ │ (custom alloc │
+ │ allocat.) │ │ depositors)│ │ per arbiter) │
+ └────────────┘ └────────────┘ └────────────────┘
 ```
 
 ---
@@ -461,7 +461,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/250 -->
 
 5. **Configuration properties not wired up**: One configuration property remains unused:
-   - `ValidationCheckInterval` - defined but no background validation processor exists
+ - `ValidationCheckInterval` - defined but no background validation processor exists
 
 6. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative.
 
@@ -529,26 +529,26 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 ### Recently Completed
 
 1. **Event-driven confirmation flow** - [Issue #214](https://github.com/beyond-immersion/bannou-service/issues/214) (2026-02-01)
-   - Implemented `ReleaseMode` and `RefundMode` enums for configurable confirmation flows
-   - `Releasing` state now used for confirmation waiting when mode is not `immediate`
-   - Added `/escrow/confirm-release` and `/escrow/confirm-refund` endpoints
-   - Added `EscrowConfirmationTimeoutService` background worker
-   - Added `EscrowReleasingEvent` and `EscrowRefundingEvent`
+ - Implemented `ReleaseMode` and `RefundMode` enums for configurable confirmation flows
+ - `Releasing` state now used for confirmation waiting when mode is not `immediate`
+ - Added `/escrow/confirm-release` and `/escrow/confirm-refund` endpoints
+ - Added `EscrowConfirmationTimeoutService` background worker
+ - Added `EscrowReleasingEvent` and `EscrowRefundingEvent`
 
 2. **Escrow Expiration Background Service** (2026-02-01)
-   - Implemented `EscrowExpirationService` that scans for expired escrows and transitions them
-   - Wired up `ExpirationCheckInterval`, `ExpirationBatchSize`, and `ExpirationGracePeriod` config
-   - Publishes `EscrowExpiredEvent` and `EscrowRefundedEvent` (for auto-refund)
+ - Implemented `EscrowExpirationService` that scans for expired escrows and transitions them
+ - Wired up `ExpirationCheckInterval`, `ExpirationBatchSize`, and `ExpirationGracePeriod` config
+ - Publishes `EscrowExpiredEvent` and `EscrowRefundedEvent` (for auto-refund)
 
 ### Pending Design Review
 
 1. **Asset transfer integration** - [Issue #153](https://github.com/beyond-immersion/bannou-service/issues/153) (2026-01-31)
-   - Release and refund operations do not execute actual asset transfers (stub #7)
-   - Escrow should call lib-currency and lib-inventory directly (L4→L2, hierarchy-permitted)
-   - Events should be for observability, not for triggering asset movements (per T27)
-   - Inventory has zero escrow integration; Currency has endpoints but they're never called
+ - Release and refund operations do not execute actual asset transfers (stub #7)
+ - Escrow should call lib-currency and lib-inventory directly (L4→L2, hierarchy-permitted)
+ - Events should be for observability, not for triggering asset movements (per)
+ - Inventory has zero escrow integration; Currency has endpoints but they're never called
 
 2. **ValidateEscrow asset checking** - [Issue #213](https://github.com/beyond-immersion/bannou-service/issues/213) (2026-01-31)
-   - `ValidateEscrowAsync` contains placeholder logic - validation always passes
-   - Needs to call ICurrencyClient/IItemClient to verify deposited assets still held
-   - Design questions: contract validation, custom handler invocation, graceful degradation policy
+ - `ValidateEscrowAsync` contains placeholder logic - validation always passes
+ - Needs to call ICurrencyClient/IItemClient to verify deposited assets still held
+ - Design questions: contract validation, custom handler invocation, graceful degradation policy

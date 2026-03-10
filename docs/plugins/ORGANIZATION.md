@@ -270,7 +270,7 @@ Organization (L4) declares `x-references` in `organization-api.yaml` for all L2 
 
 All endpoints require `developer` role.
 
-- **Create** (`/organization/create`): Validates game service existence. Validates owner entity existence via `ICharacterClient`. Provisions organizational seed via `ISeedClient` (type matches org type code). Provisions organization wallet via `ICurrencyClient`. Provisions organization inventory via `IInventoryClient`. Registers role definitions from org type template. Sets default legal status (`Tolerated`). Registers resource references via `IResourceClient` for owner character and jurisdiction location (per FOUNDATION TENETS — T28). Saves under ID, code, owner, and location lookup keys. Publishes `organization.created`.
+- **Create** (`/organization/create`): Validates game service existence. Validates owner entity existence via `ICharacterClient`. Provisions organizational seed via `ISeedClient` (type matches org type code). Provisions organization wallet via `ICurrencyClient`. Provisions organization inventory via `IInventoryClient`. Registers role definitions from org type template. Sets default legal status (`Tolerated`). Registers resource references via `IResourceClient` for owner character and jurisdiction location (per FOUNDATION TENETS —). Saves under ID, code, owner, and location lookup keys. Publishes `organization.created`.
 
 - **Get** (`/organization/get`): Load from MySQL by organizationId. Enriches with cached capability manifest, member count, and current leader.
 
@@ -367,56 +367,56 @@ Organization identity and structure are owned here. Treasury is Currency (organi
 
 ```
 +-----------------------------------------------------------------------+
-|                    ORGANIZATION STRUCTURE                               |
-|                                                                        |
-|   ORGANIZATION ENTITY                                                  |
-|   +--------------------------------------------------------------+    |
-|   |  organizationId: guid                                        |    |
-|   |  type: "shop" (opaque string)                                |    |
-|   |  code: "kaels-forge"                                         |    |
-|   |  gameServiceId: guid                                         |    |
-|   |  owner: { type: "character", id: guid }                      |    |
-|   |  legalStatus: Chartered                                      |    |
-|   |  legalStatusGrantor: factionId (sovereign)                   |    |
-|   |  jurisdiction: locationId                                    |    |
-|   |  seedId: guid (type: "shop")                                 |    |
-|   |  walletId: guid (Currency)                                   |    |
-|   |  primaryInventoryId: guid (Inventory)                        |    |
-|   |  successionMode: Designated                                  |    |
-|   |  status: Active                                              |    |
-|   +--------------------------+-----------------------------------+    |
-|                              |                                         |
-|          +-------------------+-------------------+                    |
-|          v                   v                   v                     |
-|   +----------+       +----------+       +----------+                 |
-|   | MEMBERS  |       | ASSETS   |       | SEED     |                 |
-|   |          |       |          |       | (growth) |                 |
-|   | Kael     |       | Wallet   |       |          |                 |
-|   | (owner)  |       | 500g     |       | Phase:   |                 |
-|   |          |       |          |       | Prominent|                 |
-|   | Thane    |       | Inventory|       | Business |                 |
-|   | (manager)|       | 47 items |       |          |                 |
-|   |          |       |          |       | Caps:    |                 |
-|   | Pip      |       | Location |       | employ.  |                 |
-|   | (appren- |       | Market   |       | expanded |                 |
-|   |  tice)   |       | District |       | branch.  |                 |
-|   |          |       |          |       | open     |                 |
-|   +----------+       | Charter  |       +----------+                 |
-|                      | Contract |                                     |
-|                      +----------+                                     |
-|                                                                        |
-|   SOVEREIGN RELATIONSHIP                                               |
-|   +--------------------------------------------------------------+    |
-|   | Kingdom of Arcadia (Sovereign)                                |   |
-|   |   |                                                           |   |
-|   |   +-- Charter contract: "Kael's Forge is a licensed          |   |
-|   |   |   blacksmith. Tax: 10% revenue. Annual review."          |   |
-|   |   |                                                           |   |
-|   |   +-- Behavioral clauses: no_weapons_to_outlaws,             |   |
-|   |   |   quality_standards, guild_membership_required            |   |
-|   |   |                                                           |   |
-|   |   +-- Breach consequence: Chartered -> Licensed -> Tolerated |   |
-|   +--------------------------------------------------------------+    |
+| ORGANIZATION STRUCTURE |
+| |
+| ORGANIZATION ENTITY |
+| +--------------------------------------------------------------+ |
+| | organizationId: guid | |
+| | type: "shop" (opaque string) | |
+| | code: "kaels-forge" | |
+| | gameServiceId: guid | |
+| | owner: { type: "character", id: guid } | |
+| | legalStatus: Chartered | |
+| | legalStatusGrantor: factionId (sovereign) | |
+| | jurisdiction: locationId | |
+| | seedId: guid (type: "shop") | |
+| | walletId: guid (Currency) | |
+| | primaryInventoryId: guid (Inventory) | |
+| | successionMode: Designated | |
+| | status: Active | |
+| +--------------------------+-----------------------------------+ |
+| | |
+| +-------------------+-------------------+ |
+| v v v |
+| +----------+ +----------+ +----------+ |
+| | MEMBERS | | ASSETS | | SEED | |
+| | | | | | (growth) | |
+| | Kael | | Wallet | | | |
+| | (owner) | | 500g | | Phase: | |
+| | | | | | Prominent| |
+| | Thane | | Inventory| | Business | |
+| | (manager)| | 47 items | | | |
+| | | | | | Caps: | |
+| | Pip | | Location | | employ. | |
+| | (appren- | | Market | | expanded | |
+| | tice) | | District | | branch. | |
+| | | | | | open | |
+| +----------+ | Charter | +----------+ |
+| | Contract | |
+| +----------+ |
+| |
+| SOVEREIGN RELATIONSHIP |
+| +--------------------------------------------------------------+ |
+| | Kingdom of Arcadia (Sovereign) | |
+| | | | |
+| | +-- Charter contract: "Kael's Forge is a licensed | |
+| | | blacksmith. Tax: 10% revenue. Annual review." | |
+| | | | |
+| | +-- Behavioral clauses: no_weapons_to_outlaws, | |
+| | | quality_standards, guild_membership_required | |
+| | | | |
+| | +-- Breach consequence: Chartered -> Licensed -> Tolerated | |
+| +--------------------------------------------------------------+ |
 +-----------------------------------------------------------------------+
 ```
 
@@ -554,96 +554,96 @@ From the [Player Vision](../../arcadia-kb/PLAYER-VISION.md): "The player possess
 
 ```
 CHARACTER CREATES HOUSEHOLD (marriage, coming of age, land grant)
-        |
-        v
+ |
+ v
 Organization created: type "household"
-  - Founding members registered
-  - Household wallet created (Currency)
-  - Household inventory created (Inventory)
-  - Household seed created (type: household)
-  - Location assigned (if applicable)
-  - Legal status: Tolerated (default) or Chartered (if sovereignty recognizes)
-        |
-        v
+ - Founding members registered
+ - Household wallet created (Currency)
+ - Household inventory created (Inventory)
+ - Household seed created (type: household)
+ - Location assigned (if applicable)
+ - Legal status: Tolerated (default) or Chartered (if sovereignty recognizes)
+ |
+ v
 HOUSEHOLD OPERATES (the living game)
-  - Members work -> income to household wallet
-  - Members craft -> goods to household inventory
-  - Members trade -> contracts in household's name
-  - Children born -> new members with Dependent role
-  - Elders age -> role transitions (Head -> Elder)
-  - Seed grows -> capabilities unlock (hire servants, open business, claim land)
-        |
-        +----------------------------------------------+
-        v                                               v
-SUCCESSION EVENT                              DISSOLUTION EVENT
-(head of household dies)                      (divorce, exile, split)
-        |                                               |
-        v                                               v
-Succession rules execute:                     Arbitration case filed:
-  - Primogeniture: eldest child               - Asset division via Escrow
-  - Equal: members vote                       - Custody of children
-  - Matrilineal: eldest daughter              - Ongoing obligations
-  - Elective: designated heir                 - Seed impact
-  - Testament: per will contract              - Two organizations result
-        |                                               |
-        v                                               v
-New head assumes leadership                   Split organizations operate
-Organization continues                        independently
+ - Members work -> income to household wallet
+ - Members craft -> goods to household inventory
+ - Members trade -> contracts in household's name
+ - Children born -> new members with Dependent role
+ - Elders age -> role transitions (Head -> Elder)
+ - Seed grows -> capabilities unlock (hire servants, open business, claim land)
+ |
+ +----------------------------------------------+
+ v v
+SUCCESSION EVENT DISSOLUTION EVENT
+(head of household dies) (divorce, exile, split)
+ | |
+ v v
+Succession rules execute: Arbitration case filed:
+ - Primogeniture: eldest child - Asset division via Escrow
+ - Equal: members vote - Custody of children
+ - Matrilineal: eldest daughter - Ongoing obligations
+ - Elective: designated heir - Seed impact
+ - Testament: per will contract - Two organizations result
+ | |
+ v v
+New head assumes leadership Split organizations operate
+Organization continues independently
 ```
 
 ### Household as Organization
 
 ```
 +-----------------------------------------------------------------------+
-|                    HOUSEHOLD AS ORGANIZATION                           |
-|                                                                        |
-|   ACCOUNT (guardian seed)                                              |
-|     |                                                                  |
-|     | spirit possesses household                                       |
-|     |                                                                  |
-|     v                                                                  |
-|   HOUSEHOLD (Organization, type: "household")                          |
-|   +--------------------------------------------------------------+    |
-|   |                                                               |   |
-|   |   MEMBERS (with roles)         ASSETS                         |   |
-|   |   +-----------------+         +-----------------+           |   |
-|   |   | Erik (Head)     |         | Family Home     |           |   |
-|   |   | Marta (Spouse)  |         | (Location)      |           |   |
-|   |   | Kael (Heir)     |         |                 |           |   |
-|   |   | Lena (Dependent)|         | Savings: 1200g  |           |   |
-|   |   | Old Bjorn (Elder|         | (Wallet)        |           |   |
-|   |   +-----------------+         |                 |           |   |
-|   |                                | Family Chest    |           |   |
-|   |   SUCCESSION                   | (Inventory)     |           |   |
-|   |   +-----------------+         |                 |           |   |
-|   |   | Mode: Primogeni-|         | Heirloom Sword  |           |   |
-|   |   | ture (eldest    |         | (Item in chest)  |           |   |
-|   |   | child inherits) |         +-----------------+           |   |
-|   |   |                 |                                        |   |
-|   |   | Heir: Kael      |         SEED (household)              |   |
-|   |   | (auto-determined|         +-----------------+           |   |
-|   |   |  from priority) |         | Phase: Prominent|           |   |
-|   |   +-----------------+         | Caps: branch.   |           |   |
-|   |                                | family, trade.  |           |   |
-|   |                                | family_business |           |   |
-|   +--------------------------------------------------------------+    |
-|                                                                        |
-|   LIFECYCLE EVENTS:                                                    |
-|                                                                        |
-|   Erik dies --> Succession: Kael becomes Head                          |
-|                  Marta becomes Elder                                    |
-|                  Family assets transfer to Kael's management           |
-|                                                                        |
-|   Kael wants to split --> Arbitration: dissolution case filed          |
-|                            under sovereign's procedures                 |
-|                            Asset division via Escrow                    |
-|                            New household created for Kael               |
-|                            Original household continues with Marta     |
-|                                                                        |
-|   Lena marries outsider --> Inter-household contract                   |
-|                              Dowry negotiation                          |
-|                              Member transfer (or new household)         |
-|                              Ongoing family trade agreement             |
+| HOUSEHOLD AS ORGANIZATION |
+| |
+| ACCOUNT (guardian seed) |
+| | |
+| | spirit possesses household |
+| | |
+| v |
+| HOUSEHOLD (Organization, type: "household") |
+| +--------------------------------------------------------------+ |
+| | | |
+| | MEMBERS (with roles) ASSETS | |
+| | +-----------------+ +-----------------+ | |
+| | | Erik (Head) | | Family Home | | |
+| | | Marta (Spouse) | | (Location) | | |
+| | | Kael (Heir) | | | | |
+| | | Lena (Dependent)| | Savings: 1200g | | |
+| | | Old Bjorn (Elder| | (Wallet) | | |
+| | +-----------------+ | | | |
+| | | Family Chest | | |
+| | SUCCESSION | (Inventory) | | |
+| | +-----------------+ | | | |
+| | | Mode: Primogeni-| | Heirloom Sword | | |
+| | | ture (eldest | | (Item in chest) | | |
+| | | child inherits) | +-----------------+ | |
+| | | | | |
+| | | Heir: Kael | SEED (household) | |
+| | | (auto-determined| +-----------------+ | |
+| | | from priority) | | Phase: Prominent| | |
+| | +-----------------+ | Caps: branch. | | |
+| | | family, trade. | | |
+| | | family_business | | |
+| +--------------------------------------------------------------+ |
+| |
+| LIFECYCLE EVENTS: |
+| |
+| Erik dies --> Succession: Kael becomes Head |
+| Marta becomes Elder |
+| Family assets transfer to Kael's management |
+| |
+| Kael wants to split --> Arbitration: dissolution case filed |
+| under sovereign's procedures |
+| Asset division via Escrow |
+| New household created for Kael |
+| Original household continues with Marta |
+| |
+| Lena marries outsider --> Inter-household contract |
+| Dowry negotiation |
+| Member transfer (or new household) |
+| Ongoing family trade agreement |
 +-----------------------------------------------------------------------+
 ```
 
@@ -673,23 +673,23 @@ Each organization owns a seed whose type code matches the organization type (e.g
 
 ```
 Member performs economic action
-  (trade, craft, service, combat, governance)
-        |
-        v
+ (trade, craft, service, combat, governance)
+ |
+ v
 Collection entry unlocked
-  ("org-deeds", tag: "{activity}:{domain}")
-        |
-        v
+ ("org-deeds", tag: "{activity}:{domain}")
+ |
+ v
 ICollectionUnlockListener (lib-organization)
-        |
-        v
+ |
+ v
 lib-seed: RecordGrowth
-  (orgSeedId, "{domain}", amount)
-        |
-        v
+ (orgSeedId, "{domain}", amount)
+ |
+ v
 ISeedEvolutionListener (lib-organization):
-  Phase changed -> new capabilities unlocked
-  (e.g., nascent -> established -> influential)
+ Phase changed -> new capabilities unlocked
+ (e.g., nascent -> established -> influential)
 ```
 
 ### Example: Shop Seed Type
@@ -760,29 +760,29 @@ The chartering mechanism is itself a Contract, following the established orchest
 
 ```
 Organization petitions sovereign for charter
-        |
-        v
+ |
+ v
 Sovereign evaluates (NPC sovereign uses GOAP):
-  - Organization's seed growth (is it significant enough?)
-  - Organization's reputation domain
-  - Political considerations (faction alliances, economic need)
-  - Bribery/corruption possibilities (obligation costs)
-        |
-        v
+ - Organization's seed growth (is it significant enough?)
+ - Organization's reputation domain
+ - Political considerations (faction alliances, economic need)
+ - Bribery/corruption possibilities (obligation costs)
+ |
+ v
 If approved: Charter contract created
-  - Party roles: sovereign_faction, organization
-  - Behavioral clauses: tax compliance, regulatory adherence,
-    domain restrictions, reporting requirements
-  - Milestones: annual review, charter renewal
-  - Prebound API: on creation -> set legal status to Chartered
-  - Breach consequences: status downgrade (Chartered -> Licensed -> Tolerated)
-        |
-        v
+ - Party roles: sovereign_faction, organization
+ - Behavioral clauses: tax compliance, regulatory adherence,
+ domain restrictions, reporting requirements
+ - Milestones: annual review, charter renewal
+ - Prebound API: on creation -> set legal status to Chartered
+ - Breach consequences: status downgrade (Chartered -> Licensed -> Tolerated)
+ |
+ v
 Charter contract active -> organization operates as Chartered
-  - Breach (tax evasion, regulation violation) detected via obligation
-  - Cure period allows correction
-  - Repeated breach -> status downgrade via prebound API
-  - Severe breach -> immediate outlawing
+ - Breach (tax evasion, regulation violation) detected via obligation
+ - Cure period allows correction
+ - Repeated breach -> status downgrade via prebound API
+ - Severe breach -> immediate outlawing
 ```
 
 ### Sovereignty Changes
@@ -801,54 +801,54 @@ This creates emergent political upheaval: a regime change isn't just a faction f
 
 ```
 +-----------------------------------------------------------------------+
-|                    LEGAL STATUS LIFECYCLE                               |
-|                                                                        |
-|   New organization created                                             |
-|        |                                                               |
-|        v                                                               |
-|   TOLERATED (default)                                                  |
-|        |                                                               |
-|        +-- Petition sovereign for charter --+                          |
-|        |   (seed capability: charter.*)     |                          |
-|        |                                    v                          |
-|        |                              Sovereign evaluates              |
-|        |                              (GOAP: growth, reputation,       |
-|        |                               political considerations)       |
-|        |                                    |                          |
-|        |                         +----------+----------+              |
-|        |                         v                     v              |
-|        |                    APPROVED              DENIED               |
-|        |                    Charter contract       Stays Tolerated     |
-|        |                    created                                    |
-|        |                         |                                     |
-|        |                         v                                     |
-|        |                    CHARTERED / LICENSED                        |
-|        |                         |                                     |
-|        |              +----------+----------+                         |
-|        |              v          v          v                          |
-|        |         Compliance  Minor breach  Major breach                |
-|        |         (renew)     (warning)     (downgrade)                 |
-|        |              |          |              |                      |
-|        |              v          v              v                      |
-|        |         CHARTERED   CHARTERED     LICENSED/TOLERATED          |
-|        |         (renewed)   (warned)      (demoted)                   |
-|        |                                        |                      |
-|        |                              Severe breach or                  |
-|        |                              sovereign hostility               |
-|        |                                        |                      |
-|        |                                        v                      |
-|        |                                   OUTLAWED                    |
-|        |                                        |                      |
-|        |                              +---------+---------+           |
-|        |                              v         v         v           |
-|        |                         Continues  Seized by  Dissolved       |
-|        |                         underground sovereign  (members       |
-|        |                         (crime      (asset      scatter)      |
-|        |                          economy)   forfeiture)               |
-|        |                                                               |
-|        +-- Sovereignty changes --> Grace period                        |
-|             (new sovereign takes    Re-petition required                |
-|              territory)             Or revert to Tolerated             |
+| LEGAL STATUS LIFECYCLE |
+| |
+| New organization created |
+| | |
+| v |
+| TOLERATED (default) |
+| | |
+| +-- Petition sovereign for charter --+ |
+| | (seed capability: charter.*) | |
+| | v |
+| | Sovereign evaluates |
+| | (GOAP: growth, reputation, |
+| | political considerations) |
+| | | |
+| | +----------+----------+ |
+| | v v |
+| | APPROVED DENIED |
+| | Charter contract Stays Tolerated |
+| | created |
+| | | |
+| | v |
+| | CHARTERED / LICENSED |
+| | | |
+| | +----------+----------+ |
+| | v v v |
+| | Compliance Minor breach Major breach |
+| | (renew) (warning) (downgrade) |
+| | | | | |
+| | v v v |
+| | CHARTERED CHARTERED LICENSED/TOLERATED |
+| | (renewed) (warned) (demoted) |
+| | | |
+| | Severe breach or |
+| | sovereign hostility |
+| | | |
+| | v |
+| | OUTLAWED |
+| | | |
+| | +---------+---------+ |
+| | v v v |
+| | Continues Seized by Dissolved |
+| | underground sovereign (members |
+| | (crime (asset scatter) |
+| | economy) forfeiture) |
+| | |
+| +-- Sovereignty changes --> Grace period |
+| (new sovereign takes Re-petition required |
+| territory) Or revert to Tolerated |
 +-----------------------------------------------------------------------+
 ```
 
@@ -921,33 +921,33 @@ When an organization's leader dies, retires, or is removed, succession determine
 
 ```
 Leader death/removal event received
-        |
-        v
+ |
+ v
 Organization's succession mode checked
-        |
-        +-- Primogeniture/Designated/Testament:
-        |     Deterministic. New leader identified.
-        |     Role transition executed.
-        |     Contracts transferred.
-        |     Events published.
-        |
-        +-- EqualDivision/Elective:
-        |     Voting period opened (Contract milestone).
-        |     Members with eligible roles vote.
-        |     Deadline enforced. Majority wins.
-        |     Tie-breaking: highest role priority.
-        |     New leader installed on vote completion.
-        |
-        +-- Conquest:
-        |     Arbitration case filed (type: succession_contest).
-        |     Claimants submit claims.
-        |     Resolved by sovereign's procedures.
-        |
-        +-- Dissolution:
-              Organization enters dissolution.
-              Assets divided per dissolution rules.
-              Members become unaffiliated.
-              Organization archived.
+ |
+ +-- Primogeniture/Designated/Testament:
+ | Deterministic. New leader identified.
+ | Role transition executed.
+ | Contracts transferred.
+ | Events published.
+ |
+ +-- EqualDivision/Elective:
+ | Voting period opened (Contract milestone).
+ | Members with eligible roles vote.
+ | Deadline enforced. Majority wins.
+ | Tie-breaking: highest role priority.
+ | New leader installed on vote completion.
+ |
+ +-- Conquest:
+ | Arbitration case filed (type: succession_contest).
+ | Claimants submit claims.
+ | Resolved by sovereign's procedures.
+ |
+ +-- Dissolution:
+ Organization enters dissolution.
+ Assets divided per dissolution rules.
+ Members become unaffiliated.
+ Organization archived.
 ```
 
 ### Succession and the Content Flywheel
@@ -987,27 +987,27 @@ The organization variable provider exposes organizational context to ABML behavi
 
 ```yaml
 flows:
-  evaluate_business_decision:
-    - cond:
-        # Running an outlawed organization? Consider going legit.
-        - when: "${organization.primary_legal_status == 'Outlawed' && obligations.violation_cost.contraband > 15.0}"
-          then:
-            - call: consider_chartering
+ evaluate_business_decision:
+ - cond:
+ # Running an outlawed organization? Consider going legit.
+ - when: "${organization.primary_legal_status == 'Outlawed' && obligations.violation_cost.contraband > 15.0}"
+ then:
+ - call: consider_chartering
 
-        # Business is growing? Evaluate hiring.
-        - when: "${organization.primary.has_capability.employ.expanded && organization.employee_count < 5}"
-          then:
-            - call: evaluate_hiring
+ # Business is growing? Evaluate hiring.
+ - when: "${organization.primary.has_capability.employ.expanded && organization.employee_count < 5}"
+ then:
+ - call: evaluate_hiring
 
-        # Can't hire yet? Focus on growing the business.
-        - when: "${!organization.primary.has_capability.employ.basic}"
-          then:
-            - call: focus_on_trade
+ # Can't hire yet? Focus on growing the business.
+ - when: "${!organization.primary.has_capability.employ.basic}"
+ then:
+ - call: focus_on_trade
 
-        # Organization can open a branch? Evaluate expansion.
-        - when: "${organization.primary.has_capability.branch.open}"
-          then:
-            - call: evaluate_expansion
+ # Organization can open a branch? Evaluate expansion.
+ - when: "${organization.primary.has_capability.branch.open}"
+ then:
+ - call: evaluate_expansion
 ```
 
 ---
@@ -1022,44 +1022,44 @@ How organizations participate in the NPC-driven economy through GOAP-based econo
 
 ```
 +-----------------------------------------------------------------------+
-|                    ORGANIZATION IN THE ECONOMY                         |
-|                                                                        |
-|   NPC ACTOR BRAIN (GOAP planner)                                      |
-|        |                                                               |
-|        |  ${organization.primary.has_capability.employ.basic}          |
-|        |  ${organization.primary_legal_status}                         |
-|        |  ${organization.total_treasury}                               |
-|        |                                                               |
-|        v                                                               |
-|   Economic Decision:                                                   |
-|   "I need iron ingots for my forge"                                    |
-|        |                                                               |
-|        +-- Check org wallet (Currency): 500g available                 |
-|        |                                                               |
-|        +-- Check supplier (another NPC org):                           |
-|        |   Is supplier Chartered? (legal to trade with)                |
-|        |   Is supplier Outlawed? (obligation cost for trade)           |
-|        |                                                               |
-|        +-- GOAP evaluates:                                             |
-|        |   buy_from_legal_supplier:  cost = 12g + 0 obligation        |
-|        |   buy_from_black_market:    cost = 8g + 15 obligation        |
-|        |   mine_own_iron:            cost = 20 (time) + 0 obligation  |
-|        |                                                               |
-|        v                                                               |
-|   Execute via organization:                                            |
-|   1. Contract created (org as party, not character)                    |
-|   2. Payment from org wallet (Currency debit)                          |
-|   3. Goods to org inventory (Inventory transfer)                       |
-|   4. Org seed grows (commerce.trade domain)                            |
-|   5. If trade with Outlawed org: obligation violation reported         |
-|        |                                                               |
-|        v                                                               |
-|   Downstream effects:                                                  |
-|   - Supplier org seed grows (commerce.trade)                           |
-|   - Local sovereign collects trade tax (if Chartered)                  |
-|   - Analytics tracks economic activity                                 |
-|   - Trade volume affects local faction territory norms                 |
-|   - God of Commerce (Hermes) may notice exceptional trades             |
+| ORGANIZATION IN THE ECONOMY |
+| |
+| NPC ACTOR BRAIN (GOAP planner) |
+| | |
+| | ${organization.primary.has_capability.employ.basic} |
+| | ${organization.primary_legal_status} |
+| | ${organization.total_treasury} |
+| | |
+| v |
+| Economic Decision: |
+| "I need iron ingots for my forge" |
+| | |
+| +-- Check org wallet (Currency): 500g available |
+| | |
+| +-- Check supplier (another NPC org): |
+| | Is supplier Chartered? (legal to trade with) |
+| | Is supplier Outlawed? (obligation cost for trade) |
+| | |
+| +-- GOAP evaluates: |
+| | buy_from_legal_supplier: cost = 12g + 0 obligation |
+| | buy_from_black_market: cost = 8g + 15 obligation |
+| | mine_own_iron: cost = 20 (time) + 0 obligation |
+| | |
+| v |
+| Execute via organization: |
+| 1. Contract created (org as party, not character) |
+| 2. Payment from org wallet (Currency debit) |
+| 3. Goods to org inventory (Inventory transfer) |
+| 4. Org seed grows (commerce.trade domain) |
+| 5. If trade with Outlawed org: obligation violation reported |
+| | |
+| v |
+| Downstream effects: |
+| - Supplier org seed grows (commerce.trade) |
+| - Local sovereign collects trade tax (if Chartered) |
+| - Analytics tracks economic activity |
+| - Trade volume affects local faction territory norms |
+| - God of Commerce (Hermes) may notice exceptional trades |
 +-----------------------------------------------------------------------+
 ```
 
@@ -1117,7 +1117,7 @@ How organizations participate in the NPC-driven economy through GOAP-based econo
 
 These items were identified during the L4 spec audit (2026-03-07) as requiring human design decisions — the tenets do not prescribe a single answer.
 
-11. **T31 Deprecation lifecycle**: `AUDIT:NEEDS_DESIGN` — Organization entities have IDs stored in multiple services (contracts, relationships, seeds, wallets, inventories, collections). T31's decision tree says entities referenced by other services need deprecation. However, Organization entities are concrete instances (like Characters, which do NOT have deprecation), not definitions/templates. The Dissolved/Archived status lifecycle may serve the same purpose. **Decision needed**: Is Organization an instance entity (no T31 deprecation — use lib-resource cleanup) or a definition entity (add triple-field deprecation model)?
+11. **Deprecation lifecycle**: `AUDIT:NEEDS_DESIGN` — Organization entities have IDs stored in multiple services (contracts, relationships, seeds, wallets, inventories, collections).'s decision tree says entities referenced by other services need deprecation. However, Organization entities are concrete instances (like Characters, which do NOT have deprecation), not definitions/templates. The Dissolved/Archived status lifecycle may serve the same purpose. **Decision needed**: Is Organization an instance entity (no deprecation — use lib-resource cleanup) or a definition entity (add triple-field deprecation model)?
 
 12. **Realm cleanup target**: `AUDIT:NEEDS_DESIGN` — The OrganizationModel has no direct `realmId` field. Organizations reference `locationId`, and locations belong to realms. Should Organization declare `x-references` with `target: realm` (direct cleanup requiring realm traversal via location queries), or should realm cleanup cascade through Location's cleanup of Organization?
 
@@ -1125,9 +1125,9 @@ These items were identified during the L4 spec audit (2026-03-07) as requiring h
 
 14. **x-permissions: `[]` vs `[{role: developer}]`**: `AUDIT:NEEDS_DESIGN` — The spec says "internal-only, never internet-facing" (suggesting `x-permissions: []`, service-to-service only) but also says "All endpoints require developer role" (suggesting `x-permissions: [{role: developer}]`, WebSocket-accessible to developers). These have different functional consequences. **Decision needed**: Should Organization endpoints be reachable via WebSocket for developer tooling, or service-to-service only via lib-mesh?
 
-15. **assetType classification**: `AUDIT:NEEDS_DESIGN` — Currently Category B (opaque string). Values `Wallet`, `Inventory`, `Location`, `Contract`, `Custom` include system-managed types that route to different service clients. If service logic branches based on asset type, T25 says use an enum. But the spec says "Extensible for game-specific asset registrations." **Decision needed**: Category B opaque string (truly game-extensible) or Category C enum with `Custom` escape hatch?
+15. **assetType classification**: `AUDIT:NEEDS_DESIGN` — Currently Category B (opaque string). Values `Wallet`, `Inventory`, `Location`, `Contract`, `Custom` include system-managed types that route to different service clients. If service logic branches based on asset type, says use an enum. But the spec says "Extensible for game-specific asset registrations." **Decision needed**: Category B opaque string (truly game-extensible) or Category C enum with `Custom` escape hatch?
 
-16. **dissolved/archived as dedicated events**: `AUDIT:NEEDS_DESIGN` — T31's rule about using `*.updated` with `changedFields` applies specifically to deprecation, not arbitrary state transitions. The question is whether `organization.dissolved` and `organization.archived` carry meaningful payload beyond `organization.updated` + `changedFields: ["status"]`. If they include dissolution reason, asset division details, or archive references, dedicated events are justified.
+16. **dissolved/archived as dedicated events**: `AUDIT:NEEDS_DESIGN` —'s rule about using `*.updated` with `changedFields` applies specifically to deprecation, not arbitrary state transitions. The question is whether `organization.dissolved` and `organization.archived` carry meaningful payload beyond `organization.updated` + `changedFields: ["status"]`. If they include dissolution reason, asset division details, or archive references, dedicated events are justified.
 
 17. **Compression flow**: `AUDIT:NEEDS_DESIGN` — See note at Compression Endpoints section. Is Organization a `x-compression-callback` target (lib-resource calls it), does it self-initiate compression, or both?
 

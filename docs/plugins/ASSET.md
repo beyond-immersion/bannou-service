@@ -45,7 +45,7 @@ No external services subscribe to asset events; all event consumption is interna
 | `compression` | C (System State/Mode) | `CompressionType` enum (`lz4`, `lzma`, `none`) | Algorithm selection for bundle compression; system infrastructure choice |
 | `format` | C (System State/Mode) | `BundleFormat` enum (`bannou`, `zip`) | Wire format for bundle download; system transport choice |
 | `realm` | B (Game Content Type) | Opaque string (`GameRealm`) | Realm stub name (e.g., `"shared"`, `"realm-1"`); references Realm service data, not a fixed enum |
-| `owner` (events) | -- (Polymorphic identifier) | Plain string | Dual-purpose: accountId (UUID) for user uploads, service name string for service uploads; not a type field per se. Deviates from T14 polymorphic pattern (`ownerType` + `ownerId`) because Asset predates the convention and upload ownership is event-only metadata (not used for queries or referential integrity). Tracked for future cleanup. |
+| `owner` (events) | -- (Polymorphic identifier) | Plain string | Dual-purpose: accountId (UUID) for user uploads, service name string for service uploads; not a type field per se. Deviates from polymorphic pattern (`ownerType` + `ownerId`) because Asset predates the convention and upload ownership is event-only metadata (not used for queries or referential integrity). Tracked for future cleanup. |
 
 **Notes**:
 - Asset service has no `EntityType` enum fields (Category A). Ownership is tracked via plain string `owner` fields rather than typed entity references.
@@ -159,40 +159,40 @@ No external services subscribe to asset events; all event consumption is interna
 Upload Flow & Processing Pipeline
 ==================================
 
-Client                    Asset Service                     MinIO Storage
-  │                           │                                │
-  │─── RequestUpload ────────►│                                │
-  │                           │── create UploadSession ──►Redis│
-  │◄── presigned PUT URL ─────│                                │
-  │                           │                                │
-  │─── PUT (direct upload) ──────────────────────────────────►│
-  │                           │                                │
-  │                           │◄── S3 webhook ────────────────│
-  │                           │  (MinioWebhookHandler)         │
-  │                           │                                │
-  │─── CompleteUpload ───────►│                                │
-  │                           │── SHA-256 hash ───────────────►│ (stream object)
-  │                           │── copy temp → final ──────────►│
-  │                           │── update indexes ──►Redis      │
-  │                           │                                │
-  │                           │─── size > LargeFileThreshold?  │
-  │                           │    AND processable type?       │
-  │                           │         │                      │
-  │                           │    ┌────┴────┐                 │
-  │                           │   YES        NO               │
-  │                           │    │          │                │
-  │                           │    ▼          ▼                │
-  │                           │ Dispatch    Done               │
-  │                           │ to Pool                        │
-  │                           │    │                           │
-  │                           │    ▼                           │
-  │                           │ AssetProcessingWorker          │
-  │                           │  ├─ TextureProcessor           │
-  │                           │  ├─ ModelProcessor             │
-  │                           │  └─ AudioProcessor ──► FFmpeg  │
-  │                           │    │                           │
-  │                           │    ▼                           │
-  │◄── client event ──────────│ asset.processing.completed     │
+Client Asset Service MinIO Storage
+ │ │ │
+ │─── RequestUpload ────────►│ │
+ │ │── create UploadSession ──►Redis│
+ │◄── presigned PUT URL ─────│ │
+ │ │ │
+ │─── PUT (direct upload) ──────────────────────────────────►│
+ │ │ │
+ │ │◄── S3 webhook ────────────────│
+ │ │ (MinioWebhookHandler) │
+ │ │ │
+ │─── CompleteUpload ───────►│ │
+ │ │── SHA-256 hash ───────────────►│ (stream object)
+ │ │── copy temp → final ──────────►│
+ │ │── update indexes ──►Redis │
+ │ │ │
+ │ │─── size > LargeFileThreshold? │
+ │ │ AND processable type? │
+ │ │ │ │
+ │ │ ┌────┴────┐ │
+ │ │ YES NO │
+ │ │ │ │ │
+ │ │ ▼ ▼ │
+ │ │ Dispatch Done │
+ │ │ to Pool │
+ │ │ │ │
+ │ │ ▼ │
+ │ │ AssetProcessingWorker │
+ │ │ ├─ TextureProcessor │
+ │ │ ├─ ModelProcessor │
+ │ │ └─ AudioProcessor ──► FFmpeg │
+ │ │ │ │
+ │ │ ▼ │
+ │◄── client event ──────────│ asset.processing.completed │
 ```
 
 ---
@@ -247,9 +247,9 @@ Client                    Asset Service                     MinIO Storage
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **AssetId is SHA-256 hash string (intentional)**: `InternalAssetRecord.AssetId` and `AssetProcessingContext.AssetId` are SHA-256 content hashes stored as hex strings. This is NOT a T25 violation - these are legitimately strings (hashes), not GUIDs.
+1. **AssetId is SHA-256 hash string (intentional)**: `InternalAssetRecord.AssetId` and `AssetProcessingContext.AssetId` are SHA-256 content hashes stored as hex strings. This is NOT a violation - these are legitimately strings (hashes), not GUIDs.
 
-2. **BundleId is human-readable string (intentional)**: `BundleMetadata.BundleId` and related fields are human-provided identifiers like `"synty/polygon-adventure"`, `"game-assets-v1"`. This is NOT a T25 violation - developers need meaningful names to categorize and retrieve bundles. See SDK examples in `sdks/asset-bundler/README.md` and `sdks/bundle-format/README.md`.
+2. **BundleId is human-readable string (intentional)**: `BundleMetadata.BundleId` and related fields are human-provided identifiers like `"synty/polygon-adventure"`, `"game-assets-v1"`. This is NOT a violation - developers need meaningful names to categorize and retrieve bundles. See SDK examples in `sdks/asset-bundler/README.md` and `sdks/bundle-format/README.md`.
 
 3. **Dual S3 clients**: Both `IMinioClient` and `IAmazonS3` are registered because the MinIO .NET SDK has a bug where pre-signed PUT URLs include Content-Type in the signature, causing uploads with different Content-Type headers to fail with 403. The AWS SDK is used exclusively for pre-signed URL generation while MinIO SDK handles bucket operations. See: https://github.com/minio/minio-dotnet/issues/1150
 
@@ -265,7 +265,7 @@ Client                    Asset Service                     MinIO Storage
 
 9. **MinIO connectivity check uses try/finally dispose pattern**: The `WaitForMinioConnectivityAsync` method creates a temporary `MinioClient` with explicit try/finally disposal instead of `using` because the fluent API returns `this` from `Build()`, making `using` semantics unclear. The pattern is correct but differs from the standard `using` approach.
 
-10. **Processor ValidateAsync uses `await Task.CompletedTask` (T23 compliant)**: `TextureProcessor.ValidateAsync`, `ModelProcessor.ValidateAsync`, `AudioProcessor.ValidateAsync`, and `MinioHealthCheck.CheckHealthAsync` use `await Task.CompletedTask` because they implement async interfaces with synchronous validation logic. This is the explicitly documented T23 pattern for synchronous implementations of async interfaces. No performance concern — `ValueTask` or separate sync/async interface paths would add complexity for zero benefit.
+10. **Processor ValidateAsync uses `await Task.CompletedTask` (compliant)**: `TextureProcessor.ValidateAsync`, `ModelProcessor.ValidateAsync`, `AudioProcessor.ValidateAsync`, and `MinioHealthCheck.CheckHealthAsync` use `await Task.CompletedTask` because they implement async interfaces with synchronous validation logic. This is the explicitly documented pattern for synchronous implementations of async interfaces. No performance concern — `ValueTask` or separate sync/async interface paths would add complexity for zero benefit.
 
 ### Design Considerations (Requires Planning)
 

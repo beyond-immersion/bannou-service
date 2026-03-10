@@ -1456,13 +1456,14 @@ components:
           description: Whether this capability is available at all.
 
     SeedTypeResponse:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: Full seed type definition response.
       required:
         [seedTypeCode, displayName, description,
-         maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, bondPermanent,
-         isDeprecated]
+         maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, bondPermanent]
       properties:
         seedTypeCode:
           type: string
@@ -1526,18 +1527,6 @@ components:
           items:
             $ref: '#/components/schemas/CollectionGrowthMapping'
           description: Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to collection unlocks.
-        isDeprecated:
-          type: boolean
-          description: Whether this seed type is deprecated and cannot be used for new seeds.
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp when this seed type was deprecated.
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Optional reason for deprecation.
 
     ListSeedTypesResponse:
       type: object

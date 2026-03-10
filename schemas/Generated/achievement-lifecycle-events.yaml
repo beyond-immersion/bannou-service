@@ -24,10 +24,10 @@ components:
       - achievementType
       - points
       - isActive
-      - isDeprecated
       - earnedCount
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -117,23 +117,11 @@ components:
         isActive: &id021
           type: boolean
           description: "Whether achievement is earnable"
-        isDeprecated: &id022
-          type: boolean
-          description: "Whether this definition is deprecated"
-        deprecatedAt: &id023
-          type: string
-          format: date-time
-          nullable: true
-          description: "When deprecation occurred"
-        deprecationReason: &id024
-          type: string
-          nullable: true
-          description: "Audit reason for deprecation"
-        earnedCount: &id025
+        earnedCount: &id022
           type: integer
           format: int64
           description: "How many entities have earned this"
-        metadata: &id026
+        metadata: &id023
           type: object
           additionalProperties: true
           nullable: true
@@ -146,6 +134,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the achievement definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this achievement definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the achievement definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     AchievementDefinitionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -163,10 +164,10 @@ components:
       - achievementType
       - points
       - isActive
-      - isDeprecated
       - earnedCount
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -194,11 +195,8 @@ components:
         leaderboardId: *id019
         rankThreshold: *id020
         isActive: *id021
-        isDeprecated: *id022
-        deprecatedAt: *id023
-        deprecationReason: *id024
-        earnedCount: *id025
-        metadata: *id026
+        earnedCount: *id022
+        metadata: *id023
         createdAt:
           type: string
           format: date-time
@@ -207,6 +205,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the achievement definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this achievement definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the achievement definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -229,10 +240,10 @@ components:
       - achievementType
       - points
       - isActive
-      - isDeprecated
       - earnedCount
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -259,11 +270,8 @@ components:
         leaderboardId: *id019
         rankThreshold: *id020
         isActive: *id021
-        isDeprecated: *id022
-        deprecatedAt: *id023
-        deprecationReason: *id024
-        earnedCount: *id025
-        metadata: *id026
+        earnedCount: *id022
+        metadata: *id023
         createdAt:
           type: string
           format: date-time
@@ -272,6 +280,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the achievement definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this achievement definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the achievement definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

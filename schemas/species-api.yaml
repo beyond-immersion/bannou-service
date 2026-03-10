@@ -760,6 +760,8 @@ components:
 
     # Response schemas
     SpeciesResponse:
+      allOf:
+        - $ref: 'common-api.yaml#/components/schemas/DeprecationFields'
       description: Complete species data including all attributes and realm associations
       type: object
       additionalProperties: false
@@ -768,7 +770,6 @@ components:
       - code
       - name
       - isPlayable
-      - isDeprecated
       - createdAt
       - updatedAt
       properties:
@@ -793,18 +794,6 @@ components:
         isPlayable:
           type: boolean
           description: Whether players can create characters of this species
-        isDeprecated:
-          type: boolean
-          description: Whether this species is deprecated and cannot be used for new characters
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp when this species was deprecated
-        deprecationReason:
-          type: string
-          nullable: true
-          description: Optional reason for deprecation
         baseLifespan:
           type: integer
           nullable: true

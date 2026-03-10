@@ -86,21 +86,21 @@ After binding, the dungeon has the full L2/L4 character entity stack:
 
 ```
 Dungeon-actor (character brain, bound to dungeon system realm character)
-├── ${personality.*}     ← CharacterPersonality (the dungeon's quantified personality)
-│   e.g., ${personality.cruelty} for trap placement style
-│   e.g., ${personality.patience} for ambush timing
-├── ${encounters.*}      ← CharacterEncounter (memories of adventurer interactions)
-│   e.g., ${encounters.last_hostile_days} for grudge tracking
-│   e.g., ${encounters.sentiment.player_xyz} for per-adventurer feelings
-├── ${backstory.*}       ← CharacterHistory (the dungeon's origin and significant events)
-│   e.g., ${backstory.origin} for creation mythology
-├── ${quest.*}           ← Quest (dungeon-originated quests, if applicable)
-├── ${world.*}           ← Worldstate (game time, season -- affects mana generation)
-├── ${obligations.*}     ← Obligation (any contracts the dungeon is bound by)
-├── ${dungeon.*}         ← DungeonActorVariableProviderFactory (dungeon-specific volatile state)
-├── ${seed.*}            ← DungeonCoreSeedVariableProviderFactory (growth domains, capabilities)
-├── ${master.seed.*}     ← DungeonMasterSeedVariableProviderFactory (master capabilities)
-├── ${master.*}          ← DungeonMasterCharacterVariableProviderFactory (master character data)
+├── ${personality.*} ← CharacterPersonality (the dungeon's quantified personality)
+│ e.g., ${personality.cruelty} for trap placement style
+│ e.g., ${personality.patience} for ambush timing
+├── ${encounters.*} ← CharacterEncounter (memories of adventurer interactions)
+│ e.g., ${encounters.last_hostile_days} for grudge tracking
+│ e.g., ${encounters.sentiment.player_xyz} for per-adventurer feelings
+├── ${backstory.*} ← CharacterHistory (the dungeon's origin and significant events)
+│ e.g., ${backstory.origin} for creation mythology
+├── ${quest.*} ← Quest (dungeon-originated quests, if applicable)
+├── ${world.*} ← Worldstate (game time, season -- affects mana generation)
+├── ${obligations.*} ← Obligation (any contracts the dungeon is bound by)
+├── ${dungeon.*} ← DungeonActorVariableProviderFactory (dungeon-specific volatile state)
+├── ${seed.*} ← DungeonCoreSeedVariableProviderFactory (growth domains, capabilities)
+├── ${master.seed.*} ← DungeonMasterSeedVariableProviderFactory (master capabilities)
+├── ${master.*} ← DungeonMasterCharacterVariableProviderFactory (master character data)
 └── ...can still use load_snapshot: for ad-hoc adventurer data
 ```
 
@@ -110,32 +110,32 @@ The ABML behavior document is the same one used in Stage 2 -- no swap needed. Th
 
 ```
 Dungeon core created
-    │
-    ├── dungeon_core seed: Dormant (growth: 0.0)
-    │   No actor running. Passive growth only.
-    │
-    │   [Seed reaches Stirring phase (growth ≥ 10.0)]
-    │
-    ├── dungeon.phase-changed event triggers actor spawn
-    │   Actor runs as EVENT BRAIN (no character)
-    │   creature_base cognition template
-    │   ${personality.*} = null, instinct-driven behavior
-    │
-    │   [Seed reaches Awakened phase (growth ≥ 50.0)]
-    │
-    ├── dungeon.phase-changed handler:
-    │   1. Create Character in dungeon system realm
-    │   2. Seed personality traits from dungeon personality type
-    │   3. POST /actor/bind-character (actorId, dungeonCharacterId)
-    │   4. Actor transitions to CHARACTER BRAIN
-    │   5. ${personality.*}, ${encounters.*} etc. activate
-    │   6. Store characterId on DungeonCoreModel
-    │
-    │   [Seed reaches Ancient phase (growth ≥ 200.0)]
-    │
-    └── Full cognitive depth: memories, grudges, personality evolution
-        Memory manifestation, event coordination, master synergy
-        The dungeon is now a living entity with a rich inner life
+ │
+ ├── dungeon_core seed: Dormant (growth: 0.0)
+ │ No actor running. Passive growth only.
+ │
+ │ [Seed reaches Stirring phase (growth ≥ 10.0)]
+ │
+ ├── dungeon.phase-changed event triggers actor spawn
+ │ Actor runs as EVENT BRAIN (no character)
+ │ creature_base cognition template
+ │ ${personality.*} = null, instinct-driven behavior
+ │
+ │ [Seed reaches Awakened phase (growth ≥ 50.0)]
+ │
+ ├── dungeon.phase-changed handler:
+ │ 1. Create Character in dungeon system realm
+ │ 2. Seed personality traits from dungeon personality type
+ │ 3. POST /actor/bind-character (actorId, dungeonCharacterId)
+ │ 4. Actor transitions to CHARACTER BRAIN
+ │ 5. ${personality.*}, ${encounters.*} etc. activate
+ │ 6. Store characterId on DungeonCoreModel
+ │
+ │ [Seed reaches Ancient phase (growth ≥ 200.0)]
+ │
+ └── Full cognitive depth: memories, grudges, personality evolution
+ Memory manifestation, event coordination, master synergy
+ The dungeon is now a living entity with a rich inner life
 ```
 
 ### System Realm for Dungeon Characters
@@ -210,35 +210,35 @@ All of these use the same underlying machinery: **Contract** (terms), **Faction*
 
 ```
 Character touches dungeon core
-    |
-    v
+ |
+ v
 Bond Contract created (lib-contract)
-    |
-    +--> dungeon_master seed created on CHARACTER (always, initially)
-    |
-    v
+ |
+ +--> dungeon_master seed created on CHARACTER (always, initially)
+ |
+ v
 Player presented with choice (via Gardener UX / game-specific flow):
-    |
-    +---> "Commit to this dungeon" (Pattern A)
-    |         |
-    |         +--> Household split mechanic triggered
-    |         |    (Contract + Faction norms + Obligation)
-    |         |
-    |         +--> dungeon_master seed PROMOTED from character to account
-    |         |    (consumes one of 3 account seed slots)
-    |         |
-    |         +--> Character leaves household roster
-    |         |
-    |         +--> Dungeon garden created as top-level experience
-    |
-    +---> "Keep my family" (Pattern B)
-              |
-              +--> dungeon_master seed stays on character
-              |
-              +--> Dungeon influence transient (active while
-              |    playing this character only)
-              |
-              +--> No household change, no account seed consumed
+ |
+ +---> "Commit to this dungeon" (Pattern A)
+ | |
+ | +--> Household split mechanic triggered
+ | | (Contract + Faction norms + Obligation)
+ | |
+ | +--> dungeon_master seed PROMOTED from character to account
+ | | (consumes one of 3 account seed slots)
+ | |
+ | +--> Character leaves household roster
+ | |
+ | +--> Dungeon garden created as top-level experience
+ |
+ +---> "Keep my family" (Pattern B)
+ |
+ +--> dungeon_master seed stays on character
+ |
+ +--> Dungeon influence transient (active while
+ | playing this character only)
+ |
+ +--> No household change, no account seed consumed
 ```
 
 **The choice doesn't have to happen immediately.** A character can bond with a dungeon (Pattern B by default) and the player can later choose to promote the relationship to Pattern A through the household split mechanic. The reverse (Pattern A back to B) is not possible -- once the character has left the household, they're gone.
@@ -296,43 +296,43 @@ The dungeon-master relationship follows the same structural pattern as the playe
 PATTERN A: NESTED ASYMMETRY (spirit → character → dungeon)
 ===========================================================
 
-Account (guardian seed)                 Account (dungeon_master seed)
-    |                                        |
-    | spirit possesses household             | spirit IS the dungeon master
-    | (guardian garden)                      | (dungeon garden)
-    |                                        |
-    v                                        v
-Household of characters              Dungeon (autonomous Actor brain)
-    autonomous NPC brains                  always running
-    (player lost this character            master character lives here now
-     in the household split)
+Account (guardian seed) Account (dungeon_master seed)
+ | |
+ | spirit possesses household | spirit IS the dungeon master
+ | (guardian garden) | (dungeon garden)
+ | |
+ v v
+Household of characters Dungeon (autonomous Actor brain)
+ autonomous NPC brains always running
+ (player lost this character master character lives here now
+ in the household split)
 
-    The same spirit has TWO relationships to the world,
-    selectable from the void as separate games.
+ The same spirit has TWO relationships to the world,
+ selectable from the void as separate games.
 
 
 PATTERN B: LAYERED INFLUENCE (spirit → character ↔ dungeon)
 ===========================================================
 
 Account (guardian seed only)
-    |
-    | spirit possesses household
-    |
-    v
+ |
+ | spirit possesses household
+ |
+ v
 Household of characters
-    |
-    +-- Character A (no dungeon bond) -- normal gameplay
-    +-- Character B (dungeon_master seed) -- dungeon influence ON
-    +-- Character C (no dungeon bond) -- normal gameplay
-    |
-    | When playing Character B:
-    | dungeon perceptions layer onto character's Actor
-    | dungeon UX appears transiently
-    | dungeon_master seed grows
-    |
-    | When playing Character A or C:
-    | dungeon influence on player drops away
-    | Character B still processes dungeon perceptions autonomously
+ |
+ +-- Character A (no dungeon bond) -- normal gameplay
+ +-- Character B (dungeon_master seed) -- dungeon influence ON
+ +-- Character C (no dungeon bond) -- normal gameplay
+ |
+ | When playing Character B:
+ | dungeon perceptions layer onto character's Actor
+ | dungeon UX appears transiently
+ | dungeon_master seed grows
+ |
+ | When playing Character A or C:
+ | dungeon influence on player drops away
+ | Character B still processes dungeon perceptions autonomously
 ```
 
 Both patterns share these properties:
@@ -592,7 +592,7 @@ Dungeon is a multi-entity service. Lifecycle events for the primary entity (dung
 | `seed.capability.updated` | `HandleSeedCapabilityUpdatedAsync` | Invalidate cached capability manifests for affected dungeon or master |
 | `contract.terminated` | `HandleContractTerminatedAsync` | Clean up bond record when dungeon-master contract ends; archive master seed if configured |
 
-### Resource Cleanup (T28)
+### Resource Cleanup
 
 | Target Resource | Source Type | On Delete | Cleanup Endpoint |
 |----------------|-------------|-----------|-----------------|
@@ -637,7 +637,7 @@ Dungeon is a multi-entity service. Lifecycle events for the primary entity (dung
 | Service | Role |
 |---------|------|
 | `ILogger<DungeonService>` | Structured logging |
-| `ITelemetryProvider` | Telemetry span creation for all async methods (T30) |
+| `ITelemetryProvider` | Telemetry span creation for all async methods |
 | `DungeonServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (creates 6 stores) |
 | `IMessageBus` | Event publishing |
@@ -742,44 +742,44 @@ The dungeon core actor uses a simplified cognition pipeline (`creature_base` tem
 
 ```
 +-----------------------------------------------------------------------+
-|                    DUNGEON COGNITION PIPELINE                          |
-|                                                                        |
-|   1. FILTER ATTENTION                                                  |
-|   -------------------                                                  |
-|   Priority: intrusion (10), combat (8), death (7), loot (5)           |
-|   Threat fast-track: urgency > 0.8 bypasses to action                 |
-|   Attention budget: configurable perceptions per tick                  |
-|                                                                        |
-|   2. MEMORY QUERY (simplified)                                         |
-|   ----------------------------                                         |
-|   "Have I seen these intruders before?"                                |
-|   "What happened last time in this room?"                              |
-|   Entity-indexed lookup for adventurer history                         |
-|                                                                        |
-|   3. CAPABILITY CHECK (via dungeon_core seed manifest)                 |
-|   ----------------------------------------------------                 |
-|   Query seed capability manifest for available actions                 |
-|   Higher fidelity = better execution quality                           |
-|   Unlocked capabilities gate which intentions can form                 |
-|                                                                        |
-|   4. MASTER COMMUNICATION CHECK (via dungeon_master seed manifest)     |
-|   ----------------------------------------------------------------     |
-|   If bonded: check master's perception.* capabilities                  |
-|   Higher perception fidelity = richer information shared               |
-|   If master has command.tactical: accept complex directives            |
-|   If no bond or Corrupted bond: skip (dungeon acts autonomously)       |
-|                                                                        |
-|   5. INTENTION FORMATION                                               |
-|   ----------------------                                               |
-|   Apply master commands (if any, and if command capability allows)      |
-|   Evaluate threats -> spawn defenders or activate traps                |
-|   Evaluate opportunities -> absorb corpses, claim resources            |
-|   Evaluate memories -> store significant events                        |
-|   Record seed growth contributions for significant actions             |
-|                                                                        |
-|   SKIPPED STAGES (unlike humanoid_base):                               |
-|   No significance assessment (dungeon cares about everything)          |
-|   No goal impact evaluation (goals are fixed: survive, grow)           |
+| DUNGEON COGNITION PIPELINE |
+| |
+| 1. FILTER ATTENTION |
+| ------------------- |
+| Priority: intrusion (10), combat (8), death (7), loot (5) |
+| Threat fast-track: urgency > 0.8 bypasses to action |
+| Attention budget: configurable perceptions per tick |
+| |
+| 2. MEMORY QUERY (simplified) |
+| ---------------------------- |
+| "Have I seen these intruders before?" |
+| "What happened last time in this room?" |
+| Entity-indexed lookup for adventurer history |
+| |
+| 3. CAPABILITY CHECK (via dungeon_core seed manifest) |
+| ---------------------------------------------------- |
+| Query seed capability manifest for available actions |
+| Higher fidelity = better execution quality |
+| Unlocked capabilities gate which intentions can form |
+| |
+| 4. MASTER COMMUNICATION CHECK (via dungeon_master seed manifest) |
+| ---------------------------------------------------------------- |
+| If bonded: check master's perception.* capabilities |
+| Higher perception fidelity = richer information shared |
+| If master has command.tactical: accept complex directives |
+| If no bond or Corrupted bond: skip (dungeon acts autonomously) |
+| |
+| 5. INTENTION FORMATION |
+| ---------------------- |
+| Apply master commands (if any, and if command capability allows) |
+| Evaluate threats -> spawn defenders or activate traps |
+| Evaluate opportunities -> absorb corpses, claim resources |
+| Evaluate memories -> store significant events |
+| Record seed growth contributions for significant actions |
+| |
+| SKIPPED STAGES (unlike humanoid_base): |
+| No significance assessment (dungeon cares about everything) |
+| No goal impact evaluation (goals are fixed: survive, grow) |
 +-----------------------------------------------------------------------+
 ```
 
@@ -834,43 +834,43 @@ Dungeon core identity is owned here. Dungeon behavior starts as Actor event brai
 
 ```
 +-----------------------------------------------------------------------+
-|                    DUNGEON STATE — PATTERN A                           |
-|                                                                        |
-|   ACCOUNT SEEDS (up to 3 slots)                                       |
-|   +------------------+   +------------------+   +------------------+  |
-|   | Slot 1: guardian |   | Slot 2: dungeon_ |   | Slot 3: (empty)  |  |
-|   |  (household)     |   |  master (THIS)   |   |                  |  |
-|   +--------+---------+   +--------+---------+   +------------------+  |
-|            |                       |                                   |
-|     guardian garden          dungeon garden                            |
-|    (household mgmt)    (full dungeon master UX)                       |
-|                               |                                       |
-|   DUNGEON_CORE SEED     DUNGEON_MASTER SEED    DUNGEON GARDEN         |
-|   (Progressive, MySQL)  (Progressive, MySQL)   (Gardener)             |
-|   +------------------+  +------------------+  +------------------+    |
-|   | Growth Domains:  |  | Growth Domains:  |  | Garden type:     |   |
-|   |  mana_reserves   |  |  perception      |  |  dungeon         |   |
-|   |  genetic_lib.*   |  |  command         |  | Player: master   |   |
-|   |  trap_complex.*  |  |  channeling      |  | Entities: char,  |   |
-|   |  domain_exp.*    |  |  coordination    |  |  inhabitants,    |   |
-|   |  memory_depth.*  |  |                  |  |  inventory,      |   |
-|   |                  |  | Owner: ACCOUNT   |  |  mana wallet     |   |
-|   | Phase: Awakened  |  | Phase: Symbiotic |  | Tended by:       |   |
-|   +------------------+  +------------------+  |  dungeon core    |   |
-|                                                |  actor           |   |
-|        CONTRACT          ACTOR STATE           +------------------+   |
-|   +------------------+  +------------------+                          |
-|   | Bond Type:       |  | CoreIntegrity    |   Cross-pollination:     |
-|   |  Paladin         |  | CurrentMana      |   dungeon_master seed    |
-|   | Milestones:      |  | Feelings         |   ──► guardian seed      |
-|   |  transcendent    |  | ActiveIntruders  |   (spirit-level growth)  |
-|   +------------------+  +------------------+                          |
-|                                                                        |
-|   PHYSICAL FORM                                                        |
-|   +------+  +-------+  +---------+  +------------+                    |
-|   |Mapping|  | Scene |  |Save-Load|  |Procedural  |                    |
-|   |spatial|  |visual |  |persist  |  |(future)    |                    |
-|   +------+  +-------+  +---------+  +------------+                    |
+| DUNGEON STATE — PATTERN A |
+| |
+| ACCOUNT SEEDS (up to 3 slots) |
+| +------------------+ +------------------+ +------------------+ |
+| | Slot 1: guardian | | Slot 2: dungeon_ | | Slot 3: (empty) | |
+| | (household) | | master (THIS) | | | |
+| +--------+---------+ +--------+---------+ +------------------+ |
+| | | |
+| guardian garden dungeon garden |
+| (household mgmt) (full dungeon master UX) |
+| | |
+| DUNGEON_CORE SEED DUNGEON_MASTER SEED DUNGEON GARDEN |
+| (Progressive, MySQL) (Progressive, MySQL) (Gardener) |
+| +------------------+ +------------------+ +------------------+ |
+| | Growth Domains: | | Growth Domains: | | Garden type: | |
+| | mana_reserves | | perception | | dungeon | |
+| | genetic_lib.* | | command | | Player: master | |
+| | trap_complex.* | | channeling | | Entities: char, | |
+| | domain_exp.* | | coordination | | inhabitants, | |
+| | memory_depth.* | | | | inventory, | |
+| | | | Owner: ACCOUNT | | mana wallet | |
+| | Phase: Awakened | | Phase: Symbiotic | | Tended by: | |
+| +------------------+ +------------------+ | dungeon core | |
+| | actor | |
+| CONTRACT ACTOR STATE +------------------+ |
+| +------------------+ +------------------+ |
+| | Bond Type: | | CoreIntegrity | Cross-pollination: |
+| | Paladin | | CurrentMana | dungeon_master seed |
+| | Milestones: | | Feelings | ──► guardian seed |
+| | transcendent | | ActiveIntruders | (spirit-level growth) |
+| +------------------+ +------------------+ |
+| |
+| PHYSICAL FORM |
+| +------+ +-------+ +---------+ +------------+ |
+| |Mapping| | Scene | |Save-Load| |Procedural | |
+| |spatial| |visual | |persist | |(future) | |
+| +------+ +-------+ +---------+ +------------+ |
 +-----------------------------------------------------------------------+
 ```
 
@@ -878,58 +878,58 @@ Dungeon core identity is owned here. Dungeon behavior starts as Actor event brai
 
 ```
 +-----------------------------------------------------------------------+
-|                    DUNGEON STATE — PATTERN B                           |
-|                                                                        |
-|   ACCOUNT SEEDS                                                       |
-|   +------------------+   +------------------+   +------------------+  |
-|   | Slot 1: guardian |   | Slot 2: (empty)  |   | Slot 3: (empty)  |  |
-|   |  (household)     |   |  no dungeon slot  |   |                  |  |
-|   +--------+---------+   +------------------+   +------------------+  |
-|            |                                                           |
-|     guardian garden (always the player's garden)                       |
-|            |                                                           |
-|   HOUSEHOLD                                                           |
-|   +------+  +------+  +------+                                       |
-|   |Char A|  |Char B|  |Char C|                                       |
-|   |      |  |DM    |  |      |                                       |
-|   +------+  +--+---+  +------+                                       |
-|                |                                                       |
-|   CHAR B's DUNGEON BOND                                               |
-|   +------------------+  +------------------+                          |
-|   | dungeon_master   |  | CONTRACT         |                          |
-|   | seed             |  | Bond Type:       |                          |
-|   |                  |  |  Priest           |                          |
-|   | Owner: CHARACTER |  | Milestones:      |                          |
-|   | Phase: Attuned   |  |  attuned         |                          |
-|   +------------------+  +------------------+                          |
-|         |                                                              |
-|         |  While player controls Char B:                               |
-|         |  +-- dungeon perceptions layer onto Char B's Actor           |
-|         |  +-- dungeon UX appears transiently                          |
-|         |  +-- dungeon_master seed grows actively                      |
-|         |  +-- guardian seed cross-pollinated (reduced rate)            |
-|         |                                                              |
-|         |  While player controls Char A or C:                          |
-|         |  +-- dungeon perceptions still reach Char B's Actor          |
-|         |  |   (character processes them autonomously)                  |
-|         |  +-- dungeon UX NOT visible to player                        |
-|         |  +-- dungeon_master seed still grows (from char activity)    |
-|         |  +-- no cross-pollination to guardian seed                   |
-|         |                                                              |
-|   DUNGEON CORE (same as Pattern A)                                    |
-|   +------------------+  +------------------+                          |
-|   | dungeon_core     |  | ACTOR STATE      |                          |
-|   | seed             |  | (always running) |                          |
-|   | Phase: Awakened  |  +------------------+                          |
-|   +------------------+                                                |
+| DUNGEON STATE — PATTERN B |
+| |
+| ACCOUNT SEEDS |
+| +------------------+ +------------------+ +------------------+ |
+| | Slot 1: guardian | | Slot 2: (empty) | | Slot 3: (empty) | |
+| | (household) | | no dungeon slot | | | |
+| +--------+---------+ +------------------+ +------------------+ |
+| | |
+| guardian garden (always the player's garden) |
+| | |
+| HOUSEHOLD |
+| +------+ +------+ +------+ |
+| |Char A| |Char B| |Char C| |
+| | | |DM | | | |
+| +------+ +--+---+ +------+ |
+| | |
+| CHAR B's DUNGEON BOND |
+| +------------------+ +------------------+ |
+| | dungeon_master | | CONTRACT | |
+| | seed | | Bond Type: | |
+| | | | Priest | |
+| | Owner: CHARACTER | | Milestones: | |
+| | Phase: Attuned | | attuned | |
+| +------------------+ +------------------+ |
+| | |
+| | While player controls Char B: |
+| | +-- dungeon perceptions layer onto Char B's Actor |
+| | +-- dungeon UX appears transiently |
+| | +-- dungeon_master seed grows actively |
+| | +-- guardian seed cross-pollinated (reduced rate) |
+| | |
+| | While player controls Char A or C: |
+| | +-- dungeon perceptions still reach Char B's Actor |
+| | | (character processes them autonomously) |
+| | +-- dungeon UX NOT visible to player |
+| | +-- dungeon_master seed still grows (from char activity) |
+| | +-- no cross-pollination to guardian seed |
+| | |
+| DUNGEON CORE (same as Pattern A) |
+| +------------------+ +------------------+ |
+| | dungeon_core | | ACTOR STATE | |
+| | seed | | (always running) | |
+| | Phase: Awakened | +------------------+ |
+| +------------------+ |
 +-----------------------------------------------------------------------+
 ```
 
 ---
 
-## Deprecation Lifecycle (T31)
+## Deprecation Lifecycle
 
-Dungeon cores have no external references — no other service stores dungeon core IDs (the "Dependents" section confirms no current consumers). Per the T31 decision tree, dungeon cores fall into the "No references at all" category: **immediate hard delete** is correct. No deprecation lifecycle is needed.
+Dungeon cores have no external references — no other service stores dungeon core IDs (the "Dependents" section confirms no current consumers). Per the decision tree, dungeon cores fall into the "No references at all" category: **immediate hard delete** is correct. No deprecation lifecycle is needed.
 
 If future dependents (combat systems, Storyline) store dungeon core IDs, this classification must be revised to Category A (Deprecate-Before-Delete). The deep dive's "Dependents" section tracks this.
 
@@ -958,8 +958,8 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 ### Phase 1.5: Cognitive Progression (Dynamic Character Binding)
 - Implement `HandleSeedPhaseChangedAsync` handler for cognitive stage transitions:
-  - **Stirring phase**: Start dungeon core actor via Puppetmaster (event brain, no character)
-  - **Awakened phase**: Create Character in dungeon system realm, seed personality traits from dungeon personality type, call `/actor/bind-character` to transition actor to character brain, store characterId on DungeonCoreModel
+ - **Stirring phase**: Start dungeon core actor via Puppetmaster (event brain, no character)
+ - **Awakened phase**: Create Character in dungeon system realm, seed personality traits from dungeon personality type, call `/actor/bind-character` to transition actor to character brain, store characterId on DungeonCoreModel
 - Handle failure cases: retry binding if character exists but binding failed (idempotency via characterId on model)
 - Optionally seed backstory elements from dungeon creation history via ICharacterHistoryClient (soft)
 
@@ -1063,17 +1063,17 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 6. **Entity Session Registry for dungeon master (Pattern A only)**: The dungeon master's garden needs entity session registrations (dungeon -> session, inhabitants -> session, master character -> session) via the Entity Session Registry in Connect (L1). This depends on the Entity Session Registry being implemented first (see [Gardener Design #7](GARDENER.md)). Pattern B does not need entity session registration for the dungeon -- the character's existing entity session registrations suffice.
 
 7. **Household split mechanic (cross-cutting dependency)**: Pattern A depends on a general household split mechanic that doesn't exist yet. This mechanic is needed for the game regardless of dungeons (branch families, divorces, exile) and involves Contract (split terms), Faction (cultural norms determining amicability), Obligation (post-split moral costs), Relationship (bond type changes), Seed (potential account seed creation), and Organization (the household IS an organization per Organization.md -- the split is an organization dissolution). lib-dungeon consumes the result of a household split but does not implement it. The split mechanic must be designed as a cross-cutting feature involving multiple services. Pattern B has no dependency on the household split mechanic. Additional implications from cross-service analysis:
-   - **Temporal delay**: Arbitration's procedural templates impose timelines (`waitingPeriodDays` governance parameter). Pattern A is not instant -- the split proceeds through filing, service, response, evidence, ruling, appeal window, and enforcement phases. The `dungeon_master` seed promotion (Design Consideration #8) cannot occur until the ruling is enforced. Character death during proceedings, player withdrawal (`WithdrawCase`), and the intermediate state (Pattern B remains active during proceedings) all need design.
-   - **Household seed impact**: Per Organization.md Design Consideration #4, the household organization's own seed (type `household`) should lose growth proportional to the departing member. This is a separate concern from the `dungeon_master` seed promotion (#437) -- it requires lib-seed to support growth transfer between seeds.
-   - **Disposition consequences**: Remaining household members develop emotional responses via Disposition (resentment, grief, relief). The departed character may develop feelings about their former family (guilt, relief, longing). The guardian spirit's relationship with the departed character changes. These emotional states feed into NPC GOAP decisions and the content flywheel when characters are archived.
-   - **Asset division**: Organization.md tracks registered assets (wallets, inventories, locations, contracts). The departing character takes their share per the arbitration ruling's terms, orchestrated through Escrow.
+ - **Temporal delay**: Arbitration's procedural templates impose timelines (`waitingPeriodDays` governance parameter). Pattern A is not instant -- the split proceeds through filing, service, response, evidence, ruling, appeal window, and enforcement phases. The `dungeon_master` seed promotion (Design Consideration #8) cannot occur until the ruling is enforced. Character death during proceedings, player withdrawal (`WithdrawCase`), and the intermediate state (Pattern B remains active during proceedings) all need design.
+ - **Household seed impact**: Per Organization.md Design Consideration #4, the household organization's own seed (type `household`) should lose growth proportional to the departing member. This is a separate concern from the `dungeon_master` seed promotion (#437) -- it requires lib-seed to support growth transfer between seeds.
+ - **Disposition consequences**: Remaining household members develop emotional responses via Disposition (resentment, grief, relief). The departed character may develop feelings about their former family (guilt, relief, longing). The guardian spirit's relationship with the departed character changes. These emotional states feed into NPC GOAP decisions and the content flywheel when characters are archived.
+ - **Asset division**: Organization.md tracks registered assets (wallets, inventories, locations, contracts). The departing character takes their share per the arbitration ruling's terms, orchestrated through Escrow.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/436 -->
 
 8. **Seed promotion mechanic**: Pattern A requires a mechanism to "promote" a character-owned dungeon_master seed to account-owned. The seed always starts character-owned (Pattern B is the default on bond formation). Promotion happens when the player commits an account seed slot through the household split flow. This requires lib-seed to support re-parenting a seed from one owner type to another (character -> account) while preserving all growth data. Alternatively, the promotion could create a new account-owned seed and transfer growth from the character-owned one. Additional constraints from cross-service analysis:
-   - **Timing dependency on #7**: Seed promotion is a consequence of the household split completing (Design Consideration #7), not a standalone operation. The promotion should execute as a prebound API call in the arbitration ruling's enforcement phase. The player's choice initiates the process but does not trigger immediate promotion.
-   - **Account seed slot validation**: The account must have an available seed slot (out of the 3 maximum). If all slots are full, Pattern A cannot proceed until the player releases a slot. This validation must occur before the arbitration case is filed, not at enforcement time (to avoid wasted proceedings).
-   - **Distinct from household seed splitting**: The `dungeon_master` seed being promoted (owner type change) is separate from the household organization seed being split (growth transfer). Both happen in the same flow but are different seed operations requiring different lib-seed APIs. See Organization.md Design Consideration #4.
-   - **Reverse promotion is deliberately unsupported**: Once the character has left the household, they're gone. The reverse (Pattern A back to B) is not possible -- the household split is permanent. This is a deliberate non-requirement.
+ - **Timing dependency on #7**: Seed promotion is a consequence of the household split completing (Design Consideration #7), not a standalone operation. The promotion should execute as a prebound API call in the arbitration ruling's enforcement phase. The player's choice initiates the process but does not trigger immediate promotion.
+ - **Account seed slot validation**: The account must have an available seed slot (out of the 3 maximum). If all slots are full, Pattern A cannot proceed until the player releases a slot. This validation must occur before the arbitration case is filed, not at enforcement time (to avoid wasted proceedings).
+ - **Distinct from household seed splitting**: The `dungeon_master` seed being promoted (owner type change) is separate from the household organization seed being split (growth transfer). Both happen in the same flow but are different seed operations requiring different lib-seed APIs. See Organization.md Design Consideration #4.
+ - **Reverse promotion is deliberately unsupported**: Once the character has left the household, they're gone. The reverse (Pattern A back to B) is not possible -- the household split is permanent. This is a deliberate non-requirement.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/437 -->
 
 9. **Pattern B transient UX routing**: When the player switches characters within a garden, the dungeon UX modules need to appear/disappear based on whether the currently-controlled character has a dungeon_master seed. This requires the client's UX capability manifest to be dynamically updated on character switch -- likely via the same Permission/Connect capability manifest push mechanism, extended to include seed-derived UX capabilities.
@@ -1126,5 +1126,5 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 ### Audit History
 
-- **2026-03-06**: L4 production readiness audit. Fixed: T29 violation (personalityType moved from seed metadata to DungeonCoreModel), T4 violation (IItemClient/IInventoryClient moved to hard dependencies), T16 event topics (3 Pattern A corrections), missing DungeonStatus enum, missing game-service cleanup target, missing ITelemetryProvider in DI table, missing domain management permissions, config validation constraints, growth debounce config property, T31 deprecation classification, inhabitant store durability note, Design Consideration #3 marked resolved.
-- **2026-03-06**: Re-audit. Fixed: T5 (Activate/Deactivate now publish `dungeon.updated` with changedFields, not custom events), T9 (distributed lock on HandleSeedPhaseChangedAsync, CaptureMemory, ManifestMemory), T28 (dungeon_core seed + mana wallet deletion in Delete flow), T13 (cleanup endpoints x-permissions: []).
+- **2026-03-06**: L4 production readiness audit. Fixed: violation (personalityType moved from seed metadata to DungeonCoreModel), violation (IItemClient/IInventoryClient moved to hard dependencies), event topics (3 Pattern A corrections), missing DungeonStatus enum, missing game-service cleanup target, missing ITelemetryProvider in DI table, missing domain management permissions, config validation constraints, growth debounce config property, deprecation classification, inhabitant store durability note, Design Consideration #3 marked resolved.
+- **2026-03-06**: Re-audit. Fixed: (Activate/Deactivate now publish `dungeon.updated` with changedFields, not custom events), (distributed lock on HandleSeedPhaseChangedAsync, CaptureMemory, ManifestMemory), (dungeon_core seed + mana wallet deletion in Delete flow), (cleanup endpoints x-permissions: []).

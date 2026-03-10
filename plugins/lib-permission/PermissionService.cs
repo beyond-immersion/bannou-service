@@ -35,7 +35,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IDistributedLockProvider _lockProvider;
 
-    // Constructor-cached state stores (FOUNDATION TENETS - T6)
+    // Constructor-cached state stores (FOUNDATION TENETS)
     private readonly IStateStore<Dictionary<string, object>> _permissionsStore;
     private readonly IStateStore<Dictionary<string, string>> _sessionStatesStore;
     private readonly IStateStore<string> _stringStore;

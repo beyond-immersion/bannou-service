@@ -44,7 +44,7 @@ curl http://localhost:8080/health
 |--------------|---------|
 | Understand the architecture | [Bannou Design](docs/BANNOU-DESIGN.md) |
 | Add or extend a plugin | [Plugin Development Guide](docs/guides/PLUGIN-DEVELOPMENT.md) |
-| Understand a specific service | [Plugin Deep-Dives](docs/plugins/) (41 services) |
+| Understand a specific service | [Plugin Deep-Dives](docs/plugins/) (76+ services) |
 | Run and write tests | [Testing Guide](docs/operations/TESTING.md) |
 | Contribute code | [Development Rules](docs/reference/TENETS.md) |
 
@@ -98,7 +98,7 @@ make down-compose          # Stop and cleanup
 ```
 bannou-service/
 ├── schemas/              # OpenAPI specifications (source of truth)
-├── plugins/lib-*/        # Service plugins (41 services)
+├── plugins/lib-*/        # Service plugins (76+ services)
 ├── bannou-service/       # Main application and shared code
 ├── sdks/                 # SDK packages (C#, TypeScript, Unreal)
 │   ├── core/             # Shared types (BannouJson, ApiException, base events)

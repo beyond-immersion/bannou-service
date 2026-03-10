@@ -17,6 +17,6 @@ public partial class ChatRoomCreatedEvent : ILifecycleCreatedEvent { }
 public partial class ChatRoomUpdatedEvent : ILifecycleUpdatedEvent { }
 public partial class ChatRoomDeletedEvent : ILifecycleDeletedEvent { }
 
-public partial class ChatRoomTypeCreatedEvent : ILifecycleCreatedEvent { }
-public partial class ChatRoomTypeUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class ChatRoomTypeDeletedEvent : ILifecycleDeletedEvent { }
+public partial class ChatRoomTypeCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class ChatRoomTypeUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class ChatRoomTypeDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }

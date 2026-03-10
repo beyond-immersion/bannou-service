@@ -59,7 +59,7 @@ public partial class ItemService : IItemService
     /// Key format: "{templateId}:{userId}". Values track uses within deduplication window.
     /// </summary>
     /// <remarks>
-    /// Per IMPLEMENTATION TENETS (T9): This local cache is acceptable because it's purely for
+    /// Per IMPLEMENTATION TENETS: This local cache is acceptable because it's purely for
     /// event batching optimization, not authoritative state. Cross-instance inconsistency results
     /// in multiple smaller batches being published (not data loss). Authoritative item state
     /// lives in persistent stores via lib-state.
@@ -71,7 +71,7 @@ public partial class ItemService : IItemService
     /// Key format: "{templateId}:{userId}". Values track failures within deduplication window.
     /// </summary>
     /// <remarks>
-    /// Per IMPLEMENTATION TENETS (T9): This local cache is acceptable because it's purely for
+    /// Per IMPLEMENTATION TENETS: This local cache is acceptable because it's purely for
     /// event batching optimization, not authoritative state. Cross-instance inconsistency results
     /// in multiple smaller batches being published (not data loss). Authoritative item state
     /// lives in persistent stores via lib-state.

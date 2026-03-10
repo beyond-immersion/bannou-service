@@ -200,7 +200,7 @@ Tenets are organized into categories based on when they're needed:
 | **T9** | Multi-Instance Safety | No in-memory authoritative state; use distributed locks |
 | **T17** | Client Event Schema Pattern | Use IClientEventPublisher for WebSocket push; not IMessageBus |
 | **T30** | Telemetry Span Instrumentation | All async methods get `StartActivity` spans; zero-signature-change via `Activity.Current` ambient context |
-| **T31** | Deprecation Lifecycle | Two categories (definitions vs templates); idempotent deprecation; standardized storage/events/behavior; no deprecation on instances |
+| **T31** | Deprecation Lifecycle | Two categories (definitions vs templates); idempotent deprecation; standardized storage/events/behavior; Category B clean-deprecated sweep for safe deletion; no deprecation on instances |
 
 ---
 
@@ -390,11 +390,15 @@ Tenets are organized into categories based on when they're needed:
 | Not checking deprecation before creating referencing entity | T31 | Check target's `Exists` or deprecation status; reject with `BadRequest` if deprecated |
 | Category B entity missing instance creation guard | T31 | Check `IsDeprecated` before creating instances; reject with `BadRequest` |
 | Category B entity missing `x-lifecycle` in events schema | T31 | Add `x-lifecycle` with deprecation fields; see B10–B12 checklist |
-| Category B entity with delete endpoint | T31 | Remove delete; Category B templates persist forever (B6) |
+| Category B entity with per-entity delete endpoint | T31 | Remove delete; use clean-deprecated sweep instead (B6, B17) |
 | Category B deprecate endpoint returning 409 for "already deprecated" | T31 | Return `OK` (idempotent); remove 409 from schema (B3) |
 | Category B entity missing `includeDeprecated` on list endpoint | T31 | Add `includeDeprecated` boolean parameter, `default: false` (B8) |
 | Category B entity missing `reason` in deprecate request | T31 | Add optional `reason` field, `maxLength: 500`, nullable (B2) |
 | Category B entity using hyphenated topic naming | T16, T31 | Use dot-separated Pattern C: `service.entity.action` (B11) |
+| Category B entity missing `clean-deprecated` endpoint | T31 | Add `POST /{service}/{entity}/clean-deprecated` with shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` (B17–B19) |
+| Category B clean-deprecated with non-admin permissions | T31 | Use `x-permissions: [role: admin]` — cleanup deletes data (B18) |
+| Category B clean-deprecated not using `DeprecationCleanupHelper` | T31 | Use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` for standardized sweep (B20) |
+| Category B clean-deprecated using service-specific request/response models | T31 | Use shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml` (B17) |
 | Client-facing endpoint accepting accountId in request body | T32 | Remove accountId; use webSocketSessionId; resolve account server-side if needed |
 | Non-boundary service emitting accountId in events | T32 | Use sessionId or domain-specific identifiers (ticketId, matchId) |
 | Polymorphic string field "accountId or service name" | T32, T14 | Use ownerType enum + ownerId; use sessionId for user-initiated operations |

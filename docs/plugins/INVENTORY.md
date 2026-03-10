@@ -89,94 +89,94 @@ Client events are pushed via `IEntitySessionRegistry.PublishToEntitySessionsAsyn
 Constraint Models
 ==================
 
-  slot_only:
-    ├── UsedSlots < MaxSlots → can add
-    └── Example: 20-slot backpack
+ slot_only:
+ ├── UsedSlots < MaxSlots → can add
+ └── Example: 20-slot backpack
 
-  weight_only:
-    ├── ContentsWeight + item.Weight * qty ≤ MaxWeight → can add
-    └── Example: 100 kg weight limit
+ weight_only:
+ ├── ContentsWeight + item.Weight * qty ≤ MaxWeight → can add
+ └── Example: 100 kg weight limit
 
-  slot_and_weight:
-    ├── Both slot AND weight constraints checked
-    └── Example: 20-slot, 50kg satchel
+ slot_and_weight:
+ ├── Both slot AND weight constraints checked
+ └── Example: 20-slot, 50kg satchel
 
-  grid:
-    ├── Approximated by slot count (true grid not implemented)
-    └── Example: 8x6 grid inventory (48 slots)
+ grid:
+ ├── Approximated by slot count (true grid not implemented)
+ └── Example: 8x6 grid inventory (48 slots)
 
-  volumetric:
-    ├── CurrentVolume + item.Volume * qty ≤ MaxVolume → can add
-    └── Example: 50L chest
+ volumetric:
+ ├── CurrentVolume + item.Volume * qty ≤ MaxVolume → can add
+ └── Example: 50L chest
 
-  unlimited:
-    ├── No constraints checked
-    └── Example: quest item bag, admin storage
+ unlimited:
+ ├── No constraints checked
+ └── Example: quest item bag, admin storage
 
 
 Cache Architecture
 ====================
 
-  Request Handler
-       │
-       ├── GetContainerWithCacheAsync(containerId)
-       │    │
-       │    ├── TryGetContainerFromCacheAsync (Redis)
-       │    │    └── Hit? Return cached
-       │    │
-       │    ├── Miss → GetAsync (MySQL)
-       │    │
-       │    └── Populate cache → UpdateContainerCacheAsync
-       │
-       └── SaveContainerWithCacheAsync(model)
-            ├── SaveAsync (MySQL)
-            └── UpdateContainerCacheAsync (Redis, TTL=300s)
+ Request Handler
+ │
+ ├── GetContainerWithCacheAsync(containerId)
+ │ │
+ │ ├── TryGetContainerFromCacheAsync (Redis)
+ │ │ └── Hit? Return cached
+ │ │
+ │ ├── Miss → GetAsync (MySQL)
+ │ │
+ │ └── Populate cache → UpdateContainerCacheAsync
+ │
+ └── SaveContainerWithCacheAsync(model)
+ ├── SaveAsync (MySQL)
+ └── UpdateContainerCacheAsync (Redis, TTL=300s)
 
 
 Lock Acquisition Pattern
 ==========================
 
-  Container modification operations acquire distributed locks:
-  - add-item-{uuid}
-  - remove-item-{uuid}
-  - update-container-{uuid}
-  - delete-container-{uuid}
-  - transfer-item-{uuid}
-  - split-stack-{uuid}
-  - merge-stack-{uuid}
+ Container modification operations acquire distributed locks:
+ - add-item-{uuid}
+ - remove-item-{uuid}
+ - update-container-{uuid}
+ - delete-container-{uuid}
+ - transfer-item-{uuid}
+ - split-stack-{uuid}
+ - merge-stack-{uuid}
 
-  Index list operations use shorter timeout:
-  - AddToListAsync / RemoveFromListAsync
-  - ListLockTimeoutSeconds (15s) vs LockTimeoutSeconds (30s)
+ Index list operations use shorter timeout:
+ - AddToListAsync / RemoveFromListAsync
+ - ListLockTimeoutSeconds (15s) vs LockTimeoutSeconds (30s)
 
 
 Stack Operations
 ==================
 
-  SplitStack(instanceId, quantity=8)
-  (Original stack: 20 potions)
-       │
-       ├── Validate: quantity < original.Quantity
-       ├── Validate: not QuantityModel.Unique
-       │
-       ├── ModifyItemInstance(original, QuantityDelta: -8)
-       ├── CreateItemInstance(template, quantity: 8)
-       ├── container.UsedSlots++
-       │
-       └── Result: 12 potions (original) + 8 potions (new stack)
+ SplitStack(instanceId, quantity=8)
+ (Original stack: 20 potions)
+ │
+ ├── Validate: quantity < original.Quantity
+ ├── Validate: not QuantityModel.Unique
+ │
+ ├── ModifyItemInstance(original, QuantityDelta: -8)
+ ├── CreateItemInstance(template, quantity: 8)
+ ├── container.UsedSlots++
+ │
+ └── Result: 12 potions (original) + 8 potions (new stack)
 
-  MergeStacks(source, target)
-  (Source: 8 potions, Target: 12 potions, MaxStack: 15)
-       │
-       ├── Validate: same template
-       ├── Combined = 12 + 8 = 20
-       ├── Overflow = 20 - 15 = 5
-       │
-       ├── ModifyItemInstance(target, QuantityDelta: +10) [15 - 5 = add 10]
-       │                      (actually adds quantityToAdd = 15 - 12 = 3)
-       ├── ModifyItemInstance(source, QuantityDelta: -3) [remainder = 5]
-       │
-       └── Result: target=15 (full), source=5 (remainder)
+ MergeStacks(source, target)
+ (Source: 8 potions, Target: 12 potions, MaxStack: 15)
+ │
+ ├── Validate: same template
+ ├── Combined = 12 + 8 = 20
+ ├── Overflow = 20 - 15 = 5
+ │
+ ├── ModifyItemInstance(target, QuantityDelta: +10) [15 - 5 = add 10]
+ │ (actually adds quantityToAdd = 15 - 12 = 3)
+ ├── ModifyItemInstance(source, QuantityDelta: -3) [remainder = 5]
+ │
+ └── Result: target=15 (full), source=5 (remainder)
 ```
 
 ---
@@ -276,7 +276,7 @@ Stack Operations
 6. **No escrow integration**: lib-escrow has a placeholder comment mentioning inventory but no actual integration. Asset custody for items in escrow is not implemented. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/153 -->
 
-7. **Container orphan cleanup on owner deletion**: When an owner entity is deleted, its inventory containers must be cleaned up. For L2 owners (Character, Location), cleanup is handled via lib-resource (`x-references` with CASCADE policy). For **Account-owned containers**, Inventory MUST subscribe to `account.deleted` and clean up all account-owned containers per T28's Account Deletion Cleanup Obligation. This is the established pattern — accounts are the one entity where event-based cleanup is mandatory because lib-resource cannot track account references (privacy constraint). **Not yet implemented** — see [#593](https://github.com/beyond-immersion/bannou-service/issues/593). Reference implementation: `lib-collection/CollectionServiceEvents.cs`.
+7. **Container orphan cleanup on owner deletion**: When an owner entity is deleted, its inventory containers must be cleaned up. For L2 owners (Character, Location), cleanup is handled via lib-resource (`x-references` with CASCADE policy). For **Account-owned containers**, Inventory MUST subscribe to `account.deleted` and clean up all account-owned containers per tenets's Account Deletion Cleanup Obligation. This is the established pattern — accounts are the one entity where event-based cleanup is mandatory because lib-resource cannot track account references (privacy constraint). **Not yet implemented** — see [#593](https://github.com/beyond-immersion/bannou-service/issues/593). Reference implementation: `lib-collection/CollectionServiceEvents.cs`.
 <!-- AUDIT:TODO:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/593 -->
 
 ---
@@ -299,6 +299,6 @@ Stack Operations
 
 ### Completed
 - **2026-02-25**: Reclassified "Category constraints are client-side only" from Design Considerations to Intentional Quirks (#13) — intentional architectural boundary (Inventory is placement layer, Item is data layer, no circular dependency)
-- **2026-02-24**: L3 hardening pass - NRT fix, T8 filler removal from 7 responses, T29 metadata disclaimers, event schema additionalProperties, x-lifecycle model completion, validation keywords, T26 sentinel fix, T30 telemetry spans, 24 new tests (93 total)
+- **2026-02-24**: L3 hardening pass - NRT fix, filler removal from 7 responses, metadata disclaimers, event schema additionalProperties, x-lifecycle model completion, validation keywords, sentinel fix, telemetry spans, 24 new tests (93 total)
 - **2026-02-24**: Closed #310 (silent failure patterns) - IItemClient now constructor-injected (hard dependency)
 - **2026-02-24**: Closed #317 (quest ITEM_OWNED prerequisite) - QuestService calls HasItemsAsync()
