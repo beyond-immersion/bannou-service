@@ -105,7 +105,7 @@ internal static class SchemaParser
             if (entityMapping.Children.TryGetValue(new YamlScalarNode("deprecation"), out var deprecationNode))
             {
                 hasDeprecation = deprecationNode is YamlScalarNode scalar &&
-                                 string.Equals(scalar.Value, "true", StringComparison.OrdinalIgnoreCase);
+                                string.Equals(scalar.Value, "true", StringComparison.OrdinalIgnoreCase);
             }
 
             // Extract model field names

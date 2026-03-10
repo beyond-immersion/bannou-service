@@ -598,49 +598,99 @@ Generated onto parameterized event publisher overloads.
 
 ## 13. Test Validators
 
-Shared validators in `test-utilities/` that provide one-line structural tests.
+Shared validators in `test-utilities/` and `structural-tests/`. The `structural-tests/` project auto-discovers all services via `[BannouService]` attribute reflection and runs validators across every plugin in a single test pass — individual plugins do **not** need to duplicate these tests.
 
-### ServiceConstructorValidator
+### Centralized in Structural Tests
+
+The following validators are run automatically for **all** services by `structural-tests/StructuralTests.cs`. Adding a new plugin (with `[BannouService]` attribute and a project reference in `structural-tests.csproj`) is all that's needed — zero per-plugin test boilerplate.
+
+#### ServiceConstructorValidator
 
 **File**: `test-utilities/ServiceConstructorValidator.cs`
+**Structural test**: `Service_HasValidConstructor` (auto-discovered, all services)
 
 Validates: single public constructor, no optional params, no defaults, proper null checks.
 
-```csharp
-[Fact]
-public void MyService_ConstructorIsValid() =>
-    ServiceConstructorValidator.ValidateServiceConstructor<MyService>();
-```
-
-### StateStoreKeyValidator
+#### StateStoreKeyValidator
 
 **File**: `test-utilities/StateStoreKeyValidator.cs`
+**Structural tests**: `Service_HasValidKeyBuilders`, `Service_ReferencesItsStateStores` (auto-discovered, all services)
 
-Validates: `const` prefix fields exist, `Build*Key()` methods exist, visibility is `internal static`.
+Validates: `const` prefix fields exist, `Build*Key()` methods exist, visibility is `internal static`, declared stores are referenced.
 
-```csharp
-[Fact]
-public void MyService_HasValidKeyBuilders() =>
-    StateStoreKeyValidator.ValidateKeyBuilders<MyService>();
-```
-
-### ServiceHierarchyValidator
+#### ServiceHierarchyValidator
 
 **File**: `test-utilities/ServiceHierarchyValidator.cs`
+**Structural test**: `Service_RespectsHierarchy` (auto-discovered, all services)
 
 Validates constructor `I*Client` parameters against the declared `ServiceLayer` to catch hierarchy violations.
 
-```csharp
-[Fact]
-public void MyService_RespectsDependencyHierarchy() =>
-    ServiceHierarchyValidator.ValidateServiceHierarchy<MyService>();
-```
+#### ControllerValidator
 
-### EnumMappingValidator
+**File**: `test-utilities/ControllerValidator.cs`
+**Structural test**: `Service_HasValidController` (auto-discovered, all services)
+
+Validates generated controller implements `IBannouController` and has correct `[BannouController]` attribute.
+
+#### EventPublishingValidator
+
+**File**: `test-utilities/EventPublishingValidator.cs`
+**Structural test**: `Service_CallsAllGeneratedEventPublishers` (auto-discovered, all services)
+
+Validates that every generated `Publish*Async` method is called from the plugin assembly. Maintains an allowlist for intentionally uncalled publishers (Category B deleted events, immutable entity updated events).
+
+#### ResourceCleanupValidator
+
+**File**: `test-utilities/ResourceCleanupValidator.cs`
+**Structural test**: `Service_HasRequiredCleanupMethods` (auto-discovered, all services)
+
+Validates that services with `[ResourceCleanupRequired]` attributes implement the declared cleanup methods.
+
+#### PermissionMatrixValidator
+
+**File**: `test-utilities/PermissionMatrixValidator.cs`
+**Structural test**: `Service_PermissionRegistrationEndpointCountMatchesSchema` (auto-discovered, all services)
+
+Validates permission registration endpoint count matches schema x-permissions declarations.
+
+### Additional Structural-Only Validations
+
+These validations live entirely in `structural-tests/` (no `test-utilities/` counterpart) and run for all services via auto-discovery:
+
+| Structural Test | What It Validates |
+|-----------------|-------------------|
+| `Service_ConfigurationClassIsInstantiable` | Config class has parameterless constructor, doesn't throw |
+| `Service_HasServiceEventsFile` | `*ServiceEvents.cs` partial class file exists on disk |
+| `Service_NoDirectJsonSerializer` | No direct `System.Text.Json.JsonSerializer` calls (IL scan) |
+| `Service_NoDirectEnvironmentGetVariable` | No `Environment.GetEnvironmentVariable` calls (IL scan) |
+| `Service_NoDirectInfrastructureImports` | No direct Redis/RabbitMQ/MySQL references in non-L0 (IL scan) |
+| `Service_UsesCorrectStatusCodesEnum` | No `Microsoft.AspNetCore.Http.StatusCodes` references (IL scan) |
+| `PluginsUsingEnumMapping_MustHaveEnumMappingValidatorTests` | Plugins using `EnumMapping` have `EnumMappingValidator` tests |
+
+### Schema Validation (`SchemaValidationTests.cs`)
+
+Schema-level validations that scan `schemas/*.yaml` files directly:
+
+| Test | What It Validates | Parsing |
+|------|-------------------|---------|
+| `SchemaEnumValues_ArePascalCase` | Enum values in component schemas use PascalCase | Line-based |
+| `SchemaEndpoints_HaveXPermissions` | Every endpoint declares x-permissions | Line-based |
+| `SchemaConfigEnvVars_HaveNoHyphens` | Configuration env var names use underscores, not hyphens | Line-based |
+| `SchemaClientEvents_UseAllOfWithBaseClientEvent` | Client events inherit from BaseClientEvent | Line-based |
+| `LifecycleModels_DoNotContainAutoInjectedTimestampFields` | No manual createdAt/updatedAt in x-lifecycle models | `SchemaParser` (YamlDotNet) |
+| `LifecycleModels_DoNotContainAutoInjectedDeprecationFields` | No manual deprecation fields when `deprecation: true` | `SchemaParser` (YamlDotNet) |
+
+**SchemaParser** (`structural-tests/SchemaParser.cs`): Structured YAML parser using YamlDotNet for semantic schema validation. Provides `GetLifecycleEntities()` for x-lifecycle analysis. Use this for new validations requiring nested structure traversal; use line-based scanning for simple pattern matching.
+
+### Per-Plugin Validators (Not Centralized)
+
+These validators are used in individual `lib-*.tests/` projects because they require plugin-specific knowledge:
+
+#### EnumMappingValidator
 
 **File**: `test-utilities/EnumMappingValidator.cs`
 
-Validates enum boundary mappings at test time:
+Validates enum boundary mappings. Each plugin's test project specifies its own enum pairs — structural tests enforce that these tests *exist* (via `PluginsUsingEnumMapping_MustHaveEnumMappingValidatorTests`) but the mapping details are plugin-specific.
 
 | Method | When to Use |
 |--------|-------------|
@@ -655,35 +705,11 @@ public void ArcType_FullCoverage() =>
     EnumMappingValidator.AssertFullCoverage<ArcType, StorylineTheory.ArcType>();
 ```
 
-### EventPublishingValidator
-
-**File**: `test-utilities/EventPublishingValidator.cs`
-
-Structural test that every generated `Publish*Async` method is called from the plugin assembly.
-
-### ResourceCleanupValidator
-
-**File**: `test-utilities/ResourceCleanupValidator.cs`
-
-Validates that services with `[ResourceCleanupRequired]` attributes implement the declared cleanup methods.
-
-### PermissionMatrixValidator
-
-**File**: `test-utilities/PermissionMatrixValidator.cs`
-
-Validates permission matrix registration.
-
-### ControllerValidator
-
-**File**: `test-utilities/ControllerValidator.cs`
-
-Validates generated controller structure.
-
-### TestConfigurationHelper
+#### TestConfigurationHelper
 
 **File**: `test-utilities/TestConfigurationHelper.cs`
 
-Helpers for creating test configuration instances.
+Helpers for creating test configuration instances in per-plugin unit tests.
 
 ---
 
@@ -1102,12 +1128,16 @@ public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedTempla
 | Paginate a list | `PaginationHelper.Paginate` | `History/PaginationHelper.cs` |
 | Decompress JSON from archives | `CompressionHelper.DecompressJsonData` | `History/CompressionHelper.cs` |
 | Add a telemetry span | `_telemetryProvider.StartActivity(...)` | N/A (pattern, not helper) |
-| Validate constructor pattern (test) | `ServiceConstructorValidator` | `test-utilities/` |
-| Validate key builders (test) | `StateStoreKeyValidator` | `test-utilities/` |
-| Validate hierarchy (test) | `ServiceHierarchyValidator` | `test-utilities/` |
-| Validate enum mappings (test) | `EnumMappingValidator` | `test-utilities/` |
-| Validate event publishing (test) | `EventPublishingValidator` | `test-utilities/` |
-| Validate resource cleanup (test) | `ResourceCleanupValidator` | `test-utilities/` |
+| Validate constructor pattern | `ServiceConstructorValidator` | `test-utilities/` → centralized in `structural-tests/` |
+| Validate key builders | `StateStoreKeyValidator` | `test-utilities/` → centralized in `structural-tests/` |
+| Validate hierarchy | `ServiceHierarchyValidator` | `test-utilities/` → centralized in `structural-tests/` |
+| Validate controller structure | `ControllerValidator` | `test-utilities/` → centralized in `structural-tests/` |
+| Validate event publishing | `EventPublishingValidator` | `test-utilities/` → centralized in `structural-tests/` |
+| Validate resource cleanup | `ResourceCleanupValidator` | `test-utilities/` → centralized in `structural-tests/` |
+| Validate permission registration | `PermissionMatrixValidator` | `test-utilities/` → centralized in `structural-tests/` |
+| Validate enum mappings (per-plugin) | `EnumMappingValidator` | `test-utilities/` → per-plugin `lib-*.tests/` |
+| Validate schema conventions | `SchemaValidationTests` | `structural-tests/` |
+| Validate lifecycle field hygiene | `SchemaParser` | `structural-tests/` |
 | Add Category B deprecation to a template entity | Category B Deprecation Template | § 15 (schema + implementation patterns) |
 | Implement clean-deprecated sweep | `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` | `Helpers/DeprecationCleanupHelper.cs` |
 

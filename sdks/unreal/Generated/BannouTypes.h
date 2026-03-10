@@ -12733,13 +12733,17 @@ struct FFactionResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> SeedId;
 
-    /** Current lifecycle status */
+    /** Current operational lifecycle status (orthogonal to deprecation) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FFactionStatus Status;
 
     /** Current seed growth phase (denormalized from lib-seed for convenience) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString CurrentPhase;
+
+    /** Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
 
     /** When this faction was deprecated (null if not deprecated) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -12764,7 +12768,7 @@ struct FFactionResponse
 };
 
 /**
- * Lifecycle status of a faction entity
+ * Operational lifecycle status of a faction entity (orthogonal to deprecation)
  */
 USTRUCT(BlueprintType)
 struct FFactionStatus
@@ -18123,7 +18127,7 @@ struct FListFactionsRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> RealmId;
 
-    /** Filter by lifecycle status */
+    /** Filter by operational lifecycle status (Active/Dissolved) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FFactionStatus> Status;
 

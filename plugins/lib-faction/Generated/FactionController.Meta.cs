@@ -90,6 +90,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "isDeprecated",
                 "memberCount",
                 "createdAt",
                 "updatedAt"
@@ -146,13 +147,17 @@ public partial class FactionController
                 },
                 "status": {
                     "$ref": "#/$defs/FactionStatus",
-                    "description": "Current lifecycle status"
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
                 },
                 "deprecatedAt": {
                     "type": "string",
@@ -185,10 +190,9 @@ public partial class FactionController
         },
         "FactionStatus": {
             "type": "string",
-            "description": "Lifecycle status of a faction entity",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
             "enum": [
                 "Active",
-                "Deprecated",
                 "Dissolved"
             ]
         }
@@ -293,6 +297,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "isDeprecated",
                 "memberCount",
                 "createdAt",
                 "updatedAt"
@@ -349,13 +354,17 @@ public partial class FactionController
                 },
                 "status": {
                     "$ref": "#/$defs/FactionStatus",
-                    "description": "Current lifecycle status"
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
                 },
                 "deprecatedAt": {
                     "type": "string",
@@ -388,10 +397,9 @@ public partial class FactionController
         },
         "FactionStatus": {
             "type": "string",
-            "description": "Lifecycle status of a faction entity",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
             "enum": [
                 "Active",
-                "Deprecated",
                 "Dissolved"
             ]
         }
@@ -503,6 +511,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "isDeprecated",
                 "memberCount",
                 "createdAt",
                 "updatedAt"
@@ -559,13 +568,17 @@ public partial class FactionController
                 },
                 "status": {
                     "$ref": "#/$defs/FactionStatus",
-                    "description": "Current lifecycle status"
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
                 },
                 "deprecatedAt": {
                     "type": "string",
@@ -598,10 +611,9 @@ public partial class FactionController
         },
         "FactionStatus": {
             "type": "string",
-            "description": "Lifecycle status of a faction entity",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
             "enum": [
                 "Active",
-                "Deprecated",
                 "Dissolved"
             ]
         }
@@ -690,7 +702,7 @@ public partial class FactionController
                 "status": {
                     "$ref": "#/$defs/FactionStatus",
                     "nullable": true,
-                    "description": "Filter by lifecycle status"
+                    "description": "Filter by operational lifecycle status (Active/Dissolved)"
                 },
                 "parentFactionId": {
                     "type": "string",
@@ -730,10 +742,9 @@ public partial class FactionController
         },
         "FactionStatus": {
             "type": "string",
-            "description": "Lifecycle status of a faction entity",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
             "enum": [
                 "Active",
-                "Deprecated",
                 "Dissolved"
             ]
         }
@@ -786,6 +797,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "isDeprecated",
                 "memberCount",
                 "createdAt",
                 "updatedAt"
@@ -842,13 +854,17 @@ public partial class FactionController
                 },
                 "status": {
                     "$ref": "#/$defs/FactionStatus",
-                    "description": "Current lifecycle status"
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
                 },
                 "deprecatedAt": {
                     "type": "string",
@@ -881,10 +897,9 @@ public partial class FactionController
         },
         "FactionStatus": {
             "type": "string",
-            "description": "Lifecycle status of a faction entity",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
             "enum": [
                 "Active",
-                "Deprecated",
                 "Dissolved"
             ]
         }
@@ -1009,6 +1024,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "isDeprecated",
                 "memberCount",
                 "createdAt",
                 "updatedAt"
@@ -1065,13 +1081,17 @@ public partial class FactionController
                 },
                 "status": {
                     "$ref": "#/$defs/FactionStatus",
-                    "description": "Current lifecycle status"
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
                 },
                 "deprecatedAt": {
                     "type": "string",
@@ -1104,10 +1124,9 @@ public partial class FactionController
         },
         "FactionStatus": {
             "type": "string",
-            "description": "Lifecycle status of a faction entity",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
             "enum": [
                 "Active",
-                "Deprecated",
                 "Dissolved"
             ]
         }
@@ -1219,6 +1238,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "isDeprecated",
                 "memberCount",
                 "createdAt",
                 "updatedAt"
@@ -1275,13 +1295,17 @@ public partial class FactionController
                 },
                 "status": {
                     "$ref": "#/$defs/FactionStatus",
-                    "description": "Current lifecycle status"
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
                 },
                 "deprecatedAt": {
                     "type": "string",
@@ -1314,10 +1338,9 @@ public partial class FactionController
         },
         "FactionStatus": {
             "type": "string",
-            "description": "Lifecycle status of a faction entity",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
             "enum": [
                 "Active",
-                "Deprecated",
                 "Dissolved"
             ]
         }
@@ -1422,6 +1445,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "isDeprecated",
                 "memberCount",
                 "createdAt",
                 "updatedAt"
@@ -1478,13 +1502,17 @@ public partial class FactionController
                 },
                 "status": {
                     "$ref": "#/$defs/FactionStatus",
-                    "description": "Current lifecycle status"
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
                 },
                 "deprecatedAt": {
                     "type": "string",
@@ -1517,10 +1545,9 @@ public partial class FactionController
         },
         "FactionStatus": {
             "type": "string",
-            "description": "Lifecycle status of a faction entity",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
             "enum": [
                 "Active",
-                "Deprecated",
                 "Dissolved"
             ]
         }
@@ -1889,6 +1916,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "isDeprecated",
                 "memberCount",
                 "createdAt",
                 "updatedAt"
@@ -1945,13 +1973,17 @@ public partial class FactionController
                 },
                 "status": {
                     "$ref": "#/$defs/FactionStatus",
-                    "description": "Current lifecycle status"
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
                 },
                 "deprecatedAt": {
                     "type": "string",
@@ -1984,10 +2016,9 @@ public partial class FactionController
         },
         "FactionStatus": {
             "type": "string",
-            "description": "Lifecycle status of a faction entity",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
             "enum": [
                 "Active",
-                "Deprecated",
                 "Dissolved"
             ]
         }
@@ -2092,6 +2123,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "isDeprecated",
                 "memberCount",
                 "createdAt",
                 "updatedAt"
@@ -2148,13 +2180,17 @@ public partial class FactionController
                 },
                 "status": {
                     "$ref": "#/$defs/FactionStatus",
-                    "description": "Current lifecycle status"
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
                 },
                 "deprecatedAt": {
                     "type": "string",
@@ -2187,10 +2223,9 @@ public partial class FactionController
         },
         "FactionStatus": {
             "type": "string",
-            "description": "Lifecycle status of a faction entity",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
             "enum": [
                 "Active",
-                "Deprecated",
                 "Dissolved"
             ]
         }
@@ -3641,6 +3676,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "isDeprecated",
                 "memberCount",
                 "createdAt",
                 "updatedAt"
@@ -3697,13 +3733,17 @@ public partial class FactionController
                 },
                 "status": {
                     "$ref": "#/$defs/FactionStatus",
-                    "description": "Current lifecycle status"
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
                     "maxLength": 64,
                     "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
                 },
                 "deprecatedAt": {
                     "type": "string",
@@ -3736,10 +3776,9 @@ public partial class FactionController
         },
         "FactionStatus": {
             "type": "string",
-            "description": "Lifecycle status of a faction entity",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
             "enum": [
                 "Active",
-                "Deprecated",
                 "Dissolved"
             ]
         }

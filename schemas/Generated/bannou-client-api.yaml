@@ -25288,6 +25288,7 @@ components:
       - realmId
       - isRealmBaseline
       - status
+      - isDeprecated
       - memberCount
       - createdAt
       - updatedAt
@@ -25337,13 +25338,18 @@ components:
             creation failed)
         status:
           $ref: '#/components/schemas/FactionStatus'
-          description: Current lifecycle status
+          description: Current operational lifecycle status (orthogonal to 
+            deprecation)
         currentPhase:
           type: string
           nullable: true
           maxLength: 64
           description: Current seed growth phase (denormalized from lib-seed for
             convenience)
+        isDeprecated:
+          type: boolean
+          description: Whether this faction is deprecated and should not accept 
+            new references (per IMPLEMENTATION TENETS triple-field model)
         deprecatedAt:
           type: string
           format: date-time
@@ -25368,10 +25374,10 @@ components:
           description: When this faction was last updated
     FactionStatus:
       type: string
-      description: Lifecycle status of a faction entity
+      description: Operational lifecycle status of a faction entity (orthogonal 
+        to deprecation)
       enum:
       - Active
-      - Deprecated
       - Dissolved
     FailMilestoneRequest:
       type: object
@@ -30553,7 +30559,7 @@ components:
         status:
           $ref: '#/components/schemas/FactionStatus'
           nullable: true
-          description: Filter by lifecycle status
+          description: Filter by operational lifecycle status (Active/Dissolved)
         parentFactionId:
           type: string
           format: uuid

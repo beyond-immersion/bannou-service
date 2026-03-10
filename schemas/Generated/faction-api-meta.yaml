@@ -207,45 +207,48 @@ paths:
         : \"Complete faction entity with seed growth status\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"factionId\",\n                \"gameServiceId\",\n                \"name\",\n\
         \                \"code\",\n                \"realmId\",\n                \"isRealmBaseline\",\n                \"\
-        status\",\n                \"memberCount\",\n                \"createdAt\",\n                \"updatedAt\"\n     \
-        \       ],\n            \"properties\": {\n                \"factionId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the faction\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this faction belongs to\"\n\
-        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Display name of the
-        faction\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n          \
-        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Unique
-        code within the game service (e.g., \\\"thieves_guild\\\")\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 2048,\n                    \"description\": \"Human-readable description of the faction\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm this faction belongs to\"\n                },\n                \"\
-        isRealmBaseline\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this
-        faction is the realm's baseline cultural faction\"\n                },\n                \"parentFactionId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Parent faction in hierarchy (null for top-level factions)\"\n    \
-        \            },\n                \"seedId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated seed
-        for growth tracking (null if seed creation failed)\"\n                },\n                \"status\": {\n        \
-        \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        status\",\n                \"isDeprecated\",\n                \"memberCount\",\n                \"createdAt\",\n \
+        \               \"updatedAt\"\n            ],\n            \"properties\": {\n                \"factionId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the faction\"\n                },\n                \"gameServiceId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game
+        service this faction belongs to\"\n                },\n                \"name\": {\n                    \"type\":
+        \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"\
+        description\": \"Display name of the faction\"\n                },\n                \"code\": {\n                \
+        \    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n     \
+        \               \"description\": \"Unique code within the game service (e.g., \\\"thieves_guild\\\")\"\n         \
+        \       },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 2048,\n                    \"description\": \"Human-readable
+        description of the faction\"\n                },\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm this faction belongs
+        to\"\n                },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether this faction is the realm's baseline cultural faction\"\n           \
+        \     },\n                \"parentFactionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent faction
+        in hierarchy (null for top-level factions)\"\n                },\n                \"seedId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Associated seed for growth tracking (null if seed creation failed)\"\n    \
+        \            },\n                \"status\": {\n                    \"$ref\": \"#/$defs/FactionStatus\",\n       \
+        \             \"description\": \"Current operational lifecycle status (orthogonal to deprecation)\"\n            \
+        \    },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current seed growth phase
+        (denormalized from lib-seed for convenience)\"\n                },\n                \"isDeprecated\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this faction is deprecated and
+        should not accept new references (per IMPLEMENTATION TENETS triple-field model)\"\n                },\n          \
+        \      \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this faction was deprecated
+        (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1024,\n               \
+        \     \"description\": \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"\
+        memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Current number of members in this faction\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
-        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this
-        faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Lifecycle status of a faction entity\",\n            \"\
-        enum\": [\n                \"Active\",\n                \"Deprecated\",\n                \"Dissolved\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"When this faction was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Operational lifecycle status of a faction entity
+        (orthogonal to deprecation)\",\n            \"enum\": [\n                \"Active\",\n                \"Dissolved\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new faction\",\n    \"description\": \"Creates a new faction entity
         and automatically creates a seed via lib-seed\\nwith ownerType \\\"faction\\\" and the configured seed type code.
         The seed starts\\nin the \\\"nascent\\\" phase with no capabilities unlocked.\\n\\nThe faction code must be unique
@@ -290,45 +293,48 @@ paths:
         : \"Complete faction entity with seed growth status\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"factionId\",\n                \"gameServiceId\",\n                \"name\",\n\
         \                \"code\",\n                \"realmId\",\n                \"isRealmBaseline\",\n                \"\
-        status\",\n                \"memberCount\",\n                \"createdAt\",\n                \"updatedAt\"\n     \
-        \       ],\n            \"properties\": {\n                \"factionId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the faction\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this faction belongs to\"\n\
-        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Display name of the
-        faction\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n          \
-        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Unique
-        code within the game service (e.g., \\\"thieves_guild\\\")\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 2048,\n                    \"description\": \"Human-readable description of the faction\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm this faction belongs to\"\n                },\n                \"\
-        isRealmBaseline\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this
-        faction is the realm's baseline cultural faction\"\n                },\n                \"parentFactionId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Parent faction in hierarchy (null for top-level factions)\"\n    \
-        \            },\n                \"seedId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated seed
-        for growth tracking (null if seed creation failed)\"\n                },\n                \"status\": {\n        \
-        \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        status\",\n                \"isDeprecated\",\n                \"memberCount\",\n                \"createdAt\",\n \
+        \               \"updatedAt\"\n            ],\n            \"properties\": {\n                \"factionId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the faction\"\n                },\n                \"gameServiceId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game
+        service this faction belongs to\"\n                },\n                \"name\": {\n                    \"type\":
+        \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"\
+        description\": \"Display name of the faction\"\n                },\n                \"code\": {\n                \
+        \    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n     \
+        \               \"description\": \"Unique code within the game service (e.g., \\\"thieves_guild\\\")\"\n         \
+        \       },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 2048,\n                    \"description\": \"Human-readable
+        description of the faction\"\n                },\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm this faction belongs
+        to\"\n                },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether this faction is the realm's baseline cultural faction\"\n           \
+        \     },\n                \"parentFactionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent faction
+        in hierarchy (null for top-level factions)\"\n                },\n                \"seedId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Associated seed for growth tracking (null if seed creation failed)\"\n    \
+        \            },\n                \"status\": {\n                    \"$ref\": \"#/$defs/FactionStatus\",\n       \
+        \             \"description\": \"Current operational lifecycle status (orthogonal to deprecation)\"\n            \
+        \    },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current seed growth phase
+        (denormalized from lib-seed for convenience)\"\n                },\n                \"isDeprecated\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this faction is deprecated and
+        should not accept new references (per IMPLEMENTATION TENETS triple-field model)\"\n                },\n          \
+        \      \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this faction was deprecated
+        (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1024,\n               \
+        \     \"description\": \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"\
+        memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Current number of members in this faction\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
-        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this
-        faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Lifecycle status of a faction entity\",\n            \"\
-        enum\": [\n                \"Active\",\n                \"Deprecated\",\n                \"Dissolved\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"When this faction was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Operational lifecycle status of a faction entity
+        (orthogonal to deprecation)\",\n            \"enum\": [\n                \"Active\",\n                \"Dissolved\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a faction by ID\",\n    \"description\": \"Retrieves a faction by its
         unique identifier. Includes the current seed\\ngrowth phase (denormalized from lib-seed for convenience) and member
         count.\\n\",\n    \"tags\": [\n        \"Faction CRUD\"\n    ],\n    \"deprecated\": false,\n    \"operationId\":
@@ -373,45 +379,48 @@ paths:
         : \"Complete faction entity with seed growth status\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"factionId\",\n                \"gameServiceId\",\n                \"name\",\n\
         \                \"code\",\n                \"realmId\",\n                \"isRealmBaseline\",\n                \"\
-        status\",\n                \"memberCount\",\n                \"createdAt\",\n                \"updatedAt\"\n     \
-        \       ],\n            \"properties\": {\n                \"factionId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the faction\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this faction belongs to\"\n\
-        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Display name of the
-        faction\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n          \
-        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Unique
-        code within the game service (e.g., \\\"thieves_guild\\\")\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 2048,\n                    \"description\": \"Human-readable description of the faction\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm this faction belongs to\"\n                },\n                \"\
-        isRealmBaseline\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this
-        faction is the realm's baseline cultural faction\"\n                },\n                \"parentFactionId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Parent faction in hierarchy (null for top-level factions)\"\n    \
-        \            },\n                \"seedId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated seed
-        for growth tracking (null if seed creation failed)\"\n                },\n                \"status\": {\n        \
-        \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        status\",\n                \"isDeprecated\",\n                \"memberCount\",\n                \"createdAt\",\n \
+        \               \"updatedAt\"\n            ],\n            \"properties\": {\n                \"factionId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the faction\"\n                },\n                \"gameServiceId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game
+        service this faction belongs to\"\n                },\n                \"name\": {\n                    \"type\":
+        \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"\
+        description\": \"Display name of the faction\"\n                },\n                \"code\": {\n                \
+        \    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n     \
+        \               \"description\": \"Unique code within the game service (e.g., \\\"thieves_guild\\\")\"\n         \
+        \       },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 2048,\n                    \"description\": \"Human-readable
+        description of the faction\"\n                },\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm this faction belongs
+        to\"\n                },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether this faction is the realm's baseline cultural faction\"\n           \
+        \     },\n                \"parentFactionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent faction
+        in hierarchy (null for top-level factions)\"\n                },\n                \"seedId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Associated seed for growth tracking (null if seed creation failed)\"\n    \
+        \            },\n                \"status\": {\n                    \"$ref\": \"#/$defs/FactionStatus\",\n       \
+        \             \"description\": \"Current operational lifecycle status (orthogonal to deprecation)\"\n            \
+        \    },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current seed growth phase
+        (denormalized from lib-seed for convenience)\"\n                },\n                \"isDeprecated\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this faction is deprecated and
+        should not accept new references (per IMPLEMENTATION TENETS triple-field model)\"\n                },\n          \
+        \      \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this faction was deprecated
+        (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1024,\n               \
+        \     \"description\": \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"\
+        memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Current number of members in this faction\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
-        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this
-        faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Lifecycle status of a faction entity\",\n            \"\
-        enum\": [\n                \"Active\",\n                \"Deprecated\",\n                \"Dissolved\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"When this faction was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Operational lifecycle status of a faction entity
+        (orthogonal to deprecation)\",\n            \"enum\": [\n                \"Active\",\n                \"Dissolved\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a faction by code\",\n    \"description\": \"Retrieves a faction by
         its unique code within a game service scope.\\nCodes are human-readable identifiers like \\\"thieves_guild\\\" or
         \\\"royal_guard\\\".\\n\",\n    \"tags\": [\n        \"Faction CRUD\"\n    ],\n    \"deprecated\": false,\n    \"\
@@ -448,24 +457,25 @@ paths:
         \n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter
         by realm\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/FactionStatus\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Filter by lifecycle status\"\n\
-        \                },\n                \"parentFactionId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Filter by parent faction (null returns top-level factions only when isTopLevelOnly is true)\"\n                },\n\
-        \                \"isTopLevelOnly\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"When true, returns only factions with no parent\"\n             \
-        \   },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Filter by realm baseline status\"\n                },\n\
-        \                \"includeDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Whether to include deprecated factions in results\"\n           \
-        \     },\n                \"cursor\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"maxLength\": 512,\n                    \"description\": \"Pagination cursor from a
-        previous response\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 20,\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n\
-        \                    \"description\": \"Number of factions to return per page\"\n                }\n            }\n\
-        \        },\n        \"FactionStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle
-        status of a faction entity\",\n            \"enum\": [\n                \"Active\",\n                \"Deprecated\"\
-        ,\n                \"Dissolved\"\n            ]\n        }\n    }\n}"
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Filter by operational lifecycle
+        status (Active/Dissolved)\"\n                },\n                \"parentFactionId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Filter by parent faction (null returns top-level factions only when isTopLevelOnly is true)\"\
+        \n                },\n                \"isTopLevelOnly\": {\n                    \"type\": \"boolean\",\n        \
+        \            \"default\": false,\n                    \"description\": \"When true, returns only factions with no
+        parent\"\n                },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Filter by realm baseline status\"\
+        \n                },\n                \"includeDeprecated\": {\n                    \"type\": \"boolean\",\n     \
+        \               \"default\": false,\n                    \"description\": \"Whether to include deprecated factions
+        in results\"\n                },\n                \"cursor\": {\n                    \"type\": \"string\",\n     \
+        \               \"nullable\": true,\n                    \"maxLength\": 512,\n                    \"description\"\
+        : \"Pagination cursor from a previous response\"\n                },\n                \"pageSize\": {\n          \
+        \          \"type\": \"integer\",\n                    \"default\": 20,\n                    \"minimum\": 1,\n   \
+        \                 \"maximum\": 100,\n                    \"description\": \"Number of factions to return per page\"\
+        \n                }\n            }\n        },\n        \"FactionStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Operational lifecycle status of a faction entity (orthogonal to deprecation)\",\n\
+        \            \"enum\": [\n                \"Active\",\n                \"Dissolved\"\n            ]\n        }\n \
+        \   }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListFactionsResponse\"\
         ,\n    \"$defs\": {\n        \"ListFactionsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Paginated list of factions\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
@@ -480,45 +490,48 @@ paths:
         \            \"description\": \"Complete faction entity with seed growth status\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"factionId\",\n                \"gameServiceId\",\n      \
         \          \"name\",\n                \"code\",\n                \"realmId\",\n                \"isRealmBaseline\"\
-        ,\n                \"status\",\n                \"memberCount\",\n                \"createdAt\",\n               \
-        \ \"updatedAt\"\n            ],\n            \"properties\": {\n                \"factionId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        identifier for the faction\"\n                },\n                \"gameServiceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this
-        faction belongs to\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n\
-        \                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\"\
-        : \"Display name of the faction\"\n                },\n                \"code\": {\n                    \"type\":
-        \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"\
-        description\": \"Unique code within the game service (e.g., \\\"thieves_guild\\\")\"\n                },\n       \
-        \         \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"maxLength\": 2048,\n                    \"description\": \"Human-readable description of the
-        faction\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"uuid\",\n                    \"description\": \"Realm this faction belongs to\"\n    \
-        \            },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n            \
-        \        \"description\": \"Whether this faction is the realm's baseline cultural faction\"\n                },\n\
-        \                \"parentFactionId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent faction in hierarchy
-        (null for top-level factions)\"\n                },\n                \"seedId\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Associated seed for growth tracking (null if seed creation failed)\"\n                },\n\
-        \                \"status\": {\n                    \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\"\
-        : \"Current lifecycle status\"\n                },\n                \"currentPhase\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 64,\n                 \
-        \   \"description\": \"Current seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n\
-        \                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this faction was
-        deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n            \
-        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1024,\n\
-        \                    \"description\": \"Reason for deprecation (null if not deprecated)\"\n                },\n  \
-        \              \"memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
-        \                    \"description\": \"Current number of members in this faction\"\n                },\n        \
-        \        \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When this faction was created\"\n                },\n                \"\
-        updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"When this faction was last updated\"\n                }\n            }\n       \
-        \ },\n        \"FactionStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle status
-        of a faction entity\",\n            \"enum\": [\n                \"Active\",\n                \"Deprecated\",\n  \
-        \              \"Dissolved\"\n            ]\n        }\n    }\n}"
+        ,\n                \"status\",\n                \"isDeprecated\",\n                \"memberCount\",\n            \
+        \    \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n              \
+        \  \"factionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
+        \              \"description\": \"Unique identifier for the faction\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Game service this faction belongs to\"\n                },\n                \"name\": {\n       \
+        \             \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n\
+        \                    \"description\": \"Display name of the faction\"\n                },\n                \"code\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Unique code within the game service (e.g., \\\"thieves_guild\\\")\"\
+        \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 2048,\n                    \"description\": \"Human-readable
+        description of the faction\"\n                },\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm this faction belongs
+        to\"\n                },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether this faction is the realm's baseline cultural faction\"\n           \
+        \     },\n                \"parentFactionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent faction
+        in hierarchy (null for top-level factions)\"\n                },\n                \"seedId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Associated seed for growth tracking (null if seed creation failed)\"\n    \
+        \            },\n                \"status\": {\n                    \"$ref\": \"#/$defs/FactionStatus\",\n       \
+        \             \"description\": \"Current operational lifecycle status (orthogonal to deprecation)\"\n            \
+        \    },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current seed growth phase
+        (denormalized from lib-seed for convenience)\"\n                },\n                \"isDeprecated\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this faction is deprecated and
+        should not accept new references (per IMPLEMENTATION TENETS triple-field model)\"\n                },\n          \
+        \      \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this faction was deprecated
+        (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1024,\n               \
+        \     \"description\": \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"\
+        memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Current number of members in this faction\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When this faction was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Operational lifecycle status of a faction entity
+        (orthogonal to deprecation)\",\n            \"enum\": [\n                \"Active\",\n                \"Dissolved\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List factions with filters\",\n    \"description\": \"Returns a paginated
         list of factions with optional filters by realm,\\ngame service, status, and parent faction. Supports cursor-based
         pagination.\\n\",\n    \"tags\": [\n        \"Faction CRUD\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -571,45 +584,48 @@ paths:
         : \"Complete faction entity with seed growth status\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"factionId\",\n                \"gameServiceId\",\n                \"name\",\n\
         \                \"code\",\n                \"realmId\",\n                \"isRealmBaseline\",\n                \"\
-        status\",\n                \"memberCount\",\n                \"createdAt\",\n                \"updatedAt\"\n     \
-        \       ],\n            \"properties\": {\n                \"factionId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the faction\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this faction belongs to\"\n\
-        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Display name of the
-        faction\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n          \
-        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Unique
-        code within the game service (e.g., \\\"thieves_guild\\\")\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 2048,\n                    \"description\": \"Human-readable description of the faction\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm this faction belongs to\"\n                },\n                \"\
-        isRealmBaseline\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this
-        faction is the realm's baseline cultural faction\"\n                },\n                \"parentFactionId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Parent faction in hierarchy (null for top-level factions)\"\n    \
-        \            },\n                \"seedId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated seed
-        for growth tracking (null if seed creation failed)\"\n                },\n                \"status\": {\n        \
-        \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        status\",\n                \"isDeprecated\",\n                \"memberCount\",\n                \"createdAt\",\n \
+        \               \"updatedAt\"\n            ],\n            \"properties\": {\n                \"factionId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the faction\"\n                },\n                \"gameServiceId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game
+        service this faction belongs to\"\n                },\n                \"name\": {\n                    \"type\":
+        \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"\
+        description\": \"Display name of the faction\"\n                },\n                \"code\": {\n                \
+        \    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n     \
+        \               \"description\": \"Unique code within the game service (e.g., \\\"thieves_guild\\\")\"\n         \
+        \       },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 2048,\n                    \"description\": \"Human-readable
+        description of the faction\"\n                },\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm this faction belongs
+        to\"\n                },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether this faction is the realm's baseline cultural faction\"\n           \
+        \     },\n                \"parentFactionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent faction
+        in hierarchy (null for top-level factions)\"\n                },\n                \"seedId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Associated seed for growth tracking (null if seed creation failed)\"\n    \
+        \            },\n                \"status\": {\n                    \"$ref\": \"#/$defs/FactionStatus\",\n       \
+        \             \"description\": \"Current operational lifecycle status (orthogonal to deprecation)\"\n            \
+        \    },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current seed growth phase
+        (denormalized from lib-seed for convenience)\"\n                },\n                \"isDeprecated\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this faction is deprecated and
+        should not accept new references (per IMPLEMENTATION TENETS triple-field model)\"\n                },\n          \
+        \      \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this faction was deprecated
+        (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1024,\n               \
+        \     \"description\": \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"\
+        memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Current number of members in this faction\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
-        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this
-        faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Lifecycle status of a faction entity\",\n            \"\
-        enum\": [\n                \"Active\",\n                \"Deprecated\",\n                \"Dissolved\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"When this faction was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Operational lifecycle status of a faction entity
+        (orthogonal to deprecation)\",\n            \"enum\": [\n                \"Active\",\n                \"Dissolved\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a faction\",\n    \"description\": \"Updates mutable faction properties
         (name, description, code). The faction\\ncode must remain unique within its game service scope. Cannot change\\ngameServiceId
         or realmId after creation.\\n\",\n    \"tags\": [\n        \"Faction CRUD\"\n    ],\n    \"deprecated\": false,\n\
@@ -657,45 +673,48 @@ paths:
         : \"Complete faction entity with seed growth status\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"factionId\",\n                \"gameServiceId\",\n                \"name\",\n\
         \                \"code\",\n                \"realmId\",\n                \"isRealmBaseline\",\n                \"\
-        status\",\n                \"memberCount\",\n                \"createdAt\",\n                \"updatedAt\"\n     \
-        \       ],\n            \"properties\": {\n                \"factionId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the faction\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this faction belongs to\"\n\
-        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Display name of the
-        faction\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n          \
-        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Unique
-        code within the game service (e.g., \\\"thieves_guild\\\")\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 2048,\n                    \"description\": \"Human-readable description of the faction\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm this faction belongs to\"\n                },\n                \"\
-        isRealmBaseline\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this
-        faction is the realm's baseline cultural faction\"\n                },\n                \"parentFactionId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Parent faction in hierarchy (null for top-level factions)\"\n    \
-        \            },\n                \"seedId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated seed
-        for growth tracking (null if seed creation failed)\"\n                },\n                \"status\": {\n        \
-        \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        status\",\n                \"isDeprecated\",\n                \"memberCount\",\n                \"createdAt\",\n \
+        \               \"updatedAt\"\n            ],\n            \"properties\": {\n                \"factionId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the faction\"\n                },\n                \"gameServiceId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game
+        service this faction belongs to\"\n                },\n                \"name\": {\n                    \"type\":
+        \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"\
+        description\": \"Display name of the faction\"\n                },\n                \"code\": {\n                \
+        \    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n     \
+        \               \"description\": \"Unique code within the game service (e.g., \\\"thieves_guild\\\")\"\n         \
+        \       },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 2048,\n                    \"description\": \"Human-readable
+        description of the faction\"\n                },\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm this faction belongs
+        to\"\n                },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether this faction is the realm's baseline cultural faction\"\n           \
+        \     },\n                \"parentFactionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent faction
+        in hierarchy (null for top-level factions)\"\n                },\n                \"seedId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Associated seed for growth tracking (null if seed creation failed)\"\n    \
+        \            },\n                \"status\": {\n                    \"$ref\": \"#/$defs/FactionStatus\",\n       \
+        \             \"description\": \"Current operational lifecycle status (orthogonal to deprecation)\"\n            \
+        \    },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current seed growth phase
+        (denormalized from lib-seed for convenience)\"\n                },\n                \"isDeprecated\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this faction is deprecated and
+        should not accept new references (per IMPLEMENTATION TENETS triple-field model)\"\n                },\n          \
+        \      \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this faction was deprecated
+        (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1024,\n               \
+        \     \"description\": \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"\
+        memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Current number of members in this faction\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
-        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this
-        faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Lifecycle status of a faction entity\",\n            \"\
-        enum\": [\n                \"Active\",\n                \"Deprecated\",\n                \"Dissolved\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"When this faction was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Operational lifecycle status of a faction entity
+        (orthogonal to deprecation)\",\n            \"enum\": [\n                \"Active\",\n                \"Dissolved\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a faction\",\n    \"description\": \"Marks a faction as deprecated.
         Deprecated factions cannot accept new members\\nor define new norms, but existing memberships and norms remain active.\\
         nExisting norm enforcement continues until the faction is dissolved.\\n\",\n    \"tags\": [\n        \"Faction CRUD\"\
@@ -737,45 +756,48 @@ paths:
         : \"Complete faction entity with seed growth status\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"factionId\",\n                \"gameServiceId\",\n                \"name\",\n\
         \                \"code\",\n                \"realmId\",\n                \"isRealmBaseline\",\n                \"\
-        status\",\n                \"memberCount\",\n                \"createdAt\",\n                \"updatedAt\"\n     \
-        \       ],\n            \"properties\": {\n                \"factionId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the faction\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this faction belongs to\"\n\
-        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Display name of the
-        faction\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n          \
-        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Unique
-        code within the game service (e.g., \\\"thieves_guild\\\")\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 2048,\n                    \"description\": \"Human-readable description of the faction\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm this faction belongs to\"\n                },\n                \"\
-        isRealmBaseline\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this
-        faction is the realm's baseline cultural faction\"\n                },\n                \"parentFactionId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Parent faction in hierarchy (null for top-level factions)\"\n    \
-        \            },\n                \"seedId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated seed
-        for growth tracking (null if seed creation failed)\"\n                },\n                \"status\": {\n        \
-        \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        status\",\n                \"isDeprecated\",\n                \"memberCount\",\n                \"createdAt\",\n \
+        \               \"updatedAt\"\n            ],\n            \"properties\": {\n                \"factionId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the faction\"\n                },\n                \"gameServiceId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game
+        service this faction belongs to\"\n                },\n                \"name\": {\n                    \"type\":
+        \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"\
+        description\": \"Display name of the faction\"\n                },\n                \"code\": {\n                \
+        \    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n     \
+        \               \"description\": \"Unique code within the game service (e.g., \\\"thieves_guild\\\")\"\n         \
+        \       },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 2048,\n                    \"description\": \"Human-readable
+        description of the faction\"\n                },\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm this faction belongs
+        to\"\n                },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether this faction is the realm's baseline cultural faction\"\n           \
+        \     },\n                \"parentFactionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent faction
+        in hierarchy (null for top-level factions)\"\n                },\n                \"seedId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Associated seed for growth tracking (null if seed creation failed)\"\n    \
+        \            },\n                \"status\": {\n                    \"$ref\": \"#/$defs/FactionStatus\",\n       \
+        \             \"description\": \"Current operational lifecycle status (orthogonal to deprecation)\"\n            \
+        \    },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current seed growth phase
+        (denormalized from lib-seed for convenience)\"\n                },\n                \"isDeprecated\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this faction is deprecated and
+        should not accept new references (per IMPLEMENTATION TENETS triple-field model)\"\n                },\n          \
+        \      \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this faction was deprecated
+        (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1024,\n               \
+        \     \"description\": \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"\
+        memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Current number of members in this faction\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
-        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this
-        faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Lifecycle status of a faction entity\",\n            \"\
-        enum\": [\n                \"Active\",\n                \"Deprecated\",\n                \"Dissolved\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"When this faction was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Operational lifecycle status of a faction entity
+        (orthogonal to deprecation)\",\n            \"enum\": [\n                \"Active\",\n                \"Dissolved\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Reactivate a deprecated faction\",\n    \"description\": \"Restores a deprecated
         faction to active status.\",\n    \"tags\": [\n        \"Faction CRUD\"\n    ],\n    \"deprecated\": false,\n    \"\
         operationId\": \"undeprecateFaction\"\n}"
@@ -937,45 +959,48 @@ paths:
         : \"Complete faction entity with seed growth status\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"factionId\",\n                \"gameServiceId\",\n                \"name\",\n\
         \                \"code\",\n                \"realmId\",\n                \"isRealmBaseline\",\n                \"\
-        status\",\n                \"memberCount\",\n                \"createdAt\",\n                \"updatedAt\"\n     \
-        \       ],\n            \"properties\": {\n                \"factionId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the faction\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this faction belongs to\"\n\
-        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Display name of the
-        faction\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n          \
-        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Unique
-        code within the game service (e.g., \\\"thieves_guild\\\")\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 2048,\n                    \"description\": \"Human-readable description of the faction\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm this faction belongs to\"\n                },\n                \"\
-        isRealmBaseline\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this
-        faction is the realm's baseline cultural faction\"\n                },\n                \"parentFactionId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Parent faction in hierarchy (null for top-level factions)\"\n    \
-        \            },\n                \"seedId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated seed
-        for growth tracking (null if seed creation failed)\"\n                },\n                \"status\": {\n        \
-        \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        status\",\n                \"isDeprecated\",\n                \"memberCount\",\n                \"createdAt\",\n \
+        \               \"updatedAt\"\n            ],\n            \"properties\": {\n                \"factionId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the faction\"\n                },\n                \"gameServiceId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game
+        service this faction belongs to\"\n                },\n                \"name\": {\n                    \"type\":
+        \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"\
+        description\": \"Display name of the faction\"\n                },\n                \"code\": {\n                \
+        \    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n     \
+        \               \"description\": \"Unique code within the game service (e.g., \\\"thieves_guild\\\")\"\n         \
+        \       },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 2048,\n                    \"description\": \"Human-readable
+        description of the faction\"\n                },\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm this faction belongs
+        to\"\n                },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether this faction is the realm's baseline cultural faction\"\n           \
+        \     },\n                \"parentFactionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent faction
+        in hierarchy (null for top-level factions)\"\n                },\n                \"seedId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Associated seed for growth tracking (null if seed creation failed)\"\n    \
+        \            },\n                \"status\": {\n                    \"$ref\": \"#/$defs/FactionStatus\",\n       \
+        \             \"description\": \"Current operational lifecycle status (orthogonal to deprecation)\"\n            \
+        \    },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current seed growth phase
+        (denormalized from lib-seed for convenience)\"\n                },\n                \"isDeprecated\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this faction is deprecated and
+        should not accept new references (per IMPLEMENTATION TENETS triple-field model)\"\n                },\n          \
+        \      \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this faction was deprecated
+        (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1024,\n               \
+        \     \"description\": \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"\
+        memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Current number of members in this faction\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
-        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this
-        faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Lifecycle status of a faction entity\",\n            \"\
-        enum\": [\n                \"Active\",\n                \"Deprecated\",\n                \"Dissolved\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"When this faction was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Operational lifecycle status of a faction entity
+        (orthogonal to deprecation)\",\n            \"enum\": [\n                \"Active\",\n                \"Dissolved\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Designate a faction as realm baseline\",\n    \"description\": \"Sets a
         faction as the realm's baseline cultural faction. The baseline\\nfaction provides realm-wide default norms (honor
         codes, cultural taboos,\\nspecies instincts) that apply to all characters in the realm unless\\noverridden by more
@@ -1019,45 +1044,48 @@ paths:
         : \"Complete faction entity with seed growth status\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"factionId\",\n                \"gameServiceId\",\n                \"name\",\n\
         \                \"code\",\n                \"realmId\",\n                \"isRealmBaseline\",\n                \"\
-        status\",\n                \"memberCount\",\n                \"createdAt\",\n                \"updatedAt\"\n     \
-        \       ],\n            \"properties\": {\n                \"factionId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the faction\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this faction belongs to\"\n\
-        \                },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Display name of the
-        faction\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n          \
-        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Unique
-        code within the game service (e.g., \\\"thieves_guild\\\")\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 2048,\n                    \"description\": \"Human-readable description of the faction\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm this faction belongs to\"\n                },\n                \"\
-        isRealmBaseline\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this
-        faction is the realm's baseline cultural faction\"\n                },\n                \"parentFactionId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Parent faction in hierarchy (null for top-level factions)\"\n    \
-        \            },\n                \"seedId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated seed
-        for growth tracking (null if seed creation failed)\"\n                },\n                \"status\": {\n        \
-        \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
-        seed growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
+        status\",\n                \"isDeprecated\",\n                \"memberCount\",\n                \"createdAt\",\n \
+        \               \"updatedAt\"\n            ],\n            \"properties\": {\n                \"factionId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the faction\"\n                },\n                \"gameServiceId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game
+        service this faction belongs to\"\n                },\n                \"name\": {\n                    \"type\":
+        \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"\
+        description\": \"Display name of the faction\"\n                },\n                \"code\": {\n                \
+        \    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n     \
+        \               \"description\": \"Unique code within the game service (e.g., \\\"thieves_guild\\\")\"\n         \
+        \       },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 2048,\n                    \"description\": \"Human-readable
+        description of the faction\"\n                },\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm this faction belongs
+        to\"\n                },\n                \"isRealmBaseline\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether this faction is the realm's baseline cultural faction\"\n           \
+        \     },\n                \"parentFactionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent faction
+        in hierarchy (null for top-level factions)\"\n                },\n                \"seedId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Associated seed for growth tracking (null if seed creation failed)\"\n    \
+        \            },\n                \"status\": {\n                    \"$ref\": \"#/$defs/FactionStatus\",\n       \
+        \             \"description\": \"Current operational lifecycle status (orthogonal to deprecation)\"\n            \
+        \    },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current seed growth phase
+        (denormalized from lib-seed for convenience)\"\n                },\n                \"isDeprecated\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this faction is deprecated and
+        should not accept new references (per IMPLEMENTATION TENETS triple-field model)\"\n                },\n          \
+        \      \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this faction was deprecated
+        (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1024,\n               \
+        \     \"description\": \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"\
+        memberCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Current number of members in this faction\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
-        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this
-        faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Lifecycle status of a faction entity\",\n            \"\
-        enum\": [\n                \"Active\",\n                \"Deprecated\",\n                \"Dissolved\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"description\": \"When this faction was created\"\n                },\n                \"updatedAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Operational lifecycle status of a faction entity
+        (orthogonal to deprecation)\",\n            \"enum\": [\n                \"Active\",\n                \"Dissolved\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get the realm baseline faction\",\n    \"description\": \"Returns the faction
         designated as the baseline cultural faction for a realm.\\nReturns 404 if no baseline has been designated.\\n\",\n\
         \    \"tags\": [\n        \"Faction CRUD\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRealmBaseline\"\
@@ -1639,45 +1667,47 @@ paths:
         entity with seed growth status\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
         \             \"factionId\",\n                \"gameServiceId\",\n                \"name\",\n                \"code\"\
         ,\n                \"realmId\",\n                \"isRealmBaseline\",\n                \"status\",\n             \
-        \   \"memberCount\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"\
-        properties\": {\n                \"factionId\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the faction\"\n            \
-        \    },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Game service this faction belongs to\"\n                },\n \
-        \               \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n  \
-        \                  \"maxLength\": 256,\n                    \"description\": \"Display name of the faction\"\n   \
-        \             },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Unique code within the game
-        service (e.g., \\\"thieves_guild\\\")\"\n                },\n                \"description\": {\n                \
-        \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 2048,\n  \
-        \                  \"description\": \"Human-readable description of the faction\"\n                },\n          \
-        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
-        \                \"description\": \"Realm this faction belongs to\"\n                },\n                \"isRealmBaseline\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this faction is the
-        realm's baseline cultural faction\"\n                },\n                \"parentFactionId\": {\n                \
-        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Parent faction in hierarchy (null for top-level factions)\"\n             \
-        \   },\n                \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated seed for growth
-        tracking (null if seed creation failed)\"\n                },\n                \"status\": {\n                   \
-        \ \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current lifecycle status\"\n      \
-        \          },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n                  \
-        \  \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Current seed
-        growth phase (denormalized from lib-seed for convenience)\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this faction was deprecated (null if not deprecated)\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 1024,\n                    \"description\"\
-        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"memberCount\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Current number of members in this faction\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this faction was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this
-        faction was last updated\"\n                }\n            }\n        },\n        \"FactionStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Lifecycle status of a faction entity\",\n            \"\
-        enum\": [\n                \"Active\",\n                \"Deprecated\",\n                \"Dissolved\"\n         \
-        \   ]\n        }\n    }\n}"
+        \   \"isDeprecated\",\n                \"memberCount\",\n                \"createdAt\",\n                \"updatedAt\"\
+        \n            ],\n            \"properties\": {\n                \"factionId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
+        the faction\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this faction belongs
+        to\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n               \
+        \     \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Display name
+        of the faction\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n   \
+        \                 \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
+        : \"Unique code within the game service (e.g., \\\"thieves_guild\\\")\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 2048,\n                    \"description\": \"Human-readable description of the faction\"\n                },\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Realm this faction belongs to\"\n                },\n                \"\
+        isRealmBaseline\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this
+        faction is the realm's baseline cultural faction\"\n                },\n                \"parentFactionId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Parent faction in hierarchy (null for top-level factions)\"\n    \
+        \            },\n                \"seedId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated seed
+        for growth tracking (null if seed creation failed)\"\n                },\n                \"status\": {\n        \
+        \            \"$ref\": \"#/$defs/FactionStatus\",\n                    \"description\": \"Current operational lifecycle
+        status (orthogonal to deprecation)\"\n                },\n                \"currentPhase\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 64,\n      \
+        \              \"description\": \"Current seed growth phase (denormalized from lib-seed for convenience)\"\n     \
+        \           },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                \
+        \    \"description\": \"Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION
+        TENETS triple-field model)\"\n                },\n                \"deprecatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When this faction was deprecated (null if not deprecated)\"\n                },\n \
+        \               \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 1024,\n                    \"description\": \"Reason for deprecation (null
+        if not deprecated)\"\n                },\n                \"memberCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Current number of members in this faction\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When this faction was created\"\n      \
+        \          },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"When this faction was last updated\"\n          \
+        \      }\n            }\n        },\n        \"FactionStatus\": {\n            \"type\": \"string\",\n           \
+        \ \"description\": \"Operational lifecycle status of a faction entity (orthogonal to deprecation)\",\n           \
+        \ \"enum\": [\n                \"Active\",\n                \"Dissolved\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get the controlling faction for a location\",\n    \"description\": \"\
         Returns the faction that currently controls a location. Used by\\nlib-obligation and the norm resolution hierarchy
         to determine which\\nlocation faction norms apply at a character's current position.\\n\\nReturns 404 if the location
@@ -2358,10 +2388,9 @@ components:
   schemas:
     FactionStatus:
       type: string
-      description: Lifecycle status of a faction entity
+      description: Operational lifecycle status of a faction entity (orthogonal to deprecation)
       enum:
       - Active
-      - Deprecated
       - Dissolved
     FactionMemberRole:
       type: string
@@ -2410,6 +2439,7 @@ components:
       - realmId
       - isRealmBaseline
       - status
+      - isDeprecated
       - memberCount
       - createdAt
       - updatedAt
@@ -2456,12 +2486,16 @@ components:
           description: Associated seed for growth tracking (null if seed creation failed)
         status:
           $ref: '#/components/schemas/FactionStatus'
-          description: Current lifecycle status
+          description: Current operational lifecycle status (orthogonal to deprecation)
         currentPhase:
           type: string
           nullable: true
           maxLength: 64
           description: Current seed growth phase (denormalized from lib-seed for convenience)
+        isDeprecated:
+          type: boolean
+          description: Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION 
+            TENETS triple-field model)
         deprecatedAt:
           type: string
           format: date-time
@@ -2568,7 +2602,7 @@ components:
         status:
           $ref: '#/components/schemas/FactionStatus'
           nullable: true
-          description: Filter by lifecycle status
+          description: Filter by operational lifecycle status (Active/Dissolved)
         parentFactionId:
           type: string
           format: uuid

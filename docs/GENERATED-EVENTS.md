@@ -668,9 +668,6 @@ This document lists all events defined in Bannou's event schemas.
 | `TransitJourneyInterruptedEvent` | Custom | `transit-journey-interrupted` | Published when a journey is interrupted (combat, e... |
 | `TransitJourneyResumedEvent` | Custom | `transit-journey-resumed` | Published when an interrupted journey is resumed |
 | `TransitJourneyWaypointReachedEvent` | Custom | `transit-journey-waypoint-reached` | Published when a traveling entity reaches an inter... |
-| `TransitModeDeletedEvent` | Lifecycle (Deleted) | `transit-mode.deleted` | Published when a deprecated transit mode is perman... |
-| `TransitModeRegisteredEvent` | Registration | `transit-mode.registered` | Published when a new transit mode is registered |
-| `TransitModeUpdatedEvent` | Lifecycle (Updated) | `transit-mode.updated` | Published when a transit mode is updated (covers p... |
 
 ### Transit (client)
 

@@ -193,48 +193,26 @@ using BeyondImmersion.BannouService.TestUtilities;
 
 namespace BeyondImmersion.BannouService.$SERVICE_PASCAL.Tests;
 
+/// <summary>
+/// Plugin-specific unit tests for ${SERVICE_PASCAL}Service.
+///
+/// NOTE: Constructor validation, configuration instantiation, key builder patterns,
+/// hierarchy compliance, and other structural checks are handled centrally by
+/// structural-tests/ (auto-discovered via [BannouService] attribute).
+/// Only add plugin-specific business logic tests here.
+///
+/// See: docs/reference/tenets/TESTING-PATTERNS.md
+/// </summary>
 public class ${SERVICE_PASCAL}ServiceTests
 {
-    #region Constructor Validation
-
-    /// <summary>
-    /// Validates the service constructor follows proper DI patterns.
-    ///
-    /// This single test replaces N individual null-check tests and catches:
-    /// - Multiple constructors (DI might pick wrong one)
-    /// - Optional parameters (accidental defaults that hide missing registrations)
-    /// - Missing null checks (ArgumentNullException not thrown)
-    /// - Wrong parameter names in ArgumentNullException
-    ///
-    /// See: docs/reference/tenets/TESTING_PATTERNS.md
-    /// </summary>
-    [Fact]
-    public void ${SERVICE_PASCAL}Service_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<${SERVICE_PASCAL}Service>();
-
-    #endregion
-
-    #region Configuration Tests
-
-    [Fact]
-    public void ${SERVICE_PASCAL}ServiceConfiguration_CanBeInstantiated()
-    {
-        // Arrange & Act
-        var config = new ${SERVICE_PASCAL}ServiceConfiguration();
-
-        // Assert
-        Assert.NotNull(config);
-    }
-
-    #endregion
-
     // TODO: Add service-specific tests based on schema operations
     // Schema file: $SCHEMA_FILE
     //
     // Guidelines:
-    // - Use the Capture Pattern for event/state verification (see TESTING_PATTERNS.md)
+    // - Use the Capture Pattern for event/state verification (see TESTING-PATTERNS.md)
     // - Verify side effects (saves, events, indices), not just response structure
     // - Keep Arrange < 50% of test code; extract helpers if needed
+    // - Use EnumMappingValidator for any SDK boundary enum mappings
 }
 EOF
     echo -e "${GREEN}✅ Created service test class${NC}"

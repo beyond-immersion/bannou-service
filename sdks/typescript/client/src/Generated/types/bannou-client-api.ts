@@ -17907,10 +17907,12 @@ export interface components {
        * @description Associated seed for growth tracking (null if seed creation failed)
        */
       seedId?: string | null;
-      /** @description Current lifecycle status */
+      /** @description Current operational lifecycle status (orthogonal to deprecation) */
       status: components['schemas']['FactionStatus'];
       /** @description Current seed growth phase (denormalized from lib-seed for convenience) */
       currentPhase?: string | null;
+      /** @description Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model) */
+      isDeprecated: boolean;
       /**
        * Format: date-time
        * @description When this faction was deprecated (null if not deprecated)
@@ -17932,10 +17934,10 @@ export interface components {
       updatedAt: string;
     };
     /**
-     * @description Lifecycle status of a faction entity
+     * @description Operational lifecycle status of a faction entity (orthogonal to deprecation)
      * @enum {string}
      */
-    FactionStatus: 'Active' | 'Deprecated' | 'Dissolved';
+    FactionStatus: 'Active' | 'Dissolved';
     /** @description Request to fail a milestone */
     FailMilestoneRequest: {
       /**
@@ -21251,7 +21253,7 @@ export interface components {
        * @description Filter by realm
        */
       realmId?: string | null;
-      /** @description Filter by lifecycle status */
+      /** @description Filter by operational lifecycle status (Active/Dissolved) */
       status?: components['schemas']['FactionStatus'];
       /**
        * Format: uuid

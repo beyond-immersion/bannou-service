@@ -541,7 +541,7 @@ public class TransitServiceTests
         var updatedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.mode.updated");
         Assert.NotNull(updatedEvent.Event);
         var typedEvent = Assert.IsType<TransitModeUpdatedEvent>(updatedEvent.Event);
-        Assert.Equal("horseback", typedEvent.Mode.Code);
+        Assert.Equal("horseback", typedEvent.Code);
         Assert.Contains("isDeprecated", typedEvent.ChangedFields);
     }
 

@@ -140,55 +140,31 @@ Assert.Equal(request.DisplayName, savedModel.DisplayName);
 
 ---
 
-## Constructor Tests: Use ServiceConstructorValidator
+## Structural Validators (Centralized)
 
-> See [Helpers & Common Patterns § Test Validators](../HELPERS-AND-COMMON-PATTERNS.md#13-test-validators) for the complete catalog of structural validators (`ServiceConstructorValidator`, `StateStoreKeyValidator`, `ServiceHierarchyValidator`, `EnumMappingValidator`, `EventPublishingValidator`, `ResourceCleanupValidator`, `PermissionMatrixValidator`, `ControllerValidator`).
+> See [Helpers & Common Patterns § Test Validators](../HELPERS-AND-COMMON-PATTERNS.md#13-test-validators) for the complete catalog of structural validators.
 
-### Purpose
+Most structural validators are **centralized in `structural-tests/StructuralTests.cs`** and run automatically for every service discovered via `[BannouService]` attribute reflection. Individual plugin test projects do **not** need to duplicate these tests — adding a project reference to `structural-tests.csproj` is sufficient.
 
-Constructor validation catches AI-introduced DI mistakes before expensive integration testing. These issues include wrong parameter names, optional parameters, and constructor overloads.
+### What Structural Tests Cover (Per Service, Auto-Discovered)
 
-### Recommended Pattern (One Line Per Service)
+| Validator | Structural Test | What It Catches |
+|-----------|----------------|-----------------|
+| `ServiceConstructorValidator` | `Service_HasValidConstructor` | Multiple constructors, optional params, defaults |
+| `StateStoreKeyValidator` | `Service_HasValidKeyBuilders` | Missing const prefixes, wrong key builder visibility |
+| `ServiceHierarchyValidator` | `Service_RespectsHierarchy` | Layer dependency violations (L2→L4, etc.) |
+| `ControllerValidator` | `Service_HasValidController` | Missing IBannouController, wrong attributes |
+| `EventPublishingValidator` | `Service_CallsAllGeneratedEventPublishers` | Declared events never published |
+| `ResourceCleanupValidator` | `Service_HasRequiredCleanupMethods` | Missing cleanup methods for x-references |
+| `PermissionMatrixValidator` | `Service_PermissionRegistrationEndpointCountMatchesSchema` | Permission count mismatches |
 
-```csharp
-// Add test-utilities reference to your test project
-using BeyondImmersion.BannouService.TestUtilities;
+Additionally, IL-level scanning validates no direct `JsonSerializer`, `Environment.GetEnvironmentVariable`, infrastructure client, or `Microsoft.AspNetCore.Http.StatusCodes` usage.
 
-public class SpeciesServiceTests
-{
-    /// <summary>
-    /// Validates constructor pattern: single public constructor,
-    /// no optional params, no defaults, proper null checks.
-    /// </summary>
-    [Fact]
-    public void SpeciesService_ConstructorIsValid() =>
-        ServiceConstructorValidator.ValidateServiceConstructor<SpeciesService>();
-}
-```
+### What Plugins Still Test Themselves
 
-### What ServiceConstructorValidator Catches
-
-1. **Multiple constructors** - DI might pick wrong one (AI added overload)
-2. **Optional parameters** - AI accidentally made dependency optional
-3. **Default values** - AI added `= null` or similar defaults
-4. **Wrong param names** - AI typo in `nameof(parameter)`
-
-### Migration from Old Pattern
-
-**Before** (11+ tests per service):
-```csharp
-[Fact] public void Constructor_NullStateStoreFactory_Throws() { ... }
-[Fact] public void Constructor_NullMessageBus_Throws() { ... }
-[Fact] public void Constructor_NullLogger_Throws() { ... }
-// ... 8 more tests
-```
-
-**After** (1 test per service):
-```csharp
-[Fact]
-public void MyService_ConstructorIsValid() =>
-    ServiceConstructorValidator.ValidateServiceConstructor<MyService>();
-```
+Only **plugin-specific** validations remain in `lib-*.tests/`:
+- **`EnumMappingValidator`** tests — each plugin specifies its own enum pairs (structural tests enforce these tests *exist*)
+- **Business logic** unit tests — service-specific behavior
 
 ---
 
@@ -306,6 +282,35 @@ private (SpeciesService service, Mock<IStateStore<SpeciesModel>> storeMock) Crea
 
 ## What Each Tier Tests
 
+### Tier 0: Structural & Schema Validation Tests (`structural-tests/`)
+
+Cross-cutting compliance tests that validate conventions, schemas, and assembly metadata without running any service code. These catch authoring mistakes at build time rather than at runtime.
+
+**Tests**:
+- Service conventions via reflection (constructor patterns, partial class structure, DI attributes)
+- Service layer hierarchy compliance (L0-L5 dependency rules via `ServiceHierarchyValidator`)
+- State store key builder patterns (const prefixes, `Build*Key` naming)
+- IL-level import scanning (direct Redis/RabbitMQ/MySQL/JsonSerializer usage detection)
+- Source code pattern enforcement (null-forgiving operators, Environment.GetEnvironmentVariable)
+- OpenAPI schema compliance (enum PascalCase, x-permissions presence, env var naming)
+- Lifecycle schema hygiene (duplicate auto-injected fields in x-lifecycle models)
+- Client event schema structure (allOf with BaseClientEvent)
+
+**Does NOT Test**:
+- Business logic correctness
+- Runtime behavior of any kind
+- HTTP routing or serialization
+- State persistence or event delivery
+
+**Two scanning approaches**:
+
+| Approach | Tool | When to Use |
+|----------|------|-------------|
+| Line-based YAML scanning | `File.ReadAllLines` + regex | Simple pattern matching (enum casing, key presence, indentation rules) |
+| Structured YAML parsing | `SchemaParser` (YamlDotNet) | Semantic validation requiring nested structure traversal (x-lifecycle model fields, allOf references) |
+
+**Adding new schema validations**: Use `SchemaParser` for anything that needs to understand YAML structure (nested mappings, cross-references, conditional field sets). Use line-based scanning only for flat pattern matching where the line position fully determines meaning.
+
 ### Tier 1: Unit Tests (`lib-{service}.tests/`)
 
 **Tests**:
@@ -401,16 +406,22 @@ Assert.NotNull(response);
 
 ## Quick Reference: Test Placement
 
-| Scenario | Unit Test? | HTTP Test? | Edge Test? |
-|----------|------------|------------|------------|
-| Input validation | YES | Implicit | Implicit |
-| Business rule (uniqueness) | YES | Verify with real DB | No |
-| CRUD operations | Minimal | YES | Verify client sees it |
-| Event publishing | YES (capture) | Verify delivery | Verify client receives |
-| Cross-service calls | NO | YES | If client-facing |
-| Permission checks | NO | Verify 403s | YES (client experience) |
-| WebSocket protocol | NO | NO | YES |
-| Error messages | YES (content) | YES (propagation) | YES (client sees) |
+| Scenario | Structural? | Unit Test? | HTTP Test? | Edge Test? |
+|----------|-------------|------------|------------|------------|
+| Schema enum casing | YES | No | No | No |
+| Schema x-permissions presence | YES | No | No | No |
+| Lifecycle field duplication | YES | No | No | No |
+| Service hierarchy violations | YES | No | No | No |
+| Forbidden import detection | YES | No | No | No |
+| Constructor DI patterns | YES | Also per-plugin | No | No |
+| Input validation | No | YES | Implicit | Implicit |
+| Business rule (uniqueness) | No | YES | Verify with real DB | No |
+| CRUD operations | No | Minimal | YES | Verify client sees it |
+| Event publishing | No | YES (capture) | Verify delivery | Verify client receives |
+| Cross-service calls | No | NO | YES | If client-facing |
+| Permission checks | No | NO | Verify 403s | YES (client experience) |
+| WebSocket protocol | No | NO | NO | YES |
+| Error messages | No | YES (content) | YES (propagation) | YES (client sees) |
 
 ---
 

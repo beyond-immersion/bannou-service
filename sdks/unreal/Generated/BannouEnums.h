@@ -863,12 +863,11 @@ enum class EFactionMemberRole : uint8
     Recruit UMETA(DisplayName = "Recruit"),
 };
 
-/** Lifecycle status of a faction entity */
+/** Operational lifecycle status of a faction entity (orthogonal to deprecation) */
 UENUM(BlueprintType)
 enum class EFactionStatus : uint8
 {
     Active UMETA(DisplayName = "Active"),
-    Deprecated UMETA(DisplayName = "Deprecated"),
     Dissolved UMETA(DisplayName = "Dissolved"),
 };
 
