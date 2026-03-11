@@ -93,4 +93,78 @@ public static class EnumMapping
     {
         return Enum.TryParse(source.ToString(), ignoreCase: false, out result);
     }
+
+    // --- String-to-Enum Overloads (A2 SDK Boundary) ---
+    // Use these at A2 SDK boundaries where strings from external sources (ABML parameters,
+    // processing options, YAML frontmatter, DI provider dictionaries) need to be converted
+    // to schema-generated enums. Case-insensitive because external sources may use lowercase,
+    // camelCase, or PascalCase. See IMPLEMENTATION TENETS § T25 Acceptable String Conversions Case 5.
+
+    /// <summary>
+    /// Maps a string value to a target enum value by case-insensitive name matching.
+    /// Throws <see cref="InvalidOperationException"/> if no match is found.
+    /// </summary>
+    /// <typeparam name="TTarget">The target enum type.</typeparam>
+    /// <param name="source">The string value to map.</param>
+    /// <returns>The target enum value with the matching name.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when no value in <typeparamref name="TTarget"/> matches <paramref name="source"/>.
+    /// </exception>
+    public static TTarget MapByName<TTarget>(this string source)
+        where TTarget : struct, Enum
+    {
+        if (Enum.TryParse<TTarget>(source, ignoreCase: true, out var result))
+            return result;
+
+        throw new InvalidOperationException(
+            $"Cannot map \"{source}\" to {typeof(TTarget).Name}: no matching value.");
+    }
+
+    /// <summary>
+    /// Maps a string value to a target enum value by case-insensitive name matching.
+    /// Returns <paramref name="fallback"/> if no match is found.
+    /// </summary>
+    /// <typeparam name="TTarget">The target enum type.</typeparam>
+    /// <param name="source">The string value to map.</param>
+    /// <param name="fallback">The value to return when no name match exists.</param>
+    /// <returns>The target enum value with the matching name, or <paramref name="fallback"/> if none.</returns>
+    public static TTarget MapByNameOrDefault<TTarget>(this string source, TTarget fallback)
+        where TTarget : struct, Enum
+    {
+        if (Enum.TryParse<TTarget>(source, ignoreCase: true, out var result))
+            return result;
+
+        return fallback;
+    }
+
+    /// <summary>
+    /// Attempts to map a string value to a target enum value by case-insensitive name matching.
+    /// Returns <c>false</c> if no match is found.
+    /// </summary>
+    /// <typeparam name="TTarget">The target enum type.</typeparam>
+    /// <param name="source">The string value to map.</param>
+    /// <param name="result">
+    /// When this method returns <c>true</c>, contains the mapped target value.
+    /// When <c>false</c>, contains the default value of <typeparamref name="TTarget"/>.
+    /// </param>
+    /// <returns><c>true</c> if a matching value was found; otherwise <c>false</c>.</returns>
+    public static bool TryMapByName<TTarget>(this string source, out TTarget result)
+        where TTarget : struct, Enum
+    {
+        return Enum.TryParse(source, ignoreCase: true, out result);
+    }
+
+    /// <summary>
+    /// Attempts to map a string value to an enum of the specified runtime type by case-insensitive
+    /// name matching. For use in unconstrained generic contexts where the extension method overloads
+    /// cannot be used (e.g., <c>GetProcessingOption&lt;T&gt;</c> where T is not constrained to enum).
+    /// </summary>
+    /// <param name="source">The string value to map.</param>
+    /// <param name="enumType">The target enum type (must be an enum type).</param>
+    /// <param name="result">When this method returns <c>true</c>, contains the boxed enum value.</param>
+    /// <returns><c>true</c> if a matching value was found; otherwise <c>false</c>.</returns>
+    public static bool TryMapByName(string source, Type enumType, out object? result)
+    {
+        return Enum.TryParse(enumType, source, ignoreCase: true, out result);
+    }
 }

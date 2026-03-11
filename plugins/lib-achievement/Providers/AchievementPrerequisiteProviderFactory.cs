@@ -5,7 +5,6 @@
 // Registered with DI for Quest to consume via IEnumerable<IPrerequisiteProviderFactory>.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
@@ -81,16 +80,9 @@ public sealed class AchievementPrerequisiteProviderFactory : IPrerequisiteProvid
             {
                 entityType = et;
             }
-            else
+            else if (entityTypeObj.ToString() is { } entityTypeStr)
             {
-                try
-                {
-                    entityType = BannouJson.Deserialize<EntityType>($"\"{entityTypeObj}\"");
-                }
-                catch
-                {
-                    // Value doesn't map to a valid EntityType, keep default (Character)
-                }
+                entityType = entityTypeStr.MapByNameOrDefault(EntityType.Character);
             }
         }
 

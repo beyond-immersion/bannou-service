@@ -337,8 +337,16 @@ var dict = BannouJson.Deserialize<Dictionary<string, object>>(metadata);  // No
 // MusicTheory.ChordQuality is an SDK type; ChordSymbolQuality is schema-generated
 var quality = sdkChord.Quality.MapByName<MusicTheory.ChordQuality, ChordSymbolQuality>();
 
-// ACCEPTABLE: ABML parser produces string tokens that map to schema enums at boundary
-var arcType = parsedToken.MapByName<string, ArcType>();  // Parser output → generated enum
+// ACCEPTABLE: ABML runtime parameters are string tokens from YAML — use string overloads
+var queryType = queryStr.MapByNameOrDefault(OptionsQueryType.Custom);
+if (sourceTypeStr.TryMapByName<PerceptionSourceType>(out var sourceType)) { ... }
+
+// ACCEPTABLE: Unconstrained generic T (cannot use extension methods) — Enum.TryParse directly
+if (typeof(T).IsEnum && value is string stringValue)
+{
+    if (Enum.TryParse(typeof(T), stringValue, ignoreCase: true, out var enumValue))
+        return (T)enumValue;
+}
 
 // NOT ACCEPTABLE: Using strings PAST the boundary inside service logic
 var quality = "Major";  // Should already be ChordSymbolQuality.Major by this point
@@ -346,7 +354,34 @@ var quality = "Major";  // Should already be ChordSymbolQuality.Major by this po
 
 **Diagnostic test**: "Is this string/enum from a separately-compiled SDK or parser, and am I at the point where it enters the generated-model world?" If yes, the conversion is an A2 boundary mapping. If the string exists inside service logic after the boundary, it's a V4 violation.
 
-**Required**: Every A2 boundary mapping MUST have a corresponding `EnumMappingValidator` test (see TESTING-PATTERNS.md § Enum Boundary Mapping Tests). See [Helpers & Common Patterns § Enum Mapping](../HELPERS-AND-COMMON-PATTERNS.md#9-enum-mapping) for `MapByName`, `MapByNameOrDefault`, and `TryMapByName` extension methods.
+**Required**: Every A2 boundary mapping MUST have a corresponding `EnumMappingValidator` test (see TESTING-PATTERNS.md § Enum Boundary Mapping Tests). See [Helpers & Common Patterns § Enum Mapping](../HELPERS-AND-COMMON-PATTERNS.md#9-enum-mapping) for `MapByName`, `MapByNameOrDefault`, and `TryMapByName` extension methods. String-to-enum overloads use case-insensitive matching (external sources may use lowercase/camelCase); enum-to-enum overloads use case-sensitive matching (both sides are PascalCase).
+
+### Anti-Pattern: BannouJson Try-Catch for Enum Parsing
+
+**FORBIDDEN**: Using `BannouJson.Deserialize<T>($"\"{value}\"")` in a try-catch as a workaround for the "no Enum.Parse" rule:
+
+```csharp
+// FORBIDDEN: Synthetic JSON construction with exception-based control flow
+try
+{
+    enumVal = BannouJson.Deserialize<MyEnum>($"\"{stringValue}\"");
+}
+catch
+{
+    enumVal = MyEnum.Default;
+}
+
+// CORRECT: Use string-to-enum overloads from EnumMapping
+var enumVal = stringValue.MapByNameOrDefault(MyEnum.Default);
+```
+
+**Why this is forbidden**:
+1. Constructs synthetic JSON (`$"\"{value}\""`) — fragile if values contain quotes or backslashes
+2. Uses exceptions for expected control flow (unknown strings from YAML/external input are normal, not exceptional)
+3. More verbose (8 lines vs 1) with no benefit over the non-throwing alternatives
+4. Misunderstands the "no Enum.Parse" rule: the rule targets **business logic** where model definitions should carry the type. At A2 SDK boundaries (ABML parameters, processing options, DI provider dictionaries, external YAML), string-to-enum conversion is the expected pattern — it is Case 5 above, not a violation
+
+**Incident** (2026-03-11): An agent replaced 5 correct `Enum.TryParse` calls at A2 boundaries with this anti-pattern, adding try-catch blocks that were functionally equivalent but strictly worse.
 
 Tests follow the same rules. `DeploymentMode = "bannou"` in a test is wrong - use `DeploymentMode.Bannou`.
 

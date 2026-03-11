@@ -466,6 +466,8 @@ HTTP message handler that forwards session IDs through the mesh invocation chain
 
 Shared extension methods for mapping between enum types at SDK/plugin boundaries:
 
+**Enum-to-Enum** (case-sensitive — both sides are PascalCase):
+
 | Method | Purpose |
 |--------|---------|
 | `MapByName<TSource, TTarget>()` | Name-matching conversion (throws on no match) |
@@ -473,12 +475,26 @@ Shared extension methods for mapping between enum types at SDK/plugin boundaries
 | `TryMapByName<TSource, TTarget>(out result)` | Non-throwing name-matching |
 
 ```csharp
-// A2 SDK boundary mapping
+// A2 SDK boundary mapping (enum→enum)
 var quality = sdkChord.Quality.MapByName<MusicTheory.ChordQuality, ChordSymbolQuality>();
 
 // Superset → subset with fallback
 var ownerType = entityType.MapByNameOrDefault<EntityType, ContainerOwnerType>(
     ContainerOwnerType.Other);
+```
+
+**String-to-Enum** (case-insensitive — external sources may use any casing):
+
+| Method | Purpose |
+|--------|---------|
+| `MapByName<TTarget>()` | Case-insensitive name-matching (throws on no match) |
+| `MapByNameOrDefault<TTarget>(fallback)` | Case-insensitive with fallback |
+| `TryMapByName<TTarget>(out result)` | Non-throwing case-insensitive matching |
+
+```csharp
+// A2 SDK boundary mapping (string→enum) — ABML parameters, YAML frontmatter, DI provider dicts
+var queryType = queryStr.MapByNameOrDefault(OptionsQueryType.Custom);
+if (sourceTypeStr.TryMapByName<PerceptionSourceType>(out var sourceType)) { ... }
 ```
 
 Every mapping MUST have a corresponding `EnumMappingValidator` test (see [Test Validators](#13-test-validators)).

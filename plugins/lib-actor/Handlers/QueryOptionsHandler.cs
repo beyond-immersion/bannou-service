@@ -88,28 +88,13 @@ public sealed class QueryOptionsHandler : IActionHandler
             throw new InvalidOperationException("query_options requires actor_id parameter");
         }
 
+        // A2 SDK boundary: ABML runtime parameters are string tokens from YAML
         var queryTypeStr = evaluatedParams.GetValueOrDefault("query_type")?.ToString() ?? "combat";
-        OptionsQueryType queryType;
-        try
-        {
-            queryType = BannouJson.Deserialize<OptionsQueryType>($"\"{queryTypeStr}\"");
-        }
-        catch
-        {
-            queryType = OptionsQueryType.Custom;
-        }
+        var queryType = queryTypeStr.MapByNameOrDefault(OptionsQueryType.Custom);
 
-        // Get optional parameters per IMPLEMENTATION TENETS
+        // Get optional parameters
         var freshnessStr = evaluatedParams.GetValueOrDefault("freshness")?.ToString() ?? "cached";
-        OptionsFreshness freshness;
-        try
-        {
-            freshness = BannouJson.Deserialize<OptionsFreshness>($"\"{freshnessStr}\"");
-        }
-        catch
-        {
-            freshness = OptionsFreshness.Cached;
-        }
+        var freshness = freshnessStr.MapByNameOrDefault(OptionsFreshness.Cached);
 
         var maxAgeMs = _config.QueryOptionsDefaultMaxAgeMs;
         if (evaluatedParams.TryGetValue("max_age_ms", out var maxAgeObj) && maxAgeObj != null)

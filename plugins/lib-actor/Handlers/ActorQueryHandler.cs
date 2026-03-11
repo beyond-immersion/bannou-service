@@ -99,16 +99,8 @@ public sealed class ActorQueryHandler : IActionHandler
             throw new InvalidOperationException("actor_query requires 'into' parameter");
         }
 
-        // Parse query type - use custom if not a known type per IMPLEMENTATION TENETS
-        OptionsQueryType queryType;
-        try
-        {
-            queryType = BannouJson.Deserialize<OptionsQueryType>($"\"{queryStr}\"");
-        }
-        catch
-        {
-            queryType = OptionsQueryType.Custom;
-        }
+        // A2 SDK boundary: ABML runtime parameters are string tokens from YAML
+        var queryType = queryStr.MapByNameOrDefault(OptionsQueryType.Custom);
 
         // Extract optional timeout
         var timeoutMs = DefaultTimeoutMs;
