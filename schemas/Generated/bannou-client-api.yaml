@@ -13760,6 +13760,7 @@ components:
       properties:
         key:
           type: string
+          maxLength: 100
           description: State key to modify
         value:
           description: New value to set (any type)
@@ -24257,14 +24258,17 @@ components:
       properties:
         role:
           type: string
+          maxLength: 100
           description: Role in the story (e.g., "witness", "informant", 
             "target")
         entityType:
           type: string
+          maxLength: 100
           description: Type of entity needed (e.g., "character", "location", 
             "item")
         description:
           type: string
+          maxLength: 1000
           description: Description of what's needed
         constraints:
           type: object
@@ -33664,6 +33668,7 @@ components:
           description: Delta to apply to the secondary spectrum
         positionAdvance:
           type: string
+          maxLength: 100
           nullable: true
           description: Position advance type (micro, standard, macro)
     NarrativeOptions:
@@ -38182,6 +38187,13 @@ components:
       - Experience
       - Reputation
       description: Type of reward granted on quest completion
+    RiskSeverity:
+      type: string
+      enum:
+      - Low
+      - Medium
+      - High
+      description: Severity level for identified plan risks
     RoomTypeResponse:
       allOf:
       - $ref: '#/components/schemas/DeprecationFields'
@@ -38689,6 +38701,7 @@ components:
           description: Display name for the scenario
         description:
           type: string
+          maxLength: 1000
           nullable: true
           description: Detailed scenario description
         triggerConditions:
@@ -38776,6 +38789,10 @@ components:
       - name
       - priority
       - enabled
+      - conditionCount
+      - phaseCount
+      - mutationCount
+      - questHookCount
       - createdAt
       properties:
         scenarioId:
@@ -38784,9 +38801,11 @@ components:
           description: Scenario identifier
         code:
           type: string
+          maxLength: 100
           description: Scenario code
         name:
           type: string
+          maxLength: 200
           description: Scenario name
         priority:
           type: integer
@@ -38850,18 +38869,22 @@ components:
           description: Scenario definition ID
         code:
           type: string
+          maxLength: 100
           description: Scenario code
         name:
           type: string
+          maxLength: 200
           description: Scenario name
         status:
           $ref: '#/components/schemas/ScenarioStatus'
           description: Current status
         currentPhase:
           type: integer
+          minimum: 0
           description: Current phase number
         totalPhases:
           type: integer
+          minimum: 1
           description: Total phases
         triggeredAt:
           type: string
@@ -38921,10 +38944,12 @@ components:
           description: Backstory element type for BackstoryAdd mutations
         backstoryKey:
           type: string
+          maxLength: 100
           nullable: true
           description: Backstory element key for BackstoryAdd
         backstoryValue:
           type: string
+          maxLength: 100
           nullable: true
           description: Backstory element value for BackstoryAdd
         backstoryStrength:
@@ -38936,10 +38961,12 @@ components:
           description: Backstory element strength for BackstoryAdd (0.0-1.0)
         relationshipTypeCode:
           type: string
+          maxLength: 100
           nullable: true
           description: Relationship type code for RelationshipCreate/End
         otherParticipantRole:
           type: string
+          maxLength: 100
           nullable: true
           description: Role name for other participant in multi-character 
             scenarios
@@ -38957,9 +38984,11 @@ components:
           description: Phase sequence number (1-based)
         name:
           type: string
+          maxLength: 200
           description: Phase name
         description:
           type: string
+          maxLength: 1000
           nullable: true
           description: What happens in this phase
         durationSeconds:
@@ -38968,10 +38997,12 @@ components:
           description: Expected duration in seconds (for pacing, not enforced)
         dialogueHint:
           type: string
+          maxLength: 1000
           nullable: true
           description: Hint for dialogue generation system
         actionHint:
           type: string
+          maxLength: 1000
           nullable: true
           description: Hint for behavior/GOAP system
     ScenarioPrerequisites:
@@ -39007,6 +39038,7 @@ components:
       properties:
         questCode:
           type: string
+          maxLength: 100
           description: Quest definition code to spawn
         delaySeconds:
           type: integer
@@ -41345,12 +41377,15 @@ components:
       properties:
         sourceRole:
           type: string
+          maxLength: 100
           description: Source entity role
         targetRole:
           type: string
+          maxLength: 100
           description: Target entity role
         linkType:
           type: string
+          maxLength: 100
           description: Type of relationship (e.g., "opposes", "allies_with", 
             "seeks")
     StorylinePlanAction:
@@ -41366,6 +41401,7 @@ components:
       properties:
         actionId:
           type: string
+          maxLength: 100
           description: Action identifier from action registry
         sequenceIndex:
           type: integer
@@ -41383,6 +41419,7 @@ components:
           description: Whether this is an obligatory scene
         chainedFrom:
           type: string
+          maxLength: 100
           nullable: true
           description: If chained, the ID of the action it was chained from
     StorylinePlanPhase:
@@ -41402,6 +41439,7 @@ components:
           description: 1-based phase number
         name:
           type: string
+          maxLength: 200
           description: Phase name
         actions:
           type: array
@@ -41425,20 +41463,19 @@ components:
       properties:
         riskType:
           type: string
+          maxLength: 100
           description: Risk category (e.g., "missing_entity", "low_tension", 
             "weak_climax")
         description:
           type: string
+          maxLength: 1000
           description: Risk description
         severity:
-          type: string
-          enum:
-          - Low
-          - Medium
-          - High
+          $ref: '#/components/schemas/RiskSeverity'
           description: Risk severity
         mitigation:
           type: string
+          maxLength: 1000
           nullable: true
           description: Suggested mitigation
     StyleDefinitionResponse:
@@ -42797,6 +42834,7 @@ components:
           description: Type of condition to evaluate
         traitAxis:
           type: string
+          maxLength: 100
           nullable: true
           description: Personality trait axis for TraitRange (e.g., AGGRESSION)
         traitMin:
@@ -42811,19 +42849,23 @@ components:
           description: Maximum trait value for TraitRange (-1.0 to 1.0)
         backstoryType:
           type: string
+          maxLength: 100
           nullable: true
           description: Backstory element type for BackstoryElement (e.g., 
             TRAUMA)
         backstoryKey:
           type: string
+          maxLength: 100
           nullable: true
           description: Backstory element key for BackstoryElement
         relationshipTypeCode:
           type: string
+          maxLength: 100
           nullable: true
           description: Relationship type code for RelationshipExists/Missing
         otherEntityType:
           type: string
+          maxLength: 100
           nullable: true
           description: Type of other entity in relationship check
         ageMin:
@@ -42853,10 +42895,12 @@ components:
           description: Maximum hour of day (0-23) for TimeOfDay
         worldStateKey:
           type: string
+          maxLength: 100
           nullable: true
           description: Custom state key for WorldState/Custom
         worldStateValue:
           type: string
+          maxLength: 100
           nullable: true
           description: Expected value for WorldState/Custom
     TriggerConditionType:

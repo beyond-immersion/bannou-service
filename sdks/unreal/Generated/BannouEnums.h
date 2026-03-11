@@ -1556,6 +1556,15 @@ enum class ERewardType : uint8
     Reputation UMETA(DisplayName = "Reputation"),
 };
 
+/** Severity level for identified plan risks */
+UENUM(BlueprintType)
+enum class ERiskSeverity : uint8
+{
+    Low UMETA(DisplayName = "Low"),
+    Medium UMETA(DisplayName = "Medium"),
+    High UMETA(DisplayName = "High"),
+};
+
 /** Lifecycle status of a room type definition */
 UENUM(BlueprintType)
 enum class ERoomTypeStatus : uint8
@@ -2167,15 +2176,6 @@ enum class EContentType : uint8
     Html UMETA(DisplayName = "Html"),
     Markdown UMETA(DisplayName = "Markdown"),
     Blazor UMETA(DisplayName = "Blazor"),
-};
-
-/** Risk severity */
-UENUM(BlueprintType)
-enum class ESeverity : uint8
-{
-    Low UMETA(DisplayName = "Low"),
-    Medium UMETA(DisplayName = "Medium"),
-    High UMETA(DisplayName = "High"),
 };
 
 /** Current health status of the website service */

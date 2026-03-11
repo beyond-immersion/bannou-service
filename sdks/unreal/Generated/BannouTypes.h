@@ -975,6 +975,7 @@ struct FRevealDiscoveryRequest;
 struct FRevealDiscoveryResponse;
 struct FRewardDefinition;
 struct FRewardType;
+struct FRiskSeverity;
 struct FRoomTypeResponse;
 struct FRoomTypeStatus;
 struct FRouteSortBy;
@@ -25684,6 +25685,16 @@ struct FRewardType
 };
 
 /**
+ * Severity level for identified plan risks
+ */
+USTRUCT(BlueprintType)
+struct FRiskSeverity
+{
+    GENERATED_BODY()
+
+};
+
+/**
  * Room type definition with current configuration and status
  */
 USTRUCT(BlueprintType)
@@ -26239,19 +26250,19 @@ struct FScenarioDefinitionSummary
 
     /** Number of trigger conditions */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> ConditionCount;
+    int32 ConditionCount = 0;
 
     /** Number of phases */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> PhaseCount;
+    int32 PhaseCount = 0;
 
     /** Number of mutations */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> MutationCount;
+    int32 MutationCount = 0;
 
     /** Number of quest hooks */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> QuestHookCount;
+    int32 QuestHookCount = 0;
 
     /** Realm scope */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -28755,7 +28766,7 @@ struct FStorylineRisk
 
     /** Risk severity */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    ESeverity Severity;
+    FRiskSeverity Severity;
 
     /** Suggested mitigation */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")

@@ -416,6 +416,280 @@ public class SchemaValidationTests
     }
 
     /// <summary>
+    /// Validates that service event schemas use allOf with BaseServiceEvent.
+    /// Service events must inherit from the base event schema for proper
+    /// IBannouEvent implementation and event routing (FOUNDATION TENETS T5).
+    /// Scans *-events.yaml files (not Generated/, not common-events.yaml,
+    /// not *-client-events.yaml). Only checks schemas ending with "Event".
+    /// </summary>
+    [Fact]
+    public void SchemaServiceEvents_UseAllOfWithBaseServiceEvent()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in GetSchemaFiles("*-events.yaml"))
+        {
+            var fileName = Path.GetFileName(file);
+
+            // Skip files that aren't service event schemas
+            if (fileName == "common-events.yaml")
+                continue;
+            if (fileName.Contains("client-events", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var lines = File.ReadAllLines(file);
+            var currentSchema = string.Empty;
+            var schemaIndent = -1;
+            var foundAllOf = false;
+            var foundBaseRef = false;
+            var inSchemas = false;
+
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                var trimmed = line.TrimStart();
+                var indent = line.Length - trimmed.Length;
+
+                if (trimmed is "schemas:" or "components:")
+                    continue;
+
+                // Schema definition at indent 4-6 ending with "Event:"
+                if (indent >= 4 && indent <= 6 && trimmed.EndsWith(":", StringComparison.Ordinal) &&
+                    !trimmed.StartsWith("-", StringComparison.Ordinal) &&
+                    !trimmed.StartsWith("#", StringComparison.Ordinal) &&
+                    trimmed.Contains("Event", StringComparison.Ordinal) &&
+                    !trimmed.StartsWith("BaseServiceEvent", StringComparison.Ordinal))
+                {
+                    // Check previous schema
+                    if (!string.IsNullOrEmpty(currentSchema) && !foundBaseRef)
+                    {
+                        violations.Add($"{fileName}: {currentSchema}");
+                    }
+
+                    currentSchema = trimmed.TrimEnd(':').Trim();
+                    schemaIndent = indent;
+                    foundAllOf = false;
+                    foundBaseRef = false;
+                    inSchemas = true;
+                    continue;
+                }
+
+                if (!inSchemas || string.IsNullOrEmpty(currentSchema))
+                    continue;
+
+                // Left the schema definition
+                if (indent <= schemaIndent && trimmed.Length > 0 &&
+                    !trimmed.StartsWith("#", StringComparison.Ordinal))
+                {
+                    if (!foundBaseRef)
+                    {
+                        violations.Add($"{fileName}: {currentSchema}");
+                    }
+                    currentSchema = string.Empty;
+                    inSchemas = false;
+                    i--; // Re-process this line
+                    continue;
+                }
+
+                if (trimmed.StartsWith("allOf:", StringComparison.Ordinal))
+                    foundAllOf = true;
+
+                if (foundAllOf && trimmed.Contains("BaseServiceEvent", StringComparison.Ordinal))
+                    foundBaseRef = true;
+            }
+
+            // Check last schema in file
+            if (!string.IsNullOrEmpty(currentSchema) && !foundBaseRef)
+            {
+                violations.Add($"{fileName}: {currentSchema}");
+            }
+        }
+
+        var grouped = violations
+            .GroupBy(v => v.Split(':')[0])
+            .OrderBy(g => g.Key);
+
+        var report = string.Join("\n", grouped.Select(g =>
+            $"\n  [{g.Key}] ({g.Count()} event(s)):\n" +
+            string.Join("\n", g.Select(v => $"    - {v}"))));
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} service event schema(s) not using allOf with " +
+            $"BaseServiceEvent across {grouped.Count()} file(s) (FOUNDATION TENETS):{report}");
+    }
+
+    /// <summary>
+    /// Validates that properties in component schemas have description fields.
+    /// Missing descriptions cause CS1591 compiler warnings on generated C# code,
+    /// which T22 forbids suppressing. Checks top-level properties within
+    /// components/schemas definitions in *-api.yaml and *-events.yaml files.
+    /// Skips $ref-only properties (they inherit descriptions from the referenced type)
+    /// and Generated/ directory files.
+    /// </summary>
+    [Fact]
+    public void SchemaProperties_HaveDescriptions()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in GetSchemaFiles("*-api.yaml").Concat(GetSchemaFiles("*-events.yaml")))
+        {
+            var fileName = Path.GetFileName(file);
+            if (fileName == "common-events.yaml")
+                continue;
+
+            var lines = File.ReadAllLines(file);
+            var inComponentSchemas = false;
+            var currentSchemaName = string.Empty;
+            var schemaIndent = -1;
+            var inProperties = false;
+            var propertiesIndent = -1;
+            var currentProperty = string.Empty;
+            var propertyIndent = -1;
+            var foundDescription = false;
+            var isRefOnly = false;
+
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                var trimmed = line.TrimStart();
+                var indent = line.Length - trimmed.Length;
+
+                if (trimmed.StartsWith("#", StringComparison.Ordinal))
+                    continue;
+
+                // Detect components/schemas section
+                if (trimmed == "schemas:" && indent == 2)
+                {
+                    inComponentSchemas = true;
+                    continue;
+                }
+
+                if (!inComponentSchemas)
+                    continue;
+
+                // Schema name at indent 4
+                if (indent == 4 && trimmed.EndsWith(":", StringComparison.Ordinal) &&
+                    !trimmed.StartsWith("-", StringComparison.Ordinal))
+                {
+                    // Check previous property
+                    CheckAndReportProperty(violations, fileName, currentSchemaName,
+                        currentProperty, foundDescription, isRefOnly);
+
+                    currentSchemaName = trimmed.TrimEnd(':').Trim();
+                    schemaIndent = indent;
+                    inProperties = false;
+                    currentProperty = string.Empty;
+                    continue;
+                }
+
+                // Left component schemas section entirely
+                if (indent <= 2 && trimmed.Length > 0 && indent < 4)
+                {
+                    CheckAndReportProperty(violations, fileName, currentSchemaName,
+                        currentProperty, foundDescription, isRefOnly);
+                    inComponentSchemas = false;
+                    currentSchemaName = string.Empty;
+                    inProperties = false;
+                    currentProperty = string.Empty;
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(currentSchemaName))
+                    continue;
+
+                // Detect properties block within a schema
+                if (indent == 6 && trimmed == "properties:")
+                {
+                    CheckAndReportProperty(violations, fileName, currentSchemaName,
+                        currentProperty, foundDescription, isRefOnly);
+                    inProperties = true;
+                    propertiesIndent = indent;
+                    currentProperty = string.Empty;
+                    continue;
+                }
+
+                // Left the properties block
+                if (inProperties && indent <= propertiesIndent && trimmed != "properties:")
+                {
+                    CheckAndReportProperty(violations, fileName, currentSchemaName,
+                        currentProperty, foundDescription, isRefOnly);
+                    inProperties = false;
+                    currentProperty = string.Empty;
+                    continue;
+                }
+
+                if (!inProperties)
+                    continue;
+
+                // Property name at indent 8
+                if (indent == 8 && trimmed.EndsWith(":", StringComparison.Ordinal) &&
+                    !trimmed.StartsWith("-", StringComparison.Ordinal))
+                {
+                    // Check previous property
+                    CheckAndReportProperty(violations, fileName, currentSchemaName,
+                        currentProperty, foundDescription, isRefOnly);
+
+                    currentProperty = trimmed.TrimEnd(':').Trim();
+                    propertyIndent = indent;
+                    foundDescription = false;
+                    isRefOnly = false;
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(currentProperty))
+                    continue;
+
+                // Within a property's attributes (indent > 8)
+                if (indent > propertyIndent)
+                {
+                    if (trimmed.StartsWith("description:", StringComparison.Ordinal))
+                        foundDescription = true;
+                    if (trimmed.StartsWith("$ref:", StringComparison.Ordinal))
+                        isRefOnly = true;
+                }
+            }
+
+            // Check last property in file
+            CheckAndReportProperty(violations, fileName, currentSchemaName,
+                currentProperty, foundDescription, isRefOnly);
+        }
+
+        var grouped = violations
+            .GroupBy(v => v.Split(':')[0])
+            .OrderBy(g => g.Key);
+
+        var report = string.Join("\n", grouped.Select(g =>
+            $"\n  [{g.Key}] ({g.Count()} properties):\n" +
+            string.Join("\n", g.Select(v => $"    - {v}"))));
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} schema properties without description field across " +
+            $"{grouped.Count()} file(s). Missing descriptions cause CS1591 warnings on " +
+            $"generated code (QUALITY TENETS T22):{report}");
+    }
+
+    /// <summary>
+    /// Helper for SchemaProperties_HaveDescriptions: records a violation if the property
+    /// exists, has no description, and isn't a $ref-only property.
+    /// </summary>
+    private static void CheckAndReportProperty(
+        List<string> violations, string fileName, string schemaName,
+        string propertyName, bool foundDescription, bool isRefOnly)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+            return;
+        if (foundDescription || isRefOnly)
+            return;
+
+        violations.Add($"{fileName}: {schemaName}.{propertyName}");
+    }
+
+    /// <summary>
     /// Validates that x-lifecycle model definitions do not manually define createdAt or updatedAt.
     /// These fields are auto-injected by generate-lifecycle-events.py and should not be duplicated
     /// in the source schema. The generation pipeline safely strips them, but their presence indicates

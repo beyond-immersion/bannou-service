@@ -25955,6 +25955,11 @@ export interface components {
      * @enum {string}
      */
     RewardType: 'Currency' | 'Item' | 'Experience' | 'Reputation';
+    /**
+     * @description Severity level for identified plan risks
+     * @enum {string}
+     */
+    RiskSeverity: 'Low' | 'Medium' | 'High';
     /** @description Room type definition with current configuration and status */
     RoomTypeResponse: {
       /** @description Unique room type code */
@@ -26343,13 +26348,13 @@ export interface components {
       /** @description Whether enabled */
       enabled: boolean;
       /** @description Number of trigger conditions */
-      conditionCount?: number;
+      conditionCount: number;
       /** @description Number of phases */
-      phaseCount?: number;
+      phaseCount: number;
       /** @description Number of mutations */
-      mutationCount?: number;
+      mutationCount: number;
       /** @description Number of quest hooks */
-      questHookCount?: number;
+      questHookCount: number;
       /**
        * Format: uuid
        * @description Realm scope
@@ -27935,11 +27940,8 @@ export interface components {
       riskType: string;
       /** @description Risk description */
       description: string;
-      /**
-       * @description Risk severity
-       * @enum {string}
-       */
-      severity: 'Low' | 'Medium' | 'High';
+      /** @description Risk severity */
+      severity: components['schemas']['RiskSeverity'];
       /** @description Suggested mitigation */
       mitigation?: string | null;
     };

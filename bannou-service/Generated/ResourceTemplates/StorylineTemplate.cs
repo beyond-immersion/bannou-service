@@ -27,13 +27,8 @@ public sealed class StorylineTemplate : ResourceTemplateBase
     {
         [""] = typeof(StorylineArchive),
         ["activeArcs"] = typeof(ICollection<string>),
-        ["archivedAt"] = typeof(DateTimeOffset),
         ["characterId"] = typeof(Guid),
         ["completedStorylines"] = typeof(int),
-        ["nestedArchives"] = typeof(ICollection<ResourceArchiveBase>),
         ["participations"] = typeof(ICollection<StorylineParticipation>),
-        ["resourceId"] = typeof(Guid),
-        ["resourceType"] = typeof(string),
-        ["schemaVersion"] = typeof(int),
     };
 }

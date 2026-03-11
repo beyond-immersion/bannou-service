@@ -320,6 +320,7 @@ public partial class StorylineController
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Phase name"
                 },
                 "actions": {
@@ -353,6 +354,7 @@ public partial class StorylineController
             "properties": {
                 "actionId": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Action identifier from action registry"
                 },
                 "sequenceIndex": {
@@ -376,6 +378,7 @@ public partial class StorylineController
                 },
                 "chainedFrom": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "If chained, the ID of the action it was chained from"
                 }
@@ -392,6 +395,7 @@ public partial class StorylineController
             "properties": {
                 "key": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "State key to modify"
                 },
                 "value": {
@@ -430,6 +434,7 @@ public partial class StorylineController
                 },
                 "positionAdvance": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Position advance type (micro, standard, macro)"
                 }
@@ -506,14 +511,17 @@ public partial class StorylineController
             "properties": {
                 "role": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Role in the story (e.g., \"witness\", \"informant\", \"target\")"
                 },
                 "entityType": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Type of entity needed (e.g., \"character\", \"location\", \"item\")"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "description": "Description of what's needed"
                 },
                 "constraints": {
@@ -544,14 +552,17 @@ public partial class StorylineController
             "properties": {
                 "sourceRole": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Source entity role"
                 },
                 "targetRole": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Target entity role"
                 },
                 "linkType": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Type of relationship (e.g., \"opposes\", \"allies_with\", \"seeks\")"
                 }
             }
@@ -568,27 +579,34 @@ public partial class StorylineController
             "properties": {
                 "riskType": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Risk category (e.g., \"missing_entity\", \"low_tension\", \"weak_climax\")"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "description": "Risk description"
                 },
                 "severity": {
-                    "type": "string",
-                    "enum": [
-                        "Low",
-                        "Medium",
-                        "High"
-                    ],
+                    "$ref": "#/$defs/RiskSeverity",
                     "description": "Risk severity"
                 },
                 "mitigation": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Suggested mitigation"
                 }
             }
+        },
+        "RiskSeverity": {
+            "type": "string",
+            "enum": [
+                "Low",
+                "Medium",
+                "High"
+            ],
+            "description": "Severity level for identified plan risks"
         }
     }
 }
@@ -842,6 +860,7 @@ public partial class StorylineController
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Phase name"
                 },
                 "actions": {
@@ -875,6 +894,7 @@ public partial class StorylineController
             "properties": {
                 "actionId": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Action identifier from action registry"
                 },
                 "sequenceIndex": {
@@ -898,6 +918,7 @@ public partial class StorylineController
                 },
                 "chainedFrom": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "If chained, the ID of the action it was chained from"
                 }
@@ -914,6 +935,7 @@ public partial class StorylineController
             "properties": {
                 "key": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "State key to modify"
                 },
                 "value": {
@@ -931,7 +953,7 @@ public partial class StorylineController
                 "Exclusive",
                 "Additive"
             ],
-            "description": "Cardinality for effect application.\nExclusive: Replaces existing value at key\ nAdditive: Adds to collection at key\n"
+            "description": "Cardinality for effect application.\nExclusive: Replaces existing value at key\nAdditive: Adds to collection at key\n"
         },
         "NarrativeEffect": {
             "type": "object",
@@ -952,6 +974,7 @@ public partial class StorylineController
                 },
                 "positionAdvance": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Position advance type (micro, standard, macro)"
                 }
@@ -1028,14 +1051,17 @@ public partial class StorylineController
             "properties": {
                 "role": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Role in the story (e.g., \"witness\", \"informant\", \"target\")"
                 },
                 "entityType": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Type of entity needed (e.g., \"character\", \"location\", \"item\")"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "description": "Description of what's needed"
                 },
                 "constraints": {
@@ -1066,14 +1092,17 @@ public partial class StorylineController
             "properties": {
                 "sourceRole": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Source entity role"
                 },
                 "targetRole": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Target entity role"
                 },
                 "linkType": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Type of relationship (e.g., \"opposes\", \"allies_with\", \"seeks\")"
                 }
             }
@@ -1090,27 +1119,34 @@ public partial class StorylineController
             "properties": {
                 "riskType": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Risk category (e.g., \"missing_entity\", \"low_tension\", \"weak_climax\")"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "description": "Risk description"
                 },
                 "severity": {
-                    "type": "string",
-                    "enum": [
-                        "Low",
-                        "Medium",
-                        "High"
-                    ],
+                    "$ref": "#/$defs/RiskSeverity",
                     "description": "Risk severity"
                 },
                 "mitigation": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Suggested mitigation"
                 }
             }
+        },
+        "RiskSeverity": {
+            "type": "string",
+            "enum": [
+                "Low",
+                "Medium",
+                "High"
+            ],
+            "description": "Severity level for identified plan risks"
         }
     }
 }
@@ -1491,6 +1527,7 @@ public partial class StorylineController
                 },
                 "traitAxis": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
                 },
@@ -1508,21 +1545,25 @@ public partial class StorylineController
                 },
                 "backstoryType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryElement"
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipExists/Missing"
                 },
                 "otherEntityType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Type of other entity in relationship check"
                 },
@@ -1558,11 +1599,13 @@ public partial class StorylineController
                 },
                 "worldStateKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Custom state key for WorldState/Custom"
                 },
                 "worldStateValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Expected value for WorldState/Custom"
                 }
@@ -1599,10 +1642,12 @@ public partial class StorylineController
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Phase name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "What happens in this phase"
                 },
@@ -1613,11 +1658,13 @@ public partial class StorylineController
                 },
                 "dialogueHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for dialogue generation system"
                 },
                 "actionHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for behavior/GOAP system"
                 }
@@ -1655,11 +1702,13 @@ public partial class StorylineController
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryAdd"
                 },
                 "backstoryValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element value for BackstoryAdd"
                 },
@@ -1673,11 +1722,13 @@ public partial class StorylineController
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipCreate/End"
                 },
                 "otherParticipantRole": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Role name for other participant in multi-character scenarios"
                 }
@@ -1692,7 +1743,7 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\ nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\ nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
         },
         "StorylineExperienceType": {
             "type": "string",
@@ -1734,6 +1785,7 @@ public partial class StorylineController
             "properties": {
                 "questCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Quest definition code to spawn"
                 },
                 "delaySeconds": {
@@ -1799,6 +1851,7 @@ public partial class StorylineController
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Detailed scenario description"
                 },
@@ -1910,6 +1963,7 @@ public partial class StorylineController
                 },
                 "traitAxis": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
                 },
@@ -1927,21 +1981,25 @@ public partial class StorylineController
                 },
                 "backstoryType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryElement"
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipExists/Missing"
                 },
                 "otherEntityType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Type of other entity in relationship check"
                 },
@@ -1977,11 +2035,13 @@ public partial class StorylineController
                 },
                 "worldStateKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Custom state key for WorldState/Custom"
                 },
                 "worldStateValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Expected value for WorldState/Custom"
                 }
@@ -2000,7 +2060,7 @@ public partial class StorylineController
                 "WorldState",
                 "Custom"
             ],
-            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+            "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
         },
         "ScenarioPhase": {
             "type": "object",
@@ -2018,10 +2078,12 @@ public partial class StorylineController
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Phase name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "What happens in this phase"
                 },
@@ -2032,11 +2094,13 @@ public partial class StorylineController
                 },
                 "dialogueHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for dialogue generation system"
                 },
                 "actionHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for behavior/GOAP system"
                 }
@@ -2074,11 +2138,13 @@ public partial class StorylineController
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryAdd"
                 },
                 "backstoryValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element value for BackstoryAdd"
                 },
@@ -2092,11 +2158,13 @@ public partial class StorylineController
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipCreate/End"
                 },
                 "otherParticipantRole": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Role name for other participant in multi-character scenarios"
                 }
@@ -2111,7 +2179,7 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\ nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\ nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
         },
         "StorylineExperienceType": {
             "type": "string",
@@ -2153,6 +2221,7 @@ public partial class StorylineController
             "properties": {
                 "questCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Quest definition code to spawn"
                 },
                 "delaySeconds": {
@@ -2313,6 +2382,7 @@ public partial class StorylineController
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Detailed scenario description"
                 },
@@ -2424,6 +2494,7 @@ public partial class StorylineController
                 },
                 "traitAxis": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
                 },
@@ -2441,21 +2512,25 @@ public partial class StorylineController
                 },
                 "backstoryType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryElement"
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipExists/Missing"
                 },
                 "otherEntityType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Type of other entity in relationship check"
                 },
@@ -2491,11 +2566,13 @@ public partial class StorylineController
                 },
                 "worldStateKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Custom state key for WorldState/Custom"
                 },
                 "worldStateValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Expected value for WorldState/Custom"
                 }
@@ -2514,7 +2591,7 @@ public partial class StorylineController
                 "WorldState",
                 "Custom"
             ],
-            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+            "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
         },
         "ScenarioPhase": {
             "type": "object",
@@ -2532,10 +2609,12 @@ public partial class StorylineController
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Phase name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "What happens in this phase"
                 },
@@ -2546,11 +2625,13 @@ public partial class StorylineController
                 },
                 "dialogueHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for dialogue generation system"
                 },
                 "actionHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for behavior/GOAP system"
                 }
@@ -2588,11 +2669,13 @@ public partial class StorylineController
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryAdd"
                 },
                 "backstoryValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element value for BackstoryAdd"
                 },
@@ -2606,11 +2689,13 @@ public partial class StorylineController
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipCreate/End"
                 },
                 "otherParticipantRole": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Role name for other participant in multi-character scenarios"
                 }
@@ -2625,7 +2710,7 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\ nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\ nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
         },
         "StorylineExperienceType": {
             "type": "string",
@@ -2667,6 +2752,7 @@ public partial class StorylineController
             "properties": {
                 "questCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Quest definition code to spawn"
                 },
                 "delaySeconds": {
@@ -2840,6 +2926,10 @@ public partial class StorylineController
                 "name",
                 "priority",
                 "enabled",
+                "conditionCount",
+                "phaseCount",
+                "mutationCount",
+                "questHookCount",
                 "createdAt"
             ],
             "properties": {
@@ -2850,10 +2940,12 @@ public partial class StorylineController
                 },
                 "code": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Scenario code"
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Scenario name"
                 },
                 "priority": {
@@ -3080,6 +3172,7 @@ public partial class StorylineController
                 },
                 "traitAxis": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
                 },
@@ -3097,21 +3190,25 @@ public partial class StorylineController
                 },
                 "backstoryType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryElement"
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipExists/Missing"
                 },
                 "otherEntityType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Type of other entity in relationship check"
                 },
@@ -3147,11 +3244,13 @@ public partial class StorylineController
                 },
                 "worldStateKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Custom state key for WorldState/Custom"
                 },
                 "worldStateValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Expected value for WorldState/Custom"
                 }
@@ -3170,7 +3269,7 @@ public partial class StorylineController
                 "WorldState",
                 "Custom"
             ],
-            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+            "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\ nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
         },
         "ScenarioPhase": {
             "type": "object",
@@ -3188,10 +3287,12 @@ public partial class StorylineController
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Phase name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "What happens in this phase"
                 },
@@ -3202,11 +3303,13 @@ public partial class StorylineController
                 },
                 "dialogueHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for dialogue generation system"
                 },
                 "actionHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for behavior/GOAP system"
                 }
@@ -3244,11 +3347,13 @@ public partial class StorylineController
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryAdd"
                 },
                 "backstoryValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element value for BackstoryAdd"
                 },
@@ -3262,11 +3367,13 @@ public partial class StorylineController
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipCreate/End"
                 },
                 "otherParticipantRole": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Role name for other participant in multi-character scenarios"
                 }
@@ -3281,7 +3388,7 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\ nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\ nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
         },
         "StorylineExperienceType": {
             "type": "string",
@@ -3323,6 +3430,7 @@ public partial class StorylineController
             "properties": {
                 "questCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Quest definition code to spawn"
                 },
                 "delaySeconds": {
@@ -3388,6 +3496,7 @@ public partial class StorylineController
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Detailed scenario description"
                 },
@@ -3499,6 +3608,7 @@ public partial class StorylineController
                 },
                 "traitAxis": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
                 },
@@ -3516,21 +3626,25 @@ public partial class StorylineController
                 },
                 "backstoryType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryElement"
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipExists/Missing"
                 },
                 "otherEntityType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Type of other entity in relationship check"
                 },
@@ -3566,11 +3680,13 @@ public partial class StorylineController
                 },
                 "worldStateKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Custom state key for WorldState/Custom"
                 },
                 "worldStateValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Expected value for WorldState/Custom"
                 }
@@ -3589,7 +3705,7 @@ public partial class StorylineController
                 "WorldState",
                 "Custom"
             ],
-            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+            "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
         },
         "ScenarioPhase": {
             "type": "object",
@@ -3607,10 +3723,12 @@ public partial class StorylineController
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Phase name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "What happens in this phase"
                 },
@@ -3621,11 +3739,13 @@ public partial class StorylineController
                 },
                 "dialogueHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for dialogue generation system"
                 },
                 "actionHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for behavior/GOAP system"
                 }
@@ -3663,11 +3783,13 @@ public partial class StorylineController
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryAdd"
                 },
                 "backstoryValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element value for BackstoryAdd"
                 },
@@ -3681,11 +3803,13 @@ public partial class StorylineController
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipCreate/End"
                 },
                 "otherParticipantRole": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Role name for other participant in multi-character scenarios"
                 }
@@ -3700,7 +3824,7 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\ nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\ nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
         },
         "StorylineExperienceType": {
             "type": "string",
@@ -3742,6 +3866,7 @@ public partial class StorylineController
             "properties": {
                 "questCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Quest definition code to spawn"
                 },
                 "delaySeconds": {
@@ -3893,6 +4018,7 @@ public partial class StorylineController
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Detailed scenario description"
                 },
@@ -4004,6 +4130,7 @@ public partial class StorylineController
                 },
                 "traitAxis": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Personality trait axis for TraitRange (e.g., AGGRESSION)"
                 },
@@ -4021,21 +4148,25 @@ public partial class StorylineController
                 },
                 "backstoryType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element type for BackstoryElement (e.g., TRAUMA)"
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryElement"
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipExists/Missing"
                 },
                 "otherEntityType": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Type of other entity in relationship check"
                 },
@@ -4071,11 +4202,13 @@ public partial class StorylineController
                 },
                 "worldStateKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Custom state key for WorldState/Custom"
                 },
                 "worldStateValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Expected value for WorldState/Custom"
                 }
@@ -4094,7 +4227,7 @@ public partial class StorylineController
                 "WorldState",
                 "Custom"
             ],
-            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+            "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
         },
         "ScenarioPhase": {
             "type": "object",
@@ -4112,10 +4245,12 @@ public partial class StorylineController
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Phase name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "What happens in this phase"
                 },
@@ -4126,11 +4261,13 @@ public partial class StorylineController
                 },
                 "dialogueHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for dialogue generation system"
                 },
                 "actionHint": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Hint for behavior/GOAP system"
                 }
@@ -4168,11 +4305,13 @@ public partial class StorylineController
                 },
                 "backstoryKey": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element key for BackstoryAdd"
                 },
                 "backstoryValue": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Backstory element value for BackstoryAdd"
                 },
@@ -4186,11 +4325,13 @@ public partial class StorylineController
                 },
                 "relationshipTypeCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Relationship type code for RelationshipCreate/End"
                 },
                 "otherParticipantRole": {
                     "type": "string",
+                    "maxLength": 100,
                     "nullable": true,
                     "description": "Role name for other participant in multi-character scenarios"
                 }
@@ -4205,7 +4346,7 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\ nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\ nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
         },
         "StorylineExperienceType": {
             "type": "string",
@@ -4247,6 +4388,7 @@ public partial class StorylineController
             "properties": {
                 "questCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Quest definition code to spawn"
                 },
                 "delaySeconds": {
@@ -5706,10 +5848,12 @@ public partial class StorylineController
                 },
                 "code": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Scenario code"
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Scenario name"
                 },
                 "status": {
@@ -5718,10 +5862,12 @@ public partial class StorylineController
                 },
                 "currentPhase": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current phase number"
                 },
                 "totalPhases": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Total phases"
                 },
                 "triggeredAt": {
@@ -5898,10 +6044,12 @@ public partial class StorylineController
                 },
                 "code": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Scenario code"
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Scenario name"
                 },
                 "status": {
@@ -5910,10 +6058,12 @@ public partial class StorylineController
                 },
                 "currentPhase": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current phase number"
                 },
                 "totalPhases": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Total phases"
                 },
                 "triggeredAt": {
@@ -5937,7 +6087,7 @@ public partial class StorylineController
                 "Failed",
                 "Cancelled"
             ],
-            "description": "Current status of a scenario execution instance.\nActive: Scenario is currently executing\nCompleted: Scenario finished successfully\nFailed: Scenario failed during execution\ nCancelled: Scenario was cancelled externally\n"
+            "description": "Current status of a scenario execution instance.\nActive: Scenario is currently executing\nCompleted: Scenario finished successfully\nFailed: Scenario failed during execution\nCancelled: Scenario was cancelled externally\n"
         }
     }
 }
@@ -6098,15 +6248,18 @@ public partial class StorylineController
                 },
                 "scenarioCode": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Scenario code for lookup"
                 },
                 "scenarioName": {
                     "type": "string",
+                    "maxLength": 200,
                     "nullable": true,
                     "description": "Scenario display name"
                 },
                 "role": {
                     "type": "string",
+                    "maxLength": 100,
                     "description": "Character's role in the scenario (primary, secondary, witness)"
                 },
                 "phase": {
@@ -6116,7 +6269,7 @@ public partial class StorylineController
                 },
                 "totalPhases": {
                     "type": "integer",
-                    "minimum": 0,
+                    "minimum": 1,
                     "description": "Total number of phases in the scenario"
                 },
                 "status": {
@@ -6166,7 +6319,7 @@ public partial class StorylineController
         "Compression"
     ],
     "deprecated": false,
-    "operationId": "getCompressData"
+    "operationId": "GetCompressData"
 }
 """;
 

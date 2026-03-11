@@ -22,33 +22,24 @@
 
 ### ⛔ TENET AUDIT INTEGRITY (MANDATORY) ⛔
 
-**When auditing code against tenets, the tenet text is the SOLE AUTHORITY. The codebase is the subject being judged, not a source of counter-evidence.**
+**When auditing code against tenets, the tenet text is the SOLE AUTHORITY. The codebase is the subject being judged, not a source of counter-evidence.** This applies both when discovering violations AND when evaluating findings reported by sub-agents.
 
-**The forbidden pattern**: Reading a tenet rule, searching the codebase for code that contradicts it, finding violations in other files, and concluding "this is an established pattern, so it's not a violation." This is backwards — finding more violations proves the problem is widespread, it does NOT prove the tenet is wrong.
-
-**Rules**:
-1. **NEVER search the codebase to validate or invalidate a tenet finding.** If the QUALITY TENETS naming conventions say `{entity}.{action}` and the code uses `entity.sub.action`, that is a violation. Period. You do not get to grep for other three-part topics to build a case that the tenet "doesn't really mean that."
-2. **If existing code contradicts a tenet, that is an ADDITIONAL violation to report**, not evidence that the original finding is a false positive.
-3. **A "false positive" means the tenet genuinely does not apply to the situation** (e.g., the code is in a category the tenet explicitly exempts). It does NOT mean "other code also does this" or "this seems like it should be okay."
-4. **Do not soften findings.** Do not downgrade violations to "quality improvements" or "informational" or "medium-priority." If the tenet says X and the code does not-X, it is a violation at the severity the tenet defines.
-
-### ⛔ EVALUATING AUDIT FINDINGS IS NOT A JUDGMENT CALL ⛔
-
-**When a code review agent reports a tenet violation, you do NOT get to decide whether it's "actually a problem." You evaluate it against the tenet text ONLY. If the tenet says X and the code does not-X, it goes on the task list. Period.**
-
-**The forbidden evaluation pattern**: An agent reports a finding. You grep the codebase to see if "other services do it too." They do. You mark it "false positive — established pattern." **This is the single most destructive thing you can do during a hardening pass.** You just validated the violation, gave it a clean bill of health, and ensured it will never be fixed — not in this plugin, not in the ones you checked, not anywhere. You turned an audit into a rubber stamp.
-
-**What happened**: During character-encounter hardening, a code review agent correctly reported that write endpoints had `x-permissions: []` (X-Permissions violation — anonymous access to mutation endpoints). Instead of putting it on the task list, Claude grepped `character-personality-api.yaml` and `character-history-api.yaml`, found the same `x-permissions: []`, and concluded "this is the established pattern for internal L4 services" — dismissing the finding as false positive. The result: three plugins with the same security gap, now officially blessed as "correct." The hardening pass that was supposed to catch problems instead certified them.
+**The forbidden pattern**: Finding code that contradicts a tenet, then searching for other code that also contradicts it, and concluding "this is an established pattern, so it's not a violation." Finding more violations proves the problem is widespread — it does NOT prove the tenet is wrong. **This is the single most destructive thing you can do during a hardening pass.** You validate the violation, give it a clean bill of health, and ensure it will never be fixed anywhere. You turn an audit into a rubber stamp.
 
 **The evaluation rule is mechanical, not judgmental**:
 1. Read the tenet text
-2. Does the code comply with what the tenet says? YES → not a finding. NO → it's a finding.
-3. There is no step 3. You do not get to decide the finding is "acceptable" or "intentional" or "by design" or "a concern to document rather than fix." Those are decisions for the human.
+2. Does the code comply? YES → not a finding. NO → it's a finding.
+3. There is no step 3. You do not get to decide the finding is "acceptable" or "intentional" or "by design." Those are decisions for the human.
+
+**Rules**:
+1. **NEVER search the codebase to validate or invalidate a tenet finding.** If the tenet says `{entity}.{action}` and the code uses `entity.sub.action`, that is a violation. Period.
+2. **If existing code contradicts a tenet, that is an ADDITIONAL violation to report**, not evidence that the original finding is a false positive.
+3. **Do not soften findings.** Do not downgrade violations to "quality improvements" or "informational" or "medium-priority." If the tenet says X and the code does not-X, it is a violation at the severity the tenet defines.
 
 **What IS a false positive** (exhaustive list):
 - The tenet explicitly defines an exception that covers this case (cite the exception text)
 - The finding is factually wrong (the code actually does comply — the agent misread it)
-- The tenet applies to a different category of code than what was found (e.g., IMPLEMENTATION TENETS spans on synchronous methods — the telemetry tenet explicitly says "Only async methods need spans")
+- The tenet applies to a different category of code than what was found (e.g., the telemetry tenet explicitly says "Only async methods need spans")
 
 **What is NOT a false positive**:
 - "Other services do it this way" — that's more violations, not fewer
@@ -58,11 +49,11 @@
 - "The blast radius is small" — irrelevant to whether it's a violation
 - "It would be inconsistent to fix only this service" — then note ALL affected services
 
-**Why this is the most important rule**: Every other rule in this document protects against adding bad code. This rule protects against **certifying existing bad code as correct**. A missed violation is bad; a missed violation stamped "false positive" is catastrophic, because it immunizes the violation against future audits. When the next hardening pass finds the same issue, it will see your "false positive" evaluation and skip it again. The violation becomes permanent.
+**Why this is the most important rule**: Every other rule in this document protects against adding bad code. This rule protects against **certifying existing bad code as correct**. A missed violation stamped "false positive" is catastrophic — it immunizes the violation against all future audits permanently.
 
 **Incident log** (add new incidents here):
 1. QUALITY TENETS three-part event topics: Grepped actor/asset/puppetmaster, found same pattern, dismissed as "established." Result: topic naming violations in 3+ services blessed as correct.
-2. ~~FOUNDATION TENETS x-permissions on L4 write endpoints~~: **RETRACTED** (2026-03-06) — Original finding was based on a documentation error in SCHEMA-RULES.md that described `x-permissions: []` as "Explicitly public (rare)." Investigation of issue #580 revealed `[]` actually means "not exposed to WebSocket clients" (service-to-service only). The `[]` on L4 write endpoints was correct all along — those endpoints are called by event handlers via lib-mesh, not by WebSocket clients. The documentation error has been fixed in SCHEMA-RULES.md, FOUNDATION.md, and TENETS.md.
+2. ~~FOUNDATION TENETS x-permissions on L4 write endpoints~~: **RETRACTED** (2026-03-06) — Original finding was based on a documentation error in SCHEMA-RULES.md. Investigation of issue #580 revealed `[]` means "not exposed to WebSocket clients" (service-to-service only), not "explicitly public." The documentation error has been fixed.
 
 ---
 
@@ -122,158 +113,74 @@ Then use the Read tool on `/tmp/output.txt`.
 3. **Set timeouts proportional to the command.** Full regeneration (`generate-all-services.sh`) needs 300000ms minimum. Full builds need 120000ms. Do not use the default 120000ms timeout for commands you know are longer.
 4. **If a background command completed, read its output file** — do not re-run the command to see what happened.
 
-**Why this rule exists:** Claude repeatedly ran `generate-all-services.sh` (a 3+ minute command touching 76+ services) three times in succession — once to generate, then twice more just to grep different patterns from the output. Each re-run wasted 3+ minutes and put unnecessary load on the system. One redirect-to-file would have made the output available for unlimited examination at zero cost.
-
-**The pattern to avoid:**
-```bash
-# WRONG: Run heavy command, see partial output, run it AGAIN with grep
-heavy_command 2>&1 | tail -30        # Run 1: see end
-heavy_command 2>&1 | grep "FAIL"     # Run 2: find failures (WHY ARE YOU RUNNING IT AGAIN?)
-heavy_command 2>&1 | grep -v SUCCESS # Run 3: filter differently (STOP)
-
-# CORRECT: Capture once, examine freely
-heavy_command > /tmp/output.txt 2>&1  # Run once
-# Then use Read tool on /tmp/output.txt with offset/limit as needed
-```
+**Incident**: Claude ran `generate-all-services.sh` (3+ min, 76+ services) three times in succession just to grep different patterns. One redirect-to-file would have made the output available for unlimited examination at zero cost.
 
 ---
 
-## ⛔ UNEXPECTED CONSEQUENCES = HARD STOP ⛔
+## ⛔ HARD STOP TRIGGERS (MANDATORY) ⛔
 
-**If a change you made produces unexpected errors, unexpected behavior, or unexpected side effects: STOP IMMEDIATELY. Do not attempt to work around it. Do not layer fixes on top of a surprise. Present the unexpected result to the user and ask for directions.**
+**Two situations require an immediate hard stop. Do not attempt workarounds, do not layer fixes, do not silently substitute alternatives. Present the situation to the user and wait for direction.**
 
-**The trigger is simple**: You made a change. You expected outcome X. You got outcome Y instead. **STOP.**
+### Trigger A: Unexpected Consequences
 
-**What "stop" means**:
+You made a change. You expected outcome X. You got outcome Y instead. **STOP.**
+
 1. Do NOT attempt to "fix" the unexpected consequence
 2. Do NOT add workarounds, aliases, shims, or compatibility layers
 3. Do NOT continue down the current path hoping the next fix will resolve it
 4. DO explain: what you changed, what you expected, what actually happened, and what the options are
 5. DO wait for explicit direction before proceeding
 
-**Why this rule exists**: An agent moved 6 enum definitions between schema files (a seemingly correct schema-first fix). Code generation produced duplicate types across two namespaces — an unexpected consequence. Instead of stopping, the agent spent multiple build-fix-rebuild cycles layering increasingly complex C# `using` alias workarounds, each failing in a new way (file-level aliases lost to parent namespace resolution, namespace-scoped aliases triggered CS0576 conflicts, namespace alias prefixes required touching 16+ call sites). Every "fix" made the situation worse and harder to revert. **One hard stop at the first unexpected build failure would have saved all of that.**
+**Incident**: An agent moved 6 enum definitions between schema files. Code generation produced duplicate types — an unexpected consequence. Instead of stopping, the agent spent multiple build-fix-rebuild cycles layering increasingly complex C# `using` alias workarounds, each failing in a new way. Every "fix" made the situation worse and harder to revert. One hard stop at the first unexpected failure would have saved all of that.
 
-**The compound damage pattern**:
+### Trigger B: Missing Information
+
+You were given instructions that depend on specific data (a gap list, a specification, a prior analysis). You do not have that data. **STOP.**
+
+1. Do NOT attempt to "discover" or "re-derive" the missing information on your own
+2. Do NOT launch agents or run searches to reconstruct what was lost
+3. Do NOT silently adjust the task to work without the missing data
+4. DO state exactly what information you're missing and why you need it
+5. DO wait for the user to provide the data or tell you how to recover it
+
+This is NOT a judgment call. If the instructions say "use this list" and you don't have the list, you are blocked. The user decides how to unblock you, not you.
+
+**Incident**: Claude lost detailed gap lists (produced by audit agents over hours of work) during context compaction. Instead of reporting "I no longer have the gap lists," Claude silently pivoted to giving agents open-ended discovery instructions — re-doing hours of already-completed work with no useful output. One sentence asking how to recover the data would have resolved the problem in under a minute.
+
+### The Compound Damage Pattern (Both Triggers)
+
 - Workaround #1 seems small and reasonable
 - Workaround #1 creates a new problem requiring workaround #2
 - Each layer makes reverting harder and understanding the state more difficult
 - By workaround #3+ you are debugging your workarounds, not the original problem
 - **The first workaround is already one too many without user approval**
 
-**This applies to**:
-- Build failures from schema/generation changes you didn't predict
-- Runtime behavior that differs from what you expected
-- Test failures that don't match your mental model
-- Any situation where reality diverged from your expectation
-
-**Principle**: Surprises mean your mental model is wrong. When your model is wrong, more actions based on that model make things worse, not better. Stop, report, and let the human recalibrate.
+**Principle**: Surprises mean your mental model is wrong. Missing data means you can't execute the plan. In both cases, more actions based on incomplete understanding make things worse. Stop, report, let the human recalibrate.
 
 ---
 
-## ⛔ MISSING INFORMATION = HARD STOP ⛔
+## ⛔ FROZEN ARTIFACTS (MANDATORY) ⛔
 
-**If you do not have the information required to perform a task, STOP IMMEDIATELY. Do not attempt to work around it. Do not silently substitute a "best effort" approach. Do not re-derive information that was already produced. Tell the user what you're missing and wait for direction.**
+**The following directories contain foundational infrastructure that is NEVER to be modified by an agent without EXPLICIT user instructions. Present concerns and wait — do not "fix" what you think is wrong.**
 
-**The trigger is simple**: You were given instructions that depend on specific data (a gap list, a specification, a set of requirements, a prior analysis). You do not have that data. **STOP.**
+| Directory | Scope | Presumption |
+|-----------|-------|-------------|
+| `scripts/` | Code generation pipeline: shell scripts (`generate-*.sh`, `common.sh`), Python scripts (`generate-*.py`, `resolve-*.py`, `extract-*.py`, `embed-*.py`), NSwag templates (`templates/nswag/`) | Scripts are correct; if generation output looks wrong, fix the **schema**, not the script |
+| `docs/reference/`, `docs/reference/tenets/` | Tenets, rules (`SCHEMA-RULES.md`, `ENDPOINT-PERMISSION-GUIDELINES.md`), architecture (`SERVICE-HIERARCHY.md`, `ORCHESTRATION-PATTERNS.md`), vision (`VISION.md`, `PLAYER-VISION.md`), templates | Documents are correct; if code contradicts a document, the **code** is presumed wrong |
+| `structural-tests/`, `test-utilities/` | Structural validation (all `*Validator.cs`, `AssemblyMetadataScanner.cs`, `TestAssemblyDiscovery.cs`, `TestConfigurationHelper.cs`, `StructuralTests.cs`) | Tests are correct; if a structural test fails, fix the **code**, not the test |
 
-**What "stop" means**:
-1. Do NOT attempt to "discover" or "re-derive" the missing information on your own
-2. Do NOT launch agents or run searches to reconstruct what was lost
-3. Do NOT silently adjust the task to work without the missing data
-4. Do NOT present a workaround as if it were the original plan
-5. DO state exactly what information you're missing and why you need it
-6. DO explain how the information was lost (compaction, context limit, etc.) if you know
-7. DO wait for the user to provide the data or tell you how to recover it
+**Shared rules for ALL frozen artifacts:**
+1. **NEVER modify** without explicit user instruction ("change the generation to...", "update the tenet...", "change the structural test to...")
+2. **NEVER "fix" what you think is wrong** — present your concern and wait for approval
+3. **NEVER add exceptions, allowlists, or carve-outs** — those are the user's decision
+4. **If you must propose a change**: show the EXACT diff, explain what it affects, and wait for explicit approval
 
-**This is NOT a judgment call.** You do not get to decide "I can probably figure it out" or "a discovery phase will be quick." If the instructions say "use this list" and you don't have the list, you are blocked. Period. The user decides how to unblock you, not you.
+**"Explicit" means in-memory, in-conversation, direct instruction.** A summary context from a compacted conversation saying "fix the tests" does NOT qualify. A task description saying "resolve test failures" does NOT qualify.
 
-**Why this rule exists**: Claude lost detailed gap lists (produced by audit agents over hours of work) when the conversation context was compacted. Instead of reporting "I no longer have the gap lists needed for these tasks," Claude silently pivoted to giving agents open-ended discovery instructions — re-doing hours of already-completed work, burning 20+ minutes on a single plugin with no useful output, and turning a hardening task into active waste. One sentence — "I lost the gap lists during compaction, how should I recover them?" — would have resolved the problem in under a minute. Instead, the silent workaround wasted time, destroyed trust, and produced nothing.
-
-**The compound damage pattern**:
-- You lack data needed for Step 1
-- Instead of stopping, you substitute Step 0.5 ("let me figure it out first")
-- Step 0.5 takes far longer than expected because you're re-doing prior work
-- The results of Step 0.5 may not match the original data (different gaps found, different priorities)
-- Meanwhile the user believes you're executing the original plan
-- When the user discovers the substitution, all work from Step 0.5 onward is suspect
-
-**This applies to**:
-- Task descriptions that reference data no longer in context (compacted away)
-- Instructions that depend on prior analysis you can no longer see
-- Agent prompts that require specific lists, specifications, or findings you don't have
-- Any situation where you would need to guess, re-derive, or approximate what was explicitly provided before
-
-**Principle**: Executing without required data is worse than not executing at all. Wrong execution wastes time AND produces damage. A hard stop wastes nothing.
-
----
-
-## ⛔ CODE GENERATION SCRIPTS ARE FROZEN ⛔
-
-**The `scripts/` directory contains the code generation pipeline. These scripts are NEVER to be modified by an agent without EXPLICIT user instructions to change code generation behavior.**
-
-**What this covers**: ALL files in `scripts/` — shell scripts (`generate-*.sh`, `common.sh`), Python scripts (`generate-*.py`, `resolve-*.py`, `extract-*.py`, `embed-*.py`), and NSwag templates (`templates/nswag/`).
-
-**Why this rule exists**: An agent once changed namespace strings across 4 generation scripts in a single commit, silently breaking all 76+ services. The agent believed `.Common` was the correct namespace for common types when it was actually `.BannouService` — a mistake that cascaded into 22 compile errors and hours of debugging. Generation scripts are the foundation of the entire codebase; a wrong namespace, output path, or exclusion rule breaks everything downstream.
-
-**Rules**:
-1. **NEVER modify generation scripts** unless the user explicitly says "change the code generation to..."
-2. **NEVER "fix" what you think is wrong** in generation scripts — present your concern and wait
-3. **NEVER change**: namespace strings, output paths, exclusion lists, NSwag parameters, post-processing logic, or file naming conventions
-4. **If generation output looks wrong**: the bug is almost certainly in a SCHEMA file, not in the generation scripts. Fix the schema first.
-5. **If you must propose a script change**: show the EXACT diff, explain WHY, and wait for explicit approval
-
-**The generation pipeline is correct until proven otherwise. Schemas are the source of truth; scripts are the transformation layer.**
-
----
-
-## ⛔ REFERENCE DOCUMENTS ARE FROZEN ⛔
-
-**The `docs/reference/` directory contains the authoritative rules, tenets, and design principles for the entire codebase. These documents are NEVER to be modified by an agent without EXPLICIT user instructions to change specific rules or content.**
-
-**What this covers**: ALL files in `docs/reference/` and `docs/reference/tenets/`:
-- **Tenets**: `TENETS.md`, `tenets/FOUNDATION.md`, `tenets/IMPLEMENTATION-BEHAVIOR.md`, `tenets/IMPLEMENTATION-DATA.md`, `tenets/QUALITY.md`, `tenets/TESTING-PATTERNS.md`, `tenets/IMPLEMENTATION.md`
-- **Rules**: `SCHEMA-RULES.md`, `ENDPOINT-PERMISSION-GUIDELINES.md`
-- **Architecture**: `SERVICE-HIERARCHY.md`, `ORCHESTRATION-PATTERNS.md`
-- **Vision**: `VISION.md`, `PLAYER-VISION.md`
-- **Templates & Reference**: `templates/DEEP-DIVE-TEMPLATE.md`, `templates/IMPLEMENTATION-MAP-TEMPLATE.md`, `templates/PLAN-EXAMPLE.md`, `COMPRESSION-CHARTS.md`
-
-**Why this rule exists**: An agent wrote an incorrect rule into SCHEMA-RULES.md stating that service events should NOT use `allOf` with `BaseServiceEvent`. This was factually wrong — NSwag requires `allOf` for C# inheritance. But because it was written into an authoritative document, other agents enforced it as inviolable law, systematically "fixing" dozens of event schemas to comply with the bad rule. The protective guardrails that prevent casual modification also prevented agents from correcting the error. Bad rules were permanently enshrined and actively enforced, causing cascading damage across the codebase.
-
-**The fundamental problem**: Unlike code, where bad changes are caught by compilation or tests, **a bad rule change is invisible**. It becomes indistinguishable from intentional rules. Every future agent reads it, trusts it, and enforces it. A single incorrect sentence in TENETS.md can corrupt dozens of services over weeks before a human notices. The damage is multiplicative and silent.
-
-**Rules**:
-1. **NEVER modify any file in `docs/reference/` or `docs/reference/tenets/`** unless the user explicitly says "change the rule to...", "update the tenet...", or similar direct instruction to change rule content
-2. **NEVER "fix" what you think is wrong** in a reference document — present your concern and explain why you think the document is incorrect, then wait for explicit approval
-3. **NEVER add new tenets, rules, exceptions, or carve-outs** — these require explicit human approval
-4. **NEVER remove, weaken, or reinterpret existing rules** — if you believe a rule is wrong, report it as a finding and wait
-5. **If you find an inconsistency** between a reference document and the codebase: the document is presumed correct and the code is presumed wrong. Present both to the user and wait for direction.
-6. **If you must propose a rule change**: present the EXACT proposed change as a diff, explain WHY, cite the evidence, and wait for explicit approval
-
-**The reference documents are correct until proven otherwise. When in doubt, enforce what the document says, not what you think it should say.**
-
----
-
-## ⛔ STRUCTURAL TESTS AND TEST UTILITIES ARE FROZEN ⛔
-
-**The `structural-tests/` and `test-utilities/` directories contain the codebase-wide structural validation infrastructure. These files are NEVER to be modified by an agent without EXPLICIT user instructions to change test behavior.**
-
-**What this covers**: ALL files in `structural-tests/` (primarily `StructuralTests.cs`) and `test-utilities/` (all `*Validator.cs` files, `AssemblyMetadataScanner.cs`, `TestAssemblyDiscovery.cs`, `TestConfigurationHelper.cs`, and any future additions).
-
-**Why this rule exists**: Structural tests validate patterns across ALL 76 services — constructor patterns, key builder patterns, hierarchy compliance, permission registration, event publisher completeness, resource cleanup methods, JSON serialization discipline, configuration class instantiation, and more. A single change to a validator heuristic (widening a match, narrowing a filter, adding an exception) affects the validity of ~979 test cases simultaneously. When an agent modifies a structural test to make a failing test pass, it may silently weaken validation for every other service that was previously passing correctly.
-
-**The specific danger**: An agent assigned to "fix test failures" faces a choice: fix the code to comply with the test, or fix the test to accept the code. For normal unit tests this is a judgment call. **For structural tests it is NEVER acceptable to change the test.** Structural tests encode the tenets themselves — changing them is equivalent to changing a tenet, which is forbidden without explicit approval. The correct response to a structural test failure is ALWAYS to fix the code, not the test.
-
-**Rules**:
-1. **NEVER modify any file in `structural-tests/` or `test-utilities/`** unless the user explicitly says "change the structural test to...", "update the validator to...", or gives direct instruction to change test behavior
-2. **NEVER widen or narrow validator heuristics** to make tests pass — present the failure and wait
-3. **NEVER add exceptions, allowlists, or skip lists** to structural tests — those are the user's decision
-4. **NEVER modify assertion thresholds, expected counts, or match patterns** without explicit approval
-5. **If a structural test is producing a false positive**: present the evidence (which test, which service, why you believe it's false) and wait for the user to decide whether to adjust the test or fix the code
-6. **If you must propose a structural test change**: show the EXACT diff, explain what it affects (how many services, which test cases), and wait for explicit approval
-
-**"Explicit" means in-memory, in-conversation, direct instruction.** A summary context from a compacted conversation saying "fix the tests" does NOT qualify. A task description saying "resolve test failures" does NOT qualify. Only a direct, current-conversation instruction from the user to modify a specific structural test or validator qualifies.
-
-**The structural tests are correct until proven otherwise. When a structural test fails, the code is presumed wrong — not the test.**
+**Why these are frozen — incident examples:**
+- **Scripts**: An agent changed namespace strings across 4 generation scripts, silently breaking all 76+ services. The agent believed `.Common` was the correct namespace when it was actually `.BannouService` — cascading into 22 compile errors and hours of debugging.
+- **Reference docs**: An agent wrote an incorrect rule into SCHEMA-RULES.md. Because it was in an authoritative document, other agents enforced it as law, systematically "fixing" dozens of event schemas to comply with the bad rule. A bad rule change is invisible — it becomes indistinguishable from intentional rules and gets enforced forever.
+- **Structural tests**: Structural tests validate patterns across ALL 76 services (~979 test cases). A single heuristic change affects every service simultaneously. For structural tests, it is NEVER acceptable to change the test to make it pass — structural tests encode the tenets themselves.
 
 ---
 
@@ -295,9 +202,7 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 3. **NEVER use `EnterWorktree`** — the hook will block it, but you should never attempt it.
 4. **There is no scenario where worktree isolation is beneficial.** Do not reason about whether "this particular case" might benefit from isolation. The answer is always no.
 
-**Why this rule exists**: Claude launched 3 agents with `isolation: "worktree"` for tasks that all edited `structural-tests/StructuralTests.cs`. One agent wrote 5 of 7 service file changes ONLY to the invisible worktree branch, while the structural tests referencing those changes were written to the main branch. The result: tests that reference interfaces that only exist on an invisible branch the user cannot see or access. Work was effectively lost. The user had no way to know this happened until the damage was discovered.
-
-**The fundamental problem with worktrees**: They create invisible branches. The user works on the main branch. Changes in worktrees are invisible to `git status`, `git diff`, and every normal workflow. When an agent writes some changes to the main branch and other changes to a worktree, the result is a split-brain state that is impossible to diagnose without specifically knowing to look for it. Worktrees are damage, not a feature.
+**Why**: Worktrees create invisible branches. Changes in worktrees are invisible to `git status`, `git diff`, and every normal workflow. When an agent writes some changes to the main branch and other changes to a worktree, the result is a split-brain state impossible to diagnose without specifically knowing to look for it.
 
 **Enforcement**: PreToolUse hook `block-worktree-isolation.sh` hard-blocks both `isolation: "worktree"` on Agent tool calls and `EnterWorktree` tool calls.
 
@@ -335,12 +240,7 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 3. **If a task requires more than 3 agents**, break it into sequential batches of 3. Present the batching plan to the user before starting.
 4. **Do not try to "optimize" by launching more.** The rate limit applies to the account, not per-agent. Excess agents hit the limit simultaneously, return nothing, and waste the entire budget.
 
-**Why this rule exists**: Claude launched 13 agents in a single message to fix test compilation errors. Every agent beyond the first few hit the API rate limit and returned zero useful output — literally "You've hit your limit." The entire day's usage budget was burned in one message with nothing to show for it. The user got no work done and lost an entire session. This is the equivalent of burning money.
-
-**The math is simple**: 13 agents × full context window each = 13× the token cost of doing the work sequentially in batches. When rate-limited, 100% of that cost is waste. Three agents at a time stays well within rate limits and actually completes work.
-
-**Incident log**:
-1. 2026-03-09: 13 agents launched to fix test compilation errors across tools/. All but 2-3 hit rate limits. Entire day's usage destroyed with zero deliverables.
+**Incident**: Claude launched 13 agents in a single message. All but 2-3 hit API rate limits and returned zero useful output. The entire day's usage budget was burned with nothing to show for it.
 
 ---
 
@@ -366,37 +266,9 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 
 5. **SELF-CONTAINED VERIFICATION**: State how the implementer verifies the fix is correct. Usually: "Run `dotnet build plugins/lib-foo/lib-foo.csproj --no-restore` — must compile with zero errors and zero new warnings."
 
-**Why this rule exists**: Claude repeatedly created shallow task descriptions like "Fix error handling violation in AccountService" or "Update error handling per IMPLEMENTATION TENETS." These forced every implementer (human or agent) to re-read the tenet documents, re-discover the affected files, re-identify the line numbers, and re-derive the fix from scratch — duplicating hours of audit work that had already been done. The audit agent already found all of this information; the task description must preserve it. A task that requires additional research to execute is not a task — it's a second audit disguised as a task.
-
-**The compound waste pattern**:
-- Audit agent spends 5 minutes finding violation, reading tenet, identifying files and lines, understanding the fix
-- Task is created as "Fix error handling in FooService"
-- Implementing agent spends 5 minutes re-reading the error handling tenet, re-finding the files, re-understanding the violation
-- That's 10 minutes for a 5-minute task — 50% waste, and the implementing agent may miss context the audit agent had
+**Why this rule exists**: Shallow task descriptions like "Fix error handling in AccountService" force every implementer to re-read the tenet documents, re-discover the files, and re-derive the fix — duplicating hours of audit work. A task that requires additional research to execute is not a task — it's a second audit disguised as a task.
 
 **Note**: PreToolUse hooks on `TaskCreate` and `TodoWrite` will remind you of this format. The hooks do not block — they are nudges, not gates.
-
----
-
-## 🚨 Critical Development Constraints
-
-**MANDATORY**: Never declare success or move to the next step until the current task is 100% complete and verified.
-
-**COMPLETION VERIFICATION RULES**:
-- All code must compile without errors (`dotnet build` succeeds)
-- Architectural problems must be fully resolved, not worked around
-
-**STEP-BY-STEP ENFORCEMENT**:
-- Complete each step fully before proceeding
-- Verify each step works in isolation
-- Never skip ahead due to complexity or difficulty
-- Ask for clarification rather than making assumptions that break the architecture
-
-**SUCCESS DECLARATION PROHIBITION**:
-- Never claim success when compilation errors remain
-- Never call a task "complete" when core functionality is broken
-- Never mark todos as complete when issues persist
-- Always demonstrate working functionality before claiming success
 
 ---
 

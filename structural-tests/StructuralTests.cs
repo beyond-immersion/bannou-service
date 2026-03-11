@@ -618,6 +618,182 @@ public class StructuralTests
 
     // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
+    /// Validates that services with non-empty x-event-subscriptions in their event schema
+    /// have a RegisterEventConsumers method in *ServiceEvents.cs AND call it from the
+    /// *Service.cs constructor. If a service declares event subscriptions in the schema but
+    /// never wires them up, events are silently lost at runtime (IMPLEMENTATION TENETS T3).
+    /// </summary>
+    [Fact]
+    public void Services_WithEventSubscriptions_MustRegisterConsumers()
+    {
+        EnsureAssembliesLoaded();
+        var schemasDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "schemas");
+        var failures = new List<string>();
+
+        foreach (var file in Directory.EnumerateFiles(schemasDir, "*-events.yaml"))
+        {
+            var fileName = Path.GetFileName(file);
+            // Skip Generated/ and common-events.yaml
+            if (fileName == "common-events.yaml")
+                continue;
+
+            var lines = File.ReadAllLines(file);
+            var hasNonEmptySubscriptions = false;
+
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var trimmed = lines[i].TrimStart();
+                if (!trimmed.StartsWith("x-event-subscriptions:", StringComparison.Ordinal))
+                    continue;
+
+                // Check if it's empty: "x-event-subscriptions: []" or "x-event-subscriptions:  []"
+                if (trimmed.Contains("[]", StringComparison.Ordinal))
+                    break;
+
+                // Check if next non-comment, non-blank line starts with "- topic:"
+                for (var j = i + 1; j < lines.Length; j++)
+                {
+                    var nextTrimmed = lines[j].TrimStart();
+                    if (string.IsNullOrWhiteSpace(nextTrimmed) ||
+                        nextTrimmed.StartsWith("#", StringComparison.Ordinal))
+                        continue;
+
+                    if (nextTrimmed.StartsWith("- topic:", StringComparison.Ordinal))
+                        hasNonEmptySubscriptions = true;
+                    break;
+                }
+                break;
+            }
+
+            if (!hasNonEmptySubscriptions)
+                continue;
+
+            // Extract service name: "auth-events.yaml" -> "auth"
+            var serviceName = fileName.Replace("-events.yaml", "");
+            var pluginDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins", $"lib-{serviceName}");
+            if (!Directory.Exists(pluginDir))
+                continue;
+
+            // Find *ServiceEvents.cs
+            var eventsFiles = Directory.GetFiles(pluginDir, "*ServiceEvents.cs", SearchOption.TopDirectoryOnly);
+            var hasRegisterMethod = false;
+            foreach (var eventsFile in eventsFiles)
+            {
+                var content = File.ReadAllText(eventsFile);
+                if (content.Contains("RegisterEventConsumers", StringComparison.Ordinal))
+                {
+                    hasRegisterMethod = true;
+                    break;
+                }
+            }
+
+            if (!hasRegisterMethod)
+            {
+                failures.Add(
+                    $"lib-{serviceName}: has x-event-subscriptions in {fileName} " +
+                    $"but *ServiceEvents.cs does not define RegisterEventConsumers()");
+                continue;
+            }
+
+            // Verify *Service.cs constructor calls RegisterEventConsumers
+            var serviceFiles = Directory.GetFiles(pluginDir, "*Service.cs", SearchOption.TopDirectoryOnly)
+                .Where(f => !Path.GetFileName(f).Contains("Events", StringComparison.Ordinal) &&
+                            !Path.GetFileName(f).Contains("Models", StringComparison.Ordinal) &&
+                            !Path.GetFileName(f).Contains("Plugin", StringComparison.Ordinal))
+                .ToList();
+
+            var hasConstructorCall = false;
+            foreach (var serviceFile in serviceFiles)
+            {
+                var content = File.ReadAllText(serviceFile);
+                if (content.Contains("RegisterEventConsumers", StringComparison.Ordinal))
+                {
+                    hasConstructorCall = true;
+                    break;
+                }
+            }
+
+            if (!hasConstructorCall)
+            {
+                failures.Add(
+                    $"lib-{serviceName}: has RegisterEventConsumers in *ServiceEvents.cs " +
+                    $"but *Service.cs constructor does not call it");
+            }
+        }
+
+        Assert.True(
+            failures.Count == 0,
+            $"Services with x-event-subscriptions must define and call RegisterEventConsumers " +
+            $"(IMPLEMENTATION TENETS T3 — event handlers silently missing):\n" +
+            string.Join("\n", failures.Select(f => $"  - {f}")));
+    }
+
+    // ⛔ FROZEN — Do not modify without explicit user permission.
+    /// <summary>
+    /// Validates that no manual (non-Generated) plugin source file calls
+    /// TryPublishAsync with an inline string literal topic. Generated event publishers
+    /// (*EventPublisher.cs) and topic constants (*PublishedTopics.cs) exist for every
+    /// published event — services must use those instead of raw topic strings.
+    /// Catches the pattern: TryPublishAsync("topic.name", ...) in non-Generated code.
+    /// Does NOT flag: TryPublishErrorAsync (different method, takes service name not topic),
+    /// interpolated strings ($"..."), or const/variable references.
+    /// </summary>
+    [Fact]
+    public void Services_MustNotUseTryPublishAsyncWithStringLiterals()
+    {
+        EnsureAssembliesLoaded();
+        var violations = new List<string>();
+        var pluginsDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins");
+
+        foreach (var serviceType in DiscoverAttributedTypes<BannouServiceAttribute>())
+        {
+            var attr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
+            if (attr == null) continue;
+
+            var serviceName = attr.Name;
+            var pluginDir = Path.Combine(pluginsDir, $"lib-{serviceName}");
+            if (!Directory.Exists(pluginDir)) continue;
+
+            // Scan all .cs files in the plugin directory, excluding Generated/ and test projects
+            var sourceFiles = Directory.EnumerateFiles(pluginDir, "*.cs", SearchOption.AllDirectories)
+                .Where(f =>
+                {
+                    var relativePath = Path.GetRelativePath(pluginDir, f);
+                    return !relativePath.StartsWith("Generated", StringComparison.OrdinalIgnoreCase) &&
+                            !relativePath.Contains("bin", StringComparison.OrdinalIgnoreCase) &&
+                            !relativePath.Contains("obj", StringComparison.OrdinalIgnoreCase);
+                });
+
+            foreach (var sourceFile in sourceFiles)
+            {
+                var lines = File.ReadAllLines(sourceFile);
+                var relPath = Path.GetRelativePath(TestAssemblyDiscovery.RepoRoot, sourceFile);
+
+                for (var i = 0; i < lines.Length; i++)
+                {
+                    var line = lines[i];
+                    // Match TryPublishAsync(" but NOT TryPublishErrorAsync("
+                    // The pattern: TryPublishAsync followed by ( then optional whitespace then "
+                    if (line.Contains("TryPublishAsync(\"", StringComparison.Ordinal) &&
+                        !line.Contains("TryPublishErrorAsync", StringComparison.Ordinal))
+                    {
+                        var trimmed = line.Trim();
+                        violations.Add($"{relPath}:{i + 1}: {trimmed}");
+                    }
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} TryPublishAsync call(s) with inline string literal topics. " +
+            $"Use generated Publish*Async extension methods or *PublishedTopics constants instead " +
+            $"(FOUNDATION TENETS — Event-Driven Architecture):\n" +
+            string.Join("\n", violations.Select(v => $"  - {v}")));
+    }
+
+    // ⛔ FROZEN — Do not modify without explicit user permission.
+    /// <summary>
     /// Validates that each service has a {Service}ServiceEvents.cs file on disk,
     /// confirming the partial class pattern required by FOUNDATION TENETS (service logic in
     /// *Service.cs, event handlers in *ServiceEvents.cs).
@@ -798,6 +974,62 @@ public class StructuralTests
             found.Count == 0,
             $"{serviceType.Name}: calls Enum.{string.Join("/", found)} " +
             $"— model definition is wrong, use typed enum instead (IMPLEMENTATION TENETS)");
+    }
+
+    // ⛔ FROZEN — Do not modify without explicit user permission.
+    /// <summary>
+    /// Validates that no plugin assembly uses blocking async patterns: Task.Wait(),
+    /// Task.Result (get_Result), or TaskAwaiter.GetResult(). These cause threadpool
+    /// starvation and potential deadlocks — use await instead (IMPLEMENTATION TENETS T23).
+    /// Property accessors compile to get_* methods in IL, so get_Result is detectable
+    /// via the same MemberRef scanning used for method calls.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_NoBlockingAsyncCalls(Type serviceType)
+    {
+        var assemblyPath = serviceType.Assembly.Location;
+        if (string.IsNullOrEmpty(assemblyPath))
+            return;
+
+        var violations = new List<string>();
+
+        // .Wait() is a method call on Task
+        string[] waitMethods = ["Wait", "WaitAll", "WaitAny"];
+        var waitFound = AssemblyMetadataScanner.GetReferencedMethods(
+            assemblyPath, "Task", waitMethods);
+        foreach (var m in waitFound)
+            violations.Add($"Task.{m}()");
+
+        // .Result is a property getter compiled as get_Result in IL
+        string[] resultMethods = ["get_Result"];
+        var taskResultFound = AssemblyMetadataScanner.GetReferencedMethods(
+            assemblyPath, "Task`1", resultMethods);
+        if (taskResultFound.Count > 0)
+            violations.Add("Task<T>.Result");
+
+        var valueTaskResultFound = AssemblyMetadataScanner.GetReferencedMethods(
+            assemblyPath, "ValueTask`1", resultMethods);
+        if (valueTaskResultFound.Count > 0)
+            violations.Add("ValueTask<T>.Result");
+
+        // .GetResult() on TaskAwaiter — used in .GetAwaiter().GetResult() pattern
+        string[] getResultMethods = ["GetResult"];
+        var awaiterFound = AssemblyMetadataScanner.GetReferencedMethods(
+            assemblyPath, "TaskAwaiter", getResultMethods);
+        var awaiter1Found = AssemblyMetadataScanner.GetReferencedMethods(
+            assemblyPath, "TaskAwaiter`1", getResultMethods);
+        var vAwaiterFound = AssemblyMetadataScanner.GetReferencedMethods(
+            assemblyPath, "ValueTaskAwaiter`1", getResultMethods);
+        if (awaiterFound.Count > 0 || awaiter1Found.Count > 0)
+            violations.Add("TaskAwaiter.GetResult()");
+        if (vAwaiterFound.Count > 0)
+            violations.Add("ValueTaskAwaiter.GetResult()");
+
+        Assert.True(
+            violations.Count == 0,
+            $"{serviceType.Name}: uses blocking async pattern ({string.Join(", ", violations)}) " +
+            $"— use await instead (IMPLEMENTATION TENETS)");
     }
 
     // ⛔ FROZEN — Do not modify without explicit user permission.
