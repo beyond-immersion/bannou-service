@@ -7,7 +7,7 @@ info:
     the service subscribes to contract lifecycle events to maintain its
     obligation cache.
 
-    **Event Flow**:
+    **Flow**:
     - Contract activated → obligation cache rebuilt for contract parties
     - Contract terminated/fulfilled/expired → obligation cache cleared for contract parties
     - Violation reported → obligation.violation.reported event published for downstream consumers

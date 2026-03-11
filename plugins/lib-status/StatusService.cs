@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Status;
 /// </para>
 /// </remarks>
 [BannouService("status", typeof(IStatusService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
-public partial class StatusService : IStatusService, IAccountDeletionCleanupRequired
+public partial class StatusService : IStatusService, IAccountDeletionCleanupRequired, IDeprecateAndMergeEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<StatusService> _logger;

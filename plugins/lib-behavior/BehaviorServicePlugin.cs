@@ -44,19 +44,8 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
         // Register ABML behavior compiler as singleton - it's thread-safe and stateless
         services.AddSingleton<BehaviorCompiler>();
 
-        // Register document merger for ABML document composition (merging multiple
-        // behavior documents into a single flat AbmlDocument for bytecode compilation).
-        // Stateless and thread-safe — singleton is appropriate.
-        services.AddSingleton<IDocumentMerger, DocumentMerger>();
-
         // Register behavior model interpreter factory for runtime execution
         services.AddSingleton<IBehaviorModelInterpreterFactory, BehaviorModelInterpreterFactory>();
-
-        // Register bundle manager for efficient behavior grouping and storage
-        services.AddScoped<IBehaviorBundleManager, BehaviorBundleManager>();
-
-        // Register memory store for cognition pipeline (actor-local MVP)
-        services.AddSingleton<IMemoryStore, ActorLocalMemoryStore>();
 
         // Register archetype registry - singleton with pre-loaded archetypes
         // ArchetypeRegistry constructor registers all standard archetypes automatically
@@ -65,19 +54,6 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
         // Register intent emitter registry - singleton with core emitters
         services.AddSingleton<IIntentEmitterRegistry>(sp =>
             IntentEmitterRegistry.CreateWithCoreEmitters());
-
-        // Register control gate registry - singleton for per-entity control tracking
-        services.AddSingleton<IControlGateRegistry, ControlGateManager>();
-
-        // Register behavior stack subsystem - multi-layer intent composition with
-        // category-based priority merging. Consumed by the Actor runtime (L2) for
-        // per-entity behavior evaluation during NPC execution loops.
-        services.AddSingleton<IIntentStackMerger, IntentStackMerger>();
-        services.AddSingleton<IBehaviorStackRegistry, BehaviorStackRegistry>();
-        services.AddSingleton<ISituationalTriggerManager, SituationalTriggerManager>();
-
-        // Register entity resolver for cutscene semantic name resolution
-        services.AddSingleton<IEntityResolver, EntityResolver>();
 
         // Register cutscene coordinator for multi-participant cutscene orchestration.
         // Uses in-memory session tracking (ConcurrentDictionary). When cinematics
@@ -109,12 +85,6 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
             });
             return loader;
         });
-
-        // Dialogue resolver with three-step resolution pipeline
-        services.AddSingleton<IDialogueResolver, DialogueResolver>();
-
-        // Localization provider for string table lookups
-        services.AddSingleton<ILocalizationProvider, FileLocalizationProvider>();
 
         // Register cognition layering system (Layer 7)
         // Template registry for base cognition templates (humanoid, creature, object)

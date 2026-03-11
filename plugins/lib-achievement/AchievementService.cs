@@ -1801,7 +1801,7 @@ public partial class AchievementService : IAchievementService, ICleanDeprecatedE
                     ct);
 
                 // Publish lifecycle deleted event
-                await _messageBus.TryPublishAsync("achievement.definition.deleted", new AchievementDefinitionDeletedEvent
+                await _messageBus.TryPublishAsync(AchievementPublishedTopics.AchievementDefinitionDeleted, new AchievementDefinitionDeletedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,

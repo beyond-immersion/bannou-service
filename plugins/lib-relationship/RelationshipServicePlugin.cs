@@ -22,10 +22,6 @@ public class RelationshipServicePlugin : StandardServicePlugin<IRelationshipServ
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
-
-        // Register relationship data cache and variable provider factory for ABML expressions
-        services.AddSingleton<IRelationshipDataCache, RelationshipDataCache>();
-        services.AddSingleton<IVariableProviderFactory, RelationshipProviderFactory>();
     }
 
     /// <summary>

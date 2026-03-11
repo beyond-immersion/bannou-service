@@ -37,14 +37,6 @@ public class CharacterPersonalityServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register CharacterPersonalityServiceConfiguration here
 
-        // Register personality data cache (singleton for cross-request caching)
-        services.AddSingleton<IPersonalityDataCache, PersonalityDataCache>();
-
-        // Register variable provider factories for Actor to discover via DI
-        // These enable dependency inversion: Actor (L2) consumes providers without knowing about CharacterPersonality (L4)
-        services.AddSingleton<IVariableProviderFactory, PersonalityProviderFactory>();
-        services.AddSingleton<IVariableProviderFactory, CombatPreferencesProviderFactory>();
-
         Logger?.LogDebug("Service dependencies configured");
     }
 

@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
@@ -315,14 +316,10 @@ public sealed class AudioProcessor : IAssetProcessor
 
         try
         {
-            // Handle enum types - parse from string
+            // Handle enum types - deserialize using BannouJson's JsonStringEnumConverter
             if (typeof(T).IsEnum && value is string stringValue)
             {
-                if (Enum.TryParse(typeof(T), stringValue, ignoreCase: true, out var enumValue))
-                {
-                    return (T)enumValue;
-                }
-                return defaultValue;
+                return BannouJson.Deserialize<T>($"\"{stringValue}\"") ?? defaultValue;
             }
 
             return (T)Convert.ChangeType(value, typeof(T));

@@ -7,13 +7,13 @@ info:
     for CollectionEntryTemplate, CollectionAreaContentConfig, and Collection entities.
     Custom events cover entry unlock outcomes, milestones, and discovery advancement.
 
-    **Event Categories**:
+    **Categories**:
     - Entry template lifecycle: created, updated, deleted (auto-generated)
     - Area content config lifecycle: created, updated, deleted (auto-generated)
     - Collection instance lifecycle: created, deleted (auto-generated; updated omitted — collections are immutable after creation)
     - Entry events: unlocked, grant-failed, milestone-reached, discovery-advanced
 
-    **Consumed Events**:
+    **Subscriptions**:
     - account.deleted: Cleanup account-owned collections (Account exempt from lib-resource per FOUNDATION TENETS)
     Note: Character cleanup uses lib-resource (x-references in collection-api.yaml),
     not event subscription, per FOUNDATION TENETS.

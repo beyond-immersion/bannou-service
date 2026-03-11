@@ -89,14 +89,24 @@ public sealed class QueryOptionsHandler : IActionHandler
         }
 
         var queryTypeStr = evaluatedParams.GetValueOrDefault("query_type")?.ToString() ?? "combat";
-        if (!Enum.TryParse<OptionsQueryType>(queryTypeStr, ignoreCase: true, out var queryType))
+        OptionsQueryType queryType;
+        try
+        {
+            queryType = BannouJson.Deserialize<OptionsQueryType>($"\"{queryTypeStr}\"");
+        }
+        catch
         {
             queryType = OptionsQueryType.Custom;
         }
 
-        // Get optional parameters
+        // Get optional parameters per IMPLEMENTATION TENETS
         var freshnessStr = evaluatedParams.GetValueOrDefault("freshness")?.ToString() ?? "cached";
-        if (!Enum.TryParse<OptionsFreshness>(freshnessStr, ignoreCase: true, out var freshness))
+        OptionsFreshness freshness;
+        try
+        {
+            freshness = BannouJson.Deserialize<OptionsFreshness>($"\"{freshnessStr}\"");
+        }
+        catch
         {
             freshness = OptionsFreshness.Cached;
         }

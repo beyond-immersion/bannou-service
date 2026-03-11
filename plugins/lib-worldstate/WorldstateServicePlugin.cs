@@ -1,7 +1,9 @@
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Worldstate.Providers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Worldstate;
 
@@ -19,10 +21,27 @@ public class WorldstateServicePlugin : StandardServicePlugin<IWorldstateService>
     /// <param name="services">The service collection to register services with.</param>
     public override void ConfigureServices(IServiceCollection services)
     {
-        services.AddSingleton<IWorldstateTimeCalculator, WorldstateTimeCalculator>();
-        services.AddSingleton<IRealmClockCache, RealmClockCache>();
-        services.AddSingleton<ICalendarTemplateCache, CalendarTemplateCache>();
-        services.AddSingleton<IVariableProviderFactory, WorldProviderFactory>();
         services.AddHostedService<WorldstateClockWorkerService>();
+    }
+
+    /// <inheritdoc />
+    protected override async Task OnRunningAsync()
+    {
+        await base.OnRunningAsync();
+
+        var serviceProvider = ServiceProvider
+            ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
+        using var scope = serviceProvider.CreateScope();
+        var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+
+        var success = await WorldstateService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
+        if (success)
+        {
+            Logger?.LogInformation("Registered worldstate cleanup callbacks with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register some worldstate cleanup callbacks with lib-resource");
+        }
     }
 }

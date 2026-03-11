@@ -40,14 +40,6 @@ public class PuppetmasterServicePlugin : BaseBannouPlugin
         services.AddSingleton<BehaviorDocumentCache>();
         services.AddSingleton<IBehaviorDocumentCache>(sp => sp.GetRequiredService<BehaviorDocumentCache>());
 
-        // Register the resource snapshot cache for Event Brain actors
-        // Enables event actors to access arbitrary resource data via load_snapshot command
-        services.AddSingleton<IResourceSnapshotCache, ResourceSnapshotCache>();
-
-        // Register the dynamic behavior provider (priority 100 = highest)
-        // This enables lib-actor to discover and use our provider via DI
-        services.AddSingleton<IBehaviorDocumentProvider, DynamicBehaviorProvider>();
-
         // Register load_snapshot handler for ABML execution
         // This enables Event Brain actors to load resource snapshots via load_snapshot: action
         // The handler is discovered by DocumentExecutorFactory via GetServices<IActionHandler>()

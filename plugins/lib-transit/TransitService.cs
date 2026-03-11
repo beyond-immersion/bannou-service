@@ -64,7 +64,7 @@ namespace BeyondImmersion.BannouService.Transit;
 /// </para>
 /// </remarks>
 [BannouService("transit", typeof(ITransitService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
-public partial class TransitService : ITransitService
+public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
 {
     // Infrastructure (L0)
     private readonly IMessageBus _messageBus;
@@ -103,6 +103,20 @@ public partial class TransitService : ITransitService
     private readonly ILogger<TransitService> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly TransitServiceConfiguration _configuration;
+
+    // Static mapping from entity type strings to ContainerOwnerType (avoids Enum.TryParse per IMPLEMENTATION TENETS)
+    private static readonly Dictionary<string, Inventory.ContainerOwnerType> EntityTypeToOwnerType =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Character"] = Inventory.ContainerOwnerType.Character,
+            ["Account"] = Inventory.ContainerOwnerType.Account,
+            ["Location"] = Inventory.ContainerOwnerType.Location,
+            ["Vehicle"] = Inventory.ContainerOwnerType.Vehicle,
+            ["Guild"] = Inventory.ContainerOwnerType.Guild,
+            ["Escrow"] = Inventory.ContainerOwnerType.Escrow,
+            ["Mail"] = Inventory.ContainerOwnerType.Mail,
+            ["Other"] = Inventory.ContainerOwnerType.Other,
+        };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TransitService"/> class.
@@ -792,7 +806,7 @@ public partial class TransitService : ITransitService
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CheckEntityHasItemTagAsync");
 
         // Map entity type string to ContainerOwnerType for inventory query
-        if (!Enum.TryParse<Inventory.ContainerOwnerType>(entityType, ignoreCase: true, out var ownerType))
+        if (!EntityTypeToOwnerType.TryGetValue(entityType, out var ownerType))
         {
             // Entity type doesn't map to an inventory owner type -- cannot have items
             _logger.LogDebug("Entity type {EntityType} has no inventory mapping, skipping item tag check", entityType);

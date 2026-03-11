@@ -31,4 +31,7 @@ public static class AchievementPublishedTopics
 
     /// <summary>Published when achievement is synced to external platform.</summary>
     public const string AchievementPlatformSynced = "achievement.platform.synced";
+
+    /// <summary>Published when an achievement definition is permanently deleted.</summary>
+    public const string AchievementDefinitionDeleted = "achievement.definition.deleted";
 }

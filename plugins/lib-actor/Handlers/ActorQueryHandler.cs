@@ -99,10 +99,16 @@ public sealed class ActorQueryHandler : IActionHandler
             throw new InvalidOperationException("actor_query requires 'into' parameter");
         }
 
-        // Parse query type - use custom if not a known type
-        var queryType = Enum.TryParse<OptionsQueryType>(queryStr, ignoreCase: true, out var qt)
-            ? qt
-            : OptionsQueryType.Custom;
+        // Parse query type - use custom if not a known type per IMPLEMENTATION TENETS
+        OptionsQueryType queryType;
+        try
+        {
+            queryType = BannouJson.Deserialize<OptionsQueryType>($"\"{queryStr}\"");
+        }
+        catch
+        {
+            queryType = OptionsQueryType.Custom;
+        }
 
         // Extract optional timeout
         var timeoutMs = DefaultTimeoutMs;

@@ -30,9 +30,5 @@ public class PermissionServicePlugin : StandardServicePlugin<IPermissionService>
         services.AddSingleton<IPermissionRegistry>(sp =>
             (IPermissionRegistry)sp.GetRequiredService<IPermissionService>());
 
-        // Register session activity listener for heartbeat-driven TTL refresh
-        // and session lifecycle handling. Replaces session.connected/disconnected
-        // event subscriptions with guaranteed in-process DI delivery.
-        services.AddSingleton<ISessionActivityListener, PermissionSessionActivityListener>();
     }
 }

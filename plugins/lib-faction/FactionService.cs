@@ -20,7 +20,7 @@ namespace BeyondImmersion.BannouService.Faction;
 /// territory claiming, trade regulation). Primary norm data consumer is lib-obligation.
 /// </summary>
 [BannouService("faction", typeof(IFactionService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
-public partial class FactionService : IFactionService
+public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly IResourceClient _resourceClient;

@@ -36,13 +36,6 @@ public class GardenerServicePlugin : StandardServicePlugin<IGardenerService>
     {
         base.ConfigureServices(services);
 
-        // Register ISeedEvolutionListener as Singleton for seed growth/phase notifications.
-        // Must be a separate class (not GardenerService) because ISeedEvolutionListener
-        // is consumed by BackgroundService workers (Singleton context), while GardenerService
-        // is Scoped. Follows SeedCollectionUnlockListener pattern.
-        // per IMPLEMENTATION TENETS - DI Listener pattern
-        services.AddSingleton<ISeedEvolutionListener, GardenerSeedEvolutionListener>();
-
         // Register background workers as hosted services
         services.AddHostedService<GardenerGardenOrchestratorWorker>();
         services.AddHostedService<GardenerScenarioLifecycleWorker>();

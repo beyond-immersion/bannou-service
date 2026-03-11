@@ -22,10 +22,6 @@ public class StatusServicePlugin : StandardServicePlugin<IStatusService>
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
-
-        // Register seed evolution listener as singleton for DI discovery by Seed service (L2).
-        // Seed discovers all ISeedEvolutionListener implementations via IEnumerable<ISeedEvolutionListener>.
-        services.AddSingleton<ISeedEvolutionListener, StatusSeedEvolutionListener>();
     }
 
     /// <inheritdoc />

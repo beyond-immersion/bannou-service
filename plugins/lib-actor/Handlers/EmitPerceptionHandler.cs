@@ -5,6 +5,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -107,9 +108,17 @@ public sealed class EmitPerceptionHandler : IActionHandler
         // Get source_id (who/what is sending this perception)
         var sourceId = evaluatedParams.GetValueOrDefault("source_id")?.ToString() ?? "event-brain";
 
-        // Get optional source_type - parse from string to enum for type safety
+        // Get optional source_type - deserialize from string to enum for type safety per IMPLEMENTATION TENETS
         var sourceTypeStr = evaluatedParams.GetValueOrDefault("source_type")?.ToString() ?? "coordinator";
-        var sourceType = Enum.TryParse<PerceptionSourceType>(sourceTypeStr, ignoreCase: true, out var st) ? st : PerceptionSourceType.Coordinator;
+        PerceptionSourceType sourceType;
+        try
+        {
+            sourceType = BannouJson.Deserialize<PerceptionSourceType>($"\"{sourceTypeStr}\"");
+        }
+        catch
+        {
+            sourceType = PerceptionSourceType.Coordinator;
+        }
 
         // Get urgency (default from configuration for Event Brain instructions)
         var urgency = (float)_config.EventBrainDefaultUrgency;

@@ -79,7 +79,8 @@ public partial class SubscriptionService : ISubscriptionService, IAccountDeletio
         ILogger<SubscriptionService> logger,
         SubscriptionServiceConfiguration configuration,
         IGameServiceClient serviceClient,
-        IEntitySessionRegistry entitySessionRegistry)
+        IEntitySessionRegistry entitySessionRegistry,
+        IEventConsumer eventConsumer)
     {
         _subscriptionStore = stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreDefinitions.Subscription);
         _indexStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Subscription);
@@ -90,6 +91,9 @@ public partial class SubscriptionService : ISubscriptionService, IAccountDeletio
         _configuration = configuration;
         _serviceClient = serviceClient;
         _entitySessionRegistry = entitySessionRegistry;
+
+        // Register event handlers via partial class (SubscriptionServiceEvents.cs)
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

@@ -167,7 +167,7 @@ This is NOT a judgment call. If the instructions say "use this list" and you don
 |-----------|-------|-------------|
 | `scripts/` | Code generation pipeline: shell scripts (`generate-*.sh`, `common.sh`), Python scripts (`generate-*.py`, `resolve-*.py`, `extract-*.py`, `embed-*.py`), NSwag templates (`templates/nswag/`) | Scripts are correct; if generation output looks wrong, fix the **schema**, not the script |
 | `docs/reference/`, `docs/reference/tenets/` | Tenets, rules (`SCHEMA-RULES.md`, `ENDPOINT-PERMISSION-GUIDELINES.md`), architecture (`SERVICE-HIERARCHY.md`, `ORCHESTRATION-PATTERNS.md`), vision (`VISION.md`, `PLAYER-VISION.md`), templates | Documents are correct; if code contradicts a document, the **code** is presumed wrong |
-| `structural-tests/`, `test-utilities/` | Structural validation (all `*Validator.cs`, `AssemblyMetadataScanner.cs`, `TestAssemblyDiscovery.cs`, `TestConfigurationHelper.cs`, `StructuralTests.cs`) | Tests are correct; if a structural test fails, fix the **code**, not the test |
+| `structural-tests/`, `test-utilities/` | Structural validation (all `*Validator.cs`, `AssemblyMetadataScanner.cs`, `TestAssemblyDiscovery.cs`, `TestConfigurationHelper.cs`, `StructuralTests.cs`) | Tests are correct; if a structural test fails, fix the **code or schema**, not the test |
 
 **Shared rules for ALL frozen artifacts:**
 1. **NEVER modify** without explicit user instruction ("change the generation to...", "update the tenet...", "change the structural test to...")
@@ -181,6 +181,10 @@ This is NOT a judgment call. If the instructions say "use this list" and you don
 - **Scripts**: An agent changed namespace strings across 4 generation scripts, silently breaking all 76+ services. The agent believed `.Common` was the correct namespace when it was actually `.BannouService` — cascading into 22 compile errors and hours of debugging.
 - **Reference docs**: An agent wrote an incorrect rule into SCHEMA-RULES.md. Because it was in an authoritative document, other agents enforced it as law, systematically "fixing" dozens of event schemas to comply with the bad rule. A bad rule change is invisible — it becomes indistinguishable from intentional rules and gets enforced forever.
 - **Structural tests**: Structural tests validate patterns across ALL 76 services (~979 test cases). A single heuristic change affects every service simultaneously. For structural tests, it is NEVER acceptable to change the test to make it pass — structural tests encode the tenets themselves.
+
+**"Fix the code" means "fix the subject under test" — which includes schemas.** In a schema-first codebase, many structural test failures require schema fixes (adding missing `x-event-publications`, fixing `x-permissions`, correcting `x-lifecycle` definitions). Schemas (`schemas/*.yaml`) are the primary artifact developers edit — they are NOT frozen, NOT infrastructure, and NOT something that requires special permission. When a structural test says "use generated topic constants" and the constant doesn't exist, the fix is to add the publication to the events schema and regenerate. **Never work around a missing generated artifact by hand-writing what generation should produce.** The correct chain is always: fix the schema → regenerate → the generated artifact appears → the code uses it → the test passes.
+
+**The anti-pattern to avoid**: "The fix is in the schema, but schemas feel like infrastructure, so maybe I need permission or should find an alternative." This reasoning is wrong. Schemas are to Bannou what `.cs` files are to a normal C# project — the thing you edit every day. The frozen artifacts are `scripts/`, `docs/reference/`, and `structural-tests/`. Schemas are not on that list.
 
 ---
 

@@ -461,7 +461,7 @@ public partial class WorldstateService : IWorldstateService
         await RegisterRealmReferenceAsync(BuildClockLockKey(body.RealmId), body.RealmId, cancellationToken);
 
         // Publish initialization event
-        await _messageBus.TryPublishAsync("worldstate.realm-clock.initialized", new WorldstateRealmClockInitializedEvent
+        await _messageBus.TryPublishAsync(WorldstatePublishedTopics.WorldstateRealmClockInitialized, new WorldstateRealmClockInitializedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -471,7 +471,7 @@ public partial class WorldstateService : IWorldstateService
         }, cancellationToken: cancellationToken);
 
         // Publish realm config lifecycle event
-        await _messageBus.TryPublishAsync("worldstate.realm-config.created", new RealmConfigCreatedEvent
+        await _messageBus.TryPublishAsync(WorldstatePublishedTopics.RealmConfigCreated, new RealmConfigCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -605,7 +605,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Publish ratio changed event
-        await _messageBus.TryPublishAsync("worldstate.ratio-changed", new WorldstateRatioChangedEvent
+        await _messageBus.TryPublishAsync(WorldstatePublishedTopics.WorldstateRatioChanged, new WorldstateRatioChangedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -618,7 +618,7 @@ public partial class WorldstateService : IWorldstateService
         // Publish realm config updated lifecycle event for the TimeRatio change
         if (realmConfig != null)
         {
-            await _messageBus.TryPublishAsync("worldstate.realm-config.updated", new RealmConfigUpdatedEvent
+            await _messageBus.TryPublishAsync(WorldstatePublishedTopics.RealmConfigUpdated, new RealmConfigUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
@@ -790,7 +790,7 @@ public partial class WorldstateService : IWorldstateService
         _realmClockCache.Invalidate(body.RealmId);
 
         // Publish clock-advanced service event for cross-node cache invalidation
-        await _messageBus.TryPublishAsync("worldstate.clock-advanced", new WorldstateClockAdvancedEvent
+        await _messageBus.TryPublishAsync(WorldstatePublishedTopics.WorldstateClockAdvanced, new WorldstateClockAdvancedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -945,7 +945,7 @@ public partial class WorldstateService : IWorldstateService
         await RegisterGameServiceReferenceAsync(calendarKey, body.GameServiceId, cancellationToken);
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync("worldstate.calendar-template.created", new CalendarTemplateCreatedEvent
+        await _messageBus.TryPublishAsync(WorldstatePublishedTopics.CalendarTemplateCreated, new CalendarTemplateCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1133,7 +1133,7 @@ public partial class WorldstateService : IWorldstateService
         await _calendarStore.SaveAsync(calendarKey, model, cancellationToken: cancellationToken);
 
         // Publish lifecycle event with changedFields
-        await _messageBus.TryPublishAsync("worldstate.calendar-template.updated", new CalendarTemplateUpdatedEvent
+        await _messageBus.TryPublishAsync(WorldstatePublishedTopics.CalendarTemplateUpdated, new CalendarTemplateUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1210,7 +1210,7 @@ public partial class WorldstateService : IWorldstateService
         await _calendarStore.DeleteAsync(calendarKey, cancellationToken);
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync("worldstate.calendar-template.deleted", new CalendarTemplateDeletedEvent
+        await _messageBus.TryPublishAsync(WorldstatePublishedTopics.CalendarTemplateDeleted, new CalendarTemplateDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1370,7 +1370,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Publish realm config updated lifecycle event
-        await _messageBus.TryPublishAsync("worldstate.realm-config.updated", new RealmConfigUpdatedEvent
+        await _messageBus.TryPublishAsync(WorldstatePublishedTopics.RealmConfigUpdated, new RealmConfigUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1499,7 +1499,7 @@ public partial class WorldstateService : IWorldstateService
         // no sentinel values for absence).
         if (realmConfig != null)
         {
-            await _messageBus.TryPublishAsync("worldstate.realm-config.deleted", new RealmConfigDeletedEvent
+            await _messageBus.TryPublishAsync(WorldstatePublishedTopics.RealmConfigDeleted, new RealmConfigDeletedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1554,7 +1554,7 @@ public partial class WorldstateService : IWorldstateService
                 BuildCalendarKey(body.GameServiceId, template.TemplateCode), body.GameServiceId, cancellationToken);
 
             // Publish lifecycle event for each deleted template
-            await _messageBus.TryPublishAsync("worldstate.calendar-template.deleted", new CalendarTemplateDeletedEvent
+            await _messageBus.TryPublishAsync(WorldstatePublishedTopics.CalendarTemplateDeleted, new CalendarTemplateDeletedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,

@@ -215,7 +215,7 @@ internal static class WorldstateBoundaryEventPublisher
             switch (boundary.Type)
             {
                 case BoundaryType.Hour:
-                    await messageBus.TryPublishAsync("worldstate.hour-changed", new WorldstateHourChangedEvent
+                    await messageBus.TryPublishAsync(WorldstatePublishedTopics.WorldstateHourChanged, new WorldstateHourChangedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
@@ -229,7 +229,7 @@ internal static class WorldstateBoundaryEventPublisher
                     break;
 
                 case BoundaryType.Period:
-                    await messageBus.TryPublishAsync("worldstate.period-changed", new WorldstatePeriodChangedEvent
+                    await messageBus.TryPublishAsync(WorldstatePublishedTopics.WorldstatePeriodChanged, new WorldstatePeriodChangedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
@@ -243,7 +243,7 @@ internal static class WorldstateBoundaryEventPublisher
                     break;
 
                 case BoundaryType.Day:
-                    await messageBus.TryPublishAsync("worldstate.day-changed", new WorldstateDayChangedEvent
+                    await messageBus.TryPublishAsync(WorldstatePublishedTopics.WorldstateDayChanged, new WorldstateDayChangedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
@@ -259,7 +259,7 @@ internal static class WorldstateBoundaryEventPublisher
                     break;
 
                 case BoundaryType.Month:
-                    await messageBus.TryPublishAsync("worldstate.month-changed", new WorldstateMonthChangedEvent
+                    await messageBus.TryPublishAsync(WorldstatePublishedTopics.WorldstateMonthChanged, new WorldstateMonthChangedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
@@ -275,7 +275,7 @@ internal static class WorldstateBoundaryEventPublisher
                     break;
 
                 case BoundaryType.Season:
-                    await messageBus.TryPublishAsync("worldstate.season-changed", new WorldstateSeasonChangedEvent
+                    await messageBus.TryPublishAsync(WorldstatePublishedTopics.WorldstateSeasonChanged, new WorldstateSeasonChangedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
@@ -291,7 +291,7 @@ internal static class WorldstateBoundaryEventPublisher
                     break;
 
                 case BoundaryType.Year:
-                    await messageBus.TryPublishAsync("worldstate.year-changed", new WorldstateYearChangedEvent
+                    await messageBus.TryPublishAsync(WorldstatePublishedTopics.WorldstateYearChanged, new WorldstateYearChangedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,

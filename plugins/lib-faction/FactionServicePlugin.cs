@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Faction.Providers;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,23 +42,6 @@ public class FactionServicePlugin : StandardServicePlugin<IFactionService>
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
-
-        // Register ISeedEvolutionListener as Singleton for seed growth/phase/capability notifications.
-        // Must be a separate class (not FactionService) because ISeedEvolutionListener
-        // is consumed by BackgroundService workers (Singleton context), while FactionService
-        // is Scoped. Follows GardenerSeedEvolutionListener pattern.
-        // per IMPLEMENTATION TENETS - DI Listener pattern
-        services.AddSingleton<ISeedEvolutionListener, FactionSeedEvolutionListener>();
-
-        // Register ICollectionUnlockListener as Singleton for Collection->Seed growth pipeline.
-        // Converts member activity collection unlocks into faction seed growth via tag matching.
-        // per IMPLEMENTATION TENETS - DI Listener pattern
-        services.AddSingleton<ICollectionUnlockListener, FactionCollectionUnlockListener>();
-
-        // Register IVariableProviderFactory as Singleton for Actor ABML expression evaluation.
-        // Provides ${faction.*} namespace with membership and faction data.
-        // per IMPLEMENTATION TENETS - Variable Provider Factory pattern
-        services.AddSingleton<IVariableProviderFactory, FactionProviderFactory>();
     }
 
     /// <summary>
@@ -70,6 +54,25 @@ public class FactionServicePlugin : StandardServicePlugin<IFactionService>
 
         var serviceProvider = ServiceProvider
             ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
+
+        // Register compression callback (generated from x-compression-callback)
+        using var scope = serviceProvider.CreateScope();
+        var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+        if (await FactionCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
+        {
+            Logger?.LogInformation("Registered faction compression callback with lib-resource");
+        }
+
+        // Register resource cleanup callbacks (generated from x-references)
+        var cleanupSuccess = await FactionService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
+        if (cleanupSuccess)
+        {
+            Logger?.LogInformation("Registered faction cleanup callbacks with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register some faction cleanup callbacks with lib-resource");
+        }
 
         var seedClient = serviceProvider.GetRequiredService<ISeedClient>();
         var configuration = serviceProvider.GetRequiredService<FactionServiceConfiguration>();

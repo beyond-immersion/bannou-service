@@ -35,13 +35,6 @@ public class QuestServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register QuestServiceConfiguration here
 
-        // Register quest data cache (singleton for cross-request caching)
-        services.AddSingleton<IQuestDataCache, QuestDataCache>();
-
-        // Register variable provider factory for Actor to discover via DI
-        // Enables dependency inversion: Actor (L2) consumes providers without knowing about Quest (L2)
-        services.AddSingleton<IVariableProviderFactory, QuestProviderFactory>();
-
         Logger?.LogDebug("Service dependencies configured");
     }
 

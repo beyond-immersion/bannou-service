@@ -20,9 +20,5 @@ public class InventoryServicePlugin : StandardServicePlugin<IInventoryService>
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
-
-        // Register inventory data cache and variable provider factory for ABML expressions
-        services.AddSingleton<IInventoryDataCache, InventoryDataCache>();
-        services.AddSingleton<IVariableProviderFactory, InventoryProviderFactory>();
     }
 }

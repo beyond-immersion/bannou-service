@@ -57,14 +57,6 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
         // Register HttpClientFactory for BackendDetector (Portainer/Kubernetes API calls)
         services.AddHttpClient();
 
-        // Register orchestrator helper classes as Singletons to maintain persistent connections
-        // Note: IOrchestratorStateManager uses IStateStoreFactory from lib-state (no direct Redis dependency)
-        services.AddSingleton<IOrchestratorStateManager, OrchestratorStateManager>();
-        services.AddSingleton<IOrchestratorEventManager, OrchestratorEventManager>();
-        services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
-        services.AddSingleton<ISmartRestartManager, SmartRestartManager>();
-        services.AddSingleton<IBackendDetector, BackendDetector>();
-
         // NOTE: Main service type (IOrchestratorService -> OrchestratorService) is registered
         // centrally by PluginLoader based on [BannouService] attribute. Plugins must NOT
         // re-register their main service types - it overrides the central registration.

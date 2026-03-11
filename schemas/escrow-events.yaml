@@ -4,7 +4,7 @@ info:
   description: |
     Event models for Escrow service RabbitMQ pub/sub via MassTransit.
 
-    **Event Categories**:
+    **Categories**:
     - Lifecycle events: escrow.created, escrow.deposit.received, escrow.funded
     - Consent events: escrow.consent.received, escrow.finalizing
     - Completion events: escrow.released, escrow.refunded

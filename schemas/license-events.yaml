@@ -7,12 +7,12 @@ info:
     for both LicenseBoardTemplate and LicenseBoard entities.
     Custom events cover license unlock outcomes.
 
-    **Event Categories**:
+    **Categories**:
     - Board template lifecycle: created, updated, deleted (auto-generated)
     - Board instance lifecycle: created, deleted (auto-generated; updated omitted — boards are immutable)
     - Unlock events: license.unlocked, license.unlock-failed
 
-    **Consumed Events**:
+    **Subscriptions**:
     - (none — cleanup is handled via x-references callbacks, not event subscriptions)
 
     **Topic Naming**: Uses dot-separated format (license.unlocked).

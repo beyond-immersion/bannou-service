@@ -22,11 +22,6 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
     {
         Logger?.LogDebug("Configuring messaging service dependencies");
 
-        // Register unhandled exception handler that publishes error events via IMessageBus.
-        // Composite pattern: fires alongside LoggingUnhandledExceptionHandler and any other registered handlers.
-        // Registered before the in-memory/RabbitMQ branch — handler resolves IMessageBus lazily from DI.
-        services.AddSingleton<IUnhandledExceptionHandler, MessagingUnhandledExceptionHandler>();
-
         // Register named HttpClient for subscription callbacks (FOUNDATION TENETS: use IHttpClientFactory)
         services.AddHttpClient(MessagingService.HttpClientName);
         Logger?.LogDebug("Registered named HttpClient '{ClientName}' for subscription callbacks", MessagingService.HttpClientName);
@@ -48,10 +43,6 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             services.AddSingleton<InMemoryMessageBus>();
             services.AddSingleton<IMessageBus>(sp => sp.GetRequiredService<InMemoryMessageBus>());
             services.AddSingleton<IMessageSubscriber>(sp => sp.GetRequiredService<InMemoryMessageBus>());
-
-            // Register in-memory message tap
-            services.AddSingleton<IMessageTap, InMemoryMessageTap>();
-            Logger?.LogDebug("Registered InMemoryMessageTap for in-memory messaging");
 
             Logger?.LogDebug("In-memory messaging configured");
             return;
@@ -108,10 +99,6 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
 
             return new RabbitMQMessageSubscriber(channelManager, logger, msgConfig, telemetryProvider, messageBus);
         });
-
-        // Register message tap for forwarding events between exchanges
-        services.AddSingleton<IMessageTap, RabbitMQMessageTap>();
-        Logger?.LogDebug("Registered RabbitMQMessageTap for event tapping");
 
         // Register NativeEventConsumerBackend as IHostedService
         // This bridges RabbitMQ subscriptions to existing IEventConsumer fan-out

@@ -5,7 +5,7 @@ info:
     Event models for Contract service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
-    **Event Categories**:
+    **Categories**:
     - Lifecycle events (auto-generated): contract.template.created/updated/deleted, contract.instance.created/updated/deleted
     - Contract flow events: proposed, consent-received, accepted, activated, milestone events, breach events, fulfillment, termination
 

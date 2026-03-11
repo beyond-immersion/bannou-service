@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Mesh.Services;
 
@@ -362,61 +361,39 @@ public sealed class DistributedCircuitBreaker
 
     private static GetStateResult ParseGetStateResult(string json)
     {
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-
-        var stateStr = root.GetProperty("state").GetString() ?? "Closed";
-        var state = Enum.TryParse<CircuitState>(stateStr, out var s) ? s : CircuitState.Closed;
-        var failures = root.GetProperty("failures").GetInt32();
-        var stateChanged = root.GetProperty("stateChanged").GetBoolean();
-
-        DateTimeOffset? openedAt = null;
-        if (root.TryGetProperty("openedAt", out var openedAtProp) && openedAtProp.ValueKind == JsonValueKind.Number)
-        {
-            openedAt = DateTimeOffset.FromUnixTimeMilliseconds(openedAtProp.GetInt64());
-        }
-
-        return new GetStateResult(state, failures, stateChanged, openedAt);
+        var dto = BannouJson.DeserializeRequired<CircuitStateJson>(json);
+        var openedAt = dto.OpenedAt.HasValue
+            ? DateTimeOffset.FromUnixTimeMilliseconds(dto.OpenedAt.Value)
+            : (DateTimeOffset?)null;
+        return new GetStateResult(dto.State, dto.Failures, dto.StateChanged, openedAt);
     }
 
     private static SuccessResult ParseSuccessResult(string json)
     {
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-
-        var stateChanged = root.GetProperty("stateChanged").GetBoolean();
-
-        CircuitState? previousState = null;
-        if (root.TryGetProperty("previousState", out var prevProp))
-        {
-            var prevStr = prevProp.GetString();
-            if (!string.IsNullOrEmpty(prevStr) && Enum.TryParse<CircuitState>(prevStr, out var ps))
-            {
-                previousState = ps;
-            }
-        }
-
-        return new SuccessResult(stateChanged, previousState);
+        var dto = BannouJson.DeserializeRequired<CircuitSuccessJson>(json);
+        return new SuccessResult(dto.StateChanged, dto.PreviousState);
     }
 
     private static FailureResult ParseFailureResult(string json)
     {
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-
-        var stateStr = root.GetProperty("state").GetString() ?? "Closed";
-        var state = Enum.TryParse<CircuitState>(stateStr, out var s) ? s : CircuitState.Closed;
-        var failures = root.GetProperty("failures").GetInt32();
-        var stateChanged = root.GetProperty("stateChanged").GetBoolean();
-
-        DateTimeOffset? openedAt = null;
-        if (root.TryGetProperty("openedAt", out var openedAtProp) && openedAtProp.ValueKind == JsonValueKind.Number)
-        {
-            openedAt = DateTimeOffset.FromUnixTimeMilliseconds(openedAtProp.GetInt64());
-        }
-
-        return new FailureResult(state, failures, stateChanged, openedAt);
+        var dto = BannouJson.DeserializeRequired<CircuitStateJson>(json);
+        var openedAt = dto.OpenedAt.HasValue
+            ? DateTimeOffset.FromUnixTimeMilliseconds(dto.OpenedAt.Value)
+            : (DateTimeOffset?)null;
+        return new FailureResult(dto.State, dto.Failures, dto.StateChanged, openedAt);
     }
+
+    /// <summary>JSON DTO for Lua script responses containing circuit state with openedAt timestamp.</summary>
+    private sealed record CircuitStateJson(
+        CircuitState State,
+        int Failures,
+        bool StateChanged,
+        long? OpenedAt);
+
+    /// <summary>JSON DTO for Lua success script response.</summary>
+    private sealed record CircuitSuccessJson(
+        bool StateChanged,
+        CircuitState? PreviousState);
 
     private sealed record CircuitCacheEntry(
         CircuitState State,

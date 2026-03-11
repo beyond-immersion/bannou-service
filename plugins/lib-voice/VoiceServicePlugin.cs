@@ -20,15 +20,6 @@ public class VoiceServicePlugin : StandardServicePlugin<IVoiceService>
     {
         Logger?.LogInformation("Configuring Voice service dependencies");
 
-        // Register helper services for P2P voice coordination
-        // These are Singleton because they maintain local caches for multi-instance safety (FOUNDATION TENETS)
-        services.AddSingleton<ISipEndpointRegistry, SipEndpointRegistry>();
-        services.AddSingleton<IP2PCoordinator, P2PCoordinator>();
-        Logger?.LogDebug("Registered Voice helper services (SipEndpointRegistry, P2PCoordinator)");
-
-        // Register scaled tier coordinator and clients for SFU-based conferencing
-        services.AddSingleton<IScaledTierCoordinator, ScaledTierCoordinator>();
-
         // Register RTPEngine client with configuration-driven settings
         services.AddSingleton<IRtpEngineClient>(sp =>
         {

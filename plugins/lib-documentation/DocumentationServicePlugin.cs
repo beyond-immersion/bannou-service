@@ -43,12 +43,6 @@ public class DocumentationServicePlugin : StandardServicePlugin<IDocumentationSe
             }
         });
 
-        // Register git sync service for repository operations
-        services.AddSingleton<IGitSyncService, GitSyncService>();
-
-        // Register content transform service for YAML frontmatter and markdown processing
-        services.AddSingleton<IContentTransformService, ContentTransformService>();
-
         // Register background sync scheduler service
         services.AddHostedService<RepositorySyncSchedulerService>();
 

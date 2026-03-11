@@ -20,7 +20,7 @@ namespace BeyondImmersion.BannouService.Location;
 /// Locations are partitioned by realm for scalability.
 /// </summary>
 [BannouService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
-public partial class LocationService : ILocationService
+public partial class LocationService : ILocationService, IDeprecateAndMergeEntity
 {
     /// <summary>Persistent MySQL store for location hierarchy and metadata (keyed by location ID).</summary>
     private readonly IStateStore<LocationModel> _locationStore;

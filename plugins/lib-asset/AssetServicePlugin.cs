@@ -118,12 +118,6 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             return new AmazonS3Client(credentials, config);
         });
 
-        // Register storage provider
-        services.AddSingleton<IAssetStorageProvider, MinioStorageProvider>();
-
-        // Register event emitter for client notifications
-        services.AddScoped<IAssetEventEmitter, AssetEventEmitter>();
-
         // Register bundle services with configuration-driven cache TTL
         services.AddSingleton<IBundleConverter>(sp =>
         {
@@ -141,17 +135,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         // Register metrics
         services.AddSingleton<AssetMetrics>();
 
-        // Register FFmpeg service for audio/video transcoding
-        services.AddSingleton<IFFmpegService, FFmpegService>();
-
-        // Register asset processors
-        services.AddSingleton<IAssetProcessor, TextureProcessor>();
-        services.AddSingleton<IAssetProcessor, ModelProcessor>();
-        services.AddSingleton<IAssetProcessor, AudioProcessor>();
         services.AddSingleton<AssetProcessorRegistry>();
-
-        // Register processor pool manager for tracking processor node state
-        services.AddSingleton<IAssetProcessorPoolManager, AssetProcessorPoolManager>();
 
         // Register background worker for asset processing
         // Worker checks ProcessingMode from configuration at startup and exits early if mode is "api"

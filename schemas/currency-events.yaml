@@ -5,7 +5,7 @@ info:
     Event models for Currency service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
-    **Event Categories**:
+    **Categories**:
     - Balance events: credited, debited, transferred
     - Autogain events: calculated
     - Cap events: earn-cap.reached, wallet-cap.reached

@@ -5,7 +5,7 @@ info:
     Event models for Item service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
-    **Event Categories**:
+    **Categories**:
     - Template lifecycle: created, updated (deprecation via changedFields)
     - Instance lifecycle: created, modified, destroyed
     - Binding events: bound, unbound

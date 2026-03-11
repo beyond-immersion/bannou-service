@@ -27,15 +27,6 @@ public class AuthServicePlugin : StandardServicePlugin<IAuthService>
         services.AddHttpClient();
         Logger?.LogDebug("Registered IHttpClientFactory for OAuth provider HTTP calls");
 
-        // Register edge revocation providers
-        services.AddScoped<IEdgeRevocationProvider, CloudflareEdgeProvider>();
-        services.AddScoped<IEdgeRevocationProvider, OpenrestyEdgeProvider>();
-        Logger?.LogDebug("Registered edge revocation providers (CloudFlare, OpenResty)");
-
-        // Register edge revocation service (must be before SessionService which depends on it)
-        services.AddScoped<IEdgeRevocationService, EdgeRevocationService>();
-        Logger?.LogDebug("Registered EdgeRevocationService");
-
         // Register email service based on configuration (default: console logging)
         services.AddSingleton<IEmailService>(sp =>
         {
@@ -115,13 +106,6 @@ public class AuthServicePlugin : StandardServicePlugin<IAuthService>
             }
         });
         Logger?.LogDebug("Registered email service (provider: configuration-driven)");
-
-        // Register helper services for better testability and separation of concerns
-        services.AddScoped<ISessionService, SessionService>();
-        services.AddScoped<ITokenService, TokenService>();
-        services.AddScoped<IOAuthProviderService, OAuthProviderService>();
-        services.AddScoped<IMfaService, MfaService>();
-        Logger?.LogDebug("Registered Auth helper services (SessionService, TokenService, OAuthProviderService, MfaService)");
 
         Logger?.LogDebug("Service dependencies configured");
     }

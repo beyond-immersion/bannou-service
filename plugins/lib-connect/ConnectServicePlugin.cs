@@ -18,21 +18,6 @@ public class ConnectServicePlugin : StandardServicePlugin<IConnectService>
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Register BannouSessionManager for distributed session state management
-        // Uses lib-state (connect-statestore) for state storage
-        services.AddSingleton<ISessionManager, BannouSessionManager>();
-        Logger?.LogDebug("Registered BannouSessionManager for session state management");
-
-        // Register entity session registry for entity-to-session mapping
-        // Must be Singleton because ConnectService is Singleton and cannot consume scoped services
-        services.AddSingleton<IEntitySessionRegistry, EntitySessionRegistry>();
-        Logger?.LogDebug("Registered EntitySessionRegistry for entity-to-session mapping");
-
-        // Register helper services for improved testability
-        // Must be Singleton because ConnectService is Singleton and cannot consume scoped services
-        services.AddSingleton<ICapabilityManifestBuilder, CapabilityManifestBuilder>();
-        Logger?.LogDebug("Registered CapabilityManifestBuilder");
-
         // Register inter-node broadcast manager for multi-instance broadcast relay
         // Must be Singleton because it maintains WebSocket connections to peer Connect instances
         services.AddSingleton<InterNodeBroadcastManager>();

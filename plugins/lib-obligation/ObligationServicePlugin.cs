@@ -30,10 +30,6 @@ public class ObligationServicePlugin : BaseBannouPlugin
     {
         Logger?.LogDebug("Configuring obligation service dependencies");
 
-        // Register obligation variable provider factory for Actor (L2) discovery via IEnumerable<IVariableProviderFactory>.
-        // Enables ${obligations.*} paths in ABML behavior expressions without Actor depending on Obligation.
-        services.AddSingleton<IVariableProviderFactory, ObligationProviderFactory>();
-
         Logger?.LogDebug("Obligation service dependencies configured");
     }
 

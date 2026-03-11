@@ -37,9 +37,6 @@ public class AchievementServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
-        // Prerequisite provider for Quest's dynamic prerequisite validation
-        services.AddSingleton<IPrerequisiteProviderFactory, AchievementPrerequisiteProviderFactory>();
-
         // Background service for periodic rarity percentage recalculation
         services.AddHostedService<RarityCalculationService>();
 

@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -139,10 +140,19 @@ public partial class ContentTransformService : IContentTransformService
         DocumentCategory defaultCategory)
     {
         // Priority 1: Frontmatter category (parse user-supplied string from git YAML to enum)
-        if (!string.IsNullOrWhiteSpace(frontmatter?.Category)
-            && Enum.TryParse<DocumentCategory>(frontmatter.Category.Replace("-", ""), ignoreCase: true, out var frontmatterCategory))
+        if (!string.IsNullOrWhiteSpace(frontmatter?.Category))
         {
-            return frontmatterCategory;
+            try
+            {
+                // Strip hyphens from kebab-case frontmatter values (e.g., "getting-started" → "GettingStarted")
+                var normalizedCategory = frontmatter.Category.Replace("-", "");
+                var frontmatterCategory = BannouJson.Deserialize<DocumentCategory>($"\"{normalizedCategory}\"");
+                return frontmatterCategory;
+            }
+            catch
+            {
+                // Category string doesn't match any DocumentCategory, fall through to other methods
+            }
         }
 
         // Priority 2: Path prefix matching via category mapping

@@ -28,13 +28,6 @@ public class LocationServicePlugin : StandardServicePlugin<ILocationService>
     public override void ConfigureServices(IServiceCollection services)
     {
         services.AddHostedService<EntityPresenceCleanupWorker>();
-
-        // Register location context cache (singleton for cross-request caching)
-        services.AddSingleton<ILocationDataCache, LocationDataCache>();
-
-        // Register variable provider factory for Actor to discover via DI
-        // This enables dependency inversion: Actor (L2) consumes providers without coupling to Location
-        services.AddSingleton<IVariableProviderFactory, LocationContextProviderFactory>();
     }
 
     /// <summary>

@@ -19,7 +19,7 @@ namespace BeyondImmersion.BannouService.Seed;
 /// events, progressively gaining capabilities.
 /// </summary>
 [BannouService("seed", typeof(ISeedService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
-public partial class SeedService : ISeedService
+public partial class SeedService : ISeedService, IDeprecateAndMergeEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly IStateStore<SeedModel> _seedStore;

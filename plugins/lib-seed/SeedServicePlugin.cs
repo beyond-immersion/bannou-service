@@ -40,16 +40,6 @@ public class SeedServicePlugin : BaseBannouPlugin
         // Background worker for applying growth decay to seed domains
         services.AddHostedService<SeedDecayWorkerService>();
 
-        // Register Collection→Seed DI provider for in-process growth notifications
-        services.AddSingleton<ICollectionUnlockListener, SeedCollectionUnlockListener>();
-
-        // Register seed data cache (singleton for cross-request caching)
-        services.AddSingleton<ISeedDataCache, SeedDataCache>();
-
-        // Register variable provider factory for Actor to discover via DI
-        // Enables dependency inversion: Actor (L2) consumes providers without knowing about Seed (L2)
-        services.AddSingleton<IVariableProviderFactory, SeedProviderFactory>();
-
         Logger?.LogDebug("Service dependencies configured");
     }
 

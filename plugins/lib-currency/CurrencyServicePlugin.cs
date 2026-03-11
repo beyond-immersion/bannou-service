@@ -40,10 +40,6 @@ public class CurrencyServicePlugin : BaseBannouPlugin
         services.AddHostedService<CurrencyExpirationTaskService>();
         services.AddHostedService<HoldExpirationTaskService>();
 
-        // Register currency data cache and variable provider factory for ABML expressions
-        services.AddSingleton<ICurrencyDataCache, CurrencyDataCache>();
-        services.AddSingleton<IVariableProviderFactory, CurrencyProviderFactory>();
-
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
         Logger?.LogDebug("Service dependencies configured");

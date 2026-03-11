@@ -37,13 +37,6 @@ public class CharacterHistoryServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register CharacterHistoryServiceConfiguration here
 
-        // Register backstory data cache (singleton for cross-request caching)
-        services.AddSingleton<IBackstoryCache, BackstoryCache>();
-
-        // Register variable provider factory for Actor to discover via DI
-        // Enables dependency inversion: Actor (L2) consumes providers without knowing about CharacterHistory (L4)
-        services.AddSingleton<IVariableProviderFactory, BackstoryProviderFactory>();
-
         Logger?.LogDebug("Service dependencies configured");
     }
 

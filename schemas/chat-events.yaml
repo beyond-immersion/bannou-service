@@ -6,14 +6,14 @@ info:
     Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle.
     Custom events cover participant management, message delivery, and room state changes.
 
-    **Event Categories**:
+    **Categories**:
     - Room lifecycle: created, updated, deleted (auto-generated)
     - Room type lifecycle: created, updated, deleted (auto-generated)
     - Participant: joined, left, kicked, banned, muted, unmuted
     - Message: sent (metadata only, no text content for privacy), deleted
     - Room state: locked (contract-triggered), archived
 
-    **Consumed Events**:
+    **Subscriptions**:
     - contract.fulfilled: Governing contract completed all milestones
     - contract.breach.detected: Governing contract breach recorded
     - contract.terminated: Governing contract terminated early

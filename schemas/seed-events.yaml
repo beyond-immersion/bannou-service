@@ -6,7 +6,7 @@ info:
     Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle.
     Custom events cover growth, phase transitions, capabilities, and bonds.
 
-    **Event Categories**:
+    **Categories**:
     - Seed lifecycle: created, updated, deleted (auto-generated)
     - Growth: domain values changed, phase transitions
     - Capability: manifest recomputed

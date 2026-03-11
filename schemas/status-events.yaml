@@ -7,11 +7,11 @@ info:
     for the StatusTemplate entity.
     Custom events cover grant outcomes, removal, expiration, stacking, and cleansing.
 
-    **Event Categories**:
+    **Categories**:
     - Status template lifecycle: created, updated, deleted (auto-generated)
     - Status instance events: instance.granted, instance.removed, instance.expired, instance.stacked, instance.grant-failed, instance.cleansed
 
-    **Consumed Events**:
+    **Subscriptions**:
     - account.deleted: Cleanup account-owned statuses (Account exempt from lib-resource per FOUNDATION TENETS)
     - seed.capability.updated: Invalidate seed effects cache for affected entity
     - item.expired: Clean up expired status instance records (blocked on #407)

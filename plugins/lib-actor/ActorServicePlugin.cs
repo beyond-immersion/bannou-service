@@ -64,19 +64,6 @@ public class ActorServicePlugin : BaseBannouPlugin
         services.AddSingleton<EvaluateGoalImpactHandler>();
         services.AddSingleton<TriggerGoapReplanHandler>();
 
-        // Register Event Brain action handlers (used by DocumentExecutorFactory)
-        services.AddSingleton<IActionHandler, QueryOptionsHandler>();
-        services.AddSingleton<IActionHandler, QueryActorStateHandler>();
-        services.AddSingleton<IActionHandler, EmitPerceptionHandler>();
-        services.AddSingleton<IActionHandler, ScheduleEventHandler>();
-        services.AddSingleton<IActionHandler, StateUpdateHandler>();
-        services.AddSingleton<IActionHandler, SetEncounterPhaseHandler>();
-        services.AddSingleton<IActionHandler, EndEncounterHandler>();
-
-        // Register Event-to-Character communication handlers
-        services.AddSingleton<IActionHandler, ActorCommandHandler>();
-        services.AddSingleton<IActionHandler, ActorQueryHandler>();
-
         // Register scheduled event manager for delayed event handling
         services.AddSingleton<IScheduledEventManager, ScheduledEventManager>();
 
@@ -85,28 +72,8 @@ public class ActorServicePlugin : BaseBannouPlugin
         // owning L3/L4 plugins (lib-character-personality, lib-character-encounter, lib-quest) via
         // IVariableProviderFactory interface. Actor (L2) discovers them via DI collection injection.
 
-        // Behavior document providers - discovered via IEnumerable<IBehaviorDocumentProvider>
-        // Priority 100 (DynamicBehaviorProvider) is registered by lib-puppetmaster (L4)
-        // Priority 50 (SeededBehaviorProvider) loads embedded behaviors from this assembly
-        // Priority 0 (FallbackBehaviorProvider) logs when no provider can serve a behavior
-        services.AddSingleton<IBehaviorDocumentProvider, SeededBehaviorProvider>();
-        services.AddSingleton<IBehaviorDocumentProvider, FallbackBehaviorProvider>();
         services.AddSingleton<BehaviorDocumentLoader>();
         services.AddSingleton<IBehaviorDocumentLoader>(sp => sp.GetRequiredService<BehaviorDocumentLoader>());
-
-        // Register seeded resource provider for lib-resource API exposure
-        // This enables behaviors to be discovered via /resource/seeded/list and /resource/seeded/get
-        services.AddSingleton<ISeededResourceProvider, BehaviorSeededResourceProvider>();
-
-        services.AddSingleton<IDocumentExecutorFactory, DocumentExecutorFactory>();
-
-        // Register actor runtime components as singletons (shared across service instances)
-        services.AddSingleton<IActorRegistry, ActorRegistry>();
-        services.AddSingleton<IActorRunnerFactory, ActorRunnerFactory>();
-
-        // Always register pool manager - required by ActorService constructor
-        // In bannou mode it's available but pool operations will be local-only
-        services.AddSingleton<IActorPoolManager, ActorPoolManager>();
 
         // Register all pool-related services unconditionally
         // Each service checks its own configuration in ExecuteAsync/Start and becomes a no-op
