@@ -10,6 +10,8 @@ using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
 using BeyondImmersion.BannouService.Behavior.Runtime;
 using BeyondImmersion.BannouService.Behavior.Tests.Runtime;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Numerics;
 using Xunit;
 
@@ -31,7 +33,7 @@ public sealed class StateSyncIntegrationTests : IDisposable
     {
         _stateRegistry = new EntityStateRegistry();
         _stateSync = new StateSync(_stateRegistry);
-        _controlGates = new ControlGateManager();
+        _controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         _compiler = new BehaviorCompiler();
     }
 

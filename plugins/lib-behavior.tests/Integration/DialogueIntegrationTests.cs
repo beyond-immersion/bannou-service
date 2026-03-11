@@ -6,6 +6,8 @@
 
 using BeyondImmersion.Bannou.Behavior.Dialogue;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Integration;
@@ -32,7 +34,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         });
         _loader.RegisterDirectory(_tempDir, priority: 0);
 
-        _resolver = new DialogueResolver(_loader);
+        _resolver = new DialogueResolver(_loader, NullLogger<DialogueResolver>.Instance, new NullTelemetryProvider());
     }
 
     public void Dispose()

@@ -5,6 +5,8 @@
 
 using BeyondImmersion.Bannou.Behavior.Dialogue;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -23,7 +25,7 @@ public sealed class DialogueResolverTests
     public DialogueResolverTests()
     {
         _loaderMock = new Mock<IExternalDialogueLoader>();
-        _resolver = new DialogueResolver(_loaderMock.Object);
+        _resolver = new DialogueResolver(_loaderMock.Object, NullLogger<DialogueResolver>.Instance, new NullTelemetryProvider());
         _englishLocale = LocalizationContext.English;
         _nullContext = NullDialogueExpressionContext.Instance;
     }

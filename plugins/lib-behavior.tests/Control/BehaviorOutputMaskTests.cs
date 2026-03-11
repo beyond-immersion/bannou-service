@@ -6,6 +6,8 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Control;
@@ -20,7 +22,7 @@ public sealed class BehaviorOutputMaskTests
 
     public BehaviorOutputMaskTests()
     {
-        _gates = new ControlGateManager();
+        _gates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         _mask = new BehaviorOutputMask(_gates);
     }
 

@@ -6,6 +6,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Stack;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Numerics;
 using Xunit;
 
@@ -21,7 +22,7 @@ public sealed class IntentStackMergerTests
 
     public IntentStackMergerTests()
     {
-        _merger = new IntentStackMerger();
+        _merger = new IntentStackMerger(NullLogger<IntentStackMerger>.Instance);
         var registry = new ArchetypeRegistry();
         _humanoidArchetype = registry.GetArchetype("humanoid")!;
     }

@@ -7,6 +7,8 @@
 using BeyondImmersion.Bannou.Behavior.Coordination;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Numerics;
 using Xunit;
 
@@ -23,8 +25,8 @@ public sealed class EntityLifecycleIntegrationTests
 
     public EntityLifecycleIntegrationTests()
     {
-        _resolver = new EntityResolver();
-        _controlGates = new ControlGateManager();
+        _resolver = new EntityResolver(NullLogger<EntityResolver>.Instance, new NullTelemetryProvider());
+        _controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
     }
 
     // =========================================================================

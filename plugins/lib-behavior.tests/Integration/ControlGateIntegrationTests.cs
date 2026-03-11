@@ -7,6 +7,8 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Integration;
@@ -21,7 +23,7 @@ public sealed class ControlGateIntegrationTests
 
     public ControlGateIntegrationTests()
     {
-        _registry = new ControlGateManager();
+        _registry = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
     }
 
     // =========================================================================

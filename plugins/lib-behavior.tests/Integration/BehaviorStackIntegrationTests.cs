@@ -7,6 +7,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Stack;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Integration;
@@ -26,7 +27,7 @@ public sealed class BehaviorStackIntegrationTests
         _archetypeRegistry = new ArchetypeRegistry();
         _humanoidArchetype = _archetypeRegistry.GetArchetype("humanoid")
             ?? throw new InvalidOperationException("Humanoid archetype not found");
-        _merger = new IntentStackMerger();
+        _merger = new IntentStackMerger(NullLogger<IntentStackMerger>.Instance);
     }
 
     // =========================================================================
@@ -174,7 +175,7 @@ public sealed class BehaviorStackIntegrationTests
     public void BehaviorStackRegistry_ManagesMultipleEntities()
     {
         // Arrange
-        var registry = new BehaviorStackRegistry(_merger);
+        var registry = new BehaviorStackRegistry(_merger, NullLoggerFactory.Instance);
         var entity1 = Guid.NewGuid();
         var entity2 = Guid.NewGuid();
         var entity3 = Guid.NewGuid();
@@ -195,7 +196,7 @@ public sealed class BehaviorStackIntegrationTests
     public void BehaviorStackRegistry_ReusesExistingStack()
     {
         // Arrange
-        var registry = new BehaviorStackRegistry(_merger);
+        var registry = new BehaviorStackRegistry(_merger, NullLoggerFactory.Instance);
         var entityId = Guid.NewGuid();
 
         // Act
@@ -211,7 +212,7 @@ public sealed class BehaviorStackIntegrationTests
     public void BehaviorStackRegistry_RemoveStack_CleansUp()
     {
         // Arrange
-        var registry = new BehaviorStackRegistry(_merger);
+        var registry = new BehaviorStackRegistry(_merger, NullLoggerFactory.Instance);
         var entityId = Guid.NewGuid();
 
         registry.GetOrCreate(entityId, _humanoidArchetype);
@@ -233,7 +234,7 @@ public sealed class BehaviorStackIntegrationTests
     public async Task MultipleEntities_IndependentStacks_EvaluateCorrectly()
     {
         // Arrange
-        var registry = new BehaviorStackRegistry(_merger);
+        var registry = new BehaviorStackRegistry(_merger, NullLoggerFactory.Instance);
 
         var guard = Guid.NewGuid();
         var merchant = Guid.NewGuid();

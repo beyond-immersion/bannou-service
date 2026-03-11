@@ -9,6 +9,8 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
 using BeyondImmersion.BannouService.Behavior.Runtime;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Runtime;
@@ -38,7 +40,7 @@ public sealed class CinematicRunnerTests
     private CinematicRunner CreateController(BehaviorModel model)
     {
         var interpreter = new CinematicInterpreter(model);
-        var controlGates = new ControlGateManager();
+        var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
         return new CinematicRunner(interpreter, controlGates, stateSync);
     }
@@ -62,7 +64,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        var controlGates = new ControlGateManager();
+        var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
         using var controller = CreateController(model, controlGates, stateSync);
 
@@ -93,7 +95,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        var controlGates = new ControlGateManager();
+        var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
         using var controller = CreateController(model, controlGates, stateSync);
 
@@ -214,7 +216,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        var controlGates = new ControlGateManager();
+        var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
         using var controller = CreateController(model, controlGates, stateSync);
 
@@ -266,7 +268,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        var controlGates = new ControlGateManager();
+        var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
         using var controller = CreateController(model, controlGates, stateSync);
 
@@ -324,7 +326,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        var controlGates = new ControlGateManager();
+        var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
         using var controller = CreateController(model, controlGates, stateSync);
 
@@ -432,7 +434,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        var controlGates = new ControlGateManager();
+        var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
         var controller = CreateController(model, controlGates, stateSync);
 
@@ -473,7 +475,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        var controlGates = new ControlGateManager();
+        var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
         using var controller = CreateController(model, controlGates, stateSync);
 
@@ -501,7 +503,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        var controlGates = new ControlGateManager();
+        var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
         using var controller = CreateController(model, controlGates, stateSync);
 
@@ -531,7 +533,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        var controlGates = new ControlGateManager();
+        var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
         using var controller = CreateController(model, controlGates, stateSync);
 

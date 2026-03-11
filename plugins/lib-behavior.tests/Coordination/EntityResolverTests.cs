@@ -5,6 +5,8 @@
 
 using BeyondImmersion.Bannou.Behavior.Coordination;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Numerics;
 using Xunit;
 
@@ -15,7 +17,7 @@ namespace BeyondImmersion.BannouService.Behavior.Tests.Coordination;
 /// </summary>
 public sealed class EntityResolverTests
 {
-    private readonly EntityResolver _resolver = new();
+    private readonly EntityResolver _resolver = new(NullLogger<EntityResolver>.Instance, new NullTelemetryProvider());
 
     // =========================================================================
     // PARTICIPANT RESOLUTION TESTS

@@ -6,6 +6,8 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Control;
@@ -248,7 +250,7 @@ public class ControlGateManagerTests
     public void GetOrCreate_NewEntity_CreatesGate()
     {
         // Arrange
-        var manager = new ControlGateManager();
+        var manager = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var entityId = Guid.NewGuid();
 
         // Act
@@ -264,7 +266,7 @@ public class ControlGateManagerTests
     public void GetOrCreate_SameEntity_ReturnsSameGate()
     {
         // Arrange
-        var manager = new ControlGateManager();
+        var manager = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var entityId = Guid.NewGuid();
 
         // Act
@@ -279,7 +281,7 @@ public class ControlGateManagerTests
     public void Get_NonExistent_ReturnsNull()
     {
         // Arrange
-        var manager = new ControlGateManager();
+        var manager = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
 
         // Act
         var gate = manager.Get(Guid.NewGuid());
@@ -292,7 +294,7 @@ public class ControlGateManagerTests
     public void Remove_Existing_ReturnsTrue()
     {
         // Arrange
-        var manager = new ControlGateManager();
+        var manager = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var entityId = Guid.NewGuid();
         manager.GetOrCreate(entityId);
 
@@ -308,7 +310,7 @@ public class ControlGateManagerTests
     public void Remove_NonExistent_ReturnsFalse()
     {
         // Arrange
-        var manager = new ControlGateManager();
+        var manager = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
 
         // Act
         var removed = manager.Remove(Guid.NewGuid());
@@ -325,7 +327,7 @@ public class ControlGateManagerTests
     public async Task TakeCinematicControl_MultipleEntities_Success()
     {
         // Arrange
-        var manager = new ControlGateManager();
+        var manager = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var entities = new[] { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
 
         // Act
@@ -345,7 +347,7 @@ public class ControlGateManagerTests
     public async Task ReturnCinematicControl_MultipleEntities_Success()
     {
         // Arrange
-        var manager = new ControlGateManager();
+        var manager = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var entities = new[] { Guid.NewGuid(), Guid.NewGuid() };
         await manager.TakeCinematicControlAsync(entities, "test-cinematic");
 
@@ -369,7 +371,7 @@ public class ControlGateManagerTests
     public async Task GetCinematicControlledEntities_ReturnsCorrect()
     {
         // Arrange
-        var manager = new ControlGateManager();
+        var manager = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var cinematicEntity = Guid.NewGuid();
         var behaviorEntity = Guid.NewGuid();
 
@@ -390,7 +392,7 @@ public class ControlGateManagerTests
     public async Task GetPlayerControlledEntities_ReturnsCorrect()
     {
         // Arrange
-        var manager = new ControlGateManager();
+        var manager = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var playerEntity = Guid.NewGuid();
         var behaviorEntity = Guid.NewGuid();
 

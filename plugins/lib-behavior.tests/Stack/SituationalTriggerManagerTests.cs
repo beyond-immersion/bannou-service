@@ -4,6 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.BannouService.Behavior.Stack;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Stack;
@@ -17,7 +18,7 @@ public sealed class SituationalTriggerManagerTests
 
     public SituationalTriggerManagerTests()
     {
-        _manager = new SituationalTriggerManager();
+        _manager = new SituationalTriggerManager(NullLogger<SituationalTriggerManager>.Instance);
     }
 
     // =========================================================================

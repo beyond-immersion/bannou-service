@@ -5,6 +5,8 @@
 
 using BeyondImmersion.Bannou.Behavior.Dialogue;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Dialogue;
@@ -27,7 +29,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
         {
             DefaultLocale = "en",
             LogMissingKeys = false
-        });
+        }, NullLogger<FileLocalizationProvider>.Instance, new NullTelemetryProvider());
     }
 
     public void Dispose()

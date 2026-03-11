@@ -7,6 +7,8 @@
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
 using BeyondImmersion.BannouService.Behavior.Coordination;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Integration;
@@ -27,7 +29,7 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
             Guid.NewGuid(),
             Guid.NewGuid()
         };
-        _gateManager = new ControlGateManager();
+        _gateManager = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
     }
 
     public void Dispose()
