@@ -172,7 +172,7 @@ State Store Key Relationships
 
 8. **ScenarioAvailableEvent**: The topic constant exists (`StorylinePublishedTopics.ScenarioAvailable`) and the event schema is defined, but no code path currently publishes it. It would be emitted by a background process detecting newly available scenarios.
 
-9. **CleanDeprecatedScenarioDefinitionsAsync** (`POST /storyline/scenario/clean-deprecated`): Schema-defined and generated (controller + interface) but service implementation throws `NotImplementedException`. Sweeps deprecated scenario definitions with zero remaining storyline instances. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) / `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds) from `common-api.yaml`. Permissions: `[role: admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
+9. **CleanDeprecatedScenarioDefinitionsAsync** (`POST /storyline/scenario/clean-deprecated`): Implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` — queries deprecated definitions, checks for active executions, deletes eligible entities, publishes `storyline.scenario-definition.deleted` lifecycle event. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. Permissions: `[role: admin]`.
 
 ---
 
@@ -256,13 +256,36 @@ Scenario definitions are **Category B entities** — scenario executions referen
 
 7. **Mutation failure does not fail trigger**: If an individual mutation fails (e.g., character-personality service unavailable), the trigger still succeeds with `Success = false` on that mutation. No compensation or rollback is performed for previously applied mutations. This may be intentional (best-effort mutations) but means scenarios can complete with partial state changes.
 
+8. **Guid.Empty sentinel for RealmId (T26 violation)**: In `StorylineService.cs` line 233, `ComposeAsync` uses `RealmId = realmId ?? body.Constraints?.RealmId ?? Guid.Empty` to provide a realm to the SDK's `StoryContext`. T26 (IMPLEMENTATION TENETS) forbids sentinel values — `Guid.Empty` should never represent "no realm." Options: (a) Make the SDK's `StoryContext.RealmId` nullable (`Guid?`) and pass null when no realm is available. (b) Reject composition requests with no realm by returning `BadRequest`. The correct fix depends on whether the storyline-storyteller SDK can operate without a realm context.
+
+9. **Multi-service compensation in TriggerScenarioAsync (T7 concern)**: `TriggerScenarioAsync` applies mutations via inter-service calls (CharacterPersonality, CharacterHistory, Relationship) and spawns quests. If a mutation partially fails (e.g., CharacterPersonality service unavailable), the trigger still completes — individual mutation successes/failures are reported in the response but no compensation or rollback occurs for previously applied mutations. T7 requires documented compensation or self-healing for multi-service orchestration. Options: (a) Document that mutations are intentionally best-effort and independent (no compensation needed because each mutation is idempotent and standalone). (b) Implement compensation logic that rolls back successful mutations if later ones fail. Decision needed: are scenario mutations truly independent?
+
+10. **additionalProperties: true on worldState, constraints, and additionalParticipants (T29 audit)**: Three schema properties use `additionalProperties: true` where the Storyline service reads keys by convention: `FindAvailableScenariosRequest.worldState`, `TestScenarioRequest.worldState`, `TriggerScenarioRequest.worldState` (service reads keys to match against `TriggerCondition.worldStateKey`/`worldStateValue`), `EntityRequirement.constraints` (service may read keys to evaluate entity selection), and `TriggerScenarioRequest.additionalParticipants` (service reads keys to match participants to scenario mutation roles). T29 states "additionalProperties: true is NEVER a data contract between services." However, the FOUNDATION TENETS list two legitimate uses: client-only opaque passthrough and genuinely dynamic metadata. These cases are arguably the latter — the keys come from scenario definitions created by game developers, not from hardcoded cross-service conventions. Decision needed: are these legitimate dynamic-key patterns, or should they be restructured (e.g., `additionalParticipants` as an array of `{roleName: string, characterId: uuid}` objects)?
+
 ---
 
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
+### Active
+
+- **#385** — Archive-to-Storyline Content Flywheel: Pipeline gaps (entity spawning, link extraction, resource.compressed subscription) remain unimplemented
+- **#440** — Scenario design open questions: Basic CRUD implemented, but versioning, multi-character coordination, and participant reservation questions remain relevant for Phase 2
+
 ### Completed
+
+- **Lifecycle event coverage & hardening (2026-03-11)** — Missing lifecycle events and tenet compliance fixes:
+  - `CreateScenarioDefinitionAsync` now publishes `storyline.scenario-definition.created` via generated `PublishScenarioDefinitionCreatedAsync`
+  - `UpdateScenarioDefinitionAsync` now publishes `storyline.scenario-definition.updated` via generated `PublishScenarioDefinitionUpdatedAsync` with `changedFields`
+  - `CleanDeprecatedScenarioDefinitionsAsync` implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`
+  - Constructor now wires `IEventConsumer` via `RegisterEventConsumers`
+  - All `TryPublishAsync` calls replaced with generated typed publishers
+  - Null-forgiving operators removed from `ComputeCacheKey`
+  - `?? string.Empty` replaced with validation in backstory mutation path
+  - Unnecessary `ApiException` catch removed from `GetCompressDataAsync`
+  - Schema: NRT Rule 4 fixes, inline `RiskSeverity` enum extracted, `$ref` format fixed, `operationId` PascalCase, `maxLength`/`minimum` validation constraints added
+  - Key builder format stability tests added (7 tests)
 
 - **Hardening pass (2026-03-09)** - Comprehensive tenet compliance audit and fixes:
  - Removed `Found` boolean from `GetPlanResponse` and `GetScenarioDefinitionResponse`; `GetPlanAsync` returns `NotFound` on miss

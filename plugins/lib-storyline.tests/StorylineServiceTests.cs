@@ -326,14 +326,14 @@ public class StorylineServiceTests
 
     #endregion
 
-    #region StorylineRiskSeverity Tests
+    #region RiskSeverity Tests
 
     [Fact]
-    public void StorylineRiskSeverity_HasExpectedValues()
+    public void RiskSeverity_HasExpectedValues()
     {
-        Assert.True(Enum.IsDefined(typeof(StorylineRiskSeverity), StorylineRiskSeverity.Low));
-        Assert.True(Enum.IsDefined(typeof(StorylineRiskSeverity), StorylineRiskSeverity.Medium));
-        Assert.True(Enum.IsDefined(typeof(StorylineRiskSeverity), StorylineRiskSeverity.High));
+        Assert.True(Enum.IsDefined(typeof(RiskSeverity), RiskSeverity.Low));
+        Assert.True(Enum.IsDefined(typeof(RiskSeverity), RiskSeverity.Medium));
+        Assert.True(Enum.IsDefined(typeof(RiskSeverity), RiskSeverity.High));
     }
 
     #endregion
@@ -757,12 +757,12 @@ public class StorylineRiskTests
         {
             RiskType = "thin_content",
             Description = "Plan has very few actions",
-            Severity = StorylineRiskSeverity.Medium,
+            Severity = RiskSeverity.Medium,
             Mitigation = "Add more intermediate actions"
         };
 
         Assert.Equal("thin_content", risk.RiskType);
-        Assert.Equal(StorylineRiskSeverity.Medium, risk.Severity);
+        Assert.Equal(RiskSeverity.Medium, risk.Severity);
         Assert.NotNull(risk.Mitigation);
     }
 
@@ -773,7 +773,7 @@ public class StorylineRiskTests
         {
             RiskType = "test",
             Description = "Test risk",
-            Severity = StorylineRiskSeverity.Low
+            Severity = RiskSeverity.Low
         };
 
         // Mitigation should be nullable
@@ -829,6 +829,7 @@ public class StorylineDeprecationTests : ServiceTestBase<StorylineServiceConfigu
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<ILogger<StorylineService>> _mockLogger;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     // State stores
     private readonly Mock<IStateStore<CachedPlan>> _mockPlanStore;
@@ -850,6 +851,7 @@ public class StorylineDeprecationTests : ServiceTestBase<StorylineServiceConfigu
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockLogger = new Mock<ILogger<StorylineService>>();
         _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         _mockPlanStore = new Mock<IStateStore<CachedPlan>>();
         _mockPlanIndexStore = new Mock<ICacheableStateStore<PlanIndexEntry>>();
@@ -887,7 +889,8 @@ public class StorylineDeprecationTests : ServiceTestBase<StorylineServiceConfigu
             _mockLockProvider.Object,
             _mockTelemetryProvider.Object,
             _mockLogger.Object,
-            Configuration);
+            Configuration,
+            _mockEventConsumer.Object);
     }
 
     private static ScenarioDefinitionModel CreateTestScenarioModel(Guid scenarioId, bool isDeprecated = false)
@@ -1042,5 +1045,64 @@ public class StorylineLinkTests
         Assert.Equal("protagonist", link.SourceRole);
         Assert.Equal("antagonist", link.TargetRole);
         Assert.Equal("opposes", link.LinkType);
+    }
+}
+
+/// <summary>
+/// Tests for key builder format stability.
+/// Key formats are critical because they determine state store key patterns.
+/// </summary>
+public class KeyBuilderTests
+{
+    private static readonly Guid TestId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid TestId2 = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
+    [Fact]
+    public void BuildPlanKey_ReturnsGuidString()
+    {
+        var key = StorylineService.BuildPlanKey(TestId);
+        Assert.Equal("11111111-1111-1111-1111-111111111111", key);
+    }
+
+    [Fact]
+    public void BuildPlanIndexKey_ReturnsRealmPrefixedKey()
+    {
+        var key = StorylineService.BuildPlanIndexKey(TestId);
+        Assert.Equal("realm:11111111-1111-1111-1111-111111111111", key);
+    }
+
+    [Fact]
+    public void BuildScenarioDefinitionKey_ReturnsGuidString()
+    {
+        var key = StorylineService.BuildScenarioDefinitionKey(TestId);
+        Assert.Equal("11111111-1111-1111-1111-111111111111", key);
+    }
+
+    [Fact]
+    public void BuildExecutionKey_ReturnsGuidString()
+    {
+        var key = StorylineService.BuildExecutionKey(TestId);
+        Assert.Equal("11111111-1111-1111-1111-111111111111", key);
+    }
+
+    [Fact]
+    public void BuildCooldownKey_ReturnsPrefixedCompositeKey()
+    {
+        var key = StorylineService.BuildCooldownKey(TestId, TestId2);
+        Assert.Equal("cooldown:11111111-1111-1111-1111-111111111111:22222222-2222-2222-2222-222222222222", key);
+    }
+
+    [Fact]
+    public void BuildActiveKey_ReturnsPrefixedKey()
+    {
+        var key = StorylineService.BuildActiveKey(TestId);
+        Assert.Equal("active:11111111-1111-1111-1111-111111111111", key);
+    }
+
+    [Fact]
+    public void BuildLockResource_ReturnsPrefixedCompositeKey()
+    {
+        var key = StorylineService.BuildLockResource(TestId, TestId2);
+        Assert.Equal("lock:11111111-1111-1111-1111-111111111111:22222222-2222-2222-2222-222222222222", key);
     }
 }

@@ -89,6 +89,7 @@ components:
         - goal
         - arcType
         - confidence
+        - cached
         - composedAt
       properties:
         eventName:
@@ -194,6 +195,7 @@ components:
           description: ID of the scenario definition being executed
         scenarioCode:
           type: string
+          maxLength: 100
           description: Human-readable code of the scenario definition
         primaryCharacterId:
           type: string
@@ -250,6 +252,8 @@ components:
         - primaryCharacterId
         - phaseIndex
         - phaseName
+        - totalPhases
+        - isLastPhase
         - completedAt
       properties:
         eventName:
@@ -274,6 +278,7 @@ components:
           description: Zero-based index of the completed phase
         phaseName:
           type: string
+          maxLength: 200
           description: Name of the completed phase
         totalPhases:
           type: integer
@@ -326,6 +331,7 @@ components:
           description: ID of the scenario definition that was executed
         scenarioCode:
           type: string
+          maxLength: 100
           description: Human-readable code of the scenario definition
         primaryCharacterId:
           type: string
@@ -416,6 +422,7 @@ components:
           description: ID of the scenario definition that failed
         scenarioCode:
           type: string
+          maxLength: 100
           description: Human-readable code of the scenario definition
         primaryCharacterId:
           type: string
@@ -438,6 +445,7 @@ components:
           description: Game service context for this scenario execution
         failureReason:
           type: string
+          maxLength: 1000
           description: Human-readable description of why the scenario failed
         failedAtPhase:
           type: integer
@@ -445,6 +453,7 @@ components:
           description: Phase index where failure occurred (if during phase execution)
         failedAtPhaseName:
           type: string
+          maxLength: 200
           nullable: true
           description: Name of phase where failure occurred
         partialMutationsApplied:

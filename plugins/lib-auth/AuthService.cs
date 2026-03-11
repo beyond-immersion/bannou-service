@@ -21,7 +21,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// Follows schema-first architecture - implements generated IAuthService interface.
 /// </summary>
 [BannouService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFoundation)]
-public partial class AuthService : IAuthService
+public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
 {
     private readonly IAccountClient _accountClient;
     private readonly IMessageBus _messageBus;

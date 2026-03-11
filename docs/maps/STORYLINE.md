@@ -15,7 +15,7 @@
 | Layer | L4 GameFeatures |
 | Endpoints | 16 |
 | State Stores | storyline-plans (Redis), storyline-plan-index (Redis), storyline-scenario-definitions (MySQL), storyline-scenario-executions (MySQL), storyline-scenario-cache (Redis), storyline-scenario-cooldown (Redis), storyline-scenario-active (Redis), storyline-scenario-idempotency (Redis), storyline-lock (Redis) |
-| Events Published | 3 actually published (storyline.plan.composed, storyline.scenario.triggered, storyline.scenario.completed); 6 additional defined in schema but not yet published (storyline.scenario-definition.created, storyline.scenario-definition.updated, storyline.scenario-definition.deleted, storyline.scenario.phase-completed, storyline.scenario.failed, storyline.scenario.available) |
+| Events Published | 6 actually published (storyline.plan.composed, storyline.scenario.triggered, storyline.scenario.completed, storyline.scenario-definition.created, storyline.scenario-definition.updated, storyline.scenario-definition.deleted); 3 additional defined in schema but not yet published (storyline.scenario.phase-completed, storyline.scenario.failed, storyline.scenario.available) |
 | Events Consumed | 0 |
 | Client Events | 0 |
 | Background Services | 0 |
@@ -111,10 +111,11 @@
 | `storyline.scenario.triggered` | `ScenarioTriggeredEvent` | TriggerScenario -- after execution record created, includes executionId, scenarioId, characterId, participants, phase count |
 | `storyline.scenario.completed` | `ScenarioCompletedEvent` | TriggerScenario -- after all mutations applied and quests spawned, includes mutation/quest counts, duration, quest IDs |
 
+| `storyline.scenario-definition.created` | `ScenarioDefinitionCreatedEvent` | CreateScenarioDefinition -- after saving to MySQL and cache, includes all definition fields |
+| `storyline.scenario-definition.updated` | `ScenarioDefinitionUpdatedEvent` | UpdateScenarioDefinition -- after saving updated fields, includes changedFields list. Also published by DeprecateScenarioDefinition |
+| `storyline.scenario-definition.deleted` | `ScenarioDefinitionDeletedEvent` | CleanDeprecatedScenarioDefinitions -- published for each entity cleaned during deprecation sweep |
+
 **Defined in schema but NOT currently published**:
-- `storyline.scenario-definition.created` -- CreateScenarioDefinition does not publish this event
-- `storyline.scenario-definition.updated` -- UpdateScenarioDefinition does not publish this event; DeprecateScenarioDefinition publishes with changedFields
-- `storyline.scenario-definition.deleted` -- Category B infrastructure, never published by design
 - `storyline.scenario.phase-completed` -- Multi-phase execution not yet implemented
 - `storyline.scenario.failed` -- Failure path not yet implemented (current trigger completes atomically)
 - `storyline.scenario.available` -- Discovery notification not yet implemented
@@ -142,6 +143,7 @@ This plugin does not consume external events.
 | `ITelemetryProvider` | Telemetry spans on async helper methods |
 | `ILogger<StorylineService>` | Structured logging |
 | `StorylineServiceConfiguration` | All configurable thresholds, TTLs, fit score weights, cooldown defaults |
+| `IEventConsumer` | Event consumer registration via `RegisterEventConsumers` |
 
 ---
 
@@ -154,10 +156,10 @@ This plugin does not consume external events.
 | Compose | POST /storyline/compose | generated | [developer] | plan, plan-index | storyline.plan.composed |
 | GetPlan | POST /storyline/plan/get | generated | [developer] | - | - |
 | ListPlans | POST /storyline/plan/list | generated | [developer] | - | - |
-| CreateScenarioDefinition | POST /storyline/scenario/create | generated | [developer] | scenario-definition, scenario-cache | - |
+| CreateScenarioDefinition | POST /storyline/scenario/create | generated | [developer] | scenario-definition, scenario-cache | storyline.scenario-definition.created |
 | GetScenarioDefinition | POST /storyline/scenario/get | generated | [user] | scenario-cache (write-through) | - |
 | ListScenarioDefinitions | POST /storyline/scenario/list | generated | [user] | - | - |
-| UpdateScenarioDefinition | POST /storyline/scenario/update | generated | [developer] | scenario-definition, scenario-cache | - |
+| UpdateScenarioDefinition | POST /storyline/scenario/update | generated | [developer] | scenario-definition, scenario-cache | storyline.scenario-definition.updated |
 | DeprecateScenarioDefinition | POST /storyline/scenario/deprecate | generated | [developer] | scenario-definition, scenario-cache | storyline.scenario-definition.updated |
 | FindAvailableScenarios | POST /storyline/scenario/find-available | generated | [] | - | - |
 | TestScenarioTrigger | POST /storyline/scenario/test | generated | [developer] | - | - |
@@ -166,7 +168,7 @@ This plugin does not consume external events.
 | GetActiveScenarios | POST /storyline/scenario/get-active | generated | [user] | - | - |
 | GetScenarioHistory | POST /storyline/scenario/get-history | generated | [user] | - | - |
 | GetCompressData | POST /storyline/get-compress-data | generated | [] | - | - |
-| CleanDeprecatedScenarioDefinitions | POST /storyline/scenario/clean-deprecated | generated | [admin] | scenario-definition | *(unimplemented)* |
+| CleanDeprecatedScenarioDefinitions | POST /storyline/scenario/clean-deprecated | generated | [admin] | scenario-definition, scenario-cache | storyline.scenario-definition.deleted |
 
 ---
 
@@ -294,7 +296,8 @@ etag = NewGuid()
 WRITE _scenarioDefinitionStore:{scenarioId} <- ScenarioDefinitionModel
 WRITE _scenarioCacheStore:{scenarioId} <- ScenarioDefinitionModel [with TTL = config.ScenarioDefinitionCacheTtlSeconds]
 
-// NOTE: storyline.scenario-definition.created event is NOT published (schema defines it but implementation omits)
+// Publish lifecycle event via generated typed publisher
+PUBLISH storyline.scenario-definition.created (ScenarioDefinitionCreatedEvent with all definition fields)
 
 RETURN (200, ScenarioDefinition)
 ```
@@ -365,7 +368,9 @@ WRITE _scenarioDefinitionStore:{scenarioId} <- updated model
 DELETE _scenarioCacheStore:{scenarioId}
 WRITE _scenarioCacheStore:{scenarioId} <- updated model [with TTL = config.ScenarioDefinitionCacheTtlSeconds]
 
-// NOTE: storyline.scenario-definition.updated event is NOT published
+// Build changedFields list from non-null request fields
+changedFields = [field names where request property was non-null]
+PUBLISH storyline.scenario-definition.updated (ScenarioDefinitionUpdatedEvent with all fields + changedFields)
 
 RETURN (200, ScenarioDefinition)
 ```
@@ -619,11 +624,27 @@ RETURN (200, StorylineArchive { resourceId=characterId, resourceType="storyline"
 POST /storyline/scenario/clean-deprecated | Roles: [admin]
 
 ```
-// UNIMPLEMENTED — throws NotImplementedException
-// Should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
-// Sweeps deprecated scenario definitions with zero remaining storyline instances
-// Uses shared CleanDeprecatedRequest (gracePeriodDays, dryRun)
-// Returns shared CleanDeprecatedResponse (cleaned, remaining, errors, cleanedIds)
+QUERY _scenarioDefinitionStore WHERE IsDeprecated == true
+IF count == 0
+  RETURN (200, CleanDeprecatedResponse { cleaned=0, remaining=0, errors=0, cleanedIds=[] })
+
+// Delegate to shared helper per IMPLEMENTATION TENETS (Category B, B20)
+result = DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+  deprecatedDefinitions,
+  getEntityId: d => d.ScenarioId,
+  getDeprecatedAt: d => d.DeprecatedAt,
+  hasActiveInstancesAsync: (d, ct) =>
+    QUERY _scenarioExecutionStore WHERE ScenarioId == d.ScenarioId AND Status == Active
+    RETURN count > 0,
+  deleteAndPublishAsync: (d, ct) =>
+    DELETE _scenarioDefinitionStore:{scenarioId}
+    DELETE _scenarioCacheStore:{scenarioId}
+    PUBLISH storyline.scenario-definition.deleted (ScenarioDefinitionDeletedEvent with all fields + deleteReason),
+  gracePeriodDays: body.GracePeriodDays,
+  dryRun: body.DryRun
+)
+
+RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ```
 
 ---

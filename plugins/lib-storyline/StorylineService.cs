@@ -108,7 +108,8 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
         IDistributedLockProvider lockProvider,
         ITelemetryProvider telemetryProvider,
         ILogger<StorylineService> logger,
-        StorylineServiceConfiguration configuration)
+        StorylineServiceConfiguration configuration,
+        IEventConsumer eventConsumer)
     {
         // Null checks with ArgumentNullException - per IMPLEMENTATION TENETS
         ArgumentNullException.ThrowIfNull(messageBus);
@@ -120,6 +121,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
         ArgumentNullException.ThrowIfNull(telemetryProvider);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(eventConsumer);
 
         _messageBus = messageBus;
         _resourceClient = resourceClient;
@@ -145,6 +147,8 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
 
         // SDK instantiation - pure computation, no DI needed
         _composer = new StorylineComposer();
+
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>
@@ -477,6 +481,26 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             new StateOptions { Ttl = cacheTtl },
             cancellationToken);
 
+        // Publish lifecycle created event per FOUNDATION TENETS
+        await _messageBus.PublishScenarioDefinitionCreatedAsync(new ScenarioDefinitionCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            ScenarioId = scenarioId,
+            Code = normalizedCode,
+            Name = body.Name,
+            Description = body.Description,
+            Priority = body.Priority,
+            Enabled = body.Enabled,
+            RealmId = body.RealmId,
+            GameServiceId = body.GameServiceId,
+            IsDeprecated = false,
+            DeprecatedAt = null,
+            DeprecationReason = null,
+            CreatedAt = now,
+            UpdatedAt = now
+        }, cancellationToken);
+
         // Build response
         var response = BuildScenarioDefinitionResponse(model);
 
@@ -656,13 +680,48 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             new StateOptions { Ttl = _configuration.ScenarioDefinitionCacheTtlSeconds },
             cancellationToken);
 
+        // Build changedFields list from non-null request fields
+        var changedFields = new List<string>();
+        if (body.Name is not null) changedFields.Add("name");
+        if (body.Description is not null) changedFields.Add("description");
+        if (body.TriggerConditions is not null) changedFields.Add("triggerConditions");
+        if (body.Phases is not null) changedFields.Add("phases");
+        if (body.Mutations is not null) changedFields.Add("mutations");
+        if (body.QuestHooks is not null) changedFields.Add("questHooks");
+        if (body.CooldownSeconds.HasValue) changedFields.Add("cooldownSeconds");
+        if (body.ExclusivityTags is not null) changedFields.Add("exclusivityTags");
+        if (body.Priority.HasValue) changedFields.Add("priority");
+        if (body.Enabled.HasValue) changedFields.Add("enabled");
+        if (body.Tags is not null) changedFields.Add("tags");
+
+        // Publish lifecycle updated event per FOUNDATION TENETS
+        await _messageBus.PublishScenarioDefinitionUpdatedAsync(new ScenarioDefinitionUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = existing.UpdatedAt ?? DateTimeOffset.UtcNow,
+            ScenarioId = body.ScenarioId,
+            Code = existing.Code,
+            Name = existing.Name,
+            Description = existing.Description,
+            Priority = existing.Priority,
+            Enabled = existing.Enabled,
+            RealmId = existing.RealmId,
+            GameServiceId = existing.GameServiceId,
+            IsDeprecated = existing.IsDeprecated,
+            DeprecatedAt = existing.DeprecatedAt,
+            DeprecationReason = existing.DeprecationReason,
+            CreatedAt = existing.CreatedAt,
+            UpdatedAt = existing.UpdatedAt ?? existing.CreatedAt,
+            ChangedFields = changedFields
+        }, cancellationToken);
+
         var response = BuildScenarioDefinitionResponse(existing);
         _logger.LogInformation("Updated scenario definition {ScenarioId}", body.ScenarioId);
         return (StatusCodes.OK, response);
     }
 
     /// <summary>
-    /// Soft-deletes a scenario definition.
+    /// Deprecates a scenario definition per Category B deprecation lifecycle.
     /// </summary>
     public async Task<(StatusCodes, ScenarioDefinition?)> DeprecateScenarioDefinitionAsync(
         DeprecateScenarioDefinitionRequest body,
@@ -1085,8 +1144,8 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
                 cancellationToken);
         }
 
-        // Publish triggered event
-        await _messageBus.TryPublishAsync(StorylinePublishedTopics.ScenarioTriggered, new ScenarioTriggeredEvent
+        // Publish triggered event via generated typed publisher per FOUNDATION TENETS
+        await _messageBus.PublishScenarioTriggeredAsync(new ScenarioTriggeredEvent
         {
             ExecutionId = executionId,
             ScenarioId = body.ScenarioId,
@@ -1099,7 +1158,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             FitScore = null,
             PhaseCount = phases.Count,
             TriggeredAt = now
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         // Apply mutations (Phase 1: all mutations applied immediately)
         var appliedMutations = new List<AppliedMutation>();
@@ -1156,8 +1215,8 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
 
         stopwatch.Stop();
 
-        // Publish completed event
-        await _messageBus.TryPublishAsync(StorylinePublishedTopics.ScenarioCompleted, new ScenarioCompletedEvent
+        // Publish completed event via generated typed publisher per FOUNDATION TENETS
+        await _messageBus.PublishScenarioCompletedAsync(new ScenarioCompletedEvent
         {
             ExecutionId = executionId,
             ScenarioId = body.ScenarioId,
@@ -1174,7 +1233,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             DurationMs = (int)stopwatch.ElapsedMilliseconds,
             StartedAt = now,
             CompletedAt = execution.CompletedAt.Value
-        }, cancellationToken: cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation("Completed scenario {ScenarioId} execution {ExecutionId} in {DurationMs}ms",
             body.ScenarioId, executionId, stopwatch.ElapsedMilliseconds);
@@ -1284,12 +1343,12 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
         // Use seed + goal + sorted archive/snapshot IDs for cache key
         var archiveIds = body.SeedSources
             .Where(s => s.ArchiveId.HasValue)
-            .Select(s => s.ArchiveId!.Value.ToString())
+            .Select(s => s.ArchiveId.GetValueOrDefault().ToString())
             .OrderBy(x => x);
 
         var snapshotIds = body.SeedSources
             .Where(s => s.SnapshotId.HasValue)
-            .Select(s => s.SnapshotId!.Value.ToString())
+            .Select(s => s.SnapshotId.GetValueOrDefault().ToString())
             .OrderBy(x => x);
 
         var keyParts = new List<string>
@@ -1715,7 +1774,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             {
                 RiskType = "thin_content",
                 Description = "Plan has very few actions, story may feel rushed",
-                Severity = StorylineRiskSeverity.Medium,
+                Severity = RiskSeverity.Medium,
                 Mitigation = "Consider adding more intermediate actions"
             };
         }
@@ -1727,7 +1786,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             {
                 RiskType = "missing_obligatory_scenes",
                 Description = "No core events identified, story may lack genre satisfaction",
-                Severity = StorylineRiskSeverity.High,
+                Severity = RiskSeverity.High,
                 Mitigation = "Verify genre-required scenes are present"
             };
         }
@@ -1739,7 +1798,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             {
                 RiskType = "flat_arc",
                 Description = "Plan has only one phase, limiting emotional range",
-                Severity = StorylineRiskSeverity.Low,
+                Severity = RiskSeverity.Low,
                 Mitigation = "Consider extending story across multiple phases"
             };
         }
@@ -1797,10 +1856,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             ComposedAt = DateTimeOffset.UtcNow
         };
 
-        await _messageBus.TryPublishAsync(
-            StorylinePublishedTopics.StorylinePlanComposed,
-            composedEvent,
-            cancellationToken: cancellationToken);
+        await _messageBus.PublishStorylinePlanComposedAsync(composedEvent, cancellationToken);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2178,9 +2234,9 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
                             return (false, "Character history service unavailable");
                         }
 
-                        if (!mutation.BackstoryElementType.HasValue || string.IsNullOrEmpty(mutation.BackstoryKey))
+                        if (!mutation.BackstoryElementType.HasValue || string.IsNullOrEmpty(mutation.BackstoryKey) || string.IsNullOrEmpty(mutation.BackstoryValue))
                         {
-                            return (false, "Missing backstory element type or key");
+                            return (false, "Missing backstory element type, key, or value");
                         }
 
                         // Map Storyline enum to CharacterHistory enum at service boundary
@@ -2197,7 +2253,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
                                     {
                                         ElementType = elementType,
                                         Key = mutation.BackstoryKey,
-                                        Value = mutation.BackstoryValue ?? string.Empty,
+                                        Value = mutation.BackstoryValue,
                                         Strength = mutation.BackstoryStrength ?? 0.5f
                                     }
                                 }, cancellationToken);
@@ -2447,83 +2503,75 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
     {
         _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
 
-        try
+        // Query all scenario executions for this character
+        var allExecutions = await _scenarioExecutionStore.QueryAsync(
+            e => e.PrimaryCharacterId == body.CharacterId,
+            cancellationToken);
+
+        var characterExecutions = allExecutions
+            .OrderByDescending(e => e.TriggeredAt)
+            .ToList();
+
+        // Get active scenarios from Redis set
+        var activeKey = BuildActiveKey(body.CharacterId);
+        var activeMembers = await _scenarioActiveStore.GetSetAsync<ActiveScenarioEntry>(activeKey, cancellationToken);
+        var activeScenarioCodes = activeMembers.Select(a => a.ScenarioCode).ToHashSet();
+
+        // Build participation entries from executions
+        var participations = new List<StorylineParticipation>();
+        var completedCount = 0;
+
+        foreach (var execution in characterExecutions)
         {
-            // Query all scenario executions for this character
-            var allExecutions = await _scenarioExecutionStore.QueryAsync(
-                e => e.PrimaryCharacterId == body.CharacterId,
-                cancellationToken);
-
-            var characterExecutions = allExecutions
-                .OrderByDescending(e => e.TriggeredAt)
-                .ToList();
-
-            // Get active scenarios from Redis set
-            var activeKey = BuildActiveKey(body.CharacterId);
-            var activeMembers = await _scenarioActiveStore.GetSetAsync<ActiveScenarioEntry>(activeKey, cancellationToken);
-            var activeScenarioCodes = activeMembers.Select(a => a.ScenarioCode).ToHashSet();
-
-            // Build participation entries from executions
-            var participations = new List<StorylineParticipation>();
-            var completedCount = 0;
-
-            foreach (var execution in characterExecutions)
+            var participation = new StorylineParticipation
             {
-                var participation = new StorylineParticipation
-                {
-                    ExecutionId = execution.ExecutionId,
-                    ScenarioId = execution.ScenarioId,
-                    ScenarioCode = execution.ScenarioCode,
-                    ScenarioName = execution.ScenarioName,
-                    Role = "primary", // PrimaryCharacterId means primary role
-                    Phase = execution.CurrentPhase,
-                    TotalPhases = execution.TotalPhases,
-                    Status = execution.Status,
-                    StartedAt = execution.TriggeredAt,
-                    CompletedAt = execution.CompletedAt,
-                    Choices = null // Could parse from mutations if needed
-                };
-                participations.Add(participation);
-
-                if (execution.Status == ScenarioStatus.Completed)
-                {
-                    completedCount++;
-                }
-            }
-
-            // Derive active arcs from active scenario codes
-            // Arc types are typically the prefix before underscore (e.g., "romance_first_meeting" -> "romance")
-            var activeArcs = activeScenarioCodes
-                .Select(code => code.Split('_').FirstOrDefault() ?? code)
-                .Distinct()
-                .ToList();
-
-            var archive = new StorylineArchive
-            {
-                ResourceId = body.CharacterId,
-                ResourceType = "storyline",
-                ArchivedAt = DateTimeOffset.UtcNow,
-                SchemaVersion = 1,
-                CharacterId = body.CharacterId,
-                Participations = participations,
-                ActiveArcs = activeArcs,
-                CompletedStorylines = completedCount
+                ExecutionId = execution.ExecutionId,
+                ScenarioId = execution.ScenarioId,
+                ScenarioCode = execution.ScenarioCode,
+                ScenarioName = execution.ScenarioName,
+                Role = "primary", // PrimaryCharacterId means primary role
+                Phase = execution.CurrentPhase,
+                TotalPhases = execution.TotalPhases,
+                Status = execution.Status,
+                StartedAt = execution.TriggeredAt,
+                CompletedAt = execution.CompletedAt,
+                Choices = null // Could parse from mutations if needed
             };
+            participations.Add(participation);
 
-            _logger.LogDebug(
-                "Compress data for character {CharacterId}: {ParticipationCount} participations, {ActiveArcCount} active arcs, {CompletedCount} completed",
-                body.CharacterId,
-                participations.Count,
-                activeArcs.Count,
-                completedCount);
-
-            return (StatusCodes.OK, archive);
+            if (execution.Status == ScenarioStatus.Completed)
+            {
+                completedCount++;
+            }
         }
-        catch (ApiException ex)
+
+        // Derive active arcs from active scenario codes
+        // Arc types are typically the prefix before underscore (e.g., "romance_first_meeting" -> "romance")
+        var activeArcs = activeScenarioCodes
+            .Select(code => code.Split('_').FirstOrDefault() ?? code)
+            .Distinct()
+            .ToList();
+
+        var archive = new StorylineArchive
         {
-            _logger.LogWarning(ex, "API exception getting compress data for character {CharacterId}", body.CharacterId);
-            return ((StatusCodes)ex.StatusCode, null);
-        }
+            ResourceId = body.CharacterId,
+            ResourceType = "storyline",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            CharacterId = body.CharacterId,
+            Participations = participations,
+            ActiveArcs = activeArcs,
+            CompletedStorylines = completedCount
+        };
+
+        _logger.LogDebug(
+            "Compress data for character {CharacterId}: {ParticipationCount} participations, {ActiveArcCount} active arcs, {CompletedCount} completed",
+            body.CharacterId,
+            participations.Count,
+            activeArcs.Count,
+            completedCount);
+
+        return (StatusCodes.OK, archive);
     }
 
     #endregion

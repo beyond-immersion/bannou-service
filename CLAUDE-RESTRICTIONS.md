@@ -285,6 +285,27 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 
 ---
 
+## ⛔ WORKTREE ISOLATION IS ABSOLUTELY FORBIDDEN ⛔
+
+**NEVER use `isolation: "worktree"` on the Agent tool. NEVER use `EnterWorktree` or `ExitWorktree`. There is NO valid use case for worktrees in this project. Period.**
+
+**Rules:**
+1. **ALL agents work on the current branch in the main working directory.** No exceptions.
+2. **NEVER set `isolation: "worktree"` on any Agent tool call** — the hook will block it, but you should never attempt it in the first place.
+3. **NEVER use `EnterWorktree`** — the hook will block it, but you should never attempt it.
+4. **There is no scenario where worktree isolation is beneficial.** Do not reason about whether "this particular case" might benefit from isolation. The answer is always no.
+
+**Why this rule exists**: Claude launched 3 agents with `isolation: "worktree"` for tasks that all edited `structural-tests/StructuralTests.cs`. One agent wrote 5 of 7 service file changes ONLY to the invisible worktree branch, while the structural tests referencing those changes were written to the main branch. The result: tests that reference interfaces that only exist on an invisible branch the user cannot see or access. Work was effectively lost. The user had no way to know this happened until the damage was discovered.
+
+**The fundamental problem with worktrees**: They create invisible branches. The user works on the main branch. Changes in worktrees are invisible to `git status`, `git diff`, and every normal workflow. When an agent writes some changes to the main branch and other changes to a worktree, the result is a split-brain state that is impossible to diagnose without specifically knowing to look for it. Worktrees are damage, not a feature.
+
+**Enforcement**: PreToolUse hook `block-worktree-isolation.sh` hard-blocks both `isolation: "worktree"` on Agent tool calls and `EnterWorktree` tool calls.
+
+**Incident log**:
+1. 2026-03-11: 3 agents launched with `isolation: "worktree"` for structural test tasks. Task #2 wrote `IAccountDeletionCleanupRequired` to 7 service files in the worktree but only 2 reached the main branch. 5 service changes silently lost on invisible branch.
+
+---
+
 ## ⛔ BACKGROUND AGENT POLLING IS FORBIDDEN ⛔
 
 **When you launch background agents (`run_in_background: true`), you are FINISHED until they complete. Period.**

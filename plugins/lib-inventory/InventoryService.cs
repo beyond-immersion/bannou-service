@@ -19,7 +19,7 @@ namespace BeyondImmersion.BannouService.Inventory;
 /// Provides container management and item placement operations for games.
 /// </summary>
 [BannouService("inventory", typeof(IInventoryService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
-public partial class InventoryService : IInventoryService
+public partial class InventoryService : IInventoryService, IAccountDeletionCleanupRequired
 {
     private readonly IMessageBus _messageBus;
     private readonly IItemClient _itemClient;

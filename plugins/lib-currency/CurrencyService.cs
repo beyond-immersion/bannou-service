@@ -23,7 +23,7 @@ namespace BeyondImmersion.BannouService.Currency;
 /// earn/wallet caps, conversion, escrow integration, and authorization holds.
 /// </summary>
 [BannouService("currency", typeof(ICurrencyService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
-public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity
+public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity, IAccountDeletionCleanupRequired
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<CurrencyService> _logger;

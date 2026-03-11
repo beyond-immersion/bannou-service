@@ -25,7 +25,7 @@ namespace BeyondImmersion.BannouService.Subscription;
 /// </para>
 /// </remarks>
 [BannouService("subscription", typeof(ISubscriptionService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.GameFoundation)]
-public partial class SubscriptionService : ISubscriptionService
+public partial class SubscriptionService : ISubscriptionService, IAccountDeletionCleanupRequired
 {
     private readonly IStateStore<SubscriptionDataModel> _subscriptionStore;
     private readonly IStateStore<List<Guid>> _indexStore;

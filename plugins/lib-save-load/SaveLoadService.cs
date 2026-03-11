@@ -34,7 +34,7 @@ namespace BeyondImmersion.BannouService.SaveLoad;
 /// </para>
 /// </remarks>
 [BannouService("save-load", typeof(ISaveLoadService), lifetime: ServiceLifetime.Scoped)]
-public partial class SaveLoadService : ISaveLoadService
+public partial class SaveLoadService : ISaveLoadService, IAccountDeletionCleanupRequired
 {
     private readonly IMessageBus _messageBus;
     /// <summary>Store for save slot metadata (basic CRUD operations).</summary>

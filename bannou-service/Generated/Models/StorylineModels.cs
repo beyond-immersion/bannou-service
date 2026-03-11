@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Storyline;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Storyline;
 
@@ -686,6 +701,7 @@ public partial class StorylinePlanPhase
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -727,6 +743,7 @@ public partial class StorylinePlanAction
     [System.Text.Json.Serialization.JsonPropertyName("actionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string ActionId { get; set; } = default!;
 
     /// <summary>
@@ -761,6 +778,7 @@ public partial class StorylinePlanAction
     /// If chained, the ID of the action it was chained from
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("chainedFrom")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? ChainedFrom { get; set; } = default!;
 
 }
@@ -778,6 +796,7 @@ public partial class ActionEffect
     [System.Text.Json.Serialization.JsonPropertyName("key")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -840,6 +859,7 @@ public partial class NarrativeEffect
     /// Position advance type (micro, standard, macro)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("positionAdvance")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? PositionAdvance { get; set; } = default!;
 
 }
@@ -917,6 +937,7 @@ public partial class EntityRequirement
     [System.Text.Json.Serialization.JsonPropertyName("role")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string Role { get; set; } = default!;
 
     /// <summary>
@@ -925,6 +946,7 @@ public partial class EntityRequirement
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string EntityType { get; set; } = default!;
 
     /// <summary>
@@ -933,6 +955,7 @@ public partial class EntityRequirement
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(1000)]
     public string Description { get; set; } = default!;
 
     /// <summary>
@@ -962,6 +985,7 @@ public partial class StorylineLink
     [System.Text.Json.Serialization.JsonPropertyName("sourceRole")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string SourceRole { get; set; } = default!;
 
     /// <summary>
@@ -970,6 +994,7 @@ public partial class StorylineLink
     [System.Text.Json.Serialization.JsonPropertyName("targetRole")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string TargetRole { get; set; } = default!;
 
     /// <summary>
@@ -978,9 +1003,30 @@ public partial class StorylineLink
     [System.Text.Json.Serialization.JsonPropertyName("linkType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string LinkType { get; set; } = default!;
 
 }
+
+/// <summary>
+/// Severity level for identified plan risks
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum RiskSeverity
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Low")]
+    Low = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Medium")]
+    Medium = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"High")]
+    High = 2,
+
+}
+#pragma warning restore CS1591
 
 /// <summary>
 /// Identified risk in the plan
@@ -995,6 +1041,7 @@ public partial class StorylineRisk
     [System.Text.Json.Serialization.JsonPropertyName("riskType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string RiskType { get; set; } = default!;
 
     /// <summary>
@@ -1003,6 +1050,7 @@ public partial class StorylineRisk
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(1000)]
     public string Description { get; set; } = default!;
 
     /// <summary>
@@ -1012,12 +1060,13 @@ public partial class StorylineRisk
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public StorylineRiskSeverity Severity { get; set; } = default!;
+    public RiskSeverity Severity { get; set; } = default!;
 
     /// <summary>
     /// Suggested mitigation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mitigation")]
+    [System.ComponentModel.DataAnnotations.StringLength(1000)]
     public string? Mitigation { get; set; } = default!;
 
 }
@@ -1120,6 +1169,7 @@ public partial class ScenarioDefinition : DeprecationFields
     /// Detailed scenario description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(1000)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
@@ -1237,6 +1287,7 @@ public partial class TriggerCondition
     /// Personality trait axis for TraitRange (e.g., AGGRESSION)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitAxis")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? TraitAxis { get; set; } = default!;
 
     /// <summary>
@@ -1255,24 +1306,28 @@ public partial class TriggerCondition
     /// Backstory element type for BackstoryElement (e.g., TRAUMA)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backstoryType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? BackstoryType { get; set; } = default!;
 
     /// <summary>
     /// Backstory element key for BackstoryElement
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backstoryKey")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? BackstoryKey { get; set; } = default!;
 
     /// <summary>
     /// Relationship type code for RelationshipExists/Missing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? RelationshipTypeCode { get; set; } = default!;
 
     /// <summary>
     /// Type of other entity in relationship check
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("otherEntityType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? OtherEntityType { get; set; } = default!;
 
     /// <summary>
@@ -1311,12 +1366,14 @@ public partial class TriggerCondition
     /// Custom state key for WorldState/Custom
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("worldStateKey")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? WorldStateKey { get; set; } = default!;
 
     /// <summary>
     /// Expected value for WorldState/Custom
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("worldStateValue")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? WorldStateValue { get; set; } = default!;
 
 }
@@ -1341,12 +1398,14 @@ public partial class ScenarioPhase
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string Name { get; set; } = default!;
 
     /// <summary>
     /// What happens in this phase
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(1000)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
@@ -1359,12 +1418,14 @@ public partial class ScenarioPhase
     /// Hint for dialogue generation system
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("dialogueHint")]
+    [System.ComponentModel.DataAnnotations.StringLength(1000)]
     public string? DialogueHint { get; set; } = default!;
 
     /// <summary>
     /// Hint for behavior/GOAP system
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actionHint")]
+    [System.ComponentModel.DataAnnotations.StringLength(1000)]
     public string? ActionHint { get; set; } = default!;
 
 }
@@ -1410,12 +1471,14 @@ public partial class ScenarioMutation
     /// Backstory element key for BackstoryAdd
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backstoryKey")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? BackstoryKey { get; set; } = default!;
 
     /// <summary>
     /// Backstory element value for BackstoryAdd
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backstoryValue")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? BackstoryValue { get; set; } = default!;
 
     /// <summary>
@@ -1429,12 +1492,14 @@ public partial class ScenarioMutation
     /// Relationship type code for RelationshipCreate/End
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? RelationshipTypeCode { get; set; } = default!;
 
     /// <summary>
     /// Role name for other participant in multi-character scenarios
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("otherParticipantRole")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? OtherParticipantRole { get; set; } = default!;
 
 }
@@ -1452,6 +1517,7 @@ public partial class ScenarioQuestHook
     [System.Text.Json.Serialization.JsonPropertyName("questCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string QuestCode { get; set; } = default!;
 
     /// <summary>
@@ -1701,6 +1767,7 @@ public partial class ScenarioDefinitionSummary : DeprecationFields
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string Code { get; set; } = default!;
 
     /// <summary>
@@ -1709,6 +1776,7 @@ public partial class ScenarioDefinitionSummary : DeprecationFields
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -2623,6 +2691,7 @@ public partial class ScenarioExecution
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string Code { get; set; } = default!;
 
     /// <summary>
@@ -2631,6 +2700,7 @@ public partial class ScenarioExecution
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -2646,12 +2716,14 @@ public partial class ScenarioExecution
     /// Current phase number
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPhase")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int CurrentPhase { get; set; } = default!;
 
     /// <summary>
     /// Total phases
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalPhases")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int TotalPhases { get; set; } = default!;
 
     /// <summary>
@@ -2811,12 +2883,14 @@ public partial class StorylineParticipation
     [System.Text.Json.Serialization.JsonPropertyName("scenarioCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string ScenarioCode { get; set; } = default!;
 
     /// <summary>
     /// Scenario display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scenarioName")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string? ScenarioName { get; set; } = default!;
 
     /// <summary>
@@ -2825,6 +2899,7 @@ public partial class StorylineParticipation
     [System.Text.Json.Serialization.JsonPropertyName("role")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string Role { get; set; } = default!;
 
     /// <summary>
@@ -2838,7 +2913,7 @@ public partial class StorylineParticipation
     /// Total number of phases in the scenario
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalPhases")]
-    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int TotalPhases { get; set; } = default!;
 
     /// <summary>
@@ -2871,23 +2946,6 @@ public partial class StorylineParticipation
     public System.Collections.Generic.ICollection<string>? Choices { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum StorylineRiskSeverity
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Low")]
-    Low = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Medium")]
-    Medium = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"High")]
-    High = 2,
-
-}
-#pragma warning restore CS1591
 
 
 
