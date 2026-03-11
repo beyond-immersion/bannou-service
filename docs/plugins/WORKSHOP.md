@@ -46,17 +46,11 @@ ProductionBlueprint:
  tags: [string] # For filtering (e.g., ["blacksmithing", "weapons", "iron"])
 
  # Input specification (consumed per unit of production)
- inputs:
- - itemTemplateCode: string # Required material
- quantityPerUnit: decimal # Amount consumed per unit produced
+ inputs: List<ProductionInputSpec> # See typed sub-model below
  # Note: empty inputs = time-only production (mining, training, passive generation)
 
  # Output specification (produced per unit)
- outputs:
- - itemTemplateCode: string # Produced item
- quantityPerUnit: decimal # Amount produced per unit
- qualitySource: string # "fixed", "worker_average", "blueprint_default"
- fixedQuality: decimal? # Quality value when qualitySource is "fixed"
+ outputs: List<ProductionOutputSpec> # See typed sub-model below
 
  # Recipe reference (alternative to explicit inputs/outputs)
  recipeCode: string? # If set, inputs/outputs derived from lib-craft recipe
@@ -67,18 +61,34 @@ ProductionBlueprint:
 
  # Worker constraints
  minWorkers: int # Minimum workers to operate (default: 1, 0 = autonomous)
- maxWorkers: int # Maximum workers (default: 0 = unlimited)
- workerTypes: [string]? # Valid worker entity types (null = any)
+ maxWorkers: int? # Maximum workers. null = no maximum (global MaxWorkersPerTask config cap applies). Must be >= 1 when specified.
+ workerTypes: List<EntityType>? # Valid worker entity types (null = any). Uses EntityType enum per IMPLEMENTATION TENETS.
 
  # Optional constraints
  requiresStationType: string? # Must be near a station of this type (via lib-craft station registry)
  requiresLocationId: Guid? # Must be at a specific location
 
- # Metadata
- isActive: bool
+ # Deprecation (Category B per IMPLEMENTATION TENETS — triple-field model)
+ # Active blueprints are those where IsDeprecated == false.
+ # isActive was removed as redundant with triple-field deprecation. See GH Issue #627 for potential Draft status extension.
  isDeprecated: bool
  deprecatedAt: DateTimeOffset?
  deprecationReason: string?
+
+ProductionInputSpec:
+ itemTemplateCode: string # Item template code for required material (Category B content code per IMPLEMENTATION TENETS)
+ quantityPerUnit: decimal # Amount consumed per unit of production
+
+ProductionOutputSpec:
+ itemTemplateCode: string # Item template code for produced item (Category B content code per IMPLEMENTATION TENETS)
+ quantityPerUnit: decimal # Amount produced per unit
+ qualitySource: QualitySource # How output quality is determined (see QualitySource enum below)
+ fixedQuality: decimal? # Quality value when qualitySource is Fixed (null otherwise per IMPLEMENTATION TENETS — no sentinel values)
+
+QualitySource enum (PascalCase per QUALITY TENETS):
+ Fixed            # Quality is the fixed value specified on the blueprint output
+ WorkerAverage    # Quality is the average proficiency multiplier of assigned workers
+ BlueprintDefault # Quality uses the DefaultQuality configuration property
 ```
 
 **Key design decisions**:
@@ -104,7 +114,7 @@ ProductionTask:
  realmId: Guid # For game-time lookup from lib-worldstate
 
  # Ownership
- ownerType: string # "character", "npc", "faction", "location", "account"
+ ownerType: EntityType # Character, Faction, Location, Account (per IMPLEMENTATION TENETS — $ref: EntityType)
  ownerId: Guid
 
  # Inventories
@@ -118,35 +128,51 @@ ProductionTask:
  lastProcessedGameTime: long # Game-seconds-since-epoch at last materialization
  fractionalProgress: decimal # Partial unit progress (0.0-1.0), carries across materializations
  totalProduced: long # Lifetime count of units materialized
- totalConsumed: object # Lifetime count per input item consumed
+ totalConsumed: List<ConsumedAmountRecord> # Lifetime consumption per input material (see typed sub-model below)
 
  # Rate (derived from workers)
  currentEffectiveRate: decimal # Units per game-second (recomputed on worker changes)
 
- # Status
- status: string # See status table below
- statusReason: string? # Human-readable reason for current status
+ # Status (two-field model per IMPLEMENTATION TENETS — PascalCase enums)
+ status: ProductionTaskStatus # See status table below
+ pauseReason: ProductionTaskPauseReason? # Only populated when status is Paused (null otherwise)
  pausedAtGameTime: long? # Game-time when task was paused (null if running)
  createdAtGameTime: long # Game-time when task was created
  completedAtGameTime: long? # Game-time when task completed (reached target)
 
  # Snapshot (from blueprint or recipe at creation time)
- snapshotInputs: [...] # Inputs locked at task creation
- snapshotOutputs: [...] # Outputs locked at task creation
+ snapshotInputs: List<ProductionInputSpec> # Inputs locked at task creation
+ snapshotOutputs: List<ProductionOutputSpec> # Outputs locked at task creation
  snapshotBaseGameSecondsPerUnit: int # Base time locked at task creation
+
+ProductionTaskStatus enum (PascalCase per QUALITY TENETS):
+ Running    # Actively producing
+ Paused     # Paused (see pauseReason for why)
+ Completed  # Reached target quantity (terminal)
+ Cancelled  # Cancelled by owner or cleanup (terminal)
+
+ProductionTaskPauseReason enum (PascalCase per QUALITY TENETS):
+ Manual       # Manually paused by owner
+ NoMaterials  # Source inventory lacks required materials
+ NoSpace      # Destination inventory is full
+ NoWorkers    # Below minimum worker count
+
+ConsumedAmountRecord:
+ itemTemplateCode: string # Item template code consumed (Category B content code per IMPLEMENTATION TENETS)
+ totalUnits: long         # Total quantity consumed lifetime
 ```
 
 **Task statuses**:
 
-| Status | Meaning | Transition From | Transition To |
-|--------|---------|----------------|---------------|
-| `running` | Actively producing | `created`, `paused:manual`, `paused:no_materials`, `paused:no_space` | `paused:*`, `completed`, `cancelled` |
-| `paused:manual` | Manually paused by owner | `running` | `running`, `cancelled` |
-| `paused:no_materials` | Source inventory lacks required materials | `running` | `running` (auto-resume when materials available on next check) |
-| `paused:no_space` | Destination inventory is full | `running` | `running` (auto-resume when space available on next check) |
-| `paused:no_workers` | Below minimum worker count | `running` | `running` (auto-resume when workers assigned) |
-| `completed` | Reached target quantity | `running` | (terminal) |
-| `cancelled` | Cancelled by owner or cleanup | Any non-terminal | (terminal) |
+| Status | PauseReason | Meaning | Transition From | Transition To |
+|--------|-------------|---------|----------------|---------------|
+| `Running` | *(null)* | Actively producing | `Paused` (any reason) | `Paused`, `Completed`, `Cancelled` |
+| `Paused` | `Manual` | Manually paused by owner | `Running` | `Running`, `Cancelled` |
+| `Paused` | `NoMaterials` | Source inventory lacks required materials | `Running` | `Running` (auto-resume when materials available on next check) |
+| `Paused` | `NoSpace` | Destination inventory is full | `Running` | `Running` (auto-resume when space available on next check) |
+| `Paused` | `NoWorkers` | Below minimum worker count | `Running` | `Running` (auto-resume when workers assigned) |
+| `Completed` | *(null)* | Reached target quantity | `Running` | (terminal) |
+| `Cancelled` | *(null)* | Cancelled by owner or cleanup | Any non-terminal | (terminal) |
 
 ### Workers
 
@@ -156,7 +182,7 @@ Workers are entity references assigned to a task. Each worker contributes to the
 WorkerAssignment:
  taskId: Guid
  workerId: Guid
- workerType: string # "character", "npc", "actor"
+ workerType: EntityType # Character, Actor (per IMPLEMENTATION TENETS — $ref: EntityType. NPC maps to Character.)
  assignedAtGameTime: long # Game-time when worker was assigned
  rateContribution: decimal # This worker's rate contribution (default: 1.0)
  proficiencyMultiplier: decimal # Multiplier from worker's skill level (default: 1.0)
@@ -237,9 +263,9 @@ MaterializeProduction(task, currentGameTime):
  if actualUnits == 0:
  # Can't produce anything -- pause with reason
  if maxFromMaterials == 0:
- task.status = "paused:no_materials"
+ task.status = Paused; task.pauseReason = NoMaterials
  elif maxFromCapacity == 0:
- task.status = "paused:no_space"
+ task.status = Paused; task.pauseReason = NoSpace
  task.fractionalProgress = remainingFraction
  task.lastProcessedGameTime = currentGameTime
  return
@@ -259,13 +285,14 @@ MaterializeProduction(task, currentGameTime):
 
  # Check target
  if task.targetQuantity != null && task.totalProduced >= task.targetQuantity:
- task.status = "completed"
+ task.status = Completed
 
- # Publish event
- publish("workshop.production.materialized", { taskId, units: actualUnits })
+ # Publish event (via generated extension method — no inline topic strings per FOUNDATION TENETS)
+ await _messageBus.PublishWorkshopProductionMaterializedAsync(
+   new WorkshopProductionMaterializedEvent { TaskId = taskId, UnitsMaterialized = actualUnits, TotalProduced = task.totalProduced })
 ```
 
-**Key behavior**: If a task runs for 10 game-days but the source inventory only had materials for 3 units, only 3 units are produced. The task pauses with `no_materials`. It does NOT accumulate 10 days of "debt" that suddenly materializes when materials are restocked. Fractional progress is capped at 1.0 to prevent backlog accumulation during paused periods.
+**Key behavior**: If a task runs for 10 game-days but the source inventory only had materials for 3 units, only 3 units are produced. The task pauses (`Paused`/`NoMaterials`). It does NOT accumulate 10 days of "debt" that suddenly materializes when materials are restocked. Fractional progress is capped at 1.0 to prevent backlog accumulation during paused periods.
 
 ### Background Materialization Worker
 
@@ -276,13 +303,13 @@ WorkshopMaterializationWorkerService:
  Runs every MaterializationIntervalSeconds (default: 30 real seconds)
 
  Algorithm:
- 1. Load all tasks with status "running" or "paused:no_materials" or "paused:no_space"
+ 1. Load all tasks with status Running, or Paused with pauseReason NoMaterials or NoSpace
  2. Group by ownerId (fair scheduling)
  3. Round-robin through owners:
  a. For each owner, process up to MaxTasksPerOwnerPerTick tasks
  b. For each task: call MaterializeProduction(task, currentGameTime)
- c. If task was paused:no_materials, check if materials are now available → resume
- d. If task was paused:no_space, check if space is now available → resume
+ c. If task was Paused/NoMaterials, check if materials are now available → resume to Running
+ d. If task was Paused/NoSpace, check if space is now available → resume to Running
  4. Track processing time per owner for monitoring
 
  Fair scheduling guarantee:
@@ -299,6 +326,12 @@ WorkshopMaterializationWorkerService:
 | **Worker** (background) | `WorkshopMaterializationWorkerService` timer | Every `MaterializationIntervalSeconds` |
 
 Both paths call `MaterializeProduction` and use the same distributed lock to prevent concurrent materialization of the same task.
+
+**Error handling** (per IMPLEMENTATION TENETS):
+
+- **Per-task error isolation**: Each task's processing within the materialization cycle is wrapped in a per-task try-catch. Per-task failures are logged at Warning level (not Error — these are expected/recoverable per-item failures) with the taskId included as a structured logging parameter. One failed task must not abort processing of remaining tasks in the cycle.
+- **Cycle-level error handling**: Cycle-level failures (errors that abort the entire materialization cycle, not per-task failures) are caught at the outer loop and published via `WorkerErrorPublisher.TryPublishWorkerErrorAsync` with the service name, cycle identifier, and exception details.
+- **Store access pattern**: `WorkshopMaterializationWorkerService` is a singleton `BackgroundService`. It acquires all 6 state stores (blueprint, task, worker, rate-segment, cache, lock) once per DI scope at the start of each cycle via `IServiceScopeFactory`, and passes the resolved `IStateStore<T>` references as parameters to `ProcessCycleAsync`, `MaterializeProductionAsync`, and other sub-methods. The `IStateStoreFactory` is never stored as a field and never passed to sub-methods.
 
 ---
 
@@ -379,7 +412,7 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `status:{taskId}` | `ProductionStatusCacheModel` | Cached computed production status (units pending, estimated completion). Short TTL. Invalidated on materialization. |
+| `status:{taskId}` | `ProductionStatusCacheModel` | Cached computed production status (units pending, estimated completion). Cache invalidation: `DeleteAsync` is called inline at all materialization sites (both lazy and background worker paths) to eagerly invalidate stale entries. TTL (`ProductionStatusCacheTtlSeconds`, default: 30s) serves as safety net. Standard Redis cache invalidation pattern per IMPLEMENTATION TENETS. |
 
 ### Distributed Locks
 **Store**: `workshop-lock` (Backend: Redis, prefix: `workshop:lock`)
@@ -397,11 +430,13 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
 | `category` (on blueprint) | B (Content Code) | Opaque string | Game-configurable production categories (crafting, mining, farming, manufacturing, training, etc.). Extensible without schema changes. |
-| `ownerType` (on task) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity that owns a production task (character, npc, faction, location, account). All valid values are first-class Bannou entities. |
-| `workerType` | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the type of entity assigned as a worker (character, npc, actor). |
-| `workerTypes` (on blueprint) | B (Content Code) | Opaque string array | Game-configurable valid worker entity types for a blueprint. Null means any type is accepted. |
+| `ownerType` (on task) | A (Entity Reference) | `EntityType` enum | Identifies the entity that owns a production task (Character, Faction, Location, Account). All valid values are first-class Bannou entities. Uses `$ref: EntityType` from `common-api.yaml`. |
+| `workerType` (on assignment) | A (Entity Reference) | `EntityType` enum | Identifies the type of entity assigned as a worker (Character, Actor). NPC maps to Character. Uses `$ref: EntityType`. |
+| `workerTypes` (on blueprint) | A (Entity Reference) | `List<EntityType>?` | Valid worker entity types for a blueprint. Null means any type is accepted. Entity types are a closed set — games configure which types are valid but cannot invent new entity types. |
 | `requiresStationType` | B (Content Code) | Opaque string | Game-configurable station type requirement (via lib-craft station registry). |
-| `status` (on task) | C (System State) | Service-specific enum | Finite set of task lifecycle states (pending, running, paused:manual, paused:no_materials, paused:no_space, paused:no_workers, completed, cancelled, failed). System-owned state machine driving lazy evaluation and materialization logic. |
+| `status` (on task) | C (System State) | `ProductionTaskStatus` enum | Finite set of task lifecycle states: Running, Paused, Completed, Cancelled. Two-field model with `pauseReason`. |
+| `pauseReason` (on task) | C (System State) | `ProductionTaskPauseReason?` enum | Reason for pause: Manual, NoMaterials, NoSpace, NoWorkers. Null when status is not Paused. |
+| `qualitySource` (on output) | C (System State) | `QualitySource` enum | Quality determination mode: Fixed, WorkerAverage, BlueprintDefault. |
 | `tags` (on blueprint) | B (Content Code) | Opaque string array | Game-configurable searchable tags for blueprint categorization. |
 
 ---
@@ -412,11 +447,11 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `workshop-blueprint.created` | `WorkshopBlueprintCreatedEvent` | Blueprint created (lifecycle) |
-| `workshop-blueprint.updated` | `WorkshopBlueprintUpdatedEvent` | Blueprint updated (lifecycle). Covers deprecation via `changedFields` containing deprecation fields. |
+| `workshop.blueprint.created` | `WorkshopBlueprintCreatedEvent` | Blueprint created (lifecycle, via `x-lifecycle` with `topic_prefix: workshop`) |
+| `workshop.blueprint.updated` | `WorkshopBlueprintUpdatedEvent` | Blueprint updated (lifecycle). Covers deprecation via `changedFields` containing deprecation fields. |
 | `workshop.task.created` | `WorkshopTaskCreatedEvent` | Production task created. Includes blueprintId, ownerId, inventories. |
 | `workshop.task.started` | `WorkshopTaskStartedEvent` | Task transitioned to running (first worker assigned, or autonomous task started). |
-| `workshop.task.paused` | `WorkshopTaskPausedEvent` | Task paused. Includes status reason (manual, no_materials, no_space, no_workers). |
+| `workshop.task.paused` | `WorkshopTaskPausedEvent` | Task paused. Includes `pauseReason` (Manual, NoMaterials, NoSpace, NoWorkers). |
 | `workshop.task.resumed` | `WorkshopTaskResumedEvent` | Task resumed from paused state. |
 | `workshop.task.completed` | `WorkshopTaskCompletedEvent` | Task reached target quantity. Includes totalProduced, total game-time elapsed. |
 | `workshop.task.cancelled` | `WorkshopTaskCancelledEvent` | Task cancelled. Includes totalProduced before cancellation. |
@@ -429,6 +464,16 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 | Topic | Handler | Action |
 |-------|---------|--------|
 | `worldstate.day-changed` | `HandleDayChangedAsync` | Triggers the background materialization worker to process tasks in the changed realm. Optional optimization: the worker already runs on its own timer, but day-changed events provide a natural game-time-aligned trigger for realms that just crossed a day boundary. |
+| `account.deleted` | `HandleAccountDeletedAsync` | Cancels all account-owned tasks (materializes pending production first), removes account entity from worker assignments on other entities' tasks, deletes associated rate segments and worker state. Privacy obligation per FOUNDATION TENETS. Handler includes: telemetry span (event handlers have no generated controller boundary), top-level try-catch with `TryPublishErrorAsync`, per-task try-catch for error isolation, "not found" logged at Debug level (multi-node broadcast idempotency). Follows account deletion cleanup pattern from HELPERS-AND-COMMON-PATTERNS.md §2. |
+
+### Event Schema Requirements
+
+`workshop-events.yaml` must include `x-event-subscriptions` declaring both consumed events:
+
+1. `worldstate.day-changed` — references `worldstate-events.yaml` event type. Handler: `HandleDayChanged`. Registered via `IEventConsumer` in `WorkshopServiceEvents.cs`.
+2. `account.deleted` — references `account-events.yaml` event type. Handler: `HandleAccountDeleted`. Registered via `IEventConsumer` in `WorkshopServiceEvents.cs`. Privacy obligation per FOUNDATION TENETS.
+
+Both handlers are registered in `RegisterEventConsumers` using the `IEventConsumer` pattern. The generated `WorkshopEventsController.cs` dispatches events to these handlers.
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
@@ -437,6 +482,14 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 | game-service | workshop | CASCADE | `/workshop/cleanup-by-game-service` |
 | character | workshop | CASCADE | `/workshop/cleanup-by-entity` |
 | inventory | workshop | CASCADE | `/workshop/cleanup-by-inventory` |
+| account | workshop | CASCADE | *(via `account.deleted` event subscription — T28 account exception, not lib-resource)* |
+
+**Schema requirement**: `workshop-api.yaml` must include `x-references` declarations for each cleanup target (except account) to generate the `RegisterResourceCleanupCallbacksAsync()` startup registration call:
+- `game-service` → `cleanup-by-game-service` endpoint (CASCADE)
+- `character` → `cleanup-by-entity` endpoint (CASCADE) — also covers other entity types via polymorphic ownerType
+- `inventory` → `cleanup-by-inventory` endpoint (CASCADE)
+
+The `x-references` `target` values must match the `resourceType` declared in the foundational service schemas' `x-resource-lifecycle` entries. Verify against `game-service-api.yaml`, `character-api.yaml`, and `inventory-api.yaml` resource lifecycle declarations at schema creation time.
 
 ---
 
@@ -448,14 +501,14 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 | `MaterializationStartupDelaySeconds` | `WORKSHOP_MATERIALIZATION_STARTUP_DELAY_SECONDS` | `15` | Seconds to wait after startup before first materialization cycle (range: 0-120). |
 | `MaxTasksPerOwnerPerTick` | `WORKSHOP_MAX_TASKS_PER_OWNER_PER_TICK` | `10` | Maximum tasks processed per owner per materialization cycle (range: 1-100). Fair scheduling cap. |
 | `MaxActiveTasksPerOwner` | `WORKSHOP_MAX_ACTIVE_TASKS_PER_OWNER` | `20` | Maximum concurrent non-terminal tasks per owner (range: 1-200). |
-| `MaxWorkersPerTask` | `WORKSHOP_MAX_WORKERS_PER_TASK` | `50` | Global cap on workers per task, applied when blueprint's maxWorkers is 0 (range: 1-500). |
+| `MaxWorkersPerTask` | `WORKSHOP_MAX_WORKERS_PER_TASK` | `50` | Global cap on workers per task, applied when blueprint's maxWorkers is null (range: 1-500). |
 | `MaxBlueprintsPerGameService` | `WORKSHOP_MAX_BLUEPRINTS_PER_GAME_SERVICE` | `5000` | Safety limit on blueprint count per game service (range: 100-50000). |
-| `DefaultQuality` | `WORKSHOP_DEFAULT_QUALITY` | `0.5` | Default output quality when blueprint specifies `qualitySource: "blueprint_default"` (range: 0.0-1.0). |
+| `DefaultQuality` | `WORKSHOP_DEFAULT_QUALITY` | `0.5` | Default output quality when blueprint specifies `qualitySource: BlueprintDefault` (range: 0.0-1.0). |
 | `FractionalProgressCap` | `WORKSHOP_FRACTIONAL_PROGRESS_CAP` | `1.0` | Maximum fractional progress that can accumulate. Prevents unbounded backlog when paused (range: 0.0-10.0). |
 | `MaterialReservationBatchSize` | `WORKSHOP_MATERIAL_RESERVATION_BATCH_SIZE` | `10` | Number of units' worth of materials to validate per materialization check (range: 1-100). |
 | `ProductionStatusCacheTtlSeconds` | `WORKSHOP_PRODUCTION_STATUS_CACHE_TTL_SECONDS` | `30` | TTL for cached production status in Redis (range: 5-300). |
 | `RateSegmentRetentionCount` | `WORKSHOP_RATE_SEGMENT_RETENTION_COUNT` | `100` | Maximum rate segments retained per task. Older segments are compacted (range: 10-1000). |
-| `ProficiencyDomain` | `WORKSHOP_PROFICIENCY_DOMAIN` | `""` | Default proficiency seed domain for worker multiplier calculation. Empty = no proficiency check (all workers contribute 1.0). |
+| `ProficiencyDomain` | `WORKSHOP_PROFICIENCY_DOMAIN` | *(null)* | Default proficiency seed domain for worker multiplier calculation. `nullable: true`, no default. null = no proficiency check (all workers contribute 1.0). When set, Workshop queries lib-seed for worker proficiency in this domain. |
 | `DistributedLockTimeoutSeconds` | `WORKSHOP_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `15` | Timeout for distributed lock acquisition (range: 5-60). |
 | `QueryPageSize` | `WORKSHOP_QUERY_PAGE_SIZE` | `20` | Default page size for paged queries (range: 1-100). |
 
@@ -466,9 +519,10 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 | Service | Role |
 |---------|------|
 | `ILogger<WorkshopService>` | Structured logging |
+| `ITelemetryProvider` | Telemetry span creation for async methods (passed to helpers; primary interface methods get spans from generated controller) |
 | `WorkshopServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates 6 stores) |
-| `IMessageBus` | Event publishing |
+| `IStateStoreFactory` | State store access (creates 6 stores — constructor-cached as readonly fields per FOUNDATION TENETS) |
+| `IMessageBus` | Event publishing (generated `Publish*Async` extension methods) |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 | `IWorldstateClient` | Game time queries: `GetRealmTime` for current time, `GetElapsedGameTime` for lazy evaluation (L2 hard) |
 | `IItemClient` | Creating output items during materialization (L2 hard) |
@@ -477,61 +531,72 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 | `ISeedClient` | Worker proficiency seed growth queries (L2 hard) |
 | `ILocationClient` | Location constraint validation (L2 hard) |
 | `IServiceProvider` | Runtime resolution of soft dependencies (lib-craft) |
-| `WorkshopMaterializationWorkerService` | Background `HostedService` that periodically processes pending production tasks with fair per-owner scheduling |
-| `WorkshopProviderFactory` | Implements `IVariableProviderFactory` to provide `${workshop.*}` variables to Actor's behavior system |
-| `IProductionCalculator` / `ProductionCalculator` | Internal helper for rate segment integration, material availability checks, and materialization logic |
+| `WorkshopMaterializationWorkerService` | Background `HostedService` with fair per-owner scheduling. Acquires stores per scope (see Background Worker section). |
+| `WorkshopProviderFactory` | Implements `IVariableProviderFactory`. Constructor includes `ITelemetryProvider` for span creation on provider creation and variable resolution. |
+| `IProductionCalculator` / `ProductionCalculator` | Internal helper for rate segment integration, material availability checks, and materialization logic. Constructor includes `ITelemetryProvider` for span creation on all async methods. |
+| `ICleanDeprecatedEntity` | Marker interface for Category B structural test compliance (blueprint clean-deprecated sweep) |
 
 ### Variable Provider Factory
 
 | Factory | Namespace | Data Source | Registration |
 |---------|-----------|-------------|--------------|
-| `WorkshopProviderFactory` | `${workshop.*}` | Reads owner's active tasks, production status, worker counts | `IVariableProviderFactory` (DI singleton) |
+| `WorkshopProviderFactory` | `${workshop.*}` | Reads owner's active tasks, production status, worker counts | `IVariableProviderFactory` (DI singleton). Both `WorkshopProviderFactory` and the `WorkshopProvider` instances it creates include `ITelemetryProvider` for span creation. |
 
 ---
 
 ## API Endpoints (Implementation Notes)
 
-### Blueprint Management (6 endpoints)
+### Blueprint Management (7 endpoints)
 
-All endpoints require `developer` role.
+`AUDIT:NEEDS_DESIGN` — User decision required: `x-permissions: []` (pure service-to-service, no WebSocket) vs `x-permissions: [role: developer]` (developer WebSocket sessions can manage blueprints directly). The deep dive intro says "Internal-only, never internet-facing" which suggests `[]`, but blueprint seeding/management by game developers via WebSocket could justify `[role: developer]`.
 
-- **CreateBlueprint** (`/workshop/blueprint/create`): Validates game service existence. Validates code uniqueness within game service. If `recipeCode` is set: resolves recipe via lib-craft, snapshots inputs/outputs from recipe, validates recipe exists. If explicit inputs/outputs: validates item template codes exist via lib-item. Validates structural consistency (at least one output, base time > 0, minWorkers <= maxWorkers unless maxWorkers is 0). Enforces `MaxBlueprintsPerGameService`. Publishes `workshop-blueprint.created`.
+- **CreateBlueprint** (`/workshop/blueprint/create`): Validates game service existence. Validates code uniqueness within game service. If `recipeCode` is set: resolves recipe via lib-craft, validates recipe exists AND is not deprecated (reject with `BadRequest` if recipe is deprecated — cross-service deprecation check per IMPLEMENTATION TENETS), then snapshots inputs/outputs from recipe. If explicit inputs/outputs: validates item template codes exist via lib-item. Validates structural consistency (at least one output, base time > 0, minWorkers <= maxWorkers when maxWorkers is not null). Enforces `MaxBlueprintsPerGameService`. Publishes `workshop.blueprint.created`.
 
 - **GetBlueprint** (`/workshop/blueprint/get`): Supports lookup by blueprintId or by gameServiceId + code.
 
-- **ListBlueprints** (`/workshop/blueprint/list`): Paged JSON query with required gameServiceId filter. Optional filters: category, tags (any match), recipeCode, minWorkers range, isActive, includeDeprecated (boolean, default: false).
+- **ListBlueprints** (`/workshop/blueprint/list`): Paged JSON query with required gameServiceId filter. Optional filters: category, tags (any match), recipeCode, minWorkers range, includeDeprecated (boolean, default: false — shows only non-deprecated/active blueprints by default).
 
-- **UpdateBlueprint** (`/workshop/blueprint/update`): Acquires distributed lock. Partial update. **Cannot change**: code, gameServiceId, recipeCode (identity-level). Active tasks using this blueprint continue with their creation-time snapshot; new tasks use updated values. Publishes `workshop-blueprint.updated`.
+- **UpdateBlueprint** (`/workshop/blueprint/update`): Acquires distributed lock. Partial update. **Cannot change**: code, gameServiceId, recipeCode (identity-level). Active tasks using this blueprint continue with their creation-time snapshot; new tasks use updated values. Publishes `workshop.blueprint.updated`.
 
-- **DeprecateBlueprint** (`/workshop/blueprint/deprecate`): Marks blueprint as deprecated with triple-field semantics: sets `isDeprecated: true`, `deprecatedAt` to current timestamp, and `deprecationReason` from request. Idempotent: returns OK if already deprecated. Active tasks continue. New tasks cannot use deprecated blueprints. Publishes `workshop-blueprint.updated` with `changedFields` containing deprecation fields.
+- **DeprecateBlueprint** (`/workshop/blueprint/deprecate`): Marks blueprint as deprecated with triple-field semantics: sets `isDeprecated: true`, `deprecatedAt` to current timestamp, and `deprecationReason` from request. Idempotent: returns OK if already deprecated. Active tasks continue. New tasks cannot use deprecated blueprints. Publishes `workshop.blueprint.updated` with `changedFields` containing deprecation fields.
 
 - **SeedBlueprints** (`/workshop/blueprint/seed`): Bulk creation, skipping existing codes (idempotent). Returns created/skipped counts.
 
+- **CleanDeprecatedBlueprints** (`/workshop/blueprint/clean-deprecated`): Category B clean-deprecated sweep per IMPLEMENTATION TENETS. Deletes deprecated blueprints that have zero active (non-terminal) tasks referencing them. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. Uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` for standardized sweep logic. `x-permissions: [role: admin]` — cleanup deletes data.
+
+**Category B lifecycle notes**: Blueprints are Category B (templates whose instances persist with the template's ID). No delete endpoint (blueprints persist until clean-deprecated sweep). No undeprecate endpoint (deprecation is one-way). `DeprecateBlueprint` is idempotent (returns OK if already deprecated). Blueprint lifecycle events are generated via `x-lifecycle` in `workshop-events.yaml` with `topic_prefix: workshop` and `deprecation: true`. Do NOT manually define lifecycle events or deprecation fields — they are auto-injected by the generator. Implements `ICleanDeprecatedEntity` marker interface for structural test compliance.
+
 ### Task Management (7 endpoints)
 
-- **CreateTask** (`/workshop/task/create`): Core task creation. Validates: blueprint exists and is active, owner exists, source and destination inventories exist and owner has access, realm exists (for game-time). If blueprint has location constraint: validates owner is at location (if lib-location available). Snapshots blueprint inputs/outputs onto the task (decouples from future blueprint changes). Creates initial rate segment (rate = 0 if minWorkers > 0, or base rate if minWorkers = 0). Sets status to `paused:no_workers` if minWorkers > 0, or `running` if minWorkers = 0 (autonomous). Enforces `MaxActiveTasksPerOwner`. Returns taskId.
+**x-permissions**: `[]` (service-to-service only, not exposed to WebSocket clients)
+
+- **CreateTask** (`/workshop/task/create`): Core task creation. Validates: blueprint exists and is not deprecated (reject with BadRequest if `IsDeprecated == true` — Category B instance creation guard per IMPLEMENTATION TENETS), owner exists, source and destination inventories exist and owner has access, realm exists (for game-time). If blueprint has location constraint: validates owner is at location (if lib-location available). Snapshots blueprint inputs/outputs onto the task (decouples from future blueprint changes). Creates initial rate segment (rate = 0 if minWorkers > 0, or base rate if minWorkers = 0). Sets status to `Paused` with `pauseReason: NoWorkers` if minWorkers > 0, or `Running` if minWorkers = 0 (autonomous). Enforces `MaxActiveTasksPerOwner`. Returns taskId.
 
 - **GetTask** (`/workshop/task/get`): **Triggers lazy materialization** before returning. Acquires task lock, materializes pending production, returns current state including computed pending units, estimated completion time, and worker list.
 
 - **ListTasks** (`/workshop/task/list`): Lists tasks for an owner. Does NOT trigger lazy materialization (too expensive for list queries). Returns last-known state. Filters: status, blueprintId, category.
 
-- **PauseTask** (`/workshop/task/pause`): Manually pauses a running task. Materializes pending production first (flush). Records paused game-time. Sets status to `paused:manual`. Does NOT remove workers -- they remain assigned but idle.
+- **PauseTask** (`/workshop/task/pause`): Manually pauses a running task. Materializes pending production first (flush). Records paused game-time. Sets status to `Paused` with `pauseReason: Manual`. Does NOT remove workers -- they remain assigned but idle.
 
-- **ResumeTask** (`/workshop/task/resume`): Resumes from manual pause. Validates: still has minimum workers, materials available. Updates `lastProcessedGameTime` to current game-time (no backlog production during manual pause). Creates new rate segment. Sets status to `running`.
+- **ResumeTask** (`/workshop/task/resume`): Resumes from manual pause. Validates: still has minimum workers, materials available. Updates `lastProcessedGameTime` to current game-time (no backlog production during manual pause). Creates new rate segment. Sets status to `Running`.
 
-- **CancelTask** (`/workshop/task/cancel`): Cancels a non-terminal task. Materializes pending production first (flush any pending output). Removes all worker assignments. Deletes rate segments. Sets status to `cancelled`. Publishes `workshop.task.cancelled`.
+- **CancelTask** (`/workshop/task/cancel`): Cancels a non-terminal task. Materializes pending production first (flush any pending output). Removes all worker assignments. Deletes rate segments. Sets status to `Cancelled`. Publishes `workshop.task.cancelled`.
 
 - **AdjustTarget** (`/workshop/task/adjust-target`): Changes the target quantity on a running task. Can change from indefinite to finite, or adjust the finite target. If new target <= totalProduced, task completes immediately.
 
 ### Worker Management (3 endpoints)
 
-- **AssignWorker** (`/workshop/worker/assign`): Adds a worker to a task. Acquires worker lock. Validates: worker not already assigned to this task, worker type is in blueprint's `workerTypes` (if specified), task not at `maxWorkers`. Materializes pending production (flush before rate change). Computes proficiency multiplier from lib-seed (if configured). Records worker assignment. Creates new rate segment with updated rate. If task was `paused:no_workers` and now meets `minWorkers`: resumes. Publishes `workshop.worker.assigned`.
+**x-permissions**: `[]` (service-to-service only, not exposed to WebSocket clients)
 
-- **RemoveWorker** (`/workshop/worker/remove`): Removes a worker from a task. Acquires worker lock. Materializes pending production (flush before rate change). Removes worker assignment. Creates new rate segment with updated rate. If worker count drops below `minWorkers`: pauses with `paused:no_workers`. Updates reverse index. Publishes `workshop.worker.removed`.
+- **AssignWorker** (`/workshop/worker/assign`): Adds a worker to a task. Acquires worker lock. Validates: worker not already assigned to this task, worker type is in blueprint's `workerTypes` (if specified), task not at `maxWorkers`. Materializes pending production (flush before rate change). Computes proficiency multiplier from lib-seed (if configured). Records worker assignment. Creates new rate segment with updated rate. If task was `Paused`/`NoWorkers` and now meets `minWorkers`: resumes to `Running`. Publishes `workshop.worker.assigned`.
+
+- **RemoveWorker** (`/workshop/worker/remove`): Removes a worker from a task. Acquires worker lock. Materializes pending production (flush before rate change). Removes worker assignment. Creates new rate segment with updated rate. If worker count drops below `minWorkers`: sets status to `Paused` with `pauseReason: NoWorkers`. Updates reverse index. Publishes `workshop.worker.removed`.
 
 - **ListWorkers** (`/workshop/worker/list`): Returns all worker assignments for a task, including each worker's rate contribution and proficiency multiplier.
 
 ### Query (3 endpoints)
+
+**x-permissions**: `[]` (service-to-service only, not exposed to WebSocket clients)
 
 - **GetProductionStatus** (`/workshop/query/production-status`): Computes current production status without materializing. Returns: pending units (not yet materialized), estimated units if materialized now (capped by materials and space), estimated time to next unit, estimated time to target completion, current effective rate, current worker count. Cached in Redis with short TTL.
 
@@ -540,6 +605,8 @@ All endpoints require `developer` role.
 - **GetBlueprintViability** (`/workshop/query/blueprint-viability`): Given a blueprint and source inventory, returns: how many units can be produced with current materials, which inputs are bottlenecks, what the effective rate would be with N workers. Used by NPC GOAP decisions and UI previews.
 
 ### Cleanup (3 endpoints)
+
+**x-permissions**: `[]` (service-to-service only, not exposed to WebSocket clients)
 
 Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
@@ -591,7 +658,7 @@ Blueprints are owned here. Item creation and destruction are lib-item (L2). Cont
 │ │ → Create 25 output items in destination │ │
 │ │ → task.totalProduced += 25 │ │
 │ │ → task.fractionalProgress = min(0.0, 1.0) = 0.0 │ │
-│ │ → task.status = "paused:no_materials" (ran out) │ │
+│ │ → task.status = Paused, pauseReason = NoMaterials │ │
 │ │ → task.lastProcessedGameTime = │ │
 │ └──────────────────────────────────────────────────────┘ │
 │ │
@@ -705,16 +772,17 @@ Implements `IVariableProviderFactory` (via `WorkshopProviderFactory`) providing 
 | Variable | Type | Description |
 |----------|------|-------------|
 | `${workshop.active_task_count}` | int | Number of active (non-terminal) production tasks owned by this entity |
-| `${workshop.total_producing}` | int | Number of tasks currently in `running` status |
-| `${workshop.total_paused}` | int | Number of tasks currently in any `paused:*` status |
-| `${workshop.task.<code>.status}` | string | Status of task running a specific blueprint code (first match) |
+| `${workshop.total_producing}` | int | Number of tasks currently in `Running` status |
+| `${workshop.total_paused}` | int | Number of tasks currently in `Paused` status (any reason) |
+| `${workshop.task.<code>.status}` | string | Status of task running a specific blueprint code (first match): Running, Paused, Completed, Cancelled |
+| `${workshop.task.<code>.pause_reason}` | string | Pause reason if status is Paused: Manual, NoMaterials, NoSpace, NoWorkers (null otherwise) |
 | `${workshop.task.<code>.rate}` | float | Current effective rate of the task (units per game-second) |
 | `${workshop.task.<code>.total_produced}` | long | Lifetime production count for the task |
 | `${workshop.task.<code>.has_materials}` | bool | Whether source inventory has materials for at least 1 more unit |
 | `${workshop.task.<code>.has_space}` | bool | Whether destination inventory has space for at least 1 more unit |
 | `${workshop.task.<code>.worker_count}` | int | Current worker count on the task |
-| `${workshop.any_paused_no_materials}` | bool | Whether any task is paused due to lack of materials |
-| `${workshop.any_paused_no_space}` | bool | Whether any task is paused due to lack of space |
+| `${workshop.any_paused_no_materials}` | bool | Whether any task is paused with reason `NoMaterials` |
+| `${workshop.any_paused_no_space}` | bool | Whether any task is paused with reason `NoSpace` |
 
 ### ABML Usage Examples
 
@@ -724,21 +792,23 @@ flows:
  # NPC blacksmith manages their forge production line
  - cond:
  # My forge is paused because I ran out of iron
- - when: "${workshop.task.forge_iron_sword.status == 'paused:no_materials'}"
+ - when: "${workshop.task.forge_iron_sword.status == 'Paused'
+ && workshop.task.forge_iron_sword.pause_reason == 'NoMaterials'}"
  then:
  - call: go_to_market
  - call: buy_iron_ingots
  - set: { shopping_reason: "restock_forge" }
 
  # My output chest is full -- go sell some swords
- - when: "${workshop.task.forge_iron_sword.status == 'paused:no_space'}"
+ - when: "${workshop.task.forge_iron_sword.status == 'Paused'
+ && workshop.task.forge_iron_sword.pause_reason == 'NoSpace'}"
  then:
  - call: collect_from_output_chest
  - call: go_to_market
  - call: sell_swords
 
  # Everything is running smoothly
- - when: "${workshop.task.forge_iron_sword.status == 'running'}"
+ - when: "${workshop.task.forge_iron_sword.status == 'Running'}"
  then:
  - cond:
  # But I could work faster with an apprentice
@@ -783,7 +853,7 @@ flows:
 
 3. **Manual pause does NOT accumulate production**: When a task is manually paused and then resumed, `lastProcessedGameTime` is set to the current game-time at resume. No backlog from the pause period is materialized. This is intentional -- manual pause means "stop producing," not "queue up production for later."
 
-4. **Auto-pause DOES track elapsed time for status reporting**: When paused for `no_materials` or `no_space`, the task tracks how long it's been paused (for monitoring and `${workshop.*}` variables), but this time does NOT produce items. The task simply resumes at the current rate when the constraint is resolved.
+4. **Auto-pause DOES track elapsed time for status reporting**: When paused with reason `NoMaterials` or `NoSpace`, the task tracks how long it's been paused (for monitoring and `${workshop.*}` variables), but this time does NOT produce items. The task simply resumes at the current rate when the constraint is resolved.
 
 5. **Materialization is idempotent within lock**: Both the lazy path (on query) and the worker path acquire the same distributed lock and read `lastProcessedGameTime`. If the lazy path just ran, the worker path finds nothing to do. Double-materialization is impossible.
 
@@ -791,7 +861,7 @@ flows:
 
 7. **Worker proficiency is snapshotted at assignment**: A worker's proficiency multiplier is computed once when they're assigned. If their proficiency improves (via lib-seed growth) while assigned, the rate doesn't auto-update. The owner can remove and re-assign the worker to refresh the multiplier. This avoids continuous proficiency polling for every assigned worker.
 
-8. **Rate of 0 is valid for paused-no-workers**: When `minWorkers > 0` and no workers are assigned, the rate is 0.0. A rate segment with rate 0.0 is recorded. `GetElapsedGameTime` integration over this segment correctly produces 0 units.
+8. **Rate of 0 is valid for Paused/NoWorkers**: When `minWorkers > 0` and no workers are assigned, the rate is 0.0. A rate segment with rate 0.0 is recorded. `GetElapsedGameTime` integration over this segment correctly produces 0 units.
 
 9. **Blueprint categories and tags are opaque strings**: "crafting", "mining", "farming" are conventions, not constraints. Games define their own production vocabulary.
 
@@ -811,12 +881,26 @@ flows:
 
 6. **Worker proficiency refresh**: Quirk #7 notes that proficiency is snapshotted at assignment. This means a blacksmith NPC who improves over time doesn't benefit from their improved skill in automation until re-assigned. A periodic refresh (e.g., on `worldstate.season-changed`) could update all worker proficiency multipliers, but adds complexity. The trade-off between accuracy and simplicity needs a decision.
 
-7. **Rate segment compaction**: Over long-running tasks with frequent worker changes, the rate segment list grows. `RateSegmentRetentionCount` enables compaction, but the compaction algorithm (merging adjacent segments with weighted averaging) must be designed to preserve accuracy for `MaterializeProduction` calculations that span compacted ranges.
+7. **Rate segment compaction**: Over long-running tasks with frequent worker changes, the rate segment list grows. `RateSegmentRetentionCount` enables compaction, but the compaction algorithm (merging adjacent segments with weighted averaging) must be designed to preserve accuracy for `MaterializeProduction` calculations that span compacted ranges. (See GH #529)
 
 8. ~~**L2 soft dependencies should be hard per SERVICE-HIERARCHY.md**~~: **FIXED** (2026-03-09) — Moved lib-seed (L2) and lib-location (L2) from soft dependencies to hard dependencies (constructor injection) per SERVICE-HIERARCHY.md. Optional features (proficiency, location constraints) are gated at the data level (blueprint has no proficiency domain configured, `requiresLocationId` is null), not at the service availability level.
+
+9. `AUDIT:NEEDS_DESIGN` **Materialization compensation for multi-service partial failure**: `MaterializeProduction` calls `consumeMaterials` (lib-inventory) then `createOutputs` (lib-inventory/lib-item). If `consumeMaterials` succeeds but `createOutputs` fails, materials are consumed with no output produced. IMPLEMENTATION TENETS (T7 multi-service compensation) requires either catch-block compensation (refund consumed materials) or a documented self-healing mechanism. Four options under consideration: (a) try-catch compensation refunding consumed materials, (b) idempotent retry with deduplication keys, (c) two-phase commit with pending state, (d) background reconciliation worker. Decision deferred to implementation phase. (See GH #626)
 
 ---
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. Blueprint infrastructure (Phase 1) is self-contained. Task lifecycle (Phase 2) depends on Phase 1 and lib-worldstate (Phase 2+). Lazy evaluation (Phase 4) is the core algorithm and should be extensively unit-tested. Background worker (Phase 5) depends on Phase 4.*
+| Issue | Title | Status | Notes |
+|-------|-------|--------|-------|
+| [#614](https://github.com/BeyondImmersion/bannou-service/issues/614) | Workshop plugin implementation | Open | Primary implementation tracking issue |
+| [#626](https://github.com/BeyondImmersion/bannou-service/issues/626) | Workshop: materialization compensation strategy for multi-service partial failure | Open | T7 compliance — design decision needed (DC #9) |
+| [#627](https://github.com/BeyondImmersion/bannou-service/issues/627) | Workshop: Draft blueprint status for iterative authoring | Open | Potential extension — pre-publish validation workflow |
+| [#545](https://github.com/BeyondImmersion/bannou-service/issues/545) | Workshop: blueprint categories and tag taxonomy | Open | Opaque strings vs typed enum design |
+| [#543](https://github.com/BeyondImmersion/bannou-service/issues/543) | Workshop: production queue ordering and priority | Open | Task execution order within an owner |
+| [#532](https://github.com/BeyondImmersion/bannou-service/issues/532) | Workshop: worker proficiency integration with lib-seed | Open | Proficiency domain lookup and multiplier calculation |
+| [#484](https://github.com/BeyondImmersion/bannou-service/issues/484) | Workshop: location constraint enforcement | Open | Blueprint `requiresLocationId` validation at task creation |
+| [#483](https://github.com/BeyondImmersion/bannou-service/issues/483) | Workshop: production task notifications and alerts | Open | Client events for materialization, pause, completion |
+| [#529](https://github.com/BeyondImmersion/bannou-service/issues/529) | Workshop: rate segment compaction algorithm | Open | Weighted average merging for long-running tasks (DC #7) |
+
+Plugin is in pre-implementation phase. Blueprint infrastructure (Phase 1) is self-contained. Task lifecycle (Phase 2) depends on Phase 1 and lib-worldstate. Lazy evaluation (Phase 4) is the core algorithm and should be extensively unit-tested. Background worker (Phase 5) depends on Phase 4.

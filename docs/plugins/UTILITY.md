@@ -125,31 +125,27 @@ Like Trade, Utility serves three usage patterns through the same APIs:
 │                       UTILITY (L4)                                │
 │  Network Types • Connections • Flow Calc • Coverage • Decay      │
 │  Failure Cascade • Maintenance Alerts • Variable Provider        │
-└────────┬──────────┬──────────┬──────────┬───────────────────────┘
-         │          │          │          │
-    uses │     uses │     uses │     uses │
-         ▼          ▼          ▼          ▼
-┌────────────┐ ┌────────────┐ ┌──────────┐ ┌───────────┐
-│  Location  │ │ Worldstate │ │ Workshop │ │ Currency  │  ← L2 Foundation
-│  (L2)      │ │ (L2)       │ │ (L4*)    │ │ (L2)      │
-│  network   │ │ game clock │ │ source   │ │ maint.    │
-│  nodes     │ │ season     │ │ production│ │ costs     │
-│  hierarchy │ │ decay time │ │ rates    │ │           │
-└────────────┘ └────────────┘ └──────────┘ └───────────┘
+└────────┬──────────┬──────────┬──────────────────────────────────┘
+         │          │          │
+    uses │     uses │     uses │
+         ▼          ▼          ▼
+┌────────────┐ ┌────────────┐ ┌──────────┐
+│  Location  │ │ Worldstate │ │ Resource │  ← L1/L2 Foundation (hard)
+│  (L2)      │ │ (L2)       │ │ (L1)     │
+│  network   │ │ game clock │ │ cleanup  │
+│  nodes     │ │ season     │ │ refs     │
+│  hierarchy │ │ decay time │ │          │
+└────────────┘ └────────────┘ └──────────┘
          │
-    optional │
+    optional │ (soft — graceful degradation if unavailable)
          ▼
-┌────────────┐ ┌────────┐ ┌──────────┐ ┌──────────┐
-│Organization│ │Faction │ │Environm. │ │  Trade   │  ← L4 Peers
-│  (L4)      │ │ (L4)   │ │ (L4)     │ │ (L4)     │
-│  infra.    │ │jurisd. │ │weather   │ │supply    │
-│  operators │ │norms   │ │damage    │ │demand    │
-│            │ │        │ │modifier  │ │signals   │
-└────────────┘ └────────┘ └──────────┘ └──────────┘
-
-(* Workshop is L4 but a hard dependency because Utility MUST know
-   where production sources are to compute flow. Without Workshop
-   running, Utility has no source data and coverage is zero everywhere.)
+┌────────────┐ ┌────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│ Workshop   │ │Faction │ │Environm. │ │  Trade   │ │Organizat.│  ← L4 Peers
+│  (L4)      │ │ (L4)   │ │ (L4)     │ │ (L4)     │ │ (L4)     │
+│  source    │ │jurisd. │ │weather   │ │supply    │ │ infra.   │
+│  production│ │norms   │ │damage    │ │demand    │ │ operators│
+│  rates     │ │        │ │modifier  │ │signals   │ │          │
+└────────────┘ └────────┘ └──────────┘ └──────────┘ └──────────┘
 ```
 
 ### The Cascade Emergence
@@ -231,6 +227,11 @@ UtilityNetworkType:
   connectionNoun: string            # "pipe", "cable", "conduit", "road" (for log messages/events)
   resourceNoun: string              # "water", "power", "sewage", "mana" (for log messages/events)
 
+  # Deprecation (Category B per IMPLEMENTATION TENETS — instances persist independently)
+  isDeprecated: boolean             # default: false
+  deprecatedAt: timestamp?          # When deprecated (null if not deprecated)
+  deprecationReason: string?        # Why deprecated (maxLength: 500, nullable)
+
   createdAt: timestamp
   modifiedAt: timestamp
 ```
@@ -261,16 +262,16 @@ UtilityConnection:
 
   # Ownership
   ownerId: uuid?                    # Organization or faction that owns this infrastructure
-  ownerType: string?                # "organization", "faction", "realm", "system"
+  ownerType: EntityType?            # $ref: EntityType from common-api.yaml (Organization, Faction, Realm, System)
 
   # Status
-  status: string                    # "active", "disabled", "under_construction", "demolished"
-  disabledReason: string?           # "maintenance", "sabotage", "natural_disaster", "capacity_upgrade"
+  status: ConnectionStatus          # ConnectionStatus enum: Active, Disabled, UnderConstruction, Demolished
+  disabledReason: string?           # Game-configurable reason text (type classification pending #632)
 
   # Metadata
-  terrainType: string?              # "underground", "surface", "elevated", "submerged"
+  terrainType: string?              # Game-configurable terrain classification (underground, surface, elevated, submerged)
   constructionCost: decimal?        # Original build cost (for repair cost estimation)
-  tags: [string]                    # "ancient", "magical", "temporary", "reinforced"
+  tags: [string]                    # Caller-provided classification tags for filtering and display. The service stores and returns these values but does not use them in flow calculations or business logic.
 
   createdAt: timestamp
   modifiedAt: timestamp
@@ -297,11 +298,11 @@ UtilityCoverageSnapshot:
   totalLossPercent: decimal          # Cumulative loss across the supply chain
 
   # Status classification
-  coverageStatus: string             # "full", "partial", "critical", "none"
-  # full: coverageRatio >= 1.0
-  # partial: 0.5 <= coverageRatio < 1.0
-  # critical: 0.0 < coverageRatio < 0.5
-  # none: coverageRatio == 0.0
+  coverageStatus: CoverageStatus     # CoverageStatus enum: Full, Partial, Critical, None
+  # Full: coverageRatio >= 1.0
+  # Partial: 0.5 <= coverageRatio < 1.0
+  # Critical: 0.0 < coverageRatio < 0.5
+  # None: coverageRatio == 0.0
 
   computedAt: timestamp
   invalidatedAt: timestamp?          # When topology change invalidated this snapshot
@@ -322,17 +323,17 @@ UtilityProductionSource:
   locationId: uuid                  # Where production happens (must be on the network)
 
   # Production reference
-  workshopTaskId: uuid?             # Optional link to Workshop task (for rate queries)
-  manualRateOverride: decimal?      # If no Workshop task, manually specified production rate
+  workshopTaskId: uuid?             # Optional link to Workshop task (for rate queries). Workshop is L4 soft dependency — when unavailable, Workshop-linked sources report zero production rate.
+  manualRateOverride: decimal?      # If no Workshop task, manually specified production rate. Only source of production data when Workshop is unavailable.
 
   # Computed
   currentProductionRate: decimal    # Units per game-hour (from Workshop or manual override)
 
   # Ownership
   ownerId: uuid?
-  ownerType: string?
+  ownerType: EntityType?            # $ref: EntityType from common-api.yaml
 
-  status: string                    # "active", "paused", "depleted"
+  status: ProductionSourceStatus    # ProductionSourceStatus enum: Active, Paused, Depleted
   createdAt: timestamp
   modifiedAt: timestamp
 ```
@@ -350,7 +351,7 @@ UtilityMaintenanceRequest:
   networkTypeCode: string
 
   # Type
-  maintenanceType: string           # "repair", "upgrade_capacity", "upgrade_condition", "demolish"
+  maintenanceType: MaintenanceType  # MaintenanceType enum: Repair, UpgradeCapacity, UpgradeCondition, Demolish
 
   # Current state
   currentCondition: decimal         # Condition when request was filed
@@ -363,7 +364,7 @@ UtilityMaintenanceRequest:
   estimatedCompletionAt: timestamp? # Game-time estimate
 
   # Status
-  status: string                    # "open", "assigned", "in_progress", "completed", "cancelled"
+  status: MaintenanceRequestStatus  # MaintenanceRequestStatus enum: Open, Assigned, InProgress, Completed, Cancelled
   completedAt: timestamp?
 
   createdAt: timestamp
@@ -378,17 +379,14 @@ UtilityMaintenanceRequest:
 |------------|------|-------|
 | lib-state (IStateStoreFactory) | L0 Hard | Persistence for network types, connections, coverage snapshots, sources, maintenance requests |
 | lib-messaging (IMessageBus) | L0 Hard | Publishing coverage events, failure alerts, maintenance events |
-| lib-contract (IContractClient) | L1 Hard | Infrastructure service agreements between providers and consumer locations (always available; agreement features unused if not applicable to a given network) |
+| lib-resource (IResourceClient) | L1 Hard | Reference tracking and cleanup callback registration for location references on connections and sources |
 | lib-location (ILocationClient) | L2 Hard | Validating connection endpoints are real locations, querying location hierarchy for coverage propagation |
 | lib-worldstate (IWorldstateClient) | L2 Hard | Game clock for decay calculations, seasonal modifiers on flow rates |
-| lib-currency (ICurrencyClient) | L2 Hard | Maintenance cost estimation and payment processing (always available; L4 requires all L2 services running) |
-| lib-workshop (IWorkshopClient) | L4 Hard | Querying production task rates at source locations. Without Workshop, Utility has no production data and coverage is zero everywhere. |
+| lib-workshop (IWorkshopClient) | L4 Soft | Querying production task rates at source locations. When Workshop is unavailable, only manually-registered sources with explicit `manualRateOverride` values contribute to flow calculation. Workshop-linked sources report zero production. Design decision: #628 |
 | lib-faction (IFactionClient) | L4 Soft | Jurisdiction queries for regulatory checks, norm enforcement on infrastructure operators (graceful: no regulation if unavailable) |
 | lib-organization (IOrganizationClient) | L4 Soft | Infrastructure operator queries, maintenance assignment routing (graceful: maintenance requests unassigned if unavailable) |
 | lib-environment (IEnvironmentClient) | L4 Soft | Weather-based condition modifiers (storms damage infrastructure), seasonal demand modifiers (graceful: no weather effects if unavailable) |
 | lib-trade (ITradeClient) | L4 Soft | Demand rate data from supply/demand snapshots for coverage ratio computation (graceful: demand unknown, coverage ratio not computed) |
-
-**Workshop as Hard Dependency Note**: Workshop is L4, meaning the hard dependency is an L4→L4 relationship that would normally use graceful degradation per the service hierarchy. However, Utility without Workshop is fundamentally non-functional -- there are no production sources to compute flow from. This follows the "orchestrator requires its primitive" pattern: just as Escrow (L4) cannot function without Currency (L2) for asset movements, Utility cannot function without Workshop for production source data. If Workshop is disabled, Utility should also be disabled. See Design Consideration #2 for a potential soft-dependency alternative.
 
 ---
 
@@ -464,6 +462,8 @@ Distributed locks for topology mutations.
 | `lock:coverage:{networkTypeCode}` | Lock | Distributed lock for coverage recalculation |
 | `lock:source:{sourceId}` | Lock | Distributed lock for source registration mutations |
 
+**Schema requirement**: All 5 state stores (utility-networks, utility-coverage, utility-sources, utility-maintenance, utility-locks) must be added to `schemas/state-stores.yaml` when schemas are created. Backend assignments: utility-networks (MySQL), utility-coverage (Redis), utility-sources (MySQL), utility-maintenance (MySQL), utility-locks (Redis).
+
 ---
 
 ### Type Field Classification
@@ -471,14 +471,14 @@ Distributed locks for topology mutations.
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
 | `networkTypeCode` | B (Content Code) | Opaque string | Game-configurable utility network types (water, power, sewer, magical_conduit, messenger, etc.). New utility types require zero schema changes. Follows same extensibility pattern as seed types and collection types. |
-| `ownerType` (on connection) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity that owns a utility connection (organization, faction, realm, system). |
-| `status` (on connection) | C (System State) | Service-specific enum | Finite set of connection states (active, disabled, under_construction, demolished). System-owned; drives flow calculation inclusion/exclusion. |
-| `coverageStatus` | C (System State) | Service-specific enum | Finite set of coverage classifications (full, partial, critical, none). System-owned; computed from coverage rate thresholds. Drives NPC awareness events. |
+| `ownerType` (on connection) | A (Entity Reference) | `$ref: EntityType` | Identifies the entity that owns a utility connection. All values (Organization, Faction, Realm, System) exist in EntityType from common-api.yaml. |
+| `status` (on connection) | C (System State) | `ConnectionStatus` | Finite set: Active, Disabled, UnderConstruction, Demolished. System-owned; drives flow calculation inclusion/exclusion. |
+| `coverageStatus` | C (System State) | `CoverageStatus` | Finite set: Full, Partial, Critical, None. System-owned; computed from coverage rate thresholds. Drives NPC awareness events. |
 | `terrainType` (on connection) | B (Content Code) | Opaque string | Game-configurable terrain classifications for connections (underground, surface, elevated, submerged). |
-| `maintenanceType` | C (System State) | Service-specific enum | Finite set of maintenance request types (repair, upgrade_capacity, upgrade_condition, demolish). System-owned; each type has distinct processing logic. |
-| `status` (on maintenance request) | C (System State) | Service-specific enum | Finite set of maintenance states (open, assigned, in_progress, completed, cancelled). System-owned state machine. |
-| `ownerType` (on source) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity that owns a production source feeding a utility network. |
-| `status` (on source) | C (System State) | Service-specific enum | Finite set of source states (active, paused, depleted). System-owned; drives production rate contribution to flow calculation. |
+| `maintenanceType` | C (System State) | `MaintenanceType` | Finite set: Repair, UpgradeCapacity, UpgradeCondition, Demolish. System-owned; each type has distinct processing logic. |
+| `status` (on maintenance request) | C (System State) | `MaintenanceRequestStatus` | Finite set: Open, Assigned, InProgress, Completed, Cancelled. System-owned state machine. |
+| `ownerType` (on source) | A (Entity Reference) | `$ref: EntityType` | Identifies the entity that owns a production source. Same EntityType as connection ownerType. |
+| `status` (on source) | C (System State) | `ProductionSourceStatus` | Finite set: Active, Paused, Depleted. System-owned; drives production rate contribution to flow calculation. |
 
 ---
 
@@ -503,15 +503,31 @@ Distributed locks for topology mutations.
 | `utility.source.deregistered` | `UtilitySourceDeregisteredEvent` | Production source removed from network |
 | `utility.maintenance.requested` | `UtilityMaintenanceRequestedEvent` | New maintenance work order filed |
 | `utility.maintenance.completed` | `UtilityMaintenanceCompletedEvent` | Maintenance work completed |
+| `utility.maintenance.cancelled` | `UtilityMaintenanceCancelledEvent` | Maintenance request auto-expired or manually cancelled |
+
+**Schema requirements**: The eventual `utility-events.yaml` must declare `x-lifecycle` for all four entity types (NetworkType, Connection, ProductionSource, MaintenanceRequest) with `topic_prefix: utility` to generate Pattern C topics. Without `topic_prefix`, entities like `UtilityConnection` would produce Pattern B topics (`utility-connection.created`) which are forbidden per QUALITY TENETS naming conventions. NetworkType x-lifecycle must include `deprecation: true` for Category B lifecycle event generation.
 
 ### Consumed Events
 
 | Topic | Handler | Action |
 |-------|---------|--------|
 | `workshop.task.status-changed` | `HandleWorkshopTaskStatusChangedAsync` | When a Workshop task that's registered as a production source pauses/resumes/completes, update the source's production rate and trigger coverage recalculation |
-| `worldstate.day-changed` | `HandleWorldstateDayChangedAsync` | Trigger condition decay calculation for all connections in all active networks |
-| `location.deleted` | `HandleLocationDeletedAsync` | Remove all connections to/from the deleted location, deregister any sources at that location, recalculate affected coverage |
+| `worldstate.day-changed` | `HandleWorldstateDayChangedAsync` | Trigger maintenance request expiration check (auto-cancel unassigned requests older than MaintenanceRequestAutoExpireDays game-days) |
 | `environment.conditions-changed` | `HandleEnvironmentConditionsChangedAsync` | Apply weather-based damage modifiers to connections in affected locations (storms, earthquakes) |
+
+**Schema requirements**: All consumed events must be declared in `x-event-subscriptions` in the eventual `utility-events.yaml`. Event types referenced: `WorkshopTaskStatusChangedEvent` (from `workshop-events.yaml`), `WorldstateDayChangedEvent` (from `worldstate-events.yaml`), `EnvironmentConditionsChangedEvent` (from `environment-events.yaml`).
+
+### Resource References (x-references)
+
+Location cleanup is handled via lib-resource (per FOUNDATION TENETS Resource-Managed Cleanup), not event subscriptions.
+
+| Source Field | Target Service | Target Entity | Policy | Cleanup Action |
+|-------------|---------------|---------------|--------|----------------|
+| `UtilityConnection.fromLocationId` | Location | location | CASCADE | Delete connection, trigger coverage recalculation for affected network |
+| `UtilityConnection.toLocationId` | Location | location | CASCADE | Delete connection, trigger coverage recalculation for affected network |
+| `UtilityProductionSource.locationId` | Location | location | CASCADE | Deregister source, trigger coverage recalculation for affected network |
+
+Cleanup callbacks registered via generated `RegisterResourceCleanupCallbacksAsync()` at startup. CASCADE policy: when a Location is deleted, all connections to/from it and all sources at it are automatically removed, and coverage is recalculated for affected networks.
 
 ---
 
@@ -530,6 +546,8 @@ Distributed locks for topology mutations.
 | `MaxFlowCalculationDepth` | `UTILITY_MAX_FLOW_CALCULATION_DEPTH` | `50` | Maximum hops in a flow path calculation (prevents infinite loops in misconfigured bidirectional networks) |
 | `MaintenanceRequestAutoExpireDays` | `UTILITY_MAINTENANCE_REQUEST_AUTO_EXPIRE_DAYS` | `30` | Unassigned maintenance requests auto-cancel after this many game-days |
 | `CoverageEventThreshold` | `UTILITY_COVERAGE_EVENT_THRESHOLD` | `0.1` | Minimum coverage ratio change to publish a coverage event (prevents noise from tiny fluctuations) |
+| `ConditionDecayWorkerStartupDelaySeconds` | `UTILITY_CONDITION_DECAY_WORKER_STARTUP_DELAY_SECONDS` | `60` | Delay before ConditionDecayWorker begins first execution after service startup |
+| `MaintenanceExpirationWorkerStartupDelaySeconds` | `UTILITY_MAINTENANCE_EXPIRATION_WORKER_STARTUP_DELAY_SECONDS` | `120` | Delay before MaintenanceExpirationWorker begins first execution after service startup |
 
 ---
 
@@ -541,24 +559,32 @@ Distributed locks for topology mutations.
 | `UtilityServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access for all 5 stores |
 | `IMessageBus` | Event publishing |
-| `FlowCalculator` | Graph traversal engine for computing flow from sources through connections to locations |
-| `CoverageManager` | Manages coverage snapshot computation, caching, invalidation, and event publishing |
-| `ConditionDecayCalculator` | Computes condition decay based on elapsed game-time and network type decay rates |
+| `ITelemetryProvider` | Span creation for all async methods per IMPLEMENTATION TENETS |
+| `IResourceClient` | Reference registration/unregistration for location references |
+| `FlowCalculator` | Graph traversal engine for computing flow from sources through connections to locations. Receives ITelemetryProvider for span instrumentation. |
+| `CoverageManager` | Manages coverage snapshot computation, caching, invalidation, and event publishing. Receives ITelemetryProvider for span instrumentation. |
+| `ConditionDecayCalculator` | Computes condition decay based on elapsed game-time and network type decay rates. Receives ITelemetryProvider for span instrumentation. |
 | `ILocationClient` | Location validation and hierarchy queries |
 | `IWorldstateClient` | Game clock for decay and seasonal calculations |
-| `IWorkshopClient` | Production rate queries for registered sources |
+| `IWorkshopClient` | Production rate queries for registered sources (soft L4 dependency, resolved via service provider) |
 
 ---
 
 ## API Endpoints (Implementation Notes)
 
-### Network Type Management (3 endpoints)
+### Network Type Management (5 endpoints)
 
-Standard CRUD for utility network types. `Create` validates uniqueness of code within game service scope. `Update` triggers coverage recalculation if flow configuration properties changed. `Delete` is restricted: fails if any connections exist (must demolish infrastructure first).
+- **Create**: Validates uniqueness of code within game service scope.
+- **Update**: Triggers coverage recalculation if flow configuration properties changed.
+- **List**: Returns network types with `includeDeprecated` parameter (default: false). When false, only non-deprecated types returned.
+- **Deprecate**: `POST /utility/network-type/deprecate`. Sets `isDeprecated=true`, `deprecatedAt=now`, `deprecationReason=request.reason`. **Idempotent**: returns OK if already deprecated. Publishes `utility.network-type.updated` event with `changedFields` containing deprecation fields. One-way (Category B — no undeprecate).
+- **Clean-Deprecated**: `POST /utility/network-type/clean-deprecated`. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from common-api.yaml. Requires `x-permissions: [role: admin]`. Uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`. Only permanently removes network types where zero connections and zero sources reference the `networkTypeCode`. Publishes `utility.network-type.deleted` event for each removed type. Service implements `ICleanDeprecatedEntity` marker interface.
+
+**Category B lifecycle**: No per-entity delete endpoint. No undeprecate endpoint. Deprecation is one-way; permanent removal only via clean-deprecated sweep.
 
 ### Connection Management (7 endpoints)
 
-- **Create**: Validates both location endpoints exist, validates no duplicate connection between same locations for same network type, initializes condition to 1.0, triggers coverage recalculation for all downstream locations.
+- **Create**: Validates both location endpoints exist, validates no duplicate connection between same locations for same network type, rejects if `networkTypeCode` references a deprecated network type, initializes condition to 1.0, registers `fromLocationId` and `toLocationId` references with lib-resource, triggers coverage recalculation for all downstream locations.
 - **Update**: Modifies capacity, status, ownership, metadata. Triggers coverage recalculation if capacity or status changed.
 - **UpdateCondition**: The primary mutation endpoint for damage/repair. Accepts `condition` (0.0-1.0) and `cause` string. Publishes `condition-changed` event. If condition crosses the failure threshold in either direction, publishes `connection.failed` or `connection.restored`. Triggers downstream coverage recalculation.
 - **Repair**: Convenience endpoint that increments condition by a specified amount (capped at 1.0), updates `lastMaintenanceAt`. Equivalent to `UpdateCondition` but with repair semantics.
@@ -566,8 +592,8 @@ Standard CRUD for utility network types. `Create` validates uniqueness of code w
 
 ### Production Source Management (4 endpoints)
 
-- **Register**: Links a Workshop task (or manual rate) to a location on the utility network. Validates the location has at least one connection in the specified network. Triggers coverage recalculation.
-- **Deregister**: Removes a production source. Triggers coverage recalculation (downstream locations may lose coverage).
+- **Register**: Links a Workshop task (or manual rate) to a location on the utility network. Validates the location has at least one connection in the specified network. Rejects if `networkTypeCode` references a deprecated network type. Registers `locationId` reference with lib-resource. Triggers coverage recalculation.
+- **Deregister**: Removes a production source. Unregisters `locationId` reference with lib-resource. Triggers coverage recalculation (downstream locations may lose coverage).
 - **UpdateRate**: For manual-rate sources, updates the production rate. Workshop-linked sources auto-update via event subscription.
 - **ListByNetwork**: Lists all production sources for a network type with current rates.
 
@@ -586,7 +612,7 @@ Standard CRUD for utility network types. `Create` validates uniqueness of code w
 - **CompleteMaintenance**: Marks maintenance complete. For repair types, calls `UpdateCondition` with the target condition. For capacity upgrades, updates connection capacity. Publishes completion event.
 - **ListMaintenance**: Lists maintenance requests filterable by connection, status, organization, network type. Paginated.
 
-**Total: 23 planned endpoints.**
+**Total: 25 planned endpoints.** (Network Type 5 + Connection 7 + Source 4 + Coverage 5 + Maintenance 4)
 
 ---
 
@@ -789,7 +815,7 @@ Utility is deliberately **ownership-agnostic**. A connection has an optional `ow
 
 ### ConditionDecayWorker
 
-**Interval**: Configurable (default 60 minutes).
+**Interval**: Real-time configurable interval (`ConditionDecayCheckIntervalMinutes`, default 60 minutes). Startup delay: `ConditionDecayWorkerStartupDelaySeconds` (default 60s). The worker runs on a real-time schedule but uses elapsed **game-time** (queried from IWorldstateClient) for decay calculations.
 
 On each tick:
 1. Query all active connections across all network types
@@ -798,16 +824,40 @@ On each tick:
    b. Apply decay: `newCondition = condition - (decayRate × elapsedDays)`
    c. If `newCondition` changed beyond threshold, call `UpdateCondition` internally
    d. If connection crossed failure threshold, the `UpdateCondition` flow handles events
+   e. **Per-item error isolation**: If decay calculation fails for one connection (corrupt data, missing network type config, calculation overflow), log at Warning level with connection ID and error details, and continue processing remaining connections. One corrupt connection record must not block decay processing for the entire network. Cycle-level failures (e.g., unable to query state store) are logged at Error level and abort the tick.
 3. Uses distributed locks per network type to prevent concurrent decay runs
 
 ### MaintenanceExpirationWorker
 
-**Interval**: Configurable (default 24 hours game-time via `worldstate.day-changed`).
+**Trigger**: `worldstate.day-changed` event (game-time based). Startup delay: `MaintenanceExpirationWorkerStartupDelaySeconds` (default 120s). Counts game-days for expiration threshold.
 
 On each tick:
-1. Query all maintenance requests with status "open" older than `MaintenanceRequestAutoExpireDays`
-2. Transition to "cancelled" status
+1. Query all maintenance requests with status `Open` older than `MaintenanceRequestAutoExpireDays` game-days
+2. Transition to `Cancelled` status
 3. Publish `utility.maintenance.cancelled` event
+4. **Per-item error isolation**: If status transition fails for one request, log at Warning level and continue. One corrupt maintenance request must not block expiration processing.
+
+---
+
+## Testing Strategy
+
+### Unit Tests (lib-utility.tests/)
+
+- **FlowCalculator**: Linear paths, branching junctions, proportional distribution, capacity constraints, condition multipliers, distance loss, bidirectional cycle detection, MaxFlowCalculationDepth safety bound, empty network, single source, multiple sources
+- **CoverageManager**: Snapshot caching, TTL expiration, invalidation on topology change, debounced recalculation, coverage status classification thresholds, event publishing on status change, CoverageEventThreshold filtering
+- **ConditionDecayCalculator**: Decay rate application, elapsed game-time calculation, failure threshold crossing, zero-decay network types, per-item error isolation
+- **Endpoint methods**: All 25 endpoints with success/failure scenarios, validation (duplicate connections, deprecated network type guards, location existence), distributed locking, pagination, filtering
+
+### HTTP Integration Tests (http-tester/)
+
+- End-to-end flow: Create network type -> Create connections -> Register source -> Query coverage -> Verify flow calculation
+- Topology mutation: Update connection condition -> Verify coverage recalculation -> Verify events published
+- Failure cascade: Set connection condition to 0.0 -> Verify downstream coverage degrades -> Repair -> Verify restoration
+- Deprecation lifecycle: Create -> Deprecate -> Guard rejects new connections -> Clean-deprecated sweep
+
+### Edge Tests (edge-tester/)
+
+- Coverage event delivery via WebSocket when topology changes cause coverage status transitions
 
 ---
 
@@ -861,13 +911,13 @@ Implement `IUtilityFlowModifierProvider` interface in `bannou-service/Providers/
 
 ### Design Considerations (Requires Planning)
 
-1. **Flow calculation is O(V + E) per network**: For a network with 10,000 connections and 5,000 locations, recalculation is ~15,000 operations. With debouncing (2s default) and caching (5min TTL), this should handle frequent topology changes. At scale, consider per-subgraph recalculation (only recompute the affected subtree, not the entire network).
+1. **Flow calculation is O(V + E) per network**: For a network with 10,000 connections and 5,000 locations, recalculation is ~15,000 operations. With debouncing (2s default) and caching (5min TTL), this should handle frequent topology changes. At scale, consider per-subgraph recalculation (only recompute the affected subtree, not the entire network). **Multi-instance safety**: `CoverageRecalculationDebounceMs` operates per-instance as a best-effort optimization. In multi-instance deployments, multiple instances may independently trigger recalculation after the debounce window. The distributed lock on `lock:coverage:{networkTypeCode}` serializes actual recalculation execution, ensuring correctness. The debounce reduces unnecessary lock contention and redundant computation but is not a correctness mechanism. This is IMPLEMENTATION TENETS compliant: the authoritative serialization is the distributed lock, not the in-memory timer. Design decision on local vs Redis-based debounce tracked in #633. AUDIT:NEEDS_DESIGN
 
-2. **Workshop hard dependency at L4**: Unusual for a hard dependency. Per the service hierarchy, L4→L4 dependencies should use graceful degradation (soft). If this becomes architecturally concerning, consider making it soft with a "manual sources only" fallback (no Workshop auto-discovery, all sources registered manually with rates). This is less convenient but preserves hierarchy purity.
+2. **Workshop dependency mode**: Workshop is now soft (L4→L4 per service hierarchy) with manual-rate fallback when unavailable. Whether this degradation mode is optimal or whether Utility/Workshop should be operationally co-required is tracked in #628. AUDIT:NEEDS_DESIGN
 
-3. **Junction distribution fairness**: Proportional-by-capacity is simple but may not match game design intent. Some games want priority-based distribution (military district gets water first, slums get remainder). The `IUtilityFlowModifierProvider` pattern (Phase 7) could address this by letting Faction inject priority weights.
+3. **Junction distribution fairness**: Proportional-by-capacity is simple but may not match game design intent. Some games want priority-based distribution (military district gets water first, slums get remainder). The `IUtilityFlowModifierProvider` pattern (Phase 7) could address this by letting Faction inject priority weights. Tracked in #629. AUDIT:NEEDS_DESIGN
 
-4. **Coverage ratio without demand data**: If Trade (which provides demand data) is unavailable, `coverageRatio` cannot be computed. The snapshot should clearly distinguish "supply rate is 35 units/gh, demand unknown" from "supply rate is 35 units/gh, demand is 50 units/gh, ratio is 0.7." The `coverageStatus` classification should still work on absolute thresholds when demand is unknown.
+4. **Coverage ratio without demand data**: If Trade (which provides demand data) is unavailable, `coverageRatio` cannot be computed. The snapshot should clearly distinguish "supply rate is 35 units/gh, demand unknown" from "supply rate is 35 units/gh, demand is 50 units/gh, ratio is 0.7." The `coverageStatus` classification should still work on absolute thresholds when demand is unknown. Tracked in #630. AUDIT:NEEDS_DESIGN
 
 5. **Bidirectional network cycles**: Power grids are naturally bidirectional with cycles. The BFS flow calculator must handle this (track visited nodes, detect cycles, prevent infinite traversal). `MaxFlowCalculationDepth` provides a safety bound.
 
@@ -877,8 +927,19 @@ Implement `IUtilityFlowModifierProvider` interface in `bannou-service/Providers/
 
 8. **No direct player interaction**: Utility is internal-only. Players experience infrastructure through its effects (water available, power out) and through NPCs reacting to infrastructure state. Players may direct construction via Organization management, but they don't call Utility APIs directly.
 
+9. **Connection demolition semantics**: Whether demolished connections are soft-deleted (status=Demolished, record retained) or hard-deleted (record removed). Affects maintenance cleanup and event naming. Tracked in #631. AUDIT:NEEDS_DESIGN
+
+10. **disabledReason type classification**: Whether `disabledReason` on connections is a finite enum (`ConnectionDisableReason`) or game-configurable opaque string. Tracked in #632. AUDIT:NEEDS_DESIGN
+
 ---
 
 ## Work Tracking
 
-*(No active work items -- pre-implementation)*
+| Issue | Title | Status |
+|-------|-------|--------|
+| #628 | Workshop dependency mode | Open — AUDIT:NEEDS_DESIGN |
+| #629 | Junction distribution fairness | Open — AUDIT:NEEDS_DESIGN |
+| #630 | Coverage ratio without demand data | Open — AUDIT:NEEDS_DESIGN |
+| #631 | Connection demolition semantics | Open — AUDIT:NEEDS_DESIGN |
+| #632 | disabledReason type classification | Open — AUDIT:NEEDS_DESIGN |
+| #633 | Debounce implementation | Open — AUDIT:NEEDS_DESIGN |

@@ -292,8 +292,9 @@ This generates `EntityNameCreatedEvent` (full data), `EntityNameUpdatedEvent` (f
 | `ILifecycleCreatedEvent` | `*CreatedEvent` | (inherits `ILifecycleEvent`) |
 | `ILifecycleUpdatedEvent` | `*UpdatedEvent` | `ChangedFields` |
 | `ILifecycleDeletedEvent` | `*DeletedEvent` | `DeletedReason` |
+| `IDeprecatableEntity` | Entities with `deprecation: true` | `IsDeprecated`, `DeprecatedAt`, `DeprecationReason` |
 
-These interfaces enable generic processing of lifecycle events (e.g., audit logging, analytics ingestion) without coupling to specific event types. The interfaces are implemented via companion partial class files (`*LifecycleEvents.Interfaces.cs`) generated alongside the lifecycle event schemas.
+These interfaces enable generic processing of lifecycle events (e.g., audit logging, analytics ingestion) without coupling to specific event types. The interfaces are implemented via companion partial class files (`*LifecycleEvents.Interfaces.cs`) generated alongside the lifecycle event schemas. The `IDeprecatableEntity` interface is conditionally added only to entities with `deprecation: true` in their `x-lifecycle` definition and is defined in `sdks/core/IDeprecatableEntity.cs`.
 
 **changedFields convention**: All `*.updated` events — whether lifecycle-generated or custom — MUST include a `changedFields` property containing camelCase property names of the fields that changed. This enables consumers to filter reactions to only the fields they care about. Lifecycle-generated events get this automatically; custom updated events must add it manually.
 

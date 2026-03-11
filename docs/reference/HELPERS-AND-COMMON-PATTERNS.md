@@ -1073,6 +1073,7 @@ All clean-deprecated endpoints use shared request/response models from `common-a
 **Shared models** (`common-api.yaml`):
 - `CleanDeprecatedRequest`: `gracePeriodDays` (int, default 0), `dryRun` (bool, default false)
 - `CleanDeprecatedResponse`: `cleaned` (int), `remaining` (int), `errors` (int), `cleanedIds` (uuid array)
+- `CleanDeprecatedStringKeyResponse`: Same as `CleanDeprecatedResponse` except `cleanedIds` are plain strings (for entities with developer-assigned string identifiers like achievement and leaderboard definitions). Use with `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`'s `Func<TEntity, string>` overload, which returns `StringKeyCleanupSweepResult`.
 
 #### Implementation Pattern
 

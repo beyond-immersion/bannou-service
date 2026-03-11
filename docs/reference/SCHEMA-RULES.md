@@ -172,6 +172,7 @@ Defined in `{service}-events.yaml`, generates CRUD lifecycle events automaticall
 x-lifecycle:
   topic_prefix: myservice              # Optional: enables Pattern C namespaced topics
   EntityName:
+    deprecation: true                  # Optional: auto-injects isDeprecated/deprecatedAt/deprecationReason
     model:
       entityId: { type: string, format: uuid, primary: true, required: true }
       name: { type: string, required: true }
@@ -202,6 +203,8 @@ All three events carry the complete model so consumers can react without needing
 All three generated events use `allOf` with `BaseServiceEvent` (producing C# inheritance and `IBannouEvent` implementation) and include an `eventName` property with a `default:` value matching the event's topic (e.g., `account.created`). This is automatic — no manual configuration is needed for lifecycle events to integrate with message taps and generic event processing.
 
 If `resource_mapping` is specified, each generated event includes `x-resource-mapping` for Puppetmaster watch subscriptions.
+
+**`deprecation`**: If `deprecation: true` is set on an entity, three fields are auto-injected into all lifecycle events: `isDeprecated` (bool, required), `deprecatedAt` (date-time, nullable), `deprecationReason` (string, nullable, maxLength 500). Manual definitions of these fields in the model block are stripped and replaced by the auto-injected versions. The `IDeprecatableEntity` interface (from `BeyondImmersion.Bannou.Core`) is added to the generated C# partial classes. The structural test `LifecycleModels_DoNotContainAutoInjectedDeprecationFields` validates that no manual deprecation fields exist in `x-lifecycle` model blocks when `deprecation: true` is set. For full deprecation lifecycle rules (Category A/B classification, required endpoints, storage, behavioral rules), see [IMPLEMENTATION-BEHAVIOR.md § Tenet 31](tenets/IMPLEMENTATION-BEHAVIOR.md#tenet-31-deprecation-lifecycle-mandatory). For copy-paste schema and implementation templates, see [HELPERS-AND-COMMON-PATTERNS § 15](HELPERS-AND-COMMON-PATTERNS.md#15-category-b-deprecation-template).
 
 **NEVER manually define `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent`** - use `x-lifecycle` instead.
 
