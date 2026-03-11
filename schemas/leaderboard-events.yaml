@@ -58,7 +58,6 @@ x-lifecycle:
       updateMode: { $ref: 'leaderboard-api.yaml#/components/schemas/UpdateMode', required: true, description: "Score update mode" }
       isSeasonal: { type: boolean, required: true, description: "Whether the leaderboard is seasonal" }
       isPublic: { type: boolean, required: true, description: "Whether the leaderboard is publicly visible" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the definition was created" }
     sensitive: []
 
 paths: {}  # Events don't have HTTP paths

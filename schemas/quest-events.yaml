@@ -73,7 +73,6 @@ x-lifecycle:
       cooldownSeconds: { type: integer, nullable: true, description: "Cooldown for repeatable quests" }
       deadlineSeconds: { type: integer, nullable: true, description: "Time limit" }
       maxQuestors: { type: integer, required: true, description: "Max party size" }
-      createdAt: { type: string, format: date-time, required: true, description: "Creation timestamp" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this definition belongs to" }
     sensitive: []
 

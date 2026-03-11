@@ -23,6 +23,13 @@ public class SipEndpointRegistry : ISipEndpointRegistry
 
     private const string ROOM_PARTICIPANTS_PREFIX = "voice:room:participants:";
 
+    #region Key Building Helpers
+
+    internal static string BuildRoomParticipantsKey(Guid roomId)
+        => BuildRoomParticipantsKey(roomId);
+
+    #endregion
+
     /// <summary>
     /// Local cache of room participants for fast lookups.
     /// Key: roomId, Value: concurrent dictionary of sessionId -> participant
@@ -277,7 +284,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         }
 
         // Delete from state store
-        var stateKey = $"{ROOM_PARTICIPANTS_PREFIX}{roomId}";
+        var stateKey = BuildRoomParticipantsKey(roomId);
         await _stateStore.DeleteAsync(stateKey, cancellationToken);
 
         _logger.LogInformation("Cleared room {RoomId}, removed {Count} participants", roomId, removed.Count);
@@ -299,7 +306,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.PersistRoomParticipantsAsync");
-        var stateKey = $"{ROOM_PARTICIPANTS_PREFIX}{roomId}";
+        var stateKey = BuildRoomParticipantsKey(roomId);
         var participantList = participants.Values.ToList();
 
         await _stateStore.SaveAsync(stateKey, participantList, null, cancellationToken);
@@ -313,7 +320,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.LoadRoomParticipantsAsync");
-        var stateKey = $"{ROOM_PARTICIPANTS_PREFIX}{roomId}";
+        var stateKey = BuildRoomParticipantsKey(roomId);
         var participantList = await _stateStore.GetAsync(stateKey, cancellationToken);
 
         if (participantList == null || participantList.Count == 0)

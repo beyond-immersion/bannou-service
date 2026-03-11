@@ -26,20 +26,20 @@ namespace BeyondImmersion.BannouService.Behavior.Control;
 public sealed class ControlGateManager : IControlGateRegistry
 {
     private readonly ConcurrentDictionary<Guid, IControlGate> _gates;
-    private readonly ILoggerFactory? _loggerFactory;
-    private readonly ILogger<ControlGateManager>? _logger;
-    private readonly ITelemetryProvider? _telemetryProvider;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger<ControlGateManager> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new control gate manager.
     /// </summary>
-    /// <param name="loggerFactory">Optional logger factory for creating gate loggers.</param>
+    /// <param name="loggerFactory">Logger factory for creating gate loggers.</param>
     /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
-    public ControlGateManager(ILoggerFactory? loggerFactory = null, ITelemetryProvider? telemetryProvider = null)
+    public ControlGateManager(ILoggerFactory loggerFactory, ITelemetryProvider telemetryProvider)
     {
         _gates = new ConcurrentDictionary<Guid, IControlGate>();
         _loggerFactory = loggerFactory;
-        _logger = loggerFactory?.CreateLogger<ControlGateManager>();
+        _logger = loggerFactory.CreateLogger<ControlGateManager>();
         _telemetryProvider = telemetryProvider;
     }
 

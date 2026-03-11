@@ -33,6 +33,8 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ResourceSnapshotCache> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
+    private const string SNAPSHOT_KEY_PREFIX = "snapshot:";
+
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
     private readonly TimeSpan _defaultTtl;
     private readonly int _prefetchConcurrency;
@@ -65,7 +67,7 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
         CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "ResourceSnapshotCache.GetOrLoadAsync");
-        var cacheKey = GetCacheKey(resourceType, resourceId);
+        var cacheKey = BuildCacheKey(resourceType, resourceId);
 
         // Check cache first
         if (_cache.TryGetValue(cacheKey, out var cached) && !cached.IsExpired)
@@ -145,7 +147,7 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
     /// <inheritdoc />
     public void Invalidate(string resourceType, Guid resourceId)
     {
-        var cacheKey = GetCacheKey(resourceType, resourceId);
+        var cacheKey = BuildCacheKey(resourceType, resourceId);
         if (_cache.TryRemove(cacheKey, out _))
         {
             _logger.LogDebug(
@@ -280,8 +282,8 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
             data.LoadedAt);
     }
 
-    private static string GetCacheKey(string resourceType, Guid resourceId)
-        => $"{resourceType}:{resourceId}";
+    internal static string BuildCacheKey(string resourceType, Guid resourceId)
+        => $"{SNAPSHOT_KEY_PREFIX}{resourceType}:{resourceId}";
 
     private static string DecompressData(string base64GzippedData)
     {

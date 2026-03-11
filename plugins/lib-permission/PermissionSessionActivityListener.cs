@@ -60,6 +60,16 @@ public class PermissionSessionActivityListener : ISessionActivityListener
     /// </summary>
     private const string SESSION_PERMISSIONS_KEY = "session:{0}:permissions";
 
+    #region Key Building Helpers
+
+    internal static string BuildSessionStatesKey(string sessionId)
+        => $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_STATES_KEY, sessionId)}";
+
+    internal static string BuildSessionPermissionsKey(string sessionId)
+        => $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_PERMISSIONS_KEY, sessionId)}";
+
+    #endregion
+
     /// <summary>
     /// Initializes the session activity listener for permission TTL management and session lifecycle handling.
     /// </summary>
@@ -109,8 +119,8 @@ public class PermissionSessionActivityListener : ISessionActivityListener
         var ttl = TimeSpan.FromSeconds(_configuration.SessionDataTtlSeconds);
 
         // Raw Redis keys: {prefix}:{key}
-        var statesKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_STATES_KEY, sessionIdStr)}";
-        var permissionsKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr)}";
+        var statesKey = BuildSessionStatesKey(sessionIdStr);
+        var permissionsKey = BuildSessionPermissionsKey(sessionIdStr);
 
         await _redisOps.ExpireAsync(statesKey, ttl, ct);
         await _redisOps.ExpireAsync(permissionsKey, ttl, ct);
@@ -212,8 +222,8 @@ public class PermissionSessionActivityListener : ISessionActivityListener
         var sessionIdStr = sessionId.ToString();
         var ttl = TimeSpan.FromSeconds(_configuration.SessionDataTtlSeconds);
 
-        var statesKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_STATES_KEY, sessionIdStr)}";
-        var permissionsKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr)}";
+        var statesKey = BuildSessionStatesKey(sessionIdStr);
+        var permissionsKey = BuildSessionPermissionsKey(sessionIdStr);
 
         await _redisOps.ExpireAsync(statesKey, ttl, ct);
         await _redisOps.ExpireAsync(permissionsKey, ttl, ct);
@@ -233,8 +243,8 @@ public class PermissionSessionActivityListener : ISessionActivityListener
             return;
 
         var sessionIdStr = sessionId.ToString();
-        var statesKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_STATES_KEY, sessionIdStr)}";
-        var permissionsKey = $"{REDIS_KEY_PREFIX}:{string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr)}";
+        var statesKey = BuildSessionStatesKey(sessionIdStr);
+        var permissionsKey = BuildSessionPermissionsKey(sessionIdStr);
 
         await _redisOps.ExpireAsync(statesKey, reconnectionWindow, ct);
         await _redisOps.ExpireAsync(permissionsKey, reconnectionWindow, ct);

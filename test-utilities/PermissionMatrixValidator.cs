@@ -2,6 +2,9 @@ using Xunit;
 
 namespace BeyondImmersion.BannouService.TestUtilities;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// Structural test validator. Changes affect validation across all services.
+
 /// <summary>
 /// Validates that a service's permission matrix is well-formed.
 /// Used by plugin unit tests to verify generated permission registration code.

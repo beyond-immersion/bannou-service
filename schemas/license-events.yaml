@@ -74,7 +74,6 @@ x-lifecycle:
       boardContractTemplateId: { type: string, format: uuid, required: true, description: "Contract template that controls unlock behavior" }
       adjacencyMode: { $ref: 'license-api.yaml#/components/schemas/AdjacencyMode', required: true, description: "Grid traversal mode for this template" }
       isActive: { type: boolean, required: true, description: "Whether the template is active" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
     sensitive: []
 
   LicenseBoard:

@@ -75,7 +75,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
         var store = _nodeStateStore;
-        var nodeKey = GetNodeKey(poolType, nodeId);
+        var nodeKey = BuildNodeKey(poolType, nodeId);
 
         // Check if node already exists
         var existing = await store.GetAsync(nodeKey, cancellationToken);
@@ -128,7 +128,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
         var store = _nodeStateStore;
-        var nodeKey = GetNodeKey(poolType, nodeId);
+        var nodeKey = BuildNodeKey(poolType, nodeId);
         var state = await store.GetAsync(nodeKey, cancellationToken);
 
         if (state == null)
@@ -179,7 +179,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
         var store = _nodeStateStore;
-        var nodeKey = GetNodeKey(poolType, nodeId);
+        var nodeKey = BuildNodeKey(poolType, nodeId);
 
         // Remove from index first
         await UpdatePoolIndexAsync(poolType, nodeId, add: false, cancellationToken);
@@ -205,7 +205,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
         var store = _nodeStateStore;
-        var nodeKey = GetNodeKey(poolType, nodeId);
+        var nodeKey = BuildNodeKey(poolType, nodeId);
         var state = await store.GetAsync(nodeKey, cancellationToken);
 
         if (state == null)
@@ -243,7 +243,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
         var store = _nodeStateStore;
-        var nodeKey = GetNodeKey(poolType, nodeId);
+        var nodeKey = BuildNodeKey(poolType, nodeId);
         return await store.GetAsync(nodeKey, cancellationToken);
     }
 
@@ -303,7 +303,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
 
         foreach (var nodeId in index.NodeIds)
         {
-            var nodeKey = GetNodeKey(poolType, nodeId);
+            var nodeKey = BuildNodeKey(poolType, nodeId);
             var state = await store.GetAsync(nodeKey, cancellationToken);
 
             if (state != null)
@@ -338,14 +338,14 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     #region Index Management
 
     /// <summary>
-    /// Gets the index key for a pool type.
+    /// Builds the index key for a pool type.
     /// </summary>
-    private static string GetIndexKey(string poolType) => $"{poolType}{INDEX_SUFFIX}";
+    internal static string BuildIndexKey(string poolType) => $"{poolType}{INDEX_SUFFIX}";
 
     /// <summary>
-    /// Gets the node key for a specific node in a pool.
+    /// Builds the node key for a specific node in a pool.
     /// </summary>
-    private static string GetNodeKey(string poolType, string nodeId) => $"{poolType}:{nodeId}";
+    internal static string BuildNodeKey(string poolType, string nodeId) => $"{poolType}:{nodeId}";
 
     /// <summary>
     /// Gets the pool index for a specific pool type.
@@ -354,7 +354,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.GetPoolIndexAsync");
         var store = _poolIndexStore;
-        var indexKey = GetIndexKey(poolType);
+        var indexKey = BuildIndexKey(poolType);
         var index = await store.GetAsync(indexKey, ct);
         return index ?? new ProcessorPoolIndex();
     }
@@ -368,7 +368,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.UpdatePoolIndexAsync");
         var store = _poolIndexStore;
-        var indexKey = GetIndexKey(poolType);
+        var indexKey = BuildIndexKey(poolType);
         var maxRetries = _configuration.ProcessingMaxRetries;
 
         for (int attempt = 1; attempt <= maxRetries; attempt++)

@@ -39,6 +39,13 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     private const string CONFIG_CURRENT_KEY = "current";
     private const string CONFIG_HISTORY_PREFIX = "history:";
 
+    #region Key Building Helpers
+
+    internal static string BuildConfigHistoryKey(int version)
+        => $"{CONFIG_HISTORY_PREFIX}{version}";
+
+    #endregion
+
     // Processing pool key patterns (internal to state manager — FOUNDATION TENETS)
     private const string POOL_INSTANCES_KEY = "processing-pool:{0}:instances";
     private const string POOL_AVAILABLE_KEY = "processing-pool:{0}:available";
@@ -869,7 +876,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
             configuration.Timestamp = DateTimeOffset.UtcNow;
 
             // Save to history with TTL
-            var historyKey = $"{CONFIG_HISTORY_PREFIX}{newVersion}";
+            var historyKey = BuildConfigHistoryKey(newVersion);
             var historyOptions = new StateOptions { Ttl = (int)TimeSpan.FromDays(_configuration.ConfigHistoryTtlDays).TotalSeconds };
             await _configStore.SaveAsync(historyKey, configuration, historyOptions);
 
@@ -906,7 +913,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
 
         try
         {
-            var key = $"{CONFIG_HISTORY_PREFIX}{version}";
+            var key = BuildConfigHistoryKey(version);
             var config = await _configStore.GetAsync(key);
 
             if (config == null)
@@ -985,7 +992,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
             historicalConfig.Description = $"Rolled back from version {currentVersion} to version {version}";
 
             // Save the rollback as a new version in history
-            var historyKey = $"{CONFIG_HISTORY_PREFIX}{rollbackVersion}";
+            var historyKey = BuildConfigHistoryKey(rollbackVersion);
             var historyOptions = new StateOptions { Ttl = (int)TimeSpan.FromDays(_configuration.ConfigHistoryTtlDays).TotalSeconds };
             await _configStore.SaveAsync(historyKey, historicalConfig, historyOptions);
 

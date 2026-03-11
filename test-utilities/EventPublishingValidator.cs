@@ -3,6 +3,9 @@ using System.Reflection;
 
 namespace BeyondImmersion.BannouService.TestUtilities;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// Structural test validator. Changes affect validation across all services.
+
 /// <summary>
 /// Validates event publishing patterns per FOUNDATION TENETS:
 /// - Services with generated *EventPublisher extension classes must call

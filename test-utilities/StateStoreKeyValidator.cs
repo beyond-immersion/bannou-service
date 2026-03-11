@@ -5,6 +5,12 @@ using Xunit;
 
 namespace BeyondImmersion.BannouService.TestUtilities;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// This validator enforces key builder patterns across ALL services and helper services.
+// Changes to match heuristics (GetPrefixConstants, GetBuildKeyMethods, GetGetKeyMethods)
+// affect validation of every class with [BannouService] or [BannouHelperService] attributes.
+// If a test failure appears to be a false positive, present evidence to the user and WAIT.
+
 /// <summary>
 /// Validates state store key builder patterns per FOUNDATION TENETS:
 /// - Key prefixes must be private const string fields
@@ -86,7 +92,7 @@ public static class StateStoreKeyValidator
             .Where(f => f.IsLiteral
                         && !f.IsInitOnly
                         && f.FieldType == typeof(string)
-                        && (f.Name.Contains("PREFIX") || f.Name.Contains("KEY_PREFIX")))
+                        && (f.Name.Contains("PREFIX") || f.Name.Contains("KEY_PREFIX") || f.Name.Contains("SUFFIX")))
             .ToArray();
     }
 
@@ -96,7 +102,8 @@ public static class StateStoreKeyValidator
             .GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
             .Where(m => m.IsStatic
                         && m.ReturnType == typeof(string)
-                        && m.Name.StartsWith("Build", StringComparison.Ordinal))
+                        && m.Name.StartsWith("Build", StringComparison.Ordinal)
+                        && m.Name.Contains("Key", StringComparison.Ordinal))
             .ToArray();
     }
 

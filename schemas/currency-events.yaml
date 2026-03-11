@@ -109,7 +109,6 @@ x-lifecycle:
       scope: { $ref: 'currency-api.yaml#/components/schemas/CurrencyScope', required: true, description: "Currency scope" }
       precision: { $ref: 'currency-api.yaml#/components/schemas/CurrencyPrecision', required: true, description: "Currency precision type" }
       isActive: { type: boolean, required: true, description: "Whether the definition is active" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the definition was created" }
       modifiedAt: { type: string, format: date-time, nullable: true, description: "When the definition was last modified" }
     sensitive: []
 

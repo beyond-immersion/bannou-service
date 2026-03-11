@@ -253,6 +253,30 @@ heavy_command > /tmp/output.txt 2>&1  # Run once
 
 ---
 
+## ⛔ STRUCTURAL TESTS AND TEST UTILITIES ARE FROZEN ⛔
+
+**The `structural-tests/` and `test-utilities/` directories contain the codebase-wide structural validation infrastructure. These files are NEVER to be modified by an agent without EXPLICIT user instructions to change test behavior.**
+
+**What this covers**: ALL files in `structural-tests/` (primarily `StructuralTests.cs`) and `test-utilities/` (all `*Validator.cs` files, `AssemblyMetadataScanner.cs`, `TestAssemblyDiscovery.cs`, `TestConfigurationHelper.cs`, and any future additions).
+
+**Why this rule exists**: Structural tests validate patterns across ALL 76 services — constructor patterns, key builder patterns, hierarchy compliance, permission registration, event publisher completeness, resource cleanup methods, JSON serialization discipline, configuration class instantiation, and more. A single change to a validator heuristic (widening a match, narrowing a filter, adding an exception) affects the validity of ~979 test cases simultaneously. When an agent modifies a structural test to make a failing test pass, it may silently weaken validation for every other service that was previously passing correctly.
+
+**The specific danger**: An agent assigned to "fix test failures" faces a choice: fix the code to comply with the test, or fix the test to accept the code. For normal unit tests this is a judgment call. **For structural tests it is NEVER acceptable to change the test.** Structural tests encode the tenets themselves — changing them is equivalent to changing a tenet, which is forbidden without explicit approval. The correct response to a structural test failure is ALWAYS to fix the code, not the test.
+
+**Rules**:
+1. **NEVER modify any file in `structural-tests/` or `test-utilities/`** unless the user explicitly says "change the structural test to...", "update the validator to...", or gives direct instruction to change test behavior
+2. **NEVER widen or narrow validator heuristics** to make tests pass — present the failure and wait
+3. **NEVER add exceptions, allowlists, or skip lists** to structural tests — those are the user's decision
+4. **NEVER modify assertion thresholds, expected counts, or match patterns** without explicit approval
+5. **If a structural test is producing a false positive**: present the evidence (which test, which service, why you believe it's false) and wait for the user to decide whether to adjust the test or fix the code
+6. **If you must propose a structural test change**: show the EXACT diff, explain what it affects (how many services, which test cases), and wait for explicit approval
+
+**"Explicit" means in-memory, in-conversation, direct instruction.** A summary context from a compacted conversation saying "fix the tests" does NOT qualify. A task description saying "resolve test failures" does NOT qualify. Only a direct, current-conversation instruction from the user to modify a specific structural test or validator qualifies.
+
+**The structural tests are correct until proven otherwise. When a structural test fails, the code is presumed wrong — not the test.**
+
+---
+
 ## ⛔ NO CONVENTION-BASED CROSS-SERVICE DATA SHARING ⛔
 
 **Follow FOUNDATION TENETS (No Metadata Bag Contracts) in `docs/reference/tenets/FOUNDATION.md` TO THE LETTER.** The No Metadata Bag Contracts tenet covers the eight failures of metadata bag contracts, the only two legitimate uses for `additionalProperties: true`, the correct service-owned binding pattern, per-layer scenario guidance, and detection/enforcement rules. It is comprehensive and authoritative.

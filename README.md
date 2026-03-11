@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/beyond-immersion/bannou-service/actions/workflows/ci.unit.yml/badge.svg?branch=master&event=push)](https://github.com/beyond-immersion/bannou-service/actions/workflows/ci.unit.yml)
 
-Bannou is a schema-driven monoservice platform for multiplayer games. It provides a WebSocket-first edge gateway with zero-copy message routing, plugin-based service architecture, and abstracted infrastructure (lib-state, lib-messaging, lib-mesh). Designed to support Arcadia, a revolutionary MMORPG with 100,000+ AI-driven NPCs, Bannou scales from a single development machine to distributed production clusters without code changes.
+Bannou is a composable game platform -- 76 schema-driven service primitives that combine to create game systems like economies, crafting, NPC behavior, and narrative without per-feature backend code. It deploys identically as a cloud service, a self-hosted sidecar, or embedded in-process, so the same SDK powers a mobile single-player game and a 100,000-player MMO. Alongside the service runtime, a family of pure-computation creative SDKs generate music, narratives, and NPC behaviors procedurally using GOAP planning and formal academic theory -- not AI/LLM inference. All code is generated from OpenAPI schemas; developers write behavior documents (ABML), seed data, and visual layers, not systems programming.
 
 ## Quick Start
 

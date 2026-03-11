@@ -88,9 +88,6 @@ x-lifecycle:
       status: { $ref: 'faction-api.yaml#/components/schemas/FactionStatus', required: true, description: "Current operational lifecycle status" }
       currentPhase: { type: string, nullable: true, description: "Current seed growth phase" }
       memberCount: { type: integer, required: true, description: "Current number of members" }
-      isDeprecated: { type: boolean, required: true, description: "Whether this faction is deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the faction was deprecated (null if not deprecated)" }
-      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation (null if not deprecated)" }
     sensitive: []
 
 paths: {}  # Events don't have HTTP paths

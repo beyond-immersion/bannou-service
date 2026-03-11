@@ -167,13 +167,13 @@ public sealed class SituationalTriggerManager : ISituationalTriggerManager
     private readonly ConcurrentDictionary<string, List<SituationalTriggerDefinition>> _eventTriggers;
     private readonly ConcurrentDictionary<string, List<SituationalTriggerDefinition>> _goapTriggers;
     private readonly ConcurrentDictionary<Guid, List<ActiveTrigger>> _activeTriggers;
-    private readonly ILogger<SituationalTriggerManager>? _logger;
+    private readonly ILogger<SituationalTriggerManager> _logger;
 
     /// <summary>
     /// Creates a new situational trigger manager.
     /// </summary>
-    /// <param name="logger">Optional logger.</param>
-    public SituationalTriggerManager(ILogger<SituationalTriggerManager>? logger = null)
+    /// <param name="logger">Logger instance.</param>
+    public SituationalTriggerManager(ILogger<SituationalTriggerManager> logger)
     {
         _logger = logger;
         _triggerDefinitions = new ConcurrentDictionary<string, SituationalTriggerDefinition>(StringComparer.OrdinalIgnoreCase);

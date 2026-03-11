@@ -4,6 +4,9 @@ using System.Reflection.PortableExecutable;
 
 namespace BeyondImmersion.BannouService.StructuralTests;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// Structural test infrastructure. Changes affect IL-level validation across all services.
+
 /// <summary>
 /// Scans assembly PE metadata to detect type and method references without loading
 /// the assembly into the AppDomain. Uses System.Reflection.Metadata for zero-load

@@ -20,21 +20,21 @@ public sealed class BehaviorStackRegistry : IBehaviorStackRegistry
 {
     private readonly ConcurrentDictionary<Guid, IBehaviorStack> _stacks;
     private readonly IIntentStackMerger _merger;
-    private readonly ILoggerFactory? _loggerFactory;
-    private readonly ILogger<BehaviorStackRegistry>? _logger;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger<BehaviorStackRegistry> _logger;
 
     /// <summary>
     /// Creates a new behavior stack registry.
     /// </summary>
     /// <param name="merger">The merger to use for all stacks.</param>
-    /// <param name="loggerFactory">Optional logger factory.</param>
+    /// <param name="loggerFactory">Logger factory for creating child loggers.</param>
     public BehaviorStackRegistry(
         IIntentStackMerger merger,
-        ILoggerFactory? loggerFactory = null)
+        ILoggerFactory loggerFactory)
     {
         _merger = merger;
         _loggerFactory = loggerFactory;
-        _logger = loggerFactory?.CreateLogger<BehaviorStackRegistry>();
+        _logger = loggerFactory.CreateLogger<BehaviorStackRegistry>();
         _stacks = new ConcurrentDictionary<Guid, IBehaviorStack>();
     }
 

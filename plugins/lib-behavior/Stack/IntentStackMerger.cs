@@ -33,13 +33,13 @@ public sealed class IntentStackMerger : IIntentStackMerger
     /// </summary>
     public const float UrgencyThreshold = 0.001f;
 
-    private readonly ILogger<IntentStackMerger>? _logger;
+    private readonly ILogger<IntentStackMerger> _logger;
 
     /// <summary>
     /// Creates a new intent stack merger.
     /// </summary>
-    /// <param name="logger">Optional logger.</param>
-    public IntentStackMerger(ILogger<IntentStackMerger>? logger = null)
+    /// <param name="logger">Logger instance.</param>
+    public IntentStackMerger(ILogger<IntentStackMerger> logger)
     {
         _logger = logger;
     }

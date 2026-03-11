@@ -124,7 +124,6 @@ x-lifecycle:
       defaultEnforcementMode: { $ref: 'contract-api.yaml#/components/schemas/EnforcementMode', required: true, description: "Default enforcement mode for instances" }
       transferable: { type: boolean, required: true, description: "Whether contracts can be transferred" }
       isActive: { type: boolean, required: true, description: "Whether template is active" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
     sensitive: []
 
   ContractInstance:

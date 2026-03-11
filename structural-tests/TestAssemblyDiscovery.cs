@@ -2,6 +2,9 @@ using System.Reflection;
 
 namespace BeyondImmersion.BannouService.StructuralTests;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// Structural test infrastructure. Changes affect assembly discovery across all services.
+
 /// <summary>
 /// Discovers and loads plugin test assemblies (lib-*.tests) from the repository
 /// file system, using the same Assembly.LoadFrom() mechanism as PluginLoader.

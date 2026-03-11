@@ -4,6 +4,9 @@ using Xunit;
 
 namespace BeyondImmersion.BannouService.TestUtilities;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// Structural test validator. Changes affect validation across all services.
+
 /// <summary>
 /// Validates service constructor patterns to catch common AI-introduced mistakes:
 /// - Multiple constructors (DI might pick wrong one)

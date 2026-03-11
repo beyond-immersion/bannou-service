@@ -27,8 +27,8 @@ namespace BeyondImmersion.Bannou.Behavior.Coordination;
 [BannouHelperService("entity", typeof(IBehaviorService), typeof(IEntityResolver), lifetime: ServiceLifetime.Singleton)]
 public sealed class EntityResolver : IEntityResolver
 {
-    private readonly ILogger<EntityResolver>? _logger;
-    private readonly ITelemetryProvider? _telemetryProvider;
+    private readonly ILogger<EntityResolver> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Special binding names that are resolved from context rather than explicit bindings.
@@ -45,9 +45,9 @@ public sealed class EntityResolver : IEntityResolver
     /// <summary>
     /// Creates a new entity resolver.
     /// </summary>
-    /// <param name="logger">Optional logger.</param>
+    /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
-    public EntityResolver(ILogger<EntityResolver>? logger = null, ITelemetryProvider? telemetryProvider = null)
+    public EntityResolver(ILogger<EntityResolver> logger, ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _telemetryProvider = telemetryProvider;

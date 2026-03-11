@@ -6,6 +6,13 @@ using Xunit;
 
 namespace BeyondImmersion.BannouService.StructuralTests;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// This file contains structural validation tests that enforce tenets across ALL 76 services.
+// Changing any test, assertion, heuristic, threshold, or exception list here affects ~979 test
+// cases simultaneously. Structural test failures mean the CODE is wrong, not the test.
+// If you believe a test needs changing, present the evidence to the user and WAIT.
+// A task description or compacted summary saying "fix tests" is NOT permission to edit this file.
+
 /// <summary>
 /// Auto-discovered structural validation tests for all Bannou services.
 /// Services are discovered via [BannouService] attribute reflection — adding
@@ -77,6 +84,7 @@ public class StructuralTests
         }
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     [Theory]
     [MemberData(nameof(AllServiceTypes))]
     public void Service_HasValidConstructor(Type serviceType)
@@ -84,6 +92,7 @@ public class StructuralTests
         ServiceConstructorValidator.ValidateServiceConstructor(serviceType);
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     [Theory]
     [MemberData(nameof(AllServiceTypes))]
     public void Service_RespectsHierarchy(Type serviceType)
@@ -91,6 +100,7 @@ public class StructuralTests
         ServiceHierarchyValidator.ValidateServiceHierarchy(serviceType);
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     [Theory]
     [MemberData(nameof(AllServiceTypes))]
     public void Service_HasValidKeyBuilders(Type serviceType)
@@ -98,6 +108,7 @@ public class StructuralTests
         StateStoreKeyValidator.ValidateKeyBuilders(serviceType);
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     [Theory]
     [MemberData(nameof(AllServiceTypes))]
     public void Service_ReferencesItsStateStores(Type serviceType)
@@ -105,6 +116,7 @@ public class StructuralTests
         StateStoreKeyValidator.ValidateStoreReferences(serviceType);
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     [Theory]
     [MemberData(nameof(AllHelperServiceTypes))]
     public void HelperService_HasValidConstructor(Type helperType)
@@ -112,6 +124,7 @@ public class StructuralTests
         ServiceConstructorValidator.ValidateServiceConstructor(helperType);
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     [Theory]
     [MemberData(nameof(AllHelperServiceTypes))]
     public void HelperService_HasValidKeyBuilders(Type helperType)
@@ -119,6 +132,7 @@ public class StructuralTests
         StateStoreKeyValidator.ValidateKeyBuilders(helperType);
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Detects Plugin.cs files that still manually register helper services which have
     /// [BannouHelperService] with a non-null InterfaceType. These registrations are now
@@ -198,6 +212,7 @@ public class StructuralTests
             string.Join("\n", redundant.Select(r => $"  - {r}")));
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Lists helper services (types with [BannouHelperService]) whose parent plugin
     /// has no corresponding helper configuration class (a type with [ServiceConfiguration]
@@ -244,6 +259,7 @@ public class StructuralTests
             string.Join("\n", helpersWithoutConfig.Select(h => $"  - {h}")));
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that each service's generated controller correctly implements
     /// IBannouController (via the generated I{Service}Controller interface) and
@@ -262,6 +278,7 @@ public class StructuralTests
             string.Join("\n", violations.Select(v => $"  - {v}")));
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that the generated PermissionRegistration endpoint count matches the
     /// number of endpoints with non-empty x-permissions in the API schema. A mismatch
@@ -377,6 +394,7 @@ public class StructuralTests
         return count;
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that each service's generated configuration class can be instantiated
     /// via Activator.CreateInstance() without throwing. Configuration classes must have
@@ -432,6 +450,7 @@ public class StructuralTests
         "PublishLicenseBoardUpdatedAsync",
     };
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that every generated Publish*Async extension method on the service's
     /// *EventPublisher class is called from somewhere in the plugin assembly.
@@ -469,6 +488,7 @@ public class StructuralTests
             string.Join("\n", uncalledMethods.Select(m => $"  - {m}")));
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that services with [ResourceCleanupRequired] attributes have
     /// corresponding CleanupBy{Target}Async methods implemented. The attributes
@@ -488,6 +508,7 @@ public class StructuralTests
             string.Join("\n", missing.Select(m => $"  - {m}")));
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that each service has a {Service}ServiceEvents.cs file on disk,
     /// confirming the partial class pattern required by FOUNDATION TENETS (service logic in
@@ -515,6 +536,7 @@ public class StructuralTests
             $"— FOUNDATION TENETS requires partial class split for event handlers");
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that no plugin assembly directly calls System.Text.Json.JsonSerializer
     /// methods (Serialize, Deserialize). All JSON serialization must go through
@@ -539,6 +561,7 @@ public class StructuralTests
             $"— use BannouJson instead (IMPLEMENTATION TENETS)");
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that no plugin assembly directly calls Environment.GetEnvironmentVariable().
     /// All configuration must go through generated configuration classes (IMPLEMENTATION TENETS).
@@ -562,6 +585,7 @@ public class StructuralTests
             $"— use service configuration class instead (IMPLEMENTATION TENETS)");
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that no non-infrastructure plugin assembly directly references
     /// infrastructure client types (StackExchange.Redis, RabbitMQ.Client, MySqlConnector).
@@ -612,6 +636,7 @@ public class StructuralTests
             string.Join("\n", violations.Select(v => $"  - {v}")));
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that no plugin assembly uses Microsoft.AspNetCore.Http.StatusCodes.
     /// All services must use BeyondImmersion.BannouService.StatusCodes instead (IMPLEMENTATION TENETS).
@@ -644,6 +669,7 @@ public class StructuralTests
             $"({string.Join(", ", found)}) — use BannouService.StatusCodes instead (IMPLEMENTATION TENETS)");
     }
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that every plugin using EnumMapping helper methods (MapByName,
     /// MapByNameOrDefault, TryMapByName) has corresponding EnumMappingValidator
@@ -723,6 +749,7 @@ public class StructuralTests
         "transit",          // Transit Mode — merge not yet implemented
     };
 
+    // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
     /// Validates that every service with <c>deprecation: true</c> in its events schema
     /// implements either <see cref="IDeprecateAndMergeEntity"/> (Category A — world-building

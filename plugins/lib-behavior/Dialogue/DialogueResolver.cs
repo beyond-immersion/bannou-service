@@ -32,19 +32,19 @@ namespace BeyondImmersion.Bannou.Behavior.Dialogue;
 public sealed class DialogueResolver : IDialogueResolver
 {
     private readonly IExternalDialogueLoader _loader;
-    private readonly ILogger<DialogueResolver>? _logger;
-    private readonly ITelemetryProvider? _telemetryProvider;
+    private readonly ILogger<DialogueResolver> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new dialogue resolver.
     /// </summary>
     /// <param name="loader">External dialogue file loader.</param>
-    /// <param name="logger">Optional logger.</param>
+    /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public DialogueResolver(
         IExternalDialogueLoader loader,
-        ILogger<DialogueResolver>? logger = null,
-        ITelemetryProvider? telemetryProvider = null)
+        ILogger<DialogueResolver> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _loader = loader;
         _logger = logger;

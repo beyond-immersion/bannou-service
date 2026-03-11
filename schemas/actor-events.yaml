@@ -119,11 +119,6 @@ x-lifecycle:
         type: string
         required: true
         description: Reference to behavior in lib-assets
-      createdAt:
-        type: string
-        format: date-time
-        required: true
-        description: When the template was created
     events:
       - created
       - updated

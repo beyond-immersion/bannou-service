@@ -2,6 +2,9 @@ using Xunit;
 
 namespace BeyondImmersion.BannouService.TestUtilities;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// Structural test validator. Changes affect validation across all services.
+
 /// <summary>
 /// Validates enum boundary mappings at test time, catching value drift between
 /// schema-generated enums and external SDK/library enums before it reaches production.

@@ -143,9 +143,6 @@ x-lifecycle:
         items:
           type: string
           format: uuid
-      isDeprecated: { type: boolean, required: true, description: "Whether this mode is deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When deprecation occurred (null if not deprecated)" }
-      deprecationReason: { type: string, nullable: true, description: "Why this mode was deprecated (null if not deprecated)" }
       tags:
         type: array
         nullable: true

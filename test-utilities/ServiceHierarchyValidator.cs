@@ -6,6 +6,9 @@ using Xunit;
 
 namespace BeyondImmersion.BannouService.TestUtilities;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// Structural test validator. Changes affect validation across all services.
+
 /// <summary>
 /// Validates that service dependencies follow the service hierarchy rules per SERVICE-HIERARCHY.md.
 /// Services may only depend on services in lower layers (lower ServiceLayer enum values).

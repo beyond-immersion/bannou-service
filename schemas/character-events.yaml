@@ -74,16 +74,6 @@ x-lifecycle:
           - $ref: 'character-api.yaml#/components/schemas/CharacterStatus'
         required: true
         description: Current lifecycle status of the character (alive, dead, dormant)
-      createdAt:
-        type: string
-        format: date-time
-        required: true
-        description: Timestamp when the character was created
-      updatedAt:
-        type: string
-        format: date-time
-        nullable: true  # NRT: Optional property MUST be nullable
-        description: Timestamp when the character was last updated
     resource_mapping:
       resource_type: character
       # resource_id_field defaults to characterId (primary key)

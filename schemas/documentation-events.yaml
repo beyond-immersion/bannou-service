@@ -84,16 +84,6 @@ x-lifecycle:
           type: string
         nullable: true  # NRT: Optional array MUST be nullable
         description: List of tags for categorization and search
-      createdAt:
-        type: string
-        format: date-time
-        required: true
-        description: Timestamp when the document was created
-      updatedAt:
-        type: string
-        format: date-time
-        required: true
-        description: Timestamp when the document was last updated
     # Fields excluded from events (content too large for pub/sub)
     sensitive:
       - content

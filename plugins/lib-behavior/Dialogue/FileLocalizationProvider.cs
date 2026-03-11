@@ -41,31 +41,21 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
 {
     private readonly ConcurrentDictionary<string, ILocalizationSource> _sources;
     private readonly LocalizationConfiguration _config;
-    private readonly ILogger<FileLocalizationProvider>? _logger;
-    private readonly ITelemetryProvider? _telemetryProvider;
+    private readonly ILogger<FileLocalizationProvider> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly SemaphoreSlim _reloadLock;
     private bool _disposed;
-
-    /// <summary>
-    /// Creates a new file localization provider with default configuration.
-    /// </summary>
-    /// <param name="logger">Optional logger.</param>
-    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
-    public FileLocalizationProvider(ILogger<FileLocalizationProvider>? logger = null, ITelemetryProvider? telemetryProvider = null)
-        : this(new LocalizationConfiguration(), logger, telemetryProvider)
-    {
-    }
 
     /// <summary>
     /// Creates a new file localization provider with specified configuration.
     /// </summary>
     /// <param name="config">Localization configuration.</param>
-    /// <param name="logger">Optional logger.</param>
-    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public FileLocalizationProvider(
         LocalizationConfiguration config,
-        ILogger<FileLocalizationProvider>? logger = null,
-        ITelemetryProvider? telemetryProvider = null)
+        ILogger<FileLocalizationProvider> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _config = config;
         _logger = logger;

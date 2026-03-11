@@ -23,6 +23,16 @@ public class MfaService : IMfaService
 
     private const string MFA_CHALLENGE_KEY_PREFIX = "mfa-challenge-";
     private const string MFA_SETUP_KEY_PREFIX = "mfa-setup-";
+
+    #region Key Building Helpers
+
+    internal static string BuildChallengeKey(string token)
+        => BuildChallengeKey(token);
+
+    internal static string BuildSetupKey(string token)
+        => BuildSetupKey(token);
+
+    #endregion
     private const int TOTP_SECRET_LENGTH = 20; // 160-bit per RFC 4226/6238
     private const int NONCE_SIZE = 12; // AES-GCM nonce size in bytes
     private const int TAG_SIZE = 16; // AES-GCM authentication tag size in bytes
@@ -178,7 +188,7 @@ public class MfaService : IMfaService
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.MfaChallengeTtlMinutes)
         };
 
-        var key = $"{MFA_CHALLENGE_KEY_PREFIX}{token}";
+        var key = BuildChallengeKey(token);
         await _challengeStore.SaveAsync(key, challengeData, new StateOptions { Ttl = _configuration.MfaChallengeTtlMinutes * 60 }, ct);
 
         _logger.LogDebug("Created MFA challenge for account {AccountId}, TTL {TtlMinutes}m", accountId, _configuration.MfaChallengeTtlMinutes);
@@ -189,7 +199,7 @@ public class MfaService : IMfaService
     public async Task<Guid?> ConsumeMfaChallengeAsync(string token, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "MfaService.ConsumeMfaChallenge");
-        var key = $"{MFA_CHALLENGE_KEY_PREFIX}{token}";
+        var key = BuildChallengeKey(token);
 
         var challenge = await _challengeStore.GetAsync(key, ct);
         if (challenge == null)
@@ -225,7 +235,7 @@ public class MfaService : IMfaService
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.MfaChallengeTtlMinutes)
         };
 
-        var key = $"{MFA_SETUP_KEY_PREFIX}{token}";
+        var key = BuildSetupKey(token);
         await _setupStore.SaveAsync(key, setupData, new StateOptions { Ttl = _configuration.MfaChallengeTtlMinutes * 60 }, ct);
 
         _logger.LogDebug("Created MFA setup token for account {AccountId}, TTL {TtlMinutes}m", accountId, _configuration.MfaChallengeTtlMinutes);
@@ -236,7 +246,7 @@ public class MfaService : IMfaService
     public async Task<MfaSetupData?> ConsumeMfaSetupAsync(string token, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "MfaService.ConsumeMfaSetup");
-        var key = $"{MFA_SETUP_KEY_PREFIX}{token}";
+        var key = BuildSetupKey(token);
 
         var setup = await _setupStore.GetAsync(key, ct);
         if (setup == null)

@@ -21,6 +21,8 @@ namespace BeyondImmersion.BannouService.CharacterEncounter.Caching;
 [BannouHelperService("encounter-data", typeof(ICharacterEncounterService), typeof(IEncounterDataCache), lifetime: ServiceLifetime.Singleton)]
 public sealed class EncounterDataCache : IEncounterDataCache
 {
+    private const string PAIR_KEY_PREFIX = "pair:";
+
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly int _maxEncounterResultsPerQuery;
 
@@ -73,7 +75,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <inheritdoc/>
     public async Task<SentimentResponse?> GetSentimentOrLoadAsync(Guid characterId, Guid targetCharacterId, CancellationToken ct = default)
     {
-        var cacheKey = GetPairKey(characterId, targetCharacterId);
+        var cacheKey = BuildPairKey(characterId, targetCharacterId);
         return await _sentimentBucket.GetOrLoadAsync(cacheKey, async loadCt =>
         {
             using var scope = _scopeFactory.CreateScope();
@@ -91,7 +93,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <inheritdoc/>
     public async Task<HasMetResponse?> HasMetOrLoadAsync(Guid characterId, Guid targetCharacterId, CancellationToken ct = default)
     {
-        var cacheKey = GetPairKey(characterId, targetCharacterId);
+        var cacheKey = BuildPairKey(characterId, targetCharacterId);
         return await _hasMetBucket.GetOrLoadAsync(cacheKey, async loadCt =>
         {
             using var scope = _scopeFactory.CreateScope();
@@ -109,7 +111,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <inheritdoc/>
     public async Task<EncounterListResponse?> GetEncountersBetweenOrLoadAsync(Guid characterIdA, Guid characterIdB, CancellationToken ct = default)
     {
-        var cacheKey = GetPairKey(characterIdA, characterIdB);
+        var cacheKey = BuildPairKey(characterIdA, characterIdB);
         return await _pairEncounterBucket.GetOrLoadAsync(cacheKey, async loadCt =>
         {
             using var scope = _scopeFactory.CreateScope();
@@ -149,9 +151,9 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <summary>
     /// Creates a consistent cache key for a pair of character IDs.
     /// </summary>
-    private static string GetPairKey(Guid charA, Guid charB)
+    internal static string BuildPairKey(Guid charA, Guid charB)
     {
         // Always put the smaller GUID first for consistent keying
-        return charA < charB ? $"{charA}:{charB}" : $"{charB}:{charA}";
+        return charA < charB ? $"{PAIR_KEY_PREFIX}{charA}:{charB}" : $"{PAIR_KEY_PREFIX}{charB}:{charA}";
     }
 }

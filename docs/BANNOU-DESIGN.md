@@ -1,16 +1,18 @@
 # Bannou Architecture & Design Philosophy
 
-This document explains the architectural decisions and design philosophy behind Bannou, a schema-driven monoservice platform for multiplayer games.
+This document explains the architectural decisions and design philosophy behind Bannou, a composable game platform.
 
 ## Overview
 
-Bannou is a **monoservice** - a single codebase that can deploy as anything from a monolith (all services on one machine) to a fully distributed microservices architecture (services spread across thousands of nodes). This flexibility comes from three key architectural decisions:
+Bannou is a **composable game platform** -- 76 service primitives that combine to produce emergent game systems (economies, crafting, combat, housing, NPC societies) without per-feature backend code. The same binary deploys as a cloud service, a self-hosted sidecar alongside a dedicated server, or embedded in-process inside the game itself. A mobile RPG, a LAN co-op survival game, and an MMO with 100,000 concurrent AI-driven NPCs all build on the same SDK; the deployment mode is a configuration choice, not an architectural one.
 
-1. **Schema-First Development** - OpenAPI specifications are the single source of truth
-2. **Plugin Architecture** - Each service is an independent, loadable assembly
-3. **Infrastructure Libs** - Infrastructure concerns (state, messaging, service invocation) are abstracted via lib-state, lib-messaging, and lib-mesh
+The platform rests on three architectural pillars:
 
-Together, these enable Bannou to scale from local development to supporting 100,000+ concurrent AI-driven NPCs without code changes.
+1. **Schema-First Development** - OpenAPI specifications are the single source of truth; code generation produces controllers, models, clients, and tests
+2. **Plugin Architecture** - Each service is an independent, loadable assembly; environment variables control which of the 76 plugins are active per node
+3. **Infrastructure Libs** - State, messaging, and service invocation are abstracted (lib-state, lib-messaging, lib-mesh), allowing infrastructure backends to swap between Redis/MySQL, SQLite/InMemory, and direct DI calls without code changes
+
+Alongside the service runtime, a family of **pure-computation creative SDKs** generate music, narratives, scene compositions, and NPC behaviors procedurally using GOAP planning and formal academic theory. Developers write behavior documents (ABML), seed data, and game-specific extensions -- not systems code.
 
 ## Why Monoservice?
 

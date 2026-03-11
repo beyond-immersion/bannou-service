@@ -66,8 +66,6 @@ x-lifecycle:
       enabled: { type: boolean, required: true, description: "Whether scenario can be triggered" }
       realmId: { type: string, format: uuid, nullable: true, description: "Realm scope (null means all realms)" }
       gameServiceId: { type: string, format: uuid, nullable: true, description: "Game service scope (null means all games)" }
-      createdAt: { type: string, format: date-time, required: true, description: "When definition was created" }
-      updatedAt: { type: string, format: date-time, nullable: true, description: "When definition was last modified" }
     sensitive: []
 
 paths: {}

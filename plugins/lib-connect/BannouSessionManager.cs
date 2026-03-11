@@ -38,6 +38,22 @@ public class BannouSessionManager : ISessionManager
     private const string RECONNECTION_TOKEN_KEY_PREFIX = "reconnect:";
     private const string ACCOUNT_SESSIONS_KEY_PREFIX = "account-sessions:";
 
+    #region Key Building Helpers
+
+    internal static string BuildSessionKey(string sessionId)
+        => $"{SESSION_KEY_PREFIX}{sessionId}";
+
+    internal static string BuildHeartbeatKey(string sessionId)
+        => $"{SESSION_HEARTBEAT_KEY_PREFIX}{sessionId}";
+
+    internal static string BuildReconnectionTokenKey(string reconnectionToken)
+        => $"{RECONNECTION_TOKEN_KEY_PREFIX}{reconnectionToken}";
+
+    internal static string BuildAccountSessionsKey(Guid accountId)
+        => $"{ACCOUNT_SESSIONS_KEY_PREFIX}{accountId:N}";
+
+    #endregion
+
     // TTL values now come from configuration (SessionTtlSeconds, HeartbeatTtlSeconds)
 
     /// <summary>
@@ -71,7 +87,7 @@ public class BannouSessionManager : ISessionManager
         using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.SetConnectionStateAsync");
         try
         {
-            var key = SESSION_KEY_PREFIX + sessionId;
+            var key = BuildSessionKey(sessionId);
             var ttlTimeSpan = ttl ?? TimeSpan.FromSeconds(_configuration.SessionTtlSeconds);
 
             await _connectionStateStore.SaveAsync(key, stateData, new StateOptions { Ttl = (int)ttlTimeSpan.TotalSeconds });
@@ -98,7 +114,7 @@ public class BannouSessionManager : ISessionManager
         using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.GetConnectionStateAsync");
         try
         {
-            var key = SESSION_KEY_PREFIX + sessionId;
+            var key = BuildSessionKey(sessionId);
             var stateData = await _connectionStateStore.GetAsync(key);
 
             if (stateData == null)
@@ -133,7 +149,7 @@ public class BannouSessionManager : ISessionManager
         using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.UpdateSessionHeartbeatAsync");
         try
         {
-            var key = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
+            var key = BuildHeartbeatKey(sessionId);
             var heartbeatData = new SessionHeartbeat
             {
                 SessionId = Guid.Parse(sessionId),
@@ -176,7 +192,7 @@ public class BannouSessionManager : ISessionManager
         using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.SetReconnectionTokenAsync");
         try
         {
-            var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
+            var key = BuildReconnectionTokenKey(reconnectionToken);
 
             await _stringStore.SaveAsync(key, sessionId, new StateOptions { Ttl = (int)reconnectionWindow.TotalSeconds });
 
@@ -203,7 +219,7 @@ public class BannouSessionManager : ISessionManager
         using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.ValidateReconnectionTokenAsync");
         try
         {
-            var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
+            var key = BuildReconnectionTokenKey(reconnectionToken);
             var sessionId = await _stringStore.GetAsync(key);
 
             if (string.IsNullOrEmpty(sessionId))
@@ -234,7 +250,7 @@ public class BannouSessionManager : ISessionManager
         using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.RemoveReconnectionTokenAsync");
         try
         {
-            var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
+            var key = BuildReconnectionTokenKey(reconnectionToken);
             await _stringStore.DeleteAsync(key);
 
             _logger.LogDebug("Removed reconnection token");
@@ -371,8 +387,8 @@ public class BannouSessionManager : ISessionManager
         try
         {
             // Remove all session-related keys in parallel
-            var sessionKey = SESSION_KEY_PREFIX + sessionId;
-            var heartbeatKey = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
+            var sessionKey = BuildSessionKey(sessionId);
+            var heartbeatKey = BuildHeartbeatKey(sessionId);
 
             var deleteTasks = new[]
             {
@@ -410,7 +426,7 @@ public class BannouSessionManager : ISessionManager
         using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.AddSessionToAccountAsync");
         try
         {
-            var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
+            var key = BuildAccountSessionsKey(accountId);
 
             // Atomic SADD operation - no read-modify-write race condition
             await _cacheableStringStore.AddToSetAsync(key, sessionId,
@@ -442,7 +458,7 @@ public class BannouSessionManager : ISessionManager
         using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.RemoveSessionFromAccountAsync");
         try
         {
-            var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
+            var key = BuildAccountSessionsKey(accountId);
 
             // Atomic SREM operation - no read-modify-write race condition
             await _cacheableStringStore.RemoveFromSetAsync(key, sessionId);
@@ -483,7 +499,7 @@ public class BannouSessionManager : ISessionManager
         using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.GetSessionsForAccountAsync");
         try
         {
-            var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
+            var key = BuildAccountSessionsKey(accountId);
 
             // Get all session IDs from the atomic Redis set
             var sessions = await _cacheableStringStore.GetSetAsync<string>(key);
@@ -500,7 +516,7 @@ public class BannouSessionManager : ISessionManager
 
             foreach (var sessionId in sessions)
             {
-                var heartbeatKey = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
+                var heartbeatKey = BuildHeartbeatKey(sessionId);
                 var heartbeat = await _heartbeatStore.GetAsync(heartbeatKey);
                 if (heartbeat != null)
                 {

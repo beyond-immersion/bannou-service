@@ -3,6 +3,9 @@ using System.Reflection;
 
 namespace BeyondImmersion.BannouService.TestUtilities;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// Structural test validator. Changes affect validation across all services.
+
 /// <summary>
 /// Validates that services with [ResourceCleanupRequired] attributes have
 /// corresponding cleanup methods implemented.

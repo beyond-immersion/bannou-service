@@ -56,7 +56,6 @@ x-lifecycle:
       isBuiltIn: { type: boolean, required: true, description: "Whether this is a built-in type" }
       sortOrder: { type: integer, required: true, description: "Display ordering" }
       isActive: { type: boolean, required: true, description: "Whether the type is active" }
-      createdAt: { type: string, format: date-time, required: true, description: "When the type was created" }
     sensitive: []
 
 paths: {}  # Events don't have HTTP paths

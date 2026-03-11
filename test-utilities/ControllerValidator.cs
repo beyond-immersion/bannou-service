@@ -4,6 +4,9 @@ using System.Reflection;
 
 namespace BeyondImmersion.BannouService.TestUtilities;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// Structural test validator. Changes affect validation across all services.
+
 /// <summary>
 /// Validates that each service's generated controller correctly implements
 /// <see cref="IBannouController"/> (via the generated I{Service}Controller interface)

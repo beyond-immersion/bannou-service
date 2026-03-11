@@ -2,6 +2,9 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.TestUtilities;
 
+// ⛔ FROZEN FILE — DO NOT MODIFY WITHOUT EXPLICIT USER PERMISSION ⛔
+// Structural test infrastructure. Changes affect all test projects.
+
 /// <summary>
 /// Helper class for setting up test configuration.
 /// Provides access to configure Program.Configuration for unit tests.
