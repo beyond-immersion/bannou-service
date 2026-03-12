@@ -284,38 +284,41 @@ public class StateStoreFactoryTests : IAsyncDisposable
     }
 
     [Fact]
-    public void GetStore_InMemoryMode_ReturnsWorkingStore()
+    public async Task GetStore_InMemoryMode_ReturnsWorkingStore()
     {
         var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>
         {
             ["test-store"] = new() { Backend = StateBackend.Redis }
         }));
 
+        await factory.InitializeAsync();
         var store = factory.GetStore<TestModel>("test-store");
         Assert.NotNull(store);
     }
 
     [Fact]
-    public void GetStore_InMemoryMode_ReturnsCacheableStore()
+    public async Task GetStore_InMemoryMode_ReturnsCacheableStore()
     {
         var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>
         {
             ["cache-store"] = new() { Backend = StateBackend.Redis }
         }));
 
+        await factory.InitializeAsync();
         // InMemoryStateStore implements ICacheableStateStore
         var store = factory.GetStore<TestModel>("cache-store");
         Assert.IsAssignableFrom<ICacheableStateStore<TestModel>>(store);
     }
 
     [Fact]
-    public void GetStore_SameStoreName_ReturnsCachedInstance()
+    public async Task GetStore_SameStoreName_ReturnsCachedInstance()
     {
         var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>
         {
             ["cached-store"] = new() { Backend = StateBackend.Redis }
         }));
 
+        await factory.InitializeAsync();
         var store1 = factory.GetStore<TestModel>("cached-store");
         var store2 = factory.GetStore<TestModel>("cached-store");
 
@@ -323,13 +326,14 @@ public class StateStoreFactoryTests : IAsyncDisposable
     }
 
     [Fact]
-    public void GetStore_DifferentTypes_ReturnsDifferentInstances()
+    public async Task GetStore_DifferentTypes_ReturnsDifferentInstances()
     {
         var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>
         {
             ["typed-store"] = new() { Backend = StateBackend.Redis }
         }));
 
+        await factory.InitializeAsync();
         var store1 = factory.GetStore<TestModel>("typed-store");
         var store2 = factory.GetStore<AnotherTestModel>("typed-store");
 
@@ -497,13 +501,14 @@ public class StateStoreFactoryTests : IAsyncDisposable
     }
 
     [Fact]
-    public void GetCacheableStore_InMemoryMode_ReturnsCacheableStore()
+    public async Task GetCacheableStore_InMemoryMode_ReturnsCacheableStore()
     {
         var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>
         {
             ["cacheable"] = new() { Backend = StateBackend.Redis }
         }));
 
+        await factory.InitializeAsync();
         var store = factory.GetCacheableStore<TestModel>("cacheable");
         Assert.NotNull(store);
         Assert.IsAssignableFrom<ICacheableStateStore<TestModel>>(store);
@@ -642,7 +647,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
     }
 
     [Fact]
-    public void ErrorPublisher_DisabledPublishing_StoreStillCreated()
+    public async Task ErrorPublisher_DisabledPublishing_StoreStillCreated()
     {
         var factory = TrackFactory(CreateInMemoryFactory(
             new Dictionary<string, StoreConfiguration>
@@ -651,12 +656,13 @@ public class StateStoreFactoryTests : IAsyncDisposable
             },
             enableErrorPublishing: false));
 
+        await factory.InitializeAsync();
         var store = factory.GetStore<TestModel>("no-error-store");
         Assert.NotNull(store);
     }
 
     [Fact]
-    public void ErrorPublisher_NoMessageBus_StoreStillCreated()
+    public async Task ErrorPublisher_NoMessageBus_StoreStillCreated()
     {
         var factory = TrackFactory(CreateInMemoryFactory(
             new Dictionary<string, StoreConfiguration>
@@ -665,6 +671,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             },
             messageBus: null));
 
+        await factory.InitializeAsync();
         var store = factory.GetStore<TestModel>("no-bus-store");
         Assert.NotNull(store);
     }
@@ -767,24 +774,19 @@ public class StateStoreFactoryTests : IAsyncDisposable
     /// NullLoggerFactory and requires infrastructure-level log capture.
     /// </summary>
     [Fact]
-    public void GetStore_BeforeInitializeAsync_StillReturnsStore()
+    public void GetStore_BeforeInitializeAsync_ThrowsInvalidOperation()
     {
-        // NullLoggerFactory returns NullLogger which doesn't capture anything,
-        // so we just verify the factory creates a store without throwing.
-        // The warning path is exercised when _initialized is false on GetStore,
-        // but log output verification requires a capturing logger (infrastructure test).
         var storeName = $"pre-init-{Guid.NewGuid():N}";
         var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>
         {
             [storeName] = new() { Backend = StateBackend.Redis }
         }));
 
-        // Act — GetStore without prior InitializeAsync
-        // In InMemory mode, the sync-over-async EnsureInitializedAsync succeeds
-        var store = factory.GetStore<TestModel>(storeName);
+        // Act — GetStore without prior InitializeAsync throws
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => factory.GetStore<TestModel>(storeName));
 
-        // Assert — store is returned (sync initialization completed internally)
-        Assert.NotNull(store);
+        Assert.Contains("before InitializeAsync", ex.Message);
     }
 
     // ==================== Telemetry wrapping path (Gap 33) ====================
@@ -796,13 +798,15 @@ public class StateStoreFactoryTests : IAsyncDisposable
     /// but the wrapping branch is still entered).
     /// </summary>
     [Fact]
-    public void GetStore_InMemoryMode_TelemetryWrappingPathExecutes()
+    public async Task GetStore_InMemoryMode_TelemetryWrappingPathExecutes()
     {
         var storeName = $"telemetry-wrap-{Guid.NewGuid():N}";
         var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>
         {
             [storeName] = new() { Backend = StateBackend.Redis }
         }));
+
+        await factory.InitializeAsync();
 
         // Act
         var store = factory.GetStore<TestModel>(storeName);

@@ -132,7 +132,7 @@ AffixDefinition:
 
 4. **Spawn tag modifiers** allow per-context weight overrides. A mod might have base weight 1000 but weight 0 on amulets (can't appear there) and weight 1500 on rings (more likely there). This replaces a rigid "valid item classes" list with a weighted probability system. Modeled as a typed array of `{ tag, weightMultiplier }` objects (not freeform `object`/`additionalProperties: true`).
 
-5. **Affix definitions are Category B deprecation** (per IMPLEMENTATION TENETS). Definitions are templates where applied affix instances permanently reference the definition ID. Definitions must remain readable forever. No delete endpoint, no undeprecate endpoint. Deprecated definitions cannot be applied to new items (see ApplyAffix deprecation guard below). The `isActive` field is redundant with deprecation and is NOT included -- deprecation IS the mechanism for marking a definition as inactive.
+5. **Affix definitions are Category B deprecation** (per IMPLEMENTATION TENETS). Definitions are templates where applied affix instances permanently reference the definition ID. Definitions must remain readable forever. No per-entity delete endpoint, no undeprecate endpoint. Deprecated definitions cannot be applied to new items (see ApplyAffix deprecation guard below). A `clean-deprecated` sweep endpoint (B17-B22) removes deprecated definitions with zero remaining applied instances. The `isActive` field is redundant with deprecation and is NOT included -- deprecation IS the mechanism for marking a definition as inactive.
 
 6. **Effective rarity is an opaque string** (Category B per tenets decision tree -- game designers define new rarity tiers at deployment time). Default conventions are "normal", "magic", "rare", "unique", but games may define "common/uncommon/rare/legendary" or any other rarity scheme. Not an enum.
 
@@ -459,7 +459,7 @@ Equipment Stat Computation Flow
 - Create affix-events.yaml schema
 - Create affix-configuration.yaml schema
 - Generate service code
-- Implement definition CRUD (create, get, list, update, deprecate, seed, list-mod-groups)
+- Implement definition CRUD (create, get, list, update, deprecate, seed, list-mod-groups, clean-deprecated)
 - Implement implicit mapping CRUD (create, get, seed, roll)
 - Implement pool cache warming and invalidation
 
@@ -496,7 +496,7 @@ Equipment Stat Computation Flow
 - Extend `ComputeEquipmentStats` for socket-aware equipment totals
 
 ### Phase 6: Events, Cleanup, and Background Workers
-- Implement all event publishing (lifecycle, application, state change, generation batch)
+- Implement all event publishing (lifecycle including `affix.definition.deleted` for clean-deprecated sweep, application, state change, generation batch)
 - Implement event handlers for item template lifecycle events
 - Declare `x-references` in `affix-api.yaml` targeting `game-service` with cleanup endpoint `/affix/cleanup-by-game-service` for lib-resource integration
 - Implement resource cleanup endpoint (`/affix/cleanup-by-game-service`)
@@ -571,6 +571,10 @@ None. Plugin is aspirational -- no code exists to have bugs.
 17. **Orphan reconciliation provides durability guarantee**: The `IItemInstanceDestructionListener` provides guaranteed in-process delivery on the node that processes the deletion, but if deletion occurs on a node where lib-affix is not loaded (unusual but possible in partitioned deployments), or if the listener throws, affix instances become orphaned. The orphan reconciliation background worker periodically scans affix instances, batch-checks item existence via `IItemClient`, and deletes orphaned records. This is the durability guarantee required by FOUNDATION TENETS (High-Frequency Instance Lifecycle Exception). Configuration: `OrphanReconciliationIntervalMinutes` (default: 60), `OrphanReconciliationBatchSize` (default: 500).
 
 18. **Socket detection uses container type convention**: Equipment stat computation identifies socket child containers by the `"socket"` container type string in lib-inventory. This is a shared naming convention between lib-affix and the socket creation flow (orchestrated by the caller). If lib-inventory changes container type naming, socket detection breaks -- mitigated by both sides agreeing on the convention string.
+
+### Design Considerations (Requires Planning)
+
+None. Category B clean-deprecated implementation follows the standard `DeprecationCleanupHelper` pattern used by all other Category B entities.
 
 ---
 

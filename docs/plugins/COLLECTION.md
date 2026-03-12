@@ -102,7 +102,7 @@ The Collection service (L2 GameFoundation) manages universal content unlock and 
 
 ### Bugs (Fix Immediately)
 
-*No known bugs.*
+1. **`CleanDeprecatedEntryTemplatesAsync` uses full query scan instead of reverse index**: The `hasActiveInstancesAsync` delegate iterates all collections matching the template's type, loads each collection's cache, and scans for matching entries — O(N*M) per deprecated template. Should use a reverse index (template→collection list) for O(1) lookup per IMPLEMENTATION TENETS B21. Reference: `lib-item` (`inst-template:{templateId}`), `lib-currency` (`balance-currency:{definitionId}`).
 
 ### Intentional Quirks (Documented Behavior)
 

@@ -119,8 +119,8 @@ var result = await _service.GetAccountAsync(null);  // null is allowed by type s
 | Response models | `{Entity}Response` | `AccountResponse` |
 | Event models (service) | `{Entity}{Action}Event` | `AccountCreatedEvent` |
 | Event models (client) | `{Entity}{Action}ClientEvent` | `CharacterUpdatedClientEvent` |
-| Event topics (single-entity) | `{entity}.{action}` | `account.created`, `game-session.player-joined`, `personality.evolved` (Pattern A: service has one entity type, or entity name is independent of service name) |
-| Event topics (multi-entity) | `{service}.{entity}.{action}` | `worldstate.calendar-template.created`, `transit.connection.created`, `divine.blessing.granted` (Pattern C: dot-separated service namespace for services with multiple entity types) |
+| Event topics (single-entity) | `{entity}.{action}` | `account.created`, `game-session.player-joined`, `personality.evolved` (Pattern A: service has one entity type, or entity name is independent of service name). **Hyphenated service names preserve their hyphens** — `character-history.backstory.deleted`, not `character.history.backstory.deleted` |
+| Event topics (multi-entity) | `{service}.{entity}.{action}` | `worldstate.calendar-template.created`, `transit.connection.created`, `divine.blessing.granted` (Pattern C: dot-separated service namespace for services with multiple entity types). For hyphenated services: `save-load.save-slot.created`, `character-history.participation.recorded` |
 | Client event names (single-entity) | `{service}.{compound-action}` | `auth.password-changed`, `game-session.state-changed`, `chat.typing-started` (Pattern A: no real API entity in the middle) |
 | Client event names (multi-entity) | `{service}.{entity}.{action}` | `chat.message.received`, `inventory.item.changed`, `voice.peer.joined` (Pattern C: middle word is a real API-backed entity with its own endpoint group — see "Endpoint Group" definition below) |
 | State keys | `{entity-prefix}{id}` | `account-{guid}` |

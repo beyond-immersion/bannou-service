@@ -54,4 +54,11 @@ public static class AchievementEventPublisher
         AchievementPlatformSyncedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(AchievementPublishedTopics.AchievementPlatformSynced, eventData, cancellationToken);
+
+    /// <summary>Published when an achievement definition is permanently deleted.</summary>
+    public static Task<bool> PublishAchievementDefinitionDeletedAsync(
+        this IMessageBus messageBus,
+        AchievementDefinitionDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(AchievementPublishedTopics.AchievementDefinitionDeleted, eventData, cancellationToken);
 }

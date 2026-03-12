@@ -26,7 +26,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     #region Key Building Helpers
 
     internal static string BuildRoomParticipantsKey(Guid roomId)
-        => BuildRoomParticipantsKey(roomId);
+        => $"{ROOM_PARTICIPANTS_PREFIX}{roomId}";
 
     #endregion
 

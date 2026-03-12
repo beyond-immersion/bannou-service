@@ -8,6 +8,7 @@ export { AchievementProxy } from './AchievementProxy.js';
 export { ActorProxy } from './ActorProxy.js';
 export { AssetsProxy } from './AssetsProxy.js';
 export { AuthProxy } from './AuthProxy.js';
+export { BroadcastProxy } from './BroadcastProxy.js';
 export { BundlesProxy } from './BundlesProxy.js';
 export { CharacterProxy } from './CharacterProxy.js';
 export { CharacterEncounterProxy } from './CharacterEncounterProxy.js';

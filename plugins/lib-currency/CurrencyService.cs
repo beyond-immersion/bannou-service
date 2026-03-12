@@ -2887,7 +2887,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             deprecated,
             getEntityId: d => d.DefinitionId,
             getDeprecatedAt: d => d.DeprecatedAt,
-            hasActiveInstancesAsync: async (d, ct) =>
+            hasInstancesAsync: async (d, ct) =>
             {
                 // Check if any wallets still hold balances for this currency
                 var balanceCurrencyJson = await _balanceStringStore.GetAsync(

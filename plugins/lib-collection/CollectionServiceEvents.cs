@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
@@ -86,6 +87,18 @@ public partial class CollectionService
                 await _inventoryClient.DeleteContainerAsync(
                     new Inventory.DeleteContainerRequest { ContainerId = collection.ContainerId },
                     cancellationToken);
+
+                // Remove collection from reverse indexes for each unlocked entry template
+                var cacheForCleanup = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
+                foreach (var entry in cacheForCleanup.UnlockedEntries)
+                {
+                    await _entryTemplateStringStore.RemoveFromStringListAsync(
+                        BuildTemplateCollectionIndexKey(entry.EntryTemplateId),
+                        collection.CollectionId.ToString(),
+                        _configuration.MaxConcurrencyRetries,
+                        _logger,
+                        cancellationToken);
+                }
 
                 // Delete the cache entry
                 await _collectionCache.DeleteAsync(BuildCacheKey(collection.CollectionId), cancellationToken);

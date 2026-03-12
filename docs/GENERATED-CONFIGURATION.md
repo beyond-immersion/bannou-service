@@ -91,6 +91,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE` | int | `5000` | Maximum records to delete per cleanup invocation |
+| `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_INTERVAL_SECONDS` | int | `3600` | Interval in seconds between controller history cleanup cycle... |
+| `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_STARTUP_DELAY_SECONDS` | int | `30` | Startup delay in seconds before the first controller history... |
 | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE` | int | `100` | Number of records to delete per iteration within a cleanup b... |
 | `ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS` | int | `90` | Days to retain controller history records (0 = indefinite re... |
 | `ANALYTICS_EVENT_BUFFER_FLUSH_INTERVAL_SECONDS` | int | `5` | Interval in seconds to flush event buffer |
@@ -298,6 +300,47 @@ This document lists all configuration options defined in Bannou's configuration 
 | `BEHAVIOR_MEMORY_SIGNIFICANCE_BONUS_WEIGHT` | double | `0.1` | Weight for memory significance in relevance scoring |
 | `BEHAVIOR_MEMORY_STORE_MAX_RETRIES` | int | `3` | Max retries for memory store operations |
 | `BEHAVIOR_METADATA_KEY_PREFIX` | string | `behavior-metadata:` | Key prefix for behavior metadata entries |
+
+### Broadcast
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `BROADCAST_AUTO_BROADCAST_CAMERA_ID` | string | **REQUIRED** | Camera ID to auto-broadcast on startup (null disables auto-b... |
+| `BROADCAST_AUTO_BROADCAST_RTMP_URL` | string | **REQUIRED** | RTMP destination for auto-broadcast (null disables auto-broa... |
+| `BROADCAST_DEFAULT_BACKGROUND_VIDEO` | string | `/opt/bannou/backgrounds/default.mp4` | Default video background for audio-only outputs |
+| `BROADCAST_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout for distributed lock acquisition (seconds) |
+| `BROADCAST_ENABLED` | bool | `false` | Master feature flag for the entire broadcast service |
+| `BROADCAST_FFMPEG_PATH` | string | `/usr/bin/ffmpeg` | Path to FFmpeg binary |
+| `BROADCAST_MAX_CONCURRENT_OUTPUTS` | int | `10` | Maximum simultaneous FFmpeg output processes |
+| `BROADCAST_MAX_TRACKED_VIEWERS_PER_SESSION` | int | `50` | Maximum tracked viewers with opaque GUIDs per session |
+| `BROADCAST_OUTPUT_AUDIO_BITRATE` | string | `128k` | Audio bitrate for RTMP output (e.g., 128k, 192k) |
+| `BROADCAST_OUTPUT_AUDIO_CODEC` | string | `Aac` | Audio codec for RTMP output (LGPL-compliant only) |
+| `BROADCAST_OUTPUT_ENABLED` | bool | `false` | Feature flag for RTMP output capabilities |
+| `BROADCAST_OUTPUT_HEALTH_CHECK_INTERVAL_SECONDS` | int | `10` | FFmpeg health check frequency (seconds) |
+| `BROADCAST_OUTPUT_RESTART_ON_FAILURE` | bool | `true` | Auto-restart FFmpeg process on crash |
+| `BROADCAST_OUTPUT_VIDEO_CODEC` | string | `LibVpx` | Video codec for RTMP output (LGPL-compliant only, GPL codecs... |
+| `BROADCAST_RTMP_PROBE_TIMEOUT_SECONDS` | int | `5` | FFprobe timeout for RTMP URL validation (seconds) |
+| `BROADCAST_SENTIMENT_MAX_BATCH_SIZE` | int | `200` | Maximum sentiments per pulse (overflow drops lowest-intensit... |
+| `BROADCAST_SENTIMENT_MIN_BATCH_SIZE` | int | `5` | Minimum sentiments before publishing a pulse |
+| `BROADCAST_SENTIMENT_PULSE_INTERVAL_SECONDS` | int | `15` | How often sentiment pulses are published (seconds) |
+| `BROADCAST_SESSION_CLEANUP_INTERVAL_SECONDS` | int | `3600` | How often to purge expired session records (seconds) |
+| `BROADCAST_SESSION_HISTORY_RETENTION_HOURS` | int | `168` | Hours to retain ended session records (default 1 week) |
+| `BROADCAST_TOKEN_ENCRYPTION_KEY` | string | **REQUIRED** | AES-256 encryption key for OAuth token storage (null disable... |
+| `BROADCAST_TOKEN_REFRESH_INTERVAL_TWITCH_SECONDS` | int | `14400` | Twitch OAuth token refresh interval (seconds, default 4 hour... |
+| `BROADCAST_TOKEN_REFRESH_INTERVAL_YOUTUBE_SECONDS` | int | `3600` | YouTube OAuth token refresh interval (seconds, default 1 hou... |
+| `BROADCAST_TRACKED_VIEWER_ENGAGEMENT_THRESHOLD` | double | `0.7` | Minimum engagement score for HighEngager tracking (0.0 to 1.... |
+| `BROADCAST_TRACK_MODERATORS` | bool | `true` | Whether platform moderators get tracking GUIDs |
+| `BROADCAST_TRACK_RAID_LEADERS` | bool | `true` | Whether raid leaders get tracking GUIDs |
+| `BROADCAST_TRACK_SUBSCRIBERS` | bool | `true` | Whether platform subscribers get tracking GUIDs |
+| `BROADCAST_TWITCH_CLIENT_ID` | string | **REQUIRED** | Twitch OAuth application client ID (null disables Twitch int... |
+| `BROADCAST_TWITCH_CLIENT_SECRET` | string | **REQUIRED** | Twitch OAuth application client secret |
+| `BROADCAST_TWITCH_WEBHOOK_SECRET` | string | **REQUIRED** | Twitch EventSub webhook signing secret for HMAC-SHA256 valid... |
+| `BROADCAST_WEBHOOK_MANAGER_LOCK_TIMEOUT_SECONDS` | int | `300` | TTL for the webhook manager singleton lock (must be less tha... |
+| `BROADCAST_WEBHOOK_MAX_EVENTS_PER_SESSION_PER_MINUTE` | int | `600` | Defense-in-depth rate limit for webhook events per platform ... |
+| `BROADCAST_WEBHOOK_RENEWAL_INTERVAL_SECONDS` | int | `3600` | How often to verify and renew platform webhook subscriptions... |
+| `BROADCAST_YOUTUBE_CLIENT_ID` | string | **REQUIRED** | YouTube OAuth application client ID (null disables YouTube i... |
+| `BROADCAST_YOUTUBE_CLIENT_SECRET` | string | **REQUIRED** | YouTube OAuth application client secret |
+| `BROADCAST_YOUTUBE_WEBHOOK_TOKEN` | string | **REQUIRED** | YouTube webhook verification token for push notification cal... |
 
 ### Character
 
@@ -1298,9 +1341,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1019
-- **Required (no default)**: 58
-- **Optional (has default)**: 961
+- **Total properties**: 1057
+- **Required (no default)**: 67
+- **Optional (has default)**: 990
 
 ## Environment Variable Naming Convention
 

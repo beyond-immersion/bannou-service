@@ -7,7 +7,7 @@ info:
     chat messages, and game state updates delivered via WebSocket.
 
     All events inherit from BaseClientEvent (common-client-events.yaml) and use
-    the "game.session.{event_type}" naming convention.
+    the "game-session.{event_type}" naming convention.
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -47,7 +47,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game.session.state-changed"
+          default: "game-session.state-changed"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -90,7 +90,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game.session.player-joined"
+          default: "game-session.player-joined"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -125,7 +125,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game.session.player-left"
+          default: "game-session.player-left"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -167,7 +167,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game.session.player-kicked"
+          default: "game-session.player-kicked"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -204,7 +204,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game.session.session-cancelled"
+          default: "game-session.session-cancelled"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -239,7 +239,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game.session.chat-received"
+          default: "game-session.chat-received"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -290,7 +290,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game.session.state-updated"
+          default: "game-session.state-updated"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -334,7 +334,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game.session.action-result"
+          default: "game-session.action-result"
           description: Fixed event type identifier
         sessionId:
           type: string

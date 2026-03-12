@@ -1,7 +1,9 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Actor.Runtime;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Actor.Tests;
@@ -430,6 +432,45 @@ public class OptionsEvaluatorTests
                 [optionType] = new List<OptionDefinition> { option }
             }
         };
+    }
+
+    #endregion
+
+    #region Enum Boundary Mapping Validation
+
+    /// <summary>
+    /// Validates the ABML YAML vocabulary for OptionsQueryType covers all enum values.
+    /// QueryOptionsHandler and ActorQueryHandler map lowercase ABML tokens via MapByNameOrDefault.
+    /// </summary>
+    [Fact]
+    public void OptionsQueryType_AbmlVocabulary_CoversAllValues()
+    {
+        // ABML YAML parameters use lowercase tokens
+        EnumMappingValidator.AssertStringToEnumCoverage<OptionsQueryType>(
+            "combat", "dialogue", "exploration", "social", "custom");
+    }
+
+    /// <summary>
+    /// Validates the ABML YAML vocabulary for OptionsFreshness covers all enum values.
+    /// QueryOptionsHandler maps lowercase ABML tokens via MapByNameOrDefault.
+    /// </summary>
+    [Fact]
+    public void OptionsFreshness_AbmlVocabulary_CoversAllValues()
+    {
+        EnumMappingValidator.AssertStringToEnumCoverage<OptionsFreshness>(
+            "fresh", "cached", "staleok");
+    }
+
+    /// <summary>
+    /// Validates the ABML YAML vocabulary for PerceptionSourceType covers all enum values.
+    /// EmitPerceptionHandler maps lowercase ABML tokens via MapByNameOrDefault.
+    /// </summary>
+    [Fact]
+    public void PerceptionSourceType_AbmlVocabulary_CoversAllValues()
+    {
+        EnumMappingValidator.AssertStringToEnumCoverage<PerceptionSourceType>(
+            "character", "npc", "object", "environment", "coordinator",
+            "scheduled", "message", "service", "system");
     }
 
     #endregion

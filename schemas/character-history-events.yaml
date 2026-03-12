@@ -13,22 +13,22 @@ info:
   version: 1.0.0
   x-event-subscriptions: []  # Character History doesn't subscribe to external events
   x-event-publications:
-    - topic: character.history.participation.recorded
+    - topic: character-history.participation.recorded
       event: CharacterParticipationRecordedEvent
       description: Published when a character's participation in a historical event is recorded
-    - topic: character.history.participation.deleted
+    - topic: character-history.participation.deleted
       event: CharacterParticipationDeletedEvent
       description: Published when a character's participation record is deleted
-    - topic: character.history.backstory.created
+    - topic: character-history.backstory.created
       event: CharacterBackstoryCreatedEvent
       description: Published when a character's backstory is first created
-    - topic: character.history.backstory.updated
+    - topic: character-history.backstory.updated
       event: CharacterBackstoryUpdatedEvent
       description: Published when a character's backstory is updated
-    - topic: character.history.backstory.deleted
+    - topic: character-history.backstory.deleted
       event: CharacterBackstoryDeletedEvent
       description: Published when a character's backstory is deleted
-    - topic: character.history.deleted
+    - topic: character-history.deleted
       event: CharacterHistoryDeletedEvent
       description: Published when all history data for a character is deleted
 
@@ -60,8 +60,8 @@ components:
       properties:
         eventName:
           type: string
-          default: character.history.participation.recorded
-          description: 'Event type identifier: character.history.participation.recorded'
+          default: character-history.participation.recorded
+          description: 'Event type identifier: character-history.participation.recorded'
         characterId:
           type: string
           format: uuid
@@ -108,8 +108,8 @@ components:
       properties:
         eventName:
           type: string
-          default: character.history.participation.deleted
-          description: 'Event type identifier: character.history.participation.deleted'
+          default: character-history.participation.deleted
+          description: 'Event type identifier: character-history.participation.deleted'
         participationId:
           type: string
           format: uuid
@@ -142,8 +142,8 @@ components:
       properties:
         eventName:
           type: string
-          default: character.history.backstory.created
-          description: 'Event type identifier: character.history.backstory.created'
+          default: character-history.backstory.created
+          description: 'Event type identifier: character-history.backstory.created'
         characterId:
           type: string
           format: uuid
@@ -172,8 +172,8 @@ components:
       properties:
         eventName:
           type: string
-          default: character.history.backstory.updated
-          description: 'Event type identifier: character.history.backstory.updated'
+          default: character-history.backstory.updated
+          description: 'Event type identifier: character-history.backstory.updated'
         characterId:
           type: string
           format: uuid
@@ -203,8 +203,8 @@ components:
       properties:
         eventName:
           type: string
-          default: character.history.backstory.deleted
-          description: 'Event type identifier: character.history.backstory.deleted'
+          default: character-history.backstory.deleted
+          description: 'Event type identifier: character-history.backstory.deleted'
         characterId:
           type: string
           format: uuid
@@ -230,8 +230,8 @@ components:
       properties:
         eventName:
           type: string
-          default: character.history.deleted
-          description: 'Event type identifier: character.history.deleted'
+          default: character-history.deleted
+          description: 'Event type identifier: character-history.deleted'
         characterId:
           type: string
           format: uuid

@@ -21,7 +21,7 @@ namespace BeyondImmersion.BannouService.Behavior.Tests.Integration;
 /// Integration tests for the StateSync system covering the full flow from
 /// cinematic completion to state registry update to behavior system consumption.
 /// </summary>
-public sealed class StateSyncIntegrationTests : IDisposable
+public sealed class StateSyncIntegrationTests : IAsyncDisposable
 {
     private readonly EntityStateRegistry _stateRegistry;
     private readonly StateSync _stateSync;
@@ -37,11 +37,11 @@ public sealed class StateSyncIntegrationTests : IDisposable
         _compiler = new BehaviorCompiler();
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         foreach (var runner in _createdRunners)
         {
-            runner.Dispose();
+            await runner.DisposeAsync();
         }
         _createdRunners.Clear();
         _stateRegistry.Clear();

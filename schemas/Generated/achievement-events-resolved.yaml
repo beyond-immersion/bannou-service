@@ -51,6 +51,10 @@ info:
   - topic: achievement.platform.synced
     event: AchievementPlatformSyncedEvent
     description: Published when achievement is synced to external platform
+    # Lifecycle event — definition deletion during clean-deprecated sweep
+  - topic: achievement.definition.deleted
+    event: AchievementDefinitionDeletedEvent
+    description: Published when an achievement definition is permanently deleted
 
 # Lifecycle events auto-generated from this definition.
 # Achievement uses a single entity (AchievementDefinition) with topic_prefix for Pattern C namespacing.

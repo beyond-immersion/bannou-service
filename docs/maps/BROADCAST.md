@@ -17,7 +17,7 @@
 | Endpoints | 22 (19 generated + 3 x-controller-only) |
 | State Stores | broadcast-platforms (MySQL), broadcast-sessions (Redis), broadcast-sentiment-buffer (Redis), broadcast-outputs (Redis), broadcast-cameras (Redis), broadcast-lock (Redis) |
 | Events Published | 10 (broadcast.platform-link.created/updated/deleted, broadcast.platform-session.created/updated/deleted, broadcast.output.created/updated/deleted, broadcast.audience.pulse) |
-| Events Consumed | 4 (voice.room.broadcast.approved, voice.room.broadcast.stopped, voice.participant.muted, session.disconnected) |
+| Events Consumed | 5 (account.deleted, voice.room.broadcast.approved, voice.room.broadcast.stopped, voice.participant.muted, session.disconnected) |
 | Client Events | 5 (broadcast.output.started/stopped/source-changed, broadcast.session.started/ended) |
 | Background Services | 6 |
 
@@ -85,7 +85,7 @@
 | lib-auth (IAuthClient) | L1 | Hard | OAuth token validation for platform callbacks |
 | lib-voice (IVoiceClient) | L3 | Soft | Query voice room RTP audio endpoint for broadcast source (voice room broadcasting unavailable when absent) |
 
-**Resource cleanup**: Declares `x-references` with target `account`, source type `broadcast`, CASCADE policy. lib-resource calls `/broadcast/cleanup-by-account` on account deletion.
+**Account cleanup**: Subscribes to `account.deleted` event per T28 Account Deletion Cleanup Obligation (lib-resource CANNOT track account references -- privacy). `HandleAccountDeletedAsync` calls `CleanupByAccountAsync` to remove all account-owned platform links, sessions, broadcasts, and tracking IDs.
 
 **Privacy boundary**: Raw platform data (chat text, usernames, platform user IDs) never leaves this service as identifiable data. Only anonymous sentiment values are published externally.
 
@@ -115,6 +115,7 @@
 | `voice.room.broadcast.approved` | `HandleVoiceBroadcastApprovedAsync` | lib-voice (L3) | Start RTMP output for voice room after consent. Connects to room's RTP audio. Soft -- no-op if lib-voice absent. |
 | `voice.room.broadcast.stopped` | `HandleVoiceBroadcastStoppedAsync` | lib-voice (L3) | Stop RTMP output for voice room. Consent revoked or room closed. Soft -- no-op if lib-voice absent. |
 | `voice.participant.muted` | `HandleVoiceParticipantMutedAsync` | lib-voice (L3) | Exclude/include muted participant audio from RTMP output mixing. Soft -- no-op if lib-voice absent. |
+| `account.deleted` | `HandleAccountDeletedAsync` | lib-account (L1) | Clean up all account-owned platform links, sessions, broadcasts, tracking IDs. T28 Account Deletion Cleanup Obligation (lib-resource forbidden for account references). |
 | `session.disconnected` | `HandleSessionDisconnectedAsync` | lib-connect (L1) | Cleanup platform session on WebSocket disconnect. Prevents orphaned Redis sessions. compliant: sessions have TTL and would expire naturally; the event accelerates cleanup. |
 
 All consumed voice event models are redefined inline in `broadcast-events.yaml` (cannot `$ref` other service event files per Foundation Tenets).
@@ -122,6 +123,8 @@ All consumed voice event models are redefined inline in `broadcast-events.yaml` 
 ---
 
 ## DI Services
+
+#### Constructor Dependencies
 
 | Service | Role |
 |---------|------|
@@ -519,10 +522,10 @@ RETURN (200, TestSentimentResponse { category, intensity })
 ```
 
 ### CleanupByAccount
-POST /broadcast/cleanup-by-account | Roles: [] (internal -- called by lib-resource only)
+POST /broadcast/cleanup-by-account | Roles: [] (internal)
 
 ```
-// Resource cleanup (CASCADE on account deletion)
+// Account deletion cleanup (called from HandleAccountDeletedAsync)
 
 // 1. Stop all active broadcasts initiated by this account
 QUERY broadcastStore WHERE $.initiatorAccountId == body.accountId
@@ -554,6 +557,16 @@ RETURN (200, CleanupResponse)
 ---
 
 ## Event Handlers
+
+### HandleAccountDeletedAsync
+Topic: `account.deleted` | Source: lib-account (L1, hard)
+
+```
+// T28 Account Deletion Cleanup Obligation -- lib-resource CANNOT track account references (privacy)
+// Delegates to CleanupByAccountAsync for all account-owned data removal
+CALL self.CleanupByAccountAsync(body.accountId)
+// Idempotent -- CleanupByAccount returns 200 even if nothing to clean up
+```
 
 ### HandleVoiceBroadcastApprovedAsync
 Topic: `voice.room.broadcast.approved` | Source: lib-voice (L3, soft)

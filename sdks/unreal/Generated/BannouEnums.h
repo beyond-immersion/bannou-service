@@ -214,6 +214,34 @@ enum class EBroadcastConsentState : uint8
     Approved UMETA(DisplayName = "Approved"),
 };
 
+/** Health status of a broadcast output FFmpeg process */
+UENUM(BlueprintType)
+enum class EBroadcastHealth : uint8
+{
+    Healthy UMETA(DisplayName = "Healthy"),
+    Degraded UMETA(DisplayName = "Degraded"),
+    Down UMETA(DisplayName = "Down"),
+    Unknown UMETA(DisplayName = "Unknown"),
+};
+
+/** Type of broadcast input source */
+UENUM(BlueprintType)
+enum class EBroadcastSourceType : uint8
+{
+    Camera UMETA(DisplayName = "Camera"),
+    GameAudio UMETA(DisplayName = "GameAudio"),
+    VoiceRoom UMETA(DisplayName = "VoiceRoom"),
+};
+
+/** Current state of a broadcast output */
+UENUM(BlueprintType)
+enum class EBroadcastState : uint8
+{
+    Active UMETA(DisplayName = "Active"),
+    Failed UMETA(DisplayName = "Failed"),
+    Stopped UMETA(DisplayName = "Stopped"),
+};
+
 /** Bundle file format */
 UENUM(BlueprintType)
 enum class EBundleFormat : uint8
@@ -1345,6 +1373,23 @@ enum class EPlatform : uint8
     Internal UMETA(DisplayName = "Internal"),
 };
 
+/** Current state of a platform streaming session */
+UENUM(BlueprintType)
+enum class EPlatformSessionState : uint8
+{
+    Active UMETA(DisplayName = "Active"),
+    Ended UMETA(DisplayName = "Ended"),
+};
+
+/** Streaming platform type */
+UENUM(BlueprintType)
+enum class EPlatformType : uint8
+{
+    Twitch UMETA(DisplayName = "Twitch"),
+    YouTube UMETA(DisplayName = "YouTube"),
+    Custom UMETA(DisplayName = "Custom"),
+};
+
 /** Role of the player in the game session */
 UENUM(BlueprintType)
 enum class EPlayerRole : uint8
@@ -1939,6 +1984,18 @@ enum class ETimeRatioChangeReason : uint8
     Event UMETA(DisplayName = "Event"),
     Pause UMETA(DisplayName = "Pause"),
     Resume UMETA(DisplayName = "Resume"),
+};
+
+/** Category of tracked viewers who receive opaque tracking GUIDs. Returner type requires cross-session detection (not available in v1). */
+UENUM(BlueprintType)
+enum class ETrackedViewerType : uint8
+{
+    Subscriber UMETA(DisplayName = "Subscriber"),
+    Moderator UMETA(DisplayName = "Moderator"),
+    RaidLeader UMETA(DisplayName = "RaidLeader"),
+    VIP UMETA(DisplayName = "VIP"),
+    HighEngager UMETA(DisplayName = "HighEngager"),
+    Returner UMETA(DisplayName = "Returner"),
 };
 
 /** Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.

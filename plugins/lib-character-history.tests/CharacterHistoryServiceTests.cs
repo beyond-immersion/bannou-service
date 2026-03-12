@@ -166,7 +166,7 @@ public class CharacterHistoryServiceTests
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert captured event
-        Assert.Equal("character.history.participation.recorded", capturedTopic);
+        Assert.Equal("character-history.participation.recorded", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<CharacterParticipationRecordedEvent>(capturedEvent);
         Assert.Equal(characterId, typedEvent.CharacterId);
@@ -529,7 +529,7 @@ public class CharacterHistoryServiceTests
         Assert.Equal("homeland", result.Elements.First().Key);
 
         // Assert captured event
-        Assert.Equal("character.history.backstory.created", capturedTopic);
+        Assert.Equal("character-history.backstory.created", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<CharacterBackstoryCreatedEvent>(capturedEvent);
         Assert.Equal(characterId, typedEvent.CharacterId);
@@ -598,7 +598,7 @@ public class CharacterHistoryServiceTests
         Assert.Equal(StatusCodes.OK, status);
 
         // Assert captured event
-        Assert.Equal("character.history.backstory.updated", capturedTopic);
+        Assert.Equal("character-history.backstory.updated", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<CharacterBackstoryUpdatedEvent>(capturedEvent);
         Assert.Equal(characterId, typedEvent.CharacterId);
@@ -868,7 +868,7 @@ public class CharacterHistoryServiceTests
         _mockBackstoryStore.Verify(s => s.DeleteAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert captured event
-        Assert.Equal("character.history.backstory.deleted", capturedTopic);
+        Assert.Equal("character-history.backstory.deleted", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<CharacterBackstoryDeletedEvent>(capturedEvent);
         Assert.Equal(characterId, typedEvent.CharacterId);
@@ -1322,7 +1322,7 @@ public class CharacterHistoryServiceTests
         Assert.True(response.BackstoryDeleted);
 
         // Assert captured event
-        Assert.Equal("character.history.deleted", capturedTopic);
+        Assert.Equal("character-history.deleted", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<CharacterHistoryDeletedEvent>(capturedEvent);
         Assert.Equal(characterId, typedEvent.CharacterId);

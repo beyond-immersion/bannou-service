@@ -1,0 +1,217 @@
+openapi: 3.0.4
+info:
+  title: Broadcast Service Events
+  description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: broadcast-events.yaml
+
+    Event models for Broadcast service RabbitMQ pub/sub via lib-messaging.
+    Broadcast publishes lifecycle events for platform links, sessions, and outputs,
+    plus periodic audience sentiment pulse events. Subscribes to account deletion,
+    voice broadcast consent, and WebSocket session disconnect events.
+
+    **Privacy Boundary**: Lifecycle events for PlatformLink exclude encrypted tokens.
+    Output lifecycle events exclude encrypted RTMP URLs and FFmpeg PIDs.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+  - topic: account.deleted
+    event: AccountDeletedEvent
+    handler: HandleAccountDeleted
+  - topic: voice.broadcast.approved
+    event: VoiceBroadcastApprovedEvent
+    handler: HandleVoiceBroadcastApproved
+  - topic: voice.broadcast.stopped
+    event: VoiceBroadcastStoppedEvent
+    handler: HandleVoiceBroadcastStopped
+  - topic: session.disconnected
+    event: SessionDisconnectedEvent
+    handler: HandleSessionDisconnected
+  x-event-publications:
+    # PlatformLink lifecycle events (auto-generated from x-lifecycle)
+  - topic: broadcast.platform-link.created
+    event: PlatformLinkCreatedEvent
+    description: Published when a platform link is created (OAuth callback or custom RTMP)
+  - topic: broadcast.platform-link.updated
+    event: PlatformLinkUpdatedEvent
+    description: Published when a platform link is updated (token refresh)
+  - topic: broadcast.platform-link.deleted
+    event: PlatformLinkDeletedEvent
+    description: Published when a platform link is deleted (unlink or account cleanup)
+    # PlatformSession lifecycle events (auto-generated from x-lifecycle)
+  - topic: broadcast.platform-session.created
+    event: PlatformSessionCreatedEvent
+    description: Published when a platform session starts
+  - topic: broadcast.platform-session.updated
+    event: PlatformSessionUpdatedEvent
+    description: Published when a platform session is updated (association or viewer count)
+  - topic: broadcast.platform-session.deleted
+    event: PlatformSessionDeletedEvent
+    description: Published when a platform session ends (stop or disconnect cleanup)
+    # Output lifecycle events (auto-generated from x-lifecycle)
+  - topic: broadcast.output.created
+    event: OutputCreatedEvent
+    description: Published when a broadcast output starts (camera, game audio, or voice room)
+  - topic: broadcast.output.updated
+    event: OutputUpdatedEvent
+    description: Published when a broadcast output is updated (config change or fallback cascade)
+  - topic: broadcast.output.deleted
+    event: OutputDeletedEvent
+    description: Published when a broadcast output stops (manual stop or account cleanup)
+    # Custom events
+  - topic: broadcast.audience.pulse
+    event: BroadcastAudiencePulseEvent
+    description: Published periodically by SentimentBatchPublisher with batched anonymous sentiment data
+
+servers: []
+
+x-lifecycle:
+  topic_prefix: broadcast
+  PlatformLink:
+    model:
+      linkId: {type: string, format: uuid, primary: true, required: true, description: "Platform link identifier"}
+      accountId: {type: string, format: uuid, required: true, description: "Account that owns this platform link"}
+      platform: {$ref: '../broadcast-api.yaml#/components/schemas/PlatformType', required: true, description: "Streaming platform
+          type"}
+      encryptedAccessToken: {type: string, nullable: true, description: "Encrypted OAuth access token (excluded from events)"}
+      encryptedRefreshToken: {type: string, nullable: true, description: "Encrypted OAuth refresh token (excluded from events)"}
+      tokenExpiresAt: {type: string, format: date-time, nullable: true, description: "When the OAuth access token expires"}
+      displayName: {type: string, nullable: true, description: "Platform display name from OAuth profile or user-provided"}
+      linkedAt: {type: string, format: date-time, required: true, description: "When the platform was linked"}
+    sensitive: [encryptedAccessToken, encryptedRefreshToken]
+  PlatformSession:
+    model:
+      platformSessionId: {type: string, format: uuid, primary: true, required: true, description: "Platform session identifier"}
+      linkId: {type: string, format: uuid, required: true, description: "Associated platform link"}
+      accountId: {type: string, format: uuid, required: true, description: "Account that owns this session"}
+      platform: {$ref: '../broadcast-api.yaml#/components/schemas/PlatformType', required: true, description: "Streaming platform
+          type"}
+      platformStreamId: {type: string, nullable: true, description: "Platform-specific stream identifier"}
+      viewerCount: {type: integer, required: true, description: "Current approximate viewer count"}
+      peakViewerCount: {type: integer, required: true, description: "Peak viewer count during session"}
+      startTime: {type: string, format: date-time, required: true, description: "When the session started"}
+      streamSessionId: {type: string, format: uuid, nullable: true, description: "Associated in-game stream session ID (opaque)"}
+      state: {$ref: '../broadcast-api.yaml#/components/schemas/PlatformSessionState', required: true, description: "Current
+          session state"}
+      endedAt: {type: string, format: date-time, nullable: true, description: "When the session ended"}
+      duration: {type: integer, nullable: true, description: "Session duration in seconds"}
+    sensitive: []
+  Output:
+    model:
+      broadcastId: {type: string, format: uuid, primary: true, required: true, description: "Broadcast output identifier"}
+      sourceType: {$ref: '../broadcast-api.yaml#/components/schemas/BroadcastSourceType', required: true, description: "Type
+          of broadcast input source"}
+      sourceId: {type: string, nullable: true, description: "Source identifier (camera ID or voice room ID)"}
+      encryptedRtmpUrl: {type: string, required: true, description: "Encrypted RTMP destination URL (excluded from events)"}
+      maskedRtmpUrl: {type: string, required: true, description: "RTMP destination URL with stream key masked"}
+      state: {$ref: '../broadcast-api.yaml#/components/schemas/BroadcastState', required: true, description: "Current broadcast
+          state"}
+      currentVideoSource: {type: string, nullable: true, description: "Current active video source in fallback cascade"}
+      owningInstanceId: {type: string, required: true, description: "Mesh instance ID of the node running this broadcast"}
+      ffmpegPid: {type: integer, nullable: true, description: "FFmpeg process ID (excluded from events)"}
+      startedAt: {type: string, format: date-time, required: true, description: "When the broadcast started"}
+      health: {$ref: '../broadcast-api.yaml#/components/schemas/BroadcastHealth', required: true, description: "FFmpeg process
+          health status"}
+    sensitive: [encryptedRtmpUrl, ffmpegPid]
+
+paths: {}  # Events don't have HTTP paths
+
+# Note: PlatformLinkCreatedEvent, PlatformLinkUpdatedEvent, PlatformLinkDeletedEvent,
+# PlatformSessionCreatedEvent, PlatformSessionUpdatedEvent, PlatformSessionDeletedEvent,
+# OutputCreatedEvent, OutputUpdatedEvent, OutputDeletedEvent are auto-generated from x-lifecycle.
+# See: schemas/Generated/broadcast-lifecycle-events.yaml
+
+components:
+  schemas:
+    # ============================================
+    # Custom Events (non-lifecycle)
+    # ============================================
+
+    BroadcastAudiencePulseEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: >
+        Periodic batched anonymous sentiment data from a platform session. Published by
+        SentimentBatchPublisher at configurable intervals. Contains no identifiable user
+        data — only anonymous sentiment categories, intensities, and opaque tracking GUIDs.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - platformSessionId
+      - intervalSeconds
+      - approximateViewerCount
+      - sentiments
+      properties:
+        eventName:
+          type: string
+          default: broadcast.audience.pulse
+          description: 'Event type identifier: broadcast.audience.pulse'
+        platformSessionId:
+          type: string
+          format: uuid
+          description: Platform session that produced this pulse
+        streamSessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated in-game stream session (if linked via associate endpoint)
+        intervalSeconds:
+          type: integer
+          description: Configured pulse interval in seconds
+        approximateViewerCount:
+          type: integer
+          description: Platform-reported viewer count (approximate)
+        sentiments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SentimentEntry'
+          description: Batched anonymous sentiment entries
+    SentimentCategory:
+      type: string
+      description: Fixed sentiment categories for audience analysis. Intentionally a finite enum (not opaque strings) 
+        because lib-showtime needs deterministic audience behavior mapping.
+      enum: [Excited, Supportive, Critical, Curious, Surprised, Amused, Bored, Hostile]
+    SentimentEntry:
+      type: object
+      additionalProperties: false
+      description: Individual anonymous sentiment data point
+      required: [category, intensity]
+      properties:
+        category:
+          $ref: '#/components/schemas/SentimentCategory'
+          description: Sentiment classification
+        intensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Strength of sentiment (0.0 to 1.0)
+        trackingId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Opaque tracking GUID for important viewers (null for anonymous)
+        viewerType:
+          allOf:
+          - $ref: '#/components/schemas/TrackedViewerType'
+          nullable: true
+          description: Category of tracked viewer (null for anonymous)
+
+    TrackedViewerType:
+      type: string
+      description: Category of tracked viewers who receive opaque tracking GUIDs. Returner type requires cross-session 
+        detection (not available in v1).
+      enum: [Subscriber, Moderator, RaidLeader, VIP, HighEngager, Returner]
+x-inlined-types:
+- SentimentCategory
+- SentimentEntry
+- TrackedViewerType

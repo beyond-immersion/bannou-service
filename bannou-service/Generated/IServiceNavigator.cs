@@ -12,6 +12,7 @@ using BeyondImmersion.BannouService.Analytics;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Broadcast;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
@@ -102,6 +103,11 @@ public partial interface IServiceNavigator
     /// Gets the Behavior service client.
     /// </summary>
     IBehaviorClient Behavior { get; }
+
+    /// <summary>
+    /// Gets the Broadcast service client.
+    /// </summary>
+    IBroadcastClient Broadcast { get; }
 
     /// <summary>
     /// Gets the Character service client.

@@ -166,9 +166,9 @@ Service lifetime is **Scoped** (per-request). One background service: `MemoryDec
 - **UpdatePerspective** (`/character-encounter/update-perspective`): Finds perspective, re-loads with ETag for optimistic concurrency. Applies partial updates (emotionalImpact, sentimentShift, rememberedAs). Uses `TrySaveAsync` with ETag; returns Conflict on concurrent modification. Publishes `encounter.perspective.updated` with previous and new values.
 - **RefreshMemory** (`/character-encounter/refresh-memory`): Finds perspective, re-loads with ETag. Adds boost amount (request-provided or config default) to memory strength. Clamps to [0, 1]. Uses ETag concurrency. Publishes `encounter.memory.refreshed`. Counteracts memory decay.
 
-### Deprecation Cleanup (1 endpoint, not yet implemented)
+### Deprecation Cleanup (1 endpoint)
 
-- **CleanDeprecatedEncounterTypes** (`/character-encounter/type/clean-deprecated`): **NOT IMPLEMENTED** (`NotImplementedException` stub). Admin-only. Should sweep deprecated encounter types where the `type-enc-idx-{CODE}` index contains zero encounters. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) and `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds). Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` per T31 B20-B22.
+- **CleanDeprecatedEncounterTypes** (`/character-encounter/type/clean-deprecated`): Admin-only. Loads all encounter types and filters to deprecated ones. Uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` with grace period evaluation, dry-run support, and per-item error isolation (per T31 B20-B22). Checks `type-enc-idx-{CODE}` for active encounters — types with zero referencing encounters are eligible for deletion. Deletes the type record, removes from custom type index (if not built-in), deletes the type-encounter index entry, and publishes `EncounterTypeDeletedEvent` lifecycle event. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) and `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds).
 
 ### Admin (3 endpoints)
 
@@ -362,7 +362,7 @@ Index Architecture
 
 ## Stubs & Unimplemented Features
 
-1. **`CleanDeprecatedEncounterTypesAsync` not implemented**: `POST /character-encounter/type/clean-deprecated` is schema-defined and generated (controller, interface) but the service method throws `NotImplementedException`. Should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per T31 B20-B22. Sweeps deprecated encounter types with zero remaining encounters referencing them. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. `x-permissions: [role: admin]`.
+1. ~~**`CleanDeprecatedEncounterTypesAsync` not implemented**~~: **FIXED** (2026-03-11) - Fully implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`. Loads all deprecated encounter types, checks `type-enc-idx-{CODE}` for active encounters, deletes eligible types and cleans up custom type index and type-encounter index entries, publishes `EncounterTypeDeletedEvent` lifecycle event. Class implements `ICleanDeprecatedEntity` marker interface. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse`.
 
 ---
 
@@ -434,3 +434,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Design #2 - Pair index combinatorial explosion**: Added `MaxParticipantsPerEncounter` config property (default: 20) and server-side validation (2026-02-09). O(N^2) pair index creation now bounded by configurable limit.
 - **Issue #379 - Migrate cleanup from character.deleted event to lib-resource**: Removed redundant `character.deleted` event subscription (2026-02-11). Cleanup now exclusively via lib-resource cleanup callbacks registered at startup. Removed `IEventConsumer` dependency and `CharacterEncounterServiceEvents.cs`.
 - **Design #4 - Lazy decay write amplification**: Moved to Intentional Quirks (#7) (2026-03-08). Write amplification is inherent to lazy evaluation mode; `MemoryDecayMode=scheduled` already exists as the alternative via `MemoryDecaySchedulerService`.
+- **Stub #1 - CleanDeprecatedEncounterTypesAsync not implemented**: Documentation updated (2026-03-11). Method was already fully implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` with `ICleanDeprecatedEntity` marker interface. Deep dive stub section was stale.

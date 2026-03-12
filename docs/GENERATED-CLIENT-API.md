@@ -16,6 +16,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 18 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
+| [Bannou Broadcast Service API](#broadcast) | `client.Broadcast` | 22 | Platform streaming integration and RTMP output management se... |
 | [Bannou Character Service API](#character) | `client.Character` | 12 | Character management service for game worlds. |
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
@@ -378,6 +379,71 @@ Arcadia Behavior Markup Language (ABML) API for character behavior management.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `ValidateAbmlAsync` | `ValidateAbmlRequest` | `ValidateAbmlResponse` | Validate ABML definition |
+
+---
+
+## Bannou Broadcast Service API {#broadcast}
+
+**Proxy**: `client.Broadcast` | **Version**: 1.0.0
+
+Platform streaming integration and RTMP output management service (L3 AppFeatures). Links external streaming platforms (Twitch, YouTube, custom RTM...
+
+### BroadcastAdmin
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetLatestpulseAsync` | `GetLatestPulseRequest` | `LatestPulseResponse` | Get the latest sentiment pulse for a session |
+| `TestsentimentAsync` | `TestSentimentRequest` | `TestSentimentResponse` | Test sentiment classification |
+
+### BroadcastCamera
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AnnouncecameraAsync` | `AnnounceCameraRequest` | `CameraAnnounceResponse` | Announce or heartbeat a camera source |
+| `RetirecameraEventAsync` | `RetireCameraRequest` | *(fire-and-forget)* | Retire a camera source |
+
+### BroadcastInternal
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbyaccountEventAsync` | `CleanupByAccountRequest` | *(fire-and-forget)* | Clean up all account-owned broadcast data |
+
+### BroadcastOutput
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `StartoutputAsync` | `StartOutputRequest` | `StartOutputResponse` | Start a broadcast output |
+| `StopoutputEventAsync` | `StopOutputRequest` | *(fire-and-forget)* | Stop a broadcast output |
+| `UpdateOutputEventAsync` | `UpdateOutputRequest` | *(fire-and-forget)* | Update a broadcast output configuration |
+| `GetOutputstatusAsync` | `GetOutputStatusRequest` | `OutputStatusResponse` | Get broadcast output status |
+| `ListOutputsAsync` | `ListOutputsRequest` | `OutputListResponse` | List broadcast outputs |
+
+### BroadcastPlatform
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `LinkplatformAsync` | `LinkPlatformRequest` | `LinkPlatformResponse` | Link a streaming platform account |
+| `PlatformcallbackAsync` | `PlatformCallbackRequest` | `PlatformCallbackResponse` | Complete OAuth platform linking |
+| `UnlinkplatformEventAsync` | `UnlinkPlatformRequest` | *(fire-and-forget)* | Unlink a streaming platform |
+| `ListPlatformsAsync` | `ListPlatformsRequest` | `PlatformListResponse` | List linked platforms for the current account |
+
+### BroadcastSession
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `StartsessionAsync` | `StartSessionRequest` | `StartSessionResponse` | Start a platform streaming session |
+| `StopsessionEventAsync` | `StopSessionRequest` | *(fire-and-forget)* | Stop a platform streaming session |
+| `AssociatesessionEventAsync` | `AssociateSessionRequest` | *(fire-and-forget)* | Associate a platform session with an in-game stream session |
+| `GetSessionstatusAsync` | `GetSessionStatusRequest` | `SessionStatusResponse` | Get platform session status |
+| `ListSessionsAsync` | `ListSessionsRequest` | `SessionListResponse` | List platform sessions for the current account |
+
+### BroadcastWebhook
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `WebhooktwitchAsync` | `WebhookPayload` | `WebhookResponse` | Twitch EventSub webhook callback |
+| `WebhookyoutubeAsync` | `WebhookPayload` | `WebhookResponse` | YouTube webhook callback |
+| `WebhookcustomAsync` | `WebhookPayload` | `WebhookResponse` | Custom platform webhook callback |
 
 ---
 
@@ -2558,8 +2624,8 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 
 ## Summary
 
-- **Total services**: 55
-- **Total methods**: 896
+- **Total services**: 56
+- **Total methods**: 918
 
 ---
 

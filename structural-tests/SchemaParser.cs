@@ -100,12 +100,19 @@ internal static class SchemaParser
             var entityName = key;
             var modelFields = new List<string>();
             var hasDeprecation = false;
+            string? instanceEntity = null;
 
             // Check deprecation flag
             if (entityMapping.Children.TryGetValue(new YamlScalarNode("deprecation"), out var deprecationNode))
             {
                 hasDeprecation = deprecationNode is YamlScalarNode scalar &&
                                 string.Equals(scalar.Value, "true", StringComparison.OrdinalIgnoreCase);
+            }
+
+            // Check instanceEntity (Category B: names the lifecycle entity representing instances)
+            if (entityMapping.Children.TryGetValue(new YamlScalarNode("instanceEntity"), out var instanceNode))
+            {
+                instanceEntity = (instanceNode as YamlScalarNode)?.Value;
             }
 
             // Extract model field names
@@ -120,15 +127,20 @@ internal static class SchemaParser
                 }
             }
 
-            yield return new LifecycleEntity(entityName, modelFields, hasDeprecation);
+            yield return new LifecycleEntity(entityName, modelFields, hasDeprecation, instanceEntity);
         }
     }
 
     /// <summary>
     /// Represents a parsed x-lifecycle entity definition.
     /// </summary>
+    /// <param name="EntityName">PascalCase entity name from x-lifecycle key</param>
+    /// <param name="ModelFields">Field names defined in the model block</param>
+    /// <param name="HasDeprecation">Whether deprecation: true is set</param>
+    /// <param name="InstanceEntity">Name of the lifecycle entity representing instances of this template (Category B only)</param>
     internal sealed record LifecycleEntity(
         string EntityName,
         List<string> ModelFields,
-        bool HasDeprecation);
+        bool HasDeprecation,
+        string? InstanceEntity);
 }

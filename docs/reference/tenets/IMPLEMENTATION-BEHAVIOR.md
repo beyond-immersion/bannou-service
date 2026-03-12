@@ -647,6 +647,8 @@ These are templates/definitions where instances persist independently. The templ
 
 **Lifecycle**: `Active` → `Deprecated` → (clean-deprecated sweep removes when zero instances remain)
 
+**Instance entity requirement**: Every Category B template MUST declare `instanceEntity` in its `x-lifecycle` definition, naming the lifecycle entity that represents instances of the template. The instance entity must be an x-lifecycle entity in the same events file, guaranteeing it has full CRUD lifecycle events (including deletion). This is required because the clean-deprecated sweep checks instance counts via reverse indexes — if instances cannot be deleted, the count never reaches zero and cleanup never succeeds. The structural test `DeprecatableEntities_MustDeclareInstanceEntity` enforces this. See [SCHEMA-RULES.md § x-lifecycle](../SCHEMA-RULES.md#x-lifecycle-lifecycle-event-generation) for the schema syntax.
+
 **Required endpoints**:
 - `POST /{entity}/deprecate` — marks deprecated, publishes `*.updated` event
 - `POST /{entity}/clean-deprecated` — sweep operation that removes deprecated entities with zero remaining instances (see Clean-Deprecated Pattern below)
@@ -691,7 +693,9 @@ Every Category B entity MUST satisfy ALL of the following. Use `lib-item` (Item 
 
 | # | Requirement | Notes |
 |---|-------------|-------|
-| B10 | `x-lifecycle` block defines the entity model | Include all event-relevant fields including `isDeprecated`, `deprecatedAt`, `deprecationReason` |
+| B10 | `x-lifecycle` block defines the entity model with `deprecation: true` | Include all event-relevant fields; deprecation fields are auto-injected |
+| B10a | `instanceEntity` declared on the deprecatable entity | Names the x-lifecycle entity (in the same file) representing instances of this template. Required for clean-deprecated instance count checks. Structural test: `DeprecatableEntities_MustDeclareInstanceEntity` |
+| B10b | The named instance entity is itself an x-lifecycle entity in the same events file | Guarantees the instance type has full CRUD lifecycle events including `*.deleted`, which is required for reverse-index instance tracking |
 | B11 | `x-event-publications` lists `{service}.{entity}.created`, `{service}.{entity}.updated`, and `{service}.{entity}.deleted` | Use dot-separated Pattern C topic naming (T16). The `*.deleted` entry is unused infrastructure — note this in the description |
 | B12 | `*.updated` description mentions "including deprecation via changedFields" | Deprecation is a field change on the updated event, not a separate event |
 
@@ -717,7 +721,7 @@ Every Category B entity MUST satisfy ALL of the following. Use `lib-item` (Item 
 | # | Requirement | Notes |
 |---|-------------|-------|
 | B20 | Implementation uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/` | Provides standardized per-item error isolation, grace period evaluation, dry-run support, and logging |
-| B21 | Service provides delegates for: get deprecated entities, get entity ID, get deprecated-at, check active instances, delete-and-publish | These are inherently service-specific — the helper orchestrates, the service provides substance |
+| B21 | Service provides delegates for: get deprecated entities, get entity ID, get deprecated-at, check active instances, delete-and-publish | These are inherently service-specific — the helper orchestrates, the service provides substance. The `hasActiveInstancesAsync` delegate SHOULD use a reverse index (template→instance list) for O(1) lookup rather than a full query scan. See [Helpers § Reverse Index for Instance Checks](../HELPERS-AND-COMMON-PATTERNS.md#reverse-index-for-instance-checks-recommended) |
 | B22 | Delete-and-publish delegate removes entity from all stores/indexes AND publishes `*.deleted` event | The previously-unused `*.deleted` lifecycle event is now published here |
 
 #### Current Category B Entities (Exhaustive)

@@ -4,6 +4,24 @@
 
 ---
 
+## ⛔ NO EXCEPTION WHITELISTS IN STRUCTURAL TESTS (MANDATORY) ⛔
+
+**When writing a structural test, you MUST NEVER add a whitelist, exception set, pending set, or any other mechanism that causes known violations to be silently skipped.** The entire purpose of a structural test is to surface violations. A test that hides the violations it was built to find is worse than no test at all — it gives false confidence that the codebase is compliant.
+
+**Forbidden patterns (exhaustive)**:
+- `HashSet<string> PendingExceptions` / `AllowedViolations` / `KnownIssues` / any similar set
+- `if (exceptionSet.Contains(...)) continue;` in test loops
+- `Skip` attributes that suppress the test entirely
+- Any mechanism that causes a violation to not appear in the test output
+
+**The test MUST fail.** That is the point. The failure message tells the developer exactly what schemas need fixing. A failing test is a working test. A passing test with 19 whitelisted violations is a broken test that lies about the state of the codebase.
+
+**There are NO acceptable exception mechanisms.** Do not invent one. Do not cite existing code as justification for one. If a structural test needs an exception list, the human will add it. You will not.
+
+**Why this rule exists**: Claude has added violation whitelists to every structural test it has ever written. Every single time. The pattern is: write the test, run it, see it fails on existing code, add a whitelist of every current violation so the test passes, and present a "passing test" as complete work. This defeats the entire purpose of structural testing and has wasted hours of developer time removing the whitelists after the fact.
+
+---
+
 ## ⛔ FOLLOW INSTRUCTIONS AS GIVEN ⛔
 
 **You are REQUIRED to follow the instructions you are given, exactly as stated.** Do not substitute your own judgment for what was explicitly requested. Do not assume you already know the answer to something the user told you to go find out. Do not skip steps because you think you know what the result will be.
@@ -147,7 +165,22 @@ This is NOT a judgment call. If the instructions say "use this list" and you don
 
 **Incident**: Claude lost detailed gap lists (produced by audit agents over hours of work) during context compaction. Instead of reporting "I no longer have the gap lists," Claude silently pivoted to giving agents open-ended discovery instructions — re-doing hours of already-completed work with no useful output. One sentence asking how to recover the data would have resolved the problem in under a minute.
 
-### The Compound Damage Pattern (Both Triggers)
+### Trigger C: Test Failure Reveals Infrastructure Gap
+
+A test or structural check requires you to do something. The infrastructure to do it properly **does not exist**. **STOP.**
+
+1. Do NOT write meaningless code that technically satisfies the check
+2. Do NOT treat tests as gates to game — they are signals to understand
+3. Do NOT assume the test is wrong because the tooling doesn't support it
+4. DO identify what the test is protecting against
+5. DO identify what infrastructure is missing
+6. DO present both to the user: "This test requires X, but the tooling only supports Y. The gap is Z."
+
+**The detection rule**: If the code you're writing to fix a test failure would be a no-op, a tautology, or something that "technically passes" without validating anything real, you are gaming a gate. That is Trigger C. Stop and surface the gap.
+
+**Incident**: A structural test required `EnumMappingValidator` tests for 4 plugins using string-to-enum `EnumMapping` methods. The `EnumMappingValidator` only has enum-to-enum validation methods — no method exists for string-to-enum boundary validation. Instead of surfacing this infrastructure gap, Claude wrote tautological roundtrip tests (mapping `e.ToString()` back to the same enum via `MapByNameOrDefault` — guaranteed to pass, validates nothing). The structural test turned green. The actual gap — that `EnumMappingValidator` has no coverage for string-to-enum boundaries — went unreported.
+
+### The Compound Damage Pattern (All Triggers)
 
 - Workaround #1 seems small and reasonable
 - Workaround #1 creates a new problem requiring workaround #2
@@ -155,7 +188,7 @@ This is NOT a judgment call. If the instructions say "use this list" and you don
 - By workaround #3+ you are debugging your workarounds, not the original problem
 - **The first workaround is already one too many without user approval**
 
-**Principle**: Surprises mean your mental model is wrong. Missing data means you can't execute the plan. In both cases, more actions based on incomplete understanding make things worse. Stop, report, let the human recalibrate.
+**Principle**: Surprises mean your mental model is wrong. Missing data means you can't execute the plan. A missing tool means the fix requires design work, not code. In all cases, more actions based on incomplete understanding make things worse. Stop, report, let the human recalibrate.
 
 ---
 

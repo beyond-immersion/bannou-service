@@ -131,6 +131,22 @@ This document lists all events defined in Bannou's event schemas.
 | `CinematicExtensionAvailableEvent` | Custom | `cinematic-extension-available` | Event published when a cinematic extension is avai... |
 | `GoapPlanGeneratedEvent` | Custom | `goap-plan-generated` | Event published when the GOAP planner generates a ... |
 
+### Broadcast
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `BroadcastAudiencePulseEvent` | Custom | `broadcast-audience-pulse` | Periodic batched anonymous sentiment data from a p... |
+
+### Broadcast (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `BroadcastOutputSourceChangedClientEvent` | Custom | `broadcast-output-source-changed-client` | Sent to the broadcasting user when the active vide... |
+| `BroadcastOutputStartedClientEvent` | Custom | `broadcast-output-started-client` | Sent to the broadcasting user when a broadcast out... |
+| `BroadcastOutputStoppedClientEvent` | Custom | `broadcast-output-stopped-client` | Sent to the broadcasting user when a broadcast out... |
+| `BroadcastSessionEndedClientEvent` | Custom | `broadcast-session-ended-client` | Sent to the user when their platform streaming ses... |
+| `BroadcastSessionStartedClientEvent` | Custom | `broadcast-session-started-client` | Sent to the user when their platform streaming ses... |
+
 ### Character
 
 | Event | Type | Likely Topic | Description |

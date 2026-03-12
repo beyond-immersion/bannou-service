@@ -77,6 +77,20 @@ public static class StateStoreDefinitions
     /// <summary>Behavior metadata and compiled definitions</summary>
     public const string Behavior = "behavior-statestore";
 
+    // Broadcast Service
+    /// <summary>Camera sources with TTL heartbeat (RTMP input URL, resolution, codec)</summary>
+    public const string BroadcastCameras = "broadcast-cameras";
+    /// <summary>Distributed locks for platform linking, session, broadcast, sentiment, token refresh, webhook management</summary>
+    public const string BroadcastLock = "broadcast-lock";
+    /// <summary>Authoritative broadcast output state (source type, encrypted RTMP URL, FFmpeg PID, health)</summary>
+    public const string BroadcastOutputs = "broadcast-outputs";
+    /// <summary>Platform link records (account, platform type, encrypted OAuth tokens, display name)</summary>
+    public const string BroadcastPlatforms = "broadcast-platforms";
+    /// <summary>Buffered sentiment entries awaiting batch publication and webhook rate limit counters</summary>
+    public const string BroadcastSentimentBuffer = "broadcast-sentiment-buffer";
+    /// <summary>Active platform session state and tracked viewer mappings</summary>
+    public const string BroadcastSessions = "broadcast-sessions";
+
     // Character Service
     /// <summary>Distributed locks for character update and compression operations</summary>
     public const string CharacterLock = "character-lock";
@@ -534,6 +548,12 @@ public static class StateStoreDefinitions
             [Asset] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "asset" },
             [Auth] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "auth" },
             [Behavior] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "behavior" },
+            [BroadcastCameras] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "broadcast-cam" },
+            [BroadcastLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "broadcast:lock" },
+            [BroadcastOutputs] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "broadcast-out" },
+            [BroadcastPlatforms] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "broadcast_platforms" },
+            [BroadcastSentimentBuffer] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "broadcast-sent" },
+            [BroadcastSessions] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "broadcast-sess" },
             [CharacterEncounter] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_encounter_statestore" },
             [CharacterHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_history_statestore" },
             [CharacterLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "character:lock" },
@@ -735,6 +755,12 @@ public static class StateStoreDefinitions
             [Asset] = new StoreMetadata("Asset", "Asset upload tracking and bundle state", "redis", false),
             [Auth] = new StoreMetadata("Auth", "Session and token state (ephemeral)", "redis", false),
             [Behavior] = new StoreMetadata("Behavior", "Behavior metadata and compiled definitions", "redis", false),
+            [BroadcastCameras] = new StoreMetadata("Broadcast", "Camera sources with TTL heartbeat (RTMP input URL, resolution, codec)", "redis", false),
+            [BroadcastLock] = new StoreMetadata("Broadcast", "Distributed locks for platform linking, session, broadcast, sentiment, token refresh, webhook management", "redis", false),
+            [BroadcastOutputs] = new StoreMetadata("Broadcast", "Authoritative broadcast output state (source type, encrypted RTMP URL, FFmpeg PID, health)", "redis", false),
+            [BroadcastPlatforms] = new StoreMetadata("Broadcast", "Platform link records (account, platform type, encrypted OAuth tokens, display name)", "mysql", false),
+            [BroadcastSentimentBuffer] = new StoreMetadata("Broadcast", "Buffered sentiment entries awaiting batch publication and webhook rate limit counters", "redis", false),
+            [BroadcastSessions] = new StoreMetadata("Broadcast", "Active platform session state and tracked viewer mappings", "redis", false),
             [CharacterEncounter] = new StoreMetadata("CharacterEncounter", "Encounter records and participant perspectives", "mysql", false),
             [CharacterHistory] = new StoreMetadata("CharacterHistory", "Character historical events and backstory", "mysql", false),
             [CharacterLock] = new StoreMetadata("Character", "Distributed locks for character update and compression operations", "redis", false),

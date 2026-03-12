@@ -2088,6 +2088,720 @@
         }
       }
     },
+    "/broadcast/platform/link": {
+      "post": {
+        "summary": "Link a streaming platform account",
+        "description": "Initiates platform linking. For OAuth platforms (Twitch, YouTube), returns an OAuth\nredirect URL. For Custom RTMP, stores the URL directly and returns a link ID.\nOne link per account per platform enforced.\n",
+        "operationId": "broadcast_linkPlatform",
+        "tags": [
+          "BroadcastPlatform"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkPlatformRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Platform link initiated or created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkPlatformResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Broadcast disabled, platform credentials not configured, or invalid request"
+          },
+          "404": {
+            "description": "Account not found"
+          },
+          "409": {
+            "description": "Platform already linked for this account, or lock acquisition failed"
+          }
+        }
+      }
+    },
+    "/broadcast/platform/callback": {
+      "post": {
+        "summary": "Complete OAuth platform linking",
+        "description": "Completes OAuth flow after platform redirect. Exchanges authorization code for tokens,\nencrypts and stores them. Creates the platform link.\n",
+        "operationId": "broadcast_platformCallback",
+        "tags": [
+          "BroadcastPlatform"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformCallbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OAuth flow completed, platform linked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformCallbackResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Token encryption key not configured or invalid authorization code"
+          },
+          "409": {
+            "description": "Platform already linked (race condition) or lock acquisition failed"
+          }
+        }
+      }
+    },
+    "/broadcast/platform/unlink": {
+      "post": {
+        "summary": "Unlink a streaming platform",
+        "description": "Removes a platform link. Stops any active session, revokes OAuth tokens (best-effort),\nand deletes all associated data including tracking IDs.\n",
+        "operationId": "broadcast_unlinkPlatform",
+        "tags": [
+          "BroadcastPlatform"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnlinkPlatformRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Platform unlinked"
+          },
+          "403": {
+            "description": "Link does not belong to the requesting account"
+          },
+          "404": {
+            "description": "Platform link not found"
+          },
+          "409": {
+            "description": "Lock acquisition failed"
+          }
+        }
+      }
+    },
+    "/broadcast/platform/list": {
+      "post": {
+        "summary": "List linked platforms for the current account",
+        "description": "Returns all platform links for the authenticated account. Token fields are\nnever exposed in responses (stream key masking is absolute).\n",
+        "operationId": "broadcast_listPlatforms",
+        "tags": [
+          "BroadcastPlatform"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListPlatformsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Platform links retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/broadcast/session/start": {
+      "post": {
+        "summary": "Start a platform streaming session",
+        "description": "Starts tracking a platform streaming session. Verifies the account is live on\nthe platform (best-effort). One active session per account enforced.\n",
+        "operationId": "broadcast_startSession",
+        "tags": [
+          "BroadcastSession"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Platform session started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartSessionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Link does not belong to the requesting account"
+          },
+          "404": {
+            "description": "Platform link not found"
+          },
+          "409": {
+            "description": "Session already active for this account, or lock acquisition failed"
+          }
+        }
+      }
+    },
+    "/broadcast/session/stop": {
+      "post": {
+        "summary": "Stop a platform streaming session",
+        "description": "Stops an active platform session. Deletes all tracking ID mappings and\npublishes session deleted event with duration and peak viewer count.\n",
+        "operationId": "broadcast_stopSession",
+        "tags": [
+          "BroadcastSession"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Platform session stopped"
+          },
+          "403": {
+            "description": "Session does not belong to the requesting account"
+          },
+          "404": {
+            "description": "Platform session not found"
+          },
+          "409": {
+            "description": "Lock acquisition failed"
+          }
+        }
+      }
+    },
+    "/broadcast/session/associate": {
+      "post": {
+        "summary": "Associate a platform session with an in-game stream session",
+        "description": "Links a platform session with a lib-showtime stream session ID. The stream\nsession ID is stored as an opaque GUID (no validation against lib-showtime;\nL3 cannot call L4).\n",
+        "operationId": "broadcast_associateSession",
+        "tags": [
+          "BroadcastSession"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssociateSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session associated with stream session"
+          },
+          "403": {
+            "description": "Session does not belong to the requesting account"
+          },
+          "404": {
+            "description": "Platform session not found"
+          },
+          "409": {
+            "description": "ETag mismatch or lock acquisition failed"
+          }
+        }
+      }
+    },
+    "/broadcast/session/status": {
+      "post": {
+        "summary": "Get platform session status",
+        "description": "Returns the current status of a platform session including viewer count,\nstream session association, and recent sentiment distribution.\n",
+        "operationId": "broadcast_getSessionStatus",
+        "tags": [
+          "BroadcastSession"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetSessionStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session status retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatusResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Session does not belong to the requesting account"
+          },
+          "404": {
+            "description": "Platform session not found"
+          }
+        }
+      }
+    },
+    "/broadcast/session/list": {
+      "post": {
+        "summary": "List platform sessions for the current account",
+        "description": "Returns paginated platform session history for the authenticated account,\nordered by start time descending.\n",
+        "operationId": "broadcast_listSessions",
+        "tags": [
+          "BroadcastSession"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListSessionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sessions retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/broadcast/camera/announce": {
+      "post": {
+        "summary": "Announce or heartbeat a camera source",
+        "description": "Registers or refreshes a game engine camera as a broadcast source. Idempotent\nupsert with TTL-based eviction. Cameras that stop announcing are auto-removed.\n",
+        "operationId": "broadcast_announceCamera",
+        "tags": [
+          "BroadcastCamera"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnounceCameraRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Camera announced or refreshed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CameraAnnounceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Output capability not enabled"
+          }
+        }
+      }
+    },
+    "/broadcast/camera/retire": {
+      "post": {
+        "summary": "Retire a camera source",
+        "description": "Removes a camera source. Active broadcasts using this camera trigger\nfallback cascade to the next available video source.\n",
+        "operationId": "broadcast_retireCamera",
+        "tags": [
+          "BroadcastCamera"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetireCameraRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Camera retired"
+          },
+          "404": {
+            "description": "Camera not found"
+          }
+        }
+      }
+    },
+    "/broadcast/output/start": {
+      "post": {
+        "summary": "Start a broadcast output",
+        "description": "Starts an FFmpeg process to broadcast content to an RTMP endpoint. Validates\nthe RTMP URL via FFprobe before starting. Respects MaxConcurrentOutputs limit.\nRTMP URLs are encrypted for storage; responses contain masked URLs only.\n",
+        "operationId": "broadcast_startOutput",
+        "tags": [
+          "BroadcastOutput"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartOutputRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Broadcast output started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartOutputResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Output not enabled, RTMP URL unreachable, camera/voice room not found, or voice service unavailable"
+          },
+          "409": {
+            "description": "Max concurrent outputs reached or lock acquisition failed"
+          }
+        }
+      }
+    },
+    "/broadcast/output/stop": {
+      "post": {
+        "summary": "Stop a broadcast output",
+        "description": "Stops an active broadcast by killing the FFmpeg process and removing\nthe broadcast record from the authoritative state store.\n",
+        "operationId": "broadcast_stopOutput",
+        "tags": [
+          "BroadcastOutput"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopOutputRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Broadcast output stopped"
+          },
+          "404": {
+            "description": "Broadcast not found"
+          },
+          "409": {
+            "description": "Lock acquisition failed"
+          }
+        }
+      }
+    },
+    "/broadcast/output/update": {
+      "post": {
+        "summary": "Update a broadcast output configuration",
+        "description": "Updates broadcast configuration (RTMP URL, fallback sources). Validates new\nRTMP URL via FFprobe before committing. Causes a brief interruption (~2-3s)\nas FFmpeg restarts with the new configuration.\n",
+        "operationId": "broadcast_updateOutput",
+        "tags": [
+          "BroadcastOutput"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOutputRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Broadcast output updated"
+          },
+          "400": {
+            "description": "New RTMP URL unreachable"
+          },
+          "404": {
+            "description": "Broadcast not found"
+          },
+          "409": {
+            "description": "ETag mismatch or lock acquisition failed"
+          }
+        }
+      }
+    },
+    "/broadcast/output/status": {
+      "post": {
+        "summary": "Get broadcast output status",
+        "description": "Returns the current status of a broadcast including source type, state,\ncurrent video source (which fallback level is active), and health.\nRTMP URLs are always masked in responses.\n",
+        "operationId": "broadcast_getOutputStatus",
+        "tags": [
+          "BroadcastOutput"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetOutputStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Broadcast status retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutputStatusResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Broadcast not found"
+          }
+        }
+      }
+    },
+    "/broadcast/output/list": {
+      "post": {
+        "summary": "List broadcast outputs",
+        "description": "Returns paginated broadcast outputs. Optionally filter to active only.\nRTMP URLs are always masked in responses.\n",
+        "operationId": "broadcast_listOutputs",
+        "tags": [
+          "BroadcastOutput"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListOutputsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Broadcast outputs retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutputListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/broadcast/admin/pulse/latest": {
+      "post": {
+        "summary": "Get the latest sentiment pulse for a session",
+        "description": "Returns the most recently published sentiment pulse for a platform session.\nDiagnostic endpoint for monitoring sentiment processing health.\n",
+        "operationId": "broadcast_getLatestPulse",
+        "tags": [
+          "BroadcastAdmin"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetLatestPulseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Latest pulse retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LatestPulseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Platform session not found"
+          }
+        }
+      }
+    },
+    "/broadcast/admin/sentiment/test": {
+      "post": {
+        "summary": "Test sentiment classification",
+        "description": "Stateless diagnostic endpoint. Classifies input text into a sentiment\ncategory and intensity using the current ISentimentProcessor implementation.\nNo state access, no events, no locks.\n",
+        "operationId": "broadcast_testSentiment",
+        "tags": [
+          "BroadcastAdmin"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestSentimentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sentiment classification result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestSentimentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/character/get": {
       "post": {
         "summary": "Get character by ID",
@@ -21338,6 +22052,39 @@
           }
         }
       },
+      "AnnounceCameraRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Camera source announcement with TTL heartbeat",
+        "required": [
+          "cameraId",
+          "rtmpInputUrl"
+        ],
+        "properties": {
+          "cameraId": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Unique camera identifier from the game engine"
+          },
+          "rtmpInputUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "RTMP input URL where the camera publishes its stream"
+          },
+          "resolution": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 32,
+            "description": "Video resolution (e.g., 1920x1080)"
+          },
+          "codec": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 64,
+            "description": "Video codec used by the camera source"
+          }
+        }
+      },
       "AnswerPeerRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -22037,6 +22784,33 @@
           "metadata": {
             "$ref": "#/components/schemas/AssetMetadata",
             "description": "Complete asset metadata"
+          }
+        }
+      },
+      "AssociateSessionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to associate a platform session with an in-game stream session",
+        "required": [
+          "webSocketSessionId",
+          "platformSessionId",
+          "streamSessionId"
+        ],
+        "properties": {
+          "webSocketSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "WebSocket session ID for server-side identity resolution"
+          },
+          "platformSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Platform session to associate"
+          },
+          "streamSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "In-game stream session ID (opaque, stored without validation)"
           }
         }
       },
@@ -23557,6 +24331,34 @@
           }
         }
       },
+      "BroadcastHealth": {
+        "type": "string",
+        "description": "Health status of a broadcast output FFmpeg process",
+        "enum": [
+          "Healthy",
+          "Degraded",
+          "Down",
+          "Unknown"
+        ]
+      },
+      "BroadcastSourceType": {
+        "type": "string",
+        "description": "Type of broadcast input source",
+        "enum": [
+          "Camera",
+          "GameAudio",
+          "VoiceRoom"
+        ]
+      },
+      "BroadcastState": {
+        "type": "string",
+        "description": "Current state of a broadcast output",
+        "enum": [
+          "Active",
+          "Failed",
+          "Stopped"
+        ]
+      },
       "BroadcastStatusRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -24520,6 +25322,11 @@
             "description": "Named time spans for display purposes (null if none defined)"
           }
         }
+      },
+      "CameraAnnounceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Empty response. 200 OK confirms the camera was announced or refreshed."
       },
       "CanUseBehavior": {
         "type": "string",
@@ -36883,6 +37690,21 @@
           }
         }
       },
+      "GetLatestPulseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to get the latest sentiment pulse",
+        "required": [
+          "platformSessionId"
+        ],
+        "properties": {
+          "platformSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Platform session to query"
+          }
+        }
+      },
       "GetLicenseDefinitionRequest": {
         "type": "object",
         "description": "Request to get a license definition by board template ID and code",
@@ -37075,6 +37897,21 @@
             "format": "uuid",
             "nullable": true,
             "description": "Realm for new container"
+          }
+        }
+      },
+      "GetOutputStatusRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to get broadcast output status",
+        "required": [
+          "broadcastId"
+        ],
+        "properties": {
+          "broadcastId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Broadcast output to query"
           }
         }
       },
@@ -37761,6 +38598,27 @@
             "type": "boolean",
             "description": "Whether to include archived seeds.",
             "default": false
+          }
+        }
+      },
+      "GetSessionStatusRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to get platform session status",
+        "required": [
+          "webSocketSessionId",
+          "platformSessionId"
+        ],
+        "properties": {
+          "webSocketSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "WebSocket session ID for server-side identity resolution"
+          },
+          "platformSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Platform session to query"
           }
         }
       },
@@ -40001,6 +40859,22 @@
           }
         }
       },
+      "LatestPulseResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Latest sentiment pulse for a session",
+        "properties": {
+          "pulse": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SentimentPulseInfo"
+              }
+            ],
+            "nullable": true,
+            "description": "Most recent sentiment pulse (null if no pulses published yet)"
+          }
+        }
+      },
       "LayerDefinition": {
         "type": "object",
         "description": "Configuration for a specific layer within a map definition",
@@ -40422,6 +41296,50 @@
           "Unlockable",
           "Unlocked"
         ]
+      },
+      "LinkPlatformRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to link a streaming platform account",
+        "required": [
+          "webSocketSessionId",
+          "platform"
+        ],
+        "properties": {
+          "webSocketSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "WebSocket session ID for server-side identity resolution"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/PlatformType",
+            "description": "Streaming platform to link"
+          },
+          "rtmpUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "description": "RTMP URL for Custom platform type. Required when platform is Custom, ignored otherwise."
+          }
+        }
+      },
+      "LinkPlatformResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Platform link response. Contains oauthRedirectUrl for OAuth platforms or linkId for Custom RTMP.",
+        "properties": {
+          "linkId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Platform link ID. Present when platform type is Custom (link created immediately)."
+          },
+          "oauthRedirectUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "OAuth redirect URL. Present when platform type requires OAuth (Twitch, YouTube)."
+          }
+        }
       },
       "ListAchievementDefinitionsRequest": {
         "type": "object",
@@ -41871,6 +42789,31 @@
           }
         }
       },
+      "ListOutputsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to list broadcast outputs",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "default": 1,
+            "minimum": 1,
+            "description": "Page number"
+          },
+          "pageSize": {
+            "type": "integer",
+            "default": 20,
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Items per page"
+          },
+          "activeOnly": {
+            "type": "boolean",
+            "default": false,
+            "description": "Filter to active broadcasts only"
+          }
+        }
+      },
       "ListParticipantsRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -41931,6 +42874,21 @@
           "totalCount": {
             "type": "integer",
             "description": "Total matching plans"
+          }
+        }
+      },
+      "ListPlatformsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to list linked platforms for the current account",
+        "required": [
+          "webSocketSessionId"
+        ],
+        "properties": {
+          "webSocketSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "WebSocket session ID for server-side identity resolution"
           }
         }
       },
@@ -42754,6 +43712,34 @@
             "type": "integer",
             "minimum": 0,
             "description": "Total matching seeds across all pages."
+          }
+        }
+      },
+      "ListSessionsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to list platform sessions",
+        "required": [
+          "webSocketSessionId"
+        ],
+        "properties": {
+          "webSocketSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "WebSocket session ID for server-side identity resolution"
+          },
+          "page": {
+            "type": "integer",
+            "default": 1,
+            "minimum": 1,
+            "description": "Page number"
+          },
+          "pageSize": {
+            "type": "integer",
+            "default": 20,
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Items per page"
           }
         }
       },
@@ -45788,6 +46774,144 @@
         ],
         "description": "Type of objective determining progress tracking logic"
       },
+      "OutputInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Broadcast output summary (RTMP URL always masked)",
+        "required": [
+          "broadcastId",
+          "sourceType",
+          "maskedRtmpUrl",
+          "state",
+          "startedAt",
+          "health"
+        ],
+        "properties": {
+          "broadcastId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Broadcast output identifier"
+          },
+          "sourceType": {
+            "$ref": "#/components/schemas/BroadcastSourceType",
+            "description": "Type of broadcast input source"
+          },
+          "sourceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Source identifier (camera ID or voice room ID, depending on source type)"
+          },
+          "maskedRtmpUrl": {
+            "type": "string",
+            "description": "RTMP destination URL with stream key masked"
+          },
+          "state": {
+            "$ref": "#/components/schemas/BroadcastState",
+            "description": "Current broadcast state"
+          },
+          "currentVideoSource": {
+            "type": "string",
+            "nullable": true,
+            "description": "Current active video source in the fallback cascade"
+          },
+          "owningInstanceId": {
+            "type": "string",
+            "description": "Mesh instance ID of the node running this broadcast"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the broadcast started"
+          },
+          "health": {
+            "$ref": "#/components/schemas/BroadcastHealth",
+            "description": "FFmpeg process health status"
+          }
+        }
+      },
+      "OutputListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Paginated list of broadcast outputs",
+        "required": [
+          "outputs",
+          "totalCount",
+          "page",
+          "pageSize"
+        ],
+        "properties": {
+          "outputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OutputInfo"
+            },
+            "description": "Broadcast outputs (RTMP URLs always masked)"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total number of outputs"
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number"
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Items per page"
+          }
+        }
+      },
+      "OutputStatusResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Broadcast output status (RTMP URL always masked)",
+        "required": [
+          "broadcastId",
+          "sourceType",
+          "maskedRtmpUrl",
+          "state",
+          "startedAt",
+          "health"
+        ],
+        "properties": {
+          "broadcastId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Broadcast output identifier"
+          },
+          "sourceType": {
+            "$ref": "#/components/schemas/BroadcastSourceType",
+            "description": "Type of broadcast input source"
+          },
+          "maskedRtmpUrl": {
+            "type": "string",
+            "description": "RTMP destination URL with stream key masked"
+          },
+          "state": {
+            "$ref": "#/components/schemas/BroadcastState",
+            "description": "Current broadcast state"
+          },
+          "currentVideoSource": {
+            "type": "string",
+            "nullable": true,
+            "description": "Current active video source in the fallback cascade"
+          },
+          "duration": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Broadcast duration in seconds (null if not active)"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the broadcast started"
+          },
+          "health": {
+            "$ref": "#/components/schemas/BroadcastHealth",
+            "description": "FFmpeg process health status"
+          }
+        }
+      },
       "PageContent": {
         "description": "Full content and metadata for a CMS-managed page",
         "type": "object",
@@ -46660,6 +47784,101 @@
           "Internal"
         ]
       },
+      "PlatformCallbackRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "OAuth callback completion request",
+        "required": [
+          "webSocketSessionId",
+          "platform",
+          "authorizationCode",
+          "state"
+        ],
+        "properties": {
+          "webSocketSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "WebSocket session ID for server-side identity resolution"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/PlatformType",
+            "description": "Streaming platform being linked"
+          },
+          "authorizationCode": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "OAuth authorization code from platform callback"
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 512,
+            "description": "OAuth state token for CSRF verification"
+          }
+        }
+      },
+      "PlatformCallbackResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "OAuth callback completion response",
+        "required": [
+          "linkId"
+        ],
+        "properties": {
+          "linkId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Platform link ID created by OAuth flow completion"
+          }
+        }
+      },
+      "PlatformLinkInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Platform link summary (tokens never exposed)",
+        "required": [
+          "linkId",
+          "platform",
+          "linkedAt"
+        ],
+        "properties": {
+          "linkId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Platform link identifier"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/PlatformType",
+            "description": "Streaming platform type"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Platform display name (from OAuth profile or user-provided)"
+          },
+          "linkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the platform was linked"
+          }
+        }
+      },
+      "PlatformListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "List of linked platforms",
+        "required": [
+          "links"
+        ],
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformLinkInfo"
+            },
+            "description": "Linked platform accounts (tokens never exposed)"
+          }
+        }
+      },
       "PlatformMapping": {
         "type": "object",
         "description": "Maps an achievement to a platform-specific ID",
@@ -46680,6 +47899,86 @@
             "description": "Platform-specific achievement identifier"
           }
         }
+      },
+      "PlatformSessionInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Platform session summary",
+        "required": [
+          "platformSessionId",
+          "linkId",
+          "platform",
+          "state",
+          "viewerCount",
+          "startTime"
+        ],
+        "properties": {
+          "platformSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Platform session identifier"
+          },
+          "linkId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Associated platform link"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/PlatformType",
+            "description": "Streaming platform type"
+          },
+          "state": {
+            "$ref": "#/components/schemas/PlatformSessionState",
+            "description": "Current session state"
+          },
+          "viewerCount": {
+            "type": "integer",
+            "description": "Current approximate viewer count"
+          },
+          "peakViewerCount": {
+            "type": "integer",
+            "description": "Peak viewer count during this session"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the session started"
+          },
+          "streamSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Associated in-game stream session ID (opaque, from lib-showtime)"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the session ended (null if still active)"
+          },
+          "duration": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Session duration in seconds (null if still active)"
+          }
+        }
+      },
+      "PlatformSessionState": {
+        "type": "string",
+        "description": "Current state of a platform streaming session",
+        "enum": [
+          "Active",
+          "Ended"
+        ]
+      },
+      "PlatformType": {
+        "type": "string",
+        "description": "Streaming platform type",
+        "enum": [
+          "Twitch",
+          "YouTube",
+          "Custom"
+        ]
       },
       "PlayerRole": {
         "type": "string",
@@ -50877,6 +52176,21 @@
           }
         }
       },
+      "RetireCameraRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to retire a camera source",
+        "required": [
+          "cameraId"
+        ],
+        "properties": {
+          "cameraId": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Camera to retire"
+          }
+        }
+      },
       "RevealDiscoveryRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -53599,6 +54913,135 @@
           "Hostile"
         ]
       },
+      "SentimentDistribution": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Distribution of sentiment categories from recent pulse data",
+        "properties": {
+          "excited": {
+            "type": "integer",
+            "default": 0,
+            "description": "Count of Excited sentiments"
+          },
+          "supportive": {
+            "type": "integer",
+            "default": 0,
+            "description": "Count of Supportive sentiments"
+          },
+          "critical": {
+            "type": "integer",
+            "default": 0,
+            "description": "Count of Critical sentiments"
+          },
+          "curious": {
+            "type": "integer",
+            "default": 0,
+            "description": "Count of Curious sentiments"
+          },
+          "surprised": {
+            "type": "integer",
+            "default": 0,
+            "description": "Count of Surprised sentiments"
+          },
+          "amused": {
+            "type": "integer",
+            "default": 0,
+            "description": "Count of Amused sentiments"
+          },
+          "bored": {
+            "type": "integer",
+            "default": 0,
+            "description": "Count of Bored sentiments"
+          },
+          "hostile": {
+            "type": "integer",
+            "default": 0,
+            "description": "Count of Hostile sentiments"
+          }
+        }
+      },
+      "SentimentEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Individual anonymous sentiment data point",
+        "required": [
+          "category",
+          "intensity"
+        ],
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/SentimentCategory",
+            "description": "Sentiment classification"
+          },
+          "intensity": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Strength of sentiment (0.0 to 1.0)"
+          },
+          "trackingId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Opaque tracking GUID for important viewers (null for anonymous)"
+          },
+          "viewerType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TrackedViewerType"
+              }
+            ],
+            "nullable": true,
+            "description": "Category of tracked viewer (null for anonymous)"
+          }
+        }
+      },
+      "SentimentPulseInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Batched anonymous sentiment data from a platform session",
+        "required": [
+          "platformSessionId",
+          "timestamp",
+          "intervalSeconds",
+          "approximateViewerCount",
+          "sentiments"
+        ],
+        "properties": {
+          "platformSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Platform session that produced this pulse"
+          },
+          "streamSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Associated in-game stream session (if linked)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this pulse was assembled"
+          },
+          "intervalSeconds": {
+            "type": "integer",
+            "description": "Configured pulse interval"
+          },
+          "approximateViewerCount": {
+            "type": "integer",
+            "description": "Platform-reported viewer count (approximate)"
+          },
+          "sentiments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SentimentEntry"
+            },
+            "description": "Batched anonymous sentiment entries"
+          }
+        }
+      },
       "SessionGameType": {
         "type": "string",
         "description": "Game service stub name for created sessions. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions.",
@@ -53646,6 +55089,38 @@
           }
         }
       },
+      "SessionListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Paginated list of platform sessions",
+        "required": [
+          "sessions",
+          "totalCount",
+          "page",
+          "pageSize"
+        ],
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformSessionInfo"
+            },
+            "description": "Platform sessions for the account"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total number of sessions"
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number"
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Items per page"
+          }
+        }
+      },
       "SessionStatus": {
         "type": "string",
         "description": "Current status of the game session",
@@ -53655,6 +55130,46 @@
           "Full",
           "Finished"
         ]
+      },
+      "SessionStatusResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Platform session status with sentiment distribution",
+        "required": [
+          "platformSessionId",
+          "state",
+          "viewerCount"
+        ],
+        "properties": {
+          "platformSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Platform session identifier"
+          },
+          "state": {
+            "$ref": "#/components/schemas/PlatformSessionState",
+            "description": "Current session state"
+          },
+          "viewerCount": {
+            "type": "integer",
+            "description": "Current approximate viewer count"
+          },
+          "streamSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Associated in-game stream session ID"
+          },
+          "sentimentDistribution": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SentimentDistribution"
+              }
+            ],
+            "nullable": true,
+            "description": "Recent sentiment distribution (null if no data yet)"
+          }
+        }
       },
       "SessionType": {
         "type": "string",
@@ -54354,6 +55869,107 @@
           "Ignore"
         ]
       },
+      "StartOutputRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to start a broadcast output",
+        "required": [
+          "sourceType",
+          "rtmpUrl"
+        ],
+        "properties": {
+          "sourceType": {
+            "$ref": "#/components/schemas/BroadcastSourceType",
+            "description": "Type of broadcast input source"
+          },
+          "rtmpUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "RTMP destination URL (encrypted for storage, masked in responses)"
+          },
+          "cameraId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 256,
+            "description": "Camera source ID (required when sourceType is Camera)"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Voice room ID (required when sourceType is VoiceRoom)"
+          },
+          "backgroundVideoUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "description": "Primary video background URL for audio-only sources"
+          },
+          "fallbackStreamUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "description": "Fallback stream URL if primary video fails"
+          },
+          "fallbackImageUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "description": "Fallback image URL if fallback stream fails"
+          }
+        }
+      },
+      "StartOutputResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Broadcast output start response",
+        "required": [
+          "broadcastId"
+        ],
+        "properties": {
+          "broadcastId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Created broadcast output identifier"
+          }
+        }
+      },
+      "StartSessionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to start a platform streaming session",
+        "required": [
+          "webSocketSessionId",
+          "linkId"
+        ],
+        "properties": {
+          "webSocketSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "WebSocket session ID for server-side identity resolution"
+          },
+          "linkId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Platform link to start streaming on"
+          }
+        }
+      },
+      "StartSessionResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Platform session start response",
+        "required": [
+          "platformSessionId"
+        ],
+        "properties": {
+          "platformSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Created platform session identifier"
+          }
+        }
+      },
       "StartWatcherRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -54774,6 +56390,42 @@
             "format": "uuid",
             "nullable": true,
             "description": "Session ID of the participant stopping the broadcast"
+          }
+        }
+      },
+      "StopOutputRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to stop a broadcast output",
+        "required": [
+          "broadcastId"
+        ],
+        "properties": {
+          "broadcastId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Broadcast output to stop"
+          }
+        }
+      },
+      "StopSessionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to stop a platform streaming session",
+        "required": [
+          "webSocketSessionId",
+          "platformSessionId"
+        ],
+        "properties": {
+          "webSocketSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "WebSocket session ID for server-side identity resolution"
+          },
+          "platformSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Platform session to stop"
           }
         }
       },
@@ -55574,6 +57226,43 @@
           }
         }
       },
+      "TestSentimentRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to test sentiment classification",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 4096,
+            "description": "Text to classify"
+          }
+        }
+      },
+      "TestSentimentResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Sentiment classification result",
+        "required": [
+          "category",
+          "intensity"
+        ],
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/SentimentCategory",
+            "description": "Classified sentiment category"
+          },
+          "intensity": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Strength of sentiment (0.0 to 1.0)"
+          }
+        }
+      },
       "ThemeConfig": {
         "description": "Visual theme configuration including colors, fonts, and navigation",
         "type": "object",
@@ -55693,6 +57382,18 @@
             "description": "Beat unit (4 = quarter, 8 = eighth)"
           }
         }
+      },
+      "TrackedViewerType": {
+        "type": "string",
+        "description": "Category of tracked viewers who receive opaque tracking GUIDs. Returner type requires cross-session detection (not available in v1).",
+        "enum": [
+          "Subscriber",
+          "Moderator",
+          "RaidLeader",
+          "VIP",
+          "HighEngager",
+          "Returner"
+        ]
       },
       "TraitAxis": {
         "type": "string",
@@ -56934,6 +58635,27 @@
             "type": "string",
             "format": "uuid",
             "description": "Status template to undeprecate"
+          }
+        }
+      },
+      "UnlinkPlatformRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to unlink a streaming platform",
+        "required": [
+          "webSocketSessionId",
+          "linkId"
+        ],
+        "properties": {
+          "webSocketSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "WebSocket session ID for server-side identity resolution"
+          },
+          "linkId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Platform link to remove"
           }
         }
       },
@@ -58876,6 +60598,45 @@
             "nullable": true,
             "maxLength": 1024,
             "description": "New description (null to keep current)"
+          }
+        }
+      },
+      "UpdateOutputRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to update a broadcast output configuration",
+        "required": [
+          "broadcastId"
+        ],
+        "properties": {
+          "broadcastId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Broadcast output to update"
+          },
+          "rtmpUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "description": "New RTMP destination URL (validated via FFprobe before committing)"
+          },
+          "backgroundVideoUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "description": "New primary video background URL"
+          },
+          "fallbackStreamUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "description": "New fallback stream URL"
+          },
+          "fallbackImageUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "description": "New fallback image URL"
           }
         }
       },
@@ -61082,6 +62843,10 @@
     {
       "name": "Bannou Auth",
       "description": "Authentication and session management service (Internet-facing)."
+    },
+    {
+      "name": "Bannou Broadcast",
+      "description": "Platform streaming integration and RTMP output management service (L3 AppFeatures)."
     },
     {
       "name": "Bannou Character",

@@ -2179,81 +2179,22 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
 
     /// <summary>
     /// Add a value to a JSON-serialized list in a state store with optimistic concurrency.
-    /// Uses GetWithETagAsync/TrySaveAsync to prevent distributed race conditions (IMPLEMENTATION TENETS).
+    /// Delegates to shared <see cref="StateStoreExtensions.AddToStringListAsync"/>.
     /// </summary>
     private async Task AddToListAsync(IStateStore<string> stringStore, string key, string value, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.AddToListAsync");
-        var maxRetries = _configuration.ListOperationMaxRetries;
-
-        for (var attempt = 0; attempt < maxRetries; attempt++)
-        {
-            var (json, etag) = await stringStore.GetWithETagAsync(key, ct);
-            var list = string.IsNullOrEmpty(json)
-                ? new List<string>()
-                : BannouJson.Deserialize<List<string>>(json) ?? new List<string>();
-
-            if (list.Contains(value)) return;
-
-            list.Add(value);
-            var serialized = BannouJson.Serialize(list);
-
-            // Use TrySaveAsync for both paths. Empty etag = "create only if not exists"
-            // semantics across all backends (Redis transaction, InMemory TryAdd).
-            // This prevents two concurrent first-writes from losing one record (IMPLEMENTATION TENETS).
-            var newEtag = await stringStore.TrySaveAsync(key, serialized, etag ?? string.Empty, cancellationToken: ct);
-            if (newEtag is not null) return;
-
-            _logger.LogDebug("Optimistic concurrency conflict on list {Key}, retry {Attempt}", key, attempt + 1);
-        }
-
-        _logger.LogWarning("Failed to add to list {Key} after {MaxRetries} retries", key, maxRetries);
+        await stringStore.AddToStringListAsync(key, value, _configuration.ListOperationMaxRetries, _logger, ct);
     }
 
     /// <summary>
     /// Remove a value from a JSON-serialized list in a state store with optimistic concurrency.
-    /// Uses GetWithETagAsync/TrySaveAsync to prevent distributed race conditions (IMPLEMENTATION TENETS).
+    /// Delegates to shared <see cref="StateStoreExtensions.RemoveFromStringListAsync"/>.
     /// </summary>
     private async Task RemoveFromListAsync(IStateStore<string> stringStore, string key, string value, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.RemoveFromListAsync");
-        var maxRetries = _configuration.ListOperationMaxRetries;
-
-        for (var attempt = 0; attempt < maxRetries; attempt++)
-        {
-            var (json, etag) = await stringStore.GetWithETagAsync(key, ct);
-            if (string.IsNullOrEmpty(json)) return;
-
-            var list = BannouJson.Deserialize<List<string>>(json) ?? new List<string>();
-            if (!list.Remove(value)) return;
-
-            // If list is now empty, delete the key to prevent empty index accumulation.
-            // All readers handle missing keys identically to empty lists via
-            // string.IsNullOrEmpty check, and AddToListAsync recreates from scratch.
-            if (list.Count == 0)
-            {
-                await stringStore.DeleteAsync(key, ct);
-                return;
-            }
-
-            var serialized = BannouJson.Serialize(list);
-
-            if (etag is null)
-            {
-                // Backend returned data without ETag. Unconditional save is acceptable for
-                // removes — concurrent removes are idempotent (shrinking the list) and cannot
-                // lose data, unlike concurrent adds (IMPLEMENTATION TENETS).
-                await stringStore.SaveAsync(key, serialized, cancellationToken: ct);
-                return;
-            }
-
-            var newEtag = await stringStore.TrySaveAsync(key, serialized, etag, cancellationToken: ct);
-            if (newEtag is not null) return;
-
-            _logger.LogDebug("Optimistic concurrency conflict on list {Key}, retry {Attempt}", key, attempt + 1);
-        }
-
-        _logger.LogWarning("Failed to remove from list {Key} after {MaxRetries} retries", key, maxRetries);
+        await stringStore.RemoveFromStringListAsync(key, value, _configuration.ListOperationMaxRetries, _logger, ct);
     }
 
     #endregion
@@ -2548,15 +2489,8 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
             deprecatedTemplates,
             getEntityId: t => t.TemplateId,
             getDeprecatedAt: t => t.DeprecatedAt,
-            hasActiveInstancesAsync: async (t, ct) =>
-            {
-                // Check inst-template:{templateId} index for any instances referencing this template
-                var instanceIdsJson = await _instanceStringStore.GetAsync(
-                    $"{INST_TEMPLATE_INDEX}{t.TemplateId}", ct);
-                if (string.IsNullOrEmpty(instanceIdsJson)) return false;
-                var instanceIds = BannouJson.Deserialize<List<string>>(instanceIdsJson);
-                return instanceIds is { Count: > 0 };
-            },
+            hasInstancesAsync: (t, ct) =>
+                _instanceStringStore.HasStringListEntriesAsync($"{INST_TEMPLATE_INDEX}{t.TemplateId}", ct),
             deleteAndPublishAsync: async (t, ct) =>
             {
                 // Remove template from primary store

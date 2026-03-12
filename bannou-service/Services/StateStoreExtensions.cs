@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Services;
@@ -197,4 +198,125 @@ public static class StateStoreExtensions
         logger.LogWarning("Exhausted {MaxRetries} concurrency retries for {Key}", maxRetries, key);
         return (UpdateResult.Conflict, default, default);
     }
+
+    #region String List Index Helpers (Reverse Indexes)
+
+    /// <summary>
+    /// Adds a value to a JSON-serialized string list at the given key with optimistic concurrency.
+    /// Used for reverse indexes (e.g., template→instance list). Idempotent — skips if value already present.
+    /// </summary>
+    /// <param name="store">The string state store holding the JSON-serialized list.</param>
+    /// <param name="key">The state store key for the list.</param>
+    /// <param name="value">The string value to add (typically an entity ID).</param>
+    /// <param name="maxRetries">Maximum number of optimistic concurrency retry attempts.</param>
+    /// <param name="logger">Logger for retry diagnostics.</param>
+    /// <param name="ct">Cancellation token.</param>
+    public static async Task AddToStringListAsync(
+        this IStateStore<string> store,
+        string key,
+        string value,
+        int maxRetries,
+        ILogger logger,
+        CancellationToken ct)
+    {
+        for (var attempt = 0; attempt < maxRetries; attempt++)
+        {
+            var (json, etag) = await store.GetWithETagAsync(key, ct);
+            var list = string.IsNullOrEmpty(json)
+                ? new List<string>()
+                : BannouJson.Deserialize<List<string>>(json) ?? new List<string>();
+
+            if (list.Contains(value)) return;
+
+            list.Add(value);
+            var serialized = BannouJson.Serialize(list);
+
+            // Empty etag = "create only if not exists" semantics across all backends
+            // (Redis transaction, InMemory TryAdd). Prevents concurrent first-writes
+            // from losing a record (per IMPLEMENTATION TENETS).
+            var newEtag = await store.TrySaveAsync(key, serialized, etag ?? string.Empty, cancellationToken: ct);
+            if (newEtag is not null) return;
+
+            logger.LogDebug("Optimistic concurrency conflict on list {Key}, retry {Attempt}", key, attempt + 1);
+        }
+
+        logger.LogWarning("Failed to add to list {Key} after {MaxRetries} retries", key, maxRetries);
+    }
+
+    /// <summary>
+    /// Removes a value from a JSON-serialized string list at the given key with optimistic concurrency.
+    /// Deletes the key entirely when the list becomes empty (prevents empty index accumulation).
+    /// </summary>
+    /// <param name="store">The string state store holding the JSON-serialized list.</param>
+    /// <param name="key">The state store key for the list.</param>
+    /// <param name="value">The string value to remove (typically an entity ID).</param>
+    /// <param name="maxRetries">Maximum number of optimistic concurrency retry attempts.</param>
+    /// <param name="logger">Logger for retry diagnostics.</param>
+    /// <param name="ct">Cancellation token.</param>
+    public static async Task RemoveFromStringListAsync(
+        this IStateStore<string> store,
+        string key,
+        string value,
+        int maxRetries,
+        ILogger logger,
+        CancellationToken ct)
+    {
+        for (var attempt = 0; attempt < maxRetries; attempt++)
+        {
+            var (json, etag) = await store.GetWithETagAsync(key, ct);
+            if (string.IsNullOrEmpty(json)) return;
+
+            var list = BannouJson.Deserialize<List<string>>(json) ?? new List<string>();
+            if (!list.Remove(value)) return;
+
+            // If list is now empty, delete the key to prevent empty index accumulation.
+            // All readers handle missing keys identically to empty lists via
+            // string.IsNullOrEmpty check, and AddToStringListAsync recreates from scratch.
+            if (list.Count == 0)
+            {
+                await store.DeleteAsync(key, ct);
+                return;
+            }
+
+            var serialized = BannouJson.Serialize(list);
+
+            if (etag is null)
+            {
+                // Backend returned data without ETag. Unconditional save is acceptable for
+                // removes — concurrent removes are idempotent (shrinking the list) and cannot
+                // lose data, unlike concurrent adds (per IMPLEMENTATION TENETS).
+                await store.SaveAsync(key, serialized, cancellationToken: ct);
+                return;
+            }
+
+            var newEtag = await store.TrySaveAsync(key, serialized, etag, cancellationToken: ct);
+            if (newEtag is not null) return;
+
+            logger.LogDebug("Optimistic concurrency conflict on list {Key}, retry {Attempt}", key, attempt + 1);
+        }
+
+        logger.LogWarning("Failed to remove from list {Key} after {MaxRetries} retries", key, maxRetries);
+    }
+
+    /// <summary>
+    /// Checks whether a JSON-serialized string list at the given key has any entries.
+    /// Used by Category B clean-deprecated sweeps to check if a deprecated template
+    /// still has instances referencing it via a reverse index (O(1) vs full query scan).
+    /// </summary>
+    /// <param name="store">The string state store holding the JSON-serialized list.</param>
+    /// <param name="key">The state store key for the list.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the list exists and contains at least one entry; false otherwise.</returns>
+    public static async Task<bool> HasStringListEntriesAsync(
+        this IStateStore<string> store,
+        string key,
+        CancellationToken ct)
+    {
+        var json = await store.GetAsync(key, ct);
+        if (string.IsNullOrEmpty(json)) return false;
+        var list = BannouJson.Deserialize<List<string>>(json);
+        return list is { Count: > 0 };
+    }
+
+    #endregion
 }

@@ -33,6 +33,7 @@ public class SubscriptionServiceTests
     private readonly SubscriptionServiceConfiguration _configuration;
     private readonly Mock<IGameServiceClient> _mockServiceClient;
     private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
     private const string STATE_STORE = "subscription-statestore";
 
     public SubscriptionServiceTests()
@@ -50,6 +51,7 @@ public class SubscriptionServiceTests
         };
         _mockServiceClient = new Mock<IGameServiceClient>();
         _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup default behavior for entity session registry
         _mockEntitySessionRegistry.Setup(r => r.PublishToEntitySessionsAsync(
@@ -91,7 +93,8 @@ public class SubscriptionServiceTests
             _mockLogger.Object,
             _configuration,
             _mockServiceClient.Object,
-            _mockEntitySessionRegistry.Object);
+            _mockEntitySessionRegistry.Object,
+            _mockEventConsumer.Object);
     }
 
     #region Constructor Tests

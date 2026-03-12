@@ -18,44 +18,44 @@ namespace BeyondImmersion.BannouService.SaveLoad;
 public static class SaveLoadPublishedTopics
 {
     /// <summary>Published when a new save slot is created.</summary>
-    public const string SaveSlotCreated = "save.load.save-slot.created";
+    public const string SaveSlotCreated = "save-load.save-slot.created";
 
     /// <summary>Published when a save slot is updated.</summary>
-    public const string SaveSlotUpdated = "save.load.save-slot.updated";
+    public const string SaveSlotUpdated = "save-load.save-slot.updated";
 
     /// <summary>Published when a save slot is deleted.</summary>
-    public const string SaveSlotDeleted = "save.load.save-slot.deleted";
+    public const string SaveSlotDeleted = "save-load.save-slot.deleted";
 
     /// <summary>Published when a new save version is created.</summary>
-    public const string SaveCreated = "save.load.save.created";
+    public const string SaveCreated = "save-load.save.created";
 
     /// <summary>Published when a save is loaded.</summary>
-    public const string SaveLoaded = "save.load.save.loaded";
+    public const string SaveLoaded = "save-load.save.loaded";
 
     /// <summary>Published when a save is migrated to a new schema version.</summary>
-    public const string SaveMigrated = "save.load.save.migrated";
+    public const string SaveMigrated = "save-load.save.migrated";
 
     /// <summary>Published when a version is pinned as checkpoint.</summary>
-    public const string VersionPinned = "save.load.version.pinned";
+    public const string VersionPinned = "save-load.version.pinned";
 
     /// <summary>Published when a version is unpinned.</summary>
-    public const string VersionUnpinned = "save.load.version.unpinned";
+    public const string VersionUnpinned = "save-load.version.unpinned";
 
     /// <summary>Published when a version is deleted.</summary>
-    public const string VersionDeleted = "save.load.version.deleted";
+    public const string VersionDeleted = "save-load.version.deleted";
 
     /// <summary>Published when automatic cleanup completes.</summary>
-    public const string CleanupCompleted = "save.load.cleanup.completed";
+    public const string CleanupCompleted = "save-load.cleanup.completed";
 
     /// <summary>Published when a save is queued for async upload.</summary>
-    public const string SaveQueued = "save.load.upload.queued";
+    public const string SaveQueued = "save-load.upload.queued";
 
     /// <summary>Published when async upload to MinIO completes.</summary>
-    public const string SaveUploadCompleted = "save.load.upload.completed";
+    public const string SaveUploadCompleted = "save-load.upload.completed";
 
     /// <summary>Published when async upload fails.</summary>
-    public const string SaveUploadFailed = "save.load.upload.failed";
+    public const string SaveUploadFailed = "save-load.upload.failed";
 
     /// <summary>Published when storage circuit breaker changes state.</summary>
-    public const string CircuitBreakerStateChanged = "save.load.circuit-breaker.state-changed";
+    public const string CircuitBreakerStateChanged = "save-load.circuit-breaker.state-changed";
 }

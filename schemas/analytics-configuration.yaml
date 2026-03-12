@@ -156,6 +156,21 @@ x-service-configuration:
       description: Number of records to delete per iteration within a cleanup batch
       default: 100
       env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE
+    # Controller History Cleanup Worker
+    ControllerHistoryCleanupStartupDelaySeconds:
+      type: integer
+      minimum: 0
+      maximum: 600
+      description: Startup delay in seconds before the first controller history cleanup cycle runs
+      default: 30
+      env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_STARTUP_DELAY_SECONDS
+    ControllerHistoryCleanupIntervalSeconds:
+      type: integer
+      minimum: 60
+      maximum: 86400
+      description: Interval in seconds between controller history cleanup cycles
+      default: 3600
+      env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_INTERVAL_SECONDS
     # Milestone Configuration
     MilestoneThresholds:
       type: string

@@ -384,15 +384,9 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
 
     /// <inheritdoc/>
     /// <remarks>
-    /// <para>
-    /// INTENTIONAL QUIRK: This synchronous method may perform sync-over-async initialization
-    /// if called before <see cref="InitializeAsync"/> completes. A warning is logged when this occurs.
-    /// </para>
-    /// <para>
-    /// This is safe in ASP.NET Core's DI context (no SynchronizationContext that could cause deadlock)
-    /// but callers should prefer <see cref="GetStoreAsync{TValue}"/> or ensure InitializeAsync() is
-    /// called during application startup to avoid the sync-over-async path entirely.
-    /// </para>
+    /// Throws <see cref="InvalidOperationException"/> if <see cref="InitializeAsync"/> has not been
+    /// called. The plugin lifecycle guarantees this: StateServicePlugin initializes the factory
+    /// before any service constructors run.
     /// </remarks>
     public IStateStore<TValue> GetStore<TValue>(string storeName)
         where TValue : class
@@ -404,15 +398,15 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
         }
 
         // Ensure connections are initialized before accessing the cache.
-        // The double-checked locking in EnsureInitializedAsync makes subsequent calls fast.
-        // This MUST happen outside GetOrAdd to avoid blocking inside the callback.
-        // WARNING: This is sync-over-async - prefer GetStoreAsync() or call InitializeAsync() at startup.
+        // StateServicePlugin.OnInitializeAsync() calls InitializeAsync() during startup,
+        // before any service constructors run — so this guard should never fire in normal operation.
+        // If it does, it indicates a plugin loading order bug that must be fixed at the source.
         if (!_initialized)
         {
-            _logger.LogWarning(
-                "GetStore called before InitializeAsync - performing sync-over-async initialization. " +
-                "Consider calling InitializeAsync() at startup or using GetStoreAsync().");
-            EnsureInitializedAsync().GetAwaiter().GetResult();
+            throw new InvalidOperationException(
+                "GetStore called before InitializeAsync completed. " +
+                "StateServicePlugin must initialize before any service resolves stores. " +
+                "This indicates a plugin loading order bug.");
         }
 
         return GetStoreInternal<TValue>(storeName);
@@ -772,13 +766,13 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             return null;
         }
 
-        // Ensure connections are initialized
+        // Ensure connections are initialized — same guard as GetStore<T>().
         if (!_initialized)
         {
-            _logger.LogWarning(
-                "GetRedisOperations called before InitializeAsync - performing sync-over-async initialization. " +
-                "Consider calling InitializeAsync() at startup.");
-            EnsureInitializedAsync().GetAwaiter().GetResult();
+            throw new InvalidOperationException(
+                "GetRedisOperations called before InitializeAsync completed. " +
+                "StateServicePlugin must initialize before any service resolves stores. " +
+                "This indicates a plugin loading order bug.");
         }
 
         // Return null if Redis is not available (Lazy not created during init)

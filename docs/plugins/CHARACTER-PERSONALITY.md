@@ -6,6 +6,7 @@
 > **Layer**: GameFeatures
 > **State Store**: character-personality-statestore (MySQL)
 > **Short**: Personality traits (bipolar axes) and combat preferences with probabilistic evolution
+> **Implementation Map**: [docs/maps/CHARACTER-PERSONALITY.md](../maps/CHARACTER-PERSONALITY.md)
 
 ---
 
@@ -290,7 +291,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-None.
+1. ~~**Inline key interpolation bypasses key builders**~~: **FIXED** (2026-03-11) - All 15 call sites in `CharacterPersonalityService.cs` were using `$"{PERSONALITY_KEY_PREFIX}{id}"` / `$"{COMBAT_KEY_PREFIX}{id}"` instead of calling `BuildPersonalityKey()` / `BuildCombatKey()`. Replaced all inline interpolations with builder calls per FOUNDATION TENETS. Also removed 8 dead topic constants (`PERSONALITY_CREATED_TOPIC`, etc.) that were superseded by generated publisher extension methods.
 
 ### Intentional Quirks
 
@@ -332,3 +333,4 @@ See AUDIT markers in Potential Extensions and Design Considerations sections for
 ### Completed
 
 - **2026-02-06**: Cache TTL now configurable via `CacheTtlMinutes` (Design Considerations #4)
+- **2026-03-11**: Fixed inline key interpolation — all call sites now use `BuildPersonalityKey()`/`BuildCombatKey()` builders; removed 8 dead topic constants (Bugs #1)

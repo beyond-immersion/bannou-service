@@ -509,6 +509,7 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 ### Design Considerations (Requires Planning)
 
 1. **Domain-to-analytics mapping**: The `HandleAnalyticsScoreUpdated` handler needs a mapping from analytics categories to domain codes. The plan suggests either a config property (`DomainAnalyticsMappings` as JSON string) or a dedicated mapping state store. This must be resolved during implementation.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/636 -->
 
 2. **Blessing template management on startup**: `OnRunningAsync` should create collection entry templates and status templates if they don't exist. The exact set of templates depends on game configuration, not lib-divine itself.
 

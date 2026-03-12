@@ -1,0 +1,2035 @@
+openapi: 3.0.4
+info:
+  title: Bannou Broadcast Service API
+  description: |
+    Platform streaming integration and RTMP output management service (L3 AppFeatures).
+    Links external streaming platforms (Twitch, YouTube, custom RTMP), ingests real audience data
+    as anonymous sentiment pulses, and broadcasts server-side content via FFmpeg.
+
+    **Privacy Boundary**: Raw audience data (chat messages, usernames, platform IDs) never leaves
+    this service as identifiable data. Only anonymous sentiment values are published externally.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+x-service-layer: AppFeatures
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+paths:
+  /broadcast/platform/link:
+    post:
+      summary: Link a streaming platform account
+      description: |
+        Initiates platform linking. For OAuth platforms (Twitch, YouTube), returns an OAuth
+        redirect URL. For Custom RTMP, stores the URL directly and returns a link ID.
+        One link per account per platform enforced.
+      operationId: linkPlatform
+      tags:
+      - BroadcastPlatform
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkPlatformRequest'
+      responses:
+        '200':
+          description: Platform link initiated or created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkPlatformResponse'
+        '400':
+          description: Broadcast disabled, platform credentials not configured, or invalid request
+        '404':
+          description: Account not found
+        '409':
+          description: Platform already linked for this account, or lock acquisition failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LinkPlatformRequest\"\
+        ,\n    \"$defs\": {\n        \"LinkPlatformRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to link a streaming platform account\",\n            \"required\"\
+        : [\n                \"webSocketSessionId\",\n                \"platform\"\n            ],\n            \"properties\"\
+        : {\n                \"webSocketSessionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"WebSocket session ID for server-side identity resolution\"\
+        \n                },\n                \"platform\": {\n                    \"$ref\": \"#/$defs/PlatformType\",\n \
+        \                   \"description\": \"Streaming platform to link\"\n                },\n                \"rtmpUrl\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 2048,\n                    \"description\": \"RTMP URL for Custom platform type. Required when platform is Custom,
+        ignored otherwise.\"\n                }\n            }\n        },\n        \"PlatformType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Streaming platform type\",\n            \"enum\": [\n              \
+        \  \"Twitch\",\n                \"YouTube\",\n                \"Custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LinkPlatformResponse\"\
+        ,\n    \"$defs\": {\n        \"LinkPlatformResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Platform link response. Contains oauthRedirectUrl for OAuth platforms or
+        linkId for Custom RTMP.\",\n            \"properties\": {\n                \"linkId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Platform link ID. Present when platform type is Custom (link created immediately).\"\n \
+        \               },\n                \"oauthRedirectUrl\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"OAuth redirect URL. Present when platform
+        type requires OAuth (Twitch, YouTube).\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Link a streaming platform account\",\n    \"description\": \"Initiates
+        platform linking. For OAuth platforms (Twitch, YouTube), returns an OAuth\\nredirect URL. For Custom RTMP, stores
+        the URL directly and returns a link ID.\\nOne link per account per platform enforced.\\n\",\n    \"tags\": [\n   \
+        \     \"BroadcastPlatform\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"linkPlatform\"\n}"
+  /broadcast/platform/callback:
+    post:
+      summary: Complete OAuth platform linking
+      description: |
+        Completes OAuth flow after platform redirect. Exchanges authorization code for tokens,
+        encrypts and stores them. Creates the platform link.
+      operationId: platformCallback
+      tags:
+      - BroadcastPlatform
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformCallbackRequest'
+      responses:
+        '200':
+          description: OAuth flow completed, platform linked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformCallbackResponse'
+        '400':
+          description: Token encryption key not configured or invalid authorization code
+        '409':
+          description: Platform already linked (race condition) or lock acquisition failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PlatformCallbackRequest\"\
+        ,\n    \"$defs\": {\n        \"PlatformCallbackRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"OAuth callback completion request\",\n            \"required\": [\n     \
+        \           \"webSocketSessionId\",\n                \"platform\",\n                \"authorizationCode\",\n     \
+        \           \"state\"\n            ],\n            \"properties\": {\n                \"webSocketSessionId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"WebSocket session ID for server-side identity resolution\"\n                },\n                \"platform\":
+        {\n                    \"$ref\": \"#/$defs/PlatformType\",\n                    \"description\": \"Streaming platform
+        being linked\"\n                },\n                \"authorizationCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"maxLength\": 2048,\n                    \"description\": \"OAuth authorization code from
+        platform callback\"\n                },\n                \"state\": {\n                    \"type\": \"string\",\n\
+        \                    \"maxLength\": 512,\n                    \"description\": \"OAuth state token for CSRF verification\"\
+        \n                }\n            }\n        },\n        \"PlatformType\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Streaming platform type\",\n            \"enum\": [\n                \"Twitch\",\n\
+        \                \"YouTube\",\n                \"Custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PlatformCallbackResponse\"\
+        ,\n    \"$defs\": {\n        \"PlatformCallbackResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"OAuth callback completion response\",\n            \"required\": [\n    \
+        \            \"linkId\"\n            ],\n            \"properties\": {\n                \"linkId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
+        \"Platform link ID created by OAuth flow completion\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Complete OAuth platform linking\",\n    \"description\": \"Completes OAuth
+        flow after platform redirect. Exchanges authorization code for tokens,\\nencrypts and stores them. Creates the platform
+        link.\\n\",\n    \"tags\": [\n        \"BroadcastPlatform\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"platformCallback\"\n}"
+  /broadcast/platform/unlink:
+    post:
+      summary: Unlink a streaming platform
+      description: |
+        Removes a platform link. Stops any active session, revokes OAuth tokens (best-effort),
+        and deletes all associated data including tracking IDs.
+      operationId: unlinkPlatform
+      tags:
+      - BroadcastPlatform
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlinkPlatformRequest'
+      responses:
+        '200':
+          description: Platform unlinked
+        '403':
+          description: Link does not belong to the requesting account
+        '404':
+          description: Platform link not found
+        '409':
+          description: Lock acquisition failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UnlinkPlatformRequest\"\
+        ,\n    \"$defs\": {\n        \"UnlinkPlatformRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to unlink a streaming platform\",\n            \"required\": [\n\
+        \                \"webSocketSessionId\",\n                \"linkId\"\n            ],\n            \"properties\":
+        {\n                \"webSocketSessionId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"WebSocket session ID for server-side identity resolution\"\n \
+        \               },\n                \"linkId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"uuid\",\n                    \"description\": \"Platform link to remove\"\n                }\n   \
+        \         }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Unlink a streaming platform\",\n    \"description\": \"Removes a platform
+        link. Stops any active session, revokes OAuth tokens (best-effort),\\nand deletes all associated data including tracking
+        IDs.\\n\",\n    \"tags\": [\n        \"BroadcastPlatform\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"unlinkPlatform\"\n}"
+  /broadcast/platform/list:
+    post:
+      summary: List linked platforms for the current account
+      description: |
+        Returns all platform links for the authenticated account. Token fields are
+        never exposed in responses (stream key masking is absolute).
+      operationId: listPlatforms
+      tags:
+      - BroadcastPlatform
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListPlatformsRequest'
+      responses:
+        '200':
+          description: Platform links retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformListResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListPlatformsRequest\"\
+        ,\n    \"$defs\": {\n        \"ListPlatformsRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to list linked platforms for the current account\",\n           \
+        \ \"required\": [\n                \"webSocketSessionId\"\n            ],\n            \"properties\": {\n       \
+        \         \"webSocketSessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"WebSocket session ID for server-side identity resolution\"\n     \
+        \           }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PlatformListResponse\"\
+        ,\n    \"$defs\": {\n        \"PlatformListResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"List of linked platforms\",\n            \"required\": [\n              \
+        \  \"links\"\n            ],\n            \"properties\": {\n                \"links\": {\n                    \"\
+        type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PlatformLinkInfo\"\
+        \n                    },\n                    \"description\": \"Linked platform accounts (tokens never exposed)\"\
+        \n                }\n            }\n        },\n        \"PlatformLinkInfo\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Platform link summary (tokens never
+        exposed)\",\n            \"required\": [\n                \"linkId\",\n                \"platform\",\n           \
+        \     \"linkedAt\"\n            ],\n            \"properties\": {\n                \"linkId\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Platform
+        link identifier\"\n                },\n                \"platform\": {\n                    \"$ref\": \"#/$defs/PlatformType\"\
+        ,\n                    \"description\": \"Streaming platform type\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Platform display name (from OAuth profile or user-provided)\"\n                },\n                \"linkedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When the platform was linked\"\n                }\n            }\n        },\n        \"PlatformType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Streaming platform type\",\n            \"\
+        enum\": [\n                \"Twitch\",\n                \"YouTube\",\n                \"Custom\"\n            ]\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List linked platforms for the current account\",\n    \"description\":
+        \"Returns all platform links for the authenticated account. Token fields are\\nnever exposed in responses (stream
+        key masking is absolute).\\n\",\n    \"tags\": [\n        \"BroadcastPlatform\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"listPlatforms\"\n}"
+  /broadcast/session/start:
+    post:
+      summary: Start a platform streaming session
+      description: |
+        Starts tracking a platform streaming session. Verifies the account is live on
+        the platform (best-effort). One active session per account enforced.
+      operationId: startSession
+      tags:
+      - BroadcastSession
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSessionRequest'
+      responses:
+        '200':
+          description: Platform session started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartSessionResponse'
+        '403':
+          description: Link does not belong to the requesting account
+        '404':
+          description: Platform link not found
+        '409':
+          description: Session already active for this account, or lock acquisition failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartSessionRequest\"\
+        ,\n    \"$defs\": {\n        \"StartSessionRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to start a platform streaming session\",\n            \"required\"\
+        : [\n                \"webSocketSessionId\",\n                \"linkId\"\n            ],\n            \"properties\"\
+        : {\n                \"webSocketSessionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"WebSocket session ID for server-side identity resolution\"\
+        \n                },\n                \"linkId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"description\": \"Platform link to start streaming on\"\n        \
+        \        }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartSessionResponse\"\
+        ,\n    \"$defs\": {\n        \"StartSessionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Platform session start response\",\n            \"required\": [\n       \
+        \         \"platformSessionId\"\n            ],\n            \"properties\": {\n                \"platformSessionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Created platform session identifier\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Start a platform streaming session\",\n    \"description\": \"Starts tracking
+        a platform streaming session. Verifies the account is live on\\nthe platform (best-effort). One active session per
+        account enforced.\\n\",\n    \"tags\": [\n        \"BroadcastSession\"\n    ],\n    \"deprecated\": false,\n    \"\
+        operationId\": \"startSession\"\n}"
+  /broadcast/session/stop:
+    post:
+      summary: Stop a platform streaming session
+      description: |
+        Stops an active platform session. Deletes all tracking ID mappings and
+        publishes session deleted event with duration and peak viewer count.
+      operationId: stopSession
+      tags:
+      - BroadcastSession
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StopSessionRequest'
+      responses:
+        '200':
+          description: Platform session stopped
+        '403':
+          description: Session does not belong to the requesting account
+        '404':
+          description: Platform session not found
+        '409':
+          description: Lock acquisition failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StopSessionRequest\"\
+        ,\n    \"$defs\": {\n        \"StopSessionRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to stop a platform streaming session\",\n            \"required\"\
+        : [\n                \"webSocketSessionId\",\n                \"platformSessionId\"\n            ],\n            \"\
+        properties\": {\n                \"webSocketSessionId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID for server-side identity
+        resolution\"\n                },\n                \"platformSessionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Platform session to stop\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Stop a platform streaming session\",\n    \"description\": \"Stops an active
+        platform session. Deletes all tracking ID mappings and\\npublishes session deleted event with duration and peak viewer
+        count.\\n\",\n    \"tags\": [\n        \"BroadcastSession\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"stopSession\"\n}"
+  /broadcast/session/associate:
+    post:
+      summary: Associate a platform session with an in-game stream session
+      description: |
+        Links a platform session with a lib-showtime stream session ID. The stream
+        session ID is stored as an opaque GUID (no validation against lib-showtime;
+        L3 cannot call L4).
+      operationId: associateSession
+      tags:
+      - BroadcastSession
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssociateSessionRequest'
+      responses:
+        '200':
+          description: Session associated with stream session
+        '403':
+          description: Session does not belong to the requesting account
+        '404':
+          description: Platform session not found
+        '409':
+          description: ETag mismatch or lock acquisition failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssociateSessionRequest\"\
+        ,\n    \"$defs\": {\n        \"AssociateSessionRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to associate a platform session with an in-game stream session\"\
+        ,\n            \"required\": [\n                \"webSocketSessionId\",\n                \"platformSessionId\",\n\
+        \                \"streamSessionId\"\n            ],\n            \"properties\": {\n                \"webSocketSessionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"WebSocket session ID for server-side identity resolution\"\n                },\n                \"\
+        platformSessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"Platform session to associate\"\n                },\n                \"streamSessionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"In-game stream session ID (opaque, stored without validation)\"\n                }\n            }\n\
+        \        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Associate a platform session with an in-game stream session\",\n    \"\
+        description\": \"Links a platform session with a lib-showtime stream session ID. The stream\\nsession ID is stored
+        as an opaque GUID (no validation against lib-showtime;\\nL3 cannot call L4).\\n\",\n    \"tags\": [\n        \"BroadcastSession\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"associateSession\"\n}"
+  /broadcast/session/status:
+    post:
+      summary: Get platform session status
+      description: |
+        Returns the current status of a platform session including viewer count,
+        stream session association, and recent sentiment distribution.
+      operationId: getSessionStatus
+      tags:
+      - BroadcastSession
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSessionStatusRequest'
+      responses:
+        '200':
+          description: Session status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionStatusResponse'
+        '403':
+          description: Session does not belong to the requesting account
+        '404':
+          description: Platform session not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSessionStatusRequest\"\
+        ,\n    \"$defs\": {\n        \"GetSessionStatusRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get platform session status\",\n            \"required\": [\n\
+        \                \"webSocketSessionId\",\n                \"platformSessionId\"\n            ],\n            \"properties\"\
+        : {\n                \"webSocketSessionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"WebSocket session ID for server-side identity resolution\"\
+        \n                },\n                \"platformSessionId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"description\": \"Platform session to query\"\n       \
+        \         }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SessionStatusResponse\"\
+        ,\n    \"$defs\": {\n        \"SessionStatusResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Platform session status with sentiment distribution\",\n            \"required\"\
+        : [\n                \"platformSessionId\",\n                \"state\",\n                \"viewerCount\"\n       \
+        \     ],\n            \"properties\": {\n                \"platformSessionId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Platform session identifier\"\
+        \n                },\n                \"state\": {\n                    \"$ref\": \"#/$defs/PlatformSessionState\"\
+        ,\n                    \"description\": \"Current session state\"\n                },\n                \"viewerCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Current approximate viewer
+        count\"\n                },\n                \"streamSessionId\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Associated in-game stream session ID\"\n                },\n                \"sentimentDistribution\": {\n   \
+        \                 \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/SentimentDistribution\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Recent sentiment distribution (null if no data yet)\"\n                }\n            }\n   \
+        \     },\n        \"PlatformSessionState\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Current state of a platform streaming session\",\n            \"enum\": [\n                \"Active\",\n         \
+        \       \"Ended\"\n            ]\n        },\n        \"SentimentDistribution\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Distribution of sentiment categories
+        from recent pulse data\",\n            \"properties\": {\n                \"excited\": {\n                    \"type\"\
+        : \"integer\",\n                    \"default\": 0,\n                    \"description\": \"Count of Excited sentiments\"\
+        \n                },\n                \"supportive\": {\n                    \"type\": \"integer\",\n            \
+        \        \"default\": 0,\n                    \"description\": \"Count of Supportive sentiments\"\n              \
+        \  },\n                \"critical\": {\n                    \"type\": \"integer\",\n                    \"default\"\
+        : 0,\n                    \"description\": \"Count of Critical sentiments\"\n                },\n                \"\
+        curious\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n                  \
+        \  \"description\": \"Count of Curious sentiments\"\n                },\n                \"surprised\": {\n      \
+        \              \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\": \"\
+        Count of Surprised sentiments\"\n                },\n                \"amused\": {\n                    \"type\":
+        \"integer\",\n                    \"default\": 0,\n                    \"description\": \"Count of Amused sentiments\"\
+        \n                },\n                \"bored\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"default\": 0,\n                    \"description\": \"Count of Bored sentiments\"\n                },\n    \
+        \            \"hostile\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n   \
+        \                 \"description\": \"Count of Hostile sentiments\"\n                }\n            }\n        }\n\
+        \    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get platform session status\",\n    \"description\": \"Returns the current
+        status of a platform session including viewer count,\\nstream session association, and recent sentiment distribution.\\\
+        n\",\n    \"tags\": [\n        \"BroadcastSession\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSessionStatus\"\
+        \n}"
+  /broadcast/session/list:
+    post:
+      summary: List platform sessions for the current account
+      description: |
+        Returns paginated platform session history for the authenticated account,
+        ordered by start time descending.
+      operationId: listSessions
+      tags:
+      - BroadcastSession
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListSessionsRequest'
+      responses:
+        '200':
+          description: Sessions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListSessionsRequest\"\
+        ,\n    \"$defs\": {\n        \"ListSessionsRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to list platform sessions\",\n            \"required\": [\n     \
+        \           \"webSocketSessionId\"\n            ],\n            \"properties\": {\n                \"webSocketSessionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"WebSocket session ID for server-side identity resolution\"\n                },\n                \"\
+        page\": {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n                    \"\
+        minimum\": 1,\n                    \"description\": \"Page number\"\n                },\n                \"pageSize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"default\": 20,\n                    \"minimum\"\
+        : 1,\n                    \"maximum\": 100,\n                    \"description\": \"Items per page\"\n           \
+        \     }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SessionListResponse\"\
+        ,\n    \"$defs\": {\n        \"SessionListResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Paginated list of platform sessions\",\n            \"required\": [\n   \
+        \             \"sessions\",\n                \"totalCount\",\n                \"page\",\n                \"pageSize\"\
+        \n            ],\n            \"properties\": {\n                \"sessions\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PlatformSessionInfo\"\n  \
+        \                  },\n                    \"description\": \"Platform sessions for the account\"\n              \
+        \  },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Total number of sessions\"\n                },\n                \"page\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Current page number\"\n                },\n                \"pageSize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Items per page\"\n       \
+        \         }\n            }\n        },\n        \"PlatformSessionInfo\": {\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"description\": \"Platform session summary\",\n        \
+        \    \"required\": [\n                \"platformSessionId\",\n                \"linkId\",\n                \"platform\"\
+        ,\n                \"state\",\n                \"viewerCount\",\n                \"startTime\"\n            ],\n \
+        \           \"properties\": {\n                \"platformSessionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Platform session identifier\"\
+        \n                },\n                \"linkId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"description\": \"Associated platform link\"\n                },\n\
+        \                \"platform\": {\n                    \"$ref\": \"#/$defs/PlatformType\",\n                    \"\
+        description\": \"Streaming platform type\"\n                },\n                \"state\": {\n                   \
+        \ \"$ref\": \"#/$defs/PlatformSessionState\",\n                    \"description\": \"Current session state\"\n  \
+        \              },\n                \"viewerCount\": {\n                    \"type\": \"integer\",\n              \
+        \      \"description\": \"Current approximate viewer count\"\n                },\n                \"peakViewerCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Peak viewer count during this
+        session\"\n                },\n                \"startTime\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"description\": \"When the session started\"\n  \
+        \              },\n                \"streamSessionId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Associated in-game stream session ID (opaque, from lib-showtime)\"\n                },\n                \"endedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When the session ended (null if still active)\"\n\
+        \                },\n                \"duration\": {\n                    \"type\": \"integer\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Session duration in seconds (null if still active)\"\
+        \n                }\n            }\n        },\n        \"PlatformType\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Streaming platform type\",\n            \"enum\": [\n                \"Twitch\",\n\
+        \                \"YouTube\",\n                \"Custom\"\n            ]\n        },\n        \"PlatformSessionState\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Current state of a platform streaming session\"\
+        ,\n            \"enum\": [\n                \"Active\",\n                \"Ended\"\n            ]\n        }\n   \
+        \ }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List platform sessions for the current account\",\n    \"description\"\
+        : \"Returns paginated platform session history for the authenticated account,\\nordered by start time descending.\\\
+        n\",\n    \"tags\": [\n        \"BroadcastSession\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listSessions\"\
+        \n}"
+  /broadcast/camera/announce:
+    post:
+      summary: Announce or heartbeat a camera source
+      description: |
+        Registers or refreshes a game engine camera as a broadcast source. Idempotent
+        upsert with TTL-based eviction. Cameras that stop announcing are auto-removed.
+      operationId: announceCamera
+      tags:
+      - BroadcastCamera
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnounceCameraRequest'
+      responses:
+        '200':
+          description: Camera announced or refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CameraAnnounceResponse'
+        '400':
+          description: Output capability not enabled
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AnnounceCameraRequest\"\
+        ,\n    \"$defs\": {\n        \"AnnounceCameraRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Camera source announcement with TTL heartbeat\",\n            \"required\"\
+        : [\n                \"cameraId\",\n                \"rtmpInputUrl\"\n            ],\n            \"properties\":
+        {\n                \"cameraId\": {\n                    \"type\": \"string\",\n                    \"maxLength\":
+        256,\n                    \"description\": \"Unique camera identifier from the game engine\"\n                },\n\
+        \                \"rtmpInputUrl\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 2048,\n                    \"description\": \"RTMP input URL where the camera publishes its stream\"\n         \
+        \       },\n                \"resolution\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 32,\n                    \"description\": \"Video resolution (e.g., 1920x1080)\"\
+        \n                },\n                \"codec\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"maxLength\": 64,\n                    \"description\": \"Video codec
+        used by the camera source\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CameraAnnounceResponse\"\
+        ,\n    \"$defs\": {\n        \"CameraAnnounceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Empty response. 200 OK confirms the camera was announced or refreshed.\"\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Announce or heartbeat a camera source\",\n    \"description\": \"Registers
+        or refreshes a game engine camera as a broadcast source. Idempotent\\nupsert with TTL-based eviction. Cameras that
+        stop announcing are auto-removed.\\n\",\n    \"tags\": [\n        \"BroadcastCamera\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"announceCamera\"\n}"
+  /broadcast/camera/retire:
+    post:
+      summary: Retire a camera source
+      description: |
+        Removes a camera source. Active broadcasts using this camera trigger
+        fallback cascade to the next available video source.
+      operationId: retireCamera
+      tags:
+      - BroadcastCamera
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetireCameraRequest'
+      responses:
+        '200':
+          description: Camera retired
+        '404':
+          description: Camera not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RetireCameraRequest\"\
+        ,\n    \"$defs\": {\n        \"RetireCameraRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to retire a camera source\",\n            \"required\": [\n     \
+        \           \"cameraId\"\n            ],\n            \"properties\": {\n                \"cameraId\": {\n       \
+        \             \"type\": \"string\",\n                    \"maxLength\": 256,\n                    \"description\"\
+        : \"Camera to retire\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Retire a camera source\",\n    \"description\": \"Removes a camera source.
+        Active broadcasts using this camera trigger\\nfallback cascade to the next available video source.\\n\",\n    \"tags\"\
+        : [\n        \"BroadcastCamera\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"retireCamera\"\n}"
+  /broadcast/output/start:
+    post:
+      summary: Start a broadcast output
+      description: |
+        Starts an FFmpeg process to broadcast content to an RTMP endpoint. Validates
+        the RTMP URL via FFprobe before starting. Respects MaxConcurrentOutputs limit.
+        RTMP URLs are encrypted for storage; responses contain masked URLs only.
+      operationId: startOutput
+      tags:
+      - BroadcastOutput
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartOutputRequest'
+      responses:
+        '200':
+          description: Broadcast output started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartOutputResponse'
+        '400':
+          description: Output not enabled, RTMP URL unreachable, camera/voice room not found, or voice service 
+            unavailable
+        '409':
+          description: Max concurrent outputs reached or lock acquisition failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartOutputRequest\"\
+        ,\n    \"$defs\": {\n        \"StartOutputRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to start a broadcast output\",\n            \"required\": [\n   \
+        \             \"sourceType\",\n                \"rtmpUrl\"\n            ],\n            \"properties\": {\n      \
+        \          \"sourceType\": {\n                    \"$ref\": \"#/$defs/BroadcastSourceType\",\n                   \
+        \ \"description\": \"Type of broadcast input source\"\n                },\n                \"rtmpUrl\": {\n      \
+        \              \"type\": \"string\",\n                    \"maxLength\": 2048,\n                    \"description\"\
+        : \"RTMP destination URL (encrypted for storage, masked in responses)\"\n                },\n                \"cameraId\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 256,\n                    \"description\": \"Camera source ID (required when sourceType is Camera)\"\n         \
+        \       },\n                \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Voice room ID (required
+        when sourceType is VoiceRoom)\"\n                },\n                \"backgroundVideoUrl\": {\n                 \
+        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 2048,\n   \
+        \                 \"description\": \"Primary video background URL for audio-only sources\"\n                },\n \
+        \               \"fallbackStreamUrl\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 2048,\n                    \"description\": \"Fallback stream URL if primary
+        video fails\"\n                },\n                \"fallbackImageUrl\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"maxLength\": 2048,\n                    \"description\"\
+        : \"Fallback image URL if fallback stream fails\"\n                }\n            }\n        },\n        \"BroadcastSourceType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of broadcast input source\",\n       \
+        \     \"enum\": [\n                \"Camera\",\n                \"GameAudio\",\n                \"VoiceRoom\"\n  \
+        \          ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartOutputResponse\"\
+        ,\n    \"$defs\": {\n        \"StartOutputResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Broadcast output start response\",\n            \"required\": [\n       \
+        \         \"broadcastId\"\n            ],\n            \"properties\": {\n                \"broadcastId\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Created broadcast output identifier\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Start a broadcast output\",\n    \"description\": \"Starts an FFmpeg process
+        to broadcast content to an RTMP endpoint. Validates\\nthe RTMP URL via FFprobe before starting. Respects MaxConcurrentOutputs
+        limit.\\nRTMP URLs are encrypted for storage; responses contain masked URLs only.\\n\",\n    \"tags\": [\n       \
+        \ \"BroadcastOutput\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"startOutput\"\n}"
+  /broadcast/output/stop:
+    post:
+      summary: Stop a broadcast output
+      description: |
+        Stops an active broadcast by killing the FFmpeg process and removing
+        the broadcast record from the authoritative state store.
+      operationId: stopOutput
+      tags:
+      - BroadcastOutput
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StopOutputRequest'
+      responses:
+        '200':
+          description: Broadcast output stopped
+        '404':
+          description: Broadcast not found
+        '409':
+          description: Lock acquisition failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StopOutputRequest\"\
+        ,\n    \"$defs\": {\n        \"StopOutputRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to stop a broadcast output\",\n            \"required\": [\n    \
+        \            \"broadcastId\"\n            ],\n            \"properties\": {\n                \"broadcastId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Broadcast output to stop\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Stop a broadcast output\",\n    \"description\": \"Stops an active broadcast
+        by killing the FFmpeg process and removing\\nthe broadcast record from the authoritative state store.\\n\",\n    \"\
+        tags\": [\n        \"BroadcastOutput\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"stopOutput\"\n}"
+  /broadcast/output/update:
+    post:
+      summary: Update a broadcast output configuration
+      description: |
+        Updates broadcast configuration (RTMP URL, fallback sources). Validates new
+        RTMP URL via FFprobe before committing. Causes a brief interruption (~2-3s)
+        as FFmpeg restarts with the new configuration.
+      operationId: updateOutput
+      tags:
+      - BroadcastOutput
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOutputRequest'
+      responses:
+        '200':
+          description: Broadcast output updated
+        '400':
+          description: New RTMP URL unreachable
+        '404':
+          description: Broadcast not found
+        '409':
+          description: ETag mismatch or lock acquisition failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateOutputRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateOutputRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to update a broadcast output configuration\",\n            \"required\"\
+        : [\n                \"broadcastId\"\n            ],\n            \"properties\": {\n                \"broadcastId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Broadcast output to update\"\n                },\n                \"rtmpUrl\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 2048,\n\
+        \                    \"description\": \"New RTMP destination URL (validated via FFprobe before committing)\"\n   \
+        \             },\n                \"backgroundVideoUrl\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"maxLength\": 2048,\n                    \"description\": \"\
+        New primary video background URL\"\n                },\n                \"fallbackStreamUrl\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 2048,\n \
+        \                   \"description\": \"New fallback stream URL\"\n                },\n                \"fallbackImageUrl\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 2048,\n                    \"description\": \"New fallback image URL\"\n                }\n            }\n     \
+        \   }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Update a broadcast output configuration\",\n    \"description\": \"Updates
+        broadcast configuration (RTMP URL, fallback sources). Validates new\\nRTMP URL via FFprobe before committing. Causes
+        a brief interruption (~2-3s)\\nas FFmpeg restarts with the new configuration.\\n\",\n    \"tags\": [\n        \"BroadcastOutput\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateOutput\"\n}"
+  /broadcast/output/status:
+    post:
+      summary: Get broadcast output status
+      description: |
+        Returns the current status of a broadcast including source type, state,
+        current video source (which fallback level is active), and health.
+        RTMP URLs are always masked in responses.
+      operationId: getOutputStatus
+      tags:
+      - BroadcastOutput
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetOutputStatusRequest'
+      responses:
+        '200':
+          description: Broadcast status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputStatusResponse'
+        '404':
+          description: Broadcast not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetOutputStatusRequest\"\
+        ,\n    \"$defs\": {\n        \"GetOutputStatusRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get broadcast output status\",\n            \"required\": [\n\
+        \                \"broadcastId\"\n            ],\n            \"properties\": {\n                \"broadcastId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Broadcast output to query\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/OutputStatusResponse\"\
+        ,\n    \"$defs\": {\n        \"OutputStatusResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Broadcast output status (RTMP URL always masked)\",\n            \"required\"\
+        : [\n                \"broadcastId\",\n                \"sourceType\",\n                \"maskedRtmpUrl\",\n     \
+        \           \"state\",\n                \"startedAt\",\n                \"health\"\n            ],\n            \"\
+        properties\": {\n                \"broadcastId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"description\": \"Broadcast output identifier\"\n                },\n\
+        \                \"sourceType\": {\n                    \"$ref\": \"#/$defs/BroadcastSourceType\",\n             \
+        \       \"description\": \"Type of broadcast input source\"\n                },\n                \"maskedRtmpUrl\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"RTMP destination URL with stream
+        key masked\"\n                },\n                \"state\": {\n                    \"$ref\": \"#/$defs/BroadcastState\"\
+        ,\n                    \"description\": \"Current broadcast state\"\n                },\n                \"currentVideoSource\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Current active video source in the fallback cascade\"\n                },\n                \"duration\": {\n \
+        \                   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Broadcast duration in seconds (null if not active)\"\n                },\n                \"startedAt\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When the broadcast started\"\n                },\n                \"health\": {\n               \
+        \     \"$ref\": \"#/$defs/BroadcastHealth\",\n                    \"description\": \"FFmpeg process health status\"\
+        \n                }\n            }\n        },\n        \"BroadcastSourceType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of broadcast input source\",\n            \"enum\": [\n                \"Camera\"\
+        ,\n                \"GameAudio\",\n                \"VoiceRoom\"\n            ]\n        },\n        \"BroadcastState\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Current state of a broadcast output\",\n  \
+        \          \"enum\": [\n                \"Active\",\n                \"Failed\",\n                \"Stopped\"\n  \
+        \          ]\n        },\n        \"BroadcastHealth\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Health status of a broadcast output FFmpeg process\",\n            \"enum\": [\n                \"Healthy\",\n\
+        \                \"Degraded\",\n                \"Down\",\n                \"Unknown\"\n            ]\n        }\n\
+        \    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get broadcast output status\",\n    \"description\": \"Returns the current
+        status of a broadcast including source type, state,\\ncurrent video source (which fallback level is active), and health.\\
+        nRTMP URLs are always masked in responses.\\n\",\n    \"tags\": [\n        \"BroadcastOutput\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"getOutputStatus\"\n}"
+  /broadcast/output/list:
+    post:
+      summary: List broadcast outputs
+      description: |
+        Returns paginated broadcast outputs. Optionally filter to active only.
+        RTMP URLs are always masked in responses.
+      operationId: listOutputs
+      tags:
+      - BroadcastOutput
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListOutputsRequest'
+      responses:
+        '200':
+          description: Broadcast outputs retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputListResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListOutputsRequest\"\
+        ,\n    \"$defs\": {\n        \"ListOutputsRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to list broadcast outputs\",\n            \"properties\": {\n   \
+        \             \"page\": {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n     \
+        \               \"minimum\": 1,\n                    \"description\": \"Page number\"\n                },\n      \
+        \          \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"default\": 20,\n   \
+        \                 \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"description\": \"\
+        Items per page\"\n                },\n                \"activeOnly\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"Filter to active broadcasts only\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/OutputListResponse\"\
+        ,\n    \"$defs\": {\n        \"OutputListResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Paginated list of broadcast outputs\",\n            \"required\": [\n   \
+        \             \"outputs\",\n                \"totalCount\",\n                \"page\",\n                \"pageSize\"\
+        \n            ],\n            \"properties\": {\n                \"outputs\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/OutputInfo\"\n           \
+        \         },\n                    \"description\": \"Broadcast outputs (RTMP URLs always masked)\"\n             \
+        \   },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Total number of outputs\"\n                },\n                \"page\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Current page number\"\n                },\n                \"pageSize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Items per page\"\n       \
+        \         }\n            }\n        },\n        \"OutputInfo\": {\n            \"type\": \"object\",\n           \
+        \ \"additionalProperties\": false,\n            \"description\": \"Broadcast output summary (RTMP URL always masked)\"\
+        ,\n            \"required\": [\n                \"broadcastId\",\n                \"sourceType\",\n              \
+        \  \"maskedRtmpUrl\",\n                \"state\",\n                \"startedAt\",\n                \"health\"\n  \
+        \          ],\n            \"properties\": {\n                \"broadcastId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Broadcast output identifier\"\
+        \n                },\n                \"sourceType\": {\n                    \"$ref\": \"#/$defs/BroadcastSourceType\"\
+        ,\n                    \"description\": \"Type of broadcast input source\"\n                },\n                \"\
+        sourceId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Source identifier (camera ID or voice room ID, depending on source type)\"\n           \
+        \     },\n                \"maskedRtmpUrl\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"RTMP destination URL with stream key masked\"\n                },\n                \"state\": {\n\
+        \                    \"$ref\": \"#/$defs/BroadcastState\",\n                    \"description\": \"Current broadcast
+        state\"\n                },\n                \"currentVideoSource\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Current active video source in the
+        fallback cascade\"\n                },\n                \"owningInstanceId\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Mesh instance ID of the node running this broadcast\"\n        \
+        \        },\n                \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"When the broadcast started\"\n                },\n      \
+        \          \"health\": {\n                    \"$ref\": \"#/$defs/BroadcastHealth\",\n                    \"description\"\
+        : \"FFmpeg process health status\"\n                }\n            }\n        },\n        \"BroadcastSourceType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of broadcast input source\",\n       \
+        \     \"enum\": [\n                \"Camera\",\n                \"GameAudio\",\n                \"VoiceRoom\"\n  \
+        \          ]\n        },\n        \"BroadcastState\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Current state of a broadcast output\",\n            \"enum\": [\n                \"Active\",\n               \
+        \ \"Failed\",\n                \"Stopped\"\n            ]\n        },\n        \"BroadcastHealth\": {\n          \
+        \  \"type\": \"string\",\n            \"description\": \"Health status of a broadcast output FFmpeg process\",\n \
+        \           \"enum\": [\n                \"Healthy\",\n                \"Degraded\",\n                \"Down\",\n\
+        \                \"Unknown\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List broadcast outputs\",\n    \"description\": \"Returns paginated broadcast
+        outputs. Optionally filter to active only.\\nRTMP URLs are always masked in responses.\\n\",\n    \"tags\": [\n  \
+        \      \"BroadcastOutput\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listOutputs\"\n}"
+  /broadcast/webhook/twitch:
+    post:
+      summary: Twitch EventSub webhook callback
+      description: |
+        Receives Twitch EventSub webhook callbacks. Validates HMAC-SHA256 signature
+        before processing. Handles verification challenges, stream events, and chat
+        messages. Always returns 200 to Twitch per webhook contract. Internet-facing
+        via NGINX (justified exception for platform callbacks).
+      operationId: webhookTwitch
+      tags:
+      - BroadcastWebhook
+      x-controller-only: true
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookPayload'
+      responses:
+        '200':
+          description: Webhook processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '401':
+          description: Signature validation failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/WebhookPayload\"\
+        ,\n    \"$defs\": {\n        \"WebhookPayload\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : true,\n            \"description\": \"External platform webhook payload. Validated by platform-specific HMAC/token
+        before processing. Not a cross-service data contract.\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/WebhookResponse\"\
+        ,\n    \"$defs\": {\n        \"WebhookResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Webhook acknowledgement response\",\n            \"properties\": {\n    \
+        \            \"challenge\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Twitch webhook verification challenge echo (present only for verification
+        requests)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Twitch EventSub webhook callback\",\n    \"description\": \"Receives Twitch
+        EventSub webhook callbacks. Validates HMAC-SHA256 signature\\nbefore processing. Handles verification challenges,
+        stream events, and chat\\nmessages. Always returns 200 to Twitch per webhook contract. Internet-facing\\nvia NGINX
+        (justified exception for platform callbacks).\\n\",\n    \"tags\": [\n        \"BroadcastWebhook\"\n    ],\n    \"\
+        deprecated\": false,\n    \"operationId\": \"webhookTwitch\"\n}"
+  /broadcast/webhook/youtube:
+    post:
+      summary: YouTube webhook callback
+      description: |
+        Receives YouTube push notification callbacks. Validates verification token
+        before processing. Handles live chat messages, super chats, and subscriptions.
+        Always returns 200 to YouTube per webhook contract. Internet-facing via NGINX
+        (justified exception for platform callbacks).
+      operationId: webhookYouTube
+      tags:
+      - BroadcastWebhook
+      x-controller-only: true
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookPayload'
+      responses:
+        '200':
+          description: Webhook processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '401':
+          description: Token validation failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/WebhookPayload\"\
+        ,\n    \"$defs\": {\n        \"WebhookPayload\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : true,\n            \"description\": \"External platform webhook payload. Validated by platform-specific HMAC/token
+        before processing. Not a cross-service data contract.\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/WebhookResponse\"\
+        ,\n    \"$defs\": {\n        \"WebhookResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Webhook acknowledgement response\",\n            \"properties\": {\n    \
+        \            \"challenge\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Twitch webhook verification challenge echo (present only for verification
+        requests)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"YouTube webhook callback\",\n    \"description\": \"Receives YouTube push
+        notification callbacks. Validates verification token\\nbefore processing. Handles live chat messages, super chats,
+        and subscriptions.\\nAlways returns 200 to YouTube per webhook contract. Internet-facing via NGINX\\n(justified exception
+        for platform callbacks).\\n\",\n    \"tags\": [\n        \"BroadcastWebhook\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"webhookYouTube\"\n}"
+  /broadcast/webhook/custom:
+    post:
+      summary: Custom platform webhook callback
+      description: |
+        Receives custom platform webhook callbacks. Validates configurable HMAC
+        signature before processing. Routes to generic sentiment processor.
+        Always returns 200 per webhook contract. Internet-facing via NGINX
+        (justified exception for platform callbacks).
+      operationId: webhookCustom
+      tags:
+      - BroadcastWebhook
+      x-controller-only: true
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookPayload'
+      responses:
+        '200':
+          description: Webhook processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '401':
+          description: Signature validation failed
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/WebhookPayload\"\
+        ,\n    \"$defs\": {\n        \"WebhookPayload\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : true,\n            \"description\": \"External platform webhook payload. Validated by platform-specific HMAC/token
+        before processing. Not a cross-service data contract.\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/WebhookResponse\"\
+        ,\n    \"$defs\": {\n        \"WebhookResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Webhook acknowledgement response\",\n            \"properties\": {\n    \
+        \            \"challenge\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Twitch webhook verification challenge echo (present only for verification
+        requests)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Custom platform webhook callback\",\n    \"description\": \"Receives custom
+        platform webhook callbacks. Validates configurable HMAC\\nsignature before processing. Routes to generic sentiment
+        processor.\\nAlways returns 200 per webhook contract. Internet-facing via NGINX\\n(justified exception for platform
+        callbacks).\\n\",\n    \"tags\": [\n        \"BroadcastWebhook\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"webhookCustom\"\n}"
+  /broadcast/admin/pulse/latest:
+    post:
+      summary: Get the latest sentiment pulse for a session
+      description: |
+        Returns the most recently published sentiment pulse for a platform session.
+        Diagnostic endpoint for monitoring sentiment processing health.
+      operationId: getLatestPulse
+      tags:
+      - BroadcastAdmin
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLatestPulseRequest'
+      responses:
+        '200':
+          description: Latest pulse retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LatestPulseResponse'
+        '404':
+          description: Platform session not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetLatestPulseRequest\"\
+        ,\n    \"$defs\": {\n        \"GetLatestPulseRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get the latest sentiment pulse\",\n            \"required\": [\n\
+        \                \"platformSessionId\"\n            ],\n            \"properties\": {\n                \"platformSessionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Platform session to query\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LatestPulseResponse\"\
+        ,\n    \"$defs\": {\n        \"LatestPulseResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Latest sentiment pulse for a session\",\n            \"properties\": {\n\
+        \                \"pulse\": {\n                    \"allOf\": [\n                        {\n                     \
+        \       \"$ref\": \"#/$defs/SentimentPulseInfo\"\n                        }\n                    ],\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Most recent sentiment pulse (null if no pulses
+        published yet)\"\n                }\n            }\n        },\n        \"SentimentPulseInfo\": {\n            \"\
+        type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Batched anonymous
+        sentiment data from a platform session\",\n            \"required\": [\n                \"platformSessionId\",\n \
+        \               \"timestamp\",\n                \"intervalSeconds\",\n                \"approximateViewerCount\",\n\
+        \                \"sentiments\"\n            ],\n            \"properties\": {\n                \"platformSessionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Platform session that produced this pulse\"\n                },\n                \"streamSessionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Associated in-game stream session (if linked)\"\n      \
+        \          },\n                \"timestamp\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"When this pulse was assembled\"\n               \
+        \ },\n                \"intervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Configured pulse interval\"\n                },\n                \"approximateViewerCount\": {\n             \
+        \       \"type\": \"integer\",\n                    \"description\": \"Platform-reported viewer count (approximate)\"\
+        \n                },\n                \"sentiments\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/SentimentEntry\"\n                    },\n      \
+        \              \"description\": \"Batched anonymous sentiment entries\"\n                }\n            }\n      \
+        \  },\n        \"SentimentEntry\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Individual anonymous sentiment data point\",\n            \"required\": [\n      \
+        \          \"category\",\n                \"intensity\"\n            ],\n            \"properties\": {\n         \
+        \       \"category\": {\n                    \"$ref\": \"#/$defs/SentimentCategory\",\n                    \"description\"\
+        : \"Sentiment classification\"\n                },\n                \"intensity\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n               \
+        \     \"maximum\": 1.0,\n                    \"description\": \"Strength of sentiment (0.0 to 1.0)\"\n           \
+        \     },\n                \"trackingId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Opaque tracking GUID
+        for important viewers (null for anonymous)\"\n                },\n                \"viewerType\": {\n            \
+        \        \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/TrackedViewerType\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Category of tracked viewer (null for anonymous)\"\n                }\n            }\n       \
+        \ },\n        \"SentimentCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Fixed sentiment
+        categories for audience analysis. Intentionally a finite enum (not opaque strings) because lib-showtime needs deterministic
+        audience behavior mapping.\",\n            \"enum\": [\n                \"Excited\",\n                \"Supportive\"\
+        ,\n                \"Critical\",\n                \"Curious\",\n                \"Surprised\",\n                \"\
+        Amused\",\n                \"Bored\",\n                \"Hostile\"\n            ]\n        },\n        \"TrackedViewerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Category of tracked viewers who receive opaque
+        tracking GUIDs. Returner type requires cross-session detection (not available in v1).\",\n            \"enum\": [\n\
+        \                \"Subscriber\",\n                \"Moderator\",\n                \"RaidLeader\",\n              \
+        \  \"VIP\",\n                \"HighEngager\",\n                \"Returner\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get the latest sentiment pulse for a session\",\n    \"description\": \"\
+        Returns the most recently published sentiment pulse for a platform session.\\nDiagnostic endpoint for monitoring sentiment
+        processing health.\\n\",\n    \"tags\": [\n        \"BroadcastAdmin\"\n    ],\n    \"deprecated\": false,\n    \"\
+        operationId\": \"getLatestPulse\"\n}"
+  /broadcast/admin/sentiment/test:
+    post:
+      summary: Test sentiment classification
+      description: |
+        Stateless diagnostic endpoint. Classifies input text into a sentiment
+        category and intensity using the current ISentimentProcessor implementation.
+        No state access, no events, no locks.
+      operationId: testSentiment
+      tags:
+      - BroadcastAdmin
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestSentimentRequest'
+      responses:
+        '200':
+          description: Sentiment classification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestSentimentResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TestSentimentRequest\"\
+        ,\n    \"$defs\": {\n        \"TestSentimentRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to test sentiment classification\",\n            \"required\": [\n\
+        \                \"text\"\n            ],\n            \"properties\": {\n                \"text\": {\n          \
+        \          \"type\": \"string\",\n                    \"maxLength\": 4096,\n                    \"description\": \"\
+        Text to classify\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TestSentimentResponse\"\
+        ,\n    \"$defs\": {\n        \"TestSentimentResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Sentiment classification result\",\n            \"required\": [\n       \
+        \         \"category\",\n                \"intensity\"\n            ],\n            \"properties\": {\n          \
+        \      \"category\": {\n                    \"$ref\": \"#/$defs/SentimentCategory\",\n                    \"description\"\
+        : \"Classified sentiment category\"\n                },\n                \"intensity\": {\n                    \"\
+        type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n         \
+        \           \"maximum\": 1.0,\n                    \"description\": \"Strength of sentiment (0.0 to 1.0)\"\n     \
+        \           }\n            }\n        },\n        \"SentimentCategory\": {\n            \"type\": \"string\",\n  \
+        \          \"description\": \"Fixed sentiment categories for audience analysis. Intentionally a finite enum (not opaque
+        strings) because lib-showtime needs deterministic audience behavior mapping.\",\n            \"enum\": [\n       \
+        \         \"Excited\",\n                \"Supportive\",\n                \"Critical\",\n                \"Curious\"\
+        ,\n                \"Surprised\",\n                \"Amused\",\n                \"Bored\",\n                \"Hostile\"\
+        \n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Test sentiment classification\",\n    \"description\": \"Stateless diagnostic
+        endpoint. Classifies input text into a sentiment\\ncategory and intensity using the current ISentimentProcessor implementation.\\
+        nNo state access, no events, no locks.\\n\",\n    \"tags\": [\n        \"BroadcastAdmin\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"testSentiment\"\n}"
+  /broadcast/cleanup-by-account:
+    post:
+      summary: Clean up all account-owned broadcast data
+      description: |
+        Removes all platform links, sessions, broadcasts, and tracking IDs for an account.
+        Called from HandleAccountDeletedAsync for T28 Account Deletion Cleanup Obligation.
+        Idempotent -- returns 200 even if nothing to clean up.
+      operationId: cleanupByAccount
+      tags:
+      - BroadcastInternal
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByAccountRequest'
+      responses:
+        '200':
+          description: Account data cleaned up (idempotent)
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByAccountRequest\"\
+        ,\n    \"$defs\": {\n        \"CleanupByAccountRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Account cleanup request (T28 Account Deletion Cleanup Obligation)\",\n  \
+        \          \"required\": [\n                \"accountId\"\n            ],\n            \"properties\": {\n       \
+        \         \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Account whose broadcast data should be cleaned up\"\n                }\n \
+        \           }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean up all account-owned broadcast data\",\n    \"description\": \"Removes
+        all platform links, sessions, broadcasts, and tracking IDs for an account.\\nCalled from HandleAccountDeletedAsync
+        for T28 Account Deletion Cleanup Obligation.\\nIdempotent -- returns 200 even if nothing to clean up.\\n\",\n    \"\
+        tags\": [\n        \"BroadcastInternal\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"cleanupByAccount\"\
+        \n}"
+components:
+  schemas:
+    PlatformType:
+      type: string
+      description: Streaming platform type
+      enum:
+      - Twitch
+      - YouTube
+      - Custom
+    SentimentCategory:
+      type: string
+      description: Fixed sentiment categories for audience analysis. Intentionally a finite enum (not opaque strings) 
+        because lib-showtime needs deterministic audience behavior mapping.
+      enum:
+      - Excited
+      - Supportive
+      - Critical
+      - Curious
+      - Surprised
+      - Amused
+      - Bored
+      - Hostile
+    TrackedViewerType:
+      type: string
+      description: Category of tracked viewers who receive opaque tracking GUIDs. Returner type requires cross-session 
+        detection (not available in v1).
+      enum:
+      - Subscriber
+      - Moderator
+      - RaidLeader
+      - VIP
+      - HighEngager
+      - Returner
+    BroadcastSourceType:
+      type: string
+      description: Type of broadcast input source
+      enum:
+      - Camera
+      - GameAudio
+      - VoiceRoom
+    BroadcastState:
+      type: string
+      description: Current state of a broadcast output
+      enum:
+      - Active
+      - Failed
+      - Stopped
+    PlatformSessionState:
+      type: string
+      description: Current state of a platform streaming session
+      enum:
+      - Active
+      - Ended
+    AudioCodec:
+      type: string
+      description: Audio codec for RTMP output. Only LGPL-compliant codecs are valid per FOUNDATION TENETS (licensing).
+      enum:
+      - Aac
+      - Mp3
+      - Opus
+    VideoCodec:
+      type: string
+      description: Video codec for RTMP output. Only LGPL-compliant codecs are valid per FOUNDATION TENETS (licensing). 
+        GPL codecs (libx264, libx265) are excluded.
+      enum:
+      - LibVpx
+      - LibVpxVp9
+    BroadcastHealth:
+      type: string
+      description: Health status of a broadcast output FFmpeg process
+      enum:
+      - Healthy
+      - Degraded
+      - Down
+      - Unknown
+    PlatformLinkInfo:
+      type: object
+      additionalProperties: false
+      description: Platform link summary (tokens never exposed)
+      required:
+      - linkId
+      - platform
+      - linkedAt
+      properties:
+        linkId:
+          type: string
+          format: uuid
+          description: Platform link identifier
+        platform:
+          $ref: '#/components/schemas/PlatformType'
+          description: Streaming platform type
+        displayName:
+          type: string
+          nullable: true
+          description: Platform display name (from OAuth profile or user-provided)
+        linkedAt:
+          type: string
+          format: date-time
+          description: When the platform was linked
+    PlatformSessionInfo:
+      type: object
+      additionalProperties: false
+      description: Platform session summary
+      required:
+      - platformSessionId
+      - linkId
+      - platform
+      - state
+      - viewerCount
+      - startTime
+      properties:
+        platformSessionId:
+          type: string
+          format: uuid
+          description: Platform session identifier
+        linkId:
+          type: string
+          format: uuid
+          description: Associated platform link
+        platform:
+          $ref: '#/components/schemas/PlatformType'
+          description: Streaming platform type
+        state:
+          $ref: '#/components/schemas/PlatformSessionState'
+          description: Current session state
+        viewerCount:
+          type: integer
+          description: Current approximate viewer count
+        peakViewerCount:
+          type: integer
+          description: Peak viewer count during this session
+        startTime:
+          type: string
+          format: date-time
+          description: When the session started
+        streamSessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated in-game stream session ID (opaque, from lib-showtime)
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the session ended (null if still active)
+        duration:
+          type: integer
+          nullable: true
+          description: Session duration in seconds (null if still active)
+    OutputInfo:
+      type: object
+      additionalProperties: false
+      description: Broadcast output summary (RTMP URL always masked)
+      required:
+      - broadcastId
+      - sourceType
+      - maskedRtmpUrl
+      - state
+      - startedAt
+      - health
+      properties:
+        broadcastId:
+          type: string
+          format: uuid
+          description: Broadcast output identifier
+        sourceType:
+          $ref: '#/components/schemas/BroadcastSourceType'
+          description: Type of broadcast input source
+        sourceId:
+          type: string
+          nullable: true
+          description: Source identifier (camera ID or voice room ID, depending on source type)
+        maskedRtmpUrl:
+          type: string
+          description: RTMP destination URL with stream key masked
+        state:
+          $ref: '#/components/schemas/BroadcastState'
+          description: Current broadcast state
+        currentVideoSource:
+          type: string
+          nullable: true
+          description: Current active video source in the fallback cascade
+        owningInstanceId:
+          type: string
+          description: Mesh instance ID of the node running this broadcast
+        startedAt:
+          type: string
+          format: date-time
+          description: When the broadcast started
+        health:
+          $ref: '#/components/schemas/BroadcastHealth'
+          description: FFmpeg process health status
+    SentimentPulseInfo:
+      type: object
+      additionalProperties: false
+      description: Batched anonymous sentiment data from a platform session
+      required:
+      - platformSessionId
+      - timestamp
+      - intervalSeconds
+      - approximateViewerCount
+      - sentiments
+      properties:
+        platformSessionId:
+          type: string
+          format: uuid
+          description: Platform session that produced this pulse
+        streamSessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated in-game stream session (if linked)
+        timestamp:
+          type: string
+          format: date-time
+          description: When this pulse was assembled
+        intervalSeconds:
+          type: integer
+          description: Configured pulse interval
+        approximateViewerCount:
+          type: integer
+          description: Platform-reported viewer count (approximate)
+        sentiments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SentimentEntry'
+          description: Batched anonymous sentiment entries
+    SentimentEntry:
+      type: object
+      additionalProperties: false
+      description: Individual anonymous sentiment data point
+      required:
+      - category
+      - intensity
+      properties:
+        category:
+          $ref: '#/components/schemas/SentimentCategory'
+          description: Sentiment classification
+        intensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Strength of sentiment (0.0 to 1.0)
+        trackingId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Opaque tracking GUID for important viewers (null for anonymous)
+        viewerType:
+          allOf:
+          - $ref: '#/components/schemas/TrackedViewerType'
+          nullable: true
+          description: Category of tracked viewer (null for anonymous)
+    SentimentDistribution:
+      type: object
+      additionalProperties: false
+      description: Distribution of sentiment categories from recent pulse data
+      properties:
+        excited:
+          type: integer
+          default: 0
+          description: Count of Excited sentiments
+        supportive:
+          type: integer
+          default: 0
+          description: Count of Supportive sentiments
+        critical:
+          type: integer
+          default: 0
+          description: Count of Critical sentiments
+        curious:
+          type: integer
+          default: 0
+          description: Count of Curious sentiments
+        surprised:
+          type: integer
+          default: 0
+          description: Count of Surprised sentiments
+        amused:
+          type: integer
+          default: 0
+          description: Count of Amused sentiments
+        bored:
+          type: integer
+          default: 0
+          description: Count of Bored sentiments
+        hostile:
+          type: integer
+          default: 0
+          description: Count of Hostile sentiments
+    LinkPlatformRequest:
+      type: object
+      additionalProperties: false
+      description: Request to link a streaming platform account
+      required:
+      - webSocketSessionId
+      - platform
+      properties:
+        webSocketSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID for server-side identity resolution
+        platform:
+          $ref: '#/components/schemas/PlatformType'
+          description: Streaming platform to link
+        rtmpUrl:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: RTMP URL for Custom platform type. Required when platform is Custom, ignored otherwise.
+    LinkPlatformResponse:
+      type: object
+      additionalProperties: false
+      description: Platform link response. Contains oauthRedirectUrl for OAuth platforms or linkId for Custom RTMP.
+      properties:
+        linkId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Platform link ID. Present when platform type is Custom (link created immediately).
+        oauthRedirectUrl:
+          type: string
+          nullable: true
+          description: OAuth redirect URL. Present when platform type requires OAuth (Twitch, YouTube).
+    PlatformCallbackRequest:
+      type: object
+      additionalProperties: false
+      description: OAuth callback completion request
+      required:
+      - webSocketSessionId
+      - platform
+      - authorizationCode
+      - state
+      properties:
+        webSocketSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID for server-side identity resolution
+        platform:
+          $ref: '#/components/schemas/PlatformType'
+          description: Streaming platform being linked
+        authorizationCode:
+          type: string
+          maxLength: 2048
+          description: OAuth authorization code from platform callback
+        state:
+          type: string
+          maxLength: 512
+          description: OAuth state token for CSRF verification
+    PlatformCallbackResponse:
+      type: object
+      additionalProperties: false
+      description: OAuth callback completion response
+      required:
+      - linkId
+      properties:
+        linkId:
+          type: string
+          format: uuid
+          description: Platform link ID created by OAuth flow completion
+    UnlinkPlatformRequest:
+      type: object
+      additionalProperties: false
+      description: Request to unlink a streaming platform
+      required:
+      - webSocketSessionId
+      - linkId
+      properties:
+        webSocketSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID for server-side identity resolution
+        linkId:
+          type: string
+          format: uuid
+          description: Platform link to remove
+    ListPlatformsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list linked platforms for the current account
+      required:
+      - webSocketSessionId
+      properties:
+        webSocketSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID for server-side identity resolution
+    PlatformListResponse:
+      type: object
+      additionalProperties: false
+      description: List of linked platforms
+      required:
+      - links
+      properties:
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformLinkInfo'
+          description: Linked platform accounts (tokens never exposed)
+    StartSessionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to start a platform streaming session
+      required:
+      - webSocketSessionId
+      - linkId
+      properties:
+        webSocketSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID for server-side identity resolution
+        linkId:
+          type: string
+          format: uuid
+          description: Platform link to start streaming on
+    StartSessionResponse:
+      type: object
+      additionalProperties: false
+      description: Platform session start response
+      required:
+      - platformSessionId
+      properties:
+        platformSessionId:
+          type: string
+          format: uuid
+          description: Created platform session identifier
+    StopSessionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to stop a platform streaming session
+      required:
+      - webSocketSessionId
+      - platformSessionId
+      properties:
+        webSocketSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID for server-side identity resolution
+        platformSessionId:
+          type: string
+          format: uuid
+          description: Platform session to stop
+    AssociateSessionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to associate a platform session with an in-game stream session
+      required:
+      - webSocketSessionId
+      - platformSessionId
+      - streamSessionId
+      properties:
+        webSocketSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID for server-side identity resolution
+        platformSessionId:
+          type: string
+          format: uuid
+          description: Platform session to associate
+        streamSessionId:
+          type: string
+          format: uuid
+          description: In-game stream session ID (opaque, stored without validation)
+    GetSessionStatusRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get platform session status
+      required:
+      - webSocketSessionId
+      - platformSessionId
+      properties:
+        webSocketSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID for server-side identity resolution
+        platformSessionId:
+          type: string
+          format: uuid
+          description: Platform session to query
+    SessionStatusResponse:
+      type: object
+      additionalProperties: false
+      description: Platform session status with sentiment distribution
+      required:
+      - platformSessionId
+      - state
+      - viewerCount
+      properties:
+        platformSessionId:
+          type: string
+          format: uuid
+          description: Platform session identifier
+        state:
+          $ref: '#/components/schemas/PlatformSessionState'
+          description: Current session state
+        viewerCount:
+          type: integer
+          description: Current approximate viewer count
+        streamSessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated in-game stream session ID
+        sentimentDistribution:
+          allOf:
+          - $ref: '#/components/schemas/SentimentDistribution'
+          nullable: true
+          description: Recent sentiment distribution (null if no data yet)
+    ListSessionsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list platform sessions
+      required:
+      - webSocketSessionId
+      properties:
+        webSocketSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID for server-side identity resolution
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Items per page
+    SessionListResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of platform sessions
+      required:
+      - sessions
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformSessionInfo'
+          description: Platform sessions for the account
+        totalCount:
+          type: integer
+          description: Total number of sessions
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Items per page
+    AnnounceCameraRequest:
+      type: object
+      additionalProperties: false
+      description: Camera source announcement with TTL heartbeat
+      required:
+      - cameraId
+      - rtmpInputUrl
+      properties:
+        cameraId:
+          type: string
+          maxLength: 256
+          description: Unique camera identifier from the game engine
+        rtmpInputUrl:
+          type: string
+          maxLength: 2048
+          description: RTMP input URL where the camera publishes its stream
+        resolution:
+          type: string
+          nullable: true
+          maxLength: 32
+          description: Video resolution (e.g., 1920x1080)
+        codec:
+          type: string
+          nullable: true
+          maxLength: 64
+          description: Video codec used by the camera source
+    CameraAnnounceResponse:
+      type: object
+      additionalProperties: false
+      description: Empty response. 200 OK confirms the camera was announced or refreshed.
+    RetireCameraRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retire a camera source
+      required:
+      - cameraId
+      properties:
+        cameraId:
+          type: string
+          maxLength: 256
+          description: Camera to retire
+    StartOutputRequest:
+      type: object
+      additionalProperties: false
+      description: Request to start a broadcast output
+      required:
+      - sourceType
+      - rtmpUrl
+      properties:
+        sourceType:
+          $ref: '#/components/schemas/BroadcastSourceType'
+          description: Type of broadcast input source
+        rtmpUrl:
+          type: string
+          maxLength: 2048
+          description: RTMP destination URL (encrypted for storage, masked in responses)
+        cameraId:
+          type: string
+          nullable: true
+          maxLength: 256
+          description: Camera source ID (required when sourceType is Camera)
+        roomId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Voice room ID (required when sourceType is VoiceRoom)
+        backgroundVideoUrl:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: Primary video background URL for audio-only sources
+        fallbackStreamUrl:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: Fallback stream URL if primary video fails
+        fallbackImageUrl:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: Fallback image URL if fallback stream fails
+    StartOutputResponse:
+      type: object
+      additionalProperties: false
+      description: Broadcast output start response
+      required:
+      - broadcastId
+      properties:
+        broadcastId:
+          type: string
+          format: uuid
+          description: Created broadcast output identifier
+    StopOutputRequest:
+      type: object
+      additionalProperties: false
+      description: Request to stop a broadcast output
+      required:
+      - broadcastId
+      properties:
+        broadcastId:
+          type: string
+          format: uuid
+          description: Broadcast output to stop
+    UpdateOutputRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update a broadcast output configuration
+      required:
+      - broadcastId
+      properties:
+        broadcastId:
+          type: string
+          format: uuid
+          description: Broadcast output to update
+        rtmpUrl:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: New RTMP destination URL (validated via FFprobe before committing)
+        backgroundVideoUrl:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: New primary video background URL
+        fallbackStreamUrl:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: New fallback stream URL
+        fallbackImageUrl:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: New fallback image URL
+    GetOutputStatusRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get broadcast output status
+      required:
+      - broadcastId
+      properties:
+        broadcastId:
+          type: string
+          format: uuid
+          description: Broadcast output to query
+    OutputStatusResponse:
+      type: object
+      additionalProperties: false
+      description: Broadcast output status (RTMP URL always masked)
+      required:
+      - broadcastId
+      - sourceType
+      - maskedRtmpUrl
+      - state
+      - startedAt
+      - health
+      properties:
+        broadcastId:
+          type: string
+          format: uuid
+          description: Broadcast output identifier
+        sourceType:
+          $ref: '#/components/schemas/BroadcastSourceType'
+          description: Type of broadcast input source
+        maskedRtmpUrl:
+          type: string
+          description: RTMP destination URL with stream key masked
+        state:
+          $ref: '#/components/schemas/BroadcastState'
+          description: Current broadcast state
+        currentVideoSource:
+          type: string
+          nullable: true
+          description: Current active video source in the fallback cascade
+        duration:
+          type: integer
+          nullable: true
+          description: Broadcast duration in seconds (null if not active)
+        startedAt:
+          type: string
+          format: date-time
+          description: When the broadcast started
+        health:
+          $ref: '#/components/schemas/BroadcastHealth'
+          description: FFmpeg process health status
+    ListOutputsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list broadcast outputs
+      properties:
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Items per page
+        activeOnly:
+          type: boolean
+          default: false
+          description: Filter to active broadcasts only
+    OutputListResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of broadcast outputs
+      required:
+      - outputs
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        outputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutputInfo'
+          description: Broadcast outputs (RTMP URLs always masked)
+        totalCount:
+          type: integer
+          description: Total number of outputs
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Items per page
+    WebhookPayload:
+      type: object
+      additionalProperties: true
+      description: External platform webhook payload. Validated by platform-specific HMAC/token before processing. Not a
+        cross-service data contract.
+    WebhookResponse:
+      type: object
+      additionalProperties: false
+      description: Webhook acknowledgement response
+      properties:
+        challenge:
+          type: string
+          nullable: true
+          description: Twitch webhook verification challenge echo (present only for verification requests)
+    GetLatestPulseRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get the latest sentiment pulse
+      required:
+      - platformSessionId
+      properties:
+        platformSessionId:
+          type: string
+          format: uuid
+          description: Platform session to query
+    LatestPulseResponse:
+      type: object
+      additionalProperties: false
+      description: Latest sentiment pulse for a session
+      properties:
+        pulse:
+          allOf:
+          - $ref: '#/components/schemas/SentimentPulseInfo'
+          nullable: true
+          description: Most recent sentiment pulse (null if no pulses published yet)
+    TestSentimentRequest:
+      type: object
+      additionalProperties: false
+      description: Request to test sentiment classification
+      required:
+      - text
+      properties:
+        text:
+          type: string
+          maxLength: 4096
+          description: Text to classify
+    TestSentimentResponse:
+      type: object
+      additionalProperties: false
+      description: Sentiment classification result
+      required:
+      - category
+      - intensity
+      properties:
+        category:
+          $ref: '#/components/schemas/SentimentCategory'
+          description: Classified sentiment category
+        intensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Strength of sentiment (0.0 to 1.0)
+    CleanupByAccountRequest:
+      type: object
+      additionalProperties: false
+      description: Account cleanup request (T28 Account Deletion Cleanup Obligation)
+      required:
+      - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account whose broadcast data should be cleaned up

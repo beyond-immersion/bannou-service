@@ -21,6 +21,7 @@ public partial class BannouClient
     private AssetProxy? _asset;
     private AuthProxy? _auth;
     private BehaviorProxy? _behavior;
+    private BroadcastProxy? _broadcast;
     private CharacterProxy? _character;
     private CharacterEncounterProxy? _characterEncounter;
     private CharacterHistoryProxy? _characterHistory;
@@ -111,6 +112,12 @@ public partial class BannouClient
     /// </summary>
     public BehaviorProxy Behavior =>
         _behavior ??= new BehaviorProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Broadcast Service API operations.
+    /// </summary>
+    public BroadcastProxy Broadcast =>
+        _broadcast ??= new BroadcastProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Character Service API operations.

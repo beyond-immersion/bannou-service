@@ -403,4 +403,21 @@ public class AudioProcessorTests
     }
 
     #endregion
+
+    #region Enum Boundary Mapping Validation
+
+    /// <summary>
+    /// Validates that the processing option vocabulary for audio output formats
+    /// covers all AudioOutputFormat enum values. AudioProcessor.GetProcessingOption
+    /// maps external string key-value pairs via EnumMapping.TryMapByName.
+    /// </summary>
+    [Fact]
+    public void AudioOutputFormat_ProcessingOptionVocabulary_CoversAllValues()
+    {
+        // Processing options use lowercase format names from external sources
+        EnumMappingValidator.AssertStringToEnumCoverage<AudioOutputFormat>(
+            "mp3", "opus", "aac");
+    }
+
+    #endregion
 }

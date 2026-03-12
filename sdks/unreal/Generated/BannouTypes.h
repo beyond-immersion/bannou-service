@@ -53,6 +53,7 @@ struct FAffordanceQueryRequest;
 struct FAffordanceQueryResponse;
 struct FAffordanceType;
 struct FAnalytics;
+struct FAnnounceCameraRequest;
 struct FAnswerPeerRequest;
 struct FArcType;
 struct FArchiveInfo;
@@ -74,6 +75,7 @@ struct FAssetUsageInfo;
 struct FAssetVersion;
 struct FAssetVersionList;
 struct FAssetWithDownloadUrl;
+struct FAssociateSessionRequest;
 struct FAttachmentPoint;
 struct FAuthMethodInfo;
 struct FAuthProvider;
@@ -124,6 +126,9 @@ struct FBroadcastConsentRequest;
 struct FBroadcastConsentResponse;
 struct FBroadcastConsentState;
 struct FBroadcastConsentStatus;
+struct FBroadcastHealth;
+struct FBroadcastSourceType;
+struct FBroadcastState;
 struct FBroadcastStatusRequest;
 struct FBulkDeleteRequest;
 struct FBulkDeleteResponse;
@@ -154,6 +159,7 @@ struct FCalculateConversionResponse;
 struct FCalculateRouteRequest;
 struct FCalculateRouteResponse;
 struct FCalendarTemplateResponse;
+struct FCameraAnnounceResponse;
 struct FCanUseBehavior;
 struct FCancelJobRequest;
 struct FCancelJobResponse;
@@ -521,6 +527,7 @@ struct FGetItemTemplateRequest;
 struct FGetJobStatusRequest;
 struct FGetJobStatusResponse;
 struct FGetJourneyRequest;
+struct FGetLatestPulseRequest;
 struct FGetLicenseDefinitionRequest;
 struct FGetMatchmakingStatsRequest;
 struct FGetMatchmakingStatusRequest;
@@ -529,6 +536,7 @@ struct FGetModeRequest;
 struct FGetNamespaceStatsRequest;
 struct FGetObjectiveProgressRequest;
 struct FGetOrCreateContainerRequest;
+struct FGetOutputStatusRequest;
 struct FGetPhaseConfigRequest;
 struct FGetPhaseMetricsRequest;
 struct FGetPlanRequest;
@@ -560,6 +568,7 @@ struct FGetSeedEffectsRequest;
 struct FGetSeedRequest;
 struct FGetSeedTypeRequest;
 struct FGetSeedsByOwnerRequest;
+struct FGetSessionStatusRequest;
 struct FGetSharedGardenRequest;
 struct FGetSlotRequest;
 struct FGetStatusRequest;
@@ -633,6 +642,7 @@ struct FKeyMode;
 struct FKeySignature;
 struct FKeySignatureEvent;
 struct FKickParticipantRequest;
+struct FLatestPulseResponse;
 struct FLayerDefinition;
 struct FLeaderboardDefinitionResponse;
 struct FLeaderboardEntriesResponse;
@@ -646,6 +656,8 @@ struct FLeaveRoomRequest;
 struct FLeaveVoiceRoomRequest;
 struct FLicenseDefinitionResponse;
 struct FLicenseStatus;
+struct FLinkPlatformRequest;
+struct FLinkPlatformResponse;
 struct FListAchievementDefinitionsRequest;
 struct FListAchievementDefinitionsResponse;
 struct FListActionMappingsRequest;
@@ -697,9 +709,11 @@ struct FListModesRequest;
 struct FListModesResponse;
 struct FListNormsRequest;
 struct FListNormsResponse;
+struct FListOutputsRequest;
 struct FListParticipantsRequest;
 struct FListPlansRequest;
 struct FListPlansResponse;
+struct FListPlatformsRequest;
 struct FListPoisRequest;
 struct FListPoisResponse;
 struct FListQuestDefinitionsRequest;
@@ -727,6 +741,7 @@ struct FListSeedTypesRequest;
 struct FListSeedTypesResponse;
 struct FListSeedsRequest;
 struct FListSeedsResponse;
+struct FListSessionsRequest;
 struct FListSlotsRequest;
 struct FListSlotsResponse;
 struct FListStatusTemplatesRequest;
@@ -822,6 +837,9 @@ struct FObjectiveProgress;
 struct FObjectiveProgressResponse;
 struct FObjectiveRevealBehavior;
 struct FObjectiveType;
+struct FOutputInfo;
+struct FOutputListResponse;
+struct FOutputStatusResponse;
 struct FPageContent;
 struct FPageMetadata;
 struct FPartUploadInfo;
@@ -853,7 +871,14 @@ struct FPitchRange;
 struct FPlanSummary;
 struct FPlanningUrgency;
 struct FPlatform;
+struct FPlatformCallbackRequest;
+struct FPlatformCallbackResponse;
+struct FPlatformLinkInfo;
+struct FPlatformListResponse;
 struct FPlatformMapping;
+struct FPlatformSessionInfo;
+struct FPlatformSessionState;
+struct FPlatformType;
 struct FPlayerRole;
 struct FPoiInteractionResponse;
 struct FPoiInteractionResult;
@@ -971,6 +996,7 @@ struct FRestoreArchiveResponse;
 struct FRestoreBundleRequest;
 struct FRestoreBundleResponse;
 struct FResumeJourneyRequest;
+struct FRetireCameraRequest;
 struct FRevealDiscoveryRequest;
 struct FRevealDiscoveryResponse;
 struct FRewardDefinition;
@@ -1038,9 +1064,14 @@ struct FSelectContentForAreaRequest;
 struct FSendMessageContent;
 struct FSendMessageRequest;
 struct FSentimentCategory;
+struct FSentimentDistribution;
+struct FSentimentEntry;
+struct FSentimentPulseInfo;
 struct FSessionGameType;
 struct FSessionInfo;
+struct FSessionListResponse;
 struct FSessionStatus;
+struct FSessionStatusResponse;
 struct FSessionType;
 struct FSessionsResponse;
 struct FSetActionMappingRequest;
@@ -1066,6 +1097,10 @@ struct FSpectrumType;
 struct FSplitStackRequest;
 struct FSplitStackResponse;
 struct FStackBehavior;
+struct FStartOutputRequest;
+struct FStartOutputResponse;
+struct FStartSessionRequest;
+struct FStartSessionResponse;
 struct FStartWatcherRequest;
 struct FStartWatcherResponse;
 struct FStartWatchersForRealmRequest;
@@ -1078,6 +1113,8 @@ struct FStatusResponse;
 struct FStatusTemplateResponse;
 struct FSteamVerifyRequest;
 struct FStopBroadcastConsentRequest;
+struct FStopOutputRequest;
+struct FStopSessionRequest;
 struct FStopWatcherRequest;
 struct FStopWatcherResponse;
 struct FStorageMode;
@@ -1108,11 +1145,14 @@ struct FTerritoryClaimResponse;
 struct FTerritoryClaimStatus;
 struct FTestScenarioRequest;
 struct FTestScenarioResponse;
+struct FTestSentimentRequest;
+struct FTestSentimentResponse;
 struct FThemeConfig;
 struct FTicketStatus;
 struct FTimeCommitmentType;
 struct FTimeRatioChangeReason;
 struct FTimeSignatureEvent;
+struct FTrackedViewerType;
 struct FTraitAxis;
 struct FTraitSnapshot;
 struct FTraitValue;
@@ -1142,6 +1182,7 @@ struct FUndeprecateModeRequest;
 struct FUndeprecateRelationshipTypeRequest;
 struct FUndeprecateSeedTypeRequest;
 struct FUndeprecateStatusTemplateRequest;
+struct FUnlinkPlatformRequest;
 struct FUnlockContractRequest;
 struct FUnlockContractResponse;
 struct FUnlockLicenseRequest;
@@ -1181,6 +1222,7 @@ struct FUpdateMemberRoleRequest;
 struct FUpdateMode;
 struct FUpdateModeRequest;
 struct FUpdateNormRequest;
+struct FUpdateOutputRequest;
 struct FUpdatePhaseConfigRequest;
 struct FUpdatePositionRequest;
 struct FUpdateProfileRequest;
@@ -2213,6 +2255,32 @@ struct FAnalytics
 };
 
 /**
+ * Camera source announcement with TTL heartbeat
+ */
+USTRUCT(BlueprintType)
+struct FAnnounceCameraRequest
+{
+    GENERATED_BODY()
+
+    /** Unique camera identifier from the game engine */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString CameraId;
+
+    /** RTMP input URL where the camera publishes its stream */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RtmpInputUrl;
+
+    /** Video resolution (e.g., 1920x1080) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Resolution;
+
+    /** Video codec used by the camera source */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Codec;
+
+};
+
+/**
  * Request to send an SDP answer to complete a WebRTC handshake.
  */
 USTRUCT(BlueprintType)
@@ -2767,6 +2835,28 @@ struct FAssetWithDownloadUrl
     /** Complete asset metadata */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FAssetMetadata Metadata;
+
+};
+
+/**
+ * Request to associate a platform session with an in-game stream session
+ */
+USTRUCT(BlueprintType)
+struct FAssociateSessionRequest
+{
+    GENERATED_BODY()
+
+    /** WebSocket session ID for server-side identity resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid WebSocketSessionId;
+
+    /** Platform session to associate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid PlatformSessionId;
+
+    /** In-game stream session ID (opaque, stored without validation) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid StreamSessionId;
 
 };
 
@@ -3971,6 +4061,36 @@ struct FBroadcastConsentStatus
 };
 
 /**
+ * Health status of a broadcast output FFmpeg process
+ */
+USTRUCT(BlueprintType)
+struct FBroadcastHealth
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * Type of broadcast input source
+ */
+USTRUCT(BlueprintType)
+struct FBroadcastSourceType
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * Current state of a broadcast output
+ */
+USTRUCT(BlueprintType)
+struct FBroadcastState
+{
+    GENERATED_BODY()
+
+};
+
+/**
  * Request to get broadcast consent status for a voice room
  */
 USTRUCT(BlueprintType)
@@ -4707,6 +4827,16 @@ struct FCalendarTemplateResponse
     /** Named time spans for display purposes (null if none defined) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FEraLabel> EraLabels;
+
+};
+
+/**
+ * Empty response. 200 OK confirms the camera was announced or refreshed.
+ */
+USTRUCT(BlueprintType)
+struct FCameraAnnounceResponse
+{
+    GENERATED_BODY()
 
 };
 
@@ -14509,6 +14639,20 @@ struct FGetJourneyRequest
 };
 
 /**
+ * Request to get the latest sentiment pulse
+ */
+USTRUCT(BlueprintType)
+struct FGetLatestPulseRequest
+{
+    GENERATED_BODY()
+
+    /** Platform session to query */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid PlatformSessionId;
+
+};
+
+/**
  * Request to get a license definition by board template ID and code
  */
 USTRUCT(BlueprintType)
@@ -14673,6 +14817,20 @@ struct FGetOrCreateContainerRequest
     /** Realm for new container */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> RealmId;
+
+};
+
+/**
+ * Request to get broadcast output status
+ */
+USTRUCT(BlueprintType)
+struct FGetOutputStatusRequest
+{
+    GENERATED_BODY()
+
+    /** Broadcast output to query */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BroadcastId;
 
 };
 
@@ -15263,6 +15421,24 @@ struct FGetSeedsByOwnerRequest
     /** Whether to include archived seeds. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IncludeArchived = false;
+
+};
+
+/**
+ * Request to get platform session status
+ */
+USTRUCT(BlueprintType)
+struct FGetSessionStatusRequest
+{
+    GENERATED_BODY()
+
+    /** WebSocket session ID for server-side identity resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid WebSocketSessionId;
+
+    /** Platform session to query */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid PlatformSessionId;
 
 };
 
@@ -17041,6 +17217,20 @@ struct FKickParticipantRequest
 };
 
 /**
+ * Latest sentiment pulse for a session
+ */
+USTRUCT(BlueprintType)
+struct FLatestPulseResponse
+{
+    GENERATED_BODY()
+
+    /** Most recent sentiment pulse (null if no pulses published yet) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> Pulse;
+
+};
+
+/**
  * Configuration for a specific layer within a map definition
  */
 USTRUCT(BlueprintType)
@@ -17379,6 +17569,46 @@ USTRUCT(BlueprintType)
 struct FLicenseStatus
 {
     GENERATED_BODY()
+
+};
+
+/**
+ * Request to link a streaming platform account
+ */
+USTRUCT(BlueprintType)
+struct FLinkPlatformRequest
+{
+    GENERATED_BODY()
+
+    /** WebSocket session ID for server-side identity resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid WebSocketSessionId;
+
+    /** Streaming platform to link */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FPlatformType Platform;
+
+    /** RTMP URL for Custom platform type. Required when platform is Custom, ignored otherwise. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RtmpUrl;
+
+};
+
+/**
+ * Platform link response. Contains oauthRedirectUrl for OAuth platforms or linkId for Custom RTMP.
+ */
+USTRUCT(BlueprintType)
+struct FLinkPlatformResponse
+{
+    GENERATED_BODY()
+
+    /** Platform link ID. Present when platform type is Custom (link created immediately). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> LinkId;
+
+    /** OAuth redirect URL. Present when platform type requires OAuth (Twitch, YouTube). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OauthRedirectUrl;
 
 };
 
@@ -18553,6 +18783,28 @@ struct FListNormsResponse
 };
 
 /**
+ * Request to list broadcast outputs
+ */
+USTRUCT(BlueprintType)
+struct FListOutputsRequest
+{
+    GENERATED_BODY()
+
+    /** Page number */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Page;
+
+    /** Items per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> PageSize;
+
+    /** Filter to active broadcasts only */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool ActiveOnly = false;
+
+};
+
+/**
  * Request to list participants in a room
  */
 USTRUCT(BlueprintType)
@@ -18603,6 +18855,20 @@ struct FListPlansResponse
     /** Total matching plans */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int32 TotalCount = 0;
+
+};
+
+/**
+ * Request to list linked platforms for the current account
+ */
+USTRUCT(BlueprintType)
+struct FListPlatformsRequest
+{
+    GENERATED_BODY()
+
+    /** WebSocket session ID for server-side identity resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid WebSocketSessionId;
 
 };
 
@@ -19253,6 +19519,28 @@ struct FListSeedsResponse
     /** Total matching seeds across all pages. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int32 TotalCount = 0;
+
+};
+
+/**
+ * Request to list platform sessions
+ */
+USTRUCT(BlueprintType)
+struct FListSessionsRequest
+{
+    GENERATED_BODY()
+
+    /** WebSocket session ID for server-side identity resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid WebSocketSessionId;
+
+    /** Page number */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Page;
+
+    /** Items per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> PageSize;
 
 };
 
@@ -21639,6 +21927,120 @@ struct FObjectiveType
 };
 
 /**
+ * Broadcast output summary (RTMP URL always masked)
+ */
+USTRUCT(BlueprintType)
+struct FOutputInfo
+{
+    GENERATED_BODY()
+
+    /** Broadcast output identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BroadcastId;
+
+    /** Type of broadcast input source */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FBroadcastSourceType SourceType;
+
+    /** Source identifier (camera ID or voice room ID, depending on source type) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SourceId;
+
+    /** RTMP destination URL with stream key masked */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString MaskedRtmpUrl;
+
+    /** Current broadcast state */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FBroadcastState State;
+
+    /** Current active video source in the fallback cascade */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString CurrentVideoSource;
+
+    /** Mesh instance ID of the node running this broadcast */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString OwningInstanceId;
+
+    /** When the broadcast started */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime StartedAt;
+
+    /** FFmpeg process health status */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FBroadcastHealth Health;
+
+};
+
+/**
+ * Paginated list of broadcast outputs
+ */
+USTRUCT(BlueprintType)
+struct FOutputListResponse
+{
+    GENERATED_BODY()
+
+    /** Broadcast outputs (RTMP URLs always masked) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FOutputInfo> Outputs;
+
+    /** Total number of outputs */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 TotalCount = 0;
+
+    /** Current page number */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Page = 0;
+
+    /** Items per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 PageSize = 0;
+
+};
+
+/**
+ * Broadcast output status (RTMP URL always masked)
+ */
+USTRUCT(BlueprintType)
+struct FOutputStatusResponse
+{
+    GENERATED_BODY()
+
+    /** Broadcast output identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BroadcastId;
+
+    /** Type of broadcast input source */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FBroadcastSourceType SourceType;
+
+    /** RTMP destination URL with stream key masked */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString MaskedRtmpUrl;
+
+    /** Current broadcast state */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FBroadcastState State;
+
+    /** Current active video source in the fallback cascade */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString CurrentVideoSource;
+
+    /** Broadcast duration in seconds (null if not active) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Duration;
+
+    /** When the broadcast started */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime StartedAt;
+
+    /** FFmpeg process health status */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FBroadcastHealth Health;
+
+};
+
+/**
  * Full content and metadata for a CMS-managed page
  */
 USTRUCT(BlueprintType)
@@ -22361,6 +22763,86 @@ struct FPlatform
 };
 
 /**
+ * OAuth callback completion request
+ */
+USTRUCT(BlueprintType)
+struct FPlatformCallbackRequest
+{
+    GENERATED_BODY()
+
+    /** WebSocket session ID for server-side identity resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid WebSocketSessionId;
+
+    /** Streaming platform being linked */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FPlatformType Platform;
+
+    /** OAuth authorization code from platform callback */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString AuthorizationCode;
+
+    /** OAuth state token for CSRF verification */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString State;
+
+};
+
+/**
+ * OAuth callback completion response
+ */
+USTRUCT(BlueprintType)
+struct FPlatformCallbackResponse
+{
+    GENERATED_BODY()
+
+    /** Platform link ID created by OAuth flow completion */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LinkId;
+
+};
+
+/**
+ * Platform link summary (tokens never exposed)
+ */
+USTRUCT(BlueprintType)
+struct FPlatformLinkInfo
+{
+    GENERATED_BODY()
+
+    /** Platform link identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LinkId;
+
+    /** Streaming platform type */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FPlatformType Platform;
+
+    /** Platform display name (from OAuth profile or user-provided) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** When the platform was linked */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime LinkedAt;
+
+};
+
+/**
+ * List of linked platforms
+ */
+USTRUCT(BlueprintType)
+struct FPlatformListResponse
+{
+    GENERATED_BODY()
+
+    /** Linked platform accounts (tokens never exposed) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FPlatformLinkInfo> Links;
+
+};
+
+/**
  * Maps an achievement to a platform-specific ID
  */
 USTRUCT(BlueprintType)
@@ -22375,6 +22857,76 @@ struct FPlatformMapping
     /** Platform-specific achievement identifier */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString PlatformAchievementId;
+
+};
+
+/**
+ * Platform session summary
+ */
+USTRUCT(BlueprintType)
+struct FPlatformSessionInfo
+{
+    GENERATED_BODY()
+
+    /** Platform session identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid PlatformSessionId;
+
+    /** Associated platform link */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LinkId;
+
+    /** Streaming platform type */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FPlatformType Platform;
+
+    /** Current session state */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FPlatformSessionState State;
+
+    /** Current approximate viewer count */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 ViewerCount = 0;
+
+    /** Peak viewer count during this session */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> PeakViewerCount;
+
+    /** When the session started */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime StartTime;
+
+    /** Associated in-game stream session ID (opaque, from lib-showtime) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> StreamSessionId;
+
+    /** When the session ended (null if still active) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> EndedAt;
+
+    /** Session duration in seconds (null if still active) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Duration;
+
+};
+
+/**
+ * Current state of a platform streaming session
+ */
+USTRUCT(BlueprintType)
+struct FPlatformSessionState
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * Streaming platform type
+ */
+USTRUCT(BlueprintType)
+struct FPlatformType
+{
+    GENERATED_BODY()
 
 };
 
@@ -25605,6 +26157,20 @@ struct FResumeJourneyRequest
 };
 
 /**
+ * Request to retire a camera source
+ */
+USTRUCT(BlueprintType)
+struct FRetireCameraRequest
+{
+    GENERATED_BODY()
+
+    /** Camera to retire */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString CameraId;
+
+};
+
+/**
  * Request to reveal a discoverable connection to an entity
  */
 USTRUCT(BlueprintType)
@@ -27659,6 +28225,108 @@ struct FSentimentCategory
 };
 
 /**
+ * Distribution of sentiment categories from recent pulse data
+ */
+USTRUCT(BlueprintType)
+struct FSentimentDistribution
+{
+    GENERATED_BODY()
+
+    /** Count of Excited sentiments */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Excited;
+
+    /** Count of Supportive sentiments */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Supportive;
+
+    /** Count of Critical sentiments */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Critical;
+
+    /** Count of Curious sentiments */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Curious;
+
+    /** Count of Surprised sentiments */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Surprised;
+
+    /** Count of Amused sentiments */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Amused;
+
+    /** Count of Bored sentiments */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Bored;
+
+    /** Count of Hostile sentiments */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Hostile;
+
+};
+
+/**
+ * Individual anonymous sentiment data point
+ */
+USTRUCT(BlueprintType)
+struct FSentimentEntry
+{
+    GENERATED_BODY()
+
+    /** Sentiment classification */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FSentimentCategory Category;
+
+    /** Strength of sentiment (0.0 to 1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float Intensity = 0.0f;
+
+    /** Opaque tracking GUID for important viewers (null for anonymous) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> TrackingId;
+
+    /** Category of tracked viewer (null for anonymous) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> ViewerType;
+
+};
+
+/**
+ * Batched anonymous sentiment data from a platform session
+ */
+USTRUCT(BlueprintType)
+struct FSentimentPulseInfo
+{
+    GENERATED_BODY()
+
+    /** Platform session that produced this pulse */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid PlatformSessionId;
+
+    /** Associated in-game stream session (if linked) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> StreamSessionId;
+
+    /** When this pulse was assembled */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime Timestamp;
+
+    /** Configured pulse interval */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 IntervalSeconds = 0;
+
+    /** Platform-reported viewer count (approximate) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 ApproximateViewerCount = 0;
+
+    /** Batched anonymous sentiment entries */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FSentimentEntry> Sentiments;
+
+};
+
+/**
  * Game service stub name for created sessions. Use the game service's stubName property (e.g., "my-game"). Use "generic" for non-game-specific sessions.
  */
 USTRUCT(BlueprintType)
@@ -27703,12 +28371,68 @@ struct FSessionInfo
 };
 
 /**
+ * Paginated list of platform sessions
+ */
+USTRUCT(BlueprintType)
+struct FSessionListResponse
+{
+    GENERATED_BODY()
+
+    /** Platform sessions for the account */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FPlatformSessionInfo> Sessions;
+
+    /** Total number of sessions */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 TotalCount = 0;
+
+    /** Current page number */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Page = 0;
+
+    /** Items per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 PageSize = 0;
+
+};
+
+/**
  * Current status of the game session
  */
 USTRUCT(BlueprintType)
 struct FSessionStatus
 {
     GENERATED_BODY()
+
+};
+
+/**
+ * Platform session status with sentiment distribution
+ */
+USTRUCT(BlueprintType)
+struct FSessionStatusResponse
+{
+    GENERATED_BODY()
+
+    /** Platform session identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid PlatformSessionId;
+
+    /** Current session state */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FPlatformSessionState State;
+
+    /** Current approximate viewer count */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 ViewerCount = 0;
+
+    /** Associated in-game stream session ID */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> StreamSessionId;
+
+    /** Recent sentiment distribution (null if no data yet) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> SentimentDistribution;
 
 };
 
@@ -28271,6 +28995,90 @@ struct FStackBehavior
 };
 
 /**
+ * Request to start a broadcast output
+ */
+USTRUCT(BlueprintType)
+struct FStartOutputRequest
+{
+    GENERATED_BODY()
+
+    /** Type of broadcast input source */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FBroadcastSourceType SourceType;
+
+    /** RTMP destination URL (encrypted for storage, masked in responses) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RtmpUrl;
+
+    /** Camera source ID (required when sourceType is Camera) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString CameraId;
+
+    /** Voice room ID (required when sourceType is VoiceRoom) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> RoomId;
+
+    /** Primary video background URL for audio-only sources */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BackgroundVideoUrl;
+
+    /** Fallback stream URL if primary video fails */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString FallbackStreamUrl;
+
+    /** Fallback image URL if fallback stream fails */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString FallbackImageUrl;
+
+};
+
+/**
+ * Broadcast output start response
+ */
+USTRUCT(BlueprintType)
+struct FStartOutputResponse
+{
+    GENERATED_BODY()
+
+    /** Created broadcast output identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BroadcastId;
+
+};
+
+/**
+ * Request to start a platform streaming session
+ */
+USTRUCT(BlueprintType)
+struct FStartSessionRequest
+{
+    GENERATED_BODY()
+
+    /** WebSocket session ID for server-side identity resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid WebSocketSessionId;
+
+    /** Platform link to start streaming on */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LinkId;
+
+};
+
+/**
+ * Platform session start response
+ */
+USTRUCT(BlueprintType)
+struct FStartSessionResponse
+{
+    GENERATED_BODY()
+
+    /** Created platform session identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid PlatformSessionId;
+
+};
+
+/**
  * Request to start a regional watcher
  */
 USTRUCT(BlueprintType)
@@ -28595,6 +29403,38 @@ struct FStopBroadcastConsentRequest
     /** Session ID of the participant stopping the broadcast */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> SessionId;
+
+};
+
+/**
+ * Request to stop a broadcast output
+ */
+USTRUCT(BlueprintType)
+struct FStopOutputRequest
+{
+    GENERATED_BODY()
+
+    /** Broadcast output to stop */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BroadcastId;
+
+};
+
+/**
+ * Request to stop a platform streaming session
+ */
+USTRUCT(BlueprintType)
+struct FStopSessionRequest
+{
+    GENERATED_BODY()
+
+    /** WebSocket session ID for server-side identity resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid WebSocketSessionId;
+
+    /** Platform session to stop */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid PlatformSessionId;
 
 };
 
@@ -29259,6 +30099,38 @@ struct FTestScenarioResponse
 };
 
 /**
+ * Request to test sentiment classification
+ */
+USTRUCT(BlueprintType)
+struct FTestSentimentRequest
+{
+    GENERATED_BODY()
+
+    /** Text to classify */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Text;
+
+};
+
+/**
+ * Sentiment classification result
+ */
+USTRUCT(BlueprintType)
+struct FTestSentimentResponse
+{
+    GENERATED_BODY()
+
+    /** Classified sentiment category */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FSentimentCategory Category;
+
+    /** Strength of sentiment (0.0 to 1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float Intensity = 0.0f;
+
+};
+
+/**
  * Visual theme configuration including colors, fonts, and navigation
  */
 USTRUCT(BlueprintType)
@@ -29357,6 +30229,16 @@ struct FTimeSignatureEvent
     /** Beat unit (4 = quarter, 8 = eighth) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int32 Denominator = 0;
+
+};
+
+/**
+ * Category of tracked viewers who receive opaque tracking GUIDs. Returner type requires cross-session detection (not available in v1).
+ */
+USTRUCT(BlueprintType)
+struct FTrackedViewerType
+{
+    GENERATED_BODY()
 
 };
 
@@ -30267,6 +31149,24 @@ struct FUndeprecateStatusTemplateRequest
     /** Status template to undeprecate */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid StatusTemplateId;
+
+};
+
+/**
+ * Request to unlink a streaming platform
+ */
+USTRUCT(BlueprintType)
+struct FUnlinkPlatformRequest
+{
+    GENERATED_BODY()
+
+    /** WebSocket session ID for server-side identity resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid WebSocketSessionId;
+
+    /** Platform link to remove */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LinkId;
 
 };
 
@@ -31689,6 +32589,36 @@ struct FUpdateNormRequest
     /** New description (null to keep current) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Description;
+
+};
+
+/**
+ * Request to update a broadcast output configuration
+ */
+USTRUCT(BlueprintType)
+struct FUpdateOutputRequest
+{
+    GENERATED_BODY()
+
+    /** Broadcast output to update */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BroadcastId;
+
+    /** New RTMP destination URL (validated via FFprobe before committing) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RtmpUrl;
+
+    /** New primary video background URL */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BackgroundVideoUrl;
+
+    /** New fallback stream URL */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString FallbackStreamUrl;
+
+    /** New fallback image URL */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString FallbackImageUrl;
 
 };
 

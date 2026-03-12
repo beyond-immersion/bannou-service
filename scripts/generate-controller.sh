@@ -194,7 +194,8 @@ while i < len(lines):
     i += 1
 
 # Generate the controller class content
-controller_content = '''using Microsoft.AspNetCore.Mvc;
+controller_content = '''using BeyondImmersion.BannouService.Services;
+using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -204,9 +205,9 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// Manual implementation for endpoints that require custom logic.
 /// This class extends the generated ${SERVICE_PASCAL}ControllerBase.
 /// </summary>
-public class ${SERVICE_PASCAL}Controller : ${SERVICE_PASCAL}ControllerBase
+public partial class ${SERVICE_PASCAL}Controller : ${SERVICE_PASCAL}ControllerBase
 {
-    public ${SERVICE_PASCAL}Controller(I${SERVICE_PASCAL}Service ${SERVICE_NAME}Service) : base(${SERVICE_NAME}Service)
+    public ${SERVICE_PASCAL}Controller(I${SERVICE_PASCAL}Service ${SERVICE_NAME}Service, ITelemetryProvider telemetryProvider) : base(${SERVICE_NAME}Service, telemetryProvider)
     {
     }
 '''

@@ -3256,7 +3256,7 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
             deprecatedTemplates,
             getEntityId: t => t.TemplateId,
             getDeprecatedAt: t => t.DeprecatedAt,
-            hasActiveInstancesAsync: async (t, ct) =>
+            hasInstancesAsync: async (t, ct) =>
             {
                 // Check template-idx for any contract instances referencing this template
                 var instanceIds = await _listStore.GetAsync(

@@ -26,7 +26,7 @@ public static class DeprecationCleanupHelper
     /// <param name="deprecatedEntities">All currently deprecated entities to evaluate.</param>
     /// <param name="getEntityId">Extracts the entity's unique ID for logging and result reporting.</param>
     /// <param name="getDeprecatedAt">Extracts when the entity was deprecated (null = unknown, always eligible).</param>
-    /// <param name="hasActiveInstancesAsync">Returns true if the entity still has active instances referencing it.</param>
+    /// <param name="hasInstancesAsync">Returns true if the entity still has instances referencing it.</param>
     /// <param name="deleteAndPublishAsync">Deletes the entity from storage, removes indexes, and publishes the *.deleted event.</param>
     /// <param name="gracePeriodDays">Minimum days since deprecation before cleanup. 0 = immediate.</param>
     /// <param name="dryRun">If true, report eligible entities without deleting.</param>
@@ -38,7 +38,7 @@ public static class DeprecationCleanupHelper
         IReadOnlyList<TEntity> deprecatedEntities,
         Func<TEntity, Guid> getEntityId,
         Func<TEntity, DateTimeOffset?> getDeprecatedAt,
-        Func<TEntity, CancellationToken, Task<bool>> hasActiveInstancesAsync,
+        Func<TEntity, CancellationToken, Task<bool>> hasInstancesAsync,
         Func<TEntity, CancellationToken, Task> deleteAndPublishAsync,
         int gracePeriodDays,
         bool dryRun,
@@ -73,7 +73,7 @@ public static class DeprecationCleanupHelper
                 }
 
                 // Instance check: skip if still referenced
-                if (await hasActiveInstancesAsync(entity, ct))
+                if (await hasInstancesAsync(entity, ct))
                 {
                     remaining++;
                     continue;
@@ -113,7 +113,7 @@ public static class DeprecationCleanupHelper
     /// <param name="deprecatedEntities">All currently deprecated entities to evaluate.</param>
     /// <param name="getEntityId">Extracts the entity's string identifier for logging and result reporting.</param>
     /// <param name="getDeprecatedAt">Extracts when the entity was deprecated (null = unknown, always eligible).</param>
-    /// <param name="hasActiveInstancesAsync">Returns true if the entity still has active instances referencing it.</param>
+    /// <param name="hasInstancesAsync">Returns true if the entity still has instances referencing it.</param>
     /// <param name="deleteAndPublishAsync">Deletes the entity from storage, removes indexes, and publishes the *.deleted event.</param>
     /// <param name="gracePeriodDays">Minimum days since deprecation before cleanup. 0 = immediate.</param>
     /// <param name="dryRun">If true, report eligible entities without deleting.</param>
@@ -125,7 +125,7 @@ public static class DeprecationCleanupHelper
         IReadOnlyList<TEntity> deprecatedEntities,
         Func<TEntity, string> getEntityId,
         Func<TEntity, DateTimeOffset?> getDeprecatedAt,
-        Func<TEntity, CancellationToken, Task<bool>> hasActiveInstancesAsync,
+        Func<TEntity, CancellationToken, Task<bool>> hasInstancesAsync,
         Func<TEntity, CancellationToken, Task> deleteAndPublishAsync,
         int gracePeriodDays,
         bool dryRun,
@@ -160,7 +160,7 @@ public static class DeprecationCleanupHelper
                 }
 
                 // Instance check: skip if still referenced
-                if (await hasActiveInstancesAsync(entity, ct))
+                if (await hasInstancesAsync(entity, ct))
                 {
                     remaining++;
                     continue;

@@ -49,16 +49,6 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
     #endregion
 
-    // Event topics
-    private const string PERSONALITY_CREATED_TOPIC = "personality.created";
-    private const string PERSONALITY_UPDATED_TOPIC = "personality.updated";
-    private const string PERSONALITY_EVOLVED_TOPIC = "personality.evolved";
-    private const string PERSONALITY_DELETED_TOPIC = "personality.deleted";
-    private const string COMBAT_PREFERENCES_CREATED_TOPIC = "combat-preferences.created";
-    private const string COMBAT_PREFERENCES_UPDATED_TOPIC = "combat-preferences.updated";
-    private const string COMBAT_PREFERENCES_EVOLVED_TOPIC = "combat-preferences.evolved";
-    private const string COMBAT_PREFERENCES_DELETED_TOPIC = "combat-preferences.deleted";
-
 
     /// <summary>
     /// Initializes the CharacterPersonality service with required dependencies.
@@ -98,7 +88,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Getting personality for character {CharacterId}", body.CharacterId);
 
         {
-            var data = await _personalityStore.GetAsync($"{PERSONALITY_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+            var data = await _personalityStore.GetAsync(BuildPersonalityKey(body.CharacterId), cancellationToken);
 
             if (data == null)
             {
@@ -118,7 +108,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Setting personality for character {CharacterId}", body.CharacterId);
 
         {
-            var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
+            var key = BuildPersonalityKey(body.CharacterId);
             var existing = await _personalityStore.GetAsync(key, cancellationToken);
             var isNew = existing == null;
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -180,7 +170,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Recording experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
             body.CharacterId, body.ExperienceType, body.Intensity);
 
-        var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
+        var key = BuildPersonalityKey(body.CharacterId);
         var (data, etag) = await _personalityStore.GetWithETagAsync(key, cancellationToken);
 
         if (data == null)
@@ -301,7 +291,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             foreach (var characterId in body.CharacterIds)
             {
-                var data = await _personalityStore.GetAsync($"{PERSONALITY_KEY_PREFIX}{characterId}", cancellationToken);
+                var data = await _personalityStore.GetAsync(BuildPersonalityKey(characterId), cancellationToken);
                 if (data != null)
                 {
                     personalities.Add(MapToPersonalityResponse(data));
@@ -333,7 +323,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Deleting personality for character {CharacterId}", body.CharacterId);
 
         {
-            var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
+            var key = BuildPersonalityKey(body.CharacterId);
             var existing = await _personalityStore.GetAsync(key, cancellationToken);
 
             if (existing == null)
@@ -371,7 +361,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Getting combat preferences for character {CharacterId}", body.CharacterId);
 
         {
-            var data = await _combatPreferencesStore.GetAsync($"{COMBAT_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+            var data = await _combatPreferencesStore.GetAsync(BuildCombatKey(body.CharacterId), cancellationToken);
 
             if (data == null)
             {
@@ -391,7 +381,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Setting combat preferences for character {CharacterId}", body.CharacterId);
 
         {
-            var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
+            var key = BuildCombatKey(body.CharacterId);
             var existing = await _combatPreferencesStore.GetAsync(key, cancellationToken);
             var isNew = existing == null;
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -456,7 +446,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Deleting combat preferences for character {CharacterId}", body.CharacterId);
 
         {
-            var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
+            var key = BuildCombatKey(body.CharacterId);
             var existing = await _combatPreferencesStore.GetAsync(key, cancellationToken);
 
             if (existing == null)
@@ -500,7 +490,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         var combatPreferencesDeleted = false;
 
         // Delete personality traits if they exist
-        var personalityKey = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
+        var personalityKey = BuildPersonalityKey(body.CharacterId);
         var existingPersonality = await _personalityStore.GetAsync(personalityKey, cancellationToken);
 
         if (existingPersonality != null)
@@ -520,7 +510,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         }
 
         // Delete combat preferences if they exist
-        var combatKey = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
+        var combatKey = BuildCombatKey(body.CharacterId);
         var existingCombat = await _combatPreferencesStore.GetAsync(combatKey, cancellationToken);
 
         if (existingCombat != null)
@@ -558,7 +548,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Recording combat experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
             body.CharacterId, body.ExperienceType, body.Intensity);
 
-        var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
+        var key = BuildCombatKey(body.CharacterId);
         var (data, etag) = await _combatPreferencesStore.GetWithETagAsync(key, cancellationToken);
 
         if (data == null)
@@ -868,8 +858,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
 
         {
-            var personalityData = await _personalityStore.GetAsync($"{PERSONALITY_KEY_PREFIX}{body.CharacterId}", cancellationToken);
-            var combatData = await _combatPreferencesStore.GetAsync($"{COMBAT_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+            var personalityData = await _personalityStore.GetAsync(BuildPersonalityKey(body.CharacterId), cancellationToken);
+            var combatData = await _combatPreferencesStore.GetAsync(BuildCombatKey(body.CharacterId), cancellationToken);
 
             // Return 404 only if BOTH are missing
             if (personalityData == null && combatData == null)
@@ -936,7 +926,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         // Restore personality traits if present in archive
         if (archiveData.HasPersonality && archiveData.Personality != null)
         {
-            var personalityKey = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
+            var personalityKey = BuildPersonalityKey(body.CharacterId);
 
             var data = new PersonalityData
             {
@@ -960,7 +950,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         // Restore combat preferences if present in archive
         if (archiveData.HasCombatPreferences && archiveData.CombatPreferences != null)
         {
-            var combatKey = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
+            var combatKey = BuildCombatKey(body.CharacterId);
 
             var data = new CombatPreferencesData
             {

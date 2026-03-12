@@ -125,6 +125,46 @@ x-state-stores:
     service: Voice
     purpose: Distributed locks for broadcast consent and room mutations
 
+  # ============================================================================
+  # Broadcast Stores
+  # ============================================================================
+
+  broadcast-platforms:
+    backend: mysql
+    table: broadcast_platforms
+    service: Broadcast
+    purpose: Platform link records (account, platform type, encrypted OAuth tokens, display name)
+
+  broadcast-sessions:
+    backend: redis
+    prefix: broadcast-sess
+    service: Broadcast
+    purpose: Active platform session state and tracked viewer mappings
+
+  broadcast-sentiment-buffer:
+    backend: redis
+    prefix: broadcast-sent
+    service: Broadcast
+    purpose: Buffered sentiment entries awaiting batch publication and webhook rate limit counters
+
+  broadcast-outputs:
+    backend: redis
+    prefix: broadcast-out
+    service: Broadcast
+    purpose: Authoritative broadcast output state (source type, encrypted RTMP URL, FFmpeg PID, health)
+
+  broadcast-cameras:
+    backend: redis
+    prefix: broadcast-cam
+    service: Broadcast
+    purpose: Camera sources with TTL heartbeat (RTMP input URL, resolution, codec)
+
+  broadcast-lock:
+    backend: redis
+    prefix: "broadcast:lock"
+    service: Broadcast
+    purpose: Distributed locks for platform linking, session, broadcast, sentiment, token refresh, webhook management
+
   asset-statestore:
     backend: redis
     prefix: asset

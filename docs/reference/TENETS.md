@@ -200,7 +200,7 @@ Tenets are organized into categories based on when they're needed:
 | **T9** | Multi-Instance Safety | No in-memory authoritative state; use distributed locks |
 | **T17** | Client Event Schema Pattern | Use IClientEventPublisher for WebSocket push; not IMessageBus |
 | **T30** | Telemetry Span Instrumentation | All async methods get `StartActivity` spans; zero-signature-change via `Activity.Current` ambient context |
-| **T31** | Deprecation Lifecycle | Two categories (definitions vs templates); idempotent deprecation; standardized storage/events/behavior; Category B clean-deprecated sweep for safe deletion; no deprecation on instances |
+| **T31** | Deprecation Lifecycle | Two categories (definitions vs templates); idempotent deprecation; standardized storage/events/behavior; Category B clean-deprecated sweep for safe deletion; no deprecation on instances. Marker interfaces: `IDeprecateAndMergeEntity` (Cat A), `ICleanDeprecatedEntity` (Cat B). See [Helpers § Category B Deprecation Template](HELPERS-AND-COMMON-PATTERNS.md#15-category-b-deprecation-template) for implementation patterns |
 
 ---
 
@@ -340,7 +340,7 @@ Tenets are organized into categories based on when they're needed:
 | Adding null checks for NRT-protected params | T12 | Don't add - NRT provides compile-time safety |
 | Wrong naming pattern (method, model, event, topic) | T16 | Follow category-specific pattern in T16 |
 | Non-PascalCase enum value in schema (`two_party`, `ACTIVE`, `jsonPath`) | T1, T16 | Use PascalCase: `TwoParty`, `Active`, `JsonPath` (see SCHEMA-RULES.md) |
-| Service name embedded in event topic entity via hyphens (Pattern B) | T16 | Use dot-separated namespace: `transit-connection.created` → `transit.connection.created` (Pattern C) |
+| Service name embedded in event topic entity via hyphens (Pattern B) | T16 | Use dot-separated namespace: `transit-connection.created` → `transit.connection.created` (Pattern C). Does NOT apply to hyphenated service names — `character-history.backstory.deleted` is correct (service = `character-history`); see SCHEMA-RULES.md § Topic Naming Convention |
 | Underscores in event topic strings | T16 | Use kebab-case: `currency.exchange_rate.updated` → `currency.exchange-rate.updated` |
 | Client event `eventName` missing entity dot for multi-entity service | T16 | Use Pattern C: `chat.message-received` → `chat.message.received` (message is a real API entity) |
 | Client event model missing `ClientEvent` suffix | T16 | Use `{Entity}{Action}ClientEvent` to avoid collision with service event names |
@@ -394,7 +394,9 @@ Tenets are organized into categories based on when they're needed:
 | Category B deprecate endpoint returning 409 for "already deprecated" | T31 | Return `OK` (idempotent); remove 409 from schema (B3) |
 | Category B entity missing `includeDeprecated` on list endpoint | T31 | Add `includeDeprecated` boolean parameter, `default: false` (B8) |
 | Category B entity missing `reason` in deprecate request | T31 | Add optional `reason` field, `maxLength: 500`, nullable (B2) |
-| Category B entity using hyphenated topic naming | T16, T31 | Use dot-separated Pattern C: `service.entity.action` (B11) |
+| Category B entity using hyphenated topic naming | T16, T31 | Use dot-separated Pattern C: `service.entity.action` (B11). Does NOT apply to hyphenated service names (e.g., `character-encounter.encounter-type.created` is correct) |
+| Category B entity missing `instanceEntity` in `x-lifecycle` | T31 | Add `instanceEntity: EntityName` naming the instance lifecycle entity in the same events file (B10a–B10b) |
+| Category B `instanceEntity` referencing non-lifecycle entity | T31 | The named entity must be an x-lifecycle entity in the same events file with full CRUD (including `*.deleted`) |
 | Category B entity missing `clean-deprecated` endpoint | T31 | Add `POST /{service}/{entity}/clean-deprecated` with shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` (B17–B19) |
 | Category B clean-deprecated with non-admin permissions | T31 | Use `x-permissions: [role: admin]` — cleanup deletes data (B18) |
 | Category B clean-deprecated not using `DeprecationCleanupHelper` | T31 | Use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` for standardized sweep (B20) |

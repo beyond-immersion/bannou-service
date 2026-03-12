@@ -213,7 +213,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
 
         // Verify event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "game.session.created",
+            "game-session.created",
             It.IsAny<object>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -606,7 +606,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
 
         // Verify event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "game.session.player-joined",
+            "game-session.player-joined",
             It.IsAny<object>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -942,7 +942,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((topic, evt, _) =>
             {
-                if (topic == "game.session.player-joined")
+                if (topic == "game-session.player-joined")
                 {
                     capturedTopic = topic;
                     capturedEvent = evt;
@@ -960,7 +960,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Equal(PlayerRole.Player, response.PlayerRole);
 
         // Verify player-joined event published with correct data
-        Assert.Equal("game.session.player-joined", capturedTopic);
+        Assert.Equal("game-session.player-joined", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<GameSessionPlayerJoinedEvent>(capturedEvent);
         Assert.Equal(gameSessionId, typedEvent.SessionId);
@@ -1373,7 +1373,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((topic, evt, _) =>
             {
-                if (topic == "game.session.player-left")
+                if (topic == "game-session.player-left")
                 {
                     capturedTopic = topic;
                     capturedEvent = evt;
@@ -1388,7 +1388,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify player-left event with Kicked=false
-        Assert.Equal("game.session.player-left", capturedTopic);
+        Assert.Equal("game-session.player-left", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<GameSessionPlayerLeftEvent>(capturedEvent);
         Assert.Equal(gameSessionId, typedEvent.SessionId);
@@ -1817,7 +1817,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((topic, evt, _) =>
             {
-                if (topic == "game.session.player-left")
+                if (topic == "game-session.player-left")
                 {
                     capturedTopic = topic;
                     capturedEvent = evt;
@@ -1832,7 +1832,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify player-left event with Kicked=true and reason
-        Assert.Equal("game.session.player-left", capturedTopic);
+        Assert.Equal("game-session.player-left", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<GameSessionPlayerLeftEvent>(capturedEvent);
         Assert.Equal(sessionId, typedEvent.SessionId);
@@ -2471,7 +2471,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
 
-        Assert.Equal("game.session.action.performed", capturedTopic);
+        Assert.Equal("game-session.action.performed", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<GameSessionActionPerformedEvent>(capturedEvent);
         Assert.Equal(lobbyId, typedEvent.SessionId);

@@ -17,12 +17,9 @@ The Achievement plugin (L4 GameFeatures) provides a multi-entity achievement and
 | Dependent | Relationship |
 |-----------|-------------|
 | Game clients (via Connect) | Receive `achievement.progress.unlocked` and `achievement.progress.milestone-reached` client events via WebSocket push |
+| lib-quest (via DI) | Discovers `AchievementPrerequisiteProviderFactory` via `IEnumerable<IPrerequisiteProviderFactory>` for dynamic prerequisite validation |
 
 The Achievement plugin is primarily a leaf service — it reacts to external events. Game clients receive unlock and progress milestone notifications via the Connect service's client event push system (IEntitySessionRegistry). Achievement also participates in the Quest prerequisite system via `IPrerequisiteProviderFactory`, enabling quests to require specific achievements before acceptance.
-
-| Dependent | Relationship |
-|-----------|-------------|
-| lib-quest (via DI) | Discovers `AchievementPrerequisiteProviderFactory` via `IEnumerable<IPrerequisiteProviderFactory>` for dynamic prerequisite validation |
 
 ## Configuration
 
@@ -96,17 +93,14 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 | Xbox sync provider | Stub | `XboxAchievementSync` exists but `IsConfigured=false` and returns "not implemented". Skipped by service layer. Configuration properties (`XboxClientId`, `XboxClientSecret`) are defined in schema but unused - scaffolding for future implementation <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/585 --> |
 | PlayStation sync provider | Stub | `PlayStationAchievementSync` exists but `IsConfigured=false` and returns "not implemented". Skipped by service layer. Configuration properties (`PlayStationClientId`, `PlayStationClientSecret`) are defined in schema but unused - scaffolding for future implementation <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/587 --> |
 | Internal sync provider | Active | `InternalAchievementSync` is a no-op provider (`IsConfigured=true`) for internal-only achievements |
-| ~~Per-entity sync history tracking~~ | ~~Not implemented~~ | **FIXED** (2026-03-08) — Added `achievement-sync` Redis state store with `PlatformSyncTrackingData` model. `RecordSyncOutcomeAsync` tracks sync outcomes with ETag-based optimistic concurrency. `GetPlatformSyncStatusAsync` now reads real data. `PendingCount` remains null (sync is immediate success/failure, no pending concept). |
 | TotalEligibleEntities population | Not implemented | Field exists on definition but is never written to by any endpoint; rarity calc only works when manually populated <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/581 --> |
 | `SetProgressAsync` on platforms | Not called | IPlatformAchievementSync defines it, SteamAchievementSync implements it, but the service only calls `UnlockAsync` (never syncs incremental progress) <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/592 --> |
 | `CleanDeprecatedAchievementDefinitionsAsync` | Not implemented | `POST /achievement/definition/clean-deprecated` is schema-defined and generated (controller, interface) but the service method throws `NotImplementedException`. Should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` per T31 B20-B22. Sweeps deprecated definitions with zero remaining progress records. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. `x-permissions: [role: admin]`. |
 
 ## Potential Extensions
 
-- ~~**Sync history store**~~: **FIXED** (2026-03-08) — `achievement-sync` Redis state store added with `PlatformSyncTrackingData` model, `SyncHistoryTtlSeconds` and `SyncStatusRetryAttempts` configuration properties, and `RecordSyncOutcomeAsync` helper with ETag retry logic.
 - **TotalEligibleEntities automation**: Subscribe to subscription/account lifecycle events to maintain accurate eligible entity counts for rarity <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/581 -->
 - **Progressive platform sync**: Call `SetProgressAsync` when progress updates occur (not just on unlock), enabling Steam stats to track incremental progress <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/592 -->
-- ~~**Achievement groups/categories**~~: **FIXED** (2026-03-08) — Added nullable `category` string field (opaque, game-defined, max 100 chars) to `CreateAchievementDefinitionRequest`, `UpdateAchievementDefinitionRequest`, `AchievementDefinitionResponse`, `ListAchievementDefinitionsRequest` (as filter), `AchievementDefinitionData` (internal model), and lifecycle events. Category is a Category B opaque string (game designers define values at deployment time).
 - **Leaderboard integration on unlock**: Publish achievement points to a leaderboard for gamerscore-style rankings
  <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/596 -->
 
@@ -128,15 +122,9 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 
 5. **Orphaned progress data**: Since definitions cannot be deleted (Category B), progress records may reference deprecated definitions. Orphaned entries are filtered at read time by verifying each definition still exists.
 
-6. **Client milestone events at configurable thresholds**: Progress milestone client events fire at configurable percentage thresholds (default: 25%, 50%, 75%) via `ProgressMilestonePercents` configuration. violation: values are parsed from string array at runtime — should be defined as a typed array in the configuration schema.
+6. **Client milestone events at configurable thresholds**: Progress milestone client events fire at configurable percentage thresholds (default: 25%, 50%, 75%) via `ProgressMilestonePercents` configuration. Schema defines it as a typed integer array (`type: array`, `items: type: integer`); the "(comma-separated in env var)" note refers to standard environment variable serialization, not a schema typing issue.
 
 ### Design Considerations (Requires Planning)
-
-- ~~**Missing `IPrerequisiteProviderFactory` implementation**~~: **FIXED** (2026-03-05) — Implemented `AchievementPrerequisiteProviderFactory` in `Providers/`. Registered as singleton via `AchievementServicePlugin.ConfigureServices`. Provider name: `"achievement"`. Checks entity progress for unlock status given `gameServiceId` (required parameter) and optional `entityType` (defaults to Character).
-
-- ~~**No lib-resource cleanup for entity deletion**~~: **FIXED** (2026-03-06) — Added `x-references` targeting `character` with `sourceType: achievement-progress`. Cleanup endpoint `/achievement/cleanup-by-character` deletes progress across all game services. References registered on first progress creation for Character entities. Cleanup callbacks registered via `AchievementServicePlugin.OnRunningAsync`.
-
-- ~~**Write endpoints with empty x-permissions**~~: **RESOLVED** (2026-03-06) — Investigation of issue #580 revealed that `x-permissions: []` does NOT mean "anonymous WebSocket access." It means "not exposed to WebSocket clients at all" — the endpoint is excluded from the permission matrix, receives no session GUID, and is reachable only via lib-mesh (service-to-service). The `[]` on `UpdateAchievementProgress` and `UnlockAchievement` is correct: these are called by event handlers via lib-mesh. The root cause was a misleading comment in SCHEMA-RULES.md (`# Explicitly public (rare)`) that has been corrected.
 
 - **TotalEligibleEntities never populated**: The rarity calculation background worker depends on `TotalEligibleEntities > 0`, but this field is never written by any endpoint. The rarity percentage calculation branch will never execute, making the rarity system effectively dead code until this field is automated or manually populated.
  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/581 -->
@@ -147,19 +135,13 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 - **Platform sync is fire-and-forget on unlock**: When `AutoSyncOnUnlock=true`, platform syncs happen inline during unlock but failures don't prevent the local unlock from succeeding. Retry logic exists but if all retries fail, the sync is marked failed in the event and the achievement stays locally unlocked but not synced. No retry queue exists for permanently failed syncs.
  <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/583 -->
 
-- ~~**GetPlatformSyncStatus returns hardcoded zeros**~~: **FIXED** (2026-03-08) — Added `achievement-sync` Redis state store (`PlatformSyncTrackingData`) tracking per-entity per-platform sync outcomes. `RecordSyncOutcomeAsync` records success/failure counts with ETag-based concurrency. `GetPlatformSyncStatusAsync` reads real data from the sync store. Configuration: `SyncHistoryTtlSeconds` (default 0), `SyncStatusRetryAttempts` (default 3). `PendingCount` remains null as sync is synchronous (no queuing).
-
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
 ### Completed
 
-- **2026-03-08**: Achievement groups/categories — Added nullable `category` string field across schema, lifecycle events, internal model, and service logic (create, update, list filter, response mapping)
-- **2026-03-08**: [#584](https://github.com/beyond-immersion/bannou-service/issues/584) — Per-entity sync history tracking via `achievement-sync` Redis store with `RecordSyncOutcomeAsync` ETag retry logic
-- **2026-03-06**: [#580](https://github.com/beyond-immersion/bannou-service/issues/580) — review: `x-permissions: []` is correct (service-to-service only); root cause was misleading SCHEMA-RULES.md documentation, now fixed
-- **2026-03-06**: [#579](https://github.com/beyond-immersion/bannou-service/issues/579) — lib-resource cleanup for character entity deletion
-- **2026-03-05**: [#578](https://github.com/beyond-immersion/bannou-service/issues/578) — Implemented `AchievementPrerequisiteProviderFactory` for Quest prerequisite validation
+(All previously completed items verified and cleaned up on 2026-03-12)
 
 ### Active
 - [#581](https://github.com/beyond-immersion/bannou-service/issues/581) — TotalEligibleEntities automation for rarity calculation

@@ -2316,7 +2316,7 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
             deprecatedTemplates,
             getEntityId: t => t.BoardTemplateId,
             getDeprecatedAt: t => t.DeprecatedAt,
-            hasActiveInstancesAsync: async (t, ct) =>
+            hasInstancesAsync: async (t, ct) =>
             {
                 // Check if any board instances reference this template
                 var boards = await _boardStore.QueryAsync(

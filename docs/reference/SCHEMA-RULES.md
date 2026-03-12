@@ -171,17 +171,23 @@ Defined in `{service}-events.yaml`, generates CRUD lifecycle events automaticall
 ```yaml
 x-lifecycle:
   topic_prefix: myservice              # Optional: enables Pattern C namespaced topics
-  EntityName:
+  TemplateEntity:
     deprecation: true                  # Optional: auto-injects isDeprecated/deprecatedAt/deprecationReason
+    instanceEntity: InstanceEntity     # Required when deprecation: true (Category B) — names the
+                                       # lifecycle entity representing instances of this template.
+                                       # Must be an x-lifecycle entity in the same file.
     model:
-      entityId: { type: string, format: uuid, primary: true, required: true }
+      templateId: { type: string, format: uuid, primary: true, required: true }
       name: { type: string, required: true }
-      createdAt: { type: string, format: date-time, required: true }
-    sensitive: [passwordHash, secretKey]  # Fields excluded from events
-    resource_mapping:                      # Optional: enables Puppetmaster watch subscriptions
-      resource_type: entity                # Defaults to entity name in kebab-case
-      resource_id_field: entityId          # Defaults to primary key field
-      source_type: entity                  # Defaults to entity name in kebab-case
+    sensitive: [secretKey]             # Fields excluded from events
+    resource_mapping:                  # Optional: enables Puppetmaster watch subscriptions
+      resource_type: entity            # Defaults to entity name in kebab-case
+      resource_id_field: entityId      # Defaults to primary key field
+      source_type: entity              # Defaults to entity name in kebab-case
+  InstanceEntity:                      # The instance lifecycle entity referenced above
+    model:
+      instanceId: { type: string, format: uuid, primary: true, required: true }
+      templateId: { type: string, format: uuid, required: true }
 ```
 
 **`topic_prefix`** controls how lifecycle event topics are derived (see [Topic Naming Convention](#topic-naming-convention)):
@@ -192,6 +198,8 @@ x-lifecycle:
   - Otherwise: prepends with dot (e.g., `worldstate.calendar-template.created` from `CalendarTemplate` with `topic_prefix: worldstate`)
 
 **When to use `topic_prefix`**: Required for multi-entity services (services with more than one entity type in `x-lifecycle`) and for any entity whose kebab-case name embeds the service name via hyphens (Pattern B is forbidden — see Topic Naming Convention).
+
+**Hyphenated service names**: When a service has a hyphenated name (e.g., `save-load`), the `topic_prefix` must use the full hyphenated name: `topic_prefix: save-load`, NOT `save.load`. The prefix is the service identity, not a dot-separated namespace. Without `topic_prefix`, the lifecycle generator derives the prefix from the service name (file name minus `-events.yaml`), which automatically preserves hyphens (e.g., `game-session-events.yaml` → prefix `game-session`).
 
 **Generated output** (`schemas/Generated/{service}-lifecycle-events.yaml`):
 - `EntityNameCreatedEvent` - Full entity data (sensitive fields excluded)
@@ -205,6 +213,8 @@ All three generated events use `allOf` with `BaseServiceEvent` (producing C# inh
 If `resource_mapping` is specified, each generated event includes `x-resource-mapping` for Puppetmaster watch subscriptions.
 
 **`deprecation`**: If `deprecation: true` is set on an entity, three fields are auto-injected into all lifecycle events: `isDeprecated` (bool, required), `deprecatedAt` (date-time, nullable), `deprecationReason` (string, nullable, maxLength 500). Manual definitions of these fields in the model block are stripped and replaced by the auto-injected versions. The `IDeprecatableEntity` interface (from `BeyondImmersion.Bannou.Core`) is added to the generated C# partial classes. The structural test `LifecycleModels_DoNotContainAutoInjectedDeprecationFields` validates that no manual deprecation fields exist in `x-lifecycle` model blocks when `deprecation: true` is set. For full deprecation lifecycle rules (Category A/B classification, required endpoints, storage, behavioral rules), see [IMPLEMENTATION-BEHAVIOR.md § Tenet 31](tenets/IMPLEMENTATION-BEHAVIOR.md#tenet-31-deprecation-lifecycle-mandatory). For copy-paste schema and implementation templates, see [HELPERS-AND-COMMON-PATTERNS § 15](HELPERS-AND-COMMON-PATTERNS.md#15-category-b-deprecation-template).
+
+**`instanceEntity`**: Required when `deprecation: true` is set on a Category B entity (content templates). Names the x-lifecycle entity in the same events file that represents instances of this template. The clean-deprecated sweep uses reverse-index instance counts to determine when a deprecated template has zero remaining instances and can be permanently deleted. If instances cannot be deleted (no lifecycle `*.deleted` event), cleanup can never succeed. By requiring `instanceEntity` to reference an x-lifecycle entity in the same file, the structural test `DeprecatableEntities_MustDeclareInstanceEntity` guarantees the instance entity has full CRUD lifecycle events including deletion capability. Category A entities (world-building definitions with merge semantics) are exempt — they use `x-references` for delete eligibility, not instance counts.
 
 **NEVER manually define `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent`** - use `x-lifecycle` instead.
 
@@ -254,9 +264,11 @@ info:
       handler: HandleAccountDeleted
 ```
 
-- `topic`: RabbitMQ routing key
+- `topic`: RabbitMQ routing key — must match exactly what the producing service publishes. Verify against the producer's `x-event-publications` in their `*-events.yaml`, or their implementation map's Events Published table.
 - `event`: Event model class name. Must be a valid C# class in the `BeyondImmersion.BannouService.Events` namespace — generated from any `*-events.yaml` or `common-events.yaml` schema. The generator validates that the type exists in at least one event schema's `components/schemas` section at generation time.
 - `handler`: Handler method name (without `Async` suffix)
+
+**How cross-service event resolution works**: The `event` field is a **class name**, not a `$ref`. When `broadcast-events.yaml` declares `event: VoiceBroadcastApprovedEvent`, the generator searches ALL `*-events.yaml` schemas (including `voice-events.yaml`) for a matching `components/schemas` entry. The type is already generated into the shared `BeyondImmersion.BannouService.Events` namespace by the producing service's event generation step. The consuming service does NOT need to redefine the event model inline — doing so would create duplicate C# types. This is the same mechanism that lets `achievement-events.yaml` subscribe to `AnalyticsScoreUpdatedEvent` (defined in `analytics-events.yaml`) and `auth-events.yaml` subscribe to `AccountDeletedEvent` (defined in `account-events.yaml`) without any inline copies.
 
 **Generated output**: `{Service}ServiceEvents.cs` (one-time template with `RegisterEventConsumers` method and handler stubs; never overwritten if the file already exists).
 
@@ -895,6 +907,8 @@ All API schemas MUST use `servers: [{ url: http://localhost:5012 }]`. NSwag gene
 
 Each `{service}-events.yaml` MUST contain ONLY canonical definitions for events that service PUBLISHES. **No `$ref` references to other service event files** (causes duplicate types).
 
+**This rule applies to `$ref` in schema definitions only — NOT to `x-event-subscriptions`.** The `x-event-subscriptions` mechanism references consumed event types by **class name**, not by `$ref`. The generator resolves these names across all `*-events.yaml` schemas at generation time (see [x-event-subscriptions](#x-event-subscriptions-event-handler-generation)). Consuming a cross-service event requires only a topic and class name entry in `x-event-subscriptions` — never an inline copy of the event model, and never a `$ref` to the producing service's event schema. Inline redefinition of consumed event models causes the exact same duplicate-type problem that `$ref` would.
+
 ### Topic Naming Convention
 
 Event topics use **two patterns** depending on whether a service owns one entity type or multiple:
@@ -940,12 +954,35 @@ chat-participant.joined           # → use chat.participant.joined
 inventory-container.full          # → use inventory.container.full
 
 # CORRECT Pattern A (no service prefix — entity stands alone)
-game-session.player-joined        # game-session IS the entity, not a prefix
+game-session.player-joined        # game-session IS the service name, not a prefix
 combat-preferences.evolved        # entity name independent of service name
 encounter.memory.faded            # encounter IS the entity, memory is sub-entity
 ```
 
-**The litmus test**: If the topic entity starts with `{service-name}-{sub-entity}`, it's Pattern B and must become `{service-name}.{sub-entity}.{action}` (Pattern C). If the entity name does NOT embed the publishing service's name, it's Pattern A and is correct as-is.
+**The litmus test**: If a single-word service name appears as the first segment of a hyphenated entity (e.g., `transit-connection` for service `transit`), it's Pattern B and must become `{service}.{entity}.{action}` (Pattern C). If the entity name does NOT embed the publishing service's name, it's Pattern A and is correct as-is.
+
+**Hyphenated service names are NOT Pattern B.** Several services have multi-word hyphenated names: `character-history`, `character-encounter`, `character-personality`, `realm-history`, `game-session`, `game-service`, `save-load`. The hyphen is part of the service identity — it is NOT a separator between service name and entity name. Topics for these services preserve the full hyphenated name:
+
+```
+# CORRECT: hyphenated service names preserved as-is
+character-history.backstory.deleted    # service = character-history, entity = backstory
+character-history.participation.recorded
+character-encounter.encounter-type.created
+realm-history.lore.created             # service = realm-history, entity = lore
+game-session.created                   # service = game-session (Pattern A lifecycle)
+game-session.player-joined             # service = game-session (Pattern A action)
+game-session.action.performed          # service = game-session (Pattern C sub-entity)
+game-service.created                   # service = game-service (Pattern A lifecycle)
+save-load.save-slot.created            # service = save-load, entity = save-slot
+
+# WRONG: splitting hyphenated service names into dots
+character.history.backstory.deleted    # ← confuses service name with Pattern C namespace
+realm.history.lore.created             # ← "realm" is a DIFFERENT service (lib-realm)
+game.session.created                   # ← "game" is not a service
+save.load.save-slot.created            # ← "save" is not a service
+```
+
+**How to tell the difference**: Check `plugins/lib-{name}/`. If `lib-character-history` exists as a plugin directory, then `character-history` is the service name and the hyphen is preserved. Pattern B only applies when a single-word service name (like `transit`, `actor`, `chat`) is concatenated with an entity name via hyphen.
 
 **All parts use kebab-case** (lowercase with hyphens for multi-word segments). No underscores in topic strings.
 
@@ -1213,6 +1250,29 @@ Every enum mapping in the codebase falls into one of these categories:
 - **V3 — String Where Enum Should Be**: Schema field typed as `string` when valid values are a finite, system-owned set. Fix: define an enum.
 - **V4 — Internal Model Duplicates API Enum**: `*ServiceModels.cs` defines an enum identical to the generated API enum. Fix: use the generated enum directly.
 - **V5 — String Configuration for Enum Values**: Configuration uses a string parsed at runtime into enum values. Fix: use typed enum in configuration schema.
+
+### When Inline Redefinition of Types Is Correct (Exhaustive)
+
+**"Redefine inline" means creating a separate but structurally identical (or similar) type definition in a service's own schema instead of using `$ref` to the original.** This is almost always wrong — it creates duplicate C# types, breaks type identity, and causes serialization mismatches. The correct approaches, in priority order, are:
+
+1. **`$ref` to the owning schema** — the default. Events `$ref` types from their own service's `-api.yaml`. Configuration `$ref` enums from `-api.yaml`. This is the normal case.
+
+2. **`$ref` to `common-api.yaml` or `common-events.yaml`** — when the type is used by 3+ services or is an identity-boundary concept (T32). Promotion is triggered when a third consumer appears.
+
+3. **Class name reference (no `$ref`, no inline copy)** — for `x-event-subscriptions` consuming cross-service events. The generator resolves the event type by name across all event schemas. No schema-level reference or inline copy is needed.
+
+**Inline redefinition is reserved for exactly two boundary situations:**
+
+| Boundary | When | Example |
+|----------|------|---------|
+| **A2 — Plugin/SDK boundary** | A plugin defines its own schema enum and maps to/from a domain SDK enum (MusicTheory, StorylineTheory, ABML) at the service layer. The SDK enum cannot be schema-defined because it belongs to a standalone computation library exempt from schema-first (T1). | `music-api.yaml` defines `KeySignatureMode`; `MusicService.cs` maps it to `MusicTheory.KeySignatureMode` |
+| **Cross-service schema boundary** | Two services need the same concept but cannot `$ref` each other's API files, AND the type does not meet the 3-service threshold for `common-api.yaml` promotion. | Two L4 services both need a 4-value status enum; each defines its own with a documented relationship in the `description` field |
+
+**Everything else uses `$ref` or name-based resolution.** In particular:
+
+- **Consumed event models are NEVER redefined inline.** Use the `event` class name in `x-event-subscriptions`. The producing service's event schema generates the type; the consuming service uses it by name.
+- **Shared response/request shapes are NEVER redefined inline.** If two services need the same model, the type moves to `common-api.yaml`. Cross-service `$ref` between API schemas (e.g., `$ref: 'other-service-api.yaml#/...'`) is not supported — `common-api.yaml` is the only shared API type source.
+- **"Cannot `$ref` other service event files"** (see [Canonical Definitions Only](#canonical-definitions-only)) means you do not put `$ref: 'voice-events.yaml#/...'` in your event schema definitions. It does NOT mean you copy the event model into your own schema. The resolution mechanism for consumed events is name-based, not reference-based.
 
 ### Enum Value Casing (PascalCase ONLY)
 

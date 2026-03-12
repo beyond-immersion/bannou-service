@@ -712,4 +712,23 @@ public class AchievementServiceTests
     }
 
     #endregion
+
+    #region Enum Boundary Mapping Validation
+
+    /// <summary>
+    /// Validates that the DI provider vocabulary for EntityType covers all enum values.
+    /// AchievementPrerequisiteProviderFactory receives entity type strings from provider
+    /// dictionaries and maps them via MapByNameOrDefault.
+    /// </summary>
+    [Fact]
+    public void EntityType_ProviderVocabulary_CoversAllValues()
+    {
+        // DI provider dictionaries pass entity types as lowercase strings
+        EnumMappingValidator.AssertStringToEnumCoverage<EntityType>(
+            "system", "account", "character", "actor", "guild", "organization",
+            "government", "faction", "location", "realm", "item", "monster",
+            "relationship", "session", "deity", "dungeon", "custom", "other");
+    }
+
+    #endregion
 }

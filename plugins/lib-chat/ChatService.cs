@@ -2815,7 +2815,7 @@ public partial class ChatService : IChatService, ICleanDeprecatedEntity
             deprecatedResults,
             getEntityId: r => BuildDeterministicGuid(r.Key),
             getDeprecatedAt: r => r.Value.DeprecatedAt,
-            hasActiveInstancesAsync: async (r, ct) =>
+            hasInstancesAsync: async (r, ct) =>
             {
                 // Check if any rooms reference this room type code
                 var roomCount = await _roomStore.JsonCountAsync(

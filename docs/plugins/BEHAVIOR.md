@@ -6,6 +6,7 @@
 > **Layer**: GameFeatures
 > **State Store**: behavior-statestore (Redis), agent-memories (Redis, shared with lib-actor)
 > **Short**: ABML compiler (YAML to bytecode), A*-based GOAP planner, and 5-stage cognition pipeline
+> **Implementation Map**: [docs/maps/BEHAVIOR.md](../maps/BEHAVIOR.md)
 
 ---
 

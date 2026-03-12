@@ -123,6 +123,61 @@ namespace Bannou
         /** Verify MFA code during login */
         constexpr const TCHAR* AuthVerifyMfa = TEXT("POST:/auth/mfa/verify");
 
+        // Broadcast Service
+        /** Link a streaming platform account */
+        constexpr const TCHAR* BroadcastLinkPlatform = TEXT("POST:/broadcast/platform/link");
+
+        /** Complete OAuth platform linking */
+        constexpr const TCHAR* BroadcastPlatformCallback = TEXT("POST:/broadcast/platform/callback");
+
+        /** Unlink a streaming platform */
+        constexpr const TCHAR* BroadcastUnlinkPlatform = TEXT("POST:/broadcast/platform/unlink");
+
+        /** List linked platforms for the current account */
+        constexpr const TCHAR* BroadcastListPlatforms = TEXT("POST:/broadcast/platform/list");
+
+        /** Start a platform streaming session */
+        constexpr const TCHAR* BroadcastStartSession = TEXT("POST:/broadcast/session/start");
+
+        /** Stop a platform streaming session */
+        constexpr const TCHAR* BroadcastStopSession = TEXT("POST:/broadcast/session/stop");
+
+        /** Associate a platform session with an in-game stream session */
+        constexpr const TCHAR* BroadcastAssociateSession = TEXT("POST:/broadcast/session/associate");
+
+        /** Get platform session status */
+        constexpr const TCHAR* BroadcastGetSessionStatus = TEXT("POST:/broadcast/session/status");
+
+        /** List platform sessions for the current account */
+        constexpr const TCHAR* BroadcastListSessions = TEXT("POST:/broadcast/session/list");
+
+        /** Announce or heartbeat a camera source */
+        constexpr const TCHAR* BroadcastAnnounceCamera = TEXT("POST:/broadcast/camera/announce");
+
+        /** Retire a camera source */
+        constexpr const TCHAR* BroadcastRetireCamera = TEXT("POST:/broadcast/camera/retire");
+
+        /** Start a broadcast output */
+        constexpr const TCHAR* BroadcastStartOutput = TEXT("POST:/broadcast/output/start");
+
+        /** Stop a broadcast output */
+        constexpr const TCHAR* BroadcastStopOutput = TEXT("POST:/broadcast/output/stop");
+
+        /** Update a broadcast output configuration */
+        constexpr const TCHAR* BroadcastUpdateOutput = TEXT("POST:/broadcast/output/update");
+
+        /** Get broadcast output status */
+        constexpr const TCHAR* BroadcastGetOutputStatus = TEXT("POST:/broadcast/output/status");
+
+        /** List broadcast outputs */
+        constexpr const TCHAR* BroadcastListOutputs = TEXT("POST:/broadcast/output/list");
+
+        /** Get the latest sentiment pulse for a session */
+        constexpr const TCHAR* BroadcastGetLatestPulse = TEXT("POST:/broadcast/admin/pulse/latest");
+
+        /** Test sentiment classification */
+        constexpr const TCHAR* BroadcastTestSentiment = TEXT("POST:/broadcast/admin/sentiment/test");
+
         // Bundles Service
         /** Create asset bundle from multiple assets */
         constexpr const TCHAR* AssetCreateBundle = TEXT("POST:/bundles/create");
@@ -1869,6 +1924,150 @@ namespace Bannou
                 TEXT("FMfaVerifyRequest"),
                 TEXT("FAuthResponse"),
                 TEXT("Verify MFA code during login")
+            });
+            Registry.Add(TEXT("BroadcastLinkPlatform"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/platform/link"),
+                TEXT("broadcast"),
+                TEXT("FLinkPlatformRequest"),
+                TEXT("FLinkPlatformResponse"),
+                TEXT("Link a streaming platform account")
+            });
+            Registry.Add(TEXT("BroadcastPlatformCallback"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/platform/callback"),
+                TEXT("broadcast"),
+                TEXT("FPlatformCallbackRequest"),
+                TEXT("FPlatformCallbackResponse"),
+                TEXT("Complete OAuth platform linking")
+            });
+            Registry.Add(TEXT("BroadcastUnlinkPlatform"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/platform/unlink"),
+                TEXT("broadcast"),
+                TEXT("FUnlinkPlatformRequest"),
+                TEXT(""),
+                TEXT("Unlink a streaming platform")
+            });
+            Registry.Add(TEXT("BroadcastListPlatforms"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/platform/list"),
+                TEXT("broadcast"),
+                TEXT("FListPlatformsRequest"),
+                TEXT("FPlatformListResponse"),
+                TEXT("List linked platforms for the current account")
+            });
+            Registry.Add(TEXT("BroadcastStartSession"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/session/start"),
+                TEXT("broadcast"),
+                TEXT("FStartSessionRequest"),
+                TEXT("FStartSessionResponse"),
+                TEXT("Start a platform streaming session")
+            });
+            Registry.Add(TEXT("BroadcastStopSession"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/session/stop"),
+                TEXT("broadcast"),
+                TEXT("FStopSessionRequest"),
+                TEXT(""),
+                TEXT("Stop a platform streaming session")
+            });
+            Registry.Add(TEXT("BroadcastAssociateSession"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/session/associate"),
+                TEXT("broadcast"),
+                TEXT("FAssociateSessionRequest"),
+                TEXT(""),
+                TEXT("Associate a platform session with an in-game stream session")
+            });
+            Registry.Add(TEXT("BroadcastGetSessionStatus"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/session/status"),
+                TEXT("broadcast"),
+                TEXT("FGetSessionStatusRequest"),
+                TEXT("FSessionStatusResponse"),
+                TEXT("Get platform session status")
+            });
+            Registry.Add(TEXT("BroadcastListSessions"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/session/list"),
+                TEXT("broadcast"),
+                TEXT("FListSessionsRequest"),
+                TEXT("FSessionListResponse"),
+                TEXT("List platform sessions for the current account")
+            });
+            Registry.Add(TEXT("BroadcastAnnounceCamera"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/camera/announce"),
+                TEXT("broadcast"),
+                TEXT("FAnnounceCameraRequest"),
+                TEXT("FCameraAnnounceResponse"),
+                TEXT("Announce or heartbeat a camera source")
+            });
+            Registry.Add(TEXT("BroadcastRetireCamera"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/camera/retire"),
+                TEXT("broadcast"),
+                TEXT("FRetireCameraRequest"),
+                TEXT(""),
+                TEXT("Retire a camera source")
+            });
+            Registry.Add(TEXT("BroadcastStartOutput"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/output/start"),
+                TEXT("broadcast"),
+                TEXT("FStartOutputRequest"),
+                TEXT("FStartOutputResponse"),
+                TEXT("Start a broadcast output")
+            });
+            Registry.Add(TEXT("BroadcastStopOutput"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/output/stop"),
+                TEXT("broadcast"),
+                TEXT("FStopOutputRequest"),
+                TEXT(""),
+                TEXT("Stop a broadcast output")
+            });
+            Registry.Add(TEXT("BroadcastUpdateOutput"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/output/update"),
+                TEXT("broadcast"),
+                TEXT("FUpdateOutputRequest"),
+                TEXT(""),
+                TEXT("Update a broadcast output configuration")
+            });
+            Registry.Add(TEXT("BroadcastGetOutputStatus"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/output/status"),
+                TEXT("broadcast"),
+                TEXT("FGetOutputStatusRequest"),
+                TEXT("FOutputStatusResponse"),
+                TEXT("Get broadcast output status")
+            });
+            Registry.Add(TEXT("BroadcastListOutputs"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/output/list"),
+                TEXT("broadcast"),
+                TEXT("FListOutputsRequest"),
+                TEXT("FOutputListResponse"),
+                TEXT("List broadcast outputs")
+            });
+            Registry.Add(TEXT("BroadcastGetLatestPulse"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/admin/pulse/latest"),
+                TEXT("broadcast"),
+                TEXT("FGetLatestPulseRequest"),
+                TEXT("FLatestPulseResponse"),
+                TEXT("Get the latest sentiment pulse for a session")
+            });
+            Registry.Add(TEXT("BroadcastTestSentiment"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/broadcast/admin/sentiment/test"),
+                TEXT("broadcast"),
+                TEXT("FTestSentimentRequest"),
+                TEXT("FTestSentimentResponse"),
+                TEXT("Test sentiment classification")
             });
             Registry.Add(TEXT("AssetCreateBundle"), FEndpointInfo{
                 TEXT("POST"),

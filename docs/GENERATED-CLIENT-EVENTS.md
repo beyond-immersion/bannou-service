@@ -26,6 +26,11 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `AuthPasswordChangedClientEvent` | `auth.password-changed` | Sent to all sessions when the account's password is reset. |
 | `AuthSessionTerminatedClientEvent` | `auth.session-terminated` | Sent to remaining sessions when a session is remotely termin... |
 | `AuthSuspiciousLoginClientEvent` | `auth.suspicious-login` | Sent to all sessions when a failed login attempt occurs with... |
+| `BroadcastOutputSourceChangedClientEvent` | `broadcast.output.source-changed` | Sent to the broadcasting user when the active video source c... |
+| `BroadcastOutputStartedClientEvent` | `broadcast.output.started` | Sent to the broadcasting user when a broadcast output starts |
+| `BroadcastOutputStoppedClientEvent` | `broadcast.output.stopped` | Sent to the broadcasting user when a broadcast output stops |
+| `BroadcastSessionEndedClientEvent` | `broadcast.session.ended` | Sent to the user when their platform streaming session ends |
+| `BroadcastSessionStartedClientEvent` | `broadcast.session.started` | Sent to the user when their platform streaming session start... |
 | `CharacterRealmTransferredClientEvent` | `character.realm-transferred` | Published when a character is transferred to a different rea... |
 | `CharacterUpdatedClientEvent` | `character.updated` | Published when a character's state changes (death, name chan... |
 | `ChatMessageDeletedClientEvent` | `chat.message.deleted` | Sent to room participants when a message is deleted. |
@@ -52,14 +57,14 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `CurrencyBalanceChangedClientEvent` | `currency.balance.changed` | Sent to the wallet owner when any balance mutation occurs: c... |
 | `CurrencyWalletFrozenClientEvent` | `currency.wallet.frozen` | Sent to the wallet owner when their wallet is frozen (escrow... |
 | `CurrencyWalletUnfrozenClientEvent` | `currency.wallet.unfrozen` | Sent to the wallet owner when their wallet is unfrozen and u... |
-| `GameActionResultClientEvent` | `game.session.action-result` | Sent to relevant players when a game action produces results... |
-| `SessionChatReceivedClientEvent` | `game.session.chat-received` | Sent to recipients when a chat message is posted in the sess... |
-| `PlayerJoinedClientEvent` | `game.session.player-joined` | Sent to all session participants when a new player joins. |
-| `PlayerKickedClientEvent` | `game.session.player-kicked` | Sent to all session participants when a player is kicked. |
-| `PlayerLeftClientEvent` | `game.session.player-left` | Sent to all session participants when a player leaves volunt... |
-| `SessionCancelledClientEvent` | `game.session.session-cancelled` | Sent to players who claimed their reservation when a matchma... |
-| `SessionStateChangedClientEvent` | `game.session.state-changed` | Sent to all session participants when the session state chan... |
-| `GameStateUpdatedClientEvent` | `game.session.state-updated` | Sent when game state changes that all players should see. |
+| `GameActionResultClientEvent` | `game-session.action-result` | Sent to relevant players when a game action produces results... |
+| `SessionChatReceivedClientEvent` | `game-session.chat-received` | Sent to recipients when a chat message is posted in the sess... |
+| `PlayerJoinedClientEvent` | `game-session.player-joined` | Sent to all session participants when a new player joins. |
+| `PlayerKickedClientEvent` | `game-session.player-kicked` | Sent to all session participants when a player is kicked. |
+| `PlayerLeftClientEvent` | `game-session.player-left` | Sent to all session participants when a player leaves volunt... |
+| `SessionCancelledClientEvent` | `game-session.session-cancelled` | Sent to players who claimed their reservation when a matchma... |
+| `SessionStateChangedClientEvent` | `game-session.state-changed` | Sent to all session participants when the session state chan... |
+| `GameStateUpdatedClientEvent` | `game-session.state-updated` | Sent when game state changes that all players should see. |
 | `InventoryContainerFullClientEvent` | `inventory.container.full` | Sent to sessions observing a container owner when one of the... |
 | `InventoryItemChangedClientEvent` | `inventory.item.changed` | Sent to sessions observing a container owner when an item is... |
 | `InventoryItemTransferredClientEvent` | `inventory.item.transferred` | Sent to sessions observing either the source or target conta... |
@@ -385,6 +390,80 @@ Sent to all sessions when a failed login attempt occurs with a known account.
 | `attemptCount` | Number of failed attempts in the current rate-limi |
 | `ipAddress` | IP address of the failed login attempt |
 | `userAgent` | User agent string from the failed login request |
+
+---
+
+## Broadcast Client Events
+
+Server-to-client WebSocket push events for Broadcast service. Published via IClientEventPublisher, delivered to connected clients through Connect service.
+
+### `BroadcastOutputSourceChangedClientEvent`
+
+**Event Name**: `broadcast.output.source-changed`
+
+Sent to the broadcasting user when the active video source changes (fallback cascade)
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `broadcastId` | Broadcast output identifier |
+| `currentSource` | New active video source after fallback |
+| `previousSource` | Previous active video source |
+
+### `BroadcastOutputStartedClientEvent`
+
+**Event Name**: `broadcast.output.started`
+
+Sent to the broadcasting user when a broadcast output starts
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `broadcastId` | Broadcast output identifier |
+| `maskedRtmpUrl` | RTMP destination URL with stream key masked |
+| `sourceType` | Type of broadcast input source |
+
+### `BroadcastOutputStoppedClientEvent`
+
+**Event Name**: `broadcast.output.stopped`
+
+Sent to the broadcasting user when a broadcast output stops
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `broadcastId` | Broadcast output identifier |
+| `reason` | Reason the output was stopped (e.g., manual stop,  |
+
+### `BroadcastSessionEndedClientEvent`
+
+**Event Name**: `broadcast.session.ended`
+
+Sent to the user when their platform streaming session ends
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `duration` | Session duration in seconds |
+| `peakViewerCount` | Peak viewer count during the session |
+| `platformSessionId` | Platform session identifier |
+
+### `BroadcastSessionStartedClientEvent`
+
+**Event Name**: `broadcast.session.started`
+
+Sent to the user when their platform streaming session starts
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `platform` | Streaming platform type |
+| `platformSessionId` | Platform session identifier |
 
 ---
 
@@ -853,7 +932,7 @@ Server-to-client push events for the Game Session service. These events notify c
 
 ### `GameActionResultClientEvent`
 
-**Event Name**: `game.session.action-result`
+**Event Name**: `game-session.action-result`
 
 Sent to relevant players when a game action produces results.
 
@@ -871,7 +950,7 @@ Sent to relevant players when a game action produces results.
 
 ### `SessionChatReceivedClientEvent`
 
-**Event Name**: `game.session.chat-received`
+**Event Name**: `game-session.chat-received`
 
 Sent to recipients when a chat message is posted in the session.
 
@@ -889,7 +968,7 @@ Sent to recipients when a chat message is posted in the session.
 
 ### `PlayerJoinedClientEvent`
 
-**Event Name**: `game.session.player-joined`
+**Event Name**: `game-session.player-joined`
 
 Sent to all session participants when a new player joins.
 
@@ -904,7 +983,7 @@ Sent to all session participants when a new player joins.
 
 ### `PlayerKickedClientEvent`
 
-**Event Name**: `game.session.player-kicked`
+**Event Name**: `game-session.player-kicked`
 
 Sent to all session participants when a player is kicked.
 
@@ -919,7 +998,7 @@ Sent to all session participants when a player is kicked.
 
 ### `PlayerLeftClientEvent`
 
-**Event Name**: `game.session.player-left`
+**Event Name**: `game-session.player-left`
 
 Sent to all session participants when a player leaves voluntarily.
 
@@ -935,7 +1014,7 @@ Sent to all session participants when a player leaves voluntarily.
 
 ### `SessionCancelledClientEvent`
 
-**Event Name**: `game.session.session-cancelled`
+**Event Name**: `game-session.session-cancelled`
 
 Sent to players who claimed their reservation when a matchmade session
 
@@ -948,7 +1027,7 @@ Sent to players who claimed their reservation when a matchmade session
 
 ### `SessionStateChangedClientEvent`
 
-**Event Name**: `game.session.state-changed`
+**Event Name**: `game-session.state-changed`
 
 Sent to all session participants when the session state changes.
 
@@ -964,7 +1043,7 @@ Sent to all session participants when the session state changes.
 
 ### `GameStateUpdatedClientEvent`
 
-**Event Name**: `game.session.state-updated`
+**Event Name**: `game-session.state-updated`
 
 Sent when game state changes that all players should see.
 
@@ -1471,8 +1550,8 @@ Published on period-changed boundaries, ratio changes, admin clock advancement, 
 
 ## Summary
 
-- **Total event types**: 79
-- **Services with events**: 17
+- **Total event types**: 84
+- **Services with events**: 18
 
 ---
 

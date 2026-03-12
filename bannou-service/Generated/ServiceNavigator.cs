@@ -16,6 +16,7 @@ using BeyondImmersion.BannouService.Analytics;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Broadcast;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
@@ -96,6 +97,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IAssetClient _asset;
     private readonly IAuthClient _auth;
     private readonly IBehaviorClient _behavior;
+    private readonly IBroadcastClient _broadcast;
     private readonly ICharacterClient _character;
     private readonly ICharacterEncounterClient _characterEncounter;
     private readonly ICharacterHistoryClient _characterHistory;
@@ -161,6 +163,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IAssetClient asset,
         IAuthClient auth,
         IBehaviorClient behavior,
+        IBroadcastClient broadcast,
         ICharacterClient character,
         ICharacterEncounterClient characterEncounter,
         ICharacterHistoryClient characterHistory,
@@ -222,6 +225,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _asset = asset;
         _auth = auth;
         _behavior = behavior;
+        _broadcast = broadcast;
         _character = character;
         _characterEncounter = characterEncounter;
         _characterHistory = characterHistory;
@@ -343,6 +347,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IBehaviorClient Behavior => _behavior;
+
+    /// <inheritdoc />
+    public IBroadcastClient Broadcast => _broadcast;
 
     /// <inheritdoc />
     public ICharacterClient Character => _character;

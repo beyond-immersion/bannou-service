@@ -17,6 +17,7 @@ public sealed class BannouClientEvents
     private AchievementEventSubscriptions? _achievement;
     private AssetEventSubscriptions? _asset;
     private AuthEventSubscriptions? _auth;
+    private BroadcastEventSubscriptions? _broadcast;
     private CharacterEventSubscriptions? _character;
     private ChatEventSubscriptions? _chat;
     private CollectionEventSubscriptions? _collection;
@@ -54,6 +55,12 @@ public sealed class BannouClientEvents
     /// </summary>
     public AuthEventSubscriptions Auth =>
         _auth ??= new AuthEventSubscriptions(_client);
+
+    /// <summary>
+    /// Event subscriptions for Broadcast service.
+    /// </summary>
+    public BroadcastEventSubscriptions Broadcast =>
+        _broadcast ??= new BroadcastEventSubscriptions(_client);
 
     /// <summary>
     /// Event subscriptions for Character service.

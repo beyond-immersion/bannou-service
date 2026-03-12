@@ -2603,7 +2603,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             deprecatedDefinitions,
             getEntityId: d => d.ScenarioId,
             getDeprecatedAt: d => d.DeprecatedAt,
-            hasActiveInstancesAsync: async (d, ct) =>
+            hasInstancesAsync: async (d, ct) =>
             {
                 // Check if any scenario executions with Active status reference this definition
                 var executions = await _scenarioExecutionStore.QueryAsync(

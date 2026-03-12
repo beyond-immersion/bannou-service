@@ -98,34 +98,6 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
 
 ---
 
-## Dependents (What Relies On This Plugin)
-
-| Dependent | Relationship |
-|-----------|-------------|
-| lib-broadcast (L3, future) | Subscribes to `voice.broadcast.approved` to start RTMP output; subscribes to `voice.broadcast.stopped` to stop; reads RTP audio endpoint from tier-upgraded events |
-| lib-showtime (L4, future) | Subscribes to `voice.room.created`/`voice.room.deleted` for broadcast-voice coordination; subscribes to participant events for audience context adjustments |
-
-> **Hierarchy note**: GameSession (L2) previously depended on Voice via `IVoiceClient` -- this was a hierarchy violation (L2 cannot depend on L3). The dependency has been removed. Voice now manages its own room lifecycle independently, and higher-layer services (lib-showtime at L4) will orchestrate voice-broadcast coordination via event subscriptions. The new dependency flow is clean: lib-showtime (L4) soft-depends on lib-voice (L3), which is permitted by the hierarchy.
-
----
-
-## Type Field Classification
-
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `tier` | C (System State/Mode) | `VoiceTier` enum (`P2P`, `Scaled`) | Communication infrastructure tier; system topology choice, not game content |
-| `codec` | C (System State/Mode) | `VoiceCodec` enum (`Opus`, `G711`, `G722`) | Audio codec selection; system infrastructure choice |
-| `broadcastState` / `state` | C (System State/Mode) | `BroadcastConsentState` enum (`Inactive`, `Pending`, `Approved`) | Tracks position in the broadcast consent state machine |
-| `reason` (VoiceRoomDeletedEvent) | C (System State/Mode) | `VoiceRoomDeletedReason` enum (`Manual`, `Empty`, `Error`) | Classifies the cause of room deletion; system lifecycle reason |
-| `reason` (VoiceRoomBroadcastStoppedEvent) | C (System State/Mode) | `VoiceBroadcastStoppedReason` enum (`ConsentRevoked`, `RoomClosed`, `Manual`, `Error`) | Classifies the cause of broadcast termination; system lifecycle reason |
-
-**Notes**:
-- Voice service has no `EntityType` enum fields (Category A). Participants are identified by `sessionId` (WebSocket session UUID), not by entity type polymorphism. This is a deliberate privacy-first design -- session IDs prevent leaking account information.
-- Voice service has no opaque string type fields (Category B). It is game-agnostic with no game-configurable content types.
-- All type fields are Category C (system state/mode), reflecting Voice's nature as a pure infrastructure primitive.
-
----
-
 ## The Broadcast Consent Flow
 
 **This is a load-bearing privacy boundary.** Voice rooms contain personal audio data. Broadcasting that audio to an external platform requires explicit, informed consent from every participant.
@@ -180,6 +152,17 @@ Each participant calls /voice/room/broadcast/consent
 - The broadcast status is visible to all room participants
 - Silence is not consent: unanswered consent requests auto-decline after `BroadcastConsentTimeoutSeconds`
 - Voice does not distinguish "Approved" from "Broadcasting" -- once all consent, what happens with the audio is lib-broadcast's domain
+
+---
+
+## Dependents (What Relies On This Plugin)
+
+| Dependent | Relationship |
+|-----------|-------------|
+| lib-broadcast (L3, future) | Subscribes to `voice.broadcast.approved` to start RTMP output; subscribes to `voice.broadcast.stopped` to stop; reads RTP audio endpoint from tier-upgraded events |
+| lib-showtime (L4, future) | Subscribes to `voice.room.created`/`voice.room.deleted` for broadcast-voice coordination; subscribes to participant events for audience context adjustments |
+
+> **Hierarchy note**: GameSession (L2) previously depended on Voice via `IVoiceClient` -- this was a hierarchy violation (L2 cannot depend on L3). The dependency has been removed. Voice now manages its own room lifecycle independently, and higher-layer services (lib-showtime at L4) will orchestrate voice-broadcast coordination via event subscriptions. The new dependency flow is clean: lib-showtime (L4) soft-depends on lib-voice (L3), which is permitted by the hierarchy.
 
 ---
 
@@ -345,6 +328,23 @@ SHOWTIME_SERVICE_ENABLED=true
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/548 -->
 8. **NPC voice integration**: When combined with text-to-speech services, NPC dialogue could be delivered through voice rooms. A dungeon master's commands to their dungeon could be vocalized. This would require voice rooms to accept synthetic audio sources alongside human participants.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/549 -->
+
+---
+
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `tier` | C (System State/Mode) | `VoiceTier` enum (`P2P`, `Scaled`) | Communication infrastructure tier; system topology choice, not game content |
+| `codec` | C (System State/Mode) | `VoiceCodec` enum (`Opus`, `G711`, `G722`) | Audio codec selection; system infrastructure choice |
+| `broadcastState` / `state` | C (System State/Mode) | `BroadcastConsentState` enum (`Inactive`, `Pending`, `Approved`) | Tracks position in the broadcast consent state machine |
+| `reason` (VoiceRoomDeletedEvent) | C (System State/Mode) | `VoiceRoomDeletedReason` enum (`Manual`, `Empty`, `Error`) | Classifies the cause of room deletion; system lifecycle reason |
+| `reason` (VoiceRoomBroadcastStoppedEvent) | C (System State/Mode) | `VoiceBroadcastStoppedReason` enum (`ConsentRevoked`, `RoomClosed`, `Manual`, `Error`) | Classifies the cause of broadcast termination; system lifecycle reason |
+
+**Notes**:
+- Voice service has no `EntityType` enum fields (Category A). Participants are identified by `sessionId` (WebSocket session UUID), not by entity type polymorphism. This is a deliberate privacy-first design -- session IDs prevent leaking account information.
+- Voice service has no opaque string type fields (Category B). It is game-agnostic with no game-configurable content types.
+- All type fields are Category C (system state/mode), reflecting Voice's nature as a pure infrastructure primitive.
 
 ---
 

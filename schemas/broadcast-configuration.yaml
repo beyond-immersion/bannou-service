@@ -1,0 +1,223 @@
+openapi: 3.0.4
+info:
+  title: Broadcast Service Configuration
+  description: |
+    Configuration schema for Broadcast service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    BroadcastEnabled:
+      type: boolean
+      description: Master feature flag for the entire broadcast service
+      env: BROADCAST_ENABLED
+      default: false
+    TwitchClientId:
+      type: string
+      description: Twitch OAuth application client ID (null disables Twitch integration)
+      env: BROADCAST_TWITCH_CLIENT_ID
+      nullable: true
+    TwitchClientSecret:
+      type: string
+      description: Twitch OAuth application client secret
+      env: BROADCAST_TWITCH_CLIENT_SECRET
+      nullable: true
+    TwitchWebhookSecret:
+      type: string
+      description: Twitch EventSub webhook signing secret for HMAC-SHA256 validation
+      env: BROADCAST_TWITCH_WEBHOOK_SECRET
+      nullable: true
+    YouTubeClientId:
+      type: string
+      description: YouTube OAuth application client ID (null disables YouTube integration)
+      env: BROADCAST_YOUTUBE_CLIENT_ID
+      nullable: true
+    YouTubeClientSecret:
+      type: string
+      description: YouTube OAuth application client secret
+      env: BROADCAST_YOUTUBE_CLIENT_SECRET
+      nullable: true
+    YouTubeWebhookVerificationToken:
+      type: string
+      description: YouTube webhook verification token for push notification callbacks
+      env: BROADCAST_YOUTUBE_WEBHOOK_TOKEN
+      nullable: true
+    TokenEncryptionKey:
+      type: string
+      description: AES-256 encryption key for OAuth token storage (null disables token encryption)
+      env: BROADCAST_TOKEN_ENCRYPTION_KEY
+      nullable: true
+      minLength: 32
+    SentimentPulseIntervalSeconds:
+      type: integer
+      description: How often sentiment pulses are published (seconds)
+      env: BROADCAST_SENTIMENT_PULSE_INTERVAL_SECONDS
+      default: 15
+      minimum: 1
+      maximum: 300
+    SentimentMinBatchSize:
+      type: integer
+      description: Minimum sentiments before publishing a pulse
+      env: BROADCAST_SENTIMENT_MIN_BATCH_SIZE
+      default: 5
+      minimum: 1
+    SentimentMaxBatchSize:
+      type: integer
+      description: Maximum sentiments per pulse (overflow drops lowest-intensity)
+      env: BROADCAST_SENTIMENT_MAX_BATCH_SIZE
+      default: 200
+      minimum: 1
+      maximum: 10000
+    WebhookMaxEventsPerSessionPerMinute:
+      type: integer
+      description: Defense-in-depth rate limit for webhook events per platform session per minute
+      env: BROADCAST_WEBHOOK_MAX_EVENTS_PER_SESSION_PER_MINUTE
+      default: 600
+      minimum: 1
+      maximum: 100000
+    MaxTrackedViewersPerSession:
+      type: integer
+      description: Maximum tracked viewers with opaque GUIDs per session
+      env: BROADCAST_MAX_TRACKED_VIEWERS_PER_SESSION
+      default: 50
+      minimum: 0
+      maximum: 10000
+    TrackedViewerEngagementThreshold:
+      type: number
+      description: Minimum engagement score for HighEngager tracking (0.0 to 1.0)
+      env: BROADCAST_TRACKED_VIEWER_ENGAGEMENT_THRESHOLD
+      default: 0.7
+      minimum: 0.0
+      maximum: 1.0
+    TrackSubscribers:
+      type: boolean
+      description: Whether platform subscribers get tracking GUIDs
+      env: BROADCAST_TRACK_SUBSCRIBERS
+      default: true
+    TrackModerators:
+      type: boolean
+      description: Whether platform moderators get tracking GUIDs
+      env: BROADCAST_TRACK_MODERATORS
+      default: true
+    TrackRaidLeaders:
+      type: boolean
+      description: Whether raid leaders get tracking GUIDs
+      env: BROADCAST_TRACK_RAID_LEADERS
+      default: true
+    SessionHistoryRetentionHours:
+      type: integer
+      description: Hours to retain ended session records (default 1 week)
+      env: BROADCAST_SESSION_HISTORY_RETENTION_HOURS
+      default: 168
+      minimum: 1
+    OutputEnabled:
+      type: boolean
+      description: Feature flag for RTMP output capabilities
+      env: BROADCAST_OUTPUT_ENABLED
+      default: false
+    FfmpegPath:
+      type: string
+      description: Path to FFmpeg binary
+      env: BROADCAST_FFMPEG_PATH
+      default: /usr/bin/ffmpeg
+    DefaultBackgroundVideo:
+      type: string
+      description: Default video background for audio-only outputs
+      env: BROADCAST_DEFAULT_BACKGROUND_VIDEO
+      default: /opt/bannou/backgrounds/default.mp4
+    MaxConcurrentOutputs:
+      type: integer
+      description: Maximum simultaneous FFmpeg output processes
+      env: BROADCAST_MAX_CONCURRENT_OUTPUTS
+      default: 10
+      minimum: 1
+      maximum: 100
+    OutputAudioCodec:
+      $ref: 'broadcast-api.yaml#/components/schemas/AudioCodec'
+      description: Audio codec for RTMP output (LGPL-compliant only)
+      env: BROADCAST_OUTPUT_AUDIO_CODEC
+      default: Aac
+    OutputAudioBitrate:
+      type: string
+      description: Audio bitrate for RTMP output (e.g., 128k, 192k)
+      env: BROADCAST_OUTPUT_AUDIO_BITRATE
+      default: 128k
+    OutputVideoCodec:
+      $ref: 'broadcast-api.yaml#/components/schemas/VideoCodec'
+      description: Video codec for RTMP output (LGPL-compliant only, GPL codecs excluded)
+      env: BROADCAST_OUTPUT_VIDEO_CODEC
+      default: LibVpx
+    OutputRestartOnFailure:
+      type: boolean
+      description: Auto-restart FFmpeg process on crash
+      env: BROADCAST_OUTPUT_RESTART_ON_FAILURE
+      default: true
+    OutputHealthCheckIntervalSeconds:
+      type: integer
+      description: FFmpeg health check frequency (seconds)
+      env: BROADCAST_OUTPUT_HEALTH_CHECK_INTERVAL_SECONDS
+      default: 10
+      minimum: 1
+      maximum: 3600
+    RtmpProbeTimeoutSeconds:
+      type: integer
+      description: FFprobe timeout for RTMP URL validation (seconds)
+      env: BROADCAST_RTMP_PROBE_TIMEOUT_SECONDS
+      default: 5
+      minimum: 1
+      maximum: 60
+    AutoBroadcastCameraId:
+      type: string
+      description: Camera ID to auto-broadcast on startup (null disables auto-broadcast)
+      env: BROADCAST_AUTO_BROADCAST_CAMERA_ID
+      nullable: true
+    AutoBroadcastRtmpUrl:
+      type: string
+      description: RTMP destination for auto-broadcast (null disables auto-broadcast)
+      env: BROADCAST_AUTO_BROADCAST_RTMP_URL
+      nullable: true
+    DistributedLockTimeoutSeconds:
+      type: integer
+      description: Timeout for distributed lock acquisition (seconds)
+      env: BROADCAST_DISTRIBUTED_LOCK_TIMEOUT_SECONDS
+      default: 30
+      minimum: 1
+      maximum: 300
+    TokenRefreshIntervalTwitchSeconds:
+      type: integer
+      description: Twitch OAuth token refresh interval (seconds, default 4 hours)
+      env: BROADCAST_TOKEN_REFRESH_INTERVAL_TWITCH_SECONDS
+      default: 14400
+      minimum: 60
+    TokenRefreshIntervalYouTubeSeconds:
+      type: integer
+      description: YouTube OAuth token refresh interval (seconds, default 1 hour)
+      env: BROADCAST_TOKEN_REFRESH_INTERVAL_YOUTUBE_SECONDS
+      default: 3600
+      minimum: 60
+    WebhookRenewalIntervalSeconds:
+      type: integer
+      description: How often to verify and renew platform webhook subscriptions (seconds)
+      env: BROADCAST_WEBHOOK_RENEWAL_INTERVAL_SECONDS
+      default: 3600
+      minimum: 60
+    SessionCleanupIntervalSeconds:
+      type: integer
+      description: How often to purge expired session records (seconds)
+      env: BROADCAST_SESSION_CLEANUP_INTERVAL_SECONDS
+      default: 3600
+      minimum: 60
+    WebhookManagerLockTimeoutSeconds:
+      type: integer
+      description: TTL for the webhook manager singleton lock (must be less than renewal deadline)
+      env: BROADCAST_WEBHOOK_MANAGER_LOCK_TIMEOUT_SECONDS
+      default: 300
+      minimum: 10
+      maximum: 1800

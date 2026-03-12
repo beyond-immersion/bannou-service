@@ -192,4 +192,138 @@ public static class EnumMappingValidator
                 string.Join("\n", failures.Select(f => $"  - {f}")));
         }
     }
+
+    /// <summary>
+    /// Validates a string-to-enum boundary where external strings (ABML YAML tokens,
+    /// DI provider dictionaries, user-supplied frontmatter, processing options) are mapped
+    /// to enum values via <c>EnumMapping</c> string overloads (<c>MapByName</c>,
+    /// <c>TryMapByName</c>, <c>MapByNameOrDefault</c>). Asserts:
+    /// <list type="number">
+    ///   <item>Every string in <paramref name="knownInputStrings"/> maps to a valid
+    ///   <typeparamref name="TEnum"/> value (case-insensitive, matching <c>EnumMapping</c> behavior)</item>
+    ///   <item>Every <typeparamref name="TEnum"/> value is reachable from at least one
+    ///   string in <paramref name="knownInputStrings"/> (catches new values with no external representation)</item>
+    /// </list>
+    /// </summary>
+    /// <typeparam name="TEnum">The target enum type.</typeparam>
+    /// <param name="knownInputStrings">
+    /// The external vocabulary: strings that callers are known to send. These are validated
+    /// bidirectionally — every string must map, and every enum value must be reachable.
+    /// Use the casing that external sources actually send (e.g., lowercase ABML tokens).
+    /// </param>
+    public static void AssertStringToEnumCoverage<TEnum>(params string[] knownInputStrings)
+        where TEnum : struct, Enum
+    {
+        // 1. Every input string must map to a valid enum value (case-insensitive)
+        var unmappable = new List<string>();
+        var reachedValues = new HashSet<string>();
+
+        foreach (var input in knownInputStrings)
+        {
+            if (Enum.TryParse<TEnum>(input, ignoreCase: true, out var result))
+            {
+                reachedValues.Add(result.ToString()!);
+            }
+            else
+            {
+                unmappable.Add(input);
+            }
+        }
+
+        if (unmappable.Count > 0)
+        {
+            Assert.Fail(
+                $"String-to-enum mapping failure: these input strings do not map to any " +
+                $"{typeof(TEnum).Name} value (case-insensitive): " +
+                $"[{string.Join(", ", unmappable)}]. " +
+                $"Either fix the input strings or add matching values to {typeof(TEnum).Name}.");
+        }
+
+        // 2. Every enum value must be reachable from at least one input string
+        var allValues = Enum.GetNames<TEnum>();
+        var unreachable = allValues.Where(v => !reachedValues.Contains(v)).OrderBy(n => n).ToList();
+
+        if (unreachable.Count > 0)
+        {
+            Assert.Fail(
+                $"String-to-enum coverage gap: these {typeof(TEnum).Name} values have no " +
+                $"corresponding input string in the known vocabulary: " +
+                $"[{string.Join(", ", unreachable)}]. " +
+                $"Either add input strings for these values or use the overload with expectedUnreachable.");
+        }
+    }
+
+    /// <summary>
+    /// Validates a string-to-enum boundary where not all enum values are expected to be
+    /// reachable from the known input vocabulary. Same as
+    /// <see cref="AssertStringToEnumCoverage{TEnum}(string[])"/> but accepts a list of
+    /// enum value names that are intentionally unreachable (e.g., the enum is shared across
+    /// multiple boundaries and this caller only handles a subset).
+    /// <para>
+    /// If the enum adds a new value not listed in <paramref name="expectedUnreachable"/>,
+    /// the test fails — forcing a decision: add an input string or add it to expected unreachable.
+    /// If a previously-unreachable value gains an input string, the test also fails — keeping
+    /// the list clean.
+    /// </para>
+    /// </summary>
+    /// <typeparam name="TEnum">The target enum type.</typeparam>
+    /// <param name="knownInputStrings">The external vocabulary of strings callers send.</param>
+    /// <param name="expectedUnreachable">
+    /// Enum value names that intentionally have no input string at this boundary.
+    /// </param>
+    public static void AssertStringToEnumCoverage<TEnum>(
+        string[] knownInputStrings,
+        params string[] expectedUnreachable)
+        where TEnum : struct, Enum
+    {
+        // 1. Every input string must map to a valid enum value (case-insensitive)
+        var unmappable = new List<string>();
+        var reachedValues = new HashSet<string>();
+
+        foreach (var input in knownInputStrings)
+        {
+            if (Enum.TryParse<TEnum>(input, ignoreCase: true, out var result))
+            {
+                reachedValues.Add(result.ToString()!);
+            }
+            else
+            {
+                unmappable.Add(input);
+            }
+        }
+
+        if (unmappable.Count > 0)
+        {
+            Assert.Fail(
+                $"String-to-enum mapping failure: these input strings do not map to any " +
+                $"{typeof(TEnum).Name} value (case-insensitive): " +
+                $"[{string.Join(", ", unmappable)}]. " +
+                $"Either fix the input strings or add matching values to {typeof(TEnum).Name}.");
+        }
+
+        // 2. Find actually unreachable values
+        var allValues = Enum.GetNames<TEnum>();
+        var actualUnreachable = allValues.Where(v => !reachedValues.Contains(v)).ToHashSet();
+        var expectedUnreachableSet = new HashSet<string>(expectedUnreachable);
+
+        // 3. Check for unexpected unreachable (new enum values we didn't know about)
+        var unexpectedUnreachable = actualUnreachable.Except(expectedUnreachableSet).OrderBy(n => n).ToList();
+        if (unexpectedUnreachable.Count > 0)
+        {
+            Assert.Fail(
+                $"{typeof(TEnum).Name} has values not reachable from any input string " +
+                $"and not in expectedUnreachable: [{string.Join(", ", unexpectedUnreachable)}]. " +
+                $"Either add input strings for these values or include them in expectedUnreachable.");
+        }
+
+        // 4. Check for stale expected unreachable (values that now have input strings or were removed)
+        var staleUnreachable = expectedUnreachableSet.Except(actualUnreachable).OrderBy(n => n).ToList();
+        if (staleUnreachable.Count > 0)
+        {
+            Assert.Fail(
+                $"expectedUnreachable contains values that are now reachable or no longer exist in " +
+                $"{typeof(TEnum).Name}: [{string.Join(", ", staleUnreachable)}]. " +
+                $"Remove them from expectedUnreachable.");
+        }
+    }
 }

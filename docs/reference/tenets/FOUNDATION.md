@@ -228,9 +228,9 @@ Two patterns depending on service entity count:
 - **Pattern A** (single-entity): `{entity}.{action}` — e.g., `account.created`, `game-session.player-joined`
 - **Pattern C** (multi-entity namespaced): `{service}.{entity}.{action}` — e.g., `transit.connection.created`, `divine.blessing.granted`
 
-**Forbidden**: Pattern B (service name embedded in entity via hyphens, e.g., `transit-connection.created`). Use Pattern C instead.
+**Forbidden**: Pattern B (single-word service name embedded in entity via hyphens, e.g., `transit-connection.created`). Use Pattern C instead. **Exception**: Hyphenated service names (e.g., `character-history`, `game-session`, `save-load`) preserve their hyphens — they are the service identity, not Pattern B. See SCHEMA-RULES.md § Topic Naming Convention.
 
-All parts use kebab-case. No underscores in topic strings. Infrastructure events use `bannou.` prefix (e.g., `bannou.full-service-mappings`). See [SCHEMA-RULES.md](../SCHEMA-RULES.md) for detailed Pattern A/C rules and the litmus test.
+All parts use kebab-case. No underscores in topic strings. Infrastructure events use `bannou.` prefix (e.g., `bannou.full-service-mappings`). See [SCHEMA-RULES.md](../SCHEMA-RULES.md) for detailed Pattern A/C rules, the litmus test, and hyphenated service name examples.
 
 ### Generated Event Publishers
 

@@ -69,6 +69,9 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
     /// <summary>Queryable state store for collection entry templates (MySQL-backed).</summary>
     private readonly IQueryableStateStore<EntryTemplateModel> _entryTemplateStore;
 
+    /// <summary>String state store for entry template reverse indexes (MySQL-backed).</summary>
+    private readonly IStateStore<string> _entryTemplateStringStore;
+
     /// <summary>Queryable state store for collection instances (MySQL-backed).</summary>
     private readonly IQueryableStateStore<CollectionInstanceModel> _collectionStore;
 
@@ -88,6 +91,7 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
     private const string AREA_CONTENT_KEY_PREFIX = "acc:";
     private const string CACHE_KEY_PREFIX = "cache:";
     private const string GLOBAL_UNLOCKS_KEY_PREFIX = "global-unlocks:";
+    private const string TEMPLATE_COLLECTION_INDEX = "tpl-col:";
 
     #endregion
 
@@ -105,6 +109,13 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
     internal static string BuildCacheKey(Guid collectionId) => $"{CACHE_KEY_PREFIX}{collectionId}";
     internal static string BuildGlobalUnlocksSetKey(Guid gameServiceId, string collectionType) =>
         $"{GLOBAL_UNLOCKS_KEY_PREFIX}{gameServiceId}:{collectionType}";
+
+    /// <summary>
+    /// Builds the reverse index key for entry template → collection instances.
+    /// Format: {TEMPLATE_COLLECTION_INDEX}{entryTemplateId}
+    /// </summary>
+    internal static string BuildTemplateCollectionIndexKey(Guid entryTemplateId) =>
+        $"{TEMPLATE_COLLECTION_INDEX}{entryTemplateId}";
 
     #endregion
 
@@ -212,6 +223,7 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
         _unlockListeners = unlockListeners.ToList();
 
         _entryTemplateStore = stateStoreFactory.GetQueryableStore<EntryTemplateModel>(StateStoreDefinitions.CollectionEntryTemplates);
+        _entryTemplateStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CollectionEntryTemplates);
         _collectionStore = stateStoreFactory.GetQueryableStore<CollectionInstanceModel>(StateStoreDefinitions.CollectionInstances);
         _areaContentStore = stateStoreFactory.GetQueryableStore<AreaContentConfigModel>(StateStoreDefinitions.CollectionAreaContentConfigs);
         _collectionCache = stateStoreFactory.GetStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache);
@@ -1220,6 +1232,18 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
             _logger.LogWarning("Container {ContainerId} already deleted", collection.ContainerId);
         }
 
+        // Remove collection from reverse indexes for each unlocked entry template
+        var cacheForCleanup = await LoadOrRebuildCollectionCacheAsync(collection, cancellationToken);
+        foreach (var entry in cacheForCleanup.UnlockedEntries)
+        {
+            await _entryTemplateStringStore.RemoveFromStringListAsync(
+                BuildTemplateCollectionIndexKey(entry.EntryTemplateId),
+                collection.CollectionId.ToString(),
+                _configuration.MaxConcurrencyRetries,
+                _logger,
+                cancellationToken);
+        }
+
         // Delete cache
         await _collectionCache.DeleteAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
 
@@ -1503,6 +1527,14 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
                 break;
             }
         }
+
+        // Maintain reverse index: entry template → collection instances
+        await _entryTemplateStringStore.AddToStringListAsync(
+            BuildTemplateCollectionIndexKey(template.EntryTemplateId),
+            collection.CollectionId.ToString(),
+            _configuration.MaxConcurrencyRetries,
+            _logger,
+            cancellationToken);
 
         // Track global first-unlock via atomic Redis SADD (returns true if newly added)
         var isFirstGlobal = await _cacheableCollectionCache.AddToSetAsync(
@@ -2374,24 +2406,9 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
             deprecatedTemplates,
             getEntityId: t => t.EntryTemplateId,
             getDeprecatedAt: t => t.DeprecatedAt,
-            hasActiveInstancesAsync: async (t, ct) =>
-            {
-                // Check if any collection instance has granted entries referencing this template's code
-                var collections = await _collectionStore.QueryAsync(
-                    c => c.CollectionType == t.CollectionType && c.GameServiceId == t.GameServiceId,
-                    cancellationToken: ct);
-
-                foreach (var collection in collections)
-                {
-                    var cache = await LoadOrRebuildCollectionCacheAsync(collection, ct);
-                    if (cache.UnlockedEntries.Any(e => e.Code == t.Code))
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
-            },
+            hasInstancesAsync: (t, ct) =>
+                _entryTemplateStringStore.HasStringListEntriesAsync(
+                    BuildTemplateCollectionIndexKey(t.EntryTemplateId), ct),
             deleteAndPublishAsync: async (t, ct) =>
             {
                 // Delete from both primary key and code lookup key

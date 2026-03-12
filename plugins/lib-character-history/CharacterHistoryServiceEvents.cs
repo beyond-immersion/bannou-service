@@ -27,19 +27,19 @@ public partial class CharacterHistoryService : IBannouService
         // This ensures cache is invalidated on ALL nodes in a multi-instance deployment,
         // not just the node that processed the request.
         eventConsumer.RegisterHandler<ICharacterHistoryService, CharacterBackstoryCreatedEvent>(
-            BACKSTORY_CREATED_TOPIC,
+            CharacterHistoryPublishedTopics.CharacterBackstoryCreated,
             async (svc, evt) => await ((CharacterHistoryService)svc).HandleBackstoryCreatedAsync(evt));
 
         eventConsumer.RegisterHandler<ICharacterHistoryService, CharacterBackstoryUpdatedEvent>(
-            BACKSTORY_UPDATED_TOPIC,
+            CharacterHistoryPublishedTopics.CharacterBackstoryUpdated,
             async (svc, evt) => await ((CharacterHistoryService)svc).HandleBackstoryUpdatedAsync(evt));
 
         eventConsumer.RegisterHandler<ICharacterHistoryService, CharacterBackstoryDeletedEvent>(
-            BACKSTORY_DELETED_TOPIC,
+            CharacterHistoryPublishedTopics.CharacterBackstoryDeleted,
             async (svc, evt) => await ((CharacterHistoryService)svc).HandleBackstoryDeletedAsync(evt));
 
         eventConsumer.RegisterHandler<ICharacterHistoryService, CharacterHistoryDeletedEvent>(
-            HISTORY_DELETED_TOPIC,
+            CharacterHistoryPublishedTopics.CharacterHistoryDeleted,
             async (svc, evt) => await ((CharacterHistoryService)svc).HandleHistoryDeletedAsync(evt));
     }
 

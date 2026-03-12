@@ -72,6 +72,10 @@ python3 "$SCRIPT_DIR/generate-client-events-docs.py"
 echo "  → Generating metadata properties reference..."
 python3 "$SCRIPT_DIR/generate-metadata-docs.py"
 
+# Generate deprecation entities documentation (from *-events.yaml x-lifecycle blocks)
+echo "  → Generating deprecation entities reference..."
+python3 "$SCRIPT_DIR/generate-deprecation-docs.py"
+
 # Generate document catalogs
 echo "  → Generating guides catalog..."
 python3 "$SCRIPT_DIR/generate-guides-catalog.py"

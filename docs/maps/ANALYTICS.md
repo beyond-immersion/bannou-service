@@ -18,7 +18,7 @@
 | Events Published | 4 (`analytics.score.updated`, `analytics.rating.updated`, `analytics.milestone.reached`, `analytics.controller.recorded`) |
 | Events Consumed | 11 |
 | Client Events | 0 |
-| Background Services | 0 |
+| Background Services | 1 (ControllerHistoryCleanupWorker) |
 
 ---
 
@@ -266,8 +266,7 @@ IF targetEntityId: conditions += [$.TargetEntityId = targetEntityId]
 IF targetEntityType: conditions += [$.TargetEntityType = targetEntityType]
 IF startTime: conditions += [$.Timestamp >= startTime]
 IF endTime: conditions += [$.Timestamp <= endTime]
-QUERY history-data WHERE conditions ORDER BY $.Timestamp DESC PAGED(0, limit)
-// NOTE: request.Offset is accepted but hardcoded to 0 (bug)
+QUERY history-data WHERE conditions ORDER BY $.Timestamp DESC PAGED(offset, limit)
 RETURN (200, QueryControllerHistoryResponse { Events })
 ```
 
@@ -335,7 +334,41 @@ LOOP
 
 ## Background Services
 
-No background services. Buffer flush is triggered inline from request handlers and event handlers, gated by distributed lock.
+### ControllerHistoryCleanupWorker
+
+Periodic background service that automatically purges expired controller history records.
+
+```
+ExecuteAsync:
+  DELAY config.ControllerHistoryCleanupStartupDelaySeconds
+  LOOP while not cancelled:
+    TRY:
+      SPAN "bannou.analytics" / "ControllerHistoryCleanupWorker.ProcessCycle"
+      SCOPE = CreateScope()
+      stateStoreFactory = scope.Resolve(IStateStoreFactory)
+      historyDataStore = stateStoreFactory.GetStore<ControllerHistoryData>(AnalyticsHistoryData)
+      historyDataQueryStore = stateStoreFactory.GetJsonQueryableStore<ControllerHistoryData>(AnalyticsHistoryData)
+      retentionDays = config.ControllerHistoryRetentionDays
+      IF retentionDays <= 0: CONTINUE (indefinite retention)
+      cutoffTime = now - retentionDays
+      conditions = [$.Timestamp < cutoffTime]
+      totalDeleted = 0
+      WHILE totalDeleted < config.ControllerHistoryCleanupBatchSize:
+        batch = QUERY historyDataQueryStore WHERE conditions PAGED(0, config.ControllerHistoryCleanupSubBatchSize)
+        IF batch empty: BREAK
+        FOREACH item IN batch:
+          DELETE historyDataStore:{item.Key}
+          totalDeleted++
+      LOG Information "Cleanup completed: {DeletedCount} records deleted"
+    CATCH OperationCanceledException when stopping: BREAK
+    CATCH Exception: LOG Error, TryPublishWorkerErrorAsync
+    DELAY config.ControllerHistoryCleanupIntervalSeconds
+```
+
+**Configuration**:
+- `ControllerHistoryCleanupStartupDelaySeconds` (default: 30) — delay before first cycle
+- `ControllerHistoryCleanupIntervalSeconds` (default: 3600) — interval between cycles (1 hour default)
+- Uses existing `ControllerHistoryRetentionDays`, `ControllerHistoryCleanupBatchSize`, `ControllerHistoryCleanupSubBatchSize`
 
 ---
 

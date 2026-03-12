@@ -66,7 +66,7 @@ public sealed class CinematicRunnerTests
         var model = CompileYaml(yaml);
         var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
-        using var controller = CreateController(model, controlGates, stateSync);
+        await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity1 = Guid.NewGuid();
         var entity2 = Guid.NewGuid();
@@ -97,7 +97,7 @@ public sealed class CinematicRunnerTests
         var model = CompileYaml(yaml);
         var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
-        using var controller = CreateController(model, controlGates, stateSync);
+        await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity = Guid.NewGuid();
         var allowedChannels = new HashSet<string> { "expression", "attention" };
@@ -118,7 +118,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        using var controller = CreateController(model);
+        await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
         CinematicStartedEventArgs? receivedArgs = null;
@@ -139,7 +139,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        using var controller = CreateController(model);
+        await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
         await controller.StartAsync("test_cinematic_1", new[] { entity });
@@ -158,7 +158,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        using var controller = CreateController(model);
+        await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
 
@@ -177,7 +177,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        using var controller = CreateController(model);
+        await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
         await controller.StartAsync("test_cinematic", new[] { entity });
@@ -191,12 +191,12 @@ public sealed class CinematicRunnerTests
     }
 
     [Fact]
-    public void Evaluate_BeforeStart_ReturnsCompleted()
+    public async Task Evaluate_BeforeStart_ReturnsCompleted()
     {
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        using var controller = CreateController(model);
+        await using var controller = CreateController(model);
 
         // Act
         var result = controller.Evaluate();
@@ -204,6 +204,7 @@ public sealed class CinematicRunnerTests
         // Assert
         Assert.True(result.IsCompleted);
         Assert.Contains("not started", result.Message);
+        await Task.CompletedTask;
     }
 
     // =========================================================================
@@ -218,7 +219,7 @@ public sealed class CinematicRunnerTests
         var model = CompileYaml(yaml);
         var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
-        using var controller = CreateController(model, controlGates, stateSync);
+        await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity1 = Guid.NewGuid();
         var entity2 = Guid.NewGuid();
@@ -245,7 +246,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        using var controller = CreateController(model);
+        await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
         await controller.StartAsync("test_cinematic", new[] { entity });
@@ -270,7 +271,7 @@ public sealed class CinematicRunnerTests
         var model = CompileYaml(yaml);
         var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
-        using var controller = CreateController(model, controlGates, stateSync);
+        await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity = Guid.NewGuid();
         await controller.StartAsync("test_cinematic", new[] { entity });
@@ -300,7 +301,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        using var controller = CreateController(model);
+        await using var controller = CreateController(model);
 
         var entity1 = Guid.NewGuid();
         var entity2 = Guid.NewGuid();
@@ -328,7 +329,7 @@ public sealed class CinematicRunnerTests
         var model = CompileYaml(yaml);
         var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
-        using var controller = CreateController(model, controlGates, stateSync);
+        await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity = Guid.NewGuid();
         await controller.StartAsync("test_cinematic", new[] { entity });
@@ -347,7 +348,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        using var controller = CreateController(model);
+        await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
         await controller.StartAsync("test_cinematic", new[] { entity });
@@ -369,7 +370,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        using var controller = CreateController(model);
+        await using var controller = CreateController(model);
 
         // Act - should not throw
         await controller.AbortAsync();
@@ -388,7 +389,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        using var controller = CreateController(model);
+        await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
         await controller.StartAsync("test_cinematic", new[] { entity });
@@ -409,7 +410,7 @@ public sealed class CinematicRunnerTests
         // Arrange
         var yaml = RuntimeTestFixtures.Load("cinematic_base");
         var model = CompileYaml(yaml);
-        using var controller = CreateController(model);
+        await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
         await controller.StartAsync("test_cinematic_1", new[] { entity });
@@ -442,7 +443,7 @@ public sealed class CinematicRunnerTests
         await controller.StartAsync("test_cinematic", new[] { entity });
 
         // Act
-        controller.Dispose();
+        await controller.DisposeAsync();
 
         // Assert - control should be returned
         Assert.Equal(ControlSource.Behavior, controlGates.Get(entity)!.CurrentSource);
@@ -456,7 +457,7 @@ public sealed class CinematicRunnerTests
         var model = CompileYaml(yaml);
         var controller = CreateController(model);
 
-        controller.Dispose();
+        await controller.DisposeAsync();
 
         // Act & Assert
         await Assert.ThrowsAsync<ObjectDisposedException>(
@@ -477,7 +478,7 @@ public sealed class CinematicRunnerTests
         var model = CompileYaml(yaml);
         var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
-        using var controller = CreateController(model, controlGates, stateSync);
+        await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity = Guid.NewGuid();
         await controller.StartAsync("test_cinematic", new[] { entity });
@@ -505,7 +506,7 @@ public sealed class CinematicRunnerTests
         var model = CompileYaml(yaml);
         var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
-        using var controller = CreateController(model, controlGates, stateSync);
+        await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity = Guid.NewGuid();
         var allowedChannels = new HashSet<string> { "expression" };
@@ -535,7 +536,7 @@ public sealed class CinematicRunnerTests
         var model = CompileYaml(yaml);
         var controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         var stateSync = new StateSync();
-        using var controller = CreateController(model, controlGates, stateSync);
+        await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity = Guid.NewGuid();
         await controller.StartAsync("test_cinematic", new[] { entity });

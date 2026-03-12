@@ -18,20 +18,20 @@ namespace BeyondImmersion.BannouService.RealmHistory;
 public static class RealmHistoryPublishedTopics
 {
     /// <summary>Published when a realm's participation in a historical event is recorded.</summary>
-    public const string RealmParticipationRecorded = "realm.history.participation.recorded";
+    public const string RealmParticipationRecorded = "realm-history.participation.recorded";
 
     /// <summary>Published when a realm's participation record is deleted.</summary>
-    public const string RealmParticipationDeleted = "realm.history.participation.deleted";
+    public const string RealmParticipationDeleted = "realm-history.participation.deleted";
 
     /// <summary>Published when a realm's lore is first created.</summary>
-    public const string RealmLoreCreated = "realm.history.lore.created";
+    public const string RealmLoreCreated = "realm-history.lore.created";
 
     /// <summary>Published when a realm's lore is updated.</summary>
-    public const string RealmLoreUpdated = "realm.history.lore.updated";
+    public const string RealmLoreUpdated = "realm-history.lore.updated";
 
     /// <summary>Published when a realm's lore is deleted.</summary>
-    public const string RealmLoreDeleted = "realm.history.lore.deleted";
+    public const string RealmLoreDeleted = "realm-history.lore.deleted";
 
     /// <summary>Published when all history data for a realm is deleted.</summary>
-    public const string RealmHistoryDeleted = "realm.history.deleted";
+    public const string RealmHistoryDeleted = "realm-history.deleted";
 }

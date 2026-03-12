@@ -1,0 +1,476 @@
+openapi: 3.0.4
+info:
+  title: Broadcast Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for broadcast service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: broadcast-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    PlatformLinkCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.platform-link.created when a platformlink is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - linkId
+      - accountId
+      - platform
+      - linkedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: broadcast.platform-link.created
+          description: 'Event type identifier: broadcast.platform-link.created'
+        linkId: &id001
+          type: string
+          format: uuid
+          description: "Platform link identifier"
+        accountId: &id002
+          type: string
+          format: uuid
+          description: "Account that owns this platform link"
+        platform: &id003
+          $ref: ../broadcast-api.yaml#/components/schemas/PlatformType
+          description: "Streaming platform type"
+        tokenExpiresAt: &id004
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the OAuth access token expires"
+        displayName: &id005
+          type: string
+          nullable: true
+          description: "Platform display name from OAuth profile or user-provided"
+        linkedAt: &id006
+          type: string
+          format: date-time
+          description: "When the platform was linked"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform link was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform link was last updated (set to createdAt on creation)
+    PlatformLinkUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.platform-link.updated when a platformlink is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - linkId
+      - accountId
+      - platform
+      - linkedAt
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: broadcast.platform-link.updated
+          description: 'Event type identifier: broadcast.platform-link.updated'
+        linkId: *id001
+        accountId: *id002
+        platform: *id003
+        tokenExpiresAt: *id004
+        displayName: *id005
+        linkedAt: *id006
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform link was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform link was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    PlatformLinkDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.platform-link.deleted when a platformlink is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - linkId
+      - accountId
+      - platform
+      - linkedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: broadcast.platform-link.deleted
+          description: 'Event type identifier: broadcast.platform-link.deleted'
+        linkId: *id001
+        accountId: *id002
+        platform: *id003
+        tokenExpiresAt: *id004
+        displayName: *id005
+        linkedAt: *id006
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform link was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform link was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    PlatformSessionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.platform-session.created when a platformsession is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - platformSessionId
+      - linkId
+      - accountId
+      - platform
+      - viewerCount
+      - peakViewerCount
+      - startTime
+      - state
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: broadcast.platform-session.created
+          description: 'Event type identifier: broadcast.platform-session.created'
+        platformSessionId: &id007
+          type: string
+          format: uuid
+          description: "Platform session identifier"
+        linkId: &id008
+          type: string
+          format: uuid
+          description: "Associated platform link"
+        accountId: &id009
+          type: string
+          format: uuid
+          description: "Account that owns this session"
+        platform: &id010
+          $ref: ../broadcast-api.yaml#/components/schemas/PlatformType
+          description: "Streaming platform type"
+        platformStreamId: &id011
+          type: string
+          nullable: true
+          description: "Platform-specific stream identifier"
+        viewerCount: &id012
+          type: integer
+          description: "Current approximate viewer count"
+        peakViewerCount: &id013
+          type: integer
+          description: "Peak viewer count during session"
+        startTime: &id014
+          type: string
+          format: date-time
+          description: "When the session started"
+        streamSessionId: &id015
+          type: string
+          format: uuid
+          nullable: true
+          description: "Associated in-game stream session ID (opaque)"
+        state: &id016
+          $ref: ../broadcast-api.yaml#/components/schemas/PlatformSessionState
+          description: "Current session state"
+        endedAt: &id017
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the session ended"
+        duration: &id018
+          type: integer
+          nullable: true
+          description: "Session duration in seconds"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform session was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform session was last updated (set to createdAt on creation)
+    PlatformSessionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.platform-session.updated when a platformsession is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - platformSessionId
+      - linkId
+      - accountId
+      - platform
+      - viewerCount
+      - peakViewerCount
+      - startTime
+      - state
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: broadcast.platform-session.updated
+          description: 'Event type identifier: broadcast.platform-session.updated'
+        platformSessionId: *id007
+        linkId: *id008
+        accountId: *id009
+        platform: *id010
+        platformStreamId: *id011
+        viewerCount: *id012
+        peakViewerCount: *id013
+        startTime: *id014
+        streamSessionId: *id015
+        state: *id016
+        endedAt: *id017
+        duration: *id018
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform session was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform session was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    PlatformSessionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.platform-session.deleted when a platformsession is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - platformSessionId
+      - linkId
+      - accountId
+      - platform
+      - viewerCount
+      - peakViewerCount
+      - startTime
+      - state
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: broadcast.platform-session.deleted
+          description: 'Event type identifier: broadcast.platform-session.deleted'
+        platformSessionId: *id007
+        linkId: *id008
+        accountId: *id009
+        platform: *id010
+        platformStreamId: *id011
+        viewerCount: *id012
+        peakViewerCount: *id013
+        startTime: *id014
+        streamSessionId: *id015
+        state: *id016
+        endedAt: *id017
+        duration: *id018
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform session was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform session was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    OutputCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.output.created when a output is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - broadcastId
+      - sourceType
+      - maskedRtmpUrl
+      - state
+      - owningInstanceId
+      - startedAt
+      - health
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: broadcast.output.created
+          description: 'Event type identifier: broadcast.output.created'
+        broadcastId: &id019
+          type: string
+          format: uuid
+          description: "Broadcast output identifier"
+        sourceType: &id020
+          $ref: ../broadcast-api.yaml#/components/schemas/BroadcastSourceType
+          description: "Type of broadcast input source"
+        sourceId: &id021
+          type: string
+          nullable: true
+          description: "Source identifier (camera ID or voice room ID)"
+        maskedRtmpUrl: &id022
+          type: string
+          description: "RTMP destination URL with stream key masked"
+        state: &id023
+          $ref: ../broadcast-api.yaml#/components/schemas/BroadcastState
+          description: "Current broadcast state"
+        currentVideoSource: &id024
+          type: string
+          nullable: true
+          description: "Current active video source in fallback cascade"
+        owningInstanceId: &id025
+          type: string
+          description: "Mesh instance ID of the node running this broadcast"
+        startedAt: &id026
+          type: string
+          format: date-time
+          description: "When the broadcast started"
+        health: &id027
+          $ref: ../broadcast-api.yaml#/components/schemas/BroadcastHealth
+          description: "FFmpeg process health status"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the output was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the output was last updated (set to createdAt on creation)
+    OutputUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.output.updated when a output is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - broadcastId
+      - sourceType
+      - maskedRtmpUrl
+      - state
+      - owningInstanceId
+      - startedAt
+      - health
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: broadcast.output.updated
+          description: 'Event type identifier: broadcast.output.updated'
+        broadcastId: *id019
+        sourceType: *id020
+        sourceId: *id021
+        maskedRtmpUrl: *id022
+        state: *id023
+        currentVideoSource: *id024
+        owningInstanceId: *id025
+        startedAt: *id026
+        health: *id027
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the output was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the output was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    OutputDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.output.deleted when a output is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - broadcastId
+      - sourceType
+      - maskedRtmpUrl
+      - state
+      - owningInstanceId
+      - startedAt
+      - health
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: broadcast.output.deleted
+          description: 'Event type identifier: broadcast.output.deleted'
+        broadcastId: *id019
+        sourceType: *id020
+        sourceId: *id021
+        maskedRtmpUrl: *id022
+        state: *id023
+        currentVideoSource: *id024
+        owningInstanceId: *id025
+        startedAt: *id026
+        health: *id027
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the output was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the output was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

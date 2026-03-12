@@ -778,4 +778,63 @@ public class SchemaValidationTests
             $"auto-injected by generate-lifecycle-events.py and should be removed from " +
             $"x-lifecycle model blocks:{report}");
     }
+
+    /// <summary>
+    /// Validates that every x-lifecycle entity with <c>deprecation: true</c> declares an
+    /// <c>instanceEntity</c> field naming the lifecycle entity that represents instances of
+    /// that template. Category B clean-deprecated sweep requires instance count checks;
+    /// if instances cannot be deleted (no lifecycle DeletedEvent), cleanup can never succeed.
+    /// The named instanceEntity must itself be an x-lifecycle entity in the same events file,
+    /// guaranteeing it has Created/Updated/Deleted lifecycle events (including deletion capability).
+    /// Per IMPLEMENTATION TENETS (Deprecation Lifecycle).
+    /// </summary>
+    [Fact]
+    public void DeprecatableEntities_MustDeclareInstanceEntity()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetEventSchemaFiles())
+        {
+            var fileName = Path.GetFileNameWithoutExtension(file);
+            var entities = SchemaParser.GetLifecycleEntities(file).ToList();
+            var entityNames = new HashSet<string>(entities.Select(e => e.EntityName), StringComparer.Ordinal);
+
+            foreach (var entity in entities)
+            {
+                if (!entity.HasDeprecation)
+                    continue;
+
+                if (string.IsNullOrEmpty(entity.InstanceEntity))
+                {
+                    violations.Add(
+                        $"{fileName}.yaml: {entity.EntityName} has deprecation: true " +
+                        $"but no instanceEntity declared");
+                    continue;
+                }
+
+                if (!entityNames.Contains(entity.InstanceEntity))
+                {
+                    violations.Add(
+                        $"{fileName}.yaml: {entity.EntityName} declares " +
+                        $"instanceEntity: {entity.InstanceEntity} but '{entity.InstanceEntity}' " +
+                        $"is not an x-lifecycle entity in the same file");
+                }
+            }
+        }
+
+        var grouped = violations
+            .GroupBy(v => v.Split(':')[0])
+            .OrderBy(g => g.Key);
+
+        var report = string.Join("\n", grouped.Select(g =>
+            $"\n  [{g.Key}] ({g.Count()} violation(s)):\n" +
+            string.Join("\n", g.Select(v => $"    - {v}"))));
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} deprecatable entity/entities without valid instanceEntity " +
+            $"declaration across {grouped.Count()} schema file(s). Every entity with " +
+            $"deprecation: true must declare instanceEntity naming an x-lifecycle entity " +
+            $"in the same file (per IMPLEMENTATION TENETS — Deprecation Lifecycle):{report}");
+    }
 }

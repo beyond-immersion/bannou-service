@@ -18,23 +18,23 @@ namespace BeyondImmersion.BannouService.GameSession;
 public static class GameSessionPublishedTopics
 {
     /// <summary>Published when a new game session is created.</summary>
-    public const string GameSessionCreated = "game.session.created";
+    public const string GameSessionCreated = "game-session.created";
 
     /// <summary>Published when a game session is updated.</summary>
-    public const string GameSessionUpdated = "game.session.updated";
+    public const string GameSessionUpdated = "game-session.updated";
 
     /// <summary>Published when a game session is deleted.</summary>
-    public const string GameSessionDeleted = "game.session.deleted";
+    public const string GameSessionDeleted = "game-session.deleted";
 
     /// <summary>Published when a player joins a game session.</summary>
-    public const string GameSessionPlayerJoined = "game.session.player-joined";
+    public const string GameSessionPlayerJoined = "game-session.player-joined";
 
     /// <summary>Published when a player leaves a game session.</summary>
-    public const string GameSessionPlayerLeft = "game.session.player-left";
+    public const string GameSessionPlayerLeft = "game-session.player-left";
 
     /// <summary>Published when a matchmade session is cancelled due to reservation expiry.</summary>
-    public const string GameSessionCancelled = "game.session.cancelled";
+    public const string GameSessionCancelled = "game-session.cancelled";
 
     /// <summary>Published when a game action is performed in a session.</summary>
-    public const string GameSessionActionPerformed = "game.session.action.performed";
+    public const string GameSessionActionPerformed = "game-session.action.performed";
 }

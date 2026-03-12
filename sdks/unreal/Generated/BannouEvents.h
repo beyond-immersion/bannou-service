@@ -69,6 +69,21 @@ namespace Bannou
         /** Sent to all sessions when a failed login attempt occurs with a known account. */
         constexpr const TCHAR* AuthSuspiciousLogin = TEXT("auth.suspicious-login");
 
+        /** Sent to the broadcasting user when the active video source changes (fallback cascade) */
+        constexpr const TCHAR* BroadcastOutputSourceChanged = TEXT("broadcast.output.source-changed");
+
+        /** Sent to the broadcasting user when a broadcast output starts */
+        constexpr const TCHAR* BroadcastOutputStarted = TEXT("broadcast.output.started");
+
+        /** Sent to the broadcasting user when a broadcast output stops */
+        constexpr const TCHAR* BroadcastOutputStopped = TEXT("broadcast.output.stopped");
+
+        /** Sent to the user when their platform streaming session ends */
+        constexpr const TCHAR* BroadcastSessionEnded = TEXT("broadcast.session.ended");
+
+        /** Sent to the user when their platform streaming session starts */
+        constexpr const TCHAR* BroadcastSessionStarted = TEXT("broadcast.session.started");
+
         /** Published when a character is transferred to a different realm. */
         constexpr const TCHAR* CharacterRealmTransferred = TEXT("character.realm-transferred");
 
@@ -148,28 +163,28 @@ namespace Bannou
         constexpr const TCHAR* CurrencyWalletUnfrozen = TEXT("currency.wallet.unfrozen");
 
         /** Sent to relevant players when a game action produces results. */
-        constexpr const TCHAR* GameSessionActionResult = TEXT("game.session.action-result");
+        constexpr const TCHAR* GameSessionActionResult = TEXT("game-session.action-result");
 
         /** Sent to recipients when a chat message is posted in the session. */
-        constexpr const TCHAR* GameSessionChatReceived = TEXT("game.session.chat-received");
+        constexpr const TCHAR* GameSessionChatReceived = TEXT("game-session.chat-received");
 
         /** Sent to all session participants when a new player joins. */
-        constexpr const TCHAR* GameSessionPlayerJoined = TEXT("game.session.player-joined");
+        constexpr const TCHAR* GameSessionPlayerJoined = TEXT("game-session.player-joined");
 
         /** Sent to all session participants when a player is kicked. */
-        constexpr const TCHAR* GameSessionPlayerKicked = TEXT("game.session.player-kicked");
+        constexpr const TCHAR* GameSessionPlayerKicked = TEXT("game-session.player-kicked");
 
         /** Sent to all session participants when a player leaves voluntarily. */
-        constexpr const TCHAR* GameSessionPlayerLeft = TEXT("game.session.player-left");
+        constexpr const TCHAR* GameSessionPlayerLeft = TEXT("game-session.player-left");
 
         /** Sent to players who claimed their reservation when a matchmade session */
-        constexpr const TCHAR* GameSessionSessionCancelled = TEXT("game.session.session-cancelled");
+        constexpr const TCHAR* GameSessionSessionCancelled = TEXT("game-session.session-cancelled");
 
         /** Sent to all session participants when the session state changes. */
-        constexpr const TCHAR* GameSessionStateChanged = TEXT("game.session.state-changed");
+        constexpr const TCHAR* GameSessionStateChanged = TEXT("game-session.state-changed");
 
         /** Sent when game state changes that all players should see. */
-        constexpr const TCHAR* GameSessionStateUpdated = TEXT("game.session.state-updated");
+        constexpr const TCHAR* GameSessionStateUpdated = TEXT("game-session.state-updated");
 
         /** Sent to sessions observing a container owner when one of their containers */
         constexpr const TCHAR* InventoryContainerFull = TEXT("inventory.container.full");

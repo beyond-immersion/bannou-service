@@ -1781,7 +1781,7 @@ public partial class AchievementService : IAchievementService, ICleanDeprecatedE
             deprecated,
             getEntityId: d => d.AchievementId,
             getDeprecatedAt: d => d.DeprecatedAt,
-            hasActiveInstancesAsync: (d, ct) =>
+            hasInstancesAsync: (d, ct) =>
             {
                 // EarnedCount > 0 means entities have unlocked this achievement;
                 // treat as having active instances to preserve data integrity

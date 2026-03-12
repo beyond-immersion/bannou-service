@@ -116,16 +116,16 @@ Subscribe to server-push events:
 
 ```typescript
 // Game session events
-client.onEvent('game.session.player-joined', (event) => {
+client.onEvent('game-session.player-joined', (event) => {
   console.log(`Player ${event.playerId} joined the session`);
   updatePlayerList(event.players);
 });
 
-client.onEvent('game.session.chat-received', (event) => {
+client.onEvent('game-session.chat-received', (event) => {
   addChatMessage(event.senderId, event.message);
 });
 
-client.onEvent('game.session.state-updated', (event) => {
+client.onEvent('game-session.state-updated', (event) => {
   updateGameState(event.state);
 });
 
@@ -297,7 +297,7 @@ function GameLobby({ token }: { token: string }) {
       });
 
     // Subscribe to session updates
-    client.onEvent('game.session.state-changed', (event) => {
+    client.onEvent('game-session.state-changed', (event) => {
       // Refresh session list
     });
   }, [client, connected]);
@@ -370,7 +370,7 @@ async function createBotClient(botToken: string) {
   await client.sessions.joinAsync({ sessionId: 'target-session' });
 
   // Listen for game events
-  client.onEvent('game.session.action-result', (event) => {
+  client.onEvent('game-session.action-result', (event) => {
     // Process game action results
     handleBotResponse(event);
   });

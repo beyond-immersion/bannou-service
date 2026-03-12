@@ -332,7 +332,7 @@ function handleServerEvent(header, payload) {
     case 'connect.disconnect-notification':
       handleDisconnect(payload.reconnection_token);
       break;
-    case 'game.session.state-updated':
+    case 'game-session.state-updated':
       updateWorldState(payload.state);
       break;
   }
@@ -539,7 +539,7 @@ var authEndpoints = ClientEndpointMetadata.GetEndpointsByService("Auth");
 
 // Event type ↔ name mapping
 string? name = ClientEventRegistry.GetEventName<ChatMessageReceivedEvent>();
-// Returns: "game.session.chat-received"
+// Returns: "game-session.chat-received"
 
 Type? type = ClientEventRegistry.GetEventType("voice.peer-joined");
 // Returns: typeof(VoicePeerJoinedEvent)
@@ -603,7 +603,7 @@ const account = await client.call('account/get', {
 const stats = await client.callShortcut('get_my_character_stats');
 
 // Handle events
-client.on('game.session.state-updated', (state) => {
+client.on('game-session.state-updated', (state) => {
   updateGameWorld(state);
 });
 

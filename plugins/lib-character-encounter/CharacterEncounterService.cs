@@ -2915,7 +2915,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
             deprecatedTypes,
             getEntityId: t => t.TypeId,
             getDeprecatedAt: t => t.DeprecatedAt,
-            hasActiveInstancesAsync: async (t, ct) =>
+            hasInstancesAsync: async (t, ct) =>
             {
                 // Check the type-encounter index to see if any encounters reference this type
                 var typeEncounterIndex = await _typeEncounterIndexStore.GetAsync(

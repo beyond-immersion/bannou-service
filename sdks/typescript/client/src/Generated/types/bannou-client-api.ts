@@ -1021,6 +1021,390 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/broadcast/platform/link': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Link a streaming platform account
+     * @description Initiates platform linking. For OAuth platforms (Twitch, YouTube), returns an OAuth
+     *     redirect URL. For Custom RTMP, stores the URL directly and returns a link ID.
+     *     One link per account per platform enforced.
+     */
+    post: operations['broadcast_linkPlatform'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/platform/callback': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Complete OAuth platform linking
+     * @description Completes OAuth flow after platform redirect. Exchanges authorization code for tokens,
+     *     encrypts and stores them. Creates the platform link.
+     */
+    post: operations['broadcast_platformCallback'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/platform/unlink': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Unlink a streaming platform
+     * @description Removes a platform link. Stops any active session, revokes OAuth tokens (best-effort),
+     *     and deletes all associated data including tracking IDs.
+     */
+    post: operations['broadcast_unlinkPlatform'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/platform/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List linked platforms for the current account
+     * @description Returns all platform links for the authenticated account. Token fields are
+     *     never exposed in responses (stream key masking is absolute).
+     */
+    post: operations['broadcast_listPlatforms'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/session/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Start a platform streaming session
+     * @description Starts tracking a platform streaming session. Verifies the account is live on
+     *     the platform (best-effort). One active session per account enforced.
+     */
+    post: operations['broadcast_startSession'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/session/stop': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Stop a platform streaming session
+     * @description Stops an active platform session. Deletes all tracking ID mappings and
+     *     publishes session deleted event with duration and peak viewer count.
+     */
+    post: operations['broadcast_stopSession'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/session/associate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Associate a platform session with an in-game stream session
+     * @description Links a platform session with a lib-showtime stream session ID. The stream
+     *     session ID is stored as an opaque GUID (no validation against lib-showtime;
+     *     L3 cannot call L4).
+     */
+    post: operations['broadcast_associateSession'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/session/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get platform session status
+     * @description Returns the current status of a platform session including viewer count,
+     *     stream session association, and recent sentiment distribution.
+     */
+    post: operations['broadcast_getSessionStatus'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/session/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List platform sessions for the current account
+     * @description Returns paginated platform session history for the authenticated account,
+     *     ordered by start time descending.
+     */
+    post: operations['broadcast_listSessions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/camera/announce': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Announce or heartbeat a camera source
+     * @description Registers or refreshes a game engine camera as a broadcast source. Idempotent
+     *     upsert with TTL-based eviction. Cameras that stop announcing are auto-removed.
+     */
+    post: operations['broadcast_announceCamera'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/camera/retire': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Retire a camera source
+     * @description Removes a camera source. Active broadcasts using this camera trigger
+     *     fallback cascade to the next available video source.
+     */
+    post: operations['broadcast_retireCamera'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/output/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Start a broadcast output
+     * @description Starts an FFmpeg process to broadcast content to an RTMP endpoint. Validates
+     *     the RTMP URL via FFprobe before starting. Respects MaxConcurrentOutputs limit.
+     *     RTMP URLs are encrypted for storage; responses contain masked URLs only.
+     */
+    post: operations['broadcast_startOutput'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/output/stop': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Stop a broadcast output
+     * @description Stops an active broadcast by killing the FFmpeg process and removing
+     *     the broadcast record from the authoritative state store.
+     */
+    post: operations['broadcast_stopOutput'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/output/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a broadcast output configuration
+     * @description Updates broadcast configuration (RTMP URL, fallback sources). Validates new
+     *     RTMP URL via FFprobe before committing. Causes a brief interruption (~2-3s)
+     *     as FFmpeg restarts with the new configuration.
+     */
+    post: operations['broadcast_updateOutput'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/output/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get broadcast output status
+     * @description Returns the current status of a broadcast including source type, state,
+     *     current video source (which fallback level is active), and health.
+     *     RTMP URLs are always masked in responses.
+     */
+    post: operations['broadcast_getOutputStatus'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/output/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List broadcast outputs
+     * @description Returns paginated broadcast outputs. Optionally filter to active only.
+     *     RTMP URLs are always masked in responses.
+     */
+    post: operations['broadcast_listOutputs'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/admin/pulse/latest': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get the latest sentiment pulse for a session
+     * @description Returns the most recently published sentiment pulse for a platform session.
+     *     Diagnostic endpoint for monitoring sentiment processing health.
+     */
+    post: operations['broadcast_getLatestPulse'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/broadcast/admin/sentiment/test': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Test sentiment classification
+     * @description Stateless diagnostic endpoint. Classifies input text into a sentiment
+     *     category and intensity using the current ISentimentProcessor implementation.
+     *     No state access, no events, no locks.
+     */
+    post: operations['broadcast_testSentiment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/character/get': {
     parameters: {
       query?: never;
@@ -11050,6 +11434,17 @@ export interface components {
         [key: string]: unknown;
       };
     };
+    /** @description Camera source announcement with TTL heartbeat */
+    AnnounceCameraRequest: {
+      /** @description Unique camera identifier from the game engine */
+      cameraId: string;
+      /** @description RTMP input URL where the camera publishes its stream */
+      rtmpInputUrl: string;
+      /** @description Video resolution (e.g., 1920x1080) */
+      resolution?: string | null;
+      /** @description Video codec used by the camera source */
+      codec?: string | null;
+    };
     /**
      * @description Request to send an SDP answer to complete a WebRTC handshake.
      *     Sent by clients after receiving a VoicePeerJoinedEvent with an SDP offer.
@@ -11407,6 +11802,24 @@ export interface components {
       contentType: string;
       /** @description Complete asset metadata */
       metadata: components['schemas']['AssetMetadata'];
+    };
+    /** @description Request to associate a platform session with an in-game stream session */
+    AssociateSessionRequest: {
+      /**
+       * Format: uuid
+       * @description WebSocket session ID for server-side identity resolution
+       */
+      webSocketSessionId: string;
+      /**
+       * Format: uuid
+       * @description Platform session to associate
+       */
+      platformSessionId: string;
+      /**
+       * Format: uuid
+       * @description In-game stream session ID (opaque, stored without validation)
+       */
+      streamSessionId: string;
     };
     /**
      * @description A predefined location where child objects can be attached.
@@ -12226,6 +12639,21 @@ export interface components {
       /** @description RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-broadcast so it can connect its RTMP output to the voice room's audio. */
       rtpAudioEndpoint?: string | null;
     };
+    /**
+     * @description Health status of a broadcast output FFmpeg process
+     * @enum {string}
+     */
+    BroadcastHealth: 'Healthy' | 'Degraded' | 'Down' | 'Unknown';
+    /**
+     * @description Type of broadcast input source
+     * @enum {string}
+     */
+    BroadcastSourceType: 'Camera' | 'GameAudio' | 'VoiceRoom';
+    /**
+     * @description Current state of a broadcast output
+     * @enum {string}
+     */
+    BroadcastState: 'Active' | 'Failed' | 'Stopped';
     /** @description Request to get broadcast consent status for a voice room */
     BroadcastStatusRequest: {
       /**
@@ -12652,6 +13080,8 @@ export interface components {
       /** @description Named time spans for display purposes (null if none defined) */
       eraLabels?: components['schemas']['EraLabel'][] | null;
     };
+    /** @description Empty response. 200 OK confirms the camera was announced or refreshed. */
+    CameraAnnounceResponse: Record<string, never>;
     /**
      * @description Controls CanUse validation behavior.
      *     - disabled: Skip CanUse validation even if template is configured
@@ -18998,6 +19428,14 @@ export interface components {
        */
       journeyId: string;
     };
+    /** @description Request to get the latest sentiment pulse */
+    GetLatestPulseRequest: {
+      /**
+       * Format: uuid
+       * @description Platform session to query
+       */
+      platformSessionId: string;
+    };
     /** @description Request to get a license definition by board template ID and code */
     GetLicenseDefinitionRequest: {
       /**
@@ -19092,6 +19530,14 @@ export interface components {
        * @description Realm for new container
        */
       realmId?: string | null;
+    };
+    /** @description Request to get broadcast output status */
+    GetOutputStatusRequest: {
+      /**
+       * Format: uuid
+       * @description Broadcast output to query
+       */
+      broadcastId: string;
     };
     /** @description Request to get deployment phase configuration */
     GetPhaseConfigRequest: Record<string, never>;
@@ -19449,6 +19895,19 @@ export interface components {
        * @default false
        */
       includeArchived: boolean;
+    };
+    /** @description Request to get platform session status */
+    GetSessionStatusRequest: {
+      /**
+       * Format: uuid
+       * @description WebSocket session ID for server-side identity resolution
+       */
+      webSocketSessionId: string;
+      /**
+       * Format: uuid
+       * @description Platform session to query
+       */
+      platformSessionId: string;
     };
     /** @description Request to get shared garden state for bonded players */
     GetSharedGardenRequest: {
@@ -20597,6 +21056,11 @@ export interface components {
       /** @description Optional reason for the kick */
       reason?: string | null;
     };
+    /** @description Latest sentiment pulse for a session */
+    LatestPulseResponse: {
+      /** @description Most recent sentiment pulse (null if no pulses published yet) */
+      pulse?: components['schemas']['SentimentPulseInfo'] | null;
+    };
     /** @description Configuration for a specific layer within a map definition */
     LayerDefinition: {
       /** @description The layer kind */
@@ -20828,6 +21292,28 @@ export interface components {
      * @enum {string}
      */
     LicenseStatus: 'Locked' | 'Unlockable' | 'Unlocked';
+    /** @description Request to link a streaming platform account */
+    LinkPlatformRequest: {
+      /**
+       * Format: uuid
+       * @description WebSocket session ID for server-side identity resolution
+       */
+      webSocketSessionId: string;
+      /** @description Streaming platform to link */
+      platform: components['schemas']['PlatformType'];
+      /** @description RTMP URL for Custom platform type. Required when platform is Custom, ignored otherwise. */
+      rtmpUrl?: string | null;
+    };
+    /** @description Platform link response. Contains oauthRedirectUrl for OAuth platforms or linkId for Custom RTMP. */
+    LinkPlatformResponse: {
+      /**
+       * Format: uuid
+       * @description Platform link ID. Present when platform type is Custom (link created immediately).
+       */
+      linkId?: string | null;
+      /** @description OAuth redirect URL. Present when platform type requires OAuth (Twitch, YouTube). */
+      oauthRedirectUrl?: string | null;
+    };
     /** @description Request to list achievement definitions */
     ListAchievementDefinitionsRequest: {
       /**
@@ -21515,6 +22001,24 @@ export interface components {
       /** @description All matching norm definitions */
       norms: components['schemas']['NormDefinitionResponse'][];
     };
+    /** @description Request to list broadcast outputs */
+    ListOutputsRequest: {
+      /**
+       * @description Page number
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Items per page
+       * @default 20
+       */
+      pageSize: number;
+      /**
+       * @description Filter to active broadcasts only
+       * @default false
+       */
+      activeOnly: boolean;
+    };
     /** @description Request to list participants in a room */
     ListParticipantsRequest: {
       /**
@@ -21547,6 +22051,14 @@ export interface components {
       plans: components['schemas']['PlanSummary'][];
       /** @description Total matching plans */
       totalCount: number;
+    };
+    /** @description Request to list linked platforms for the current account */
+    ListPlatformsRequest: {
+      /**
+       * Format: uuid
+       * @description WebSocket session ID for server-side identity resolution
+       */
+      webSocketSessionId: string;
     };
     /** @description Request to list active POIs */
     ListPoisRequest: {
@@ -21944,6 +22456,24 @@ export interface components {
       seeds: components['schemas']['SeedResponse'][];
       /** @description Total matching seeds across all pages. */
       totalCount: number;
+    };
+    /** @description Request to list platform sessions */
+    ListSessionsRequest: {
+      /**
+       * Format: uuid
+       * @description WebSocket session ID for server-side identity resolution
+       */
+      webSocketSessionId: string;
+      /**
+       * @description Page number
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Items per page
+       * @default 20
+       */
+      pageSize: number;
     };
     /** @description Request to list all save slots belonging to a specific owner */
     ListSlotsRequest: {
@@ -23429,6 +23959,69 @@ export interface components {
       | 'Escort'
       | 'Defend'
       | 'Custom';
+    /** @description Broadcast output summary (RTMP URL always masked) */
+    OutputInfo: {
+      /**
+       * Format: uuid
+       * @description Broadcast output identifier
+       */
+      broadcastId: string;
+      /** @description Type of broadcast input source */
+      sourceType: components['schemas']['BroadcastSourceType'];
+      /** @description Source identifier (camera ID or voice room ID, depending on source type) */
+      sourceId?: string | null;
+      /** @description RTMP destination URL with stream key masked */
+      maskedRtmpUrl: string;
+      /** @description Current broadcast state */
+      state: components['schemas']['BroadcastState'];
+      /** @description Current active video source in the fallback cascade */
+      currentVideoSource?: string | null;
+      /** @description Mesh instance ID of the node running this broadcast */
+      owningInstanceId?: string;
+      /**
+       * Format: date-time
+       * @description When the broadcast started
+       */
+      startedAt: string;
+      /** @description FFmpeg process health status */
+      health: components['schemas']['BroadcastHealth'];
+    };
+    /** @description Paginated list of broadcast outputs */
+    OutputListResponse: {
+      /** @description Broadcast outputs (RTMP URLs always masked) */
+      outputs: components['schemas']['OutputInfo'][];
+      /** @description Total number of outputs */
+      totalCount: number;
+      /** @description Current page number */
+      page: number;
+      /** @description Items per page */
+      pageSize: number;
+    };
+    /** @description Broadcast output status (RTMP URL always masked) */
+    OutputStatusResponse: {
+      /**
+       * Format: uuid
+       * @description Broadcast output identifier
+       */
+      broadcastId: string;
+      /** @description Type of broadcast input source */
+      sourceType: components['schemas']['BroadcastSourceType'];
+      /** @description RTMP destination URL with stream key masked */
+      maskedRtmpUrl: string;
+      /** @description Current broadcast state */
+      state: components['schemas']['BroadcastState'];
+      /** @description Current active video source in the fallback cascade */
+      currentVideoSource?: string | null;
+      /** @description Broadcast duration in seconds (null if not active) */
+      duration?: number | null;
+      /**
+       * Format: date-time
+       * @description When the broadcast started
+       */
+      startedAt: string;
+      /** @description FFmpeg process health status */
+      health: components['schemas']['BroadcastHealth'];
+    };
     /** @description Full content and metadata for a CMS-managed page */
     PageContent: {
       /** @description URL-friendly identifier for the page */
@@ -23872,6 +24465,50 @@ export interface components {
      * @enum {string}
      */
     Platform: 'Steam' | 'Xbox' | 'PlayStation' | 'Internal';
+    /** @description OAuth callback completion request */
+    PlatformCallbackRequest: {
+      /**
+       * Format: uuid
+       * @description WebSocket session ID for server-side identity resolution
+       */
+      webSocketSessionId: string;
+      /** @description Streaming platform being linked */
+      platform: components['schemas']['PlatformType'];
+      /** @description OAuth authorization code from platform callback */
+      authorizationCode: string;
+      /** @description OAuth state token for CSRF verification */
+      state: string;
+    };
+    /** @description OAuth callback completion response */
+    PlatformCallbackResponse: {
+      /**
+       * Format: uuid
+       * @description Platform link ID created by OAuth flow completion
+       */
+      linkId: string;
+    };
+    /** @description Platform link summary (tokens never exposed) */
+    PlatformLinkInfo: {
+      /**
+       * Format: uuid
+       * @description Platform link identifier
+       */
+      linkId: string;
+      /** @description Streaming platform type */
+      platform: components['schemas']['PlatformType'];
+      /** @description Platform display name (from OAuth profile or user-provided) */
+      displayName?: string | null;
+      /**
+       * Format: date-time
+       * @description When the platform was linked
+       */
+      linkedAt: string;
+    };
+    /** @description List of linked platforms */
+    PlatformListResponse: {
+      /** @description Linked platform accounts (tokens never exposed) */
+      links: components['schemas']['PlatformLinkInfo'][];
+    };
     /** @description Maps an achievement to a platform-specific ID */
     PlatformMapping: {
       /** @description External platform */
@@ -23879,6 +24516,54 @@ export interface components {
       /** @description Platform-specific achievement identifier */
       platformAchievementId: string;
     };
+    /** @description Platform session summary */
+    PlatformSessionInfo: {
+      /**
+       * Format: uuid
+       * @description Platform session identifier
+       */
+      platformSessionId: string;
+      /**
+       * Format: uuid
+       * @description Associated platform link
+       */
+      linkId: string;
+      /** @description Streaming platform type */
+      platform: components['schemas']['PlatformType'];
+      /** @description Current session state */
+      state: components['schemas']['PlatformSessionState'];
+      /** @description Current approximate viewer count */
+      viewerCount: number;
+      /** @description Peak viewer count during this session */
+      peakViewerCount?: number;
+      /**
+       * Format: date-time
+       * @description When the session started
+       */
+      startTime: string;
+      /**
+       * Format: uuid
+       * @description Associated in-game stream session ID (opaque, from lib-showtime)
+       */
+      streamSessionId?: string | null;
+      /**
+       * Format: date-time
+       * @description When the session ended (null if still active)
+       */
+      endedAt?: string | null;
+      /** @description Session duration in seconds (null if still active) */
+      duration?: number | null;
+    };
+    /**
+     * @description Current state of a platform streaming session
+     * @enum {string}
+     */
+    PlatformSessionState: 'Active' | 'Ended';
+    /**
+     * @description Streaming platform type
+     * @enum {string}
+     */
+    PlatformType: 'Twitch' | 'YouTube' | 'Custom';
     /**
      * @description Role of the player in the game session
      * @enum {string}
@@ -25915,6 +26600,11 @@ export interface components {
        */
       journeyId: string;
     };
+    /** @description Request to retire a camera source */
+    RetireCameraRequest: {
+      /** @description Camera to retire */
+      cameraId: string;
+    };
     /** @description Request to reveal a discoverable connection to an entity */
     RevealDiscoveryRequest: {
       /**
@@ -27222,6 +27912,90 @@ export interface components {
       | 'Amused'
       | 'Bored'
       | 'Hostile';
+    /** @description Distribution of sentiment categories from recent pulse data */
+    SentimentDistribution: {
+      /**
+       * @description Count of Excited sentiments
+       * @default 0
+       */
+      excited: number;
+      /**
+       * @description Count of Supportive sentiments
+       * @default 0
+       */
+      supportive: number;
+      /**
+       * @description Count of Critical sentiments
+       * @default 0
+       */
+      critical: number;
+      /**
+       * @description Count of Curious sentiments
+       * @default 0
+       */
+      curious: number;
+      /**
+       * @description Count of Surprised sentiments
+       * @default 0
+       */
+      surprised: number;
+      /**
+       * @description Count of Amused sentiments
+       * @default 0
+       */
+      amused: number;
+      /**
+       * @description Count of Bored sentiments
+       * @default 0
+       */
+      bored: number;
+      /**
+       * @description Count of Hostile sentiments
+       * @default 0
+       */
+      hostile: number;
+    };
+    /** @description Individual anonymous sentiment data point */
+    SentimentEntry: {
+      /** @description Sentiment classification */
+      category: components['schemas']['SentimentCategory'];
+      /**
+       * Format: float
+       * @description Strength of sentiment (0.0 to 1.0)
+       */
+      intensity: number;
+      /**
+       * Format: uuid
+       * @description Opaque tracking GUID for important viewers (null for anonymous)
+       */
+      trackingId?: string | null;
+      /** @description Category of tracked viewer (null for anonymous) */
+      viewerType?: components['schemas']['TrackedViewerType'] | null;
+    };
+    /** @description Batched anonymous sentiment data from a platform session */
+    SentimentPulseInfo: {
+      /**
+       * Format: uuid
+       * @description Platform session that produced this pulse
+       */
+      platformSessionId: string;
+      /**
+       * Format: uuid
+       * @description Associated in-game stream session (if linked)
+       */
+      streamSessionId?: string | null;
+      /**
+       * Format: date-time
+       * @description When this pulse was assembled
+       */
+      timestamp: string;
+      /** @description Configured pulse interval */
+      intervalSeconds: number;
+      /** @description Platform-reported viewer count (approximate) */
+      approximateViewerCount: number;
+      /** @description Batched anonymous sentiment entries */
+      sentiments: components['schemas']['SentimentEntry'][];
+    };
     /**
      * @description Game service stub name for created sessions. Use the game service's stubName property (e.g., "my-game"). Use "generic" for non-game-specific sessions.
      * @default generic
@@ -27251,11 +28025,41 @@ export interface components {
       /** @description Geographic location derived from the IP address */
       location?: string | null;
     };
+    /** @description Paginated list of platform sessions */
+    SessionListResponse: {
+      /** @description Platform sessions for the account */
+      sessions: components['schemas']['PlatformSessionInfo'][];
+      /** @description Total number of sessions */
+      totalCount: number;
+      /** @description Current page number */
+      page: number;
+      /** @description Items per page */
+      pageSize: number;
+    };
     /**
      * @description Current status of the game session
      * @enum {string}
      */
     SessionStatus: 'Waiting' | 'Active' | 'Full' | 'Finished';
+    /** @description Platform session status with sentiment distribution */
+    SessionStatusResponse: {
+      /**
+       * Format: uuid
+       * @description Platform session identifier
+       */
+      platformSessionId: string;
+      /** @description Current session state */
+      state: components['schemas']['PlatformSessionState'];
+      /** @description Current approximate viewer count */
+      viewerCount: number;
+      /**
+       * Format: uuid
+       * @description Associated in-game stream session ID
+       */
+      streamSessionId?: string | null;
+      /** @description Recent sentiment distribution (null if no data yet) */
+      sentimentDistribution?: components['schemas']['SentimentDistribution'] | null;
+    };
     /**
      * @description Type of game session - determines join behavior
      * @enum {string}
@@ -27606,6 +28410,55 @@ export interface components {
      * @enum {string}
      */
     StackBehavior: 'RefreshDuration' | 'Independent' | 'IncreaseIntensity' | 'Replace' | 'Ignore';
+    /** @description Request to start a broadcast output */
+    StartOutputRequest: {
+      /** @description Type of broadcast input source */
+      sourceType: components['schemas']['BroadcastSourceType'];
+      /** @description RTMP destination URL (encrypted for storage, masked in responses) */
+      rtmpUrl: string;
+      /** @description Camera source ID (required when sourceType is Camera) */
+      cameraId?: string | null;
+      /**
+       * Format: uuid
+       * @description Voice room ID (required when sourceType is VoiceRoom)
+       */
+      roomId?: string | null;
+      /** @description Primary video background URL for audio-only sources */
+      backgroundVideoUrl?: string | null;
+      /** @description Fallback stream URL if primary video fails */
+      fallbackStreamUrl?: string | null;
+      /** @description Fallback image URL if fallback stream fails */
+      fallbackImageUrl?: string | null;
+    };
+    /** @description Broadcast output start response */
+    StartOutputResponse: {
+      /**
+       * Format: uuid
+       * @description Created broadcast output identifier
+       */
+      broadcastId: string;
+    };
+    /** @description Request to start a platform streaming session */
+    StartSessionRequest: {
+      /**
+       * Format: uuid
+       * @description WebSocket session ID for server-side identity resolution
+       */
+      webSocketSessionId: string;
+      /**
+       * Format: uuid
+       * @description Platform link to start streaming on
+       */
+      linkId: string;
+    };
+    /** @description Platform session start response */
+    StartSessionResponse: {
+      /**
+       * Format: uuid
+       * @description Created platform session identifier
+       */
+      platformSessionId: string;
+    };
     /** @description Request to start a regional watcher */
     StartWatcherRequest: {
       /**
@@ -27842,6 +28695,27 @@ export interface components {
        * @description Session ID of the participant stopping the broadcast
        */
       sessionId?: string | null;
+    };
+    /** @description Request to stop a broadcast output */
+    StopOutputRequest: {
+      /**
+       * Format: uuid
+       * @description Broadcast output to stop
+       */
+      broadcastId: string;
+    };
+    /** @description Request to stop a platform streaming session */
+    StopSessionRequest: {
+      /**
+       * Format: uuid
+       * @description WebSocket session ID for server-side identity resolution
+       */
+      webSocketSessionId: string;
+      /**
+       * Format: uuid
+       * @description Platform session to stop
+       */
+      platformSessionId: string;
     };
     /** @description Request to stop a regional watcher */
     StopWatcherRequest: {
@@ -28243,6 +29117,21 @@ export interface components {
       /** @description Why scenario would not trigger (cooldown, exclusivity, etc.) */
       blockingReason?: string | null;
     };
+    /** @description Request to test sentiment classification */
+    TestSentimentRequest: {
+      /** @description Text to classify */
+      text: string;
+    };
+    /** @description Sentiment classification result */
+    TestSentimentResponse: {
+      /** @description Classified sentiment category */
+      category: components['schemas']['SentimentCategory'];
+      /**
+       * Format: float
+       * @description Strength of sentiment (0.0 to 1.0)
+       */
+      intensity: number;
+    };
     /** @description Visual theme configuration including colors, fonts, and navigation */
     ThemeConfig: {
       /** @description Name of the active theme */
@@ -28293,6 +29182,17 @@ export interface components {
       /** @description Beat unit (4 = quarter, 8 = eighth) */
       denominator: number;
     };
+    /**
+     * @description Category of tracked viewers who receive opaque tracking GUIDs. Returner type requires cross-session detection (not available in v1).
+     * @enum {string}
+     */
+    TrackedViewerType:
+      | 'Subscriber'
+      | 'Moderator'
+      | 'RaidLeader'
+      | 'VIP'
+      | 'HighEngager'
+      | 'Returner';
     /**
      * @description Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
      *     Based on psychological research (Big Five + game-relevant extensions).
@@ -28959,6 +29859,19 @@ export interface components {
        * @description Status template to undeprecate
        */
       statusTemplateId: string;
+    };
+    /** @description Request to unlink a streaming platform */
+    UnlinkPlatformRequest: {
+      /**
+       * Format: uuid
+       * @description WebSocket session ID for server-side identity resolution
+       */
+      webSocketSessionId: string;
+      /**
+       * Format: uuid
+       * @description Platform link to remove
+       */
+      linkId: string;
     };
     /** @description Request to unlock a contract from guardian custody */
     UnlockContractRequest: {
@@ -29834,6 +30747,22 @@ export interface components {
       scope?: components['schemas']['NormScope'];
       /** @description New description (null to keep current) */
       description?: string | null;
+    };
+    /** @description Request to update a broadcast output configuration */
+    UpdateOutputRequest: {
+      /**
+       * Format: uuid
+       * @description Broadcast output to update
+       */
+      broadcastId: string;
+      /** @description New RTMP destination URL (validated via FFprobe before committing) */
+      rtmpUrl?: string | null;
+      /** @description New primary video background URL */
+      backgroundVideoUrl?: string | null;
+      /** @description New fallback stream URL */
+      fallbackStreamUrl?: string | null;
+      /** @description New fallback image URL */
+      fallbackImageUrl?: string | null;
     };
     /** @description Request to update deployment phase configuration (non-null fields applied) */
     UpdatePhaseConfigRequest: {
@@ -32421,6 +33350,636 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ValidateAbmlResponse'];
+        };
+      };
+    };
+  };
+  broadcast_linkPlatform: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LinkPlatformRequest'];
+      };
+    };
+    responses: {
+      /** @description Platform link initiated or created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LinkPlatformResponse'];
+        };
+      };
+      /** @description Broadcast disabled, platform credentials not configured, or invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Account not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Platform already linked for this account, or lock acquisition failed */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_platformCallback: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PlatformCallbackRequest'];
+      };
+    };
+    responses: {
+      /** @description OAuth flow completed, platform linked */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformCallbackResponse'];
+        };
+      };
+      /** @description Token encryption key not configured or invalid authorization code */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Platform already linked (race condition) or lock acquisition failed */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_unlinkPlatform: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UnlinkPlatformRequest'];
+      };
+    };
+    responses: {
+      /** @description Platform unlinked */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Link does not belong to the requesting account */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Platform link not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Lock acquisition failed */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_listPlatforms: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListPlatformsRequest'];
+      };
+    };
+    responses: {
+      /** @description Platform links retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformListResponse'];
+        };
+      };
+    };
+  };
+  broadcast_startSession: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartSessionRequest'];
+      };
+    };
+    responses: {
+      /** @description Platform session started */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StartSessionResponse'];
+        };
+      };
+      /** @description Link does not belong to the requesting account */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Platform link not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Session already active for this account, or lock acquisition failed */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_stopSession: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StopSessionRequest'];
+      };
+    };
+    responses: {
+      /** @description Platform session stopped */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Session does not belong to the requesting account */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Platform session not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Lock acquisition failed */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_associateSession: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AssociateSessionRequest'];
+      };
+    };
+    responses: {
+      /** @description Session associated with stream session */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Session does not belong to the requesting account */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Platform session not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description ETag mismatch or lock acquisition failed */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_getSessionStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetSessionStatusRequest'];
+      };
+    };
+    responses: {
+      /** @description Session status retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SessionStatusResponse'];
+        };
+      };
+      /** @description Session does not belong to the requesting account */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Platform session not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_listSessions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListSessionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Sessions retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SessionListResponse'];
+        };
+      };
+    };
+  };
+  broadcast_announceCamera: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AnnounceCameraRequest'];
+      };
+    };
+    responses: {
+      /** @description Camera announced or refreshed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CameraAnnounceResponse'];
+        };
+      };
+      /** @description Output capability not enabled */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_retireCamera: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RetireCameraRequest'];
+      };
+    };
+    responses: {
+      /** @description Camera retired */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Camera not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_startOutput: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartOutputRequest'];
+      };
+    };
+    responses: {
+      /** @description Broadcast output started */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StartOutputResponse'];
+        };
+      };
+      /** @description Output not enabled, RTMP URL unreachable, camera/voice room not found, or voice service unavailable */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Max concurrent outputs reached or lock acquisition failed */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_stopOutput: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StopOutputRequest'];
+      };
+    };
+    responses: {
+      /** @description Broadcast output stopped */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Broadcast not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Lock acquisition failed */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_updateOutput: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateOutputRequest'];
+      };
+    };
+    responses: {
+      /** @description Broadcast output updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description New RTMP URL unreachable */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Broadcast not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description ETag mismatch or lock acquisition failed */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_getOutputStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetOutputStatusRequest'];
+      };
+    };
+    responses: {
+      /** @description Broadcast status retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OutputStatusResponse'];
+        };
+      };
+      /** @description Broadcast not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_listOutputs: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListOutputsRequest'];
+      };
+    };
+    responses: {
+      /** @description Broadcast outputs retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OutputListResponse'];
+        };
+      };
+    };
+  };
+  broadcast_getLatestPulse: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetLatestPulseRequest'];
+      };
+    };
+    responses: {
+      /** @description Latest pulse retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LatestPulseResponse'];
+        };
+      };
+      /** @description Platform session not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  broadcast_testSentiment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TestSentimentRequest'];
+      };
+    };
+    responses: {
+      /** @description Sentiment classification result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TestSentimentResponse'];
         };
       };
     };

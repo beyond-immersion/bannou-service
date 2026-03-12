@@ -5,7 +5,7 @@ info:
     Event subscription and publication declarations for Analytics service.
 
     **Data Flow**: Analytics is the central event aggregation point:
-    - Subscribes to game.session.action.performed for event ingestion
+    - Subscribes to game-session.action.performed for event ingestion
     - Publishes analytics.score.updated for leaderboards/achievements to consume
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
@@ -16,34 +16,34 @@ info:
   version: 1.0.0
   x-event-subscriptions:
     # Game session events for action tracking
-    - topic: game.session.action.performed
+    - topic: game-session.action.performed
       event: GameSessionActionPerformedEvent
       handler: HandleGameActionPerformed
     # Game session lifecycle for session-level analytics
-    - topic: game.session.created
+    - topic: game-session.created
       event: GameSessionCreatedEvent
       handler: HandleGameSessionCreated
-    - topic: game.session.deleted
+    - topic: game-session.deleted
       event: GameSessionDeletedEvent
       handler: HandleGameSessionDeleted
     # Character history events for historical analytics
-    - topic: character.history.participation.recorded
+    - topic: character-history.participation.recorded
       event: CharacterParticipationRecordedEvent
       handler: HandleCharacterParticipationRecorded
-    - topic: character.history.backstory.created
+    - topic: character-history.backstory.created
       event: CharacterBackstoryCreatedEvent
       handler: HandleCharacterBackstoryCreated
-    - topic: character.history.backstory.updated
+    - topic: character-history.backstory.updated
       event: CharacterBackstoryUpdatedEvent
       handler: HandleCharacterBackstoryUpdated
     # Realm history events for historical analytics
-    - topic: realm.history.participation.recorded
+    - topic: realm-history.participation.recorded
       event: RealmParticipationRecordedEvent
       handler: HandleRealmParticipationRecorded
-    - topic: realm.history.lore.created
+    - topic: realm-history.lore.created
       event: RealmLoreCreatedEvent
       handler: HandleRealmLoreCreated
-    - topic: realm.history.lore.updated
+    - topic: realm-history.lore.updated
       event: RealmLoreUpdatedEvent
       handler: HandleRealmLoreUpdated
     # Cache invalidation events

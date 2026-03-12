@@ -112,7 +112,7 @@ Each stage has a clear input, output, and quality gate. Existing skills handle s
 - Client events schema (if service pushes to WebSocket clients)
 - State store definitions in the shared schema
 
-**No existing skill**: This is currently manual work guided by SCHEMA-RULES.md. A `/schema-plugin` skill could be created to generate initial schema scaffolding from the deep dive + implementation map, but schema creation involves enough judgment calls (validation keywords, type classifications, reference hierarchy) that full automation may not be desirable. **Recommendation**: Keep schema creation manual for now; consider a skill later if patterns stabilize.
+**Existing skill**: `/schema-plugin` -- creates all schema files from the deep dive + implementation map, validates them via an audit agent against SCHEMA-RULES.md, runs code generation, and verifies the build. The skill handles the judgment calls (validation keywords, type classifications, reference hierarchy, x-permissions) by deriving all decisions from the implementation map's pseudocode and the deep dive's design. An embedded audit agent validates every schema rule before generation.
 
 **Critical constraint**: Schema-First Development is inviolable. Schemas MUST exist before any generated code, tests, or implementation. This is the hard gate between "design" and "code."
 
@@ -202,7 +202,7 @@ Each stage has a clear input, output, and quality gate. Existing skills handle s
 | 1. Deep Dive | `/maintain-plugin` | EXISTS |
 | 2. Pre-Implementation Audit | `/audit-plugin` | EXISTS |
 | 3. Implementation Map | `/map-plugin` | EXISTS |
-| 4. Schema Creation | (manual, guided by SCHEMA-RULES.md) | Manual |
+| 4. Schema Creation | `/schema-plugin` | EXISTS |
 | 5. Code Generation | (make/script commands) | Manual |
 | 6. Test Writing | `/test-plugin` | EXISTS |
 | 7. Implementation | `/implement-plugin` | EXISTS |
@@ -229,7 +229,7 @@ Each stage has a clear input, output, and quality gate. Existing skills handle s
 | L0 | Concept | No deep dive exists | `/maintain-plugin` |
 | L1 | Designed | Deep dive exists, may have gaps | `/audit-plugin` |
 | L2 | Audited | Audit complete, findings resolved | `/map-plugin` |
-| L3 | Mapped | Implementation map complete | Schema creation (manual) |
+| L3 | Mapped | Implementation map complete | `/schema-plugin` |
 | L4 | Schema'd | Schemas exist, code generated | `/test-plugin` |
 | L5 | Tested | Tests exist and compile (red phase) | `/implement-plugin` |
 | L6 | Implemented | Implementation exists, tests may not all pass | Fix implementation |
@@ -265,9 +265,15 @@ Each stage has a clear input, output, and quality gate. Existing skills handle s
 
 /check-plugin agency
   -> L3 (Mapped): Map complete, no schemas
-  -> Recommends: Schema creation (manual)
+  -> Recommends: /schema-plugin agency
 
-[User creates schemas, runs generation]
+/schema-plugin agency
+  -> Reads deep dive + implementation map
+  -> Creates schemas/{service}-api.yaml, events.yaml, configuration.yaml
+  -> Updates state-stores.yaml
+  -> Audit agent validates against SCHEMA-RULES.md
+  -> Runs code generation
+  -> Build passes
 
 /check-plugin agency
   -> L4 (Schema'd): Schemas exist, code generated
@@ -353,7 +359,15 @@ Categories 3 and 4 are embraced and documented. Categories 1 and 2 indicate insu
 
 ## Next Steps
 
-All skill commands referenced in this pipeline have been created. Remaining work:
+All seven pipeline stages now have corresponding skill commands. The full automated pipeline is:
+
+```
+/maintain-plugin → /audit-plugin → /map-plugin → /schema-plugin → /test-plugin → /implement-plugin
+```
+
+With `/check-plugin` as the orchestrator determining which skill to run next.
+
+Remaining work:
 
 1. Validate the pipeline end-to-end on a new plugin (Agency is the best candidate -- deep dive exists, no schemas yet)
 2. Evaluate whether `/map-plugin` handles the "new plugin from deep dive" case well enough, or if it needs enhancement for pre-schema mapping

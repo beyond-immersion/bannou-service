@@ -18,48 +18,48 @@ info:
       description: Delete all save slots, versions, hot cache entries, and associated assets owned by the deleted account (Account Deletion Cleanup Obligation)
   x-event-publications:
     # SaveSlot lifecycle events (auto-generated from x-lifecycle)
-    - topic: save.load.save-slot.created
+    - topic: save-load.save-slot.created
       event: SaveSlotCreatedEvent
       description: Published when a new save slot is created
-    - topic: save.load.save-slot.updated
+    - topic: save-load.save-slot.updated
       event: SaveSlotUpdatedEvent
       description: Published when a save slot is updated
-    - topic: save.load.save-slot.deleted
+    - topic: save-load.save-slot.deleted
       event: SaveSlotDeletedEvent
       description: Published when a save slot is deleted
     # Custom save events
-    - topic: save.load.save.created
+    - topic: save-load.save.created
       event: SaveCreatedEvent
       description: Published when a new save version is created
-    - topic: save.load.save.loaded
+    - topic: save-load.save.loaded
       event: SaveLoadedEvent
       description: Published when a save is loaded
-    - topic: save.load.save.migrated
+    - topic: save-load.save.migrated
       event: SaveMigratedEvent
       description: Published when a save is migrated to a new schema version
-    - topic: save.load.version.pinned
+    - topic: save-load.version.pinned
       event: VersionPinnedEvent
       description: Published when a version is pinned as checkpoint
-    - topic: save.load.version.unpinned
+    - topic: save-load.version.unpinned
       event: VersionUnpinnedEvent
       description: Published when a version is unpinned
-    - topic: save.load.version.deleted
+    - topic: save-load.version.deleted
       event: VersionDeletedEvent
       description: Published when a version is deleted
-    - topic: save.load.cleanup.completed
+    - topic: save-load.cleanup.completed
       event: CleanupCompletedEvent
       description: Published when automatic cleanup completes
     # Async upload events
-    - topic: save.load.upload.queued
+    - topic: save-load.upload.queued
       event: SaveQueuedEvent
       description: Published when a save is queued for async upload
-    - topic: save.load.upload.completed
+    - topic: save-load.upload.completed
       event: SaveUploadCompletedEvent
       description: Published when async upload to MinIO completes
-    - topic: save.load.upload.failed
+    - topic: save-load.upload.failed
       event: SaveUploadFailedEvent
       description: Published when async upload fails
-    - topic: save.load.circuit-breaker.state-changed
+    - topic: save-load.circuit-breaker.state-changed
       event: CircuitBreakerStateChangedEvent
       description: Published when storage circuit breaker changes state
 
@@ -68,7 +68,7 @@ paths: {}  # Events don't have HTTP paths
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/save-load-lifecycle-events.yaml
 x-lifecycle:
-  topic_prefix: save.load
+  topic_prefix: save-load
   SaveSlot:
     model:
       slotId: { type: string, format: uuid, primary: true, required: true, description: "Unique slot identifier" }
@@ -108,8 +108,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save.load.save.created
-          description: 'Event type identifier: save.load.save.created'
+          default: save-load.save.created
+          description: 'Event type identifier: save-load.save.created'
         slotId:
           type: string
           format: uuid
@@ -165,8 +165,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save.load.save.loaded
-          description: 'Event type identifier: save.load.save.loaded'
+          default: save-load.save.loaded
+          description: 'Event type identifier: save-load.save.loaded'
         slotId:
           type: string
           format: uuid
@@ -202,8 +202,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save.load.save.migrated
-          description: 'Event type identifier: save.load.save.migrated'
+          default: save-load.save.migrated
+          description: 'Event type identifier: save-load.save.migrated'
         slotId:
           type: string
           format: uuid
@@ -252,8 +252,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save.load.version.pinned
-          description: 'Event type identifier: save.load.version.pinned'
+          default: save-load.version.pinned
+          description: 'Event type identifier: save-load.version.pinned'
         slotId:
           type: string
           format: uuid
@@ -295,8 +295,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save.load.version.unpinned
-          description: 'Event type identifier: save.load.version.unpinned'
+          default: save-load.version.unpinned
+          description: 'Event type identifier: save-load.version.unpinned'
         slotId:
           type: string
           format: uuid
@@ -339,8 +339,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save.load.version.deleted
-          description: 'Event type identifier: save.load.version.deleted'
+          default: save-load.version.deleted
+          description: 'Event type identifier: save-load.version.deleted'
         slotId:
           type: string
           format: uuid
@@ -382,8 +382,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save.load.cleanup.completed
-          description: 'Event type identifier: save.load.cleanup.completed'
+          default: save-load.cleanup.completed
+          description: 'Event type identifier: save-load.cleanup.completed'
         versionsDeleted:
           type: integer
           description: Number of versions cleaned up
@@ -421,8 +421,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save.load.upload.queued
-          description: 'Event type identifier: save.load.upload.queued'
+          default: save-load.upload.queued
+          description: 'Event type identifier: save-load.upload.queued'
         slotId:
           type: string
           format: uuid
@@ -467,8 +467,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save.load.upload.completed
-          description: 'Event type identifier: save.load.upload.completed'
+          default: save-load.upload.completed
+          description: 'Event type identifier: save-load.upload.completed'
         slotId:
           type: string
           format: uuid
@@ -510,8 +510,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save.load.upload.failed
-          description: 'Event type identifier: save.load.upload.failed'
+          default: save-load.upload.failed
+          description: 'Event type identifier: save-load.upload.failed'
         slotId:
           type: string
           format: uuid
@@ -559,8 +559,8 @@ components:
       properties:
         eventName:
           type: string
-          default: save.load.circuit-breaker.state-changed
-          description: 'Event type identifier: save.load.circuit-breaker.state-changed'
+          default: save-load.circuit-breaker.state-changed
+          description: 'Event type identifier: save-load.circuit-breaker.state-changed'
         previousState:
           $ref: 'save-load-api.yaml#/components/schemas/CircuitBreakerState'
           description: Previous circuit breaker state before the transition

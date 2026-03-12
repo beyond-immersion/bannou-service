@@ -17,6 +17,7 @@ import { AchievementProxy } from './proxies/AchievementProxy.js';
 import { ActorProxy } from './proxies/ActorProxy.js';
 import { AssetsProxy } from './proxies/AssetsProxy.js';
 import { AuthProxy } from './proxies/AuthProxy.js';
+import { BroadcastProxy } from './proxies/BroadcastProxy.js';
 import { BundlesProxy } from './proxies/BundlesProxy.js';
 import { CharacterProxy } from './proxies/CharacterProxy.js';
 import { CharacterEncounterProxy } from './proxies/CharacterEncounterProxy.js';
@@ -68,6 +69,7 @@ interface ProxyCache {
   actor?: ActorProxy;
   assets?: AssetsProxy;
   auth?: AuthProxy;
+  broadcast?: BroadcastProxy;
   bundles?: BundlesProxy;
   character?: CharacterProxy;
   characterEncounter?: CharacterEncounterProxy;
@@ -168,6 +170,18 @@ Object.defineProperty(BannouClient.prototype, 'auth', {
   get(this: BannouClientWithCache): AuthProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.auth ??= new AuthProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
+ * Add lazy-initialized broadcast proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'broadcast', {
+  get(this: BannouClientWithCache): BroadcastProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.broadcast ??= new BroadcastProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -676,6 +690,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for Auth API endpoints.
      */
     readonly auth: AuthProxy;
+    /**
+     * Typed proxy for Broadcast API endpoints.
+     */
+    readonly broadcast: BroadcastProxy;
     /**
      * Typed proxy for Bundles API endpoints.
      */

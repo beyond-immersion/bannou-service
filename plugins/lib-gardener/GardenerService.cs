@@ -2078,7 +2078,7 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
             deprecatedTemplates,
             getEntityId: t => t.ScenarioTemplateId,
             getDeprecatedAt: t => t.DeprecatedAt,
-            hasActiveInstancesAsync: (t, ct) =>
+            hasInstancesAsync: (t, ct) =>
                 Task.FromResult(activeScenarioTemplateIds.Contains(t.ScenarioTemplateId)),
             deleteAndPublishAsync: async (t, ct) =>
             {

@@ -404,7 +404,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Transit | L2 | Geographic connectivity graph, transit modes, and game-time journey tracking | 33 |
 | Worldstate | L2 | Per-realm game clock, calendar system, temporal events, and ${world.*} variable provider | 18 |
 | Asset | L3 | Binary asset storage (MinIO/S3) with bundles, pre-signed URLs, and transcoding pool | 20 |
-| Broadcast | L3 | Streaming platform integration for live content broadcasting | — |
+| Broadcast | L3 | Streaming platform integration for live content broadcasting | 22 |
 | Documentation | L3 | Knowledge base API for AI agents with full-text search and git-sync namespaces | 27 |
 | Orchestrator | L3 | Deployment orchestration (Docker/Swarm/Portainer/K8s) with processing pools and routing broadcasts | 23 |
 | Voice | L3 | Voice room coordination with P2P mesh, Kamailio SFU, and automatic tier upgrade | 11 |
@@ -452,7 +452,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**76 services, 915 endpoints**
+**76 services, 937 endpoints**
 
 For full per-service details: `docs/GENERATED-*-SERVICE-DETAILS.md`
 

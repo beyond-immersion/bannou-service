@@ -61,13 +61,13 @@ The Auth plugin is the internet-facing authentication and session management ser
 
 ## Behavior {#behavior}
 
-**Version**: 3.0.0 | **Schema**: `schemas/behavior-api.yaml` | **Endpoints**: 6 | **Deep Dive**: [docs/plugins/BEHAVIOR.md](plugins/BEHAVIOR.md)
+**Version**: 3.0.0 | **Schema**: `schemas/behavior-api.yaml` | **Endpoints**: 6 | **Deep Dive**: [docs/plugins/BEHAVIOR.md](plugins/BEHAVIOR.md) | **Map**: [docs/maps/BEHAVIOR.md](maps/BEHAVIOR.md)
 
 ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action Planning) runtime (L4 GameFeatures) for NPC behavior management. Provides three core subsystems: a multi-phase ABML compiler producing portable stack-based bytecode, an A*-based GOAP planner for action sequence generation from world state and goals, and a 5-stage cognition pipeline for NPC perception and intention formation. Compiled bytecode is interpreted by both the server-side ActorRunner (L2) and client SDKs. Supports streaming composition, variant-based model caching with fallback chains, and behavior bundling through the Asset service.
 
 ## Broadcast {#broadcast}
 
-**Deep Dive**: [docs/plugins/BROADCAST.md](plugins/BROADCAST.md) | **Map**: [docs/maps/BROADCAST.md](maps/BROADCAST.md)
+**Version**: 1.0.0 | **Schema**: `schemas/broadcast-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/BROADCAST.md](plugins/BROADCAST.md) | **Map**: [docs/maps/BROADCAST.md](maps/BROADCAST.md)
 
 Platform streaming integration and RTMP output management service (L3 AppFeatures) for linking external streaming platforms (Twitch, YouTube, custom RTMP), ingesting real audience data, and broadcasting server-side content. The bridge between Bannou's internal world and external streaming platforms -- everything that touches a third-party streaming service goes through lib-broadcast. Game-agnostic: which platforms are enabled and how sentiment categories map to game emotions are configured via environment variables and API calls. Internal-only for sentiment/broadcast management; webhook endpoints are internet-facing for platform callbacks (justified exception -- platform callbacks, not browser-facing).
 
@@ -99,7 +99,7 @@ Generational cycle orchestration and genetic heritage service (L4 GameFeatures) 
 
 ## Character Personality {#character-personality}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-personality-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/CHARACTER-PERSONALITY.md](plugins/CHARACTER-PERSONALITY.md)
+**Version**: 1.0.0 | **Schema**: `schemas/character-personality-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/CHARACTER-PERSONALITY.md](plugins/CHARACTER-PERSONALITY.md) | **Map**: [docs/maps/CHARACTER-PERSONALITY.md](maps/CHARACTER-PERSONALITY.md)
 
 Machine-readable personality traits and combat preferences (L4 GameFeatures) for NPC behavior decisions. Features probabilistic personality evolution based on character experiences and combat preference adaptation based on battle outcomes. Traits are floating-point values on bipolar axes that shift based on experience intensity. Provides `${personality.*}` and `${combat.*}` ABML variables to the Actor service via the Variable Provider Factory pattern.
 
@@ -490,7 +490,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 76
-- **Total endpoints**: 915
+- **Total endpoints**: 937
 
 ---
 

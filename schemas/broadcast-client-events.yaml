@@ -1,0 +1,173 @@
+openapi: 3.0.4
+info:
+  title: Broadcast Client Events
+  description: |
+    Server-to-client WebSocket push events for Broadcast service.
+    Published via IClientEventPublisher, delivered to connected clients through Connect service.
+
+    Five client events notify the broadcasting user of output and session state changes:
+    output started/stopped/source-changed, session started/ended.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Output Client Events
+    # ============================================
+
+    BroadcastOutputStartedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: Sent to the broadcasting user when a broadcast output starts
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - broadcastId
+        - sourceType
+        - maskedRtmpUrl
+      properties:
+        eventName:
+          type: string
+          default: "broadcast.output.started"
+          description: Fixed event type identifier
+        broadcastId:
+          type: string
+          format: uuid
+          description: Broadcast output identifier
+        sourceType:
+          $ref: 'broadcast-api.yaml#/components/schemas/BroadcastSourceType'
+          description: Type of broadcast input source
+        maskedRtmpUrl:
+          type: string
+          description: RTMP destination URL with stream key masked
+
+    BroadcastOutputStoppedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: Sent to the broadcasting user when a broadcast output stops
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - broadcastId
+      properties:
+        eventName:
+          type: string
+          default: "broadcast.output.stopped"
+          description: Fixed event type identifier
+        broadcastId:
+          type: string
+          format: uuid
+          description: Broadcast output identifier
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason the output was stopped (e.g., manual stop, FFmpeg crash, account cleanup)
+
+    BroadcastOutputSourceChangedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: Sent to the broadcasting user when the active video source changes (fallback cascade)
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - broadcastId
+        - previousSource
+        - currentSource
+      properties:
+        eventName:
+          type: string
+          default: "broadcast.output.source-changed"
+          description: Fixed event type identifier
+        broadcastId:
+          type: string
+          format: uuid
+          description: Broadcast output identifier
+        previousSource:
+          type: string
+          description: Previous active video source
+        currentSource:
+          type: string
+          description: New active video source after fallback
+
+    # ============================================
+    # Session Client Events
+    # ============================================
+
+    BroadcastSessionStartedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: Sent to the user when their platform streaming session starts
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - platformSessionId
+        - platform
+      properties:
+        eventName:
+          type: string
+          default: "broadcast.session.started"
+          description: Fixed event type identifier
+        platformSessionId:
+          type: string
+          format: uuid
+          description: Platform session identifier
+        platform:
+          $ref: 'broadcast-api.yaml#/components/schemas/PlatformType'
+          description: Streaming platform type
+
+    BroadcastSessionEndedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: Sent to the user when their platform streaming session ends
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - platformSessionId
+      properties:
+        eventName:
+          type: string
+          default: "broadcast.session.ended"
+          description: Fixed event type identifier
+        platformSessionId:
+          type: string
+          format: uuid
+          description: Platform session identifier
+        duration:
+          type: integer
+          nullable: true
+          description: Session duration in seconds
+        peakViewerCount:
+          type: integer
+          nullable: true
+          description: Peak viewer count during the session

@@ -1006,7 +1006,7 @@ public partial class LeaderboardService : ILeaderboardService, ICleanDeprecatedE
             deprecated,
             getEntityId: d => d.LeaderboardId,
             getDeprecatedAt: d => d.DeprecatedAt,
-            hasActiveInstancesAsync: async (d, ct) =>
+            hasInstancesAsync: async (d, ct) =>
             {
                 // Check current/non-seasonal ranking sorted set for scores
                 var rankingKey = BuildRankingKey(d.GameServiceId, d.LeaderboardId, d.CurrentSeason);

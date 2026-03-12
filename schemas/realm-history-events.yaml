@@ -13,22 +13,22 @@ info:
   version: 1.0.0
   x-event-subscriptions: []  # Realm History doesn't subscribe to external events
   x-event-publications:
-    - topic: realm.history.participation.recorded
+    - topic: realm-history.participation.recorded
       event: RealmParticipationRecordedEvent
       description: Published when a realm's participation in a historical event is recorded
-    - topic: realm.history.participation.deleted
+    - topic: realm-history.participation.deleted
       event: RealmParticipationDeletedEvent
       description: Published when a realm's participation record is deleted
-    - topic: realm.history.lore.created
+    - topic: realm-history.lore.created
       event: RealmLoreCreatedEvent
       description: Published when a realm's lore is first created
-    - topic: realm.history.lore.updated
+    - topic: realm-history.lore.updated
       event: RealmLoreUpdatedEvent
       description: Published when a realm's lore is updated
-    - topic: realm.history.lore.deleted
+    - topic: realm-history.lore.deleted
       event: RealmLoreDeletedEvent
       description: Published when a realm's lore is deleted
-    - topic: realm.history.deleted
+    - topic: realm-history.deleted
       event: RealmHistoryDeletedEvent
       description: Published when all history data for a realm is deleted
 
@@ -57,8 +57,8 @@ components:
       properties:
         eventName:
           type: string
-          default: realm.history.participation.recorded
-          description: 'Event type identifier: realm.history.participation.recorded'
+          default: realm-history.participation.recorded
+          description: 'Event type identifier: realm-history.participation.recorded'
         realmId:
           type: string
           format: uuid
@@ -91,8 +91,8 @@ components:
       properties:
         eventName:
           type: string
-          default: realm.history.participation.deleted
-          description: 'Event type identifier: realm.history.participation.deleted'
+          default: realm-history.participation.deleted
+          description: 'Event type identifier: realm-history.participation.deleted'
         participationId:
           type: string
           format: uuid
@@ -125,8 +125,8 @@ components:
       properties:
         eventName:
           type: string
-          default: realm.history.lore.created
-          description: 'Event type identifier: realm.history.lore.created'
+          default: realm-history.lore.created
+          description: 'Event type identifier: realm-history.lore.created'
         realmId:
           type: string
           format: uuid
@@ -154,8 +154,8 @@ components:
       properties:
         eventName:
           type: string
-          default: realm.history.lore.updated
-          description: 'Event type identifier: realm.history.lore.updated'
+          default: realm-history.lore.updated
+          description: 'Event type identifier: realm-history.lore.updated'
         realmId:
           type: string
           format: uuid
@@ -182,8 +182,8 @@ components:
       properties:
         eventName:
           type: string
-          default: realm.history.lore.deleted
-          description: 'Event type identifier: realm.history.lore.deleted'
+          default: realm-history.lore.deleted
+          description: 'Event type identifier: realm-history.lore.deleted'
         realmId:
           type: string
           format: uuid
@@ -205,8 +205,8 @@ components:
       properties:
         eventName:
           type: string
-          default: realm.history.deleted
-          description: 'Event type identifier: realm.history.deleted'
+          default: realm-history.deleted
+          description: 'Event type identifier: realm-history.deleted'
         realmId:
           type: string
           format: uuid

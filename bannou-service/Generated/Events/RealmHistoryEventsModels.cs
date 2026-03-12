@@ -39,12 +39,12 @@ public partial class RealmParticipationRecordedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: realm.history.participation.recorded
+    /// Event type identifier: realm-history.participation.recorded
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "realm.history.participation.recorded";
+    public override string EventName { get; set; } = "realm-history.participation.recorded";
 
     /// <summary>
     /// ID of the realm that participated
@@ -89,12 +89,12 @@ public partial class RealmParticipationDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: realm.history.participation.deleted
+    /// Event type identifier: realm-history.participation.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "realm.history.participation.deleted";
+    public override string EventName { get; set; } = "realm-history.participation.deleted";
 
     /// <summary>
     /// ID of the deleted participation record
@@ -130,12 +130,12 @@ public partial class RealmLoreCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: realm.history.lore.created
+    /// Event type identifier: realm-history.lore.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "realm.history.lore.created";
+    public override string EventName { get; set; } = "realm-history.lore.created";
 
     /// <summary>
     /// ID of the realm whose lore was created
@@ -161,12 +161,12 @@ public partial class RealmLoreUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: realm.history.lore.updated
+    /// Event type identifier: realm-history.lore.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "realm.history.lore.updated";
+    public override string EventName { get; set; } = "realm-history.lore.updated";
 
     /// <summary>
     /// ID of the realm whose lore was updated
@@ -198,12 +198,12 @@ public partial class RealmLoreDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: realm.history.lore.deleted
+    /// Event type identifier: realm-history.lore.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "realm.history.lore.deleted";
+    public override string EventName { get; set; } = "realm-history.lore.deleted";
 
     /// <summary>
     /// ID of the realm whose lore was deleted
@@ -223,12 +223,12 @@ public partial class RealmHistoryDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: realm.history.deleted
+    /// Event type identifier: realm-history.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "realm.history.deleted";
+    public override string EventName { get; set; } = "realm-history.deleted";
 
     /// <summary>
     /// ID of the realm whose history was deleted

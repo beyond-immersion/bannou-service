@@ -231,13 +231,12 @@ public interface IStateStoreFactory
 {
     /// <summary>
     /// Get or create a state store for the named store.
-    /// Note: If InitializeAsync() was not called, this performs sync-over-async initialization.
-    /// Prefer GetStoreAsync() for async contexts or call InitializeAsync() at startup.
+    /// Requires <see cref="InitializeAsync"/> to have been called first (guaranteed by plugin lifecycle).
     /// </summary>
     /// <typeparam name="TValue">Value type to store.</typeparam>
     /// <param name="storeName">Name of the configured store.</param>
     /// <returns>State store instance.</returns>
-    /// <exception cref="InvalidOperationException">Thrown if store is not configured.</exception>
+    /// <exception cref="InvalidOperationException">Thrown if store is not configured or InitializeAsync() has not been called.</exception>
     IStateStore<TValue> GetStore<TValue>(string storeName)
         where TValue : class;
 

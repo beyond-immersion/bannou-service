@@ -39,12 +39,12 @@ public partial class SaveCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save.load.save.created
+    /// Event type identifier: save-load.save.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.load.save.created";
+    public override string EventName { get; set; } = "save-load.save.created";
 
     /// <summary>
     /// Slot identifier
@@ -126,12 +126,12 @@ public partial class SaveLoadedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save.load.save.loaded
+    /// Event type identifier: save-load.save.loaded
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.load.save.loaded";
+    public override string EventName { get; set; } = "save-load.save.loaded";
 
     /// <summary>
     /// Slot identifier
@@ -180,12 +180,12 @@ public partial class SaveMigratedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save.load.save.migrated
+    /// Event type identifier: save-load.save.migrated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.load.save.migrated";
+    public override string EventName { get; set; } = "save-load.save.migrated";
 
     /// <summary>
     /// Slot identifier
@@ -252,12 +252,12 @@ public partial class VersionPinnedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save.load.version.pinned
+    /// Event type identifier: save-load.version.pinned
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.load.version.pinned";
+    public override string EventName { get; set; } = "save-load.version.pinned";
 
     /// <summary>
     /// Slot identifier
@@ -308,12 +308,12 @@ public partial class VersionUnpinnedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save.load.version.unpinned
+    /// Event type identifier: save-load.version.unpinned
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.load.version.unpinned";
+    public override string EventName { get; set; } = "save-load.version.unpinned";
 
     /// <summary>
     /// Slot identifier
@@ -364,12 +364,12 @@ public partial class VersionDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save.load.version.deleted
+    /// Event type identifier: save-load.version.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.load.version.deleted";
+    public override string EventName { get; set; } = "save-load.version.deleted";
 
     /// <summary>
     /// Slot identifier
@@ -420,12 +420,12 @@ public partial class CleanupCompletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save.load.cleanup.completed
+    /// Event type identifier: save-load.cleanup.completed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.load.cleanup.completed";
+    public override string EventName { get; set; } = "save-load.cleanup.completed";
 
     /// <summary>
     /// Number of versions cleaned up
@@ -461,12 +461,12 @@ public partial class SaveQueuedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save.load.upload.queued
+    /// Event type identifier: save-load.upload.queued
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.load.upload.queued";
+    public override string EventName { get; set; } = "save-load.upload.queued";
 
     /// <summary>
     /// Save slot identifier
@@ -527,12 +527,12 @@ public partial class SaveUploadCompletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save.load.upload.completed
+    /// Event type identifier: save-load.upload.completed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.load.upload.completed";
+    public override string EventName { get; set; } = "save-load.upload.completed";
 
     /// <summary>
     /// Save slot identifier
@@ -584,12 +584,12 @@ public partial class SaveUploadFailedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save.load.upload.failed
+    /// Event type identifier: save-load.upload.failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.load.upload.failed";
+    public override string EventName { get; set; } = "save-load.upload.failed";
 
     /// <summary>
     /// Save slot identifier
@@ -654,12 +654,12 @@ public partial class CircuitBreakerStateChangedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: save.load.circuit-breaker.state-changed
+    /// Event type identifier: save-load.circuit-breaker.state-changed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save.load.circuit-breaker.state-changed";
+    public override string EventName { get; set; } = "save-load.circuit-breaker.state-changed";
 
     /// <summary>
     /// Previous circuit breaker state before the transition

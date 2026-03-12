@@ -39,12 +39,12 @@ public partial class CharacterParticipationRecordedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: character.history.participation.recorded
+    /// Event type identifier: character-history.participation.recorded
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "character.history.participation.recorded";
+    public override string EventName { get; set; } = "character-history.participation.recorded";
 
     /// <summary>
     /// ID of the character that participated
@@ -112,12 +112,12 @@ public partial class CharacterParticipationDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: character.history.participation.deleted
+    /// Event type identifier: character-history.participation.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "character.history.participation.deleted";
+    public override string EventName { get; set; } = "character-history.participation.deleted";
 
     /// <summary>
     /// ID of the deleted participation record
@@ -153,12 +153,12 @@ public partial class CharacterBackstoryCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: character.history.backstory.created
+    /// Event type identifier: character-history.backstory.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "character.history.backstory.created";
+    public override string EventName { get; set; } = "character-history.backstory.created";
 
     /// <summary>
     /// ID of the character whose backstory was created
@@ -184,12 +184,12 @@ public partial class CharacterBackstoryUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: character.history.backstory.updated
+    /// Event type identifier: character-history.backstory.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "character.history.backstory.updated";
+    public override string EventName { get; set; } = "character-history.backstory.updated";
 
     /// <summary>
     /// ID of the character whose backstory was updated
@@ -221,12 +221,12 @@ public partial class CharacterBackstoryDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: character.history.backstory.deleted
+    /// Event type identifier: character-history.backstory.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "character.history.backstory.deleted";
+    public override string EventName { get; set; } = "character-history.backstory.deleted";
 
     /// <summary>
     /// ID of the character whose backstory was deleted
@@ -246,12 +246,12 @@ public partial class CharacterHistoryDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: character.history.deleted
+    /// Event type identifier: character-history.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "character.history.deleted";
+    public override string EventName { get; set; } = "character-history.deleted";
 
     /// <summary>
     /// ID of the character whose history was deleted

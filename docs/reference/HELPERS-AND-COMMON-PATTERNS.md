@@ -133,6 +133,46 @@ if (!lockResponse.Success) return (StatusCodes.Conflict, null);
 
 Lock store names come from `StateStoreDefinitions` constants. Lock owner strings should be `$"{operation}-{Guid:N}"` for debuggability.
 
+### String List Index Helpers (Reverse Indexes)
+
+**File**: `bannou-service/Services/StateStoreExtensions.cs`
+
+Extension methods on `IStateStore<string>` for maintaining JSON-serialized string lists used as reverse indexes (e.g., template→instance list). All operations use optimistic concurrency with configurable retry counts.
+
+**AddToStringListAsync** — Adds a value to the list. Idempotent (skips if value already present). Uses `etag ?? string.Empty` for create-only-if-not-exists on first write:
+
+```csharp
+await _instanceStringStore.AddToStringListAsync(
+    $"{INST_TEMPLATE_INDEX}{templateId}",
+    instanceId.ToString(),
+    _configuration.ListOperationMaxRetries,
+    _logger,
+    ct);
+```
+
+**RemoveFromStringListAsync** — Removes a value from the list. Deletes the key entirely when the list becomes empty (prevents empty index accumulation). Idempotent (no-op if value not present or key missing):
+
+```csharp
+await _instanceStringStore.RemoveFromStringListAsync(
+    $"{INST_TEMPLATE_INDEX}{templateId}",
+    instanceId.ToString(),
+    _configuration.ListOperationMaxRetries,
+    _logger,
+    ct);
+```
+
+**HasStringListEntriesAsync** — O(1) existence check for whether a reverse index has any entries. Single read, no retry needed. Used in Category B deprecation cleanup `hasInstancesAsync` delegates:
+
+```csharp
+hasInstancesAsync: (t, ct) =>
+    _instanceStringStore.HasStringListEntriesAsync(
+        $"{INST_TEMPLATE_INDEX}{t.TemplateId}", ct),
+```
+
+**Pattern**: Each service uses `GetStore<string>(StateStoreDefinitions.ExistingStore)` on its existing instance store. The key prefix distinguishes index entries from data entries. Add on instance create, remove on instance delete. No new state stores needed.
+
+**Reference implementation**: `lib-item` (`inst-template:{templateId}`, `inst-container:{containerId}`).
+
 ---
 
 ## 2. Event & Messaging Helpers
@@ -725,8 +765,9 @@ Schema-level validations that scan `schemas/*.yaml` files directly:
 | `SchemaClientEvents_UseAllOfWithBaseClientEvent` | Client events inherit from BaseClientEvent | Line-based |
 | `LifecycleModels_DoNotContainAutoInjectedTimestampFields` | No manual createdAt/updatedAt in x-lifecycle models | `SchemaParser` (YamlDotNet) |
 | `LifecycleModels_DoNotContainAutoInjectedDeprecationFields` | No manual deprecation fields when `deprecation: true` | `SchemaParser` (YamlDotNet) |
+| `DeprecatableEntities_MustDeclareInstanceEntity` | Every entity with `deprecation: true` declares `instanceEntity` naming an x-lifecycle entity in the same file | `SchemaParser` (YamlDotNet) |
 
-**SchemaParser** (`structural-tests/SchemaParser.cs`): Structured YAML parser using YamlDotNet for semantic schema validation. Provides `GetLifecycleEntities()` for x-lifecycle analysis. Use this for new validations requiring nested structure traversal; use line-based scanning for simple pattern matching.
+**SchemaParser** (`structural-tests/SchemaParser.cs`): Structured YAML parser using YamlDotNet for semantic schema validation. Provides `GetLifecycleEntities()` for x-lifecycle analysis (returns `EntityName`, `ModelFields`, `HasDeprecation`, and `InstanceEntity`). Use this for new validations requiring nested structure traversal; use line-based scanning for simple pattern matching.
 
 ### Per-Plugin Validators (Not Centralized)
 
@@ -963,7 +1004,7 @@ info:
     # Do not remove; do not count as a "published event"; structural tests should exclude it
 ```
 
-**Topic naming**: Use dot-separated Pattern C per T16: `{service}.{entity}.{action}`. NOT hyphenated Pattern B (`service-entity.action`).
+**Topic naming**: Use dot-separated Pattern C per T16: `{service}.{entity}.{action}`. NOT hyphenated Pattern B (`service-entity.action`). **Exception**: Hyphenated service names preserve hyphens (e.g., `character-history.backstory.deleted`, `save-load.save-slot.created`) — see SCHEMA-RULES.md § Topic Naming Convention.
 
 #### x-lifecycle
 
@@ -971,15 +1012,22 @@ info:
 x-lifecycle:
   topic_prefix: myservice
   MyTemplate:
+    deprecation: true
+    instanceEntity: MyInstance        # Required: names the lifecycle entity representing instances
     model:
       templateId: { type: string, format: uuid, primary: true, required: true, description: "Unique template identifier" }
       code: { type: string, required: true, description: "Unique template code" }
       # ... entity-specific fields ...
-      isDeprecated: { type: boolean, required: true, description: "Whether template is deprecated" }
-      deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the template was deprecated" }
-      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
+      # NOTE: isDeprecated, deprecatedAt, deprecationReason are auto-injected by deprecation: true
     sensitive: []
+  MyInstance:                          # Instance lifecycle entity (must be in same file)
+    model:
+      instanceId: { type: string, format: uuid, primary: true, required: true, description: "Unique instance identifier" }
+      templateId: { type: string, format: uuid, required: true, description: "Template this instance was created from" }
+      # ... instance-specific fields ...
 ```
+
+**`instanceEntity`**: Required on every Category B template entity (B10a). Names the x-lifecycle entity in the same events file that represents instances of this template. The structural test `DeprecatableEntities_MustDeclareInstanceEntity` validates this. The instance entity must have full CRUD lifecycle events (guaranteed by being an x-lifecycle entity), including `*.deleted` — required because the clean-deprecated sweep uses reverse-index instance counts, and instances must be deletable for the count to reach zero.
 
 ### Implementation Pattern (`{Service}Service.cs`)
 
@@ -1113,8 +1161,8 @@ public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedTempla
         deprecated,
         getEntityId: t => t.TemplateId,
         getDeprecatedAt: t => t.DeprecatedAt,
-        hasActiveInstancesAsync: async (t, c) =>
-            await _instanceStore.ExistsAsync(BuildInstancesByTemplateKey(t.TemplateId), c),
+        hasInstancesAsync: (t, c) =>
+            _instanceStringStore.HasStringListEntriesAsync(BuildInstancesByTemplateKey(t.TemplateId), c),
         deleteAndPublishAsync: async (t, c) =>
         {
             await _templateStore.DeleteAsync(BuildTemplateKey(t.TemplateId), c);
@@ -1146,9 +1194,30 @@ public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedTempla
 
 **Key points:**
 - The `*.deleted` lifecycle event (previously unused infrastructure) is now published here
-- `hasActiveInstancesAsync` is service-specific — each service checks its own instance stores
+- `hasInstancesAsync` checks whether ANY instances reference the template (not just "active" ones — a template about to be destroyed must have zero references of any status)
 - `deleteAndPublishAsync` must handle all stores, indexes, and caches for the entity
 - The helper's `CleanupSweepResult` maps trivially to the generated `CleanDeprecatedResponse`
+
+#### Reverse Index for Instance Checks (Required)
+
+The `hasInstancesAsync` delegate is called once per deprecated entity during every cleanup sweep. A full query scan (`QueryAsync(i => i.DefinitionId == id)`) is O(N) per deprecated template — unacceptable at scale when there are thousands of deprecated templates and millions of instances.
+
+**Required pattern**: Use shared `HasStringListEntriesAsync` from `StateStoreExtensions` to read the pre-maintained reverse index in O(1):
+
+```csharp
+// O(1) — reads a pre-maintained reverse index key via shared helper
+hasInstancesAsync: (t, ct) =>
+    _instanceStringStore.HasStringListEntriesAsync(
+        BuildInstancesByTemplateKey(t.TemplateId), ct),
+```
+
+The reverse index is maintained via the shared `AddToStringListAsync` and `RemoveFromStringListAsync` extension methods on `IStateStore<string>` — add the instance ID on create, remove on delete. See [String List Index Helpers](#string-list-index-helpers-reverse-indexes) for full API documentation.
+
+**Prerequisite**: The instance entity must be deletable — otherwise the reverse index never reaches zero entries and cleanup never succeeds. The `instanceEntity` field in `x-lifecycle` (B10a) enforces this structurally by requiring the instance entity to be a lifecycle entity with full CRUD events including `*.deleted`.
+
+**Important**: The check must count ALL instances regardless of status. A template about to be destroyed must have zero references — completed, failed, expired, or active instances all prevent cleanup. Filtering by status (e.g., `Status == Active`) is a data integrity bug that allows templates to be deleted while historical instances still reference them.
+
+Reference implementations: `lib-item` (`inst-template:{templateId}`), `lib-currency` (`balance-currency:{definitionId}`), `lib-contract` (`template-idx:{templateId}`).
 
 ### What NOT to Include
 
@@ -1192,6 +1261,7 @@ public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedTempla
 | Mark service as Category B (cleanup) | `ICleanDeprecatedEntity` | `Services/ICleanDeprecatedEntity.cs` |
 | Add Category B deprecation to a template entity | Category B Deprecation Template | § 15 (schema + implementation patterns) |
 | Implement clean-deprecated sweep | `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` | `Helpers/DeprecationCleanupHelper.cs` |
+| O(1) instance check for clean-deprecated | Reverse index (template→instance list) | § 15 (reverse index pattern) |
 | Implement Category A merge endpoint | `MergeDeprecatedRequest`/`MergeDeprecatedResponse` | `common-api.yaml` shared models |
 
 ---

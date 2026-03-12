@@ -2651,7 +2651,7 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
             deprecated,
             getEntityId: d => d.DefinitionId,
             getDeprecatedAt: d => d.DeprecatedAt,
-            hasActiveInstancesAsync: async (d, ct) =>
+            hasInstancesAsync: async (d, ct) =>
             {
                 var activeInstances = await _instanceStore.QueryAsync(
                     i => i.DefinitionId == d.DefinitionId && i.Status == QuestStatus.Active,

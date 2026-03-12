@@ -12,16 +12,6 @@
 
 The Analytics plugin (L4 GameFeatures) is the central event aggregation point for all game-related statistics. Handles event ingestion, entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. Publishes score updates and milestone events consumed by Achievement and Leaderboard for downstream processing. Subscribes to game session lifecycle and character/realm history events for automatic ingestion. Unlike typical L4 services, Analytics only observes via event subscriptions -- it does not invoke L2/L4 service APIs and should not be called by L1/L2/L3 services.
 
-## Dependents (What Relies On This Plugin)
-
-| Dependent | Relationship |
-|-----------|-------------|
-| lib-achievement | Subscribes to `analytics.score.updated` to check achievement progress thresholds |
-| lib-achievement | Subscribes to `analytics.milestone.reached` to trigger milestone-based achievements |
-| lib-leaderboard | Subscribes to `analytics.score.updated` to update leaderboard entries |
-| lib-leaderboard | Subscribes to `analytics.rating.updated` to update skill rating leaderboards |
-| lib-divine | Subscribes to `analytics.score.updated` for divine intervention triggers (stub) |
-
 ## Type Field Classification
 
 | Field | Category | Type | Rationale |
@@ -34,6 +24,16 @@ The Analytics plugin (L4 GameFeatures) is the central event aggregation point fo
 | `milestoneType` (on `AnalyticsMilestoneReachedEvent`) | B (Game Content Type) | Opaque string | Type of milestone reached (e.g., `"total_kills"`, `"games_played"`). Published when a score crosses a configured threshold. Vocabulary matches aggregated event types. |
 | `action` | C (System State/Mode) | `ControllerAction` enum | Controller possession action (`possess`, `release`). Binary state tracking whether control was taken or relinquished. |
 | `metadata` (on `IngestEventRequest`) | -- (Client Metadata) | `object` (`additionalProperties: true`) | Opaque client-provided event context. Analytics stores and returns this data without inspecting its structure, per tenets (No Metadata Bag Contracts). |
+
+## Dependents (What Relies On This Plugin)
+
+| Dependent | Relationship |
+|-----------|-------------|
+| lib-achievement | Subscribes to `analytics.score.updated` to check achievement progress thresholds |
+| lib-achievement | Subscribes to `analytics.milestone.reached` to trigger milestone-based achievements |
+| lib-leaderboard | Subscribes to `analytics.score.updated` to update leaderboard entries |
+| lib-leaderboard | Subscribes to `analytics.rating.updated` to update skill rating leaderboards |
+| lib-divine | Subscribes to `analytics.score.updated` for divine intervention triggers (stub) |
 
 ## Configuration
 
@@ -58,6 +58,8 @@ The Analytics plugin (L4 GameFeatures) is the central event aggregation point fo
 | `ControllerHistoryRetentionDays` | `ANALYTICS_CONTROLLER_HISTORY_RETENTION_DAYS` | 90 | Days to retain controller history records (0 = indefinite) |
 | `ControllerHistoryCleanupBatchSize` | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_BATCH_SIZE` | 5000 | Maximum records to delete per cleanup invocation |
 | `ControllerHistoryCleanupSubBatchSize` | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_SUB_BATCH_SIZE` | 100 | Records to delete per iteration within a cleanup batch |
+| `ControllerHistoryCleanupStartupDelaySeconds` | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_STARTUP_DELAY_SECONDS` | 30 | Startup delay before first cleanup cycle |
+| `ControllerHistoryCleanupIntervalSeconds` | `ANALYTICS_CONTROLLER_HISTORY_CLEANUP_INTERVAL_SECONDS` | 3600 | Interval between cleanup cycles (1 hour default) |
 
 ## Visual Aid
 
@@ -116,18 +118,20 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 ## Potential Extensions
 
-- **Rating period scheduling**: A background task that periodically increases RD for inactive players (common in competitive games)
-- **Per-game milestones**: API for game-specific milestone definitions (currently global config only)
+- **Rating period scheduling**: A background task that periodically increases RD for inactive players (common in competitive games). Tracked above in Stubs as "Rating Period Decay" ([#249](https://github.com/beyond-immersion/bannou-service/issues/249)).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/249 -->
+- **Per-game milestones**: API for game-specific milestone definitions (currently global config only). Tracked above in Stubs as "Per-Game Milestone Definitions" ([#602](https://github.com/beyond-immersion/bannou-service/issues/602)).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/602 -->
 - **Event replay**: Ability to reprocess buffered events after a bug fix (currently events are deleted after processing)
+<!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/634 -->
 - **Time-series queries**: Adding time-bucketed aggregations for trend analysis
+<!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/635 -->
 
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
 
-1. ~~**`QueryControllerHistory` ignores `Offset` parameter**~~: **FIXED** (2026-03-08) - The schema was missing the `offset` field entirely on `QueryControllerHistoryRequest`. Added `offset` (integer, default 0, minimum 0) to the schema, regenerated, updated the method to pass `body.Offset` instead of hardcoded `0`, and added offset validation matching the `QueryEntitySummariesAsync` pattern.
-
-2. ~~**`IngestEvent` drops `SessionId` from request**~~: **FIXED** (2026-03-08) - Added `sessionId` (nullable Guid) to `IngestEventRequest` schema and wired `SessionId = body.SessionId` in both `IngestEventAsync` and `IngestEventBatchAsync`. Downstream consumers (Achievement, Leaderboard) now receive the session ID for API-ingested events via `AnalyticsScoreUpdatedEvent`.
+1. **`MilestoneThresholds` uses comma-delimited string for structured data**: The `MilestoneThresholds` configuration property is defined as a comma-separated string (`"10,25,50,..."`) that is parsed at runtime into a list of integers. Per IMPLEMENTATION TENETS (Configuration-First), structured data should use typed schema constructs — in this case, a YAML array type (`type: array, items: { type: integer }`) rather than a string requiring runtime parsing. The current approach bypasses compile-time type safety and schema validation. The fix requires updating the configuration schema to use an array type and updating the service code to consume the typed array.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -143,9 +147,7 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 ### Design Considerations (Requires Planning)
 
-1. **No automatic controller history cleanup** - The `CleanupControllerHistory` endpoint exists but must be called manually (e.g., via scheduled cron job or orchestrator task). There is no background service that automatically purges expired records. For production deployments, consider adding a periodic cleanup task or documenting the requirement for external scheduling.
-
-2. **Constructor injects 4 service clients individually** - The constructor takes `IGameServiceClient`, `IGameSessionClient`, `IRealmClient`, and `ICharacterClient` as separate parameters. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
+None currently identified.
 
 ## Work Tracking
 

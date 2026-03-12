@@ -147,6 +147,46 @@ export const eventRegistry = new Map<string, EventMetadata>([
     },
   ],
   [
+    'broadcast.output.source-changed',
+    {
+      eventName: 'broadcast.output.source-changed',
+      typeName: 'BroadcastOutputSourceChangedClientEvent',
+      service: 'broadcast',
+    },
+  ],
+  [
+    'broadcast.output.started',
+    {
+      eventName: 'broadcast.output.started',
+      typeName: 'BroadcastOutputStartedClientEvent',
+      service: 'broadcast',
+    },
+  ],
+  [
+    'broadcast.output.stopped',
+    {
+      eventName: 'broadcast.output.stopped',
+      typeName: 'BroadcastOutputStoppedClientEvent',
+      service: 'broadcast',
+    },
+  ],
+  [
+    'broadcast.session.ended',
+    {
+      eventName: 'broadcast.session.ended',
+      typeName: 'BroadcastSessionEndedClientEvent',
+      service: 'broadcast',
+    },
+  ],
+  [
+    'broadcast.session.started',
+    {
+      eventName: 'broadcast.session.started',
+      typeName: 'BroadcastSessionStartedClientEvent',
+      service: 'broadcast',
+    },
+  ],
+  [
     'character.realm-transferred',
     {
       eventName: 'character.realm-transferred',
@@ -331,65 +371,65 @@ export const eventRegistry = new Map<string, EventMetadata>([
     },
   ],
   [
-    'game.session.action-result',
+    'game-session.action-result',
     {
-      eventName: 'game.session.action-result',
+      eventName: 'game-session.action-result',
       typeName: 'GameActionResultClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game.session.chat-received',
+    'game-session.chat-received',
     {
-      eventName: 'game.session.chat-received',
+      eventName: 'game-session.chat-received',
       typeName: 'SessionChatReceivedClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game.session.player-joined',
+    'game-session.player-joined',
     {
-      eventName: 'game.session.player-joined',
+      eventName: 'game-session.player-joined',
       typeName: 'PlayerJoinedClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game.session.player-kicked',
+    'game-session.player-kicked',
     {
-      eventName: 'game.session.player-kicked',
+      eventName: 'game-session.player-kicked',
       typeName: 'PlayerKickedClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game.session.player-left',
+    'game-session.player-left',
     {
-      eventName: 'game.session.player-left',
+      eventName: 'game-session.player-left',
       typeName: 'PlayerLeftClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game.session.session-cancelled',
+    'game-session.session-cancelled',
     {
-      eventName: 'game.session.session-cancelled',
+      eventName: 'game-session.session-cancelled',
       typeName: 'SessionCancelledClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game.session.state-changed',
+    'game-session.state-changed',
     {
-      eventName: 'game.session.state-changed',
+      eventName: 'game-session.state-changed',
       typeName: 'SessionStateChangedClientEvent',
       service: 'game-session',
     },
   ],
   [
-    'game.session.state-updated',
+    'game-session.state-updated',
     {
-      eventName: 'game.session.state-updated',
+      eventName: 'game-session.state-updated',
       typeName: 'GameStateUpdatedClientEvent',
       service: 'game-session',
     },

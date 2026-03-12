@@ -39,12 +39,12 @@ public partial class GameSessionPlayerJoinedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: game.session.player-joined
+    /// Event type identifier: game-session.player-joined
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game.session.player-joined";
+    public override string EventName { get; set; } = "game-session.player-joined";
 
     /// <summary>
     /// ID of the game session
@@ -72,12 +72,12 @@ public partial class GameSessionPlayerLeftEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: game.session.player-left
+    /// Event type identifier: game-session.player-left
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game.session.player-left";
+    public override string EventName { get; set; } = "game-session.player-left";
 
     /// <summary>
     /// ID of the game session
@@ -117,12 +117,12 @@ public partial class GameSessionCancelledEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: game.session.cancelled
+    /// Event type identifier: game-session.cancelled
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game.session.cancelled";
+    public override string EventName { get; set; } = "game-session.cancelled";
 
     /// <summary>
     /// ID of the cancelled game session
@@ -150,12 +150,12 @@ public partial class GameSessionActionPerformedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: game.session.action.performed
+    /// Event type identifier: game-session.action.performed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game.session.action.performed";
+    public override string EventName { get; set; } = "game-session.action.performed";
 
     /// <summary>
     /// ID of the game session

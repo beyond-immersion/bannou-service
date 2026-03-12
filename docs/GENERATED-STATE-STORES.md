@@ -29,6 +29,12 @@ This document lists all state store components used in Bannou.
 | `asset-statestore` | Redis | Asset | Asset upload tracking and bundle state |
 | `auth-statestore` | Redis | Auth | Session and token state (ephemeral) |
 | `behavior-statestore` | Redis | Behavior | Behavior metadata and compiled definitions |
+| `broadcast-cameras` | Redis | Broadcast | Camera sources with TTL heartbeat (RTMP input URL, resolution, codec) |
+| `broadcast-lock` | Redis | Broadcast | Distributed locks for platform linking, session, broadcast, sentiment, token refresh, webhook management |
+| `broadcast-outputs` | Redis | Broadcast | Authoritative broadcast output state (source type, encrypted RTMP URL, FFmpeg PID, health) |
+| `broadcast-platforms` | MySQL | Broadcast | Platform link records (account, platform type, encrypted OAuth tokens, display name) |
+| `broadcast-sentiment-buffer` | Redis | Broadcast | Buffered sentiment entries awaiting batch publication and webhook rate limit counters |
+| `broadcast-sessions` | Redis | Broadcast | Active platform session state and tracked viewer mappings |
 | `character-encounter-statestore` | MySQL | CharacterEncounter | Encounter records and participant perspectives |
 | `character-history-statestore` | MySQL | CharacterHistory | Character historical events and backstory |
 | `character-lock` | Redis | Character | Distributed locks for character update and compression operations |
@@ -199,7 +205,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 189 stores (118 Redis, 71 MySQL)
+**Total**: 195 stores (123 Redis, 72 MySQL)
 
 ## Naming Conventions
 

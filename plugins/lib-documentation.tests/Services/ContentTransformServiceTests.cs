@@ -520,4 +520,23 @@ public class ContentTransformServiceTests
     }
 
     #endregion
+
+    #region Enum Boundary Mapping Validation
+
+    /// <summary>
+    /// Validates that the frontmatter category vocabulary (after hyphen stripping)
+    /// covers all DocumentCategory enum values. ContentTransformService strips hyphens
+    /// from kebab-case frontmatter values before calling TryMapByName.
+    /// </summary>
+    [Fact]
+    public void DocumentCategory_FrontmatterVocabulary_CoversAllValues()
+    {
+        // Frontmatter uses kebab-case; ContentTransformService strips hyphens before mapping.
+        // These are the post-strip representations that reach TryMapByName.
+        EnumMappingValidator.AssertStringToEnumCoverage<DocumentCategory>(
+            "gettingstarted", "apireference", "architecture", "deployment",
+            "troubleshooting", "tutorials", "gamesystems", "worldlore", "npcai", "other");
+    }
+
+    #endregion
 }

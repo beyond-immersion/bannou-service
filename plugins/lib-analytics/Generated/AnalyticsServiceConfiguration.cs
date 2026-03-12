@@ -178,6 +178,20 @@ public class AnalyticsServiceConfiguration : BaseServiceConfiguration
     public int ControllerHistoryCleanupSubBatchSize { get; set; } = 100;
 
     /// <summary>
+    /// Startup delay in seconds before the first controller history cleanup cycle runs
+    /// Environment variable: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 600)]
+    public int ControllerHistoryCleanupStartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Interval in seconds between controller history cleanup cycles
+    /// Environment variable: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 86400)]
+    public int ControllerHistoryCleanupIntervalSeconds { get; set; } = 3600;
+
+    /// <summary>
     /// Comma-separated list of score thresholds that trigger milestone events (e.g., "10,25,50,100")
     /// Environment variable: ANALYTICS_MILESTONE_THRESHOLDS
     /// </summary>

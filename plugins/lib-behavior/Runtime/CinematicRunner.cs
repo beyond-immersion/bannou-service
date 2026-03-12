@@ -28,7 +28,7 @@ namespace BeyondImmersion.BannouService.Behavior.Runtime;
 /// <item>Synchronizes entity state on completion</item>
 /// </list>
 /// </remarks>
-public sealed class CinematicRunner : IDisposable
+public sealed class CinematicRunner : IAsyncDisposable
 {
     private readonly CinematicInterpreter _interpreter;
     private readonly ControlGateManager _controlGates;
@@ -377,7 +377,7 @@ public sealed class CinematicRunner : IDisposable
     }
 
     /// <inheritdoc/>
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         if (_disposed)
         {
@@ -387,7 +387,7 @@ public sealed class CinematicRunner : IDisposable
         // If still running, abort
         if (IsRunning)
         {
-            AbortAsync().GetAwaiter().GetResult();
+            await AbortAsync();
         }
 
         _disposed = true;

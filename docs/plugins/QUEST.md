@@ -156,7 +156,7 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 
 ### Bugs (Fix Immediately)
 
-None currently identified.
+1. **`CleanDeprecatedDefinitionsAsync` uses full query scan instead of reverse index**: The `hasActiveInstancesAsync` delegate performs `_instanceStore.QueryAsync(i => i.DefinitionId == d.DefinitionId)` — a full table scan per deprecated definition. Should use a reverse index (definition→instance list) for O(1) lookup per IMPLEMENTATION TENETS B21. Reference: `lib-item` (`inst-template:{templateId}`), `lib-currency` (`balance-currency:{definitionId}`).
 
 ### Intentional Quirks (Documented Behavior)
 
