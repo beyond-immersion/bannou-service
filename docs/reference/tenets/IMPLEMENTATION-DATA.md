@@ -162,6 +162,7 @@ Document with code comments explaining the exception:
 2. **Test Harness Control**: `DAEMON_MODE`, `PLUGIN` in test projects
 3. **Orchestrator Environment Forwarding**: `Environment.GetEnvironmentVariables()` in `OrchestratorService.cs` (forwards config to deployed containers via strict whitelist)
 4. **Integration Test Runners**: `BANNOU_HTTP_ENDPOINT`, `BANNOU_APP_ID` in `http-tester/`/`edge-tester/` (standalone harnesses without DI access, use `AppConstants.ENV_*`)
+5. **Test Runner Control**: `BANNOU_RUN_INFORMATIONAL_TESTS` in `structural-tests/SkipUnless.cs` (controls `dotnet test`-level behavior — whether informational/checklist tests run or skip; service config schemas and Docker .env files would be an anti-pattern for test execution concerns that never touch containers or service startup)
 
 ```csharp
 // CORRECT: Injected config with fail-fast

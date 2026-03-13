@@ -438,4 +438,48 @@ When reviewing existing tests, ask:
 
 ---
 
+## Informational Tests & Runtime-Conditional Skipping
+
+Some structural tests are **informational** — they produce diagnostic checklists rather than enforcing pass/fail compliance. These tests are designed to fail with a useful report (e.g., "these 158 published topics have no subscribers"). They should be skippable by default so they don't block CI, but runnable on demand without code changes.
+
+### The `SkipUnless.InformationalTest()` Pattern
+
+Use `SkipUnless.InformationalTest(reason)` at the top of any informational test method. The test will skip by default and run only when the `BANNOU_RUN_INFORMATIONAL_TESTS` environment variable is set:
+
+```csharp
+[Fact]
+public void Events_PublishedTopicsWithoutSubscribers()
+{
+    SkipUnless.InformationalTest("Produces a checklist of published events with no subscribers");
+
+    // ... test logic that produces a diagnostic report via Assert failure message
+}
+```
+
+**Running informational tests:**
+```bash
+# Run a specific informational test
+BANNOU_RUN_INFORMATIONAL_TESTS=true dotnet test --project structural-tests/structural-tests.csproj --filter-method "*Events_PublishedTopicsWithoutSubscribers"
+
+# Run all informational tests
+BANNOU_RUN_INFORMATIONAL_TESTS=true dotnet test --project structural-tests/structural-tests.csproj
+```
+
+**When to use this pattern:**
+- Tests that produce checklists or coverage reports (event consumers, config gaps, etc.)
+- Tests that are expected to fail with diagnostic information
+- Tests that track known technical debt without blocking CI
+
+**When NOT to use this pattern:**
+- Tests that enforce compliance (schema validation, naming conventions, hierarchy rules) — these must always run and must pass
+- Tests that can be made to pass by fixing the codebase — fix the code, don't skip the test
+
+### Implementation Notes
+
+- `SkipUnless` lives in `structural-tests/SkipUnless.cs`
+- Uses `Assert.Skip()` (xunit v3 native API) for proper skip reporting
+- Uses `Environment.GetEnvironmentVariable` directly — this is a documented exception to the Configuration-First tenet (T21). Test runner control via raw environment variables is correct here; adding these to service configuration schemas would be an anti-pattern.
+
+---
+
 *This document supplements T11/T12 in QUALITY.md with specific implementation patterns.*
