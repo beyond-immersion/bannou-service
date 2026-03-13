@@ -422,7 +422,7 @@ public class MfaServiceTests
             })
             .ReturnsAsync("etag");
 
-        var token = await _service.CreateMfaChallengeAsync(accountId, CancellationToken.None);
+        var token = await _service.CreateMfaChallengeAsync(accountId, null, null, CancellationToken.None);
 
         Assert.False(string.IsNullOrWhiteSpace(token));
         Assert.Equal($"mfa-challenge-{token}", capturedKey);
@@ -448,7 +448,7 @@ public class MfaServiceTests
             })
             .ReturnsAsync("etag");
 
-        await _service.CreateMfaChallengeAsync(accountId, CancellationToken.None);
+        await _service.CreateMfaChallengeAsync(accountId, null, null, CancellationToken.None);
 
         Assert.NotNull(capturedOptions);
         Assert.Equal(_configuration.MfaChallengeTtlMinutes * 60, capturedOptions.Ttl);
@@ -472,7 +472,8 @@ public class MfaServiceTests
 
         var result = await _service.ConsumeMfaChallengeAsync(token, CancellationToken.None);
 
-        Assert.Equal(accountId, result);
+        Assert.NotNull(result);
+        Assert.Equal(accountId, result.Value.accountId);
         _mockChallengeStore.Verify(s => s.DeleteAsync(key, It.IsAny<CancellationToken>()), Times.Once);
     }
 

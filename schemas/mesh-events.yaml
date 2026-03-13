@@ -15,9 +15,9 @@ info:
     - topic: bannou.service-heartbeat
       event: ServiceHeartbeatEvent
       handler: HandleServiceHeartbeat
-    - topic: bannou.full-service-mappings
-      event: FullServiceMappingsEvent
-      handler: HandleServiceMappings
+    - topic: mesh.mappings.updated
+      event: MeshMappingsUpdatedEvent
+      handler: HandleMeshMappingsUpdated
     - topic: mesh.circuit.changed
       event: MeshCircuitStateChangedEvent
       handler: HandleCircuitStateChanged
@@ -37,6 +37,9 @@ info:
     - topic: mesh.endpoint.degraded
       event: MeshEndpointDegradedEvent
       description: Published when an endpoint transitions to Degraded status
+    - topic: mesh.mappings.updated
+      event: MeshMappingsUpdatedEvent
+      description: Published when service-to-appId mappings are updated locally, enabling cross-node sync
 
 paths: {}
 
@@ -240,3 +243,48 @@ components:
           format: date-time
           nullable: true
           description: When the last heartbeat was received (for MissedHeartbeat reason)
+
+    # =========================================================================
+    # Service Mapping Events (cross-node sync)
+    # =========================================================================
+    MeshMappingsUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published by Mesh when service-to-appId mappings are updated locally.
+        Other mesh nodes subscribe to this L0 event to sync their own
+        IServiceAppMappingResolver. Replaces the previous pattern where Mesh (L0)
+        subscribed to Orchestrator (L3) full-service-mappings events (T27 violation).
+      required:
+        - eventName
+        - version
+      properties:
+        eventName:
+          type: string
+          default: mesh.mappings.updated
+          description: 'Event type identifier: mesh.mappings.updated'
+        mappings:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Complete service-to-appId mapping dictionary. Null or empty means reset to default routing.
+        defaultAppId:
+          type: string
+          nullable: true
+          description: Default app-id for unmapped services (typically "bannou")
+        version:
+          type: integer
+          format: int64
+          description: Monotonically increasing version number for ordering
+        sourceInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Instance ID that originated the update (receivers skip self-originated events)
+        totalServices:
+          type: integer
+          nullable: true
+          description: Total number of services in the mappings

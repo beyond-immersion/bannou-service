@@ -221,9 +221,10 @@ public class StructuralTests
     /// recognizable prefix). This is informational — not all helpers need dedicated
     /// configuration. Run this test directly to produce the checklist.
     /// </summary>
-    [Fact(Skip = "Informational — produces a checklist of helpers without dedicated configuration classes")]
+    [Fact]
     public void HelperServices_ShouldHaveConfigurationClasses()
     {
+        SkipUnless.InformationalTest("Produces a checklist of helpers without dedicated configuration classes");
         EnsureAssembliesLoaded();
 
         var helpersWithoutConfig = new List<string>();
@@ -443,10 +444,11 @@ public class StructuralTests
     /// An uncalled method means a declared event topic is never published.
     /// Methods in <see cref="IntentionallyUncalledPublishers"/> are excluded.
     /// </summary>
-    [Theory(Skip = "Temporarily skipped — services with unimplemented event publishers need implementation work")]
+    [Theory]
     [MemberData(nameof(AllServiceTypes))]
     public void Service_CallsAllGeneratedEventPublishers(Type serviceType)
     {
+        SkipUnless.InformationalTest("Services with unimplemented event publishers need implementation work");
         var publisherInfo = EventPublishingValidator.GetEventPublisherInfo(serviceType);
         if (publisherInfo == null)
             return; // No generated publisher — service has no published events
@@ -1484,6 +1486,174 @@ public class StructuralTests
             {
                 // Skip assemblies that fail to load (safe failure mode —
                 // those plugins simply won't be validated by structural tests)
+            }
+        }
+    }
+
+    /// <summary>
+    /// Informational test that inventories all published event topics across the system and
+    /// identifies which ones have no subscriber (x-event-subscriptions) in any service.
+    /// This is NOT a violation — FOUNDATION TENETS explicitly state "publish events even
+    /// without current consumers." This test exists to provide visibility and replace
+    /// scattered "no consumers" tickets with a single trackable checklist.
+    /// </summary>
+    [Fact]
+    public void Events_PublishedTopicsWithoutSubscribers()
+    {
+        SkipUnless.InformationalTest("Produces a checklist of published events with no subscribers");
+        var schemasDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "schemas");
+        if (!Directory.Exists(schemasDir))
+            return;
+
+        // Phase 1: Collect all published topics (topic -> publishing service(s))
+        var publishedTopics = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+        // Phase 2: Collect all subscribed topics (topic -> subscribing service(s))
+        var subscribedTopics = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+        foreach (var file in Directory.GetFiles(schemasDir, "*-events.yaml"))
+        {
+            var fileName = Path.GetFileNameWithoutExtension(file);
+            if (!fileName.EndsWith("-events", StringComparison.Ordinal))
+                continue;
+
+            // Skip Generated/ subdirectory files
+            if (file.Contains(Path.Combine("schemas", "Generated"), StringComparison.Ordinal))
+                continue;
+
+            var serviceName = fileName[..^"-events".Length];
+            if (serviceName == "common")
+                continue;
+
+            var lines = File.ReadAllLines(file);
+            ParseEventPublications(lines, serviceName, publishedTopics);
+            ParseEventSubscriptions(lines, serviceName, subscribedTopics);
+        }
+
+        // Also scan Generated/*-lifecycle-events.yaml for auto-generated lifecycle publications
+        var generatedDir = Path.Combine(schemasDir, "Generated");
+        if (Directory.Exists(generatedDir))
+        {
+            foreach (var file in Directory.GetFiles(generatedDir, "*-lifecycle-events.yaml"))
+            {
+                var fileName = Path.GetFileNameWithoutExtension(file);
+                // Format: {service}-lifecycle-events.yaml
+                var serviceName = fileName.Replace("-lifecycle-events", "");
+                var lines = File.ReadAllLines(file);
+                ParseEventPublications(lines, serviceName, publishedTopics);
+            }
+        }
+
+        // Phase 3: Find published topics with no subscribers
+        var unconsumed = new List<string>();
+        foreach (var (topic, publishers) in publishedTopics.OrderBy(kv => kv.Key))
+        {
+            if (!subscribedTopics.ContainsKey(topic))
+            {
+                unconsumed.Add($"{topic} (published by: {string.Join(", ", publishers)})");
+            }
+        }
+
+        var consumed = publishedTopics.Count - unconsumed.Count;
+
+        Assert.True(
+            unconsumed.Count == 0,
+            $"Event consumer coverage: {consumed}/{publishedTopics.Count} published topics have subscribers. " +
+            $"{unconsumed.Count} published topic(s) have no subscribers in any service's x-event-subscriptions:\n" +
+            string.Join("\n", unconsumed.Select(u => $"  - {u}")));
+    }
+
+    /// <summary>
+    /// Parses x-event-publications from event schema lines and adds to the dictionary.
+    /// </summary>
+    private static void ParseEventPublications(
+        string[] lines, string serviceName, Dictionary<string, List<string>> publications)
+    {
+        var inPublications = false;
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var trimmed = lines[i].TrimStart();
+
+            if (trimmed.StartsWith("x-event-publications:", StringComparison.Ordinal))
+            {
+                // Check for empty: "x-event-publications: []"
+                if (trimmed.Contains("[]", StringComparison.Ordinal))
+                    continue;
+                inPublications = true;
+                continue;
+            }
+
+            // Exit publications block at the next top-level key (no indent or different section)
+            if (inPublications && trimmed.Length > 0 && !char.IsWhiteSpace(lines[i][0])
+                && !trimmed.StartsWith("-", StringComparison.Ordinal)
+                && !trimmed.StartsWith("#", StringComparison.Ordinal))
+            {
+                inPublications = false;
+            }
+
+            if (inPublications && trimmed.StartsWith("- topic:", StringComparison.Ordinal))
+            {
+                var topic = trimmed["- topic:".Length..].Trim();
+                // Strip quotes if present
+                if (topic.StartsWith('"') && topic.EndsWith('"'))
+                    topic = topic[1..^1];
+                if (topic.StartsWith('\'') && topic.EndsWith('\''))
+                    topic = topic[1..^1];
+
+                if (!publications.TryGetValue(topic, out var list))
+                {
+                    list = new List<string>();
+                    publications[topic] = list;
+                }
+                list.Add(serviceName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Parses x-event-subscriptions from event schema lines and adds to the dictionary.
+    /// </summary>
+    private static void ParseEventSubscriptions(
+        string[] lines, string serviceName, Dictionary<string, List<string>> subscriptions)
+    {
+        var inSubscriptions = false;
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var trimmed = lines[i].TrimStart();
+
+            if (trimmed.StartsWith("x-event-subscriptions:", StringComparison.Ordinal))
+            {
+                // Check for empty: "x-event-subscriptions: []"
+                if (trimmed.Contains("[]", StringComparison.Ordinal))
+                    continue;
+                inSubscriptions = true;
+                continue;
+            }
+
+            // Exit subscriptions block at the next top-level key
+            if (inSubscriptions && trimmed.Length > 0 && !char.IsWhiteSpace(lines[i][0])
+                && !trimmed.StartsWith("-", StringComparison.Ordinal)
+                && !trimmed.StartsWith("#", StringComparison.Ordinal))
+            {
+                inSubscriptions = false;
+            }
+
+            if (inSubscriptions && trimmed.StartsWith("- topic:", StringComparison.Ordinal))
+            {
+                var topic = trimmed["- topic:".Length..].Trim();
+                if (topic.StartsWith('"') && topic.EndsWith('"'))
+                    topic = topic[1..^1];
+                if (topic.StartsWith('\'') && topic.EndsWith('\''))
+                    topic = topic[1..^1];
+
+                if (!subscriptions.TryGetValue(topic, out var list))
+                {
+                    list = new List<string>();
+                    subscriptions[topic] = list;
+                }
+                list.Add(serviceName);
             }
         }
     }

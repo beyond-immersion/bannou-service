@@ -11256,26 +11256,50 @@ struct FDeviceInfo
 {
     GENERATED_BODY()
 
-    /** Category of the device */
+    /** Category of the device (Desktop, Mobile, Tablet, Console, Handheld) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> DeviceType;
 
-    /** Operating system or platform name */
+    /** Operating system or platform of the client device */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Platform;
+    TMap<FString, FString> Platform;
 
-    /** Browser name and version if applicable */
+    /** Operating system version string (e.g., "Windows 11 23H2", "iOS 17.4") */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Browser;
+    FString OsVersion;
 
-    /** Version of the client application */
+    /** Device manufacturer (e.g., "Apple", "Sony", "Valve") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeviceManufacturer;
+
+    /** Device model name (e.g., "iPhone 15 Pro", "PlayStation 5", "Steam Deck OLED") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeviceModel;
+
+    /** Version of the client application (semantic version recommended) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString AppVersion;
+
+    /** Version of the Bannou SDK used by the client */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SdkVersion;
+
+    /** Game engine name (e.g., "Unity", "Unreal", "Godot", "Stride", "Custom") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString EngineName;
+
+    /** Game engine version (e.g., "2022.3.14f1", "5.4.1") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString EngineVersion;
+
+    /** Optional key-value metadata for hardware capabilities and other client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> Metadata;
 
 };
 
 /**
- * Category of client device used for authentication or session tracking
+ * Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode)
  */
 USTRUCT(BlueprintType)
 struct FDeviceType
@@ -24974,6 +24998,10 @@ struct FRefreshRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString RefreshToken;
 
+    /** Optional updated device information for the new session. If omitted, the new session has no device info. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDeviceInfo> DeviceInfo;
+
 };
 
 /**
@@ -25075,6 +25103,10 @@ struct FRegisterRequest
     /** Email address for account recovery and notifications */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Email;
+
+    /** Information about the client device (optional) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDeviceInfo> DeviceInfo;
 
 };
 
@@ -28363,10 +28395,6 @@ struct FSessionInfo
     /** IP address from which the session was initiated */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString IpAddress;
-
-    /** Geographic location derived from the IP address */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Location;
 
 };
 

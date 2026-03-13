@@ -20,9 +20,6 @@ public static class OrchestratorPublishedTopics
     /// <summary>Published to verify pub/sub path is active.</summary>
     public const string OrchestratorHealthPing = "orchestrator.health-ping";
 
-    /// <summary>Published to broadcast full service-to-appId mappings to mesh.</summary>
-    public const string FullServiceMappings = "bannou.full-service-mappings";
-
     /// <summary>Published when deployment state changes (started, completed, failed, topology-changed).</summary>
     public const string Deployment = "bannou.deployment-events";
 

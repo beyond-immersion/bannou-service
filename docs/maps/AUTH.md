@@ -28,7 +28,7 @@
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `session:{sessionKey}` | `SessionDataModel` | Active session data (accountId, email, roles, authorizations, expiry, jti). TTL = SessionTokenTtlDays * 86400 |
+| `session:{sessionKey}` | `SessionDataModel` | Active session data (accountId, email, roles, authorizations, expiry, jti, deviceInfo, ipAddress). TTL = SessionTokenTtlDays * 86400 |
 | `session-id-index:{sessionId}` | `string` (sessionKey) | Reverse lookup: human-facing session ID to internal session key. TTL = session TTL + 300s |
 | `account-sessions:{accountId}` | Redis Set (`string`) | Per-account index of active session keys. No TTL; lazily pruned on read |
 | `refresh_token:{refreshToken}` | `string` (accountId) | Maps refresh token to account ID. TTL = SessionTokenTtlDays * 86400 |
@@ -36,7 +36,7 @@
 | `account-oauth-links:{accountId}` | `List<string>` | Reverse index of OAuth link keys for account cleanup. No TTL |
 | `login-attempts:{normalizedEmail}` | Counter (int) | Failed login attempt counter for rate limiting. TTL = LoginLockoutMinutes * 60 |
 | `password-reset:{token}` | `PasswordResetData` | Pending password reset (accountId, email, expiry). TTL = PasswordResetTokenTtlMinutes * 60 |
-| `mfa-challenge-{token}` | `MfaChallengeData` | MFA challenge token linking to accountId. TTL = MfaChallengeTtlMinutes * 60 |
+| `mfa-challenge-{token}` | `MfaChallengeData` | MFA challenge token (accountId, deviceInfo, expiry). TTL = MfaChallengeTtlMinutes * 60 |
 | `mfa-setup-{token}` | `MfaSetupData` | Pending MFA setup (encrypted secret, hashed recovery codes). TTL = MfaChallengeTtlMinutes * 60 |
 
 **Store**: `edge-revocation-statestore` (Backend: Redis) — only active when EdgeRevocationEnabled=true
@@ -64,6 +64,7 @@
 | IEntitySessionRegistry | L1 | Hard | Push client events to account WebSocket sessions (hosted by Connect) |
 | AppConfiguration | — | Hard | Cross-cutting JWT config (BANNOU_JWT_*) and ServiceDomain |
 | IHttpClientFactory | — | Hard | OAuth provider HTTP calls and CloudFlare KV API (injected into helper services) |
+| IHttpContextAccessor | — | Hard | Client IP extraction from X-Forwarded-For/X-Real-IP headers (reverse proxy aware) |
 
 **Notes:**
 - Auth subscribes to `account.deleted` for session invalidation per FOUNDATION TENETS's Account Deletion Cleanup Obligation. Sessions are ephemeral, TTL-bounded state — no data integrity violation occurs if the event is missed (sessions time out naturally). Auth is L1→L1, making this the simplest case of the account cleanup pattern.
@@ -119,6 +120,7 @@
 | `IEmailService` | Password reset email delivery (None/SendGrid/SMTP/SES — selected at startup) |
 | `IMfaService` | TOTP secret generation/encryption, code validation, recovery code management |
 | `IEventConsumer` | Registers handlers for account.deleted, account.updated |
+| `IHttpContextAccessor` | Client IP extraction from request headers (X-Forwarded-For, X-Real-IP, RemoteIpAddress) |
 
 ---
 
@@ -155,31 +157,32 @@ POST /auth/login | Roles: [anonymous]
 
 ```
 IF body.Email or body.Password is empty -> 400
+clientIp = GetClientIpAddress() // X-Forwarded-For -> X-Real-IP -> RemoteIpAddress
 // Rate limiting via Redis counter
 READ counter login-attempts:{normalizedEmail} -> 401 if >= MaxLoginAttempts
- PUBLISH auth.login.failed { reason: RateLimited }
+ PUBLISH auth.login.failed { reason: RateLimited, ipAddress: clientIp }
 CALL IAccountClient.GetAccountByEmailAsync(email) -> 401 if 404 (ApiException)
- PUBLISH auth.login.failed { reason: AccountNotFound }
+ PUBLISH auth.login.failed { reason: AccountNotFound, ipAddress: clientIp }
  INCREMENT login-attempts:{normalizedEmail} (TTL: LoginLockoutMinutes * 60)
 IF account.PasswordHash is empty -> 401
 IF !BCrypt.Verify(password, hash)
  INCREMENT login-attempts:{normalizedEmail}
- PUBLISH auth.login.failed { reason: InvalidCredentials, accountId, attemptCount }
- PUSH auth.suspicious-login to account sessions (only when accountId known)
+ PUBLISH auth.login.failed { reason: InvalidCredentials, accountId, attemptCount, ipAddress: clientIp }
+ PUSH auth.suspicious-login to account sessions { attemptCount, ipAddress: clientIp }
  RETURN (401, null)
 DELETE counter login-attempts:{normalizedEmail}
 IF account.MfaEnabled
  // see helper: MfaService.CreateMfaChallengeAsync
- WRITE auth:mfa-challenge-{token} <- MfaChallengeData { accountId } (TTL: MfaChallengeTtlMinutes * 60)
+ WRITE auth:mfa-challenge-{token} <- MfaChallengeData { accountId, deviceInfo, ipAddress: clientIp } (TTL: MfaChallengeTtlMinutes * 60)
  RETURN (200, LoginResponse { requiresMfa: true, mfaChallengeToken })
 // No MFA — generate tokens
-// see helper: TokenService.GenerateAccessTokenAsync
-WRITE auth:session:{sessionKey} <- SessionDataModel (TTL: SessionTokenTtlDays * 86400)
+// see helper: TokenService.GenerateAccessTokenAsync (passes body.DeviceInfo, clientIp)
+WRITE auth:session:{sessionKey} <- SessionDataModel { ..., deviceInfo, ipAddress: clientIp } (TTL: SessionTokenTtlDays * 86400)
 WRITE auth:session-id-index:{sessionId} <- sessionKey (TTL: session TTL + 300)
 ADD auth:account-sessions:{accountId} <- sessionKey (Redis Set SADD)
 WRITE auth:refresh_token:{refreshToken} <- accountId (TTL: SessionTokenTtlDays * 86400)
-PUBLISH auth.login.successful { accountId, username, sessionId }
-PUSH auth.device-login to account sessions { loginSessionId }
+PUBLISH auth.login.successful { accountId, username, sessionId, deviceInfo, ipAddress: clientIp }
+PUSH auth.device-login to account sessions { loginSessionId, ipAddress: clientIp }
 RETURN (200, LoginResponse { accountId, accessToken, refreshToken, expiresIn, connectUrl })
 ```
 
@@ -193,12 +196,12 @@ BCrypt.HashPassword(body.Password, workFactor: config.BcryptWorkFactor)
 CALL IAccountClient.CreateAccountAsync(email, displayName, passwordHash)
  -> 409 if email exists (ApiException)
  -> 400 if invalid data (ApiException)
-// see helper: TokenService.GenerateAccessTokenAsync
-WRITE auth:session:{sessionKey} <- SessionDataModel (TTL: SessionTokenTtlDays * 86400)
+// see helper: TokenService.GenerateAccessTokenAsync (passes body.DeviceInfo)
+WRITE auth:session:{sessionKey} <- SessionDataModel { ..., deviceInfo } (TTL: SessionTokenTtlDays * 86400)
 WRITE auth:session-id-index:{sessionId} <- sessionKey (TTL: session TTL + 300)
 ADD auth:account-sessions:{accountId} <- sessionKey (Redis Set SADD)
 WRITE auth:refresh_token:{refreshToken} <- accountId (TTL: SessionTokenTtlDays * 86400)
-PUBLISH auth.registration.successful { accountId, username, email, sessionId }
+PUBLISH auth.registration.successful { accountId, username, email, sessionId, deviceInfo }
 RETURN (200, RegisterResponse { accountId, accessToken, refreshToken, connectUrl })
 ```
 
@@ -238,12 +241,12 @@ ELSE
  WRITE auth:oauth-link:{provider}:{providerId} <- accountId
  WRITE auth:account-oauth-links:{accountId} <- append link key
 IF account is null -> 500
-// see helper: TokenService.GenerateAccessTokenAsync
-WRITE auth:session:{sessionKey} <- SessionDataModel (TTL: SessionTokenTtlDays * 86400)
+// see helper: TokenService.GenerateAccessTokenAsync (passes body.DeviceInfo)
+WRITE auth:session:{sessionKey} <- SessionDataModel { ..., deviceInfo } (TTL: SessionTokenTtlDays * 86400)
 WRITE auth:session-id-index:{sessionId} <- sessionKey (TTL: session TTL + 300)
 ADD auth:account-sessions:{accountId} <- sessionKey (Redis Set SADD)
 WRITE auth:refresh_token:{refreshToken} <- accountId (TTL: SessionTokenTtlDays * 86400)
-PUBLISH auth.oauth.successful { accountId, provider, providerUserId, sessionId, isNewAccount }
+PUBLISH auth.oauth.successful { accountId, provider, providerUserId, sessionId, isNewAccount, deviceInfo }
 PUSH auth.device-login to account sessions { loginSessionId }
 IF isNewAccount
  PUSH auth.external-account-linked to account sessions { provider }
@@ -265,12 +268,12 @@ IF steamId is empty -> 401
 // Same find-or-create flow as CompleteOAuth, email=null for Steam
 WRITE auth:oauth-link:Steam:{steamId} <- accountId
 WRITE auth:account-oauth-links:{accountId} <- append link key
-// see helper: TokenService.GenerateAccessTokenAsync
-WRITE auth:session:{sessionKey} <- SessionDataModel (TTL: SessionTokenTtlDays * 86400)
+// see helper: TokenService.GenerateAccessTokenAsync (passes body.DeviceInfo)
+WRITE auth:session:{sessionKey} <- SessionDataModel { ..., deviceInfo } (TTL: SessionTokenTtlDays * 86400)
 WRITE auth:session-id-index:{sessionId} <- sessionKey (TTL: session TTL + 300)
 ADD auth:account-sessions:{accountId} <- sessionKey (Redis Set SADD)
 WRITE auth:refresh_token:{refreshToken} <- accountId (TTL: SessionTokenTtlDays * 86400)
-PUBLISH auth.steam.successful { accountId, steamId, sessionId, isNewAccount }
+PUBLISH auth.steam.successful { accountId, steamId, sessionId, isNewAccount, deviceInfo }
 PUSH auth.device-login to account sessions { loginSessionId }
 IF isNewAccount
  PUSH auth.external-account-linked to account sessions { provider: Steam }
@@ -286,8 +289,8 @@ IF body.RefreshToken is empty -> 400
 // see helper: TokenService.ValidateRefreshTokenAsync
 READ auth:refresh_token:{body.RefreshToken} -> 403 if null
 CALL IAccountClient.GetAccountAsync(accountId) -> 401 if 404 (ApiException)
-// see helper: TokenService.GenerateAccessTokenAsync (new session)
-WRITE auth:session:{sessionKey} <- SessionDataModel (TTL: SessionTokenTtlDays * 86400)
+// see helper: TokenService.GenerateAccessTokenAsync (new session, passes body.DeviceInfo if provided)
+WRITE auth:session:{sessionKey} <- SessionDataModel { ..., deviceInfo: body.DeviceInfo } (TTL: SessionTokenTtlDays * 86400)
 WRITE auth:session-id-index:{sessionId} <- sessionKey (TTL: session TTL + 300)
 ADD auth:account-sessions:{accountId} <- sessionKey (Redis Set SADD)
 // Store new refresh token
@@ -529,9 +532,10 @@ POST /auth/mfa/verify | Roles: [anonymous]
 
 ```
 // Consume challenge token (single-use — deleted BEFORE verification)
-// see helper: MfaService.ConsumeMfaChallengeAsync
+// see helper: MfaService.ConsumeMfaChallengeAsync -> (accountId, deviceInfo)
 READ auth:mfa-challenge-{body.ChallengeToken} -> 401 if null
 DELETE auth:mfa-challenge-{body.ChallengeToken}
+// deviceInfo preserved from original login request via MfaChallengeData
 CALL IAccountClient.GetAccountAsync(accountId) -> 500 if 404 (should not happen)
 IF neither TotpCode nor RecoveryCode provided -> 400
 IF body.TotpCode provided
@@ -547,13 +551,13 @@ ELSE IF body.RecoveryCode provided
  // Remove used recovery code, update account (retry up to 3x on 409 Conflict)
  CALL IAccountClient.UpdateMfaAsync(accountId, enabled: true, secret, remainingCodes)
 // MFA verified — generate full tokens
-// see helper: TokenService.GenerateAccessTokenAsync
-WRITE auth:session:{sessionKey} <- SessionDataModel (TTL: SessionTokenTtlDays * 86400)
+// see helper: TokenService.GenerateAccessTokenAsync (passes challengeDeviceInfo)
+WRITE auth:session:{sessionKey} <- SessionDataModel { ..., deviceInfo: challengeDeviceInfo } (TTL: SessionTokenTtlDays * 86400)
 WRITE auth:session-id-index:{sessionId} <- sessionKey (TTL: session TTL + 300)
 ADD auth:account-sessions:{accountId} <- sessionKey (Redis Set SADD)
 WRITE auth:refresh_token:{refreshToken} <- accountId (TTL: SessionTokenTtlDays * 86400)
-PUBLISH auth.mfa.verified { accountId, method, sessionId, recoveryCodesRemaining }
-PUBLISH auth.login.successful { accountId, username, sessionId }
+PUBLISH auth.mfa.verified { accountId, method, sessionId, recoveryCodesRemaining, deviceInfo }
+PUBLISH auth.login.successful { accountId, username, sessionId, deviceInfo }
 PUSH auth.device-login to account sessions { loginSessionId }
 RETURN (200, AuthResponse { accountId, accessToken, refreshToken, expiresIn, connectUrl })
 ```

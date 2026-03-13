@@ -415,9 +415,9 @@ Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. 
 
 ## State {#state}
 
-**Version**: 1.0.0 | **Schema**: `schemas/state-api.yaml` | **Endpoints**: 9 | **Deep Dive**: [docs/plugins/STATE.md](plugins/STATE.md) | **Map**: [docs/maps/STATE.md](maps/STATE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/state-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/STATE.md](plugins/STATE.md) | **Map**: [docs/maps/STATE.md](maps/STATE.md)
 
-The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports four backends (Redis for ephemeral/session data, MySQL for durable/queryable data, SQLite for self-hosted durable storage, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Interface Hierarchy section for the full interface tree and backend support matrix.
+The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports four backends (Redis for ephemeral/session data, MySQL for durable/queryable data, SQLite for self-hosted durable storage, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Visual Aid section for the full interface tree and backend support matrix.
 
 ## Status {#status}
 
@@ -444,6 +444,8 @@ Client events are routed via `IEntitySessionRegistry.PublishToEntitySessionsAsyn
 **Version**: 1.0.0 | **Schema**: `schemas/telemetry-api.yaml` | **Endpoints**: 2 | **Deep Dive**: [docs/plugins/TELEMETRY.md](plugins/TELEMETRY.md) | **Map**: [docs/maps/TELEMETRY.md](maps/TELEMETRY.md)
 
 The Telemetry service (L0 Infrastructure, optional) provides unified observability infrastructure for Bannou using OpenTelemetry standards. Operates in a dual role: as the `ITelemetryProvider` interface that lib-state, lib-messaging, and lib-mesh use for instrumentation, and as an HTTP API providing health and status endpoints. Unique among Bannou services: uses no state stores and publishes no events. When disabled, other L0 services receive a `NullTelemetryProvider` (all methods are no-ops).
+
+This plugin has **no dependencies on other Bannou plugins** — it is optional Layer 0 infrastructure per Service Hierarchy. Unlike required L0 components (state, messaging, mesh) which cannot be disabled, telemetry can be freely disabled. When enabled, it loads FIRST so that required infrastructure libs can use `ITelemetryProvider` for instrumentation. The service class does not inject `IMessageBus` directly — it has no events to publish and no event subscriptions. The generated controller still calls `TryPublishErrorAsync` on unexpected endpoint failures as normal (per IMPLEMENTATION TENETS). There is no circular dependency concern: `ITelemetryProvider.StartActivity` creates spans on lib-messaging operations but does not call back into telemetry service endpoints, and `NullTelemetryProvider` provides a safe no-op fallback if the real provider is unavailable.
 
 ## Trade {#trade}
 
@@ -490,7 +492,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 76
-- **Total endpoints**: 939
+- **Total endpoints**: 942
 
 ---
 

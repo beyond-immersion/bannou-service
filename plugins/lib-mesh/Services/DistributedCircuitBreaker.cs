@@ -91,6 +91,16 @@ public sealed class DistributedCircuitBreaker
                 "DistributedCircuitBreaker running without Redis (InMemory mode). " +
                 "Circuit state will NOT be shared across instances.");
         }
+
+        // Register observable gauge for circuit breaker state monitoring.
+        // Reports the worst (highest ordinal) state across all tracked circuits:
+        // Closed=0, Open=1, HalfOpen=2. Any value > 0 indicates degradation.
+        _telemetryProvider.RegisterObservableGauge<int>(
+            TelemetryComponents.Mesh,
+            TelemetryMetrics.MeshCircuitBreakerState,
+            ObserveWorstCircuitState,
+            unit: "{state}",
+            description: "Worst circuit breaker state across all tracked circuits (0=Closed, 1=Open, 2=HalfOpen)");
     }
 
     /// <summary>
@@ -319,6 +329,26 @@ public sealed class DistributedCircuitBreaker
     public void ClearAllLocalCache()
     {
         _localCache.Clear();
+    }
+
+    /// <summary>
+    /// Observes the worst circuit breaker state across all tracked circuits.
+    /// Used as the callback for the observable gauge metric.
+    /// </summary>
+    /// <returns>Integer encoding of the worst state: 0=Closed, 1=Open, 2=HalfOpen.</returns>
+    private int ObserveWorstCircuitState()
+    {
+        var worst = 0;
+        foreach (var entry in _localCache.Values)
+        {
+            var stateValue = (int)entry.State;
+            if (stateValue > worst)
+            {
+                worst = stateValue;
+            }
+        }
+
+        return worst;
     }
 
     private string GetRedisKey(string appId) => $"{_keyPrefix}:{appId}";

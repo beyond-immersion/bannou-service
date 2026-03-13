@@ -188,6 +188,12 @@ public partial class AuthLoginSuccessfulEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("userAgent")]
     public string? UserAgent { get; set; } = default!;
 
+    /// <summary>
+    /// Device information reported by the client during authentication
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
+    public DeviceInfo? DeviceInfo { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -295,6 +301,12 @@ public partial class AuthRegistrationSuccessfulEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
     public string? IpAddress { get; set; } = default!;
 
+    /// <summary>
+    /// Device information reported by the client during registration
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
+    public DeviceInfo? DeviceInfo { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -357,6 +369,12 @@ public partial class AuthOAuthLoginSuccessfulEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
     public string? IpAddress { get; set; } = default!;
 
+    /// <summary>
+    /// Device information reported by the client during OAuth authentication
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
+    public DeviceInfo? DeviceInfo { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -409,6 +427,12 @@ public partial class AuthSteamLoginSuccessfulEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
     public string? IpAddress { get; set; } = default!;
+
+    /// <summary>
+    /// Device information reported by the client during Steam authentication
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
+    public DeviceInfo? DeviceInfo { get; set; } = default!;
 
 }
 
@@ -553,6 +577,18 @@ public partial class AuthMfaVerifiedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recoveryCodesRemaining")]
     public int? RecoveryCodesRemaining { get; set; } = default!;
+
+    /// <summary>
+    /// Device information from the original login request (preserved through MFA challenge)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
+    public DeviceInfo? DeviceInfo { get; set; } = default!;
+
+    /// <summary>
+    /// IP address from which MFA verification was performed (preserved from original login challenge)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
+    public string? IpAddress { get; set; } = default!;
 
 }
 

@@ -17,7 +17,7 @@ public class ServiceMappingChangedEventArgs : EventArgs
 
 /// <summary>
 /// Resolves service names to app-ids for distributed service routing.
-/// Supports dynamic mapping via RabbitMQ events for production scaling.
+/// Supports dynamic mapping via IServiceMappingReceiver DI interface for production scaling.
 /// </summary>
 public interface IServiceAppMappingResolver
 {
@@ -36,7 +36,7 @@ public interface IServiceAppMappingResolver
     string GetAppIdForService(string? serviceName);
 
     /// <summary>
-    /// Updates the service mapping from RabbitMQ service discovery events.
+    /// Updates an individual service mapping.
     /// </summary>
     /// <param name="serviceName">The service name</param>
     /// <param name="appId">The app-id where this service is running</param>
@@ -62,8 +62,8 @@ public interface IServiceAppMappingResolver
     void ImportMappings(IReadOnlyDictionary<string, string> mappings);
 
     /// <summary>
-    /// Atomically replaces all service mappings with a new full state from Orchestrator.
-    /// Implements version checking to reject out-of-order events.
+    /// Atomically replaces all service mappings with a new full state.
+    /// Implements version checking to reject out-of-order updates.
     /// </summary>
     /// <param name="mappings">Complete dictionary of serviceName -> appId mappings</param>
     /// <param name="defaultAppId">Default app-id for unmapped services</param>

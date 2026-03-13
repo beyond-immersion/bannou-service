@@ -54,7 +54,7 @@ public enum EmailProvider
 #pragma warning restore CS1591
 
 /// <summary>
-/// Category of client device used for authentication or session tracking
+/// Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode)
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -72,6 +72,53 @@ public enum DeviceType
 
     [System.Runtime.Serialization.EnumMember(Value = @"Console")]
     Console = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Handheld")]
+    Handheld = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Unknown")]
+    Unknown = 5,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Operating system or platform of the client device
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Platform
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Windows")]
+    Windows = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"MacOS")]
+    MacOS = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Linux")]
+    Linux = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"iOS")]
+    IOS = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Android")]
+    Android = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PlayStation")]
+    PlayStation = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Xbox")]
+    Xbox = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"NintendoSwitch")]
+    NintendoSwitch = 7,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"WebGL")]
+    WebGL = 8,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Other")]
+    Other = 9,
 
 }
 #pragma warning restore CS1591
@@ -326,6 +373,12 @@ public partial class RegisterRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string Email { get; set; } = default!;
 
+    /// <summary>
+    /// Information about the client device (optional)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
+    public DeviceInfo? DeviceInfo { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -494,6 +547,12 @@ public partial class RefreshRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string RefreshToken { get; set; } = default!;
 
+    /// <summary>
+    /// Optional updated device information for the new session. If omitted, the new session has no device info.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deviceInfo")]
+    public DeviceInfo? DeviceInfo { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -616,12 +675,6 @@ public partial class SessionInfo
     [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
     public string? IpAddress { get; set; } = default!;
 
-    /// <summary>
-    /// Geographic location derived from the IP address
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("location")]
-    public string? Location { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -632,29 +685,73 @@ public partial class DeviceInfo
 {
 
     /// <summary>
-    /// Category of the device
+    /// Category of the device (Desktop, Mobile, Tablet, Console, Handheld)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deviceType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DeviceType? DeviceType { get; set; } = default!;
 
     /// <summary>
-    /// Operating system or platform name
+    /// Operating system or platform of the client device
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("platform")]
-    public string? Platform { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public Platform? Platform { get; set; } = default!;
 
     /// <summary>
-    /// Browser name and version if applicable
+    /// Operating system version string (e.g., "Windows 11 23H2", "iOS 17.4")
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("browser")]
-    public string? Browser { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("osVersion")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? OsVersion { get; set; } = default!;
 
     /// <summary>
-    /// Version of the client application
+    /// Device manufacturer (e.g., "Apple", "Sony", "Valve")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deviceManufacturer")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
+    public string? DeviceManufacturer { get; set; } = default!;
+
+    /// <summary>
+    /// Device model name (e.g., "iPhone 15 Pro", "PlayStation 5", "Steam Deck OLED")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deviceModel")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
+    public string? DeviceModel { get; set; } = default!;
+
+    /// <summary>
+    /// Version of the client application (semantic version recommended)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appVersion")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? AppVersion { get; set; } = default!;
+
+    /// <summary>
+    /// Version of the Bannou SDK used by the client
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sdkVersion")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? SdkVersion { get; set; } = default!;
+
+    /// <summary>
+    /// Game engine name (e.g., "Unity", "Unreal", "Godot", "Stride", "Custom")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("engineName")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? EngineName { get; set; } = default!;
+
+    /// <summary>
+    /// Game engine version (e.g., "2022.3.14f1", "5.4.1")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("engineVersion")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? EngineVersion { get; set; } = default!;
+
+    /// <summary>
+    /// Optional key-value metadata for hardware capabilities and other client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
 }
 

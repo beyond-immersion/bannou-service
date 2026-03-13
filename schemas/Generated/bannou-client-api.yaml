@@ -24190,19 +24190,64 @@ components:
           allOf:
           - $ref: '#/components/schemas/DeviceType'
           nullable: true
-          description: Category of the device
+          description: Category of the device (Desktop, Mobile, Tablet, Console,
+            Handheld)
         platform:
+          allOf:
+          - $ref: '#/components/schemas/Platform'
+          nullable: true
+          description: Operating system or platform of the client device
+        osVersion:
           type: string
           nullable: true
-          description: Operating system or platform name
-        browser:
+          maxLength: 100
+          description: Operating system version string (e.g., "Windows 11 23H2",
+            "iOS 17.4")
+        deviceManufacturer:
           type: string
           nullable: true
-          description: Browser name and version if applicable
+          maxLength: 200
+          description: Device manufacturer (e.g., "Apple", "Sony", "Valve")
+        deviceModel:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Device model name (e.g., "iPhone 15 Pro", "PlayStation 
+            5", "Steam Deck OLED")
         appVersion:
           type: string
           nullable: true
-          description: Version of the client application
+          maxLength: 100
+          description: Version of the client application (semantic version 
+            recommended)
+        sdkVersion:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Version of the Bannou SDK used by the client
+        engineName:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Game engine name (e.g., "Unity", "Unreal", "Godot", 
+            "Stride", "Custom")
+        engineVersion:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Game engine version (e.g., "2022.3.14f1", "5.4.1")
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+          description: >-
+            Optional key-value metadata for hardware capabilities and other client-reported
+            device properties (e.g., screen resolution, GPU name, memory). Values
+            are strings.
+            This data is stored and published in events as-is; the auth service does
+            not
+            read or interpret it (T29-compliant pass-through).
     DeviceType:
       type: string
       enum:
@@ -24210,8 +24255,10 @@ components:
       - Mobile
       - Tablet
       - Console
-      description: Category of client device used for authentication or session 
-        tracking
+      - Handheld
+      - Unknown
+      description: Category of client device (Handheld covers devices like Steam
+        Deck and Nintendo Switch in portable mode)
     DiscardRequest:
       type: object
       additionalProperties: false
@@ -37801,6 +37848,11 @@ components:
           type: string
           description: Refresh token issued during authentication to obtain a 
             new access token
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+          nullable: true
+          description: Optional updated device information for the new session. 
+            If omitted, the new session has no device info.
     RefundMode:
       type: string
       description: |
@@ -37934,6 +37986,10 @@ components:
           format: email
           description: Email address for account recovery and notifications
           example: "user@example.com"
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+          nullable: true
+          description: Information about the client device (optional)
     RegisterResponse:
       type: object
       description: Response from successful user registration
@@ -41412,10 +41468,6 @@ components:
           type: string
           nullable: true
           description: IP address from which the session was initiated
-        location:
-          type: string
-          nullable: true
-          description: Geographic location derived from the IP address
     SessionListResponse:
       type: object
       additionalProperties: false

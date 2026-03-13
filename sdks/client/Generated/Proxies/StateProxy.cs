@@ -187,4 +187,58 @@ public sealed class StateProxy
         return _client.InvokeAsync<ListStoresRequest, ListStoresResponse>(
             "/state/list-stores", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Analyze a store and report what can and cannot be migrated
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing MigrateDryRunResponse on success.</returns>
+    public Task<ApiResponse<MigrateDryRunResponse>> MigrateDryRunAsync(
+        MigrateDryRunRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<MigrateDryRunRequest, MigrateDryRunResponse>(
+            "/state/migrate/dry-run", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Perform actual data migration between backends for a store
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing MigrateExecuteResponse on success.</returns>
+    public Task<ApiResponse<MigrateExecuteResponse>> MigrateExecuteAsync(
+        MigrateExecuteRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<MigrateExecuteRequest, MigrateExecuteResponse>(
+            "/state/migrate/execute", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Compare key counts between source and destination backends
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing MigrateVerifyResponse on success.</returns>
+    public Task<ApiResponse<MigrateVerifyResponse>> MigrateVerifyAsync(
+        MigrateVerifyRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<MigrateVerifyRequest, MigrateVerifyResponse>(
+            "/state/migrate/verify", request, channel, timeout, cancellationToken);
+    }
 }

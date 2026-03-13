@@ -30,6 +30,9 @@ public sealed class TelemetryProvider : ITelemetryProvider, IDisposable
     // Histograms by component:metricName key
     private readonly ConcurrentDictionary<string, Histogram<double>> _histograms = new();
 
+    // Observable gauges by component:metricName key (stored as object since generic type varies)
+    private readonly ConcurrentDictionary<string, object> _observableGauges = new();
+
     private bool _disposed;
 
     /// <summary>
@@ -220,6 +223,70 @@ public sealed class TelemetryProvider : ITelemetryProvider, IDisposable
     }
 
     /// <inheritdoc/>
+    public void RegisterObservableGauge<T>(
+        string componentName,
+        string metricName,
+        Func<T> observeValue,
+        string? unit = null,
+        string? description = null) where T : struct
+    {
+        if (!MetricsEnabled)
+        {
+            return;
+        }
+
+        var key = $"{componentName}:{metricName}";
+        _observableGauges.GetOrAdd(key, _ =>
+        {
+            var meter = GetMeter(componentName)
+                ?? throw new InvalidOperationException(
+                    $"Meter for {componentName} unavailable despite MetricsEnabled being true");
+
+            _logger.LogDebug(
+                "Registered ObservableGauge: {MetricName} (component: {ComponentName})",
+                metricName, componentName);
+
+            return meter.CreateObservableGauge(
+                metricName,
+                observeValue,
+                unit: unit,
+                description: description);
+        });
+    }
+
+    /// <inheritdoc/>
+    public void RegisterObservableGauge<T>(
+        string componentName,
+        string metricName,
+        Func<Measurement<T>> observeValue,
+        string? unit = null,
+        string? description = null) where T : struct
+    {
+        if (!MetricsEnabled)
+        {
+            return;
+        }
+
+        var key = $"{componentName}:{metricName}";
+        _observableGauges.GetOrAdd(key, _ =>
+        {
+            var meter = GetMeter(componentName)
+                ?? throw new InvalidOperationException(
+                    $"Meter for {componentName} unavailable despite MetricsEnabled being true");
+
+            _logger.LogDebug(
+                "Registered ObservableGauge (with tags): {MetricName} (component: {ComponentName})",
+                metricName, componentName);
+
+            return meter.CreateObservableGauge(
+                metricName,
+                observeValue,
+                unit: unit,
+                description: description);
+        });
+    }
+
+    /// <inheritdoc/>
     public IStateStore<TValue> WrapStateStore<TValue>(IStateStore<TValue> store, string storeName, string backend)
         where TValue : class
     {
@@ -308,6 +375,7 @@ public sealed class TelemetryProvider : ITelemetryProvider, IDisposable
 
         _counters.Clear();
         _histograms.Clear();
+        _observableGauges.Clear();
 
         _disposed = true;
         _logger.LogInformation("TelemetryProvider disposed");

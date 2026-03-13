@@ -394,16 +394,19 @@ public partial class OrchestratorService : IOrchestratorService
         var startTime = DateTime.UtcNow;
         var deploymentId = Guid.NewGuid().ToString();
 
-        // Publish deployment started event
-        await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
+        // Don't publish events during dry run
+        if (!body.DryRun)
         {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            Action = DeploymentAction.Started,
-            DeploymentId = deploymentId,
-            Preset = body.Preset,
-            Backend = effectiveBackend
-        });
+            await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Action = DeploymentAction.Started,
+                DeploymentId = deploymentId,
+                Preset = body.Preset,
+                Backend = effectiveBackend
+            });
+        }
 
         // Detect available backends first
         var backends = await _backendDetector.DetectBackendsAsync(cancellationToken);
@@ -943,18 +946,21 @@ public partial class OrchestratorService : IOrchestratorService
             Warnings = failedServices.Count > 0 ? failedServices : null
         };
 
-        // Publish deployment completed/failed event
-        await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
+        // Don't publish events during dry run
+        if (!body.DryRun)
         {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            Action = success ? DeploymentAction.Completed : DeploymentAction.Failed,
-            DeploymentId = deploymentId,
-            Preset = body.Preset,
-            Backend = orchestrator.BackendType,
-            Changes = deployedServices.Select(s => s.Name).ToList(),
-            Error = success ? null : string.Join("; ", failedServices)
-        });
+            await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Action = success ? DeploymentAction.Completed : DeploymentAction.Failed,
+                DeploymentId = deploymentId,
+                Preset = body.Preset,
+                Backend = orchestrator.BackendType,
+                Changes = deployedServices.Select(s => s.Name).ToList(),
+                Error = success ? null : string.Join("; ", failedServices)
+            });
+        }
 
         return (success ? StatusCodes.OK : StatusCodes.InternalServerError, response);
     }

@@ -306,6 +306,57 @@ public partial class MeshEndpointDegradedEvent : BaseServiceEvent
 
 }
 
+/// <summary>
+/// Published by Mesh when service-to-appId mappings are updated locally.
+/// <br/>Other mesh nodes subscribe to this L0 event to sync their own
+/// <br/>IServiceAppMappingResolver. Replaces the previous pattern where Mesh (L0)
+/// <br/>subscribed to Orchestrator (L3) full-service-mappings events (T27 violation).
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MeshMappingsUpdatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: mesh.mappings.updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "mesh.mappings.updated";
+
+    /// <summary>
+    /// Complete service-to-appId mapping dictionary. Null or empty means reset to default routing.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mappings")]
+    public System.Collections.Generic.IDictionary<string, string>? Mappings { get; set; } = default!;
+
+    /// <summary>
+    /// Default app-id for unmapped services (typically "bannou")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultAppId")]
+    public string? DefaultAppId { get; set; } = default!;
+
+    /// <summary>
+    /// Monotonically increasing version number for ordering
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public long Version { get; set; } = default!;
+
+    /// <summary>
+    /// Instance ID that originated the update (receivers skip self-originated events)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceInstanceId")]
+    public System.Guid? SourceInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of services in the mappings
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalServices")]
+    public int? TotalServices { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

@@ -12,7 +12,7 @@ namespace BeyondImmersion.BannouService.Tests.Mesh;
 
 /// <summary>
 /// Tests for MeshService event handler logic in MeshServiceEvents.cs.
-/// Covers HandleServiceHeartbeatAsync, HandleServiceMappingsAsync,
+/// Covers HandleServiceHeartbeatAsync, HandleMeshMappingsUpdatedAsync,
 /// MapHeartbeatStatus, DetermineDegradationReason, and TryPublishDegradationEventAsync.
 /// </summary>
 public class MeshServiceEventsTests
@@ -188,10 +188,10 @@ public class MeshServiceEventsTests
         CreateService(enableServiceMappingSync: true);
 
         _eventConsumer.Verify(
-            ec => ec.Register<FullServiceMappingsEvent>(
-                "bannou.full-service-mappings",
-                "IMeshService:bannou.full-service-mappings",
-                It.IsAny<Func<IServiceProvider, FullServiceMappingsEvent, Task>>()),
+            ec => ec.Register<MeshMappingsUpdatedEvent>(
+                "mesh.mappings.updated",
+                "IMeshService:mesh.mappings.updated",
+                It.IsAny<Func<IServiceProvider, MeshMappingsUpdatedEvent, Task>>()),
             Times.Once);
     }
 
@@ -201,10 +201,10 @@ public class MeshServiceEventsTests
         CreateService(enableServiceMappingSync: false);
 
         _eventConsumer.Verify(
-            ec => ec.Register<FullServiceMappingsEvent>(
+            ec => ec.Register<MeshMappingsUpdatedEvent>(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<Func<IServiceProvider, FullServiceMappingsEvent, Task>>()),
+                It.IsAny<Func<IServiceProvider, MeshMappingsUpdatedEvent, Task>>()),
             Times.Never);
     }
 
@@ -695,13 +695,13 @@ public class MeshServiceEventsTests
     }
 
     // =========================================================================
-    // HandleServiceMappingsAsync — Successful Update
+    // HandleMeshMappingsUpdatedAsync — Successful Update
     // =========================================================================
 
     [Fact]
-    public async Task HandleServiceMappingsAsync_WithMappings_CallsReplaceAllMappings()
+    public async Task HandleMeshMappingsUpdatedAsync_WithMappings_CallsReplaceAllMappings()
     {
-        var evt = new FullServiceMappingsEvent
+        var evt = new MeshMappingsUpdatedEvent
         {
             Mappings = new Dictionary<string, string>
             {
@@ -719,7 +719,7 @@ public class MeshServiceEventsTests
             .Returns(true);
 
         var service = CreateService();
-        await service.HandleServiceMappingsAsync(evt);
+        await service.HandleMeshMappingsUpdatedAsync(evt);
 
         _mappingResolver.Verify(mr => mr.ReplaceAllMappings(
             It.Is<Dictionary<string, string>>(d =>
@@ -732,9 +732,9 @@ public class MeshServiceEventsTests
     }
 
     [Fact]
-    public async Task HandleServiceMappingsAsync_EmptyMappings_ResetsToDefault()
+    public async Task HandleMeshMappingsUpdatedAsync_EmptyMappings_ResetsToDefault()
     {
-        var evt = new FullServiceMappingsEvent
+        var evt = new MeshMappingsUpdatedEvent
         {
             Mappings = new Dictionary<string, string>(), // empty = reset
             DefaultAppId = null, // null defaults to "bannou"
@@ -748,7 +748,7 @@ public class MeshServiceEventsTests
             .Returns(true);
 
         var service = CreateService();
-        await service.HandleServiceMappingsAsync(evt);
+        await service.HandleMeshMappingsUpdatedAsync(evt);
 
         _mappingResolver.Verify(mr => mr.ReplaceAllMappings(
             It.Is<Dictionary<string, string>>(d => d.Count == 0),
@@ -758,10 +758,10 @@ public class MeshServiceEventsTests
     }
 
     [Fact]
-    public async Task HandleServiceMappingsAsync_DefaultMappings_TreatsAsEmpty()
+    public async Task HandleMeshMappingsUpdatedAsync_DefaultMappings_TreatsAsEmpty()
     {
-        // FullServiceMappingsEvent.Mappings defaults to empty dictionary (non-nullable, [Required])
-        var evt = new FullServiceMappingsEvent
+        // MeshMappingsUpdatedEvent.Mappings defaults to empty dictionary (non-nullable, [Required])
+        var evt = new MeshMappingsUpdatedEvent
         {
             DefaultAppId = "custom-default",
             Version = 5,
@@ -774,7 +774,7 @@ public class MeshServiceEventsTests
             .Returns(true);
 
         var service = CreateService();
-        await service.HandleServiceMappingsAsync(evt);
+        await service.HandleMeshMappingsUpdatedAsync(evt);
 
         _mappingResolver.Verify(mr => mr.ReplaceAllMappings(
             It.Is<Dictionary<string, string>>(d => d.Count == 0),
@@ -784,13 +784,13 @@ public class MeshServiceEventsTests
     }
 
     // =========================================================================
-    // HandleServiceMappingsAsync — Stale Version
+    // HandleMeshMappingsUpdatedAsync — Stale Version
     // =========================================================================
 
     [Fact]
-    public async Task HandleServiceMappingsAsync_StaleVersion_DoesNotUpdate()
+    public async Task HandleMeshMappingsUpdatedAsync_StaleVersion_DoesNotUpdate()
     {
-        var evt = new FullServiceMappingsEvent
+        var evt = new MeshMappingsUpdatedEvent
         {
             Mappings = new Dictionary<string, string> { ["auth"] = "old-node" },
             Version = 1,
@@ -805,7 +805,7 @@ public class MeshServiceEventsTests
         _mappingResolver.Setup(mr => mr.CurrentVersion).Returns(5L);
 
         var service = CreateService();
-        await service.HandleServiceMappingsAsync(evt);
+        await service.HandleMeshMappingsUpdatedAsync(evt);
 
         // Verify ReplaceAllMappings was called but returned false (stale)
         _mappingResolver.Verify(mr => mr.ReplaceAllMappings(
@@ -816,13 +816,13 @@ public class MeshServiceEventsTests
     }
 
     // =========================================================================
-    // HandleServiceMappingsAsync — Error Handling
+    // HandleMeshMappingsUpdatedAsync — Error Handling
     // =========================================================================
 
     [Fact]
-    public async Task HandleServiceMappingsAsync_ResolverThrows_PublishesErrorEvent()
+    public async Task HandleMeshMappingsUpdatedAsync_ResolverThrows_PublishesErrorEvent()
     {
-        var evt = new FullServiceMappingsEvent
+        var evt = new MeshMappingsUpdatedEvent
         {
             Mappings = new Dictionary<string, string> { ["auth"] = "node" },
             Version = 10,
@@ -835,11 +835,11 @@ public class MeshServiceEventsTests
             .Throws(new InvalidOperationException("resolver error"));
 
         var service = CreateService();
-        await service.HandleServiceMappingsAsync(evt);
+        await service.HandleMeshMappingsUpdatedAsync(evt);
 
         _messageBus.Verify(mb => mb.TryPublishErrorAsync(
             "mesh",
-            "HandleServiceMappings",
+            "HandleMeshMappingsUpdated",
             "unexpected_exception",
             It.Is<string>(msg => msg.Contains("resolver error")),
             It.IsAny<string?>(),                   // dependency
@@ -853,9 +853,9 @@ public class MeshServiceEventsTests
     }
 
     [Fact]
-    public async Task HandleServiceMappingsAsync_ResolverThrows_DoesNotRethrow()
+    public async Task HandleMeshMappingsUpdatedAsync_ResolverThrows_DoesNotRethrow()
     {
-        var evt = new FullServiceMappingsEvent
+        var evt = new MeshMappingsUpdatedEvent
         {
             Mappings = new Dictionary<string, string> { ["auth"] = "node" },
             Version = 10,
@@ -870,7 +870,7 @@ public class MeshServiceEventsTests
         var service = CreateService();
 
         var exception = await Record.ExceptionAsync(() =>
-            service.HandleServiceMappingsAsync(evt));
+            service.HandleMeshMappingsUpdatedAsync(evt));
 
         Assert.Null(exception);
     }

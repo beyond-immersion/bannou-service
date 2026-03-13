@@ -61,6 +61,21 @@ public sealed class RabbitMQConnectionManager : IChannelManager
         _channelCreationSemaphore = new SemaphoreSlim(
             configuration.MaxConcurrentChannelCreation,
             configuration.MaxConcurrentChannelCreation);
+
+        // Register observable gauges for channel pool monitoring
+        _telemetryProvider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            TelemetryMetrics.MessagingChannelPoolActive,
+            () => TotalActiveChannels,
+            unit: "{channels}",
+            description: "Current number of active channels (pooled + in-use + consumer)");
+
+        _telemetryProvider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            TelemetryMetrics.MessagingChannelPoolAvailable,
+            () => PooledChannelCount,
+            unit: "{channels}",
+            description: "Current number of channels available in the pool");
     }
 
     /// <summary>

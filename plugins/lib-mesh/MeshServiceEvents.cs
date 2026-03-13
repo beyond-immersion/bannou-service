@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Mesh;
 
 /// <summary>
 /// Event handler implementations for MeshService.
-/// Handles ServiceHeartbeatEvent and FullServiceMappingsEvent subscriptions.
+/// Handles ServiceHeartbeatEvent and MeshMappingsUpdatedEvent subscriptions.
 /// </summary>
 public partial class MeshService
 {
@@ -31,9 +31,9 @@ public partial class MeshService
 
         if (_configuration.EnableServiceMappingSync)
         {
-            eventConsumer.RegisterHandler<IMeshService, FullServiceMappingsEvent>(
-                "bannou.full-service-mappings",
-                async (svc, evt) => await ((MeshService)svc).HandleServiceMappingsAsync(evt));
+            eventConsumer.RegisterHandler<IMeshService, MeshMappingsUpdatedEvent>(
+                MeshPublishedTopics.MeshMappingsUpdated,
+                async (svc, evt) => await ((MeshService)svc).HandleMeshMappingsUpdatedAsync(evt));
         }
     }
 
@@ -125,19 +125,19 @@ public partial class MeshService
     }
 
     /// <summary>
-    /// Handle full service mappings events.
-    /// Updates the shared IServiceAppMappingResolver atomically so all generated clients
-    /// (AuthClient, AccountClient, etc.) route to the correct app-ids.
-    /// IMPORTANT: Empty mappings events are valid and mean "reset to default routing" -
-    /// all services should route to the default app-id ("bannou").
+    /// Handle mesh mappings updated events (L0→L0 cross-node sync).
+    /// Receives broadcast from MeshServiceMappingReceiver on the Orchestrator node
+    /// and updates the local IServiceAppMappingResolver on this node.
+    /// Skips self-originated events (already applied locally by the DI call).
     /// </summary>
-    /// <param name="evt">The full service mappings event.</param>
-    public async Task HandleServiceMappingsAsync(FullServiceMappingsEvent evt)
+    /// <param name="evt">The mesh mappings updated event.</param>
+    public async Task HandleMeshMappingsUpdatedAsync(MeshMappingsUpdatedEvent evt)
     {
         _logger.LogDebug(
-            "Processing service mappings update v{Version} with {Count} mappings",
+            "Processing mesh mappings update v{Version} with {Count} mappings from {SourceInstanceId}",
             evt.Version,
-            evt.Mappings?.Count ?? 0);
+            evt.Mappings?.Count ?? 0,
+            evt.SourceInstanceId);
 
         try
         {
@@ -147,8 +147,9 @@ public partial class MeshService
             var mappingsDict = evt.Mappings?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
                 ?? new Dictionary<string, string>();
 
-            // Update the shared ServiceAppMappingResolver used by all generated clients.
-            // Empty mappings = reset to default routing (all services -> "bannou").
+            // ReplaceAllMappings is version-guarded: if the co-located MeshServiceMappingReceiver
+            // already applied this version (via DI call), the same version is rejected as stale.
+            // This naturally handles self-originated events without explicit SourceInstanceId check.
             var updated = _mappingResolver.ReplaceAllMappings(
                 mappingsDict,
                 evt.DefaultAppId ?? AppConstants.DEFAULT_APP_NAME,
@@ -156,46 +157,26 @@ public partial class MeshService
 
             if (updated)
             {
-                if (mappingsDict.Count == 0)
-                {
-                    _logger.LogInformation(
-                        "Reset ServiceAppMappingResolver to default routing v{Version} (all services -> {DefaultAppId})",
-                        evt.Version,
-                        evt.DefaultAppId ?? AppConstants.DEFAULT_APP_NAME);
-                }
-                else
-                {
-                    _logger.LogInformation(
-                        "Updated ServiceAppMappingResolver to v{Version} with {Count} mappings",
-                        evt.Version,
-                        mappingsDict.Count);
-
-                    // Log the mappings for debugging
-                    var displayLimit = _configuration.MaxServiceMappingsDisplayed;
-                    foreach (var mapping in mappingsDict.Take(displayLimit))
-                    {
-                        _logger.LogDebug("  {Service} -> {AppId}", mapping.Key, mapping.Value);
-                    }
-                    if (mappingsDict.Count > displayLimit)
-                    {
-                        _logger.LogDebug("  ... and {Count} more", mappingsDict.Count - displayLimit);
-                    }
-                }
+                _logger.LogInformation(
+                    "Applied mesh mappings v{Version} with {Count} services from remote node {SourceInstanceId}",
+                    evt.Version,
+                    mappingsDict.Count,
+                    evt.SourceInstanceId);
             }
             else
             {
                 _logger.LogDebug(
-                    "Skipped stale mappings update v{Version} (current: v{Current})",
+                    "Skipped mesh mappings v{Version} (current: v{Current})",
                     evt.Version,
                     _mappingResolver.CurrentVersion);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing service mappings event");
+            _logger.LogError(ex, "Error processing mesh mappings update event");
             await _messageBus.TryPublishErrorAsync(
-                "mesh", "HandleServiceMappings", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "event:bannou.full-service-mappings",
+                "mesh", "HandleMeshMappingsUpdated", "unexpected_exception", ex.Message,
+                dependency: null, endpoint: "event:mesh.mappings.updated",
                 details: new { Version = evt.Version }, stack: ex.StackTrace, cancellationToken: CancellationToken.None);
         }
     }

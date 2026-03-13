@@ -88,6 +88,13 @@ x-service-configuration:
       description: "Time window in seconds for deduplicating identical error events. Events with the same store+operation+errorType are published at most once per window."
       env: STATE_ERROR_EVENT_DEDUPLICATION_WINDOW_SECONDS
       default: 60
+    MigrationBatchSize:
+      type: integer
+      minimum: 10
+      maximum: 10000
+      description: "Number of entries to read/write per batch during state store migration. Higher values use more memory but complete faster."
+      env: STATE_MIGRATION_BATCH_SIZE
+      default: 500
     # Note: DefaultConsistency was removed as dead config (per IMPLEMENTATION TENETS).
     # Consistency is specified per-request via StateOptions.Consistency, not as a global default.
     # The ConsistencyLevel enum remains available in state-api.yaml for per-request use.

@@ -118,7 +118,7 @@ x-service-configuration:
     # =========================================================================
     EnableServiceMappingSync:
       type: boolean
-      description: Whether to subscribe to FullServiceMappingsEvent for routing updates
+      description: Whether to subscribe to mesh.mappings.updated events for cross-node routing sync
       env: MESH_ENABLE_SERVICE_MAPPING_SYNC
       default: true
 

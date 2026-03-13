@@ -865,7 +865,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_DEFAULT_MAX_CONNECTIONS` | int | `1000` | Default max connections for auto-registered endpoints when h... |
 | `MESH_DEGRADATION_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Time window in seconds for deduplicating degradation events ... |
 | `MESH_DEGRADATION_THRESHOLD_SECONDS` | int | `60` | Time without heartbeat before marking endpoint as degraded |
-| `MESH_ENABLE_SERVICE_MAPPING_SYNC` | bool | `true` | Whether to subscribe to FullServiceMappingsEvent for routing... |
+| `MESH_ENABLE_SERVICE_MAPPING_SYNC` | bool | `true` | Whether to subscribe to mesh.mappings.updated events for cro... |
 | `MESH_ENDPOINT_CACHE_MAX_SIZE` | int | `0` | Maximum number of app-ids to cache endpoint resolutions for.... |
 | `MESH_ENDPOINT_CACHE_TTL_SECONDS` | int | `5` | TTL in seconds for cached service endpoints |
 | `MESH_ENDPOINT_HOST` | string | **REQUIRED** | Hostname/IP for mesh endpoint registration. Defaults to app-... |
@@ -1198,6 +1198,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `STATE_ENABLE_ERROR_EVENT_PUBLISHING` | bool | `true` | Enable publishing error events when state store operations f... |
 | `STATE_ERROR_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Time window in seconds for deduplicating identical error eve... |
 | `STATE_INMEMORY_FALLBACK_LIMIT` | int | `10000` | Maximum entries for in-memory LINQ fallback before throwing ... |
+| `STATE_MIGRATION_BATCH_SIZE` | int | `500` | Number of entries to read/write per batch during state store... |
 | `STATE_MIN_RETRY_DELAY_MS` | int | `1000` | Minimum delay in milliseconds between MySQL connection retry... |
 | `STATE_MYSQL_CONNECTION_STRING` | string | `server=bannou-mysql;database=bannou;user=guest;password=guest` (insecure) | MySQL connection string for MySQL-backed state stores |
 | `STATE_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
@@ -1345,9 +1346,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1061
+- **Total properties**: 1062
 - **Required (no default)**: 67
-- **Optional (has default)**: 994
+- **Optional (has default)**: 995
 
 ## Environment Variable Naming Convention
 

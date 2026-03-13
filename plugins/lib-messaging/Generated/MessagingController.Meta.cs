@@ -280,18 +280,13 @@ public partial class MessagingController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "subscriptionId",
-                "queueName"
+                "subscriptionId"
             ],
             "properties": {
                 "subscriptionId": {
                     "type": "string",
                     "format": "uuid",
                     "description": "Unique identifier for the created subscription"
-                },
-                "queueName": {
-                    "type": "string",
-                    "description": "Name of the RabbitMQ queue created for this subscription"
                 }
             }
         }

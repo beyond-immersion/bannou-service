@@ -27,13 +27,6 @@ public static class OrchestratorEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(OrchestratorPublishedTopics.OrchestratorHealthPing, eventData, cancellationToken);
 
-    /// <summary>Published to broadcast full service-to-appId mappings to mesh.</summary>
-    public static Task<bool> PublishFullServiceMappingsAsync(
-        this IMessageBus messageBus,
-        FullServiceMappingsEvent eventData,
-        CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(OrchestratorPublishedTopics.FullServiceMappings, eventData, cancellationToken);
-
     /// <summary>Published when deployment state changes (started, completed, failed, topology-changed).</summary>
     public static Task<bool> PublishDeploymentAsync(
         this IMessageBus messageBus,

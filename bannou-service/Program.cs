@@ -444,7 +444,7 @@ public static class Program
                     // Orchestrator/primary container - no initial mappings to load
                     // Mappings are discovered dynamically via:
                     // - Service heartbeats publishing their services
-                    // - FullServiceMappingsEvent from orchestrator (RabbitMQ pub/sub)
+                    // - Orchestrator pushes via IServiceMappingReceiver DI interface → mesh.mappings.updated L0 events
                     Logger.Log(LogLevel.Debug, null, "No source app-id configured - mappings will be discovered from heartbeats");
                 }
 

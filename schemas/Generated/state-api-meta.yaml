@@ -480,6 +480,167 @@ paths:
         keys (only if includeStats=true)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List configured state stores\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listStores\"\n}"
+  /state/migrate/dry-run:
+    post:
+      operationId: migrateDryRun
+      summary: Analyze a store and report what can and cannot be migrated
+      tags:
+      - State
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MigrateDryRunRequest'
+      responses:
+        '200':
+          description: Dry-run analysis result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigrateDryRunResponse'
+        '404':
+          description: Store not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MigrateDryRunRequest\"\
+        ,\n    \"$defs\": {\n        \"MigrateDryRunRequest\": {\n            \"description\": \"Request to analyze a store
+        for migration feasibility\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"storeName\",\n                \"destinationBackend\"\n            ],\n\
+        \            \"properties\": {\n                \"storeName\": {\n                    \"type\": \"string\",\n    \
+        \                \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\":
+        \"Name of the state store to analyze\"\n                },\n                \"destinationBackend\": {\n          \
+        \          \"$ref\": \"#/$defs/MigrationBackend\",\n                    \"description\": \"Target backend to migrate
+        to\"\n                }\n            }\n        },\n        \"MigrationBackend\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"Redis\",\n                \"Mysql\"\n            ],\n            \"\
+        description\": \"Target backend type for state store migration\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MigrateDryRunResponse\"\
+        ,\n    \"$defs\": {\n        \"MigrateDryRunResponse\": {\n            \"description\": \"Dry-run analysis result
+        showing migration feasibility and potential issues\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"storeName\",\n                \"currentBackend\",\n     \
+        \           \"destinationBackend\",\n                \"incompatibleFeatures\",\n                \"warnings\",\n  \
+        \              \"canMigrate\"\n            ],\n            \"properties\": {\n                \"storeName\": {\n \
+        \                   \"type\": \"string\",\n                    \"description\": \"Name of the analyzed store\"\n \
+        \               },\n                \"currentBackend\": {\n                    \"$ref\": \"#/$defs/MigrationBackend\"\
+        ,\n                    \"description\": \"Current backend of the store\"\n                },\n                \"destinationBackend\"\
+        : {\n                    \"$ref\": \"#/$defs/MigrationBackend\",\n                    \"description\": \"Requested
+        target backend\"\n                },\n                \"keyValueEntryCount\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Count of key-value entries (null if Redis source \\u2014 cannot enumerate efficiently)\"\n                },\n\
+        \                \"incompatibleFeatures\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Features that cannot be migrated (e.g., sorted sets, TTL-bearing keys)\"\n                },\n                \"warnings\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Advisory messages (e.g., ETag format
+        will change)\"\n                },\n                \"canMigrate\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"description\": \"Whether migration can proceed (false if same backend, store not found, or
+        incompatible-only)\"\n                }\n            }\n        },\n        \"MigrationBackend\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"Redis\",\n                \"Mysql\"\n            ],\n\
+        \            \"description\": \"Target backend type for state store migration\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Analyze a store and report what can and cannot be migrated\",\n    \"description\"\
+        : \"\",\n    \"tags\": [\n        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"migrateDryRun\"\
+        \n}"
+  /state/migrate/execute:
+    post:
+      operationId: migrateExecute
+      summary: Perform actual data migration between backends for a store
+      tags:
+      - State
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MigrateExecuteRequest'
+      responses:
+        '200':
+          description: Migration completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigrateExecuteResponse'
+        '400':
+          description: Same backend (no-op) or store uses incompatible-only features
+        '404':
+          description: Store not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MigrateExecuteRequest\"\
+        ,\n    \"$defs\": {\n        \"MigrateExecuteRequest\": {\n            \"description\": \"Request to execute a state
+        store migration between backends\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"storeName\",\n                \"destinationBackend\"\n           \
+        \ ],\n            \"properties\": {\n                \"storeName\": {\n                    \"type\": \"string\",\n\
+        \                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Name of the state store to migrate\"\n                },\n                \"destinationBackend\": {\n        \
+        \            \"$ref\": \"#/$defs/MigrationBackend\",\n                    \"description\": \"Target backend to migrate
+        to\"\n                }\n            }\n        },\n        \"MigrationBackend\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"Redis\",\n                \"Mysql\"\n            ],\n            \"\
+        description\": \"Target backend type for state store migration\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MigrateExecuteResponse\"\
+        ,\n    \"$defs\": {\n        \"MigrateExecuteResponse\": {\n            \"description\": \"Result of a successful
+        state store migration\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n      \
+        \      \"required\": [\n                \"storeName\",\n                \"entriesMigrated\",\n                \"durationMs\"\
+        \n            ],\n            \"properties\": {\n                \"storeName\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Name of the migrated store\"\n                },\n             \
+        \   \"entriesMigrated\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n    \
+        \                \"description\": \"Number of key-value entries copied\"\n                },\n                \"durationMs\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        minimum\": 0,\n                    \"description\": \"Total elapsed time in milliseconds\"\n                }\n  \
+        \          }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Perform actual data migration between backends for a store\",\n    \"description\"\
+        : \"\",\n    \"tags\": [\n        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"migrateExecute\"\
+        \n}"
+  /state/migrate/verify:
+    post:
+      operationId: migrateVerify
+      summary: Compare key counts between source and destination backends
+      tags:
+      - State
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MigrateVerifyRequest'
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigrateVerifyResponse'
+        '404':
+          description: Store not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MigrateVerifyRequest\"\
+        ,\n    \"$defs\": {\n        \"MigrateVerifyRequest\": {\n            \"description\": \"Request to verify migration
+        by comparing key counts between backends\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"storeName\",\n                \"destinationBackend\"\n  \
+        \          ],\n            \"properties\": {\n                \"storeName\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Name of the state store to verify\"\n                },\n                \"destinationBackend\": {\n         \
+        \           \"$ref\": \"#/$defs/MigrationBackend\",\n                    \"description\": \"Backend to compare against
+        current\"\n                }\n            }\n        },\n        \"MigrationBackend\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"Redis\",\n                \"Mysql\"\n            ],\n      \
+        \      \"description\": \"Target backend type for state store migration\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MigrateVerifyResponse\"\
+        ,\n    \"$defs\": {\n        \"MigrateVerifyResponse\": {\n            \"description\": \"Verification result comparing
+        key counts between source and destination backends\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"storeName\"\n            ],\n            \"properties\":
+        {\n                \"storeName\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Name of the verified store\"\n                },\n                \"sourceKeyCount\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Key count in source backend (null if Redis source \\u2014 cannot enumerate)\"\n       \
+        \         },\n                \"destinationKeyCount\": {\n                    \"type\": \"integer\",\n           \
+        \         \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\": \"Key count
+        in destination backend (null if Redis destination)\"\n                },\n                \"countsMatch\": {\n   \
+        \                 \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Whether counts match (null if either side cannot enumerate)\"\n                }\n            }\n        }\n \
+        \   }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Compare key counts between source and destination backends\",\n    \"description\"\
+        : \"\",\n    \"tags\": [\n        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"migrateVerify\"\
+        \n}"
 components:
   schemas:
     GetStateRequest:
@@ -987,3 +1148,141 @@ components:
           minimum: 0
           nullable: true
           description: Number of keys (only if includeStats=true)
+    MigrationBackend:
+      type: string
+      enum:
+      - Redis
+      - Mysql
+      description: Target backend type for state store migration
+    MigrateDryRunRequest:
+      description: Request to analyze a store for migration feasibility
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - destinationBackend
+      properties:
+        storeName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name of the state store to analyze
+        destinationBackend:
+          $ref: '#/components/schemas/MigrationBackend'
+          description: Target backend to migrate to
+    MigrateDryRunResponse:
+      description: Dry-run analysis result showing migration feasibility and potential issues
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - currentBackend
+      - destinationBackend
+      - incompatibleFeatures
+      - warnings
+      - canMigrate
+      properties:
+        storeName:
+          type: string
+          description: Name of the analyzed store
+        currentBackend:
+          $ref: '#/components/schemas/MigrationBackend'
+          description: Current backend of the store
+        destinationBackend:
+          $ref: '#/components/schemas/MigrationBackend'
+          description: Requested target backend
+        keyValueEntryCount:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Count of key-value entries (null if Redis source — cannot enumerate efficiently)
+        incompatibleFeatures:
+          type: array
+          items:
+            type: string
+          description: Features that cannot be migrated (e.g., sorted sets, TTL-bearing keys)
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Advisory messages (e.g., ETag format will change)
+        canMigrate:
+          type: boolean
+          description: Whether migration can proceed (false if same backend, store not found, or incompatible-only)
+    MigrateExecuteRequest:
+      description: Request to execute a state store migration between backends
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - destinationBackend
+      properties:
+        storeName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name of the state store to migrate
+        destinationBackend:
+          $ref: '#/components/schemas/MigrationBackend'
+          description: Target backend to migrate to
+    MigrateExecuteResponse:
+      description: Result of a successful state store migration
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - entriesMigrated
+      - durationMs
+      properties:
+        storeName:
+          type: string
+          description: Name of the migrated store
+        entriesMigrated:
+          type: integer
+          minimum: 0
+          description: Number of key-value entries copied
+        durationMs:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total elapsed time in milliseconds
+    MigrateVerifyRequest:
+      description: Request to verify migration by comparing key counts between backends
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - destinationBackend
+      properties:
+        storeName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name of the state store to verify
+        destinationBackend:
+          $ref: '#/components/schemas/MigrationBackend'
+          description: Backend to compare against current
+    MigrateVerifyResponse:
+      description: Verification result comparing key counts between source and destination backends
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      properties:
+        storeName:
+          type: string
+          description: Name of the verified store
+        sourceKeyCount:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Key count in source backend (null if Redis source — cannot enumerate)
+        destinationKeyCount:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Key count in destination backend (null if Redis destination)
+        countsMatch:
+          type: boolean
+          nullable: true
+          description: Whether counts match (null if either side cannot enumerate)

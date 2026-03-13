@@ -11,6 +11,16 @@ internal class MfaChallengeData
 
     /// <summary>When this challenge token expires.</summary>
     public DateTimeOffset ExpiresAt { get; set; }
+
+    /// <summary>
+    /// Device information from the original login request, preserved across the MFA flow.
+    /// </summary>
+    public DeviceInfo? DeviceInfo { get; set; }
+
+    /// <summary>
+    /// Client IP address from the original login request, preserved across the MFA flow.
+    /// </summary>
+    public string? IpAddress { get; set; }
 }
 
 /// <summary>

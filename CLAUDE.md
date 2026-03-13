@@ -71,6 +71,7 @@ These documents provide the high-level architectural north-star context for the 
 | **Schema auditing** (reviewing OpenAPI schemas, checking schema rules, validating schema design) | `docs/reference/SCHEMA-RULES.md` |
 | **High-level vision** (evaluating how services serve gameplay, cross-cutting feature planning, content flywheel analysis) | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode) |
 | **Canonical pattern lookup** (searching for the correct way to implement a pattern — background workers, state store access, event publishing, deprecation, cleanup, enum mapping, etc.) | `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` — read this FIRST before grepping the codebase for examples. It catalogs all shared helpers, canonical skeletons, and reference implementations with code samples and "when to use" guidance. |
+| **Documentation search** (broad search across guides, planning docs, FAQs, or operations docs) | The relevant catalog file(s): `docs/GENERATED-GUIDES-CATALOG.md`, `docs/GENERATED-PLANNING-CATALOG.md`, `docs/GENERATED-FAQ-CATALOG.md`, `docs/GENERATED-OPERATIONS-CATALOG.md`. Read the catalog first to identify target documents from summaries, then read only the identified documents. Never glob a docs directory and read files blindly. |
 
 **Rules:**
 1. Every sub-agent prompt MUST include an explicit instruction to read the relevant documents listed above BEFORE doing any work
@@ -91,6 +92,27 @@ These documents provide the high-level architectural north-star context for the 
 - **Configuration**: `docs/GENERATED-CONFIGURATION.md` - Environment variables per service
 - **Events**: `docs/GENERATED-EVENTS.md` - Event schemas and topics
 - **State Stores**: `docs/GENERATED-STATE-STORES.md` - Redis/MySQL state stores
+- **Document Catalogs** (index-first search — see rule below):
+  - `docs/GENERATED-GUIDES-CATALOG.md` — All developer guides with summaries, status, key plugins
+  - `docs/GENERATED-PLANNING-CATALOG.md` — All planning/design/research docs with summaries, type, status, north stars
+  - `docs/GENERATED-FAQ-CATALOG.md` — All architectural rationale FAQs with summaries and related plugins
+  - `docs/GENERATED-OPERATIONS-CATALOG.md` — All operations docs with summaries and scope
+
+### Catalog-First Documentation Search (MANDATORY)
+
+**When searching documentation broadly** — e.g., "find documentation about X", "search docs for anything related to Y", "which guide covers Z", or when launching agents to search documentation — **read the relevant catalog FIRST before opening individual documents.** Each catalog is a single-file index (~50-200 lines) with rich summary paragraphs, metadata (status, key plugins, last updated), and direct links. Reading a catalog and identifying the 1-2 relevant documents is dramatically cheaper than globbing a directory and reading files one by one.
+
+**Which catalog to check:**
+
+| Looking for... | Read first |
+|----------------|------------|
+| How-to guides, SDK docs, system explanations, developer workflows | `docs/GENERATED-GUIDES-CATALOG.md` |
+| Design documents, vision docs, research, implementation plans, architectural analysis | `docs/GENERATED-PLANNING-CATALOG.md` |
+| "Why does Bannou do X?", architectural rationale, design decision justification | `docs/GENERATED-FAQ-CATALOG.md` |
+| Deployment, testing, CI/CD, linting, release procedures | `docs/GENERATED-OPERATIONS-CATALOG.md` |
+| Unknown or cross-cutting topic | Check all four catalogs (they're small — total ~500 lines) |
+
+**This applies to both direct searches and sub-agent instructions.** When launching an agent to "search documentation for X", instruct it to read the relevant catalog(s) first, identify target documents from the summaries, and only then read the full documents it identified. Do not instruct agents to glob `docs/guides/` or `docs/planning/` and read files blindly.
 
 ## Development Rules
 

@@ -166,9 +166,9 @@ public class MessagingServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task PublishEventAsync_WhenMessageBusThrows_ReturnsInternalServerErrorAndEmitsErrorEvent()
+    public async Task PublishEventAsync_WhenMessageBusThrows_ExceptionPropagates()
     {
-        // Arrange
+        // Arrange - generated controller handles logging, error events, and 500 response (IMPLEMENTATION TENETS)
         var request = new PublishEventRequest
         {
             Topic = "test.topic",
@@ -184,27 +184,10 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("RabbitMQ connection failed"));
 
-        // Act
-        var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
-
-        // Assert - errors return null per IMPLEMENTATION TENETS
-        Assert.Equal(StatusCodes.InternalServerError, statusCode);
-        Assert.Null(response);
-
-        _mockMessageBus.Verify(
-            m => m.TryPublishErrorAsync(
-                "messaging",
-                "PublishEvent",
-                "InvalidOperationException",
-                "RabbitMQ connection failed",
-                It.IsAny<string?>(),
-                It.IsAny<string?>(),
-                It.IsAny<ServiceErrorEventSeverity>(),
-                It.IsAny<object?>(),
-                It.IsAny<string?>(),
-                It.IsAny<Guid?>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        // Act & Assert - exception propagates to generated controller catch-all boundary
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _service.PublishEventAsync(request, CancellationToken.None));
+        Assert.Equal("RabbitMQ connection failed", ex.Message);
     }
 
     [Fact]
@@ -302,13 +285,12 @@ public class MessagingServiceTests : IDisposable
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.NotEqual(Guid.Empty, response.SubscriptionId);
-        Assert.StartsWith("bannou-dynamic-", response.QueueName);
     }
 
     [Fact]
-    public async Task CreateSubscriptionAsync_WhenSubscriberThrows_ReturnsInternalServerErrorAndEmitsErrorEvent()
+    public async Task CreateSubscriptionAsync_WhenSubscriberThrows_ExceptionPropagates()
     {
-        // Arrange
+        // Arrange - generated controller handles logging, error events, and 500 response (IMPLEMENTATION TENETS)
         var request = new CreateSubscriptionRequest
         {
             Topic = "test.topic",
@@ -324,27 +306,10 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Cannot create subscription"));
 
-        // Act
-        var (statusCode, response) = await _service.CreateSubscriptionAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, statusCode);
-        Assert.Null(response);
-
-        _mockMessageBus.Verify(
-            m => m.TryPublishErrorAsync(
-                "messaging",
-                "CreateSubscription",
-                "InvalidOperationException",
-                "Cannot create subscription",
-                It.IsAny<string?>(),
-                It.IsAny<string?>(),
-                It.IsAny<ServiceErrorEventSeverity>(),
-                It.IsAny<object?>(),
-                It.IsAny<string?>(),
-                It.IsAny<Guid?>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        // Act & Assert - exception propagates to generated controller catch-all boundary
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _service.CreateSubscriptionAsync(request, CancellationToken.None));
+        Assert.Equal("Cannot create subscription", ex.Message);
     }
 
     [Fact]
@@ -446,9 +411,9 @@ public class MessagingServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task RemoveSubscriptionAsync_WhenDisposeThrows_ReturnsInternalServerErrorAndEmitsErrorEvent()
+    public async Task RemoveSubscriptionAsync_WhenDisposeThrows_ExceptionPropagates()
     {
-        // Arrange - Create a subscription with a handle that throws on dispose
+        // Arrange - generated controller handles logging, error events, and 500 response (IMPLEMENTATION TENETS)
         var createRequest = new CreateSubscriptionRequest
         {
             Topic = "test.topic",
@@ -477,26 +442,9 @@ public class MessagingServiceTests : IDisposable
             SubscriptionId = createResponse.SubscriptionId
         };
 
-        // Act
-        var statusCode = await _service.RemoveSubscriptionAsync(removeRequest, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, statusCode);
-
-        _mockMessageBus.Verify(
-            m => m.TryPublishErrorAsync(
-                "messaging",
-                "RemoveSubscription",
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string?>(),
-                It.IsAny<string?>(),
-                It.IsAny<ServiceErrorEventSeverity>(),
-                It.IsAny<object?>(),
-                It.IsAny<string?>(),
-                It.IsAny<Guid?>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        // Act & Assert - exception propagates to generated controller catch-all boundary
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _service.RemoveSubscriptionAsync(removeRequest, CancellationToken.None));
     }
 
     #endregion

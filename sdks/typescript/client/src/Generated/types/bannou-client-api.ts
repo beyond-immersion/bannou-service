@@ -17194,20 +17194,34 @@ export interface components {
     DestroyReason: 'Consumed' | 'Destroyed' | 'Expired' | 'Admin';
     /** @description Information about the client device used for authentication or session tracking */
     DeviceInfo: {
-      /** @description Category of the device */
+      /** @description Category of the device (Desktop, Mobile, Tablet, Console, Handheld) */
       deviceType?: components['schemas']['DeviceType'] | null;
-      /** @description Operating system or platform name */
-      platform?: string | null;
-      /** @description Browser name and version if applicable */
-      browser?: string | null;
-      /** @description Version of the client application */
+      /** @description Operating system or platform of the client device */
+      platform?: components['schemas']['Platform'] | null;
+      /** @description Operating system version string (e.g., "Windows 11 23H2", "iOS 17.4") */
+      osVersion?: string | null;
+      /** @description Device manufacturer (e.g., "Apple", "Sony", "Valve") */
+      deviceManufacturer?: string | null;
+      /** @description Device model name (e.g., "iPhone 15 Pro", "PlayStation 5", "Steam Deck OLED") */
+      deviceModel?: string | null;
+      /** @description Version of the client application (semantic version recommended) */
       appVersion?: string | null;
+      /** @description Version of the Bannou SDK used by the client */
+      sdkVersion?: string | null;
+      /** @description Game engine name (e.g., "Unity", "Unreal", "Godot", "Stride", "Custom") */
+      engineName?: string | null;
+      /** @description Game engine version (e.g., "2022.3.14f1", "5.4.1") */
+      engineVersion?: string | null;
+      /** @description Optional key-value metadata for hardware capabilities and other client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through). */
+      metadata?: {
+        [key: string]: string;
+      } | null;
     };
     /**
-     * @description Category of client device used for authentication or session tracking
+     * @description Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode)
      * @enum {string}
      */
-    DeviceType: 'Desktop' | 'Mobile' | 'Tablet' | 'Console';
+    DeviceType: 'Desktop' | 'Mobile' | 'Tablet' | 'Console' | 'Handheld' | 'Unknown';
     /** @description Request to discard checkout */
     DiscardRequest: {
       /**
@@ -25864,6 +25878,8 @@ export interface components {
     RefreshRequest: {
       /** @description Refresh token issued during authentication to obtain a new access token */
       refreshToken: string;
+      /** @description Optional updated device information for the new session. If omitted, the new session has no device info. */
+      deviceInfo?: components['schemas']['DeviceInfo'];
     };
     /**
      * @description Controls how refund confirmation is handled. Same semantics as ReleaseMode.
@@ -25938,6 +25954,8 @@ export interface components {
        * @example user@example.com
        */
       email: string;
+      /** @description Information about the client device (optional) */
+      deviceInfo?: components['schemas']['DeviceInfo'];
     };
     /** @description Response from successful user registration */
     RegisterResponse: {
@@ -28022,8 +28040,6 @@ export interface components {
       lastActive: string;
       /** @description IP address from which the session was initiated */
       ipAddress?: string | null;
-      /** @description Geographic location derived from the IP address */
-      location?: string | null;
     };
     /** @description Paginated list of platform sessions */
     SessionListResponse: {

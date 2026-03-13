@@ -253,18 +253,23 @@ ELSE
 // Resolve backend
 CALL _backendDetector.CreateOrchestrator(request.Backend ?? config.DefaultBackend)
 
-PUBLISH bannou.deployment-events { action: Started, deploymentId }
+IF !dryRun
+  PUBLISH bannou.deployment-events { action: Started, deploymentId }
 
 // Build environment: merge current config + preset env + request env + host env
 READ config:current                                // via EnsureLastDeploymentLoadedAsync
 // 4-layer env merge: stored config -> preset -> request -> host env (filtered)
 
 FOREACH node in topology.Nodes
+  IF dryRun
+    // Collect what would be deployed without actually deploying
+    ADD to deployedServices { name, status: Starting }
+    CONTINUE
   CALL _orchestrator.DeployServiceAsync(node.Name, node.AppId, mergedEnv)
-  // On failure: log error, continue to next node (no rollback)
-  // Poll GetContainerStatusAsync until Running or timeout
+  // On failure: rollback all previously successful nodes, then continue
+  // On success: poll GetContainerStatusAsync until Running or timeout
 
-FOREACH deployed service
+FOREACH deployed service                           // Skip in dryRun
   CALL _healthMonitor.SetServiceRoutingAsync(serviceName, routing)
   CALL InvalidateOpenRestyRoutingCacheAsync(serviceName)
     // Direct HTTP to OpenResty; failure is non-blocking
@@ -274,12 +279,14 @@ IF preset has poolConfigurations
   FOREACH poolConfig
     WRITE pool:{type}:config <- PoolConfiguration from preset
 
-// Save versioned deployment config
-WRITE config:current <- DeploymentConfiguration
-WRITE config:version <- version + 1
-WRITE config:history:{newVersion} <- DeploymentConfiguration (TTL: ConfigHistoryTtlDays)
+// Save versioned deployment config (skip in dryRun)
+IF success AND !dryRun
+  WRITE config:current <- DeploymentConfiguration
+  WRITE config:version <- version + 1
+  WRITE config:history:{newVersion} <- DeploymentConfiguration (TTL: ConfigHistoryTtlDays)
 
-PUBLISH bannou.deployment-events { action: Completed, deploymentId, services }
+IF !dryRun
+  PUBLISH bannou.deployment-events { action: Completed, deploymentId, services }
 // ServiceHealthMonitor publishes bannou.full-service-mappings on routing changes
 RETURN (200, DeployResponse { success, deploymentId, backend, duration, services, warnings })
 ```
@@ -324,7 +331,12 @@ ELSE -> all known appIds from heartbeat index
 
 CALL _backendDetector.CreateOrchestrator(config.DefaultBackend)
 
-PUBLISH bannou.deployment-events { action: TopologyChanged }
+IF !dryRun
+  PUBLISH bannou.deployment-events { action: TopologyChanged }
+
+// List all containers, filter out infrastructure unless includeInfrastructure
+IF dryRun
+  RETURN (200, TeardownResponse { preview of what would be torn down })
 
 FOREACH appId
   CALL _orchestrator.TeardownServiceAsync(appId, removeVolumes)

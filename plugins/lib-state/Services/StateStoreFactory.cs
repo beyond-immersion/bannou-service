@@ -90,6 +90,13 @@ public class StateStoreFactoryConfiguration
     public int ErrorEventDeduplicationWindowSeconds { get; set; } = 60;
 
     /// <summary>
+    /// Number of entries to read/write per batch during state store migration.
+    /// Higher values use more memory but complete faster.
+    /// Env: STATE_MIGRATION_BATCH_SIZE
+    /// </summary>
+    public int MigrationBatchSize { get; set; } = 500;
+
+    /// <summary>
     /// Store configurations by name.
     /// </summary>
     public Dictionary<string, StoreConfiguration> Stores { get; set; } = new();
@@ -856,6 +863,103 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                 _logger.LogWarning("Unknown backend type {Backend} for store '{StoreName}'", backend, storeName);
                 return null;
         }
+    }
+
+    /// <summary>
+    /// Creates a temporary store instance using a specified backend, regardless of the store's configured backend.
+    /// The returned store is NOT cached — it is for one-time migration use only.
+    /// </summary>
+    /// <param name="storeName">Name of the configured store (must exist in configuration).</param>
+    /// <param name="backend">Backend to create the store with.</param>
+    /// <returns>A temporary state store instance using the specified backend.</returns>
+    internal IStateStore<TValue> CreateStoreWithBackend<TValue>(string storeName, StateBackend backend)
+        where TValue : class
+    {
+        if (!HasStore(storeName))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+
+        if (!_initialized)
+        {
+            throw new InvalidOperationException(
+                "CreateStoreWithBackend called before InitializeAsync completed.");
+        }
+
+        var storeConfig = _configuration.Stores[storeName];
+
+        switch (backend)
+        {
+            case StateBackend.Redis:
+                if (_redis == null)
+                {
+                    throw new InvalidOperationException("Redis connection not available for migration target");
+                }
+                var keyPrefix = storeConfig.KeyPrefix ?? storeName;
+                var redisLogger = _loggerFactory.CreateLogger<RedisStateStore<TValue>>();
+                return new RedisStateStore<TValue>(_redis.GetDatabase(), keyPrefix, null, redisLogger, null);
+
+            case StateBackend.MySql:
+                if (_mysqlOptions == null)
+                {
+                    throw new InvalidOperationException("MySQL connection not available for migration target");
+                }
+                var mysqlLogger = _loggerFactory.CreateLogger<MySqlStateStore<TValue>>();
+                return new MySqlStateStore<TValue>(
+                    _mysqlOptions,
+                    storeConfig.TableName ?? storeName,
+                    _configuration.InMemoryFallbackLimit,
+                    mysqlLogger,
+                    null);
+
+            default:
+                throw new ArgumentException($"Migration only supports Redis and Mysql backends, got {backend}");
+        }
+    }
+
+    /// <summary>
+    /// Scans Redis keys matching a pattern using StackExchange.Redis's cursor-managed SCAN.
+    /// </summary>
+    /// <param name="pattern">Redis key pattern (e.g., "auth:*").</param>
+    /// <param name="pageSize">Number of keys per SCAN batch.</param>
+    /// <returns>Async enumerable of matching Redis keys.</returns>
+    internal IAsyncEnumerable<RedisKey> ScanKeysAsync(string pattern, int pageSize = 500)
+    {
+        if (_redis == null)
+        {
+            throw new InvalidOperationException("Redis connection not available for key scanning");
+        }
+
+        var server = _redis.GetServers().First();
+        return server.KeysAsync(pattern: pattern, pageSize: pageSize);
+    }
+
+    /// <summary>
+    /// Gets the configured key prefix for a Redis store.
+    /// </summary>
+    /// <param name="storeName">Store name.</param>
+    /// <returns>Key prefix string.</returns>
+    internal string GetKeyPrefix(string storeName)
+    {
+        if (!_configuration.Stores.TryGetValue(storeName, out var config))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+        return config.KeyPrefix ?? storeName;
+    }
+
+    /// <summary>
+    /// Gets the store configuration for a named store.
+    /// </summary>
+    /// <param name="storeName">Store name.</param>
+    /// <returns>Store configuration.</returns>
+    internal StoreConfiguration GetStoreConfiguration(string storeName)
+    {
+        if (!_configuration.Stores.TryGetValue(storeName, out var config))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+        return config;
     }
 
     /// <summary>

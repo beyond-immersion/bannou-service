@@ -117,7 +117,7 @@ public static class EventSubscriptionRegistration
 
         // From mesh-events.yaml
         EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou.service-heartbeat");
-        EventSubscriptionRegistry.Register<FullServiceMappingsEvent>("bannou.full-service-mappings");
+        EventSubscriptionRegistry.Register<MeshMappingsUpdatedEvent>("mesh.mappings.updated");
         EventSubscriptionRegistry.Register<MeshCircuitStateChangedEvent>("mesh.circuit.changed");
 
         // From obligation-events.yaml

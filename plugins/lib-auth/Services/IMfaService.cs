@@ -71,17 +71,19 @@ public interface IMfaService
     /// Creates an MFA challenge token for the login flow. Stored in Redis with configurable TTL.
     /// </summary>
     /// <param name="accountId">Account that passed password verification.</param>
+    /// <param name="deviceInfo">Device information from the original login request to preserve across MFA flow.</param>
+    /// <param name="ipAddress">Client IP address from the original login request to preserve across MFA flow.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Challenge token string.</returns>
-    Task<string> CreateMfaChallengeAsync(Guid accountId, CancellationToken ct);
+    Task<string> CreateMfaChallengeAsync(Guid accountId, DeviceInfo? deviceInfo, string? ipAddress, CancellationToken ct);
 
     /// <summary>
     /// Consumes (retrieves and deletes) an MFA challenge token. Single-use.
     /// </summary>
     /// <param name="token">Challenge token to consume.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>Account ID if token was valid and not expired, null otherwise.</returns>
-    Task<Guid?> ConsumeMfaChallengeAsync(string token, CancellationToken ct);
+    /// <returns>Tuple of (accountId, deviceInfo, ipAddress) if token was valid and not expired, null otherwise.</returns>
+    Task<(Guid accountId, DeviceInfo? deviceInfo, string? ipAddress)?> ConsumeMfaChallengeAsync(string token, CancellationToken ct);
 
     /// <summary>
     /// Creates an MFA setup token storing pending MFA configuration. Stored in Redis with configurable TTL.

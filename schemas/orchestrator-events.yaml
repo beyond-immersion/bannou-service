@@ -21,10 +21,6 @@ info:
     - topic: orchestrator.health-ping
       event: OrchestratorHealthPingEvent
       description: Published to verify pub/sub path is active
-    # Service mappings broadcast
-    - topic: bannou.full-service-mappings
-      event: FullServiceMappingsEvent
-      description: Published to broadcast full service-to-appId mappings to mesh
     # Deployment state change events
     - topic: bannou.deployment-events
       event: DeploymentEvent

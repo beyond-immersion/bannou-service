@@ -1033,10 +1033,10 @@ public class MeshServiceTests
 
     #endregion
 
-    #region HandleServiceMappingsAsync Tests
+    #region HandleMeshMappingsUpdatedAsync Tests
 
     [Fact]
-    public async Task HandleServiceMappingsAsync_WithValidMappings_ShouldCallReplaceAllMappings()
+    public async Task HandleMeshMappingsUpdatedAsync_WithValidMappings_ShouldCallReplaceAllMappings()
     {
         // Arrange
         _mockMappingResolver.Setup(x => x.ReplaceAllMappings(
@@ -1046,7 +1046,7 @@ public class MeshServiceTests
             .Returns(true);
 
         var service = CreateService();
-        var evt = new FullServiceMappingsEvent
+        var evt = new MeshMappingsUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1060,7 +1060,7 @@ public class MeshServiceTests
         };
 
         // Act
-        await service.HandleServiceMappingsAsync(evt);
+        await service.HandleMeshMappingsUpdatedAsync(evt);
 
         // Assert - Verify ReplaceAllMappings was called with correct parameters
         _mockMappingResolver.Verify(x => x.ReplaceAllMappings(
@@ -1079,7 +1079,7 @@ public class MeshServiceTests
     /// to clear the old service-to-app-id mappings so all services route to "bannou".
     /// </summary>
     [Fact]
-    public async Task HandleServiceMappingsAsync_WithEmptyMappings_ShouldResetToDefaultRouting()
+    public async Task HandleMeshMappingsUpdatedAsync_WithEmptyMappings_ShouldResetToDefaultRouting()
     {
         // Arrange
         _mockMappingResolver.Setup(x => x.ReplaceAllMappings(
@@ -1089,7 +1089,7 @@ public class MeshServiceTests
             .Returns(true);
 
         var service = CreateService();
-        var evt = new FullServiceMappingsEvent
+        var evt = new MeshMappingsUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1099,7 +1099,7 @@ public class MeshServiceTests
         };
 
         // Act
-        await service.HandleServiceMappingsAsync(evt);
+        await service.HandleMeshMappingsUpdatedAsync(evt);
 
         // Assert - ReplaceAllMappings SHOULD be called with empty mappings to reset routing
         _mockMappingResolver.Verify(x => x.ReplaceAllMappings(
@@ -1110,7 +1110,7 @@ public class MeshServiceTests
     }
 
     [Fact]
-    public async Task HandleServiceMappingsAsync_WithStaleVersion_ShouldLogDebugWhenRejected()
+    public async Task HandleMeshMappingsUpdatedAsync_WithStaleVersion_ShouldLogDebugWhenRejected()
     {
         // Arrange - Configure resolver to reject update (returns false)
         _mockMappingResolver.Setup(x => x.ReplaceAllMappings(
@@ -1121,7 +1121,7 @@ public class MeshServiceTests
         _mockMappingResolver.Setup(x => x.CurrentVersion).Returns(100);
 
         var service = CreateService();
-        var evt = new FullServiceMappingsEvent
+        var evt = new MeshMappingsUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1131,7 +1131,7 @@ public class MeshServiceTests
         };
 
         // Act
-        await service.HandleServiceMappingsAsync(evt);
+        await service.HandleMeshMappingsUpdatedAsync(evt);
 
         // Assert - ReplaceAllMappings was called but returned false (logged as debug)
         _mockMappingResolver.Verify(x => x.ReplaceAllMappings(

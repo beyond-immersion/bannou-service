@@ -22,7 +22,7 @@ Native service mesh (L0 Infrastructure) providing direct in-process service-to-s
 |-----------|-------------|
 | All services (via generated clients) | Every NSwag-generated client uses `IMeshInvocationClient` for service-to-service HTTP calls |
 | lib-connect | Routes WebSocket messages to backend services via mesh invocation |
-| lib-orchestrator | Manages service routing tables; publishes `FullServiceMappingsEvent` consumed by mesh |
+| lib-orchestrator | Manages service routing tables; pushes mapping updates via `IServiceMappingReceiver` DI interface |
 
 ---
 
@@ -40,7 +40,7 @@ Native service mesh (L0 Infrastructure) providing direct in-process service-to-s
 | `DegradationThresholdSeconds` | `MESH_DEGRADATION_THRESHOLD_SECONDS` | `60` | Time without heartbeat before marking degraded |
 | `DefaultLoadBalancer` | `MESH_DEFAULT_LOAD_BALANCER` | `RoundRobin` | Load balancing algorithm (enum: RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random) |
 | `LoadThresholdPercent` | `MESH_LOAD_THRESHOLD_PERCENT` | `80` | Load % above which endpoint is considered high-load |
-| `EnableServiceMappingSync` | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | `true` | Subscribe to FullServiceMappingsEvent for routing updates |
+| `EnableServiceMappingSync` | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | `true` | Subscribe to `mesh.mappings.updated` L0 events for cross-node routing sync |
 | `HealthCheckEnabled` | `MESH_HEALTH_CHECK_ENABLED` | `false` | Enable active health check probing |
 | `HealthCheckIntervalSeconds` | `MESH_HEALTH_CHECK_INTERVAL_SECONDS` | `60` | Interval between health probes |
 | `HealthCheckTimeoutSeconds` | `MESH_HEALTH_CHECK_TIMEOUT_SECONDS` | `5` | Timeout for health check requests |
@@ -154,14 +154,13 @@ Event-Driven Auto-Registration
 
 ### Bugs (Fix Immediately)
 
-1. **L0 subscribing to L3 events (`bannou.full-service-mappings`)**: Mesh (L0) subscribes to `bannou.full-service-mappings` events published by Orchestrator (L3). Per Foundation Tenets (Cross-Service Communication Discipline), a lower-layer service must never subscribe to events published by a higher-layer service. The fix: Orchestrator (L3) should call mesh (L0) API directly to update routing tables — hierarchy permits L3→L0 calls. The `bannou.service-heartbeat` event is a separate case — heartbeat events are published by any running node (including L0 infrastructure nodes), not exclusively by Orchestrator, so they are true infrastructure broadcasts.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-13:https://github.com/beyond-immersion/bannou-service/issues/638 -->
+1. ~~**L0 subscribing to L3 events (`bannou.full-service-mappings`)**~~: **FIXED** (2026-03-13) - Replaced with DI interface inversion: Mesh (L0) provides `IServiceMappingReceiver` implementation that Orchestrator (L3) discovers and pushes mapping updates into. The implementation updates the local `IServiceAppMappingResolver` and broadcasts `mesh.mappings.updated` (L0→L0) events for cross-node sync. Mesh no longer subscribes to any L3 events.
 
 ### Intentional Quirks (Documented Behavior)
 
 1. **`InvokeRawAsync` bypasses circuit breaker**: The raw API invocation path (`InvokeRawAsync`) intentionally skips circuit breaker checks and does not record success/failure to the breaker. This is by design because raw API execution targets services that may be optional or disabled — failures against absent services should not trip the circuit.
 
-2. **Two-level routing model**: Mesh routing operates in two stages. First, `IServiceAppMappingResolver` maps a **service name** to an **app-id** (e.g., `"auth"` → `"bannou-auth-node1"`). This mapping is populated by Orchestrator's `FullServiceMappingsEvent` broadcasts after deployments and topology changes. Second, Mesh resolves the **app-id** to a specific **endpoint** using load balancing across all healthy instances registered under that app-id. Node affinity is handled at the first level (Orchestrator assigns per-node app-ids like `bannou-{service}-{nodeName}`), so Mesh's load balancing at the second level is always stateless. In development, all services map to the default `"bannou"` app-id (single instance); in production, Orchestrator controls which node each service routes to by publishing different mappings.
+2. **Two-level routing model**: Mesh routing operates in two stages. First, `IServiceAppMappingResolver` maps a **service name** to an **app-id** (e.g., `"auth"` → `"bannou-auth-node1"`). This mapping is populated by Orchestrator via the `IServiceMappingReceiver` DI interface (Orchestrator pushes updates; Mesh broadcasts `mesh.mappings.updated` L0 events for cross-node sync). Second, Mesh resolves the **app-id** to a specific **endpoint** using load balancing across all healthy instances registered under that app-id. Node affinity is handled at the first level (Orchestrator assigns per-node app-ids like `bannou-{service}-{nodeName}`), so Mesh's load balancing at the second level is always stateless. In development, all services map to the default `"bannou"` app-id (single instance); in production, Orchestrator controls which node each service routes to by pushing different mappings.
 
 3. **Resilient routing fallback**: If health/load filtering eliminates all endpoints, `GetRoute` falls back to the full unfiltered list. Prefers degraded routing over total failure.
 
@@ -169,7 +168,7 @@ Event-Driven Auto-Registration
 
 5. **Global index lazy cleanup**: The `mesh-global-index` store cleans stale entries on access rather than via TTL. Endpoints themselves have TTL, so this is an optimization choice, not a bug.
 
-6. **Empty mappings = reset**: `FullServiceMappingsEvent` with empty mappings resets all routing to default ("bannou"). This is intentional for container teardown.
+6. **Empty mappings = reset**: Empty mappings passed via `IServiceMappingReceiver.UpdateMappingsAsync` (or via `mesh.mappings.updated` event) reset all routing to default ("bannou"). This is intentional for container teardown.
 
 ### Design Considerations (Requires Planning)
 
@@ -183,4 +182,8 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Active
 
-- [#638](https://github.com/beyond-immersion/bannou-service/issues/638) — T27: Mesh (L0) subscribes to Orchestrator (L3) full-service-mappings event (NEEDS_DESIGN)
+*No active work items.*
+
+### Completed
+
+- [#638](https://github.com/beyond-immersion/bannou-service/issues/638) — T27: Mesh (L0) subscribes to Orchestrator (L3) full-service-mappings event — **FIXED** (2026-03-13)

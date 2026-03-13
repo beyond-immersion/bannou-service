@@ -68,22 +68,66 @@ public partial class AuthController
                         }
                     ],
                     "nullable": true,
-                    "description": "Category of the device"
+                    "description": "Category of the device (Desktop, Mobile, Tablet, Console, Handheld)"
                 },
                 "platform": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/Platform"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Operating system or platform name"
+                    "description": "Operating system or platform of the client device"
                 },
-                "browser": {
+                "osVersion": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Browser name and version if applicable"
+                    "maxLength": 100,
+                    "description": "Operating system version string (e.g., \"Windows 11 23H2\", \"iOS 17.4\")"
+                },
+                "deviceManufacturer": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device manufacturer (e.g., \"Apple\", \"Sony\", \"Valve\")"
+                },
+                "deviceModel": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device model name (e.g., \"iPhone 15 Pro\", \"PlayStation 5\", \"Steam Deck OLED\")"
                 },
                 "appVersion": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Version of the client application"
+                    "maxLength": 100,
+                    "description": "Version of the client application (semantic version recommended)"
+                },
+                "sdkVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Version of the Bannou SDK used by the client"
+                },
+                "engineName": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine name (e.g., \"Unity\", \"Unreal\", \"Godot\", \"Stride\", \"Custom\")"
+                },
+                "engineVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine version (e.g., \"2022.3.14f1\", \"5.4.1\")"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Optional key-value metadata for hardware capabilities and other client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through)."
                 }
             }
         },
@@ -93,9 +137,27 @@ public partial class AuthController
                 "Desktop",
                 "Mobile",
                 "Tablet",
-                "Console"
+                "Console",
+                "Handheld",
+                "Unknown"
             ],
-            "description": "Category of client device used for authentication or session tracking"
+            "description": "Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode)"
+        },
+        "Platform": {
+            "type": "string",
+            "enum": [
+                "Windows",
+                "MacOS",
+                "Linux",
+                "iOS",
+                "Android",
+                "PlayStation",
+                "Xbox",
+                "NintendoSwitch",
+                "WebGL",
+                "Other"
+            ],
+            "description": "Operating system or platform of the client device"
         }
     }
 }
@@ -256,8 +318,116 @@ public partial class AuthController
                     "format": "email",
                     "description": "Email address for account recovery and notifications",
                     "example": "user@example.com"
+                },
+                "deviceInfo": {
+                    "$ref": "#/$defs/DeviceInfo",
+                    "nullable": true,
+                    "description": "Information about the client device (optional)"
                 }
             }
+        },
+        "DeviceInfo": {
+            "description": "Information about the client device used for authentication or session tracking",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "deviceType": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/DeviceType"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Category of the device (Desktop, Mobile, Tablet, Console, Handheld)"
+                },
+                "platform": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/Platform"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Operating system or platform of the client device"
+                },
+                "osVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Operating system version string (e.g., \"Windows 11 23H2\", \"iOS 17.4\")"
+                },
+                "deviceManufacturer": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device manufacturer (e.g., \"Apple\", \"Sony\", \"Valve\")"
+                },
+                "deviceModel": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device model name (e.g., \"iPhone 15 Pro\", \"PlayStation 5\", \"Steam Deck OLED\")"
+                },
+                "appVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Version of the client application (semantic version recommended)"
+                },
+                "sdkVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Version of the Bannou SDK used by the client"
+                },
+                "engineName": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine name (e.g., \"Unity\", \"Unreal\", \"Godot\", \"Stride\", \"Custom\")"
+                },
+                "engineVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine version (e.g., \"2022.3.14f1\", \"5.4.1\")"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Optional key-value metadata for hardware capabilities and other client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through)."
+                }
+            }
+        },
+        "DeviceType": {
+            "type": "string",
+            "enum": [
+                "Desktop",
+                "Mobile",
+                "Tablet",
+                "Console",
+                "Handheld",
+                "Unknown"
+            ],
+            "description": "Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode)"
+        },
+        "Platform": {
+            "type": "string",
+            "enum": [
+                "Windows",
+                "MacOS",
+                "Linux",
+                "iOS",
+                "Android",
+                "PlayStation",
+                "Xbox",
+                "NintendoSwitch",
+                "WebGL",
+                "Other"
+            ],
+            "description": "Operating system or platform of the client device"
         }
     }
 }
@@ -466,22 +636,66 @@ public partial class AuthController
                         }
                     ],
                     "nullable": true,
-                    "description": "Category of the device"
+                    "description": "Category of the device (Desktop, Mobile, Tablet, Console, Handheld)"
                 },
                 "platform": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/Platform"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Operating system or platform name"
+                    "description": "Operating system or platform of the client device"
                 },
-                "browser": {
+                "osVersion": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Browser name and version if applicable"
+                    "maxLength": 100,
+                    "description": "Operating system version string (e.g., \"Windows 11 23H2\", \"iOS 17.4\")"
+                },
+                "deviceManufacturer": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device manufacturer (e.g., \"Apple\", \"Sony\", \"Valve\")"
+                },
+                "deviceModel": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device model name (e.g., \"iPhone 15 Pro\", \"PlayStation 5\", \"Steam Deck OLED\")"
                 },
                 "appVersion": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Version of the client application"
+                    "maxLength": 100,
+                    "description": "Version of the client application (semantic version recommended)"
+                },
+                "sdkVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Version of the Bannou SDK used by the client"
+                },
+                "engineName": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine name (e.g., \"Unity\", \"Unreal\", \"Godot\", \"Stride\", \"Custom\")"
+                },
+                "engineVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine version (e.g., \"2022.3.14f1\", \"5.4.1\")"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Optional key-value metadata for hardware capabilities and other client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through)."
                 }
             }
         },
@@ -491,9 +705,27 @@ public partial class AuthController
                 "Desktop",
                 "Mobile",
                 "Tablet",
-                "Console"
+                "Console",
+                "Handheld",
+                "Unknown"
             ],
-            "description": "Category of client device used for authentication or session tracking"
+            "description": "Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode)"
+        },
+        "Platform": {
+            "type": "string",
+            "enum": [
+                "Windows",
+                "MacOS",
+                "Linux",
+                "iOS",
+                "Android",
+                "PlayStation",
+                "Xbox",
+                "NintendoSwitch",
+                "WebGL",
+                "Other"
+            ],
+            "description": "Operating system or platform of the client device"
         }
     }
 }
@@ -648,22 +880,66 @@ public partial class AuthController
                         }
                     ],
                     "nullable": true,
-                    "description": "Category of the device"
+                    "description": "Category of the device (Desktop, Mobile, Tablet, Console, Handheld)"
                 },
                 "platform": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/Platform"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Operating system or platform name"
+                    "description": "Operating system or platform of the client device"
                 },
-                "browser": {
+                "osVersion": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Browser name and version if applicable"
+                    "maxLength": 100,
+                    "description": "Operating system version string (e.g., \"Windows 11 23H2\", \"iOS 17.4\")"
+                },
+                "deviceManufacturer": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device manufacturer (e.g., \"Apple\", \"Sony\", \"Valve\")"
+                },
+                "deviceModel": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device model name (e.g., \"iPhone 15 Pro\", \"PlayStation 5\", \"Steam Deck OLED\")"
                 },
                 "appVersion": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Version of the client application"
+                    "maxLength": 100,
+                    "description": "Version of the client application (semantic version recommended)"
+                },
+                "sdkVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Version of the Bannou SDK used by the client"
+                },
+                "engineName": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine name (e.g., \"Unity\", \"Unreal\", \"Godot\", \"Stride\", \"Custom\")"
+                },
+                "engineVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine version (e.g., \"2022.3.14f1\", \"5.4.1\")"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Optional key-value metadata for hardware capabilities and other client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through)."
                 }
             }
         },
@@ -673,9 +949,27 @@ public partial class AuthController
                 "Desktop",
                 "Mobile",
                 "Tablet",
-                "Console"
+                "Console",
+                "Handheld",
+                "Unknown"
             ],
-            "description": "Category of client device used for authentication or session tracking"
+            "description": "Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode)"
+        },
+        "Platform": {
+            "type": "string",
+            "enum": [
+                "Windows",
+                "MacOS",
+                "Linux",
+                "iOS",
+                "Android",
+                "PlayStation",
+                "Xbox",
+                "NintendoSwitch",
+                "WebGL",
+                "Other"
+            ],
+            "description": "Operating system or platform of the client device"
         }
     }
 }
@@ -806,8 +1100,116 @@ public partial class AuthController
                 "refreshToken": {
                     "type": "string",
                     "description": "Refresh token issued during authentication to obtain a new access token"
+                },
+                "deviceInfo": {
+                    "$ref": "#/$defs/DeviceInfo",
+                    "nullable": true,
+                    "description": "Optional updated device information for the new session. If omitted, the new session has no device info."
                 }
             }
+        },
+        "DeviceInfo": {
+            "description": "Information about the client device used for authentication or session tracking",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "deviceType": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/DeviceType"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Category of the device (Desktop, Mobile, Tablet, Console, Handheld)"
+                },
+                "platform": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/Platform"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Operating system or platform of the client device"
+                },
+                "osVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Operating system version string (e.g., \"Windows 11 23H2\", \"iOS 17.4\")"
+                },
+                "deviceManufacturer": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device manufacturer (e.g., \"Apple\", \"Sony\", \"Valve\")"
+                },
+                "deviceModel": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device model name (e.g., \"iPhone 15 Pro\", \"PlayStation 5\", \"Steam Deck OLED\")"
+                },
+                "appVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Version of the client application (semantic version recommended)"
+                },
+                "sdkVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Version of the Bannou SDK used by the client"
+                },
+                "engineName": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine name (e.g., \"Unity\", \"Unreal\", \"Godot\", \"Stride\", \"Custom\")"
+                },
+                "engineVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine version (e.g., \"2022.3.14f1\", \"5.4.1\")"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Optional key-value metadata for hardware capabilities and other client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through)."
+                }
+            }
+        },
+        "DeviceType": {
+            "type": "string",
+            "enum": [
+                "Desktop",
+                "Mobile",
+                "Tablet",
+                "Console",
+                "Handheld",
+                "Unknown"
+            ],
+            "description": "Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode)"
+        },
+        "Platform": {
+            "type": "string",
+            "enum": [
+                "Windows",
+                "MacOS",
+                "Linux",
+                "iOS",
+                "Android",
+                "PlayStation",
+                "Xbox",
+                "NintendoSwitch",
+                "WebGL",
+                "Other"
+            ],
+            "description": "Operating system or platform of the client device"
         }
     }
 }
@@ -1174,11 +1576,6 @@ public partial class AuthController
                     "type": "string",
                     "nullable": true,
                     "description": "IP address from which the session was initiated"
-                },
-                "location": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Geographic location derived from the IP address"
                 }
             }
         },
@@ -1194,22 +1591,66 @@ public partial class AuthController
                         }
                     ],
                     "nullable": true,
-                    "description": "Category of the device"
+                    "description": "Category of the device (Desktop, Mobile, Tablet, Console, Handheld)"
                 },
                 "platform": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/Platform"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Operating system or platform name"
+                    "description": "Operating system or platform of the client device"
                 },
-                "browser": {
+                "osVersion": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Browser name and version if applicable"
+                    "maxLength": 100,
+                    "description": "Operating system version string (e.g., \"Windows 11 23H2\", \"iOS 17.4\")"
+                },
+                "deviceManufacturer": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device manufacturer (e.g., \"Apple\", \"Sony\", \"Valve\")"
+                },
+                "deviceModel": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Device model name (e.g., \"iPhone 15 Pro\", \"PlayStation 5\", \"Steam Deck OLED\")"
                 },
                 "appVersion": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Version of the client application"
+                    "maxLength": 100,
+                    "description": "Version of the client application (semantic version recommended)"
+                },
+                "sdkVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Version of the Bannou SDK used by the client"
+                },
+                "engineName": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine name (e.g., \"Unity\", \"Unreal\", \"Godot\", \"Stride\", \"Custom\")"
+                },
+                "engineVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Game engine version (e.g., \"2022.3.14f1\", \"5.4.1\")"
+                },
+                "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Optional key-value metadata for hardware capabilities and other client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through)."
                 }
             }
         },
@@ -1219,9 +1660,27 @@ public partial class AuthController
                 "Desktop",
                 "Mobile",
                 "Tablet",
-                "Console"
+                "Console",
+                "Handheld",
+                "Unknown"
             ],
-            "description": "Category of client device used for authentication or session tracking"
+            "description": "Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode)"
+        },
+        "Platform": {
+            "type": "string",
+            "enum": [
+                "Windows",
+                "MacOS",
+                "Linux",
+                "iOS",
+                "Android",
+                "PlayStation",
+                "Xbox",
+                "NintendoSwitch",
+                "WebGL",
+                "Other"
+            ],
+            "description": "Operating system or platform of the client device"
         }
     }
 }

@@ -52,6 +52,28 @@ public sealed class NullTelemetryProvider : ITelemetryProvider
     }
 
     /// <inheritdoc />
+    public void RegisterObservableGauge<T>(
+        string componentName,
+        string metricName,
+        Func<T> observeValue,
+        string? unit = null,
+        string? description = null) where T : struct
+    {
+        // No-op when telemetry is disabled — callback is never registered
+    }
+
+    /// <inheritdoc />
+    public void RegisterObservableGauge<T>(
+        string componentName,
+        string metricName,
+        Func<Measurement<T>> observeValue,
+        string? unit = null,
+        string? description = null) where T : struct
+    {
+        // No-op when telemetry is disabled — callback is never registered
+    }
+
+    /// <inheritdoc />
     public IStateStore<TValue> WrapStateStore<TValue>(IStateStore<TValue> store, string storeName, string backend)
         where TValue : class => store;
 

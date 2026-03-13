@@ -55,7 +55,7 @@ public class TokenService : ITokenService
     }
 
     /// <inheritdoc/>
-    public async Task<(string accessToken, Guid sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
+    public async Task<(string accessToken, Guid sessionId)> GenerateAccessTokenAsync(AccountResponse account, DeviceInfo? deviceInfo = null, string? ipAddress = null, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "TokenService.GenerateAccessToken");
         _logger.LogDebug("Generating access token for account {AccountId}", account.AccountId);
@@ -84,7 +84,9 @@ public class TokenService : ITokenService
             Jti = jti,
             CreatedAt = now,
             LastActiveAt = now,
-            ExpiresAt = now.AddMinutes(_configuration.JwtExpirationMinutes)
+            ExpiresAt = now.AddMinutes(_configuration.JwtExpirationMinutes),
+            DeviceInfo = deviceInfo,
+            IpAddress = ipAddress
         };
 
         await _sessionService.SaveSessionAsync(sessionKey, sessionData, _configuration.JwtExpirationMinutes * 60, cancellationToken);

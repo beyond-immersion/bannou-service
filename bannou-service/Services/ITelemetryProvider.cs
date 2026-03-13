@@ -90,6 +90,42 @@ public interface ITelemetryProvider
         params KeyValuePair<string, object?>[] tags);
 
     /// <summary>
+    /// Register a callback-based observable gauge that is sampled by the metrics exporter.
+    /// The callback is invoked during each export/scrape cycle to read the current value.
+    /// Registration is idempotent — duplicate registrations for the same component:metric are ignored.
+    /// </summary>
+    /// <typeparam name="T">The numeric type for the gauge value (int, long, double, etc.).</typeparam>
+    /// <param name="componentName">Component name for the meter.</param>
+    /// <param name="metricName">Name of the gauge metric.</param>
+    /// <param name="observeValue">Callback that returns the current value when polled.</param>
+    /// <param name="unit">Optional unit of measure (e.g., "{messages}", "{channels}").</param>
+    /// <param name="description">Optional human-readable description.</param>
+    void RegisterObservableGauge<T>(
+        string componentName,
+        string metricName,
+        Func<T> observeValue,
+        string? unit = null,
+        string? description = null) where T : struct;
+
+    /// <summary>
+    /// Register a callback-based observable gauge that returns a <see cref="Measurement{T}"/>
+    /// with attached tags. Use this overload when the gauge observation needs static tags.
+    /// Registration is idempotent — duplicate registrations for the same component:metric are ignored.
+    /// </summary>
+    /// <typeparam name="T">The numeric type for the gauge value (int, long, double, etc.).</typeparam>
+    /// <param name="componentName">Component name for the meter.</param>
+    /// <param name="metricName">Name of the gauge metric.</param>
+    /// <param name="observeValue">Callback that returns a measurement with tags when polled.</param>
+    /// <param name="unit">Optional unit of measure.</param>
+    /// <param name="description">Optional human-readable description.</param>
+    void RegisterObservableGauge<T>(
+        string componentName,
+        string metricName,
+        Func<Measurement<T>> observeValue,
+        string? unit = null,
+        string? description = null) where T : struct;
+
+    /// <summary>
     /// Wrap a state store with instrumentation.
     /// Returns the original store if instrumentation is disabled.
     /// </summary>
@@ -212,6 +248,31 @@ public static class TelemetryMetrics
     /// Histogram for message consume durations.
     /// </summary>
     public const string MessagingConsumeDuration = "bannou.messaging.consume_duration_seconds";
+
+    /// <summary>
+    /// Gauge for retry buffer depth (current number of messages awaiting retry).
+    /// </summary>
+    public const string MessagingRetryBufferDepth = "bannou.messaging.retry_buffer_depth";
+
+    /// <summary>
+    /// Gauge for retry buffer fill ratio (0.0–1.0 relative to max size).
+    /// </summary>
+    public const string MessagingRetryBufferFillRatio = "bannou.messaging.retry_buffer_fill_ratio";
+
+    /// <summary>
+    /// Gauge for active channels in the channel pool.
+    /// </summary>
+    public const string MessagingChannelPoolActive = "bannou.messaging.channel_pool_active";
+
+    /// <summary>
+    /// Gauge for available (pooled) channels in the channel pool.
+    /// </summary>
+    public const string MessagingChannelPoolAvailable = "bannou.messaging.channel_pool_available";
+
+    /// <summary>
+    /// Counter for retry buffer processing outcomes (tagged by status: processed, failed, discarded, deferred).
+    /// </summary>
+    public const string MessagingRetryAttempts = "bannou.messaging.retry_attempts";
 
     // Mesh metrics
     /// <summary>

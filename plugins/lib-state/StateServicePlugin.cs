@@ -79,6 +79,9 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
         // Register distributed lock provider (used by Permission service and others)
         services.AddSingleton<IDistributedLockProvider, Services.RedisDistributedLockProvider>();
 
+        // Register migration helper for admin migration endpoints
+        services.AddScoped<Services.StateMigrationHelper>();
+
         Logger?.LogDebug("State service dependencies configured");
     }
 
@@ -102,7 +105,8 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             MinRetryDelayMs = stateConfig.MinRetryDelayMs,
             InMemoryFallbackLimit = stateConfig.InMemoryFallbackLimit,
             EnableErrorEventPublishing = stateConfig.EnableErrorEventPublishing,
-            ErrorEventDeduplicationWindowSeconds = stateConfig.ErrorEventDeduplicationWindowSeconds
+            ErrorEventDeduplicationWindowSeconds = stateConfig.ErrorEventDeduplicationWindowSeconds,
+            MigrationBatchSize = stateConfig.MigrationBatchSize
         };
 
         // Load store configurations from generated definitions (schema-first approach)

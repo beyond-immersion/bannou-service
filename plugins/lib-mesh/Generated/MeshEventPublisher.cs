@@ -54,4 +54,11 @@ public static class MeshEventPublisher
         MeshEndpointDegradedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(MeshPublishedTopics.MeshEndpointDegraded, eventData, cancellationToken);
+
+    /// <summary>Published when service-to-appId mappings are updated locally, enabling cross-node sync.</summary>
+    public static Task<bool> PublishMeshMappingsUpdatedAsync(
+        this IMessageBus messageBus,
+        MeshMappingsUpdatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(MeshPublishedTopics.MeshMappingsUpdated, eventData, cancellationToken);
 }

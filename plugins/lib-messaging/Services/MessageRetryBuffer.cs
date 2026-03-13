@@ -73,6 +73,23 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
         _processTerminator = processTerminator ?? new DefaultProcessTerminator();
         _messageBus = messageBus;
 
+        // Register observable gauges for retry buffer monitoring
+        _telemetryProvider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            TelemetryMetrics.MessagingRetryBufferDepth,
+            () => _bufferCount,
+            unit: "{messages}",
+            description: "Current number of messages in the retry buffer awaiting retry");
+
+        _telemetryProvider.RegisterObservableGauge<double>(
+            TelemetryComponents.Messaging,
+            TelemetryMetrics.MessagingRetryBufferFillRatio,
+            () => _configuration.RetryBufferMaxSize > 0
+                ? (double)_bufferCount / _configuration.RetryBufferMaxSize
+                : 0.0,
+            unit: "1",
+            description: "Retry buffer fill ratio (0.0-1.0) relative to max size");
+
         if (_configuration.RetryBufferEnabled)
         {
             var intervalMs = _configuration.RetryBufferIntervalSeconds * 1000;
@@ -456,6 +473,36 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
             {
                 _buffer.Enqueue(message);
                 Interlocked.Increment(ref _bufferCount);
+            }
+
+            // Record per-status retry attempt counters for observability
+            if (processedCount > 0)
+            {
+                _telemetryProvider.RecordCounter(
+                    TelemetryComponents.Messaging, TelemetryMetrics.MessagingRetryAttempts,
+                    processedCount,
+                    new KeyValuePair<string, object?>("status", "processed"));
+            }
+            if (failedCount > 0)
+            {
+                _telemetryProvider.RecordCounter(
+                    TelemetryComponents.Messaging, TelemetryMetrics.MessagingRetryAttempts,
+                    failedCount,
+                    new KeyValuePair<string, object?>("status", "failed"));
+            }
+            if (discardedCount > 0)
+            {
+                _telemetryProvider.RecordCounter(
+                    TelemetryComponents.Messaging, TelemetryMetrics.MessagingRetryAttempts,
+                    discardedCount,
+                    new KeyValuePair<string, object?>("status", "discarded"));
+            }
+            if (deferredCount > 0)
+            {
+                _telemetryProvider.RecordCounter(
+                    TelemetryComponents.Messaging, TelemetryMetrics.MessagingRetryAttempts,
+                    deferredCount,
+                    new KeyValuePair<string, object?>("status", "deferred"));
             }
 
             if (processedCount > 0 || failedCount > 0 || discardedCount > 0)

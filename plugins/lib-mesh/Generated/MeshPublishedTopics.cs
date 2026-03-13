@@ -31,4 +31,7 @@ public static class MeshPublishedTopics
 
     /// <summary>Published when an endpoint transitions to Degraded status.</summary>
     public const string MeshEndpointDegraded = "mesh.endpoint.degraded";
+
+    /// <summary>Published when service-to-appId mappings are updated locally, enabling cross-node sync.</summary>
+    public const string MeshMappingsUpdated = "mesh.mappings.updated";
 }

@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -62,6 +63,20 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
         // Register active health checking background service
         services.AddHostedService<MeshHealthCheckService>();
+
+        // Register IServiceMappingReceiver — Mesh's default implementation.
+        // Orchestrator (L3) discovers this via IEnumerable<IServiceMappingReceiver> and pushes
+        // live mapping updates. The implementation updates the local IServiceAppMappingResolver
+        // and broadcasts mesh.mappings.updated (L0→L0) events for cross-node sync.
+        // Per FOUNDATION TENETS (Cross-Service Communication Discipline): DI interface inversion
+        // replaces the previous pattern where Mesh subscribed to L3 events (T27 violation).
+        services.AddSingleton<IServiceMappingReceiver>(sp =>
+            new MeshServiceMappingReceiver(
+                sp.GetRequiredService<IServiceAppMappingResolver>(),
+                sp.GetRequiredService<IMessageBus>(),
+                sp.GetRequiredService<ILogger<MeshServiceMappingReceiver>>(),
+                sp.GetRequiredService<MeshServiceConfiguration>(),
+                sp.GetRequiredService<IMeshInstanceIdentifier>()));
 
         // Register the mesh invocation client for service-to-service calls
         // Uses IMeshStateManager directly (NOT IMeshClient) to avoid circular dependency:

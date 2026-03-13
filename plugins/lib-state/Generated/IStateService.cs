@@ -74,4 +74,19 @@ public partial interface IStateService : IBannouService
         /// </summary>
         Task<(StatusCodes, ListStoresResponse?)> ListStoresAsync(ListStoresRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// MigrateDryRun operation
+        /// </summary>
+        Task<(StatusCodes, MigrateDryRunResponse?)> MigrateDryRunAsync(MigrateDryRunRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// MigrateExecute operation
+        /// </summary>
+        Task<(StatusCodes, MigrateExecuteResponse?)> MigrateExecuteAsync(MigrateExecuteRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// MigrateVerify operation
+        /// </summary>
+        Task<(StatusCodes, MigrateVerifyResponse?)> MigrateVerifyAsync(MigrateVerifyRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

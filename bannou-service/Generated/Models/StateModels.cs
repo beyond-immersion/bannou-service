@@ -760,6 +760,236 @@ public partial class StoreInfo
 
 }
 
+/// <summary>
+/// Target backend type for state store migration
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MigrationBackend
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Redis")]
+    Redis = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Mysql")]
+    Mysql = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Request to analyze a store for migration feasibility
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MigrateDryRunRequest
+{
+
+    /// <summary>
+    /// Name of the state store to analyze
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Target backend to migrate to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationBackend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MigrationBackend DestinationBackend { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Dry-run analysis result showing migration feasibility and potential issues
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MigrateDryRunResponse
+{
+
+    /// <summary>
+    /// Name of the analyzed store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Current backend of the store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentBackend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MigrationBackend CurrentBackend { get; set; } = default!;
+
+    /// <summary>
+    /// Requested target backend
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationBackend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MigrationBackend DestinationBackend { get; set; } = default!;
+
+    /// <summary>
+    /// Count of key-value entries (null if Redis source — cannot enumerate efficiently)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("keyValueEntryCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? KeyValueEntryCount { get; set; } = default!;
+
+    /// <summary>
+    /// Features that cannot be migrated (e.g., sorted sets, TTL-bearing keys)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("incompatibleFeatures")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> IncompatibleFeatures { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Advisory messages (e.g., ETag format will change)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("warnings")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> Warnings { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Whether migration can proceed (false if same backend, store not found, or incompatible-only)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("canMigrate")]
+    public bool CanMigrate { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to execute a state store migration between backends
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MigrateExecuteRequest
+{
+
+    /// <summary>
+    /// Name of the state store to migrate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Target backend to migrate to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationBackend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MigrationBackend DestinationBackend { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of a successful state store migration
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MigrateExecuteResponse
+{
+
+    /// <summary>
+    /// Name of the migrated store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Number of key-value entries copied
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entriesMigrated")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int EntriesMigrated { get; set; } = default!;
+
+    /// <summary>
+    /// Total elapsed time in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
+    [System.ComponentModel.DataAnnotations.Range(0L, long.MaxValue)]
+    public long DurationMs { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to verify migration by comparing key counts between backends
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MigrateVerifyRequest
+{
+
+    /// <summary>
+    /// Name of the state store to verify
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Backend to compare against current
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationBackend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MigrationBackend DestinationBackend { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Verification result comparing key counts between source and destination backends
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MigrateVerifyResponse
+{
+
+    /// <summary>
+    /// Name of the verified store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Key count in source backend (null if Redis source — cannot enumerate)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceKeyCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? SourceKeyCount { get; set; } = default!;
+
+    /// <summary>
+    /// Key count in destination backend (null if Redis destination)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationKeyCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? DestinationKeyCount { get; set; } = default!;
+
+    /// <summary>
+    /// Whether counts match (null if either side cannot enumerate)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("countsMatch")]
+    public bool? CountsMatch { get; set; } = default!;
+
+}
+
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum SortFieldOrder

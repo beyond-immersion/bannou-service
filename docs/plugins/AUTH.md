@@ -129,8 +129,7 @@ account.deleted event ──► SessionService.InvalidateAllSessionsForAccountAs
 
 ## Stubs & Unimplemented Features
 
-No Auth-specific stubs remain. Auth publishes 12 well-typed audit events (login success/fail, registration, OAuth x3, Steam, password reset, MFA enabled/disabled/verified/failed) and per-email rate limiting is production-ready via Redis counters. The remaining consumer gap — IP-level cross-account correlation, anomaly detection, and admin alerting — is an **Analytics (L4) responsibility**, tracked externally:
-<!-- AUDIT:EXTERNAL:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/142 -->
+No Auth-specific stubs remain.
 
 ## Potential Extensions
 
@@ -160,10 +159,11 @@ No bugs identified.
 
 8. **ConnectUrl is overridden by ServiceDomain when set**: The `EffectiveConnectUrl` property in `AuthService` ignores the configured `ConnectUrl` value when `AppConfiguration.ServiceDomain` is non-empty, deriving `wss://{ServiceDomain}/connect` instead. The `AUTH_CONNECT_URL` config value only takes effect when `BANNOU_SERVICE_DOMAIN` is unset. This means in production (where ServiceDomain is always set), the `ConnectUrl` configuration property is effectively dead.
 
+9. **IP address extraction is proxy-aware**: `GetClientIpAddress()` reads `X-Forwarded-For` (first entry from comma-separated chain), then `X-Real-IP`, then falls back to `RemoteIpAddress`. This covers OpenResty/NGINX reverse proxy setups. The IP is stored in `SessionDataModel.IpAddress` and published in all auth audit events. No geolocation is performed — that is delegated to Analytics (issue #639). For MFA flows, the IP is preserved in `MfaChallengeData` across the challenge/verify round-trip so the completed login event carries the original request IP.
+
 ### Design Considerations (Requires Planning)
 
-1. **DeviceInfo returns hardcoded placeholders**: `SessionService.GetAccountSessionsAsync` returns hardcoded device information (`Platform: "Unknown"`, `Browser: "Unknown"`, `DeviceType: Desktop`) because device capture is unimplemented. The constants `UNKNOWN_PLATFORM` and `UNKNOWN_BROWSER` are defined at the top of `SessionService.cs`. Requires design decisions: what device information to capture, how to extract it (User-Agent parsing, WebSocket handshake headers, client-reported data), and privacy implications of device fingerprinting.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/449 -->
+1. ~~**DeviceInfo returns hardcoded placeholders**~~: **FIXED** (2026-03-13) - Implemented client-reported DeviceInfo model with DeviceType/Platform enums, structured fields (osVersion, deviceManufacturer, deviceModel, sdkVersion, engineName, engineVersion), and T29-compliant metadata pass-through. DeviceInfo plumbed through all auth flows (login, register, OAuth, Steam, MFA, refresh), stored in session data, published in success events. Hardcoded sentinels removed. See `docs/reference/DEVICE-INFO-STANDARD.md` for specification. Issue #449.
 
 2. **Account merge session handling** (Auth-side impact of Account #137): Account merge is a complex cross-service operation (40+ services reference accounts). Auth's specific responsibility: handle a new `account.merged` event by invalidating all sessions for the source account (same as `account.deleted` path) and optionally refreshing target account sessions with merged roles/authorizations. The merge itself is an Account-layer orchestration problem; Auth's handler is straightforward. Low priority - post-launch compliance feature.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/137 -->
@@ -171,4 +171,8 @@ No bugs identified.
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+### Completed
+- **2026-03-13**: Issue #639 - Implemented client IP address capture in session creation and auth audit events. IP extracted from X-Forwarded-For/X-Real-IP/RemoteIpAddress chain (reverse-proxy aware). Stored in SessionDataModel, published in all 7 auth audit events and client security events. Preserved across MFA challenge flow. Removed `location` field from SessionInfo schema (geolocation delegated to Analytics). Created issue #639 for Analytics-side IP geolocation enrichment using db-ip MMDB + MaxMind reader.
+- **2026-03-13**: Issue #449 - Implemented DeviceInfo capture in session creation. Added DeviceType/Platform enums, expanded DeviceInfo model, plumbed through all auth flows, stored in Redis sessions, published in auth events. Reference spec: `docs/reference/DEVICE-INFO-STANDARD.md`.
 

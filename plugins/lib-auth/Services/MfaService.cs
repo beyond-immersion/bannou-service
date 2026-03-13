@@ -27,10 +27,10 @@ public class MfaService : IMfaService
     #region Key Building Helpers
 
     internal static string BuildChallengeKey(string token)
-        => BuildChallengeKey(token);
+        => $"{MFA_CHALLENGE_KEY_PREFIX}{token}";
 
     internal static string BuildSetupKey(string token)
-        => BuildSetupKey(token);
+        => $"{MFA_SETUP_KEY_PREFIX}{token}";
 
     #endregion
     private const int TOTP_SECRET_LENGTH = 20; // 160-bit per RFC 4226/6238
@@ -178,14 +178,16 @@ public class MfaService : IMfaService
     }
 
     /// <inheritdoc/>
-    public async Task<string> CreateMfaChallengeAsync(Guid accountId, CancellationToken ct)
+    public async Task<string> CreateMfaChallengeAsync(Guid accountId, DeviceInfo? deviceInfo, string? ipAddress, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "MfaService.CreateMfaChallenge");
         var token = GenerateSecureToken();
         var challengeData = new MfaChallengeData
         {
             AccountId = accountId,
-            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.MfaChallengeTtlMinutes)
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.MfaChallengeTtlMinutes),
+            DeviceInfo = deviceInfo,
+            IpAddress = ipAddress
         };
 
         var key = BuildChallengeKey(token);
@@ -196,7 +198,7 @@ public class MfaService : IMfaService
     }
 
     /// <inheritdoc/>
-    public async Task<Guid?> ConsumeMfaChallengeAsync(string token, CancellationToken ct)
+    public async Task<(Guid accountId, DeviceInfo? deviceInfo, string? ipAddress)?> ConsumeMfaChallengeAsync(string token, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.auth", "MfaService.ConsumeMfaChallenge");
         var key = BuildChallengeKey(token);
@@ -219,7 +221,7 @@ public class MfaService : IMfaService
         }
 
         _logger.LogDebug("Consumed MFA challenge for account {AccountId}", challenge.AccountId);
-        return challenge.AccountId;
+        return (challenge.AccountId, challenge.DeviceInfo, challenge.IpAddress);
     }
 
     /// <inheritdoc/>

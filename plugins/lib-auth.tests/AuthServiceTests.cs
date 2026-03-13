@@ -10,6 +10,7 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -137,7 +138,8 @@ public class AuthServiceTests
             _mockEdgeRevocationService.Object,
             _mockEmailService.Object,
             _mockMfaService.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            Mock.Of<IHttpContextAccessor>());
     }
 
     [Fact]
@@ -554,7 +556,8 @@ public class AuthServiceTests
             _mockEdgeRevocationService.Object,
             _mockEmailService.Object,
             _mockMfaService.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            Mock.Of<IHttpContextAccessor>());
 
         // Act
         var (status, response) = await service.ListProvidersAsync();
@@ -951,6 +954,8 @@ public class AuthServiceTests
         // Mock token service
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
             It.IsAny<AccountResponse>(),
+            It.IsAny<DeviceInfo?>(),
+            It.IsAny<string?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(("test-access-token", Guid.NewGuid()));
         _mockTokenService.Setup(t => t.GenerateRefreshToken())
@@ -980,7 +985,8 @@ public class AuthServiceTests
             _mockEdgeRevocationService.Object,
             _mockEmailService.Object,
             _mockMfaService.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            Mock.Of<IHttpContextAccessor>());
 
         var request = new SteamVerifyRequest { Ticket = "valid-steam-ticket-hex" };
 
@@ -1022,6 +1028,8 @@ public class AuthServiceTests
 
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
             It.IsAny<AccountResponse>(),
+            It.IsAny<DeviceInfo?>(),
+            It.IsAny<string?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(("mock-token", Guid.NewGuid()));
         _mockTokenService.Setup(t => t.GenerateRefreshToken())
@@ -1069,7 +1077,8 @@ public class AuthServiceTests
             _mockEdgeRevocationService.Object,
             _mockEmailService.Object,
             _mockMfaService.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            Mock.Of<IHttpContextAccessor>());
 
         var request = new SteamVerifyRequest { Ticket = "valid-ticket" };
 
@@ -1113,7 +1122,8 @@ public class AuthServiceTests
             _mockEdgeRevocationService.Object,
             _mockEmailService.Object,
             _mockMfaService.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            Mock.Of<IHttpContextAccessor>());
 
         var request = new SteamVerifyRequest { Ticket = "invalid-ticket" };
 
@@ -1166,7 +1176,8 @@ public class AuthServiceTests
             _mockEdgeRevocationService.Object,
             _mockEmailService.Object,
             _mockMfaService.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            Mock.Of<IHttpContextAccessor>());
 
         var request = new SteamVerifyRequest { Ticket = "valid-ticket" };
 
@@ -1398,6 +1409,8 @@ public class AuthServiceTests
 
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
             It.IsAny<AccountResponse>(),
+            It.IsAny<DeviceInfo?>(),
+            It.IsAny<string?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(("test-access-token", Guid.NewGuid()));
         _mockTokenService.Setup(t => t.GenerateRefreshToken())
@@ -1456,6 +1469,8 @@ public class AuthServiceTests
 
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
             It.IsAny<AccountResponse>(),
+            It.IsAny<DeviceInfo?>(),
+            It.IsAny<string?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(("test-token", Guid.NewGuid()));
         _mockTokenService.Setup(t => t.GenerateRefreshToken())
@@ -1506,6 +1521,8 @@ public class AuthServiceTests
 
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
             It.IsAny<AccountResponse>(),
+            It.IsAny<DeviceInfo?>(),
+            It.IsAny<string?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(("token", Guid.NewGuid()));
         _mockTokenService.Setup(t => t.GenerateRefreshToken())
@@ -2479,7 +2496,7 @@ public class AuthServiceTests
                 SessionId = sessionKey,
                 CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
                 LastActive = DateTimeOffset.UtcNow,
-                DeviceInfo = new DeviceInfo { DeviceType = DeviceType.Desktop, Platform = "Unknown", Browser = "Unknown" }
+                DeviceInfo = new DeviceInfo { DeviceType = DeviceType.Desktop, Platform = Platform.Windows }
             }
         };
 
@@ -2769,7 +2786,7 @@ public class AuthServiceTests
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(password)
             });
 
-        _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<CancellationToken>()))
+        _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<DeviceInfo?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(("access-token", sessionId));
         _mockTokenService.Setup(t => t.GenerateRefreshToken()).Returns("refresh-token");
 
@@ -2805,7 +2822,7 @@ public class AuthServiceTests
         _mockAccountClient.Setup(c => c.CreateAccountAsync(It.IsAny<CreateAccountRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AccountResponse { AccountId = accountId, Email = "new@example.com", DisplayName = "NewUser" });
 
-        _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<CancellationToken>()))
+        _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<DeviceInfo?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(("access-token", sessionId));
         _mockTokenService.Setup(t => t.GenerateRefreshToken()).Returns("refresh-token");
 
@@ -2846,7 +2863,7 @@ public class AuthServiceTests
 
         _mockMfaService
             .Setup(m => m.ConsumeMfaChallengeAsync("challenge-token", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(accountId);
+            .ReturnsAsync((accountId, (DeviceInfo?)null, (string?)null));
 
         _mockAccountClient
             .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
@@ -2861,7 +2878,7 @@ public class AuthServiceTests
         _mockMfaService.Setup(m => m.ValidateTotp("raw-secret", "123456")).Returns(true);
 
         _mockTokenService
-            .Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<CancellationToken>()))
+            .Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<DeviceInfo?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(("access-token", sessionId));
         _mockTokenService.Setup(t => t.GenerateRefreshToken()).Returns("refresh-token");
 
@@ -2888,7 +2905,7 @@ public class AuthServiceTests
 
         _mockMfaService
             .Setup(m => m.ConsumeMfaChallengeAsync("challenge-token", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(accountId);
+            .ReturnsAsync((accountId, (DeviceInfo?)null, (string?)null));
 
         _mockAccountClient
             .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
@@ -2905,7 +2922,7 @@ public class AuthServiceTests
             .Returns((true, 1)); // matches index 1
 
         _mockTokenService
-            .Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<CancellationToken>()))
+            .Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<DeviceInfo?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(("access-token", sessionId));
         _mockTokenService.Setup(t => t.GenerateRefreshToken()).Returns("refresh-token");
 
@@ -2936,7 +2953,7 @@ public class AuthServiceTests
 
         _mockMfaService
             .Setup(m => m.ConsumeMfaChallengeAsync("bad-token", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid?)null);
+            .ReturnsAsync(((Guid, DeviceInfo?, string?)?)null);
 
         var request = new MfaVerifyRequest { ChallengeToken = "bad-token", TotpCode = "123456" };
 
@@ -2957,7 +2974,7 @@ public class AuthServiceTests
 
         _mockMfaService
             .Setup(m => m.ConsumeMfaChallengeAsync("token", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(accountId);
+            .ReturnsAsync((accountId, (DeviceInfo?)null, (string?)null));
 
         _mockAccountClient
             .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
@@ -2990,7 +3007,7 @@ public class AuthServiceTests
 
         _mockMfaService
             .Setup(m => m.ConsumeMfaChallengeAsync("token", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(accountId);
+            .ReturnsAsync((accountId, (DeviceInfo?)null, (string?)null));
 
         _mockAccountClient
             .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
@@ -3017,7 +3034,7 @@ public class AuthServiceTests
 
         _mockMfaService
             .Setup(m => m.ConsumeMfaChallengeAsync("token", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(accountId);
+            .ReturnsAsync((accountId, (DeviceInfo?)null, (string?)null));
 
         _mockAccountClient
             .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
@@ -3045,7 +3062,7 @@ public class AuthServiceTests
             });
 
         _mockTokenService
-            .Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<CancellationToken>()))
+            .Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<DeviceInfo?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(("access-token", sessionId));
         _mockTokenService.Setup(t => t.GenerateRefreshToken()).Returns("refresh-token");
 

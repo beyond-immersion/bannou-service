@@ -122,6 +122,9 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 <!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/249 -->
 - **Per-game milestones**: API for game-specific milestone definitions (currently global config only). Tracked above in Stubs as "Per-Game Milestone Definitions" ([#602](https://github.com/beyond-immersion/bannou-service/issues/602)).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/602 -->
+- **Auth audit event consumption**: Security monitoring, anomaly detection, and IP geolocation enrichment from auth audit events (login success/fail, registration, OAuth, MFA). Auth publishes 12 well-typed events with IP addresses — Analytics is the natural consumer for cross-account correlation and admin alerting.
+<!-- AUDIT:EXTERNAL:2026-03-13:https://github.com/beyond-immersion/bannou-service/issues/142 -->
+<!-- AUDIT:EXTERNAL:2026-03-13:https://github.com/beyond-immersion/bannou-service/issues/639 -->
 - **Event replay**: Ability to reprocess buffered events after a bug fix (currently events are deleted after processing)
 <!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/634 -->
 - **Time-series queries**: Adding time-bucketed aggregations for trend analysis

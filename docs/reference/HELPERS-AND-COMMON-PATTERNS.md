@@ -564,6 +564,10 @@ Spans nest automatically via `Activity.Current` (no parameter passing needed). R
 
 No-op implementation used when telemetry is disabled. All methods are no-ops.
 
+### Metrics (Counters, Histograms, Gauges)
+
+For metric instrumentation patterns — `RecordCounter`, `RecordHistogram`, `RegisterObservableGauge`, the complete metric inventory, tag taxonomy, and when to add custom metrics — see [TELEMETRY-METRICS.md](TELEMETRY-METRICS.md).
+
 ---
 
 ## 11. Shared Models & Enums

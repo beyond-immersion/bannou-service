@@ -205,8 +205,7 @@ None. All previously listed stubs have been resolved:
 
 ## Potential Extensions
 
-1. **Observable gauge metrics for buffer depth, retry counts, and channel pool utilization**: Publish/subscribe rate counters and duration histograms are already implemented via `ITelemetryProvider.RecordCounter/RecordHistogram` in `RabbitMQMessageBus` and `RabbitMQMessageSubscriber`. Three application-level gauge metrics remain unimplemented: retry buffer depth (from `IRetryBuffer.BufferCount`), per-attempt retry counts (from `MessageRetryBuffer` retry loop), and channel pool utilization (from `IChannelManager.TotalActiveChannels`/`PooledChannelCount`). These are in-process values that no sidecar exporter can observe — they require `ObservableGauge` support in `ITelemetryProvider`, which currently only exposes `RecordCounter` and `RecordHistogram`.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/453 -->
+None currently identified. All previous items have been resolved.
 
 ---
 
@@ -230,7 +229,7 @@ No bugs identified.
 
 4. **Channel pool for publishers only**: `RabbitMQConnectionManager` maintains a channel pool (default 100, max 1000 total via `MaxTotalChannels`) for publish operations. Consumer channels are separate (not pooled) - each subscription gets a dedicated channel.
 
-5. **Two queue naming schemes**: HTTP API subscriptions use `bannou-dynamic-{id:N}` while internal dynamic subscriptions use `{topic}.dynamic.{id:N}`. Different schemes for different subscription paths.
+5. **Dynamic queue naming**: All dynamic subscriptions (both HTTP API and internal) use `{topic}.dynamic.{id:N}` queue names, assigned by `RabbitMQMessageSubscriber.SubscribeDynamicAsync`. The queue name is an internal implementation detail not exposed via the API.
 
 6. **Static subscriptions prevent duplicates**: `RabbitMQMessageSubscriber.SubscribeAsync()` logs a warning and returns early if already subscribed to the same topic. This prevents duplicate handlers but can mask subscription misuse.
 
@@ -246,7 +245,9 @@ No bugs identified.
 
 12. **Publisher confirms add latency**: When `EnablePublisherConfirms` is true (default), each `BasicPublishAsync` waits for broker confirmation before returning. This adds ~1-5ms latency per publish but provides at-least-once delivery guarantees. Fully configurable via `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` and mitigated by `MESSAGING_ENABLE_PUBLISH_BATCHING` for high-throughput scenarios.
 
-13. **External subscription node affinity**: HTTP callback subscriptions are inherently node-local — the RabbitMQ consumer channel exists only on the node that created the subscription. `RemoveSubscription` checks the in-memory `_activeSubscriptions` dictionary first and returns 404 if the subscription handle isn't on the current node, even if the subscription exists in Redis. In multi-node deployments with shared `appId`, the `MessagingSubscriptionRecoveryService` recovers persisted subscriptions on whichever node starts (or restarts), creating competing consumers on the same deterministic queue name (`bannou-dynamic-{id:N}`). This means: (a) unsubscribe must route to a node that holds the active handle, and (b) after node failover, the recovered subscription lives on the recovering node, not the original.
+13. **Observable gauge metrics for in-process infrastructure state**: `RabbitMQConnectionManager` registers two `ObservableGauge<int>` metrics at construction (channel pool active count, pooled channel count). `MessageRetryBuffer` registers two gauges (buffer depth count, buffer fill ratio). Additionally, `ProcessBufferedMessagesInternalAsync` records per-status retry attempt counters (processed/failed/discarded/deferred) via `RecordCounter` with a `status` tag. All metrics are gated on `ITelemetryProvider.MetricsEnabled` — when telemetry is disabled, registration is a no-op. These are in-process values that no RabbitMQ sidecar exporter can observe.
+
+14. **External subscription node affinity**: HTTP callback subscriptions are inherently node-local — the RabbitMQ consumer channel exists only on the node that created the subscription. `RemoveSubscription` checks the in-memory `_activeSubscriptions` dictionary first and returns 404 if the subscription handle isn't on the current node, even if the subscription exists in Redis. In multi-node deployments with shared `appId`, the `MessagingSubscriptionRecoveryService` recovers persisted subscriptions on whichever node starts (or restarts), creating competing consumers on the same deterministic queue name (`{topic}.dynamic.{id:N}`). This means: (a) unsubscribe must route to a node that holds the active handle, and (b) after node failover, the recovered subscription lives on the recovering node, not the original.
 
 ### Design Considerations (Requires Planning)
 
@@ -260,7 +261,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
-All historical completed items have been archived to git history.
+- [#453](https://github.com/beyond-immersion/bannou-service/issues/453): Observable gauge metrics for buffer depth, retry counts, channel pool — implemented via `RegisterObservableGauge<T>` on `ITelemetryProvider`
 
 ### Active
 

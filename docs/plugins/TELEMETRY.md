@@ -14,18 +14,7 @@
 
 The Telemetry service (L0 Infrastructure, optional) provides unified observability infrastructure for Bannou using OpenTelemetry standards. Operates in a dual role: as the `ITelemetryProvider` interface that lib-state, lib-messaging, and lib-mesh use for instrumentation, and as an HTTP API providing health and status endpoints. Unique among Bannou services: uses no state stores and publishes no events. When disabled, other L0 services receive a `NullTelemetryProvider` (all methods are no-ops).
 
----
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| AppConfiguration | Fallback service name from EffectiveAppId when ServiceName not configured |
-| OpenTelemetry SDK | Core tracing and metrics infrastructure |
-| OpenTelemetry.Exporter.OpenTelemetryProtocol | OTLP trace export (gRPC or HTTP) |
-| OpenTelemetry.Exporter.Prometheus.AspNetCore | Prometheus metrics scraping endpoint |
-
-**Note**: This plugin has **no dependencies on other Bannou plugins** - it is **optional Layer 0 infrastructure** per SERVICE_HIERARCHY. Unlike required L0 components (state, messaging, mesh) which cannot be disabled, telemetry can be freely disabled. When enabled, it loads FIRST so that required infrastructure libs can use `ITelemetryProvider` for instrumentation. Telemetry intentionally does not use lib-messaging for error events to avoid circular instrumentation concerns.
+This plugin has **no dependencies on other Bannou plugins** — it is optional Layer 0 infrastructure per Service Hierarchy. Unlike required L0 components (state, messaging, mesh) which cannot be disabled, telemetry can be freely disabled. When enabled, it loads FIRST so that required infrastructure libs can use `ITelemetryProvider` for instrumentation. The service class does not inject `IMessageBus` directly — it has no events to publish and no event subscriptions. The generated controller still calls `TryPublishErrorAsync` on unexpected endpoint failures as normal (per IMPLEMENTATION TENETS). There is no circular dependency concern: `ITelemetryProvider.StartActivity` creates spans on lib-messaging operations but does not call back into telemetry service endpoints, and `NullTelemetryProvider` provides a safe no-op fallback if the real provider is unavailable.
 
 ---
 
@@ -41,26 +30,6 @@ The Telemetry service (L0 Infrastructure, optional) provides unified observabili
 
 ---
 
-## State Storage
-
-**Store**: None
-
-This service is stateless. All telemetry data flows directly to external collectors (OTLP endpoint for traces, Prometheus scraping for metrics) without intermediate storage.
-
----
-
-## Events
-
-### Published Events
-
-This plugin does not publish any business events.
-
-### Consumed Events
-
-This plugin does not consume external events.
-
----
-
 ## Configuration
 
 | Property | Env Var | Default | Purpose |
@@ -73,45 +42,6 @@ This plugin does not consume external events.
 | `ServiceName` | `TELEMETRY_SERVICE_NAME` | `null` | Service name for telemetry identification (falls back to EffectiveAppId) |
 | `ServiceNamespace` | `TELEMETRY_SERVICE_NAMESPACE` | `bannou` | Service namespace for telemetry grouping |
 | `DeploymentEnvironment` | `TELEMETRY_DEPLOYMENT_ENVIRONMENT` | `development` | Deployment environment attribute |
-
----
-
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ILogger<TelemetryService>` | Structured logging |
-| `TelemetryServiceConfiguration` | Typed configuration access |
-| `AppConfiguration` | Access to EffectiveAppId for service name fallback |
-| `ITelemetryProvider` (Singleton) | Main instrumentation interface registered by plugin |
-| `TelemetryProvider` | Implementation that manages ActivitySources and Meters |
-
-### Internal Classes
-
-| Class | Role |
-|-------|------|
-| `TelemetryProvider` | Manages `ActivitySource` and `Meter` instances per component; wraps state stores with instrumentation decorators |
-| `InstrumentedStateStore<T>` | Decorator adding tracing and metrics to `IStateStore<T>` |
-| `InstrumentedCacheableStateStore<T>` | Decorator for `ICacheableStateStore<T>` (extends InstrumentedStateStore) |
-| `InstrumentedQueryableStateStore<T>` | Decorator for `IQueryableStateStore<T>` |
-| `InstrumentedSearchableStateStore<T>` | Decorator for `ISearchableStateStore<T>` |
-| `InstrumentedJsonQueryableStateStore<T>` | Decorator for `IJsonQueryableStateStore<T>` |
-| `HealthTrackingExporter` | Decorator wrapping `OtlpTraceExporter` to passively track export success/failure for health reporting |
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Health & Status
-
-| Endpoint | Notes |
-|----------|-------|
-| `POST /telemetry/health` | Returns tracing/metrics enabled flags, OTLP endpoint (null if both disabled), and passive OTLP export health (`otlpExportHealthy`, `consecutiveExportFailures`, `lastSuccessfulExportAt`). Health is communicated by 200 OK per IMPLEMENTATION TENETS. |
-| `POST /telemetry/status` | Returns full configuration details including sampling ratio, service name, namespace, environment, and OTLP protocol |
-
-Both endpoints are simple configuration introspection - no state access or side effects.
-
-**Trace Filtering**: The OpenTelemetry SDK is configured to exclude `/health`, `/telemetry/health`, and `/metrics` paths from automatic ASP.NET Core tracing to reduce noise. Similarly, HttpClient instrumentation excludes requests with "health" in the path.
 
 ---
 
@@ -141,6 +71,7 @@ Both endpoints are simple configuration introspection - no state access or side 
 │  │ ConcurrentDictionary<component, Meter>                        │  │
 │  │ ConcurrentDictionary<key, Counter<long>>                      │  │
 │  │ ConcurrentDictionary<key, Histogram<double>>                  │  │
+│  │ ConcurrentDictionary<key, object>  (ObservableGauges)         │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 │                              │                                       │
 │                              ▼                                       │
@@ -166,6 +97,11 @@ Both endpoints are simple configuration introspection - no state access or side 
 │  • bannou.messaging.published, bannou.messaging.consumed            │
 │  • bannou.messaging.publish_duration_seconds,                       │
 │    bannou.messaging.consume_duration_seconds                        │
+│  • bannou.messaging.retry_buffer_depth (gauge)                      │
+│  • bannou.messaging.retry_buffer_fill_ratio (gauge)                 │
+│  • bannou.messaging.channel_pool_active (gauge)                     │
+│  • bannou.messaging.channel_pool_available (gauge)                  │
+│  • bannou.messaging.retry_attempts (counter, tagged by status)      │
 │  • bannou.mesh.invocations, bannou.mesh.duration_seconds            │
 │  • bannou.mesh.circuit_breaker_state, ...state_changes, ...retries  │
 │  • bannou.mesh.raw_invocations (no circuit breaker participation)   │
@@ -212,7 +148,11 @@ None currently identified.
 
 5. **Counter/Histogram creation on first use**: Counters and histograms are created lazily via `GetOrCreateCounter`/`GetOrCreateHistogram`. The unreachable null branch (when MetricsEnabled is checked upstream) throws `InvalidOperationException` as an invariant guard rather than returning null.
 
+6. **ObservableGauge registration at construction time**: Unlike counters and histograms (push-based, created lazily on first `RecordCounter`/`RecordHistogram` call), observable gauges are pull-based — registered once via `RegisterObservableGauge<T>` at object construction time with a callback that the OpenTelemetry SDK invokes during each export/scrape cycle. Registration is idempotent (duplicate registrations for the same `component:metric` key are ignored). Gauge references are stored in `ConcurrentDictionary<string, object>` (typed as `object` because the generic type parameter `T` varies). Two overloads: simple `Func<T>` for tagless observations, and `Func<Measurement<T>>` for observations with static tags.
+
 6. **Parent-based trace sampling**: The `TracingSamplingRatio` is applied via a `ParentBasedSampler` wrapping a `TraceIdRatioBasedSampler`. This means child spans respect their parent's sampling decision, and only root spans are subject to ratio-based sampling. This is the recommended OpenTelemetry pattern for distributed tracing.
+
+7. **Trace filtering for health/metrics paths**: The OpenTelemetry SDK is configured to exclude `/health`, `/telemetry/health`, and `/metrics` paths from automatic ASP.NET Core tracing to reduce noise. Similarly, HttpClient instrumentation excludes requests with "health" in the path.
 
 ### Design Considerations (Requires Planning)
 
@@ -227,3 +167,4 @@ None currently identified.
 | [#183](https://github.com/beyond-immersion/bannou-service/issues/183) | Open | Managed platform telemetry exporters (Datadog, Azure, AWS, Elastic) |
 | [#185](https://github.com/beyond-immersion/bannou-service/issues/185) | Open | Enhanced Grafana dashboards with per-service views and SLO alerting |
 | [#457](https://github.com/beyond-immersion/bannou-service/issues/457) | Open | Custom histogram bucket boundaries for Bannou latency profiles |
+| [#640](https://github.com/beyond-immersion/bannou-service/issues/640) | Open | Wire up mesh circuit breaker state ObservableGauge metric |

@@ -230,14 +230,6 @@ public partial class CreateSubscriptionResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SubscriptionId { get; set; } = default!;
 
-    /// <summary>
-    /// Name of the RabbitMQ queue created for this subscription
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("queueName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string QueueName { get; set; } = default!;
-
 }
 
 /// <summary>

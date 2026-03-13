@@ -4,10 +4,8 @@ info:
   description: |
     Event models for State service RabbitMQ pub/sub.
 
-    NOTE: This is an INTERNAL service. State change events (StateChanged,
-    StoreMigration, StoreHealth) were planned for debugging/auditing but never
-    implemented. They would be expensive to publish for every operation.
-    See docs/CLEANED_EVENTS.md for documentation of these planned events.
+    State publishes migration events when store data is moved between backends
+    via the admin-only migration endpoints.
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -17,10 +15,136 @@ info:
   version: 1.0.0
   # No subscriptions - State service doesn't subscribe to external events
   x-event-subscriptions: []
-  # No events currently implemented - debug/audit events removed as aspirational
-  x-event-publications: []
+  x-event-publications:
+    - topic: state.migration.started
+      event: StateMigrationStartedEvent
+      description: Published when a store migration execution begins (after validation, before first batch)
+    - topic: state.migration.completed
+      event: StateMigrationCompletedEvent
+      description: Published when a store migration finishes successfully
+    - topic: state.migration.failed
+      event: StateMigrationFailedEvent
+      description: Published when a store migration encounters an unrecoverable error
 
 paths: {}  # Events don't have HTTP paths
 
 components:
-  schemas: {}
+  schemas:
+    StateMigrationStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a state store migration begins execution
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - storeName
+        - sourceBackend
+        - destinationBackend
+        - startedAt
+      properties:
+        eventName:
+          type: string
+          default: state.migration.started
+          description: 'Event type identifier: state.migration.started'
+        storeName:
+          type: string
+          description: Name of the store being migrated
+        sourceBackend:
+          $ref: 'state-api.yaml#/components/schemas/MigrationBackend'
+          description: Current backend of the store
+        destinationBackend:
+          $ref: 'state-api.yaml#/components/schemas/MigrationBackend'
+          description: Target backend for migration
+        startedAt:
+          type: string
+          format: date-time
+          description: UTC timestamp when migration began
+
+    StateMigrationCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a state store migration finishes successfully
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - storeName
+        - sourceBackend
+        - destinationBackend
+        - entriesMigrated
+        - durationMs
+        - completedAt
+      properties:
+        eventName:
+          type: string
+          default: state.migration.completed
+          description: 'Event type identifier: state.migration.completed'
+        storeName:
+          type: string
+          description: Name of the store that was migrated
+        sourceBackend:
+          $ref: 'state-api.yaml#/components/schemas/MigrationBackend'
+          description: Original backend of the store
+        destinationBackend:
+          $ref: 'state-api.yaml#/components/schemas/MigrationBackend'
+          description: Backend data was migrated to
+        entriesMigrated:
+          type: integer
+          minimum: 0
+          description: Total number of key-value entries copied
+        durationMs:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total elapsed time in milliseconds
+        completedAt:
+          type: string
+          format: date-time
+          description: UTC timestamp when migration completed
+
+    StateMigrationFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a state store migration encounters an unrecoverable error
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - storeName
+        - sourceBackend
+        - destinationBackend
+        - entriesProcessedBeforeFailure
+        - error
+        - failedAt
+      properties:
+        eventName:
+          type: string
+          default: state.migration.failed
+          description: 'Event type identifier: state.migration.failed'
+        storeName:
+          type: string
+          description: Name of the store that failed migration
+        sourceBackend:
+          $ref: 'state-api.yaml#/components/schemas/MigrationBackend'
+          description: Original backend of the store
+        destinationBackend:
+          $ref: 'state-api.yaml#/components/schemas/MigrationBackend'
+          description: Intended target backend
+        entriesProcessedBeforeFailure:
+          type: integer
+          minimum: 0
+          description: Number of entries successfully copied before the failure
+        error:
+          type: string
+          description: Error message describing the failure
+        failedAt:
+          type: string
+          format: date-time
+          description: UTC timestamp when failure occurred

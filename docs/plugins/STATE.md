@@ -12,20 +12,7 @@
 
 ## Overview
 
-The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports four backends (Redis for ephemeral/session data, MySQL for durable/queryable data, SQLite for self-hosted durable storage, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Interface Hierarchy section for the full interface tree and backend support matrix.
-
----
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| StackExchange.Redis 2.10.1 | Redis connection multiplexing and operations (transitive via bannou-service) |
-| NRedisStack 0.13.1 | Redis JSON and search (FT) commands |
-| Pomelo.EntityFrameworkCore.MySql 9.0.0 | MySQL via EF Core |
-| Microsoft.EntityFrameworkCore 9.0.0 | ORM and change tracking |
-| Microsoft.EntityFrameworkCore.Sqlite 9.0.0 | SQLite via EF Core for self-hosted deployments |
-| lib-messaging (`IMessageBus`) | Error event publishing via `TryPublishErrorAsync` (optional, resolved lazily) |
+The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports four backends (Redis for ephemeral/session data, MySQL for durable/queryable data, SQLite for self-hosted durable storage, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Visual Aid section for the full interface tree and backend support matrix.
 
 ---
 
@@ -41,58 +28,6 @@ The State service (L0 Infrastructure) provides all Bannou services with unified 
 | lib-inventory | Uses Redis cache with MySQL backing for containers |
 
 All services depend on state infrastructure. The HTTP API (`IStateClient`) is used for debugging/admin only.
-
----
-
-## State Storage
-
-**Self-managed**: This plugin defines and manages all state stores across Bannou.
-
-**Store Registry**: `schemas/state-stores.yaml` (~107 stores as of 2026-02)
-
-### Backend Distribution
-
-| Backend | Count | Use Case |
-|---------|-------|----------|
-| Redis | ~70 | Sessions, caches, ephemeral state, leaderboards, locks, indexes |
-| MySQL | ~37 | Durable entity data, queryable records, archives |
-| SQLite | 0 (runtime alternative) | Self-hosted/embedded deployments with `UseSqlite=true`. MySQL-configured stores use SQLite files; Redis-configured stores use in-memory. |
-| Memory | 0 (runtime only) | Testing with `UseInMemory=true` |
-
-### Key Structure (Redis)
-
-| Pattern | Purpose |
-|---------|---------|
-| `{prefix}:{key}` | Primary value storage (STRING or JSON depending on store type) |
-| `{prefix}:{key}:meta` | Hash with `version` and `updated` timestamp |
-| `{prefix}:set:{key}` | Set members (SET type) |
-| `{prefix}:zset:{key}` | Sorted set for rankings (ZSET type) |
-| `{prefix}:counter:{key}` | Atomic counter (STRING with INCR/DECR) |
-| `{prefix}:hash:{key}` | Hash for field-value pairs (HASH type) |
-| `{storeName}-idx` | FT search index (auto-created for EnableSearch stores) |
-
-### Key Structure (MySQL)
-
-| Column | Type | Purpose |
-|--------|------|---------|
-| `StoreName` | VARCHAR(255) | Part of composite PK |
-| `Key` | VARCHAR(255) | Part of composite PK |
-| `ValueJson` | LONGTEXT | JSON-serialized value |
-| `ETag` | VARCHAR(64) | SHA256[0:12] base64 hash |
-| `Version` | INT | Concurrency token |
-| `CreatedAt` / `UpdatedAt` | TIMESTAMP | Audit timestamps |
-
----
-
-## Events
-
-### Published Events
-
-This service **intentionally publishes no lifecycle events**. State change events were considered expensive to publish for every operation. Error events are published via `TryPublishErrorAsync` for operational visibility.
-
-### Consumed Events
-
-This plugin does not consume external events.
 
 ---
 
@@ -123,92 +58,6 @@ When infrastructure errors occur (Redis connection failures, timeouts, etc.), th
 **Fire-and-Forget**: Error publishing is non-blocking (`_ = _errorPublisher?.Invoke(...)`) and does not affect the exception behavior - stores still throw as before.
 
 **Disable**: Set `STATE_ENABLE_ERROR_EVENT_PUBLISHING=false` to disable error event publishing entirely.
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `IStateStoreFactory` | Singleton | Creates typed store instances, manages connections |
-| `StateStoreFactory` | Singleton | Implementation with Redis/MySQL/SQLite initialization and store caching |
-| `StateStoreFactoryConfiguration` | Singleton | Built from `StateServiceConfiguration` in `StateServicePlugin`; holds store registry and connection settings |
-| `IDistributedLockProvider` | Singleton | Distributed mutex using Redis (SET NX EX) with InMemory fallback |
-| `RedisDistributedLockProvider` | Singleton | Uses `IRedisOperations` for Lua-based safe unlock, falls back to in-memory locks |
-| `IRedisOperations` | - | Low-level Redis ops (Lua scripts, transactions only); obtained via `GetRedisOperations()`; null in InMemory/SQLite mode |
-| `RedisOperations` | Internal | Shares `ConnectionMultiplexer` with state stores; lazily initialized |
-| `RedisLuaScripts` | Static | Loads and caches Lua scripts from embedded resources (`Scripts/*.lua`) |
-| `StateService` | Scoped | HTTP API implementation |
-
-### Factory Methods
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `GetStore<T>(name)` | `IStateStore<T>` | Basic CRUD operations (all backends) |
-| `GetStoreAsync<T>(name)` | `IStateStore<T>` | Async version, avoids sync-over-async |
-| `GetCacheableStore<T>(name)` | `ICacheableStateStore<T>` | Set, Sorted Set, Counter, Hash ops (throws for MySQL/SQLite) |
-| `GetCacheableStoreAsync<T>(name)` | `ICacheableStateStore<T>` | Async version |
-| `GetQueryableStore<T>(name)` | `IQueryableStateStore<T>` | LINQ queries (MySQL/SQLite only, throws for Redis) |
-| `GetJsonQueryableStore<T>(name)` | `IJsonQueryableStateStore<T>` | JSON path queries (MySQL/SQLite only, throws for Redis) |
-| `GetSearchableStore<T>(name)` | `ISearchableStateStore<T>` | Full-text search (RedisSearch only) |
-| `GetRedisOperations()` | `IRedisOperations?` | Lua scripts, transactions only; null when `UseInMemory=true` or `UseSqlite=true` |
-| `GetKeyCountAsync(name)` | `long?` | Key count for store (O(1) InMemory, COUNT MySQL/SQLite, null Redis) |
-| `HasStore(name)` | `bool` | Check if store is configured |
-| `SupportsSearch(name)` | `bool` | Check if store supports full-text search |
-| `GetBackendType(name)` | `StateBackend` | Get effective backend type (respects UseInMemory/UseSqlite overrides) |
-| `GetStoreNames()` | `IEnumerable<string>` | All configured store names |
-| `GetStoreNames(backend)` | `IEnumerable<string>` | Store names filtered by backend type |
-| `InitializeAsync()` | `Task` | Pre-initialize connections (called by StateServicePlugin at startup) |
-
-### Store Implementation Classes
-
-| Class | Backend | Implements | Features |
-|-------|---------|------------|----------|
-| `RedisStateStore<T>` | Redis | `ICacheableStateStore<T>` | String ops, sets, sorted sets, counters, hashes, TTL |
-| `RedisSearchStateStore<T>` | Redis | `ICacheableStateStore<T>`, `ISearchableStateStore<T>` | JSON storage, FT search, sets, sorted sets, counters, hashes |
-| `MySqlStateStore<T>` | MySQL | `IQueryableStateStore<T>`, `IJsonQueryableStateStore<T>` | EF Core, JSON path queries (no sets/sorted sets/counters/hashes) |
-| `SqliteStateStore<T>` | SQLite | `IQueryableStateStore<T>`, `IJsonQueryableStateStore<T>` | EF Core + SQLite, per-operation DbContext for thread-safety, SHA256-based ETags |
-| `InMemoryStateStore<T>` | Memory | `ICacheableStateStore<T>` | Static shared stores, sets, sorted sets, counters, hashes, TTL via lazy cleanup |
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Get (`/state/get`)
-
-Returns value with ETag for concurrent-safe retrieval. Uses `GetWithETagAsync()` internally. Returns NotFound if store doesn't exist or key not found.
-
-### Save (`/state/save`)
-
-Supports optimistic concurrency via ETag in `StateOptions`. If ETag provided and mismatches, returns 409 Conflict via `TrySaveAsync()`. TTL support for Redis stores. Uses Redis transactions for atomicity in `RedisStateStore`.
-
-### Delete (`/state/delete`)
-
-Boolean response indicates deletion success. Returns false if key not found. Deletes both value and metadata keys in Redis.
-
-### Query (`/state/query`)
-
-Routes to MySQL for conditions-based queries (JSON path expressions) or Redis Search if enabled. Returns BadRequest if Redis search not supported for the store. MySQL uses `JSON_EXTRACT`, `JSON_UNQUOTE`, and `JSON_CONTAINS_PATH` functions. Supports operators: equals, notEquals, greaterThan, lessThan, contains, startsWith, endsWith, in, exists, notExists, fullText.
-
-### Bulk Save (`/state/bulk-save`)
-
-Saves multiple key-value pairs in a single operation. Returns per-key ETags. Passes options (including TTL) through to the underlying store's `SaveBulkAsync`.
-
-### Bulk Get (`/state/bulk-get`)
-
-Uses `GetBulkAsync()` for efficient multi-key retrieval. Returns per-key `Found` flags. Redis uses MGET; MySQL uses multi-key IN query.
-
-### Bulk Exists (`/state/bulk-exists`)
-
-Checks existence of multiple keys in a single operation. Returns a set of keys that exist. Redis uses EXISTS command; MySQL uses IN query on StoreName+Key.
-
-### Bulk Delete (`/state/bulk-delete`)
-
-Deletes multiple keys in a single operation. Returns count of keys actually deleted. Uses transactions/batching for efficiency.
-
-### List Stores (`/state/list-stores`)
-
-Returns registered store names with backend info. Optional backend filter (Redis/MySQL). `KeyCount` is backend-dependent: O(1) for InMemory, COUNT(*) query for MySQL/SQLite, null for Redis (SCAN is O(N) on total keys). Stats are only retrieved when `includeStats=true`.
 
 ---
 
@@ -264,34 +113,7 @@ State Store Architecture (Interface Hierarchy)
     └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
----
-
-## Stubs & Unimplemented Features
-
-None.
-
----
-
-## Potential Extensions
-
-1. **Store migration tooling**: Move data between Redis and MySQL backends without downtime.
-   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/190 -->
-
----
-
-## Interface Hierarchy
-
-```
-IStateStore<T>                    - Core CRUD (all backends)
-├── ICacheableStateStore<T>       - Sets, Sorted Sets, Counters, Hashes (Redis + InMemory)
-│   └── ISearchableStateStore<T>  - Full-text search (extends Cacheable)
-├── IQueryableStateStore<T>       - LINQ queries (MySQL + SQLite)
-│   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL + SQLite)
-
-IRedisOperations                  - Low-level Redis access (Lua scripts, transactions)
-```
-
-**Key Design**: `ISearchableStateStore<T>` extends `ICacheableStateStore<T>` because all searchable stores are Redis-based and therefore support all cacheable operations (sets, sorted sets, counters, hashes). This ensures proper telemetry instrumentation for all operations when using searchable stores. `SqliteStateStore<T>` implements the same `IJsonQueryableStateStore<T>` interface as `MySqlStateStore<T>`, providing a drop-in replacement for self-hosted deployments without MySQL infrastructure.
+**Key Design**: `ISearchableStateStore<T>` extends `ICacheableStateStore<T>` because all searchable stores are Redis-based and therefore support all cacheable operations (sets, sorted sets, counters, hashes). `SqliteStateStore<T>` implements the same `IJsonQueryableStateStore<T>` interface as `MySqlStateStore<T>`, providing a drop-in replacement for self-hosted deployments without MySQL infrastructure.
 
 **Backend Support Matrix**:
 
@@ -306,6 +128,18 @@ IRedisOperations                  - Low-level Redis access (Lua scripts, transac
 | `IJsonQueryableStateStore<T>` | ❌ | ✅ | ✅ | ❌ | ❌ |
 | `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ❌ | ✅ |
 | `IRedisOperations` | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+---
+
+## Stubs & Unimplemented Features
+
+None.
+
+---
+
+## Potential Extensions
+
+None currently identified.
 
 ---
 
@@ -327,7 +161,7 @@ None currently identified.
 
 5. **RedisSearchStateStore falls back to string storage**: The `GetAsync` and `GetWithETagAsync` methods catch `WRONGTYPE` errors and fall back to `StringGet` for backwards compatibility with keys stored as strings before search was enabled.
 
-6. **No state change events**: The State service intentionally does not publish lifecycle events (StateChanged, StoreMigration, StoreHealth) for state mutations. This was a deliberate design decision because publishing events for every save/delete operation would be prohibitively expensive given the high operation volume across all services. Error events are still published via `TryPublishErrorAsync` for operational visibility. See `schemas/state-events.yaml` for documentation of this decision.
+6. **No per-operation state change events**: The State service intentionally does not publish lifecycle events for individual state mutations (save/delete). Publishing events for every operation would be prohibitively expensive given the high volume across all services. Error events are published via `TryPublishErrorAsync` for operational visibility. Migration events (`state.migration.started`, `state.migration.completed`, `state.migration.failed`) are published for admin-initiated backend transitions — these are rare operational events, not per-operation tracking.
 
 7. **No store-level access control**: Any service can access any store via `IStateStoreFactory.GetStore<T>(anyName)`. This is intentional - enforcement was considered and rejected for these reasons:
    - All services are in the same trust boundary (same codebase, same deployment)

@@ -250,15 +250,11 @@ components:
       additionalProperties: false
       required:  # NRT: Response properties server always sets (Rule 4)
       - subscriptionId
-      - queueName
       properties:
         subscriptionId:
           type: string
           format: uuid
           description: Unique identifier for the created subscription
-        queueName:
-          type: string
-          description: Name of the RabbitMQ queue created for this subscription
 
     RemoveSubscriptionRequest:
       description: Request to remove an existing subscription

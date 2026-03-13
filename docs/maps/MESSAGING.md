@@ -28,7 +28,7 @@
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `{appId}` | `Set<ExternalSubscriptionData>` | All HTTP callback subscriptions for this app-id instance, stored as a Redis set with configurable TTL |
+| `external-subs:{appId}` | `Set<ExternalSubscriptionData>` | All HTTP callback subscriptions for this app-id instance, stored as a Redis set with configurable TTL |
 
 All external subscriptions for a given app-id live in a single Redis set. Set operations used: `AddToSetAsync`, `GetSetAsync`, `RemoveFromSetAsync`, `RefreshSetTtlAsync`.
 
@@ -74,7 +74,7 @@ This plugin does not consume external events.
 | Service | Role |
 |---------|------|
 | `ILogger<MessagingService>` | Structured logging |
-| `MessagingServiceConfiguration` | Typed configuration (42 properties) |
+| `MessagingServiceConfiguration` | Typed configuration (40 properties) |
 | `AppConfiguration` | `EffectiveAppId` for store keying |
 | `IMessageBus` | Publish delegation and error events |
 | `IMessageSubscriber` | Dynamic subscription creation |
@@ -96,12 +96,12 @@ This plugin does not consume external events.
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| PublishEvent | POST /messaging/publish | [] | - | caller's topic (delegated) |
-| CreateSubscription | POST /messaging/subscribe | [] | subscriptions (set add) | - |
-| RemoveSubscription | POST /messaging/unsubscribe | [] | subscriptions (set remove) | - |
-| ListTopics | POST /messaging/list-topics | [] | - | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| PublishEvent | POST /messaging/publish | generated | [] | - | caller's topic (delegated) |
+| CreateSubscription | POST /messaging/subscribe | generated | [] | subscriptions (set add) | - |
+| RemoveSubscription | POST /messaging/unsubscribe | generated | [] | subscriptions (set remove) | - |
+| ListTopics | POST /messaging/list-topics | generated | [] | - | - |
 
 ---
 
@@ -131,7 +131,6 @@ POST /messaging/subscribe | Roles: []
 
 ```
 subscriptionId = new Guid
-queueName = "bannou-dynamic-{subscriptionId:N}"
 httpClient = HttpClientFactory.CreateClient("MessagingCallbacks")
 // Build callback handler: HTTP POST to callbackUrl with body = envelope.PayloadJson
 // Retry on transport failures only (HttpRequestException, TaskCanceledException)
@@ -143,9 +142,9 @@ callbackHandler = CreateCallbackHandler(body.CallbackUrl, httpClient, config)
 _messageSubscriber.SubscribeDynamicAsync(body.Topic, callbackHandler)
 // Store in-memory for disposal tracking
 _activeSubscriptions[subscriptionId] = SubscriptionEntry { Topic, Handle, HttpClient }
-WRITE _subscriptionStore:{appId} (set add) <- ExternalSubscriptionData { SubscriptionId, Topic, CallbackUrl, CreatedAt }
+WRITE _subscriptionStore:external-subs:{appId} (set add) <- ExternalSubscriptionData { SubscriptionId, Topic, CallbackUrl, CreatedAt }
   // TTL = config.ExternalSubscriptionTtlSeconds (default 24h)
-RETURN (200, CreateSubscriptionResponse { SubscriptionId, QueueName })
+RETURN (200, CreateSubscriptionResponse { SubscriptionId })
 ```
 
 ---
@@ -158,10 +157,10 @@ POST /messaging/unsubscribe | Roles: []
 IF subscriptionId not in _activeSubscriptions           -> 404
 // Dispose RabbitMQ subscription handle and HttpClient
 entry.DisposeAsync()
-READ _subscriptionStore:{appId} (full set)
+READ _subscriptionStore:external-subs:{appId} (full set)
   // Retrieves all ExternalSubscriptionData entries for this app-id
 IF matching entry found by SubscriptionId
-  DELETE _subscriptionStore:{appId} (set remove matching entry)
+  DELETE _subscriptionStore:external-subs:{appId} (set remove matching entry)
 RETURN 200
   // Bare status code, no response body
 ```
@@ -210,7 +209,7 @@ FOREACH (topic, eventType, handlers) in EventSubscriptionRegistry
 
 ```
 // Phase 1: Recovery (on startup after delay)
-READ _subscriptionStore:{appId} (full set)
+READ _subscriptionStore:external-subs:{appId} (full set)
 FOREACH subscription in persisted set
   IF subscription.SubscriptionId already in _activeSubscriptions
     // skip (already active from this boot)
@@ -221,14 +220,14 @@ FOREACH subscription in persisted set
     _messageSubscriber.SubscribeDynamicAsync(sub.Topic, callbackHandler)
     _activeSubscriptions[sub.SubscriptionId] = entry
     IF recovery fails for individual subscription
-      DELETE _subscriptionStore:{appId} (set remove failed entry)
+      DELETE _subscriptionStore:external-subs:{appId} (set remove failed entry)
       // Continue with remaining subscriptions (no fail-fast)
-WRITE _subscriptionStore:{appId} (refresh TTL)
+WRITE _subscriptionStore:external-subs:{appId} (refresh TTL)
   // TTL = config.ExternalSubscriptionTtlSeconds
 
 // Phase 2: TTL refresh (recurring loop)
 IF _activeSubscriptions.Count > 0
-  WRITE _subscriptionStore:{appId} (refresh TTL)
+  WRITE _subscriptionStore:external-subs:{appId} (refresh TTL)
 ```
 
 ---
@@ -260,6 +259,10 @@ FOREACH dead letter message received
 **Purpose**: Retries buffered failed publishes; crash-fast on prolonged failure
 
 ```
+// Construction: register observable gauge metrics
+RegisterObservableGauge("bannou.messaging.retry_buffer_depth", () => _bufferCount)
+RegisterObservableGauge("bannou.messaging.retry_buffer_fill_ratio", () => _bufferCount / maxSize)
+
 // Guard: skip if retry buffer disabled or buffer empty
 IF !config.RetryBufferEnabled OR buffer.IsEmpty         -> skip
 
@@ -280,4 +283,46 @@ FOREACH buffered message in ConcurrentQueue (dequeue)
     IF retry fails
       // Re-buffer with incremented retry count
       // Exponential backoff: config.RetryDelayMs * 2^retryCount, capped at config.RetryMaxBackoffMs
+
+// After processing: record per-status retry attempt counters
+RecordCounter("bannou.messaging.retry_attempts", processedCount, status=processed)
+RecordCounter("bannou.messaging.retry_attempts", failedCount, status=failed)
+RecordCounter("bannou.messaging.retry_attempts", discardedCount, status=discarded)
+RecordCounter("bannou.messaging.retry_attempts", deferredCount, status=deferred)
 ```
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### ConfigureServices (mode branching)
+
+The plugin's `ConfigureServices` contains significant branching logic that determines the entire infrastructure backend:
+
+```
+IF config.UseInMemory
+  // Testing/minimal infrastructure mode
+  REGISTER InMemoryMessageBus as IMessageBus + IMessageSubscriber (Singleton)
+  REGISTER InMemoryMessageTap as IMessageTap (Singleton)
+  // No background services registered — return early
+ELSE
+  // Production RabbitMQ mode
+  REGISTER RabbitMQConnectionManager as IChannelManager (Singleton)
+    // Constructor registers ObservableGauge: channel_pool_active, channel_pool_available
+  REGISTER MessageRetryBuffer as IRetryBuffer (Singleton)
+    // Constructor registers ObservableGauge: retry_buffer_depth, retry_buffer_fill_ratio
+    // Factory breaks circular DI: IMessageBus → RabbitMQMessageBus → IRetryBuffer → MessageRetryBuffer
+    // Passes null for optional IMessageBus? parameter
+  REGISTER RabbitMQMessageBus as IMessageBus (Singleton)
+    // Factory injects ITelemetryProvider + IMeshInstanceIdentifier
+  REGISTER RabbitMQMessageSubscriber as IMessageSubscriber (Singleton)
+  REGISTER RabbitMQMessageTap as IMessageTap (Singleton)
+  REGISTER MessagingUnhandledExceptionHandler as IUnhandledExceptionHandler (Singleton)
+  REGISTER NativeEventConsumerBackend as IHostedService
+  REGISTER MessagingSubscriptionRecoveryService as IHostedService
+  REGISTER DeadLetterConsumerService as IHostedService
+  // Also registers MessagingService concrete type (cast from IMessagingService)
+  // for MessagingSubscriptionRecoveryService to access internal recovery methods
+```
+
+This branching means in-memory mode has no background services, no retry buffer, no dead letter processing, and no subscription recovery. The `IMessageBus`/`IMessageSubscriber` interface contract is preserved but the reliability guarantees differ significantly.

@@ -215,4 +215,17 @@ public class SessionDataModel
         get => DateTimeOffset.FromUnixTimeSeconds(LastActiveAtUnix);
         set => LastActiveAtUnix = value.ToUnixTimeSeconds();
     }
+
+    /// <summary>
+    /// Device information reported by the client during authentication.
+    /// Nullable for sessions created before device capture was implemented.
+    /// </summary>
+    public DeviceInfo? DeviceInfo { get; set; }
+
+    /// <summary>
+    /// IP address from which the session was initiated.
+    /// Extracted from X-Forwarded-For/X-Real-IP headers (reverse proxy aware).
+    /// Nullable for sessions created before IP capture was implemented.
+    /// </summary>
+    public string? IpAddress { get; set; }
 }

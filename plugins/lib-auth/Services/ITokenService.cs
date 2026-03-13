@@ -13,9 +13,11 @@ public interface ITokenService
     /// Creates session data in Redis and returns the signed JWT plus sessionId.
     /// </summary>
     /// <param name="account">The account to generate the token for.</param>
+    /// <param name="deviceInfo">Device information reported by the client during authentication.</param>
+    /// <param name="ipAddress">Client IP address extracted from request headers.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Tuple of (accessToken, sessionId) for event publishing.</returns>
-    Task<(string accessToken, Guid sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default);
+    Task<(string accessToken, Guid sessionId)> GenerateAccessTokenAsync(AccountResponse account, DeviceInfo? deviceInfo = null, string? ipAddress = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Generates a new refresh token.

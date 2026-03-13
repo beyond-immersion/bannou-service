@@ -10,6 +10,7 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -129,7 +130,8 @@ public class AuthServiceEventsTests
             _mockEdgeRevocationService.Object,
             _mockEmailService.Object,
             _mockMfaService.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            Mock.Of<IHttpContextAccessor>());
     }
 
     #region HandleAccountDeletedAsync Tests

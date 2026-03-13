@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 
 namespace BeyondImmersion.BannouService.State.Tests;
@@ -14,6 +15,7 @@ public class StateServiceTests
     private readonly Mock<IServiceProvider> _mockServiceProvider = new();
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory = new();
     private readonly Mock<IStateStore<object>> _mockStateStore = new();
+    private readonly Mock<StateMigrationHelper> _mockMigrationHelper = new();
 
     public StateServiceTests()
     {
@@ -29,7 +31,8 @@ public class StateServiceTests
             _mockLogger.Object,
             _configuration,
             _mockServiceProvider.Object,
-            _mockStateStoreFactory.Object);
+            _mockStateStoreFactory.Object,
+            _mockMigrationHelper.Object);
     }
 
     #region Constructor Tests

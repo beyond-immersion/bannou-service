@@ -24,12 +24,194 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.State;
 
 
 namespace BeyondImmersion.BannouService.Events;
 
 using System = global::System;
 
+/// <summary>
+/// Published when a state store migration begins execution
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class StateMigrationStartedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: state.migration.started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "state.migration.started";
+
+    /// <summary>
+    /// Name of the store being migrated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Current backend of the store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBackend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MigrationBackend SourceBackend { get; set; } = default!;
+
+    /// <summary>
+    /// Target backend for migration
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationBackend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MigrationBackend DestinationBackend { get; set; } = default!;
+
+    /// <summary>
+    /// UTC timestamp when migration began
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset StartedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a state store migration finishes successfully
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class StateMigrationCompletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: state.migration.completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "state.migration.completed";
+
+    /// <summary>
+    /// Name of the store that was migrated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Original backend of the store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBackend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MigrationBackend SourceBackend { get; set; } = default!;
+
+    /// <summary>
+    /// Backend data was migrated to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationBackend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MigrationBackend DestinationBackend { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of key-value entries copied
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entriesMigrated")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int EntriesMigrated { get; set; } = default!;
+
+    /// <summary>
+    /// Total elapsed time in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
+    [System.ComponentModel.DataAnnotations.Range(0L, long.MaxValue)]
+    public long DurationMs { get; set; } = default!;
+
+    /// <summary>
+    /// UTC timestamp when migration completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("completedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CompletedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a state store migration encounters an unrecoverable error
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class StateMigrationFailedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: state.migration.failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "state.migration.failed";
+
+    /// <summary>
+    /// Name of the store that failed migration
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Original backend of the store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBackend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MigrationBackend SourceBackend { get; set; } = default!;
+
+    /// <summary>
+    /// Intended target backend
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationBackend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MigrationBackend DestinationBackend { get; set; } = default!;
+
+    /// <summary>
+    /// Number of entries successfully copied before the failure
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entriesProcessedBeforeFailure")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int EntriesProcessedBeforeFailure { get; set; } = default!;
+
+    /// <summary>
+    /// Error message describing the failure
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("error")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Error { get; set; } = default!;
+
+    /// <summary>
+    /// UTC timestamp when failure occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset FailedAt { get; set; } = default!;
+
+}
 
 
 

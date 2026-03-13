@@ -19,13 +19,6 @@ public class SessionService : ISessionService
     private readonly IEdgeRevocationService _edgeRevocationService;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<SessionService> _logger;
-    private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
-    private const string SESSION_UPDATED_TOPIC = "session.updated";
-
-    // Device info placeholders - device capture is unimplemented
-    private const string UNKNOWN_PLATFORM = "Unknown";
-    private const string UNKNOWN_BROWSER = "Unknown";
-
     /// <summary>
     /// Buffer in seconds added to session index TTL so the index outlives its sessions
     /// for cleanup purposes. This is an engineering constant, not a tunable parameter.
@@ -113,12 +106,8 @@ public class SessionService : ISessionService
                             SessionId = result.SessionData.SessionId,
                             CreatedAt = result.SessionData.CreatedAt,
                             LastActive = lastActive,
-                            DeviceInfo = new DeviceInfo
-                            {
-                                DeviceType = DeviceType.Desktop,
-                                Platform = UNKNOWN_PLATFORM,
-                                Browser = UNKNOWN_BROWSER
-                            }
+                            DeviceInfo = result.SessionData.DeviceInfo,
+                            IpAddress = result.SessionData.IpAddress
                         });
                     }
                     else

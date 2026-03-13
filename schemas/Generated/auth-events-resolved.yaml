@@ -1,0 +1,567 @@
+openapi: 3.0.4
+info:
+  title: Auth Service Events
+  description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: auth-events.yaml
+
+    Event models for Auth service RabbitMQ pub/sub via MassTransit.
+    Contains auth-specific events and subscription/publication declarations.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Account lifecycle events from Account service
+  - topic: account.deleted
+    event: AccountDeletedEvent
+    handler: HandleAccountDeleted
+  - topic: account.updated
+    event: AccountUpdatedEvent
+    handler: HandleAccountUpdated
+  x-event-publications:
+    # Session lifecycle events published by Auth service
+  - topic: session.invalidated
+    event: SessionInvalidatedEvent
+    description: Published when sessions are invalidated (logout, deletion, security)
+  - topic: session.updated
+    event: SessionUpdatedEvent
+    description: Published when session roles/authorizations change
+    # Authentication audit events for security monitoring
+  - topic: auth.login.successful
+    event: AuthLoginSuccessfulEvent
+    description: Published when a user successfully logs in with username/password
+  - topic: auth.login.failed
+    event: AuthLoginFailedEvent
+    description: Published when a login attempt fails (brute force detection)
+  - topic: auth.registration.successful
+    event: AuthRegistrationSuccessfulEvent
+    description: Published when a new user account is registered
+  - topic: auth.oauth.successful
+    event: AuthOAuthLoginSuccessfulEvent
+    description: Published when a user authenticates via OAuth provider
+  - topic: auth.steam.successful
+    event: AuthSteamLoginSuccessfulEvent
+    description: Published when a user authenticates via Steam
+  - topic: auth.password-reset.successful
+    event: AuthPasswordResetSuccessfulEvent
+    description: Published when a password reset is successfully completed
+    # MFA audit events
+  - topic: auth.mfa.enabled
+    event: AuthMfaEnabledEvent
+    description: Published when MFA is enabled for an account
+  - topic: auth.mfa.disabled
+    event: AuthMfaDisabledEvent
+    description: Published when MFA is disabled for an account (self or admin)
+  - topic: auth.mfa.verified
+    event: AuthMfaVerifiedEvent
+    description: Published when MFA verification succeeds during login
+  - topic: auth.mfa.failed
+    event: AuthMfaFailedEvent
+    description: Published when MFA verification fails during login
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # Auth-specific events (published by Auth service)
+    # NOTE: Events Auth subscribes to (AccountDeletedEvent, etc.) are defined in their
+    # canonical locations and accessed via BeyondImmersion.BannouService.Events namespace
+    SessionInvalidatedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Event published when sessions are invalidated (logout, account deletion, etc.)
+      required:
+      - eventName
+      - sessionIds
+      - reason
+      properties:
+        eventName:
+          type: string
+          default: session.invalidated
+          description: 'Event type identifier: session.invalidated'
+        accountId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the account whose sessions were invalidated
+        sessionIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of session IDs that were invalidated
+        reason:
+          $ref: '../auth-api.yaml#/components/schemas/SessionInvalidatedEventReason'
+          description: The reason why the session(s) were invalidated
+        disconnectClients:
+          type: boolean
+          default: true
+          description: Whether Connect service should disconnect WebSocket clients
+
+    SessionUpdatedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a session's roles or authorizations change.
+        Permission service subscribes to update capability compilation.
+      required:
+      - eventName
+      - accountId
+      - sessionId
+      - roles
+      - authorizations
+      - reason
+      properties:
+        eventName:
+          type: string
+          default: session.updated
+          description: 'Event type identifier: session.updated'
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account whose session changed
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session that changed
+        roles:
+          type: array
+          items:
+            type: string
+          description: Current roles for the session
+        authorizations:
+          type: array
+          items:
+            type: string
+          description: Current authorization strings (e.g., ["my-game:authorized"])
+        reason:
+          $ref: '../auth-api.yaml#/components/schemas/SessionUpdatedEventReason'
+          description: The reason why the session was updated
+
+    # ==========================================================================
+    # Authentication Audit Events
+    # ==========================================================================
+
+    AuthLoginSuccessfulEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a user successfully authenticates with username/password
+      required:
+      - eventName
+      - accountId
+      - username
+      - sessionId
+      properties:
+        eventName:
+          type: string
+          default: auth.login.successful
+          description: 'Event type identifier: auth.login.successful'
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that logged in
+        username:
+          type: string
+          description: Display name of the authenticated account (never email; "(unknown)" if unavailable)
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session created for this login (for tracing WebSocket connections)
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the login request
+        userAgent:
+          type: string
+          nullable: true
+          description: User agent string from the login request
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+          nullable: true
+          description: Device information reported by the client during authentication
+
+    AuthLoginFailedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a login attempt fails (for brute force detection)
+      required:
+      - eventName
+      - username
+      - reason
+      properties:
+        eventName:
+          type: string
+          default: auth.login.failed
+          description: 'Event type identifier: auth.login.failed'
+        username:
+          type: string
+          description: Display name of the account (never email; "(unknown)" if account not found)
+        reason:
+          $ref: '../auth-api.yaml#/components/schemas/AuthLoginFailedReason'
+          description: Why the login attempt failed
+        accountId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Account ID if the account exists (null if unknown user)
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the failed login attempt
+        userAgent:
+          type: string
+          nullable: true
+          description: User agent string from the request
+
+    AuthRegistrationSuccessfulEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a new user successfully registers
+      required:
+      - eventName
+      - accountId
+      - username
+      - email
+      - sessionId
+      properties:
+        eventName:
+          type: string
+          default: auth.registration.successful
+          description: 'Event type identifier: auth.registration.successful'
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the newly created account
+        username:
+          type: string
+          description: Username chosen by the user
+        email:
+          type: string
+          description: Email address provided during registration
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session created for this registration (for tracing WebSocket connections)
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the registration request
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+          nullable: true
+          description: Device information reported by the client during registration
+
+    AuthOAuthLoginSuccessfulEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a user authenticates via OAuth provider
+      required:
+      - eventName
+      - accountId
+      - provider
+      - providerUserId
+      - sessionId
+      properties:
+        eventName:
+          type: string
+          default: auth.oauth.successful
+          description: 'Event type identifier: auth.oauth.successful'
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that logged in
+        provider:
+          $ref: '../common-api.yaml#/components/schemas/OAuthProvider'
+          description: OAuth provider name
+        providerUserId:
+          type: string
+          description: User ID from the OAuth provider
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session created for this login (for tracing WebSocket connections)
+        isNewAccount:
+          type: boolean
+          default: false
+          description: Whether this login created a new account
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the login request
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+          nullable: true
+          description: Device information reported by the client during OAuth authentication
+
+    AuthSteamLoginSuccessfulEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a user authenticates via Steam
+      required:
+      - eventName
+      - accountId
+      - steamId
+      - sessionId
+      properties:
+        eventName:
+          type: string
+          default: auth.steam.successful
+          description: 'Event type identifier: auth.steam.successful'
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that logged in
+        steamId:
+          type: string
+          description: Steam ID (64-bit)
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session created for this login (for tracing WebSocket connections)
+        isNewAccount:
+          type: boolean
+          default: false
+          description: Whether this login created a new account
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the login request
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+          nullable: true
+          description: Device information reported by the client during Steam authentication
+
+    AuthPasswordResetSuccessfulEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a password reset is successfully completed
+      required:
+      - eventName
+      - accountId
+      properties:
+        eventName:
+          type: string
+          default: auth.password-reset.successful
+          description: 'Event type identifier: auth.password-reset.successful'
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account whose password was reset
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the password reset request
+
+    # ==========================================================================
+    # MFA Audit Events
+    # ==========================================================================
+
+    AuthMfaEnabledEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when MFA is successfully enabled for an account
+      required:
+      - eventName
+      - accountId
+      properties:
+        eventName:
+          type: string
+          default: auth.mfa.enabled
+          description: 'Event type identifier: auth.mfa.enabled'
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that enabled MFA
+
+    AuthMfaDisabledEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when MFA is disabled for an account
+      required:
+      - eventName
+      - accountId
+      - disabledBy
+      properties:
+        eventName:
+          type: string
+          default: auth.mfa.disabled
+          description: 'Event type identifier: auth.mfa.disabled'
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account whose MFA was disabled
+        disabledBy:
+          $ref: '../auth-api.yaml#/components/schemas/MfaDisabledBy'
+          description: Who triggered the MFA disable
+        adminReason:
+          type: string
+          nullable: true
+          description: Administrative reason (only when disabledBy is Admin)
+
+    AuthMfaVerifiedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when MFA verification succeeds during login
+      required:
+      - eventName
+      - accountId
+      - method
+      - sessionId
+      properties:
+        eventName:
+          type: string
+          default: auth.mfa.verified
+          description: 'Event type identifier: auth.mfa.verified'
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that completed MFA verification
+        method:
+          $ref: '../auth-api.yaml#/components/schemas/MfaVerificationMethod'
+          description: Method used for MFA verification
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session created after successful MFA
+        recoveryCodesRemaining:
+          type: integer
+          nullable: true
+          description: Recovery codes remaining after use (only when method is RecoveryCode)
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+          nullable: true
+          description: Device information from the original login request (preserved through MFA challenge)
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address from which MFA verification was performed (preserved from original login challenge)
+
+    AuthMfaFailedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when MFA verification fails during login
+      required:
+      - eventName
+      - accountId
+      - method
+      - reason
+      properties:
+        eventName:
+          type: string
+          default: auth.mfa.failed
+          description: 'Event type identifier: auth.mfa.failed'
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that failed MFA
+        method:
+          $ref: '../auth-api.yaml#/components/schemas/MfaVerificationMethod'
+          description: Method attempted
+        reason:
+          $ref: '../auth-api.yaml#/components/schemas/MfaFailedReason'
+          description: Why MFA verification failed
+    DeviceInfo:
+      description: Information about the client device used for authentication or session tracking
+      type: object
+      additionalProperties: false
+      properties:
+        deviceType:
+          allOf:
+          - $ref: '#/components/schemas/DeviceType'
+          nullable: true
+          description: Category of the device (Desktop, Mobile, Tablet, Console, Handheld)
+        platform:
+          allOf:
+          - $ref: '#/components/schemas/Platform'
+          nullable: true
+          description: Operating system or platform of the client device
+        osVersion:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Operating system version string (e.g., "Windows 11 23H2", "iOS 17.4")
+        deviceManufacturer:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Device manufacturer (e.g., "Apple", "Sony", "Valve")
+        deviceModel:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Device model name (e.g., "iPhone 15 Pro", "PlayStation 5", "Steam Deck OLED")
+        appVersion:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Version of the client application (semantic version recommended)
+        sdkVersion:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Version of the Bannou SDK used by the client
+        engineName:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Game engine name (e.g., "Unity", "Unreal", "Godot", "Stride", "Custom")
+        engineVersion:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Game engine version (e.g., "2022.3.14f1", "5.4.1")
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+          description: >-
+            Optional key-value metadata for hardware capabilities and other client-reported
+            device properties (e.g., screen resolution, GPU name, memory). Values are strings.
+            This data is stored and published in events as-is; the auth service does not
+            read or interpret it (T29-compliant pass-through).
+
+    DeviceType:
+      type: string
+      enum: [Desktop, Mobile, Tablet, Console, Handheld, Unknown]
+      description: Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable 
+        mode)
+
+    Platform:
+      type: string
+      enum: [Windows, MacOS, Linux, iOS, Android, PlayStation, Xbox, NintendoSwitch, WebGL, Other]
+      description: Operating system or platform of the client device
+
+x-inlined-types:
+- DeviceInfo
+- DeviceType
+- Platform

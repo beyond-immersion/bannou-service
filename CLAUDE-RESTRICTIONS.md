@@ -297,6 +297,26 @@ You are implementing a task. The implementation requires a behavioral choice tha
 
 ---
 
+## ⛔ AGENT TOOL USE BUDGET (MANDATORY) ⛔
+
+**Every agent you launch MUST have a bounded tool use budget specified in the prompt. Unbounded agents are forbidden.**
+
+**Rules:**
+1. **Always include an explicit tool use limit in the agent prompt.** Example: "Complete this task using no more than 15 tool calls." The limit should be proportional to the task complexity.
+2. **Default budget is 15 tool calls** for research/exploration agents. Adjust up or down based on scope:
+   - Simple lookup (find a file, check a value): 5-8 tool calls
+   - Focused research (understand one service, read a few files): 10-15 tool calls
+   - Broad exploration (trace cross-service dependencies, audit multiple files): 15-25 tool calls
+   - Implementation work (write code, run builds): 20-30 tool calls
+3. **Never launch an agent with no budget constraint.** An uncapped agent doing web searches, file reads, or any open-ended work can burn 50-100+ tool calls before returning — consuming the entire context window budget and producing output that cannot be stopped or salvaged.
+4. **Web research agents are especially dangerous.** WebSearch and WebFetch calls are high-cost and open-ended. Web research agents MUST have a budget of 10-15 tool calls maximum and a clear instruction to summarize findings concisely rather than exhaustively exploring every lead.
+
+**Why this rule exists**: Claude launched a general-purpose research agent to investigate IP geolocation library options. The agent began making unbounded web searches and fetches with no stopping condition. When the user killed it to stop the waste, the agent returned NOTHING — all context spent, zero results. A 10-call budget with "summarize the top 3 options" would have returned useful results in seconds.
+
+**Incident**: Research agent launched with no tool budget for "investigate free IP geolocation libraries." Agent began open-ended web crawling. User had to force-kill. Entire agent invocation produced zero output. The research question could have been answered in 5-8 targeted tool calls.
+
+---
+
 ## ⛔ VIOLATION TASK LISTS (MANDATORY) ⛔
 
 **When creating a task list to fix TENET violations, SCHEMA-RULES issues, or other code quality/consistency problems, every task description MUST be fully self-contained. An implementer who has never seen the codebase or the tenets must be able to execute the task from the description alone, with zero additional file reads required.**

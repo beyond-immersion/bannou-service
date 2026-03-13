@@ -638,7 +638,7 @@ enum class EDestroyReason : uint8
     Admin UMETA(DisplayName = "Admin"),
 };
 
-/** Category of client device used for authentication or session tracking */
+/** Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode) */
 UENUM(BlueprintType)
 enum class EDeviceType : uint8
 {
@@ -646,6 +646,8 @@ enum class EDeviceType : uint8
     Mobile UMETA(DisplayName = "Mobile"),
     Tablet UMETA(DisplayName = "Tablet"),
     Console UMETA(DisplayName = "Console"),
+    Handheld UMETA(DisplayName = "Handheld"),
+    Unknown UMETA(DisplayName = "Unknown"),
 };
 
 /** Fixed categories for type-safe filtering */

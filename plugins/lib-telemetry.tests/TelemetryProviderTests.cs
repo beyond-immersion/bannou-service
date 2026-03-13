@@ -297,6 +297,175 @@ public class TelemetryProviderTests
 
     #endregion
 
+    #region RegisterObservableGauge (Simple Callback)
+
+    [Fact]
+    public void RegisterObservableGauge_WhenMetricsEnabled_DoesNotThrow()
+    {
+        // Arrange
+        using var provider = CreateProvider(metricsEnabled: true);
+        var currentValue = 42;
+
+        // Act & Assert - should not throw
+        provider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            TelemetryMetrics.MessagingRetryBufferDepth,
+            () => currentValue,
+            unit: "{messages}",
+            description: "Test gauge");
+    }
+
+    [Fact]
+    public void RegisterObservableGauge_WhenMetricsDisabled_DoesNotThrow()
+    {
+        // Arrange
+        using var provider = CreateProvider(metricsEnabled: false);
+
+        // Act & Assert - should not throw even when disabled
+        provider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            TelemetryMetrics.MessagingRetryBufferDepth,
+            () => 0,
+            unit: "{messages}");
+    }
+
+    [Fact]
+    public void RegisterObservableGauge_DuplicateRegistration_DoesNotThrow()
+    {
+        // Arrange
+        using var provider = CreateProvider(metricsEnabled: true);
+
+        // Act - register same component:metric twice (idempotent)
+        provider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            TelemetryMetrics.MessagingChannelPoolActive,
+            () => 5,
+            unit: "{channels}");
+
+        // Assert - second registration with same key is silently ignored
+        provider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            TelemetryMetrics.MessagingChannelPoolActive,
+            () => 10,
+            unit: "{channels}");
+    }
+
+    [Fact]
+    public void RegisterObservableGauge_DifferentMetrics_BothRegistered()
+    {
+        // Arrange
+        using var provider = CreateProvider(metricsEnabled: true);
+
+        // Act & Assert - different metric names should both succeed
+        provider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            TelemetryMetrics.MessagingChannelPoolActive,
+            () => 5,
+            unit: "{channels}");
+
+        provider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            TelemetryMetrics.MessagingChannelPoolAvailable,
+            () => 3,
+            unit: "{channels}");
+    }
+
+    [Fact]
+    public void RegisterObservableGauge_WithDoubleType_DoesNotThrow()
+    {
+        // Arrange
+        using var provider = CreateProvider(metricsEnabled: true);
+
+        // Act & Assert - double gauge (used by retry buffer fill ratio)
+        provider.RegisterObservableGauge<double>(
+            TelemetryComponents.Messaging,
+            TelemetryMetrics.MessagingRetryBufferFillRatio,
+            () => 0.75,
+            unit: "1",
+            description: "Fill ratio");
+    }
+
+    [Fact]
+    public void RegisterObservableGauge_WithoutOptionalParams_DoesNotThrow()
+    {
+        // Arrange
+        using var provider = CreateProvider(metricsEnabled: true);
+
+        // Act & Assert - omit unit and description
+        provider.RegisterObservableGauge<int>(
+            TelemetryComponents.Mesh,
+            TelemetryMetrics.MeshCircuitBreakerState,
+            () => 0);
+    }
+
+    #endregion
+
+    #region RegisterObservableGauge (Measurement Callback)
+
+    [Fact]
+    public void RegisterObservableGauge_WithMeasurement_WhenMetricsEnabled_DoesNotThrow()
+    {
+        // Arrange
+        using var provider = CreateProvider(metricsEnabled: true);
+
+        // Act & Assert - Measurement<T> overload with tags
+        provider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            "bannou.messaging.test_gauge_tagged",
+            () => new Measurement<int>(42, new KeyValuePair<string, object?>("region", "us-east")),
+            unit: "{items}",
+            description: "Tagged gauge");
+    }
+
+    [Fact]
+    public void RegisterObservableGauge_WithMeasurement_WhenMetricsDisabled_DoesNotThrow()
+    {
+        // Arrange
+        using var provider = CreateProvider(metricsEnabled: false);
+
+        // Act & Assert - should not throw even when disabled
+        provider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            "bannou.messaging.test_gauge_tagged",
+            () => new Measurement<int>(0));
+    }
+
+    [Fact]
+    public void RegisterObservableGauge_WithMeasurement_DuplicateRegistration_DoesNotThrow()
+    {
+        // Arrange
+        using var provider = CreateProvider(metricsEnabled: true);
+        var metricName = "bannou.messaging.test_gauge_tagged_dup";
+
+        // Act - register same component:metric twice (idempotent)
+        provider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            metricName,
+            () => new Measurement<int>(5));
+
+        // Assert - second registration silently ignored
+        provider.RegisterObservableGauge<int>(
+            TelemetryComponents.Messaging,
+            metricName,
+            () => new Measurement<int>(10));
+    }
+
+    [Fact]
+    public void RegisterObservableGauge_WithMeasurement_DoubleType_DoesNotThrow()
+    {
+        // Arrange
+        using var provider = CreateProvider(metricsEnabled: true);
+
+        // Act & Assert - double measurement with tags
+        provider.RegisterObservableGauge<double>(
+            TelemetryComponents.Messaging,
+            "bannou.messaging.test_gauge_double_tagged",
+            () => new Measurement<double>(0.85, new KeyValuePair<string, object?>("pool", "primary")),
+            unit: "1");
+    }
+
+    #endregion
+
     #region WrapStateStore
 
     [Fact]

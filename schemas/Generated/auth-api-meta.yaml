@@ -67,16 +67,42 @@ paths:
         ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"deviceType\": {\n\
         \                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/DeviceType\"\
         \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Category of the device\"\n                },\n                \"platform\": {\n             \
-        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Operating
-        system or platform name\"\n                },\n                \"browser\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\
-        \n                },\n                \"appVersion\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Version of the client application\"\n        \
-        \        }\n            }\n        },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n              \
-        \  \"Console\"\n            ],\n            \"description\": \"Category of client device used for authentication or
-        session tracking\"\n        }\n    }\n}"
+        \ \"description\": \"Category of the device (Desktop, Mobile, Tablet, Console, Handheld)\"\n                },\n \
+        \               \"platform\": {\n                    \"allOf\": [\n                        {\n                   \
+        \         \"$ref\": \"#/$defs/Platform\"\n                        }\n                    ],\n                    \"\
+        nullable\": true,\n                    \"description\": \"Operating system or platform of the client device\"\n  \
+        \              },\n                \"osVersion\": {\n                    \"type\": \"string\",\n                 \
+        \   \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Operating
+        system version string (e.g., \\\"Windows 11 23H2\\\", \\\"iOS 17.4\\\")\"\n                },\n                \"\
+        deviceManufacturer\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
+        \                \"maxLength\": 200,\n                    \"description\": \"Device manufacturer (e.g., \\\"Apple\\\
+        \", \\\"Sony\\\", \\\"Valve\\\")\"\n                },\n                \"deviceModel\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 200,\n          \
+        \          \"description\": \"Device model name (e.g., \\\"iPhone 15 Pro\\\", \\\"PlayStation 5\\\", \\\"Steam Deck
+        OLED\\\")\"\n                },\n                \"appVersion\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Version of the client application (semantic version recommended)\"\n                },\n                \"sdkVersion\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Version of the Bannou SDK used by the client\"\n                },\n\
+        \                \"engineName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"maxLength\": 100,\n                    \"description\": \"Game engine name (e.g., \\\"Unity\\\
+        \", \\\"Unreal\\\", \\\"Godot\\\", \\\"Stride\\\", \\\"Custom\\\")\"\n                },\n                \"engineVersion\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Game engine version (e.g., \\\"2022.3.14f1\\\", \\\"5.4.1\\\")\"\n\
+        \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
+        \    \"nullable\": true,\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Optional key-value metadata for hardware capabilities
+        and other client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This
+        data is stored and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through).\"\
+        \n                }\n            }\n        },\n        \"DeviceType\": {\n            \"type\": \"string\",\n   \
+        \         \"enum\": [\n                \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n  \
+        \              \"Console\",\n                \"Handheld\",\n                \"Unknown\"\n            ],\n        \
+        \    \"description\": \"Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in
+        portable mode)\"\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"Windows\",\n                \"MacOS\",\n                \"Linux\",\n                \"iOS\",\n\
+        \                \"Android\",\n                \"PlayStation\",\n                \"Xbox\",\n                \"NintendoSwitch\"\
+        ,\n                \"WebGL\",\n                \"Other\"\n            ],\n            \"description\": \"Operating
+        system or platform of the client device\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LoginResponse\"\
         ,\n    \"$defs\": {\n        \"LoginResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response from email/password login. May contain full tokens (no MFA) or a challenge token (MFA required).\",\n\
@@ -140,8 +166,50 @@ paths:
         : 8,\n                    \"maxLength\": 128,\n                    \"format\": \"password\",\n                   \
         \ \"example\": \"SecurePassword123!\"\n                },\n                \"email\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"email\",\n                    \"description\": \"Email address for
-        account recovery and notifications\",\n                    \"example\": \"user@example.com\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        account recovery and notifications\",\n                    \"example\": \"user@example.com\"\n                },\n\
+        \                \"deviceInfo\": {\n                    \"$ref\": \"#/$defs/DeviceInfo\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Information about the client device (optional)\"\n     \
+        \           }\n            }\n        },\n        \"DeviceInfo\": {\n            \"description\": \"Information about
+        the client device used for authentication or session tracking\",\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"properties\": {\n                \"deviceType\": {\n               \
+        \     \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/DeviceType\"\n    \
+        \                    }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Category of the device (Desktop, Mobile, Tablet, Console, Handheld)\"\n                },\n                \"\
+        platform\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\":
+        \"#/$defs/Platform\"\n                        }\n                    ],\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Operating system or platform of the client device\"\n                },\n\
+        \                \"osVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"maxLength\": 100,\n                    \"description\": \"Operating system version string (e.g.,
+        \\\"Windows 11 23H2\\\", \\\"iOS 17.4\\\")\"\n                },\n                \"deviceManufacturer\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 200,\n                    \"description\": \"Device manufacturer (e.g., \\\"Apple\\\", \\\"Sony\\\", \\\"Valve\\\
+        \")\"\n                },\n                \"deviceModel\": {\n                    \"type\": \"string\",\n       \
+        \             \"nullable\": true,\n                    \"maxLength\": 200,\n                    \"description\": \"\
+        Device model name (e.g., \\\"iPhone 15 Pro\\\", \\\"PlayStation 5\\\", \\\"Steam Deck OLED\\\")\"\n              \
+        \  },\n                \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 100,\n                    \"description\": \"Version of the client application
+        (semantic version recommended)\"\n                },\n                \"sdkVersion\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n                \
+        \    \"description\": \"Version of the Bannou SDK used by the client\"\n                },\n                \"engineName\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Game engine name (e.g., \\\"Unity\\\", \\\"Unreal\\\", \\\"Godot\\\"\
+        , \\\"Stride\\\", \\\"Custom\\\")\"\n                },\n                \"engineVersion\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n     \
+        \               \"description\": \"Game engine version (e.g., \\\"2022.3.14f1\\\", \\\"5.4.1\\\")\"\n            \
+        \    },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
+        : true,\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n         \
+        \           },\n                    \"description\": \"Optional key-value metadata for hardware capabilities and other
+        client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored
+        and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through).\"\n  \
+        \              }\n            }\n        },\n        \"DeviceType\": {\n            \"type\": \"string\",\n      \
+        \      \"enum\": [\n                \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n     \
+        \           \"Console\",\n                \"Handheld\",\n                \"Unknown\"\n            ],\n           \
+        \ \"description\": \"Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable
+        mode)\"\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
+        \         \"Windows\",\n                \"MacOS\",\n                \"Linux\",\n                \"iOS\",\n       \
+        \         \"Android\",\n                \"PlayStation\",\n                \"Xbox\",\n                \"NintendoSwitch\"\
+        ,\n                \"WebGL\",\n                \"Other\"\n            ],\n            \"description\": \"Operating
+        system or platform of the client device\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterResponse\"\
         ,\n    \"$defs\": {\n        \"RegisterResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response from successful user registration\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -246,17 +314,43 @@ paths:
         authentication or session tracking\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"properties\": {\n                \"deviceType\": {\n                    \"allOf\": [\n            \
         \            {\n                            \"$ref\": \"#/$defs/DeviceType\"\n                        }\n        \
-        \            ],\n                    \"nullable\": true,\n                    \"description\": \"Category of the device\"\
-        \n                },\n                \"platform\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Operating system or platform name\"\n          \
-        \      },\n                \"browser\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Browser name and version if applicable\"\n                },\n   \
-        \             \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Version of the client application\"\n                }\n            }\n  \
-        \      },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
-        \ \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n                \"Console\"\n          \
-        \  ],\n            \"description\": \"Category of client device used for authentication or session tracking\"\n  \
-        \      }\n    }\n}"
+        \            ],\n                    \"nullable\": true,\n                    \"description\": \"Category of the device
+        (Desktop, Mobile, Tablet, Console, Handheld)\"\n                },\n                \"platform\": {\n            \
+        \        \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/Platform\"\n   \
+        \                     }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Operating system or platform of the client device\"\n                },\n                \"osVersion\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Operating system version string (e.g., \\\"Windows 11 23H2\\\", \\\"\
+        iOS 17.4\\\")\"\n                },\n                \"deviceManufacturer\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"maxLength\": 200,\n                    \"description\"\
+        : \"Device manufacturer (e.g., \\\"Apple\\\", \\\"Sony\\\", \\\"Valve\\\")\"\n                },\n               \
+        \ \"deviceModel\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
+        \             \"maxLength\": 200,\n                    \"description\": \"Device model name (e.g., \\\"iPhone 15 Pro\\\
+        \", \\\"PlayStation 5\\\", \\\"Steam Deck OLED\\\")\"\n                },\n                \"appVersion\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Version of the client application (semantic version recommended)\"\n\
+        \                },\n                \"sdkVersion\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Version
+        of the Bannou SDK used by the client\"\n                },\n                \"engineName\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n     \
+        \               \"description\": \"Game engine name (e.g., \\\"Unity\\\", \\\"Unreal\\\", \\\"Godot\\\", \\\"Stride\\\
+        \", \\\"Custom\\\")\"\n                },\n                \"engineVersion\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"\
+        description\": \"Game engine version (e.g., \\\"2022.3.14f1\\\", \\\"5.4.1\\\")\"\n                },\n          \
+        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
+        \               \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Optional key-value metadata for hardware capabilities and other client-reported
+        device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored and published
+        in events as-is; the auth service does not read or interpret it (T29-compliant pass-through).\"\n                }\n\
+        \            }\n        },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n                \"Console\"\
+        ,\n                \"Handheld\",\n                \"Unknown\"\n            ],\n            \"description\": \"Category
+        of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode)\"\n        },\n  \
+        \      \"Platform\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Windows\",\n\
+        \                \"MacOS\",\n                \"Linux\",\n                \"iOS\",\n                \"Android\",\n\
+        \                \"PlayStation\",\n                \"Xbox\",\n                \"NintendoSwitch\",\n              \
+        \  \"WebGL\",\n                \"Other\"\n            ],\n            \"description\": \"Operating system or platform
+        of the client device\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
         containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -325,17 +419,43 @@ paths:
         or session tracking\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"properties\": {\n                \"deviceType\": {\n                    \"allOf\": [\n                    \
         \    {\n                            \"$ref\": \"#/$defs/DeviceType\"\n                        }\n                \
-        \    ],\n                    \"nullable\": true,\n                    \"description\": \"Category of the device\"\n\
-        \                },\n                \"platform\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Operating system or platform name\"\n           \
-        \     },\n                \"browser\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Browser name and version if applicable\"\n                },\n   \
-        \             \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Version of the client application\"\n                }\n            }\n  \
-        \      },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
-        \ \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n                \"Console\"\n          \
-        \  ],\n            \"description\": \"Category of client device used for authentication or session tracking\"\n  \
-        \      }\n    }\n}"
+        \    ],\n                    \"nullable\": true,\n                    \"description\": \"Category of the device (Desktop,
+        Mobile, Tablet, Console, Handheld)\"\n                },\n                \"platform\": {\n                    \"\
+        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/Platform\"\n              \
+        \          }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Operating system or platform of the client device\"\n                },\n                \"osVersion\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Operating system version string (e.g., \\\"Windows 11 23H2\\\", \\\"\
+        iOS 17.4\\\")\"\n                },\n                \"deviceManufacturer\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"maxLength\": 200,\n                    \"description\"\
+        : \"Device manufacturer (e.g., \\\"Apple\\\", \\\"Sony\\\", \\\"Valve\\\")\"\n                },\n               \
+        \ \"deviceModel\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n       \
+        \             \"maxLength\": 200,\n                    \"description\": \"Device model name (e.g., \\\"iPhone 15 Pro\\\
+        \", \\\"PlayStation 5\\\", \\\"Steam Deck OLED\\\")\"\n                },\n                \"appVersion\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Version of the client application (semantic version recommended)\"\n\
+        \                },\n                \"sdkVersion\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Version
+        of the Bannou SDK used by the client\"\n                },\n                \"engineName\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n     \
+        \               \"description\": \"Game engine name (e.g., \\\"Unity\\\", \\\"Unreal\\\", \\\"Godot\\\", \\\"Stride\\\
+        \", \\\"Custom\\\")\"\n                },\n                \"engineVersion\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"\
+        description\": \"Game engine version (e.g., \\\"2022.3.14f1\\\", \\\"5.4.1\\\")\"\n                },\n          \
+        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
+        \               \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Optional key-value metadata for hardware capabilities and other client-reported
+        device properties (e.g., screen resolution, GPU name, memory). Values are strings. This data is stored and published
+        in events as-is; the auth service does not read or interpret it (T29-compliant pass-through).\"\n                }\n\
+        \            }\n        },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n                \"Console\"\
+        ,\n                \"Handheld\",\n                \"Unknown\"\n            ],\n            \"description\": \"Category
+        of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable mode)\"\n        },\n  \
+        \      \"Platform\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Windows\",\n\
+        \                \"MacOS\",\n                \"Linux\",\n                \"iOS\",\n                \"Android\",\n\
+        \                \"PlayStation\",\n                \"Xbox\",\n                \"NintendoSwitch\",\n              \
+        \  \"WebGL\",\n                \"Other\"\n            ],\n            \"description\": \"Operating system or platform
+        of the client device\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
         containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -393,8 +513,51 @@ paths:
         token using a valid refresh token\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"refreshToken\"\n            ],\n            \"properties\": {\n  \
         \              \"refreshToken\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Refresh token issued during authentication to obtain a new access token\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        : \"Refresh token issued during authentication to obtain a new access token\"\n                },\n              \
+        \  \"deviceInfo\": {\n                    \"$ref\": \"#/$defs/DeviceInfo\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Optional updated device information for the new session. If omitted, the new
+        session has no device info.\"\n                }\n            }\n        },\n        \"DeviceInfo\": {\n         \
+        \   \"description\": \"Information about the client device used for authentication or session tracking\",\n      \
+        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n      \
+        \          \"deviceType\": {\n                    \"allOf\": [\n                        {\n                      \
+        \      \"$ref\": \"#/$defs/DeviceType\"\n                        }\n                    ],\n                    \"\
+        nullable\": true,\n                    \"description\": \"Category of the device (Desktop, Mobile, Tablet, Console,
+        Handheld)\"\n                },\n                \"platform\": {\n                    \"allOf\": [\n             \
+        \           {\n                            \"$ref\": \"#/$defs/Platform\"\n                        }\n           \
+        \         ],\n                    \"nullable\": true,\n                    \"description\": \"Operating system or
+        platform of the client device\"\n                },\n                \"osVersion\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n                \
+        \    \"description\": \"Operating system version string (e.g., \\\"Windows 11 23H2\\\", \\\"iOS 17.4\\\")\"\n    \
+        \            },\n                \"deviceManufacturer\": {\n                    \"type\": \"string\",\n          \
+        \          \"nullable\": true,\n                    \"maxLength\": 200,\n                    \"description\": \"Device
+        manufacturer (e.g., \\\"Apple\\\", \\\"Sony\\\", \\\"Valve\\\")\"\n                },\n                \"deviceModel\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 200,\n                    \"description\": \"Device model name (e.g., \\\"iPhone 15 Pro\\\", \\\"PlayStation 5\\\
+        \", \\\"Steam Deck OLED\\\")\"\n                },\n                \"appVersion\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n                \
+        \    \"description\": \"Version of the client application (semantic version recommended)\"\n                },\n \
+        \               \"sdkVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"maxLength\": 100,\n                    \"description\": \"Version of the Bannou SDK used by
+        the client\"\n                },\n                \"engineName\": {\n                    \"type\": \"string\",\n \
+        \                   \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Game engine name (e.g., \\\"Unity\\\", \\\"Unreal\\\", \\\"Godot\\\", \\\"Stride\\\", \\\"Custom\\\")\"\n    \
+        \            },\n                \"engineVersion\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Game engine
+        version (e.g., \\\"2022.3.14f1\\\", \\\"5.4.1\\\")\"\n                },\n                \"metadata\": {\n      \
+        \              \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Optional key-value metadata for hardware capabilities and other client-reported device properties (e.g., screen resolution,
+        GPU name, memory). Values are strings. This data is stored and published in events as-is; the auth service does not
+        read or interpret it (T29-compliant pass-through).\"\n                }\n            }\n        },\n        \"DeviceType\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Desktop\",\n                \"\
+        Mobile\",\n                \"Tablet\",\n                \"Console\",\n                \"Handheld\",\n            \
+        \    \"Unknown\"\n            ],\n            \"description\": \"Category of client device (Handheld covers devices
+        like Steam Deck and Nintendo Switch in portable mode)\"\n        },\n        \"Platform\": {\n            \"type\"\
+        : \"string\",\n            \"enum\": [\n                \"Windows\",\n                \"MacOS\",\n               \
+        \ \"Linux\",\n                \"iOS\",\n                \"Android\",\n                \"PlayStation\",\n         \
+        \       \"Xbox\",\n                \"NintendoSwitch\",\n                \"WebGL\",\n                \"Other\"\n  \
+        \          ],\n            \"description\": \"Operating system or platform of the client device\"\n        }\n   \
+        \ }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
         containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -541,23 +704,47 @@ paths:
         \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp of the last activity
         in this session\"\n                },\n                \"ipAddress\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"IP address from which the session
-        was initiated\"\n                },\n                \"location\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Geographic location derived from
-        the IP address\"\n                }\n            }\n        },\n        \"DeviceInfo\": {\n            \"description\"\
+        was initiated\"\n                }\n            }\n        },\n        \"DeviceInfo\": {\n            \"description\"\
         : \"Information about the client device used for authentication or session tracking\",\n            \"type\": \"object\"\
         ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"deviceType\": {\n\
         \                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/DeviceType\"\
         \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Category of the device\"\n                },\n                \"platform\": {\n             \
-        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Operating
-        system or platform name\"\n                },\n                \"browser\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\
-        \n                },\n                \"appVersion\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Version of the client application\"\n        \
-        \        }\n            }\n        },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n              \
-        \  \"Console\"\n            ],\n            \"description\": \"Category of client device used for authentication or
-        session tracking\"\n        }\n    }\n}"
+        \ \"description\": \"Category of the device (Desktop, Mobile, Tablet, Console, Handheld)\"\n                },\n \
+        \               \"platform\": {\n                    \"allOf\": [\n                        {\n                   \
+        \         \"$ref\": \"#/$defs/Platform\"\n                        }\n                    ],\n                    \"\
+        nullable\": true,\n                    \"description\": \"Operating system or platform of the client device\"\n  \
+        \              },\n                \"osVersion\": {\n                    \"type\": \"string\",\n                 \
+        \   \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Operating
+        system version string (e.g., \\\"Windows 11 23H2\\\", \\\"iOS 17.4\\\")\"\n                },\n                \"\
+        deviceManufacturer\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
+        \                \"maxLength\": 200,\n                    \"description\": \"Device manufacturer (e.g., \\\"Apple\\\
+        \", \\\"Sony\\\", \\\"Valve\\\")\"\n                },\n                \"deviceModel\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 200,\n          \
+        \          \"description\": \"Device model name (e.g., \\\"iPhone 15 Pro\\\", \\\"PlayStation 5\\\", \\\"Steam Deck
+        OLED\\\")\"\n                },\n                \"appVersion\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Version of the client application (semantic version recommended)\"\n                },\n                \"sdkVersion\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Version of the Bannou SDK used by the client\"\n                },\n\
+        \                \"engineName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"maxLength\": 100,\n                    \"description\": \"Game engine name (e.g., \\\"Unity\\\
+        \", \\\"Unreal\\\", \\\"Godot\\\", \\\"Stride\\\", \\\"Custom\\\")\"\n                },\n                \"engineVersion\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Game engine version (e.g., \\\"2022.3.14f1\\\", \\\"5.4.1\\\")\"\n\
+        \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
+        \    \"nullable\": true,\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Optional key-value metadata for hardware capabilities
+        and other client-reported device properties (e.g., screen resolution, GPU name, memory). Values are strings. This
+        data is stored and published in events as-is; the auth service does not read or interpret it (T29-compliant pass-through).\"\
+        \n                }\n            }\n        },\n        \"DeviceType\": {\n            \"type\": \"string\",\n   \
+        \         \"enum\": [\n                \"Desktop\",\n                \"Mobile\",\n                \"Tablet\",\n  \
+        \              \"Console\",\n                \"Handheld\",\n                \"Unknown\"\n            ],\n        \
+        \    \"description\": \"Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in
+        portable mode)\"\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"Windows\",\n                \"MacOS\",\n                \"Linux\",\n                \"iOS\",\n\
+        \                \"Android\",\n                \"PlayStation\",\n                \"Xbox\",\n                \"NintendoSwitch\"\
+        ,\n                \"WebGL\",\n                \"Other\"\n            ],\n            \"description\": \"Operating
+        system or platform of the client device\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get active sessions for account\",\n    \"description\": \"\",\n    \"\
         tags\": [\n        \"Sessions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSessions\"\n}"
   /auth/sessions/terminate:
@@ -1042,7 +1229,24 @@ components:
       - Mobile
       - Tablet
       - Console
-      description: Category of client device used for authentication or session tracking
+      - Handheld
+      - Unknown
+      description: Category of client device (Handheld covers devices like Steam Deck and Nintendo Switch in portable 
+        mode)
+    Platform:
+      type: string
+      enum:
+      - Windows
+      - MacOS
+      - Linux
+      - iOS
+      - Android
+      - PlayStation
+      - Xbox
+      - NintendoSwitch
+      - WebGL
+      - Other
+      description: Operating system or platform of the client device
     AuthType:
       type: string
       enum:
@@ -1170,6 +1374,10 @@ components:
           format: email
           description: Email address for account recovery and notifications
           example: "user@example.com"
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+          nullable: true
+          description: Information about the client device (optional)
     RegisterResponse:
       type: object
       description: Response from successful user registration
@@ -1281,6 +1489,11 @@ components:
         refreshToken:
           type: string
           description: Refresh token issued during authentication to obtain a new access token
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+          nullable: true
+          description: Optional updated device information for the new session. If omitted, the new session has no 
+            device info.
     ValidateTokenResponse:
       description: Response from token validation containing associated account details. HTTP 200 confirms the token is 
         valid; 401 indicates invalid or expired.
@@ -1367,10 +1580,6 @@ components:
           type: string
           nullable: true
           description: IP address from which the session was initiated
-        location:
-          type: string
-          nullable: true
-          description: Geographic location derived from the IP address
     DeviceInfo:
       description: Information about the client device used for authentication or session tracking
       type: object
@@ -1380,19 +1589,57 @@ components:
           allOf:
           - $ref: '#/components/schemas/DeviceType'
           nullable: true
-          description: Category of the device
+          description: Category of the device (Desktop, Mobile, Tablet, Console, Handheld)
         platform:
+          allOf:
+          - $ref: '#/components/schemas/Platform'
+          nullable: true
+          description: Operating system or platform of the client device
+        osVersion:
           type: string
           nullable: true
-          description: Operating system or platform name
-        browser:
+          maxLength: 100
+          description: Operating system version string (e.g., "Windows 11 23H2", "iOS 17.4")
+        deviceManufacturer:
           type: string
           nullable: true
-          description: Browser name and version if applicable
+          maxLength: 200
+          description: Device manufacturer (e.g., "Apple", "Sony", "Valve")
+        deviceModel:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Device model name (e.g., "iPhone 15 Pro", "PlayStation 5", "Steam Deck OLED")
         appVersion:
           type: string
           nullable: true
-          description: Version of the client application
+          maxLength: 100
+          description: Version of the client application (semantic version recommended)
+        sdkVersion:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Version of the Bannou SDK used by the client
+        engineName:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Game engine name (e.g., "Unity", "Unreal", "Godot", "Stride", "Custom")
+        engineVersion:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Game engine version (e.g., "2022.3.14f1", "5.4.1")
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+          description: >-
+            Optional key-value metadata for hardware capabilities and other client-reported
+            device properties (e.g., screen resolution, GPU name, memory). Values are strings.
+            This data is stored and published in events as-is; the auth service does not
+            read or interpret it (T29-compliant pass-through).
     PasswordResetRequest:
       description: Request to initiate a password reset by sending a reset link to the email
       type: object

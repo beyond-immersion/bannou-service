@@ -72,7 +72,7 @@ This plugin does not consume external events. No `TelemetryServiceEvents.cs` fil
 
 | Class | File | Role |
 |-------|------|------|
-| `TelemetryProvider` | `Core/TelemetryProvider.cs` | Full `ITelemetryProvider` implementation; manages `ActivitySource` and `Meter` instances per component in `ConcurrentDictionary` caches; wraps state stores with instrumented decorators |
+| `TelemetryProvider` | `Core/TelemetryProvider.cs` | Full `ITelemetryProvider` implementation; manages `ActivitySource`, `Meter`, `Counter<long>`, `Histogram<double>`, and `ObservableGauge` instances per component in `ConcurrentDictionary` caches; supports pull-based `RegisterObservableGauge<T>` (idempotent, callback-based) and push-based `RecordCounter`/`RecordHistogram`; wraps state stores with instrumented decorators |
 | `InstrumentedStateStore<T>` | `Instrumentation/InstrumentedStateStore.cs` | Decorator wrapping `IStateStore<T>` with tracing spans and counter/histogram metrics |
 | `InstrumentedCacheableStateStore<T>` | `Instrumentation/InstrumentedStateStore.cs` | Extends `InstrumentedStateStore<T>` for `ICacheableStateStore<T>` operations (sets, sorted sets, atomic counters) |
 | `InstrumentedQueryableStateStore<T>` | `Instrumentation/InstrumentedQueryableStateStore.cs` | Extends `InstrumentedStateStore<T>` for `IQueryableStateStore<T>` operations (Query, Count) |

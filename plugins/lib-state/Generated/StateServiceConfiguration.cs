@@ -122,4 +122,11 @@ public class StateServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 1, Maximum = 3600)]
     public int ErrorEventDeduplicationWindowSeconds { get; set; } = 60;
 
+    /// <summary>
+    /// Number of entries to read/write per batch during state store migration. Higher values use more memory but complete faster.
+    /// Environment variable: STATE_MIGRATION_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 10000)]
+    public int MigrationBatchSize { get; set; } = 500;
+
 }

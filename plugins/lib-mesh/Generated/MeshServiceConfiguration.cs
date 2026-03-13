@@ -125,7 +125,7 @@ public class MeshServiceConfiguration : BaseServiceConfiguration
     public int LoadBalancingStateMaxAppIds { get; set; } = 0;
 
     /// <summary>
-    /// Whether to subscribe to FullServiceMappingsEvent for routing updates
+    /// Whether to subscribe to mesh.mappings.updated events for cross-node routing sync
     /// Environment variable: MESH_ENABLE_SERVICE_MAPPING_SYNC
     /// </summary>
     public bool EnableServiceMappingSync { get; set; } = true;

@@ -1339,4 +1339,430 @@ public partial class StateController
             _ListStores_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for MigrateDryRun
+
+    private static readonly string _MigrateDryRun_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MigrateDryRunRequest",
+    "$defs": {
+        "MigrateDryRunRequest": {
+            "description": "Request to analyze a store for migration feasibility",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "destinationBackend"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Name of the state store to analyze"
+                },
+                "destinationBackend": {
+                    "$ref": "#/$defs/MigrationBackend",
+                    "description": "Target backend to migrate to"
+                }
+            }
+        },
+        "MigrationBackend": {
+            "type": "string",
+            "enum": [
+                "Redis",
+                "Mysql"
+            ],
+            "description": "Target backend type for state store migration"
+        }
+    }
+}
+""";
+
+    private static readonly string _MigrateDryRun_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MigrateDryRunResponse",
+    "$defs": {
+        "MigrateDryRunResponse": {
+            "description": "Dry-run analysis result showing migration feasibility and potential issues",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "currentBackend",
+                "destinationBackend",
+                "incompatibleFeatures",
+                "warnings",
+                "canMigrate"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "description": "Name of the analyzed store"
+                },
+                "currentBackend": {
+                    "$ref": "#/$defs/MigrationBackend",
+                    "description": "Current backend of the store"
+                },
+                "destinationBackend": {
+                    "$ref": "#/$defs/MigrationBackend",
+                    "description": "Requested target backend"
+                },
+                "keyValueEntryCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Count of key-value entries (null if Redis source \u2014 cannot enumerate efficiently)"
+                },
+                "incompatibleFeatures": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Features that cannot be migrated (e.g., sorted sets, TTL-bearing keys)"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Advisory messages (e.g., ETag format will change)"
+                },
+                "canMigrate": {
+                    "type": "boolean",
+                    "description": "Whether migration can proceed (false if same backend, store not found, or incompatible-only)"
+                }
+            }
+        },
+        "MigrationBackend": {
+            "type": "string",
+            "enum": [
+                "Redis",
+                "Mysql"
+            ],
+            "description": "Target backend type for state store migration"
+        }
+    }
+}
+""";
+
+    private static readonly string _MigrateDryRun_Info = """
+{
+    "summary": "Analyze a store and report what can and cannot be migrated",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "migrateDryRun"
+}
+""";
+
+    /// <summary>Returns endpoint information for MigrateDryRun</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/dry-run/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateDryRun_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "State",
+            "POST",
+            "/state/migrate/dry-run",
+            _MigrateDryRun_Info));
+
+    /// <summary>Returns request schema for MigrateDryRun</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/dry-run/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateDryRun_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/migrate/dry-run",
+            "request-schema",
+            _MigrateDryRun_RequestSchema));
+
+    /// <summary>Returns response schema for MigrateDryRun</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/dry-run/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateDryRun_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/migrate/dry-run",
+            "response-schema",
+            _MigrateDryRun_ResponseSchema));
+
+    /// <summary>Returns full schema for MigrateDryRun</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/dry-run/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateDryRun_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "State",
+            "POST",
+            "/state/migrate/dry-run",
+            _MigrateDryRun_Info,
+            _MigrateDryRun_RequestSchema,
+            _MigrateDryRun_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for MigrateExecute
+
+    private static readonly string _MigrateExecute_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MigrateExecuteRequest",
+    "$defs": {
+        "MigrateExecuteRequest": {
+            "description": "Request to execute a state store migration between backends",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "destinationBackend"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Name of the state store to migrate"
+                },
+                "destinationBackend": {
+                    "$ref": "#/$defs/MigrationBackend",
+                    "description": "Target backend to migrate to"
+                }
+            }
+        },
+        "MigrationBackend": {
+            "type": "string",
+            "enum": [
+                "Redis",
+                "Mysql"
+            ],
+            "description": "Target backend type for state store migration"
+        }
+    }
+}
+""";
+
+    private static readonly string _MigrateExecute_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MigrateExecuteResponse",
+    "$defs": {
+        "MigrateExecuteResponse": {
+            "description": "Result of a successful state store migration",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "entriesMigrated",
+                "durationMs"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "description": "Name of the migrated store"
+                },
+                "entriesMigrated": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of key-value entries copied"
+                },
+                "durationMs": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 0,
+                    "description": "Total elapsed time in milliseconds"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MigrateExecute_Info = """
+{
+    "summary": "Perform actual data migration between backends for a store",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "migrateExecute"
+}
+""";
+
+    /// <summary>Returns endpoint information for MigrateExecute</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/execute/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateExecute_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "State",
+            "POST",
+            "/state/migrate/execute",
+            _MigrateExecute_Info));
+
+    /// <summary>Returns request schema for MigrateExecute</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/execute/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateExecute_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/migrate/execute",
+            "request-schema",
+            _MigrateExecute_RequestSchema));
+
+    /// <summary>Returns response schema for MigrateExecute</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/execute/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateExecute_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/migrate/execute",
+            "response-schema",
+            _MigrateExecute_ResponseSchema));
+
+    /// <summary>Returns full schema for MigrateExecute</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/execute/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateExecute_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "State",
+            "POST",
+            "/state/migrate/execute",
+            _MigrateExecute_Info,
+            _MigrateExecute_RequestSchema,
+            _MigrateExecute_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for MigrateVerify
+
+    private static readonly string _MigrateVerify_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MigrateVerifyRequest",
+    "$defs": {
+        "MigrateVerifyRequest": {
+            "description": "Request to verify migration by comparing key counts between backends",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName",
+                "destinationBackend"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Name of the state store to verify"
+                },
+                "destinationBackend": {
+                    "$ref": "#/$defs/MigrationBackend",
+                    "description": "Backend to compare against current"
+                }
+            }
+        },
+        "MigrationBackend": {
+            "type": "string",
+            "enum": [
+                "Redis",
+                "Mysql"
+            ],
+            "description": "Target backend type for state store migration"
+        }
+    }
+}
+""";
+
+    private static readonly string _MigrateVerify_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MigrateVerifyResponse",
+    "$defs": {
+        "MigrateVerifyResponse": {
+            "description": "Verification result comparing key counts between source and destination backends",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "storeName"
+            ],
+            "properties": {
+                "storeName": {
+                    "type": "string",
+                    "description": "Name of the verified store"
+                },
+                "sourceKeyCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Key count in source backend (null if Redis source \u2014 cannot enumerate)"
+                },
+                "destinationKeyCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Key count in destination backend (null if Redis destination)"
+                },
+                "countsMatch": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether counts match (null if either side cannot enumerate)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MigrateVerify_Info = """
+{
+    "summary": "Compare key counts between source and destination backends",
+    "description": "",
+    "tags": [
+        "State"
+    ],
+    "deprecated": false,
+    "operationId": "migrateVerify"
+}
+""";
+
+    /// <summary>Returns endpoint information for MigrateVerify</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/verify/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateVerify_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "State",
+            "POST",
+            "/state/migrate/verify",
+            _MigrateVerify_Info));
+
+    /// <summary>Returns request schema for MigrateVerify</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/verify/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateVerify_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/migrate/verify",
+            "request-schema",
+            _MigrateVerify_RequestSchema));
+
+    /// <summary>Returns response schema for MigrateVerify</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/verify/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateVerify_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "State",
+            "POST",
+            "/state/migrate/verify",
+            "response-schema",
+            _MigrateVerify_ResponseSchema));
+
+    /// <summary>Returns full schema for MigrateVerify</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/state/migrate/verify/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateVerify_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "State",
+            "POST",
+            "/state/migrate/verify",
+            _MigrateVerify_Info,
+            _MigrateVerify_RequestSchema,
+            _MigrateVerify_ResponseSchema));
+
+    #endregion
 }

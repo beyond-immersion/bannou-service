@@ -377,7 +377,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 |---------|-------|------|----|
 | Mesh | L0 | Service-to-service invocation via YARP with circuit breaking and Redis-backed discovery | 8 |
 | Messaging | L0 | RabbitMQ pub/sub infrastructure (IMessageBus/IMessageSubscriber) with in-memory testing mode | 4 |
-| State | L0 | Unified state persistence (Redis/MySQL/SQLite/InMemory) with optimistic concurrency and specialized interfaces | 9 |
+| State | L0 | Unified state persistence (Redis/MySQL/SQLite/InMemory) with optimistic concurrency and specialized interfaces | 12 |
 | Telemetry | L0 | OpenTelemetry distributed tracing and metrics via ITelemetryProvider (optional, NullTelemetryProvider fallback) | 2 |
 | Account | L1 | Internal user account CRUD (never internet-facing; external access via Auth only) | 18 |
 | Auth | L1 | Internet-facing authentication (email, OAuth, Steam, JWT, MFA, session management) | 19 |
@@ -452,7 +452,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**76 services, 939 endpoints**
+**76 services, 942 endpoints**
 
 For full per-service details: `docs/GENERATED-*-SERVICE-DETAILS.md`
 

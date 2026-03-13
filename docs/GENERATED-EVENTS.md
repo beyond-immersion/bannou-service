@@ -518,6 +518,7 @@ This document lists all events defined in Bannou's event schemas.
 | `MeshEndpointDeregisteredEvent` | Registration | `mesh-endpoint-deregistered` | Published when an endpoint is removed from the ser... |
 | `MeshEndpointHealthCheckFailedEvent` | Custom | `mesh-endpoint-health-check-failed` | Published when a health check probe fails (before ... |
 | `MeshEndpointRegisteredEvent` | Registration | `mesh-endpoint.registered` | Published when a new endpoint is registered in the... |
+| `MeshMappingsUpdatedEvent` | Lifecycle (Updated) | `mesh-mappings.updated` | Published by Mesh when service-to-appId mappings a... |
 
 ### Obligation
 
@@ -631,6 +632,14 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `SpeciesMergedEvent` | Custom | `species-merged` | Published when two species are merged, with the so... |
+
+### State
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `StateMigrationCompletedEvent` | Custom | `state-migration-completed` | Published when a state store migration finishes su... |
+| `StateMigrationFailedEvent` | Custom | `state-migration-failed` | Published when a state store migration encounters ... |
+| `StateMigrationStartedEvent` | Custom | `state-migration-started` | Published when a state store migration begins exec... |
 
 ### Status
 

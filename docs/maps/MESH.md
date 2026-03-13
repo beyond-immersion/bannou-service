@@ -15,7 +15,7 @@
 | Layer | L0 Infrastructure |
 | Endpoints | 8 |
 | State Stores | mesh-endpoints (Redis), mesh-appid-index (Redis), mesh-global-index (Redis), mesh-circuit-breaker (Redis) |
-| Events Published | 5 (mesh.endpoint.registered, mesh.endpoint.deregistered, mesh.circuit.changed, mesh.endpoint.health.failed, mesh.endpoint.degraded) |
+| Events Published | 6 (mesh.endpoint.registered, mesh.endpoint.deregistered, mesh.circuit.changed, mesh.endpoint.health.failed, mesh.endpoint.degraded, mesh.mappings.updated) |
 | Events Consumed | 3 |
 | Client Events | 0 |
 | Background Services | 1 |
@@ -58,7 +58,7 @@
 | lib-state (`IRedisOperations`) | L0 | Hard | Lua script execution for atomic circuit breaker transitions |
 | lib-messaging (`IMessageBus`) | L0 | Hard | Publishing 5 endpoint/circuit lifecycle events |
 | lib-messaging (`IMessageSubscriber`) | L0 | Hard | Direct subscription to `mesh.circuit.changed` in `MeshInvocationClient` |
-| lib-messaging (`IEventConsumer`) | L0 | Hard | Registering `bannou.service-heartbeat` and `bannou.full-service-mappings` handlers |
+| lib-messaging (`IEventConsumer`) | L0 | Hard | Registering `bannou.service-heartbeat` and `mesh.mappings.updated` handlers |
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation (`NullTelemetryProvider` when disabled) |
 
 No service-layer dependencies. Mesh is L0 Infrastructure and explicitly avoids all service clients. `MeshInvocationClient` receives `IMeshStateManager` directly (not `IMeshClient`) to prevent circular DI dependency — all generated clients depend on `IMeshInvocationClient`.
@@ -74,6 +74,7 @@ No service-layer dependencies. Mesh is L0 Infrastructure and explicitly avoids a
 | `mesh.circuit.changed` | `MeshCircuitStateChangedEvent` | DistributedCircuitBreaker on state transitions (Closed↔Open↔HalfOpen) |
 | `mesh.endpoint.health.failed` | `MeshEndpointHealthCheckFailedEvent` | MeshHealthCheckService on probe failure (deduplicated per endpoint within `HealthCheckEventDeduplicationWindowSeconds`) |
 | `mesh.endpoint.degraded` | `MeshEndpointDegradedEvent` | HandleServiceHeartbeatAsync on Healthy→Degraded transition (deduplicated per endpoint+reason within `DegradationEventDeduplicationWindowSeconds`) |
+| `mesh.mappings.updated` | `MeshMappingsUpdatedEvent` | MeshServiceMappingReceiver after updating local IServiceAppMappingResolver (enables cross-node sync) |
 
 ---
 
@@ -82,7 +83,7 @@ No service-layer dependencies. Mesh is L0 Infrastructure and explicitly avoids a
 | Topic | Handler | Action |
 |-------|---------|--------|
 | `bannou.service-heartbeat` | `HandleServiceHeartbeatAsync` | Updates existing endpoint metrics or auto-registers new endpoints; publishes degradation event on status transition |
-| `bannou.full-service-mappings` | `HandleServiceMappingsAsync` | Atomically replaces `IServiceAppMappingResolver` mappings (version-guarded; conditional on `EnableServiceMappingSync`) |
+| `mesh.mappings.updated` | `HandleMeshMappingsUpdatedAsync` | Atomically replaces `IServiceAppMappingResolver` mappings (version-guarded; skips self-originated events; conditional on `EnableServiceMappingSync`) |
 | `mesh.circuit.changed` | `DistributedCircuitBreaker.HandleStateChangeEvent` | Updates local circuit breaker cache from other instances (via `MeshInvocationClient` direct `IMessageSubscriber` subscription, not `IEventConsumer`) |
 
 ---
@@ -102,6 +103,7 @@ No service-layer dependencies. Mesh is L0 Infrastructure and explicitly avoids a
 | `DistributedCircuitBreaker` | Redis-backed per-appId circuit breaker with local cache + event sync (internal to MeshInvocationClient) |
 | `MeshHealthCheckService` | Active endpoint health probing (BackgroundService) |
 | `LocalMeshStateManager` | In-memory state for `UseLocalRouting=true` mode (replaces MeshStateManager) |
+| `IServiceMappingReceiver` | DI interface (in `bannou-service/Providers/`) — Mesh provides default implementation (`MeshServiceMappingReceiver`) that updates local `IServiceAppMappingResolver` and broadcasts `mesh.mappings.updated` L0 events for cross-node sync. Orchestrator (L3) discovers and pushes live mapping updates into it |
 
 ---
 
@@ -275,11 +277,14 @@ ELSE // new endpoint — auto-register
 
 ---
 
-### HandleServiceMappingsAsync
-Topic: `bannou.full-service-mappings` | Guard: `EnableServiceMappingSync == true`
+### HandleMeshMappingsUpdatedAsync
+Topic: `mesh.mappings.updated` | Guard: `EnableServiceMappingSync == true`
 
 ```
 // Updates in-memory IServiceAppMappingResolver only — no state store writes
+// Receives cross-node broadcasts from MeshServiceMappingReceiver
+IF evt.SourceInstanceId == own instance ID
+  SKIP (already applied locally by DI call)
 IF evt.Version > mappingResolver.CurrentVersion
   mappingResolver.ReplaceAllMappings(mappings, defaultAppId, version)
   // Empty mappings = reset all routing to default "bannou" app-id

@@ -11,9 +11,9 @@
 |-------|-------|
 | Plugin | lib-state |
 | Layer | L0 Infrastructure |
-| Endpoints | 9 |
+| Endpoints | 12 |
 | State Stores | Self-managed (provides `IStateStoreFactory` for all services) |
-| Events Published | 0 |
+| Events Published | 3 (migration lifecycle) |
 | Events Consumed | 0 |
 | Client Events | 0 |
 | Background Services | 0 |
@@ -61,7 +61,15 @@ All store names and keys are caller-provided. The service validates store existe
 
 ## Events Published
 
-This plugin publishes no domain events. Error events (`ServiceErrorEvent`) are published via `TryPublishErrorAsync` for operational visibility on infrastructure failures only, deduplicated by `store+operation+errorType` within a configurable window (default: 60s).
+**Error events**: `ServiceErrorEvent` published via `TryPublishErrorAsync` for operational visibility on infrastructure failures, deduplicated by `store+operation+errorType` within a configurable window (default: 60s).
+
+**Migration events** (published by `StateMigrationHelper` during execute operations only — not dry-run):
+
+| Topic | Event | When |
+|-------|-------|------|
+| `state.migration.started` | `StateMigrationStartedEvent` | After validation, before first batch |
+| `state.migration.completed` | `StateMigrationCompletedEvent` | After all batches complete successfully |
+| `state.migration.failed` | `StateMigrationFailedEvent` | On unrecoverable error during migration |
 
 ## Events Consumed
 
@@ -108,6 +116,9 @@ This plugin does not consume external events.
 | BulkExistsState | POST /state/bulk-exists | [] | - | - |
 | BulkDeleteState | POST /state/bulk-delete | [] | entries | - |
 | ListStores | POST /state/list-stores | [] | - | - |
+| MigrateDryRun | POST /state/migrate/dry-run | [role: admin] | - | - |
+| MigrateExecute | POST /state/migrate/execute | [role: admin] | destination store | `state.migration.started`, `state.migration.completed`, `state.migration.failed` |
+| MigrateVerify | POST /state/migrate/verify | [role: admin] | - | - |
 
 ## Methods
 
@@ -218,6 +229,86 @@ FOREACH name in storeNames
  // Redis: null (SCAN too slow), MySQL/SQLite: COUNT(*), InMemory: O(1)
 RETURN (200, ListStoresResponse { stores: [{ name, backend, keyCount? }] })
 ```
+
+### MigrateDryRun
+POST /state/migrate/dry-run | Roles: [role: admin]
+
+Delegates to `StateMigrationHelper.AnalyzeStoreAsync`.
+
+```
+IF NOT factory.HasStore(storeName) -> 404
+currentBackend = factory.GetBackendType(storeName)
+IF currentBackend == destinationBackend -> canMigrate: false, warning
+IF store.indirectOnly -> canMigrate: false, warning
+IF store.enableSearch -> incompatible: "RedisSearch index"
+IF currentBackend != Redis -> keyCount = factory.GetKeyCountAsync(storeName)
+ELSE -> keyCount = null, warning "Redis count unavailable"
+warnings += "ETag format will change"
+IF currentBackend is Memory -> canMigrate: false, warning "unsupported source"
+RETURN (200, MigrateDryRunResponse { storeName, currentBackend, destinationBackend, keyValueEntryCount, incompatibleFeatures, warnings, canMigrate })
+```
+
+### MigrateExecute
+POST /state/migrate/execute | Roles: [role: admin]
+
+Delegates to `StateMigrationHelper.ExecuteMigrationAsync`.
+
+```
+IF NOT factory.HasStore(storeName) -> 404
+IF currentBackend == destinationBackend -> 400
+IF currentBackend is Memory -> 400
+IF store.indirectOnly -> 400
+sourceStore = factory.GetStore<object>(storeName)
+destStore = factory.CreateStoreWithBackend<object>(storeName, destBackend)
+PUBLISH state.migration.started { storeName, sourceBackend, destinationBackend, startedAt }
+TRY
+  IF source is MySQL/SQLite
+    LOOP paged via JsonQueryPagedAsync(null, offset, batchSize)
+      SaveBulkAsync to destination
+      offset += batchSize
+    UNTIL empty page
+  ELSE IF source is Redis
+    SCAN "{prefix}:*" via factory.ScanKeysAsync
+    FILTER OUT ":meta" suffix keys
+    STRIP prefix to get logical keys
+    GetAsync from source, batch SaveBulkAsync to destination
+  PUBLISH state.migration.completed { storeName, entriesMigrated, durationMs, completedAt }
+  RETURN (200, MigrateExecuteResponse { storeName, entriesMigrated, durationMs })
+CATCH
+  PUBLISH state.migration.failed { storeName, entriesProcessedBeforeFailure, error, failedAt }
+  THROW (generated controller handles 500)
+```
+
+### MigrateVerify
+POST /state/migrate/verify | Roles: [role: admin]
+
+Delegates to `StateMigrationHelper.VerifyMigrationAsync`.
+
+```
+IF NOT factory.HasStore(storeName) -> 404
+sourceKeyCount = factory.GetKeyCountAsync(storeName)  // null for Redis
+destStore = factory.CreateStoreWithBackend<object>(storeName, destBackend)
+IF destStore is IQueryableStateStore -> destKeyCount = CountAsync()
+ELSE -> destKeyCount = null  // Redis destination can't count
+countsMatch = (both non-null) ? sourceCount == destCount : null
+RETURN (200, MigrateVerifyResponse { storeName, sourceKeyCount, destinationKeyCount, countsMatch })
+```
+
+## DI Services (Migration)
+
+| Service | Role |
+|---------|------|
+| `StateMigrationHelper` | Scoped — migration analysis, execution, and verification |
+
+**StateMigrationHelper dependencies**:
+
+| Dependency | Resolution | Purpose |
+|------------|-----------|---------|
+| `IStateStoreFactory` | Constructor (cast to `StateStoreFactory`) | Internal factory methods: `CreateStoreWithBackend`, `ScanKeysAsync`, `GetKeyPrefix`, `GetStoreConfiguration` |
+| `StateServiceConfiguration` | Constructor | `MigrationBatchSize` |
+| `IMessageBus` | Lazy via `IServiceProvider` | Migration event publishing |
+| `ILogger<StateMigrationHelper>` | Constructor | Structured logging |
+| `ITelemetryProvider` | Constructor | Span instrumentation |
 
 ## Background Services
 

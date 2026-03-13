@@ -136,12 +136,10 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateSubscriptionResponse\"\
         ,\n    \"$defs\": {\n        \"CreateSubscriptionResponse\": {\n            \"description\": \"Response containing
         the created subscription details\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"subscriptionId\",\n                \"queueName\"\n            ],\n\
-        \            \"properties\": {\n                \"subscriptionId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the created
-        subscription\"\n                },\n                \"queueName\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Name of the RabbitMQ queue created for this subscription\"\n             \
-        \   }\n            }\n        }\n    }\n}"
+        \            \"required\": [\n                \"subscriptionId\"\n            ],\n            \"properties\": {\n\
+        \                \"subscriptionId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique identifier for the created subscription\"\n           \
+        \     }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a dynamic subscription to a topic\",\n    \"description\": \"\"\
         ,\n    \"tags\": [\n        \"Messaging\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createSubscription\"\
         \n}"
@@ -355,15 +353,11 @@ components:
       additionalProperties: false
       required:
       - subscriptionId
-      - queueName
       properties:
         subscriptionId:
           type: string
           format: uuid
           description: Unique identifier for the created subscription
-        queueName:
-          type: string
-          description: Name of the RabbitMQ queue created for this subscription
     RemoveSubscriptionRequest:
       description: Request to remove an existing subscription
       type: object

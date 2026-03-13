@@ -56,7 +56,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
 | [Seed Service API](#seed) | `client.Seed` | 24 | Generic progressive growth entity service (L2 GameFoundation... |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
-| [Bannou State Service API](#state) | `client.State` | 9 | Repository pattern state management with Redis and MySQL bac... |
+| [Bannou State Service API](#state) | `client.State` | 12 | Repository pattern state management with Redis and MySQL bac... |
 | [Status Service API](#status) | `client.Status` | 19 | Unified entity effects query layer for temporary contract-ma... |
 | [Storyline Composer API](#storyline) | `client.Storyline` | 16 | Seeded narrative generation from compressed archives using t... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
@@ -2299,6 +2299,9 @@ Repository pattern state management with Redis and MySQL backends.
 | `BulkexistsstateAsync` | `BulkExistsStateRequest` | `BulkExistsStateResponse` | Check existence of multiple keys |
 | `BulkdeletestateAsync` | `BulkDeleteStateRequest` | `BulkDeleteStateResponse` | Delete multiple keys |
 | `ListStoresAsync` | `ListStoresRequest` | `ListStoresResponse` | List configured state stores |
+| `MigratedryrunAsync` | `MigrateDryRunRequest` | `MigrateDryRunResponse` | Analyze a store and report what can and cannot be migrated |
+| `MigrateexecuteAsync` | `MigrateExecuteRequest` | `MigrateExecuteResponse` | Perform actual data migration between backends for a store |
+| `MigrateverifyAsync` | `MigrateVerifyRequest` | `MigrateVerifyResponse` | Compare key counts between source and destination backends |
 
 ---
 
@@ -2627,7 +2630,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 56
-- **Total methods**: 920
+- **Total methods**: 923
 
 ---
 

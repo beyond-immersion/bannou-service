@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
@@ -20,6 +21,7 @@ public partial class StateService : IStateService
     private readonly StateServiceConfiguration _configuration;
     private readonly IServiceProvider _serviceProvider;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly StateMigrationHelper _migrationHelper;
 
     /// <summary>
     /// Lazily resolved IMessageBus. State loads before Messaging in L0 infrastructure order,
@@ -32,12 +34,14 @@ public partial class StateService : IStateService
         ILogger<StateService> logger,
         StateServiceConfiguration configuration,
         IServiceProvider serviceProvider,
-        IStateStoreFactory stateStoreFactory)
+        IStateStoreFactory stateStoreFactory,
+        StateMigrationHelper migrationHelper)
     {
         _logger = logger;
         _configuration = configuration;
         _serviceProvider = serviceProvider;
         _stateStoreFactory = stateStoreFactory;
+        _migrationHelper = migrationHelper;
     }
 
     /// <inheritdoc />
@@ -444,6 +448,39 @@ public partial class StateService : IStateService
 
         _logger.LogDebug("Listed {Count} state stores (includeStats={IncludeStats})", stores.Count, includeStats);
         return (StatusCodes.OK, new ListStoresResponse { Stores = stores });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, MigrateDryRunResponse?)> MigrateDryRunAsync(
+        MigrateDryRunRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Migration dry-run requested for store {StoreName} to {Destination}",
+            body.StoreName, body.DestinationBackend);
+
+        return await _migrationHelper.AnalyzeStoreAsync(body.StoreName, body.DestinationBackend, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, MigrateExecuteResponse?)> MigrateExecuteAsync(
+        MigrateExecuteRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Migration execute requested for store {StoreName} to {Destination}",
+            body.StoreName, body.DestinationBackend);
+
+        return await _migrationHelper.ExecuteMigrationAsync(body.StoreName, body.DestinationBackend, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, MigrateVerifyResponse?)> MigrateVerifyAsync(
+        MigrateVerifyRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Migration verify requested for store {StoreName} against {Destination}",
+            body.StoreName, body.DestinationBackend);
+
+        return await _migrationHelper.VerifyMigrationAsync(body.StoreName, body.DestinationBackend, cancellationToken);
     }
 
     #region Permission Registration

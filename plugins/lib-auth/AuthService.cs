@@ -11,6 +11,7 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -49,6 +50,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
     private readonly IEdgeRevocationService _edgeRevocationService;
     private readonly IEmailService _emailService;
     private readonly IMfaService _mfaService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public AuthService(
         IAccountClient accountClient,
@@ -65,7 +67,8 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         IEdgeRevocationService edgeRevocationService,
         IEmailService emailService,
         IMfaService mfaService,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IHttpContextAccessor httpContextAccessor)
     {
         _accountClient = accountClient;
         _messageBus = messageBus;
@@ -80,6 +83,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         _edgeRevocationService = edgeRevocationService;
         _emailService = emailService;
         _mfaService = mfaService;
+        _httpContextAccessor = httpContextAccessor;
 
         // Constructor-cache state stores per FOUNDATION TENETS
         _authCacheStore = stateStoreFactory.GetCacheableStore<SessionDataModel>(StateStoreDefinitions.Auth);
@@ -113,6 +117,35 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         }
     }
 
+    /// <summary>
+    /// Extracts the client IP address from the current HTTP request.
+    /// Respects X-Forwarded-For and X-Real-IP headers from reverse proxies (OpenResty, NGINX).
+    /// Falls back to the direct connection remote IP address.
+    /// </summary>
+    private string? GetClientIpAddress()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext is null) return null;
+
+        // X-Real-IP is set by NGINX/OpenResty directly from the connection remote address —
+        // this is the most trustworthy header (proxy-controlled, not client-injectable)
+        var realIp = httpContext.Request.Headers["X-Real-IP"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(realIp)) return realIp;
+
+        // X-Forwarded-For: "client, proxy1, proxy2" — the LAST entry is appended by our trusted
+        // proxy; earlier entries may be client-forged. Take the last entry.
+        var forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(forwardedFor))
+        {
+            var parts = forwardedFor.Split(',', StringSplitOptions.TrimEntries);
+            var lastIp = parts[^1];
+            if (!string.IsNullOrWhiteSpace(lastIp)) return lastIp;
+        }
+
+        // Direct connection fallback (no proxy)
+        return httpContext.Connection.RemoteIpAddress?.ToString();
+    }
+
     /// <inheritdoc/>
     public async Task<(StatusCodes, LoginResponse?)> LoginAsync(
         LoginRequest body,
@@ -125,6 +158,9 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
             return (StatusCodes.BadRequest, null);
         }
 
+        // Extract client IP once for all event publishing in this request
+        var clientIp = GetClientIpAddress();
+
         // Rate limiting: check failed login attempts before any expensive operations
         var normalizedEmail = body.Email.Trim().ToLowerInvariant();
         var rateLimitKey = $"login-attempts:{normalizedEmail}";
@@ -133,7 +169,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         if (currentAttempts.HasValue && currentAttempts.Value >= _configuration.MaxLoginAttempts)
         {
             _logger.LogWarning("Rate limit exceeded ({Attempts} attempts)", currentAttempts.Value);
-            await PublishLoginFailedEventAsync(UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.RateLimited);
+            await PublishLoginFailedEventAsync(UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.RateLimited, ipAddress: clientIp);
             // Return Unauthorized (not a dedicated 429) to avoid leaking rate-limit state to attackers.
             // The audit event carries the RateLimited reason for internal monitoring.
             return (StatusCodes.Unauthorized, null);
@@ -158,7 +194,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         {
             // Account not found - return Unauthorized (don't reveal whether account exists)
             _logger.LogWarning("Account not found for provided email");
-            await PublishLoginFailedEventAsync(UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.AccountNotFound);
+            await PublishLoginFailedEventAsync(UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.AccountNotFound, ipAddress: clientIp);
             // Increment rate limit counter even for non-existent accounts to prevent enumeration
             await IncrementLoginAttemptCounterAsync(_authCacheStore, rateLimitKey, cancellationToken);
             return (StatusCodes.Unauthorized, null);
@@ -183,7 +219,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         {
             _logger.LogWarning("Password verification failed for account {AccountId}", account.AccountId);
             await IncrementLoginAttemptCounterAsync(_authCacheStore, rateLimitKey, cancellationToken);
-            await PublishLoginFailedEventAsync(account.DisplayName ?? UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.InvalidCredentials, account.AccountId, attemptCount: (int?)((currentAttempts ?? 0) + 1));
+            await PublishLoginFailedEventAsync(account.DisplayName ?? UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.InvalidCredentials, account.AccountId, attemptCount: (int?)((currentAttempts ?? 0) + 1), ipAddress: clientIp);
             return (StatusCodes.Unauthorized, null);
         }
 
@@ -194,7 +230,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         // Check if MFA is enabled for this account
         if (account.MfaEnabled)
         {
-            var challengeToken = await _mfaService.CreateMfaChallengeAsync(account.AccountId, cancellationToken);
+            var challengeToken = await _mfaService.CreateMfaChallengeAsync(account.AccountId, body.DeviceInfo, clientIp, cancellationToken);
             _logger.LogInformation("MFA required for account {AccountId}, challenge issued", account.AccountId);
 
             return (StatusCodes.OK, new LoginResponse
@@ -206,7 +242,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         }
 
         // No MFA - proceed with full token generation
-        var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+        var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, body.DeviceInfo, clientIp, cancellationToken);
 
         var refreshToken = _tokenService.GenerateRefreshToken();
 
@@ -216,7 +252,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         _logger.LogInformation("Successfully authenticated user: {AccountId}", account.AccountId);
 
         // Publish audit event for successful login
-        await PublishLoginSuccessfulEventAsync(account.AccountId, account.DisplayName ?? UNKNOWN_DISPLAY_NAME, sessionId);
+        await PublishLoginSuccessfulEventAsync(account.AccountId, account.DisplayName ?? UNKNOWN_DISPLAY_NAME, sessionId, body.DeviceInfo, clientIp);
 
         return (StatusCodes.OK, new LoginResponse
         {
@@ -285,8 +321,10 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
             return (StatusCodes.InternalServerError, null);
         }
 
+        var clientIp = GetClientIpAddress();
+
         // Generate tokens (returns both accessToken and sessionId for event publishing)
-        var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(accountResult, cancellationToken);
+        var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(accountResult, body.DeviceInfo, clientIp, cancellationToken);
         var refreshToken = _tokenService.GenerateRefreshToken();
 
         // Store refresh token
@@ -296,7 +334,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
             body.Username, accountResult.AccountId);
 
         // Publish audit event for successful registration
-        await PublishRegistrationSuccessfulEventAsync(accountResult.AccountId, body.Username, body.Email, sessionId);
+        await PublishRegistrationSuccessfulEventAsync(accountResult.AccountId, body.Username, body.Email, sessionId, body.DeviceInfo, clientIp);
 
         return (StatusCodes.OK, new RegisterResponse
         {
@@ -354,8 +392,10 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
             return (StatusCodes.InternalServerError, null);
         }
 
+        var clientIp = GetClientIpAddress();
+
         // Generate tokens (returns both accessToken and sessionId for event publishing)
-        var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+        var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, body.DeviceInfo, clientIp, cancellationToken);
         var refreshToken = _tokenService.GenerateRefreshToken();
         await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
@@ -364,7 +404,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
 
         // Publish audit event for successful OAuth login
         var providerId = userInfo.ProviderId ?? throw new InvalidOperationException($"OAuth user info missing ProviderId after successful exchange for provider {provider}");
-        await PublishOAuthLoginSuccessfulEventAsync(account.AccountId, provider, providerId, sessionId, isNewAccount);
+        await PublishOAuthLoginSuccessfulEventAsync(account.AccountId, provider, providerId, sessionId, isNewAccount, body.DeviceInfo, clientIp);
 
         return (StatusCodes.OK, new AuthResponse
         {
@@ -431,15 +471,17 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
             return (StatusCodes.InternalServerError, null);
         }
 
+        var clientIp = GetClientIpAddress();
+
         // Generate tokens (returns both accessToken and sessionId for event publishing)
-        var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+        var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, body.DeviceInfo, clientIp, cancellationToken);
         var refreshToken = _tokenService.GenerateRefreshToken();
         await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
         _logger.LogInformation("Steam authentication successful for account {AccountId}", account.AccountId);
 
         // Publish audit event for successful Steam login
-        await PublishSteamLoginSuccessfulEventAsync(account.AccountId, steamId, sessionId, isNewAccount);
+        await PublishSteamLoginSuccessfulEventAsync(account.AccountId, steamId, sessionId, isNewAccount, body.DeviceInfo, clientIp);
 
         return (StatusCodes.OK, new AuthResponse
         {
@@ -505,7 +547,8 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         }
 
         // Generate new tokens (sessionId not used for refresh - no audit event needed)
-        var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+        var clientIp = GetClientIpAddress();
+        var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, body.DeviceInfo, clientIp, cancellationToken);
         var newRefreshToken = _tokenService.GenerateRefreshToken();
 
         // Store new refresh token and remove old one
@@ -924,7 +967,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         _logger.LogInformation("Password reset successful for account {AccountId}", resetData.AccountId);
 
         // Publish audit event for successful password reset
-        await PublishPasswordResetSuccessfulEventAsync(resetData.AccountId);
+        await PublishPasswordResetSuccessfulEventAsync(resetData.AccountId, GetClientIpAddress());
 
         return StatusCodes.OK;
     }
@@ -1311,24 +1354,26 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         MfaVerifyRequest body,
         CancellationToken cancellationToken = default)
     {
-        // Consume challenge token (single-use)
-        var accountId = await _mfaService.ConsumeMfaChallengeAsync(body.ChallengeToken, cancellationToken);
-        if (accountId == null)
+        // Consume challenge token (single-use) — returns accountId and preserved DeviceInfo
+        var challengeResult = await _mfaService.ConsumeMfaChallengeAsync(body.ChallengeToken, cancellationToken);
+        if (challengeResult == null)
         {
             _logger.LogWarning("MFA verify failed: challenge token not found or expired");
             return (StatusCodes.Unauthorized, null);
         }
+
+        var (accountId, challengeDeviceInfo, challengeIpAddress) = (challengeResult.Value.accountId, challengeResult.Value.deviceInfo, challengeResult.Value.ipAddress);
 
         // Get account
         AccountResponse account;
         try
         {
             account = await _accountClient.GetAccountAsync(
-                new GetAccountRequest { AccountId = accountId.Value }, cancellationToken);
+                new GetAccountRequest { AccountId = accountId }, cancellationToken);
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            _logger.LogError("Account {AccountId} not found during MFA verify (should not happen)", accountId.Value);
+            _logger.LogError("Account {AccountId} not found during MFA verify (should not happen)", accountId);
             return (StatusCodes.InternalServerError, null);
         }
 
@@ -1349,8 +1394,8 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
             var secret = _mfaService.DecryptSecret(encryptedSecret);
             if (!_mfaService.ValidateTotp(secret, body.TotpCode))
             {
-                _logger.LogWarning("MFA verify failed: invalid TOTP code for account {AccountId}", accountId.Value);
-                await PublishMfaFailedEventAsync(accountId.Value, MfaVerificationMethod.Totp, MfaFailedReason.InvalidCode);
+                _logger.LogWarning("MFA verify failed: invalid TOTP code for account {AccountId}", accountId);
+                await PublishMfaFailedEventAsync(accountId, MfaVerificationMethod.Totp, MfaFailedReason.InvalidCode);
                 return (StatusCodes.BadRequest, null);
             }
         }
@@ -1363,8 +1408,8 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
 
             if (!valid)
             {
-                _logger.LogWarning("MFA verify failed: invalid recovery code for account {AccountId}", accountId.Value);
-                await PublishMfaFailedEventAsync(accountId.Value, MfaVerificationMethod.RecoveryCode, MfaFailedReason.InvalidCode);
+                _logger.LogWarning("MFA verify failed: invalid recovery code for account {AccountId}", accountId);
+                await PublishMfaFailedEventAsync(accountId, MfaVerificationMethod.RecoveryCode, MfaFailedReason.InvalidCode);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -1374,7 +1419,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
 
             if (hashedCodes.Count == 0)
             {
-                _logger.LogWarning("Account {AccountId} has used all recovery codes", accountId.Value);
+                _logger.LogWarning("Account {AccountId} has used all recovery codes", accountId);
             }
 
             // Update recovery codes in account (retry on 409 Conflict)
@@ -1385,7 +1430,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
                 {
                     await _accountClient.UpdateMfaAsync(new UpdateMfaRequest
                     {
-                        AccountId = accountId.Value,
+                        AccountId = accountId,
                         MfaEnabled = true,
                         MfaSecret = account.MfaSecret,
                         MfaRecoveryCodes = hashedCodes
@@ -1397,7 +1442,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
                     // Re-fetch account for fresh recovery codes, re-verify, and retry
                     _logger.LogDebug("Conflict on recovery code update, retrying (attempt {Attempt})", attempt + 1);
                     account = await _accountClient.GetAccountAsync(
-                        new GetAccountRequest { AccountId = accountId.Value }, cancellationToken);
+                        new GetAccountRequest { AccountId = accountId }, cancellationToken);
                     hashedCodes = account.MfaRecoveryCodes?.ToList() ?? new List<string>();
                     var (reValid, reIndex) = _mfaService.VerifyRecoveryCode(body.RecoveryCode ?? string.Empty, hashedCodes);
                     if (reValid)
@@ -1409,18 +1454,18 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
             }
         }
 
-        // MFA verified - generate full tokens
-        var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+        // MFA verified - generate full tokens (DeviceInfo and IP preserved from original login via challenge data)
+        var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, challengeDeviceInfo, challengeIpAddress, cancellationToken);
         var refreshToken = _tokenService.GenerateRefreshToken();
-        await _tokenService.StoreRefreshTokenAsync(accountId.Value, refreshToken, cancellationToken);
+        await _tokenService.StoreRefreshTokenAsync(accountId, refreshToken, cancellationToken);
 
-        _logger.LogInformation("MFA verification successful for account {AccountId} via {Method}", accountId.Value, method);
-        await PublishMfaVerifiedEventAsync(accountId.Value, method, sessionId, recoveryCodesRemaining);
-        await PublishLoginSuccessfulEventAsync(accountId.Value, account.DisplayName ?? UNKNOWN_DISPLAY_NAME, sessionId);
+        _logger.LogInformation("MFA verification successful for account {AccountId} via {Method}", accountId, method);
+        await PublishMfaVerifiedEventAsync(accountId, method, sessionId, recoveryCodesRemaining, challengeDeviceInfo, challengeIpAddress);
+        await PublishLoginSuccessfulEventAsync(accountId, account.DisplayName ?? UNKNOWN_DISPLAY_NAME, sessionId, challengeDeviceInfo, challengeIpAddress);
 
         return (StatusCodes.OK, new AuthResponse
         {
-            AccountId = accountId.Value,
+            AccountId = accountId,
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             ExpiresIn = _configuration.JwtExpirationMinutes * 60,
@@ -1470,7 +1515,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         }
 
         // Mock providers don't need audit events - discard sessionId
-        var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+        var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken: cancellationToken);
         var refreshToken = _tokenService.GenerateRefreshToken();
         await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
@@ -1499,7 +1544,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         }
 
         // Mock providers don't need audit events - discard sessionId
-        var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+        var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken: cancellationToken);
         var refreshToken = _tokenService.GenerateRefreshToken();
         await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
@@ -1672,23 +1717,12 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
             details: details);
     }
 
-    // Auth audit event topics
     private const string UNKNOWN_DISPLAY_NAME = "(unknown)";
-    private const string AUTH_LOGIN_SUCCESSFUL_TOPIC = "auth.login.successful";
-    private const string AUTH_LOGIN_FAILED_TOPIC = "auth.login.failed";
-    private const string AUTH_REGISTRATION_SUCCESSFUL_TOPIC = "auth.registration.successful";
-    private const string AUTH_OAUTH_SUCCESSFUL_TOPIC = "auth.oauth.successful";
-    private const string AUTH_STEAM_SUCCESSFUL_TOPIC = "auth.steam.successful";
-    private const string AUTH_PASSWORD_RESET_SUCCESSFUL_TOPIC = "auth.password-reset.successful";
-    private const string AUTH_MFA_ENABLED_TOPIC = "auth.mfa.enabled";
-    private const string AUTH_MFA_DISABLED_TOPIC = "auth.mfa.disabled";
-    private const string AUTH_MFA_VERIFIED_TOPIC = "auth.mfa.verified";
-    private const string AUTH_MFA_FAILED_TOPIC = "auth.mfa.failed";
 
     /// <summary>
     /// Publish AuthLoginSuccessfulEvent for security audit trail.
     /// </summary>
-    private async Task PublishLoginSuccessfulEventAsync(Guid accountId, string username, Guid sessionId)
+    private async Task PublishLoginSuccessfulEventAsync(Guid accountId, string username, Guid sessionId, DeviceInfo? deviceInfo = null, string? ipAddress = null)
     {
         try
         {
@@ -1698,7 +1732,9 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
                 Username = username,
-                SessionId = sessionId
+                SessionId = sessionId,
+                DeviceInfo = deviceInfo,
+                IpAddress = ipAddress
             };
 
             await _messageBus.PublishAuthLoginSuccessfulAsync(eventModel);
@@ -1714,14 +1750,15 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            LoginSessionId = sessionId
+            LoginSessionId = sessionId,
+            IpAddress = ipAddress
         });
     }
 
     /// <summary>
     /// Publish AuthLoginFailedEvent for brute force detection and security monitoring.
     /// </summary>
-    private async Task PublishLoginFailedEventAsync(string username, AuthLoginFailedReason reason, Guid? accountId = null, int? attemptCount = null)
+    private async Task PublishLoginFailedEventAsync(string username, AuthLoginFailedReason reason, Guid? accountId = null, int? attemptCount = null, string? ipAddress = null)
     {
         try
         {
@@ -1731,7 +1768,8 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
                 Timestamp = DateTimeOffset.UtcNow,
                 Username = username,
                 Reason = reason,
-                AccountId = accountId
+                AccountId = accountId,
+                IpAddress = ipAddress
             };
 
             await _messageBus.PublishAuthLoginFailedAsync(eventModel);
@@ -1750,7 +1788,8 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AttemptCount = attemptCount
+                AttemptCount = attemptCount,
+                IpAddress = ipAddress
             });
         }
     }
@@ -1758,7 +1797,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
     /// <summary>
     /// Publish AuthRegistrationSuccessfulEvent for user onboarding analytics.
     /// </summary>
-    private async Task PublishRegistrationSuccessfulEventAsync(Guid accountId, string username, string email, Guid sessionId)
+    private async Task PublishRegistrationSuccessfulEventAsync(Guid accountId, string username, string email, Guid sessionId, DeviceInfo? deviceInfo = null, string? ipAddress = null)
     {
         try
         {
@@ -1769,7 +1808,9 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
                 AccountId = accountId,
                 Username = username,
                 Email = email,
-                SessionId = sessionId
+                SessionId = sessionId,
+                DeviceInfo = deviceInfo,
+                IpAddress = ipAddress
             };
 
             await _messageBus.PublishAuthRegistrationSuccessfulAsync(eventModel);
@@ -1784,7 +1825,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
     /// <summary>
     /// Publish AuthOAuthLoginSuccessfulEvent for OAuth provider analytics.
     /// </summary>
-    private async Task PublishOAuthLoginSuccessfulEventAsync(Guid accountId, OAuthProvider provider, string providerUserId, Guid sessionId, bool isNewAccount)
+    private async Task PublishOAuthLoginSuccessfulEventAsync(Guid accountId, OAuthProvider provider, string providerUserId, Guid sessionId, bool isNewAccount, DeviceInfo? deviceInfo = null, string? ipAddress = null)
     {
         try
         {
@@ -1796,7 +1837,9 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
                 Provider = provider,
                 ProviderUserId = providerUserId,
                 SessionId = sessionId,
-                IsNewAccount = isNewAccount
+                IsNewAccount = isNewAccount,
+                DeviceInfo = deviceInfo,
+                IpAddress = ipAddress
             };
 
             await _messageBus.PublishAuthOAuthLoginSuccessfulAsync(eventModel);
@@ -1830,7 +1873,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
     /// <summary>
     /// Publish AuthSteamLoginSuccessfulEvent for platform login analytics.
     /// </summary>
-    private async Task PublishSteamLoginSuccessfulEventAsync(Guid accountId, string steamId, Guid sessionId, bool isNewAccount)
+    private async Task PublishSteamLoginSuccessfulEventAsync(Guid accountId, string steamId, Guid sessionId, bool isNewAccount, DeviceInfo? deviceInfo = null, string? ipAddress = null)
     {
         try
         {
@@ -1841,7 +1884,9 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
                 AccountId = accountId,
                 SteamId = steamId,
                 SessionId = sessionId,
-                IsNewAccount = isNewAccount
+                IsNewAccount = isNewAccount,
+                DeviceInfo = deviceInfo,
+                IpAddress = ipAddress
             };
 
             await _messageBus.PublishAuthSteamLoginSuccessfulAsync(eventModel);
@@ -1875,7 +1920,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
     /// <summary>
     /// Publish AuthPasswordResetSuccessfulEvent for security audit trail.
     /// </summary>
-    private async Task PublishPasswordResetSuccessfulEventAsync(Guid accountId)
+    private async Task PublishPasswordResetSuccessfulEventAsync(Guid accountId, string? ipAddress = null)
     {
         try
         {
@@ -1883,7 +1928,8 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AccountId = accountId
+                AccountId = accountId,
+                IpAddress = ipAddress
             };
 
             await _messageBus.PublishAuthPasswordResetSuccessfulAsync(eventModel);
@@ -1966,7 +2012,7 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
     /// <summary>
     /// Publishes an MFA verification success audit event.
     /// </summary>
-    private async Task PublishMfaVerifiedEventAsync(Guid accountId, MfaVerificationMethod method, Guid sessionId, int? recoveryCodesRemaining)
+    private async Task PublishMfaVerifiedEventAsync(Guid accountId, MfaVerificationMethod method, Guid sessionId, int? recoveryCodesRemaining, DeviceInfo? deviceInfo = null, string? ipAddress = null)
     {
         try
         {
@@ -1977,7 +2023,9 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
                 AccountId = accountId,
                 Method = method,
                 SessionId = sessionId,
-                RecoveryCodesRemaining = recoveryCodesRemaining
+                RecoveryCodesRemaining = recoveryCodesRemaining,
+                DeviceInfo = deviceInfo,
+                IpAddress = ipAddress
             };
             await _messageBus.PublishAuthMfaVerifiedAsync(eventModel);
             _logger.LogDebug("Published AuthMfaVerifiedEvent for account {AccountId}, method {Method}", accountId, method);
