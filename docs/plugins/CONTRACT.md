@@ -34,29 +34,6 @@ Binding agreement management (L1 AppFoundation) between entities with milestone-
 
 ---
 
-### Type Field Classification
-
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `entityType` (on parties, consent, breach, termination, constraint, query) | A (Entity Reference) | `EntityType` enum (`$ref` to `common-api.yaml`) | Identifies which first-class Bannou entity is a contract party, breach reporter, or constraint subject |
-| `guardianType` (on lock/unlock/transfer requests and events) | C (System State) | Opaque string (`maxLength: 64`) | System-mechanism identifier for the custody holder (e.g., `"escrow"`); not an entity type -- identifies the *kind of guardian system*, of which there may be only a few but they are not Bannou entities |
-| `ContractStatus` | C (System State) | Service-specific enum | Finite state machine states (`draft`, `proposed`, `pending`, `active`, `fulfilled`, `terminated`, `expired`, `declined`) |
-| `MilestoneStatus` | C (System State) | Service-specific enum | Finite milestone lifecycle states (`pending`, `active`, `completed`, `failed`, `skipped`) |
-| `BreachType` | C (System State) | Service-specific enum | Finite breach categories (`term_violation`, `milestone_missed`, `milestone_deadline`, `non_payment`) |
-| `BreachStatus` | C (System State) | Service-specific enum | Finite breach lifecycle states (`detected`, `cure_period`, `cured`, `escalated`, `forgiven`) |
-| `ConsentStatus` | C (System State) | Service-specific enum | Finite consent states (`pending`, `consented`, `declined`, `implicit`) |
-| `EnforcementMode` | C (System State) | Service-specific enum | Finite enforcement behavior modes (`advisory`, `event_only`, `consequence_based`, `community`) |
-| `TerminationPolicy` | C (System State) | Service-specific enum | Finite termination rule modes (`mutual_consent`, `unilateral_with_notice`, `unilateral_immediate`, `non_terminable`) |
-| `PaymentSchedule` | C (System State) | Service-specific enum | Finite payment timing modes (`one_time`, `recurring`, `milestone_based`) |
-| `ConstraintType` | C (System State) | Service-specific enum | Finite constraint check types (`exclusivity`, `non_compete`, `time_commitment`) |
-| `MetadataType` | C (System State) | Service-specific enum | Finite metadata partition types (`instance_data`, `runtime_state`) |
-| `MilestoneDeadlineBehavior` | C (System State) | Service-specific enum | Finite deadline handling modes (`skip`, `warn`, `breach`) |
-| `ValidationOutcome` | C (System State) | Service-specific enum | Finite prebound API validation results (`success`, `failure`, `transient_failure`) |
-| `TimeCommitmentType` | C (System State) | Service-specific enum | Finite time commitment modes (`exclusive`, `shared`, `flexible`, `fire_and_forget`) |
-| `ClauseCategory` | C (System State) | Service-specific enum | Finite clause handler categories (validation, execution, or both) |
-
----
-
 ## Configuration
 
 | Property | Env Var | Default | Purpose |
@@ -312,7 +289,7 @@ Prebound API Batched Execution
 
 ## Stubs & Unimplemented Features
 
-1. **CleanDeprecatedContractTemplatesAsync** (`POST /contract/template/clean-deprecated`): Schema-defined and generated (controller + interface) but service implementation throws `NotImplementedException`. Sweeps deprecated contract templates with zero remaining contract instances. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) / `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds) from `common-api.yaml`. Permissions: `[role: admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
+*No stubs remaining. `CleanDeprecatedContractTemplatesAsync` was implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` as of 2026-03-13.*
 
 ---
 
@@ -322,6 +299,29 @@ Prebound API Batched Execution
 <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/458 -->
 2. **Template inheritance**: Allow templates to extend other templates, inheriting milestones, terms, and party roles with overrides. ([#459](https://github.com/beyond-immersion/bannou-service/issues/459))
 <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/459 -->
+
+---
+
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `entityType` (on parties, consent, breach, termination, constraint, query) | A (Entity Reference) | `EntityType` enum (`$ref` to `common-api.yaml`) | Identifies which first-class Bannou entity is a contract party, breach reporter, or constraint subject |
+| `guardianType` (on lock/unlock/transfer requests and events) | Hierarchy Isolation (T14 Test 2) | Opaque string (`maxLength: 64`) | System-mechanism identifier for the custody holder (e.g., `"escrow"`). Contract (L1) cannot enumerate which L4 systems act as guardians — opaque string prevents upward enumeration per FOUNDATION TENETS |
+| `ContractStatus` | C (System State) | Service-specific enum | Finite state machine states (`draft`, `proposed`, `pending`, `active`, `fulfilled`, `terminated`, `expired`, `declined`) |
+| `MilestoneStatus` | C (System State) | Service-specific enum | Finite milestone lifecycle states (`pending`, `active`, `completed`, `failed`, `skipped`) |
+| `BreachType` | C (System State) | Service-specific enum | Finite breach categories (`term_violation`, `milestone_missed`, `milestone_deadline`, `non_payment`) |
+| `BreachStatus` | C (System State) | Service-specific enum | Finite breach lifecycle states (`detected`, `cure_period`, `cured`, `escalated`, `forgiven`) |
+| `ConsentStatus` | C (System State) | Service-specific enum | Finite consent states (`pending`, `consented`, `declined`, `implicit`) |
+| `EnforcementMode` | C (System State) | Service-specific enum | Finite enforcement behavior modes (`advisory`, `event_only`, `consequence_based`, `community`) |
+| `TerminationPolicy` | C (System State) | Service-specific enum | Finite termination rule modes (`mutual_consent`, `unilateral_with_notice`, `unilateral_immediate`, `non_terminable`) |
+| `PaymentSchedule` | C (System State) | Service-specific enum | Finite payment timing modes (`one_time`, `recurring`, `milestone_based`) |
+| `ConstraintType` | C (System State) | Service-specific enum | Finite constraint check types (`exclusivity`, `non_compete`, `time_commitment`) |
+| `MetadataType` | C (System State) | Service-specific enum | Finite metadata partition types (`instance_data`, `runtime_state`) |
+| `MilestoneDeadlineBehavior` | C (System State) | Service-specific enum | Finite deadline handling modes (`skip`, `warn`, `breach`) |
+| `ValidationOutcome` | C (System State) | Service-specific enum | Finite prebound API validation results (`success`, `failure`, `transient_failure`) |
+| `TimeCommitmentType` | C (System State) | Service-specific enum | Finite time commitment modes (`exclusive`, `shared`, `flexible`, `fire_and_forget`) |
+| `ClauseCategory` | C (System State) | Service-specific enum | Finite clause handler categories (validation, execution, or both) |
 
 ---
 
@@ -361,7 +361,7 @@ The contract service uses a **hybrid lazy + background** approach for both contr
 
 1. **Primary: Lazy Enforcement** - When `GetContractInstanceStatus` is called, the service checks if the contract has passed its `effectiveUntil` date (transitions to Expired) and if any active milestones are overdue (applies configured `DeadlineBehavior`). `GetMilestone` also triggers lazy milestone enforcement. `ConsentToContract` checks consent deadline expiration.
 
-2. **Backup: Background Service** - `ContractExpirationService` runs every `MilestoneDeadlineCheckIntervalSeconds` (default 5 minutes), calling `GetContractInstanceStatusAsync` for each active contract which triggers lazy enforcement of both expiration types in a single pass.
+2. **Backup: Background Service** - `ContractExpirationService` runs every `MilestoneDeadlineCheckIntervalSeconds` (default 5 minutes) in two phases. Phase 1: iterates `status-idx:Pending` contracts, calling `GetContractInstanceStatusAsync` to trigger Pending→Active lazy transitions. Phase 2: iterates `status-idx:Active` contracts, calling `GetContractInstanceStatusAsync` (triggers Active→Expired and overdue milestone enforcement), then checks payment schedules — if `NextPaymentDue <= now`, publishes `contract.payment.due` and advances `NextPaymentDue` to the next interval.
 
 ### Deadline Behavior
 
@@ -430,6 +430,7 @@ When a clause execution fails:
 ### Design Considerations (Requires Planning)
 
 1. **Per-milestone onApiFailure flag** ([#246](https://github.com/beyond-immersion/bannou-service/issues/246)): Currently prebound API failures are always non-blocking. Adding a per-milestone flag would require API schema changes (new field on MilestoneDefinition), model regeneration, and careful design of retry semantics. Requires design discussion before implementation.
+
 <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/246 -->
 
 
@@ -441,7 +442,7 @@ This section tracks active development work using AUDIT markers.
 
 ### Active Work
 
-*None currently tracked.*
+- **Implementation map party-idx inaccuracy**: Map pseudocode for `TerminateContractInstance` and `CompleteMilestone` (Fulfilled transition) shows `party-idx` removal on terminal transitions, but code verification (2026-03-13) confirmed no terminal transition removes party-idx entries. Only `DeleteContractInstance` removes party-idx. Map pseudocode for these methods needs correction during next `/map-plugin contract` run.
 
 ### Completed
 

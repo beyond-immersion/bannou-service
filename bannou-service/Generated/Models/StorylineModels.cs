@@ -2782,6 +2782,56 @@ public partial class GetScenarioHistoryResponse
 }
 
 /// <summary>
+/// Request to delete a scenario execution instance
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteScenarioExecutionRequest
+{
+
+    /// <summary>
+    /// Execution instance to delete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("executionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ExecutionId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from deleting a scenario execution
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteScenarioExecutionResponse
+{
+
+    /// <summary>
+    /// Deleted execution instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("executionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ExecutionId { get; set; } = default!;
+
+    /// <summary>
+    /// Scenario definition that was referenced
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ScenarioId { get; set; } = default!;
+
+    /// <summary>
+    /// Code of the referenced scenario
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ScenarioCode { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to get storyline data for compression
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

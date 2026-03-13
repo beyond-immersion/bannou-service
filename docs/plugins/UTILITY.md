@@ -687,6 +687,8 @@ Everything. This is a pre-implementation specification. No schema, no generated 
 
 8. **DI-based flow modifiers via `IUtilityFlowModifierProvider`**: Allow L4 services to affect flow calculations without Utility depending on them. Environment could reduce flow during storms, Faction could impose flow restrictions in disputed territory, Divine could boost flow as a blessing effect.
 
+9. **Bulk infrastructure seeding endpoint**: New realms need initial infrastructure. A bulk seed endpoint that accepts a list of connections + sources in one call, creates them all, then triggers a single coverage recalculation would avoid N recalculations during world setup.
+
 ---
 
 ## Variable Provider Factory
@@ -903,33 +905,41 @@ Implement `IUtilityFlowModifierProvider` interface in `bannou-service/Providers/
 
 ### Bugs (Fix Immediately)
 
-*(None -- pre-implementation)*
+1. **MaintenanceExpirationWorker pattern inconsistency**: The deep dive describes MaintenanceExpirationWorker as event-triggered (`worldstate.day-changed`) but also specifies a startup delay config property (`MaintenanceExpirationWorkerStartupDelaySeconds`). Event-triggered handlers are registered via `IEventConsumer` in `ServiceEvents.cs` and do not have startup delays or polling intervals — those are `BackgroundService` polling loop concerns (per Foundation Tenets service implementation pattern). The design must choose one pattern: either it is a `BackgroundService` with its own polling interval (and removes the event trigger), or it is an event handler (and removes the startup delay config property). A single worker cannot be both event-driven and polling. If event-driven, the handler simply processes the event when received; if polling, it queries for expired requests on its own schedule.
 
 ### Intentional Quirks (Documented Behavior)
 
-*(None -- pre-implementation)*
+1. **Bidirectional network cycles**: Power grids are naturally bidirectional with cycles. The BFS flow calculator handles this by tracking visited nodes and detecting cycles to prevent infinite traversal. `MaxFlowCalculationDepth` provides a configurable safety bound.
+
+2. **Connection condition vs. binary status**: Some network types have proportional flow reduction (water pipe at 50% condition delivers 50% flow). Others are binary (a bridge either works or doesn't). The `conditionFlowMultiplier` boolean flag on network type controls this behavior.
+
+3. **No direct player interaction**: Utility is internal-only. Players experience infrastructure through its effects (water available, power out) and through NPCs reacting to infrastructure state. Players may direct construction via Organization management, but they don't call Utility APIs directly. All endpoints use `x-permissions: []` (service-to-service only) or `x-permissions: [role: admin]` for administrative operations.
 
 ### Design Considerations (Requires Planning)
 
-1. **Flow calculation is O(V + E) per network**: For a network with 10,000 connections and 5,000 locations, recalculation is ~15,000 operations. With debouncing (2s default) and caching (5min TTL), this should handle frequent topology changes. At scale, consider per-subgraph recalculation (only recompute the affected subtree, not the entire network). **Multi-instance safety**: `CoverageRecalculationDebounceMs` operates per-instance as a best-effort optimization. In multi-instance deployments, multiple instances may independently trigger recalculation after the debounce window. The distributed lock on `lock:coverage:{networkTypeCode}` serializes actual recalculation execution, ensuring correctness. The debounce reduces unnecessary lock contention and redundant computation but is not a correctness mechanism. This is IMPLEMENTATION TENETS compliant: the authoritative serialization is the distributed lock, not the in-memory timer. Design decision on local vs Redis-based debounce tracked in #633. AUDIT:NEEDS_DESIGN
+1. **Flow calculation is O(V + E) per network**: For a network with 10,000 connections and 5,000 locations, recalculation is ~15,000 operations. With debouncing (2s default) and caching (5min TTL), this should handle frequent topology changes. At scale, consider per-subgraph recalculation (only recompute the affected subtree, not the entire network). **Multi-instance safety**: `CoverageRecalculationDebounceMs` operates per-instance as a best-effort optimization. In multi-instance deployments, multiple instances may independently trigger recalculation after the debounce window. The distributed lock on `lock:coverage:{networkTypeCode}` serializes actual recalculation execution, ensuring correctness. The debounce reduces unnecessary lock contention and redundant computation but is not a correctness mechanism. This is IMPLEMENTATION TENETS compliant: the authoritative serialization is the distributed lock, not the in-memory timer. Design decision on local vs Redis-based debounce tracked in #633.
+   <!-- AUDIT:NEEDS_DESIGN:2026-03-13:https://github.com/beyondimmersion/bannou-service/issues/633 -->
 
-2. **Workshop dependency mode**: Workshop is now soft (L4→L4 per service hierarchy) with manual-rate fallback when unavailable. Whether this degradation mode is optimal or whether Utility/Workshop should be operationally co-required is tracked in #628. AUDIT:NEEDS_DESIGN
+2. **Workshop dependency mode**: Workshop is now soft (L4→L4 per service hierarchy) with manual-rate fallback when unavailable. Whether this degradation mode is optimal or whether Utility/Workshop should be operationally co-required is tracked in #628.
+   <!-- AUDIT:NEEDS_DESIGN:2026-03-13:https://github.com/beyondimmersion/bannou-service/issues/628 -->
 
-3. **Junction distribution fairness**: Proportional-by-capacity is simple but may not match game design intent. Some games want priority-based distribution (military district gets water first, slums get remainder). The `IUtilityFlowModifierProvider` pattern (Phase 7) could address this by letting Faction inject priority weights. Tracked in #629. AUDIT:NEEDS_DESIGN
+3. **Junction distribution fairness**: Proportional-by-capacity is simple but may not match game design intent. Some games want priority-based distribution (military district gets water first, slums get remainder). The `IUtilityFlowModifierProvider` pattern (Phase 7) could address this by letting Faction inject priority weights. Tracked in #629.
+   <!-- AUDIT:NEEDS_DESIGN:2026-03-13:https://github.com/beyondimmersion/bannou-service/issues/629 -->
 
-4. **Coverage ratio without demand data**: If Trade (which provides demand data) is unavailable, `coverageRatio` cannot be computed. The snapshot should clearly distinguish "supply rate is 35 units/gh, demand unknown" from "supply rate is 35 units/gh, demand is 50 units/gh, ratio is 0.7." The `coverageStatus` classification should still work on absolute thresholds when demand is unknown. Tracked in #630. AUDIT:NEEDS_DESIGN
+4. **Coverage ratio without demand data**: If Trade (which provides demand data) is unavailable, `coverageRatio` cannot be computed. The snapshot should clearly distinguish "supply rate is 35 units/gh, demand unknown" from "supply rate is 35 units/gh, demand is 50 units/gh, ratio is 0.7." The `coverageStatus` classification should still work on absolute thresholds when demand is unknown. Tracked in #630.
+   <!-- AUDIT:NEEDS_DESIGN:2026-03-13:https://github.com/beyondimmersion/bannou-service/issues/630 -->
 
-5. **Bidirectional network cycles**: Power grids are naturally bidirectional with cycles. The BFS flow calculator must handle this (track visited nodes, detect cycles, prevent infinite traversal). `MaxFlowCalculationDepth` provides a safety bound.
+5. **Connection demolition semantics**: Whether demolished connections are soft-deleted (status=Demolished, record retained) or hard-deleted (record removed). Affects maintenance cleanup and event naming. Tracked in #631.
+   <!-- AUDIT:NEEDS_DESIGN:2026-03-13:https://github.com/beyondimmersion/bannou-service/issues/631 -->
 
-6. **Connection condition vs. binary status**: Some network types should have proportional flow reduction (water pipe at 50% condition delivers 50% flow). Others should be binary (a bridge either works or doesn't). The `conditionFlowMultiplier` flag on network type controls this.
+6. **disabledReason type classification**: Whether `disabledReason` on connections is a finite enum (`ConnectionDisableReason`) or game-configurable opaque string. Tracked in #632.
+    <!-- AUDIT:NEEDS_DESIGN:2026-03-13:https://github.com/beyondimmersion/bannou-service/issues/632 -->
 
-7. **Seeding infrastructure for world initialization**: New realms need initial infrastructure. Consider a bulk seed endpoint that accepts a list of connections + sources in one call, creates them all, then triggers a single coverage recalculation. Avoids N recalculations during world setup.
+7. **Missing x-references for ownership fields**: Connections and production sources have `ownerId`/`ownerType` fields referencing Organizations, Factions, Realms, etc. If an owning entity is deleted, the connection/source retains a dangling reference. Per Foundation Tenets (Resource-Managed Cleanup), dependent data must be cleaned up via lib-resource. The appropriate policy is likely DETACH (set `ownerId`/`ownerType` to null — the connection still functions, just without a designated owner). This should be declared in `x-references` when schemas are created.
 
-8. **No direct player interaction**: Utility is internal-only. Players experience infrastructure through its effects (water available, power out) and through NPCs reacting to infrastructure state. Players may direct construction via Organization management, but they don't call Utility APIs directly.
+8. **Missing x-references for workshopTaskId**: Production sources optionally reference a Workshop task via `workshopTaskId`. If the Workshop task is deleted, the source retains a dangling reference. Should be handled via lib-resource with DETACH policy (set `workshopTaskId` to null, leaving `manualRateOverride` as the rate source) or CASCADE (deregister the source entirely since its production linkage is broken). Requires a design decision on the correct policy.
 
-9. **Connection demolition semantics**: Whether demolished connections are soft-deleted (status=Demolished, record retained) or hard-deleted (record removed). Affects maintenance cleanup and event naming. Tracked in #631. AUDIT:NEEDS_DESIGN
-
-10. **disabledReason type classification**: Whether `disabledReason` on connections is a finite enum (`ConnectionDisableReason`) or game-configurable opaque string. Tracked in #632. AUDIT:NEEDS_DESIGN
+9. **Consumed events must use IEventConsumer**: The Consumed Events section lists three event subscriptions (`workshop.task.status-changed`, `worldstate.day-changed`, `environment.conditions-changed`) but does not mention `IEventConsumer` registration. Per Foundation Tenets (Event Consumer Fan-Out), all event subscriptions MUST use `IEventConsumer` — the handlers must be registered in `UtilityServiceEvents.cs` via `RegisterEventConsumers`, not via direct `IMessageSubscriber` calls.
 
 ---
 

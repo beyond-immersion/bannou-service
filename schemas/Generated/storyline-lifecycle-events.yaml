@@ -195,3 +195,184 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    ScenarioExecutionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-execution.created when a scenarioexecution is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - executionId
+      - scenarioId
+      - scenarioCode
+      - primaryCharacterId
+      - status
+      - currentPhase
+      - totalPhases
+      - triggeredAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-execution.created
+          description: 'Event type identifier: storyline.scenario-execution.created'
+        executionId: &id009
+          type: string
+          format: uuid
+          description: "Unique scenario execution instance identifier"
+        scenarioId: &id010
+          type: string
+          format: uuid
+          description: "Scenario definition this execution was created from"
+        scenarioCode: &id011
+          type: string
+          description: "Code of the scenario definition"
+        primaryCharacterId: &id012
+          type: string
+          format: uuid
+          description: "Character that triggered the scenario"
+        orchestratorId: &id013
+          type: string
+          format: uuid
+          nullable: true
+          description: "God-actor or system that orchestrated the trigger"
+        realmId: &id014
+          type: string
+          format: uuid
+          nullable: true
+          description: "Realm context for this execution"
+        gameServiceId: &id015
+          type: string
+          format: uuid
+          nullable: true
+          description: "Game service context for this execution"
+        status: &id016
+          $ref: ../storyline-api.yaml#/components/schemas/ScenarioStatus
+          description: "Current execution status"
+        currentPhase: &id017
+          type: integer
+          description: "Current phase number (1-based)"
+        totalPhases: &id018
+          type: integer
+          description: "Total number of phases in this execution"
+        triggeredAt: &id019
+          type: string
+          format: date-time
+          description: "When the scenario was triggered"
+        completedAt: &id020
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the scenario completed or failed"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was last updated (set to createdAt on creation)
+    ScenarioExecutionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-execution.updated when a scenarioexecution is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - executionId
+      - scenarioId
+      - scenarioCode
+      - primaryCharacterId
+      - status
+      - currentPhase
+      - totalPhases
+      - triggeredAt
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-execution.updated
+          description: 'Event type identifier: storyline.scenario-execution.updated'
+        executionId: *id009
+        scenarioId: *id010
+        scenarioCode: *id011
+        primaryCharacterId: *id012
+        orchestratorId: *id013
+        realmId: *id014
+        gameServiceId: *id015
+        status: *id016
+        currentPhase: *id017
+        totalPhases: *id018
+        triggeredAt: *id019
+        completedAt: *id020
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ScenarioExecutionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-execution.deleted when a scenarioexecution is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - executionId
+      - scenarioId
+      - scenarioCode
+      - primaryCharacterId
+      - status
+      - currentPhase
+      - totalPhases
+      - triggeredAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-execution.deleted
+          description: 'Event type identifier: storyline.scenario-execution.deleted'
+        executionId: *id009
+        scenarioId: *id010
+        scenarioCode: *id011
+        primaryCharacterId: *id012
+        orchestratorId: *id013
+        realmId: *id014
+        gameServiceId: *id015
+        status: *id016
+        currentPhase: *id017
+        totalPhases: *id018
+        triggeredAt: *id019
+        completedAt: *id020
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

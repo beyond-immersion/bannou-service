@@ -3349,6 +3349,265 @@ public partial class QuestController
 
     #endregion
 
+    #region Meta Endpoints for DeleteQuestInstance
+
+    private static readonly string _DeleteQuestInstance_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteQuestInstanceRequest",
+    "$defs": {
+        "DeleteQuestInstanceRequest": {
+            "type": "object",
+            "description": "Request to permanently delete a quest instance",
+            "additionalProperties": false,
+            "required": [
+                "questInstanceId"
+            ],
+            "properties": {
+                "questInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the quest instance to delete"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteQuestInstance_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QuestInstanceResponse",
+    "$defs": {
+        "QuestInstanceResponse": {
+            "type": "object",
+            "description": "Active or completed quest instance with progress information",
+            "additionalProperties": false,
+            "required": [
+                "questInstanceId",
+                "definitionId",
+                "contractInstanceId",
+                "code",
+                "name",
+                "status",
+                "questorCharacterIds",
+                "objectives",
+                "acceptedAt"
+            ],
+            "properties": {
+                "questInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique instance ID"
+                },
+                "definitionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Quest definition ID"
+                },
+                "contractInstanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Underlying contract instance ID"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Quest code"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Quest name"
+                },
+                "status": {
+                    "description": "Current status of the quest",
+                    "$ref": "#/$defs/QuestStatus"
+                },
+                "questorCharacterIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Characters on the quest"
+                },
+                "questGiverCharacterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Quest giver NPC"
+                },
+                "objectives": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ObjectiveProgress"
+                    },
+                    "description": "Objective progress"
+                },
+                "acceptedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When quest was accepted"
+                },
+                "deadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Quest deadline (null if none)"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When completed"
+                }
+            }
+        },
+        "QuestStatus": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Completed",
+                "Failed",
+                "Abandoned",
+                "Expired"
+            ],
+            "description": "Current status of a quest instance"
+        },
+        "ObjectiveProgress": {
+            "type": "object",
+            "description": "Current progress state of a quest objective",
+            "additionalProperties": false,
+            "required": [
+                "code",
+                "name",
+                "objectiveType",
+                "currentCount",
+                "requiredCount",
+                "isComplete",
+                "progressPercent",
+                "hidden",
+                "optional"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "description": "Objective code"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Objective name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Objective description"
+                },
+                "objectiveType": {
+                    "description": "Type of objective determining progress tracking logic",
+                    "$ref": "#/$defs/ObjectiveType"
+                },
+                "currentCount": {
+                    "type": "integer",
+                    "description": "Current progress count"
+                },
+                "requiredCount": {
+                    "type": "integer",
+                    "description": "Required count"
+                },
+                "isComplete": {
+                    "type": "boolean",
+                    "description": "Whether complete"
+                },
+                "progressPercent": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Progress percentage (0-100)"
+                },
+                "hidden": {
+                    "type": "boolean",
+                    "description": "Whether currently hidden"
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Whether optional"
+                }
+            }
+        },
+        "ObjectiveType": {
+            "type": "string",
+            "enum": [
+                "Kill",
+                "Collect",
+                "Deliver",
+                "Travel",
+                "Discover",
+                "Talk",
+                "Craft",
+                "Escort",
+                "Defend",
+                "Custom"
+            ],
+            "description": "Type of objective determining progress tracking logic"
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteQuestInstance_Info = """
+{
+    "summary": "Delete a quest instance",
+    "description": "Permanently deletes a quest instance record and its associated data (objective progress,\ncharacter index entries). Publishes quest.instance.deleted lifecycle event. Used by\nclean-deprecated sweep and character cleanup. Active quests are abandoned before deletion.\n",
+    "tags": [
+        "Instances"
+    ],
+    "deprecated": false,
+    "operationId": "deleteQuestInstance"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteQuestInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/instance/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteQuestInstance_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Quest",
+            "POST",
+            "/quest/instance/delete",
+            _DeleteQuestInstance_Info));
+
+    /// <summary>Returns request schema for DeleteQuestInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/instance/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteQuestInstance_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Quest",
+            "POST",
+            "/quest/instance/delete",
+            "request-schema",
+            _DeleteQuestInstance_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteQuestInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/instance/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteQuestInstance_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Quest",
+            "POST",
+            "/quest/instance/delete",
+            "response-schema",
+            _DeleteQuestInstance_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteQuestInstance</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/quest/instance/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteQuestInstance_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Quest",
+            "POST",
+            "/quest/instance/delete",
+            _DeleteQuestInstance_Info,
+            _DeleteQuestInstance_RequestSchema,
+            _DeleteQuestInstance_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GetQuest
 
     private static readonly string _GetQuest_RequestSchema = """

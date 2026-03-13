@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using System.Reflection;
@@ -1369,6 +1370,84 @@ public class StructuralTests
         }
 
         return null;
+    }
+
+    // ⛔ FROZEN — Do not modify without explicit user permission.
+    /// <summary>
+    /// Validates that all concrete plugin classes extend StandardServicePlugin&lt;T&gt;
+    /// rather than BaseBannouPlugin directly. StandardServicePlugin provides standardized
+    /// lifecycle management (scoped service resolution, IBannouService integration, proper
+    /// start/running/shutdown phases). Plugins extending BaseBannouPlugin directly must
+    /// reimplement this lifecycle manually, which is error-prone and inconsistent.
+    /// </summary>
+    [Fact]
+    public void Plugins_ExtendStandardServicePlugin()
+    {
+        EnsureAssembliesLoaded();
+
+        var violations = new List<string>();
+        var standardPluginOpenType = typeof(StandardServicePlugin<>);
+
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            var assemblyName = assembly.GetName().Name;
+            if (assemblyName == null || !assemblyName.StartsWith("lib-", StringComparison.Ordinal))
+                continue;
+
+            // Skip test assemblies
+            if (assemblyName.EndsWith(".tests", StringComparison.Ordinal))
+                continue;
+
+            Type[] types;
+            try
+            {
+                types = assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException)
+            {
+                continue;
+            }
+
+            foreach (var type in types)
+            {
+                if (type.IsAbstract || !type.IsClass)
+                    continue;
+
+                if (!typeof(BaseBannouPlugin).IsAssignableFrom(type))
+                    continue;
+
+                if (!ExtendsGenericBaseType(type, standardPluginOpenType))
+                {
+                    violations.Add(
+                        $"{assemblyName}: {type.Name} extends BaseBannouPlugin directly " +
+                        $"— should extend StandardServicePlugin<T>");
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"{violations.Count} plugin(s) extend BaseBannouPlugin directly instead of " +
+            $"StandardServicePlugin<T>. StandardServicePlugin provides standardized lifecycle " +
+            $"management — migrate these plugins:\n" +
+            string.Join("\n", violations.Select(v => $"  - {v}")));
+    }
+
+    /// <summary>
+    /// Checks whether a type extends a specific open generic base type at any depth
+    /// in the inheritance chain. For example, checks if FooPlugin extends
+    /// StandardServicePlugin&lt;&gt; (regardless of the type parameter).
+    /// </summary>
+    private static bool ExtendsGenericBaseType(Type type, Type openGenericBase)
+    {
+        var baseType = type.BaseType;
+        while (baseType != null)
+        {
+            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == openGenericBase)
+                return true;
+            baseType = baseType.BaseType;
+        }
+        return false;
     }
 
     /// <summary>

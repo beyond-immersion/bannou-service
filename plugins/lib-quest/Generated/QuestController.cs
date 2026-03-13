@@ -159,6 +159,23 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
 
 
     /// <summary>
+    /// Delete a quest instance
+    /// </summary>
+
+    /// <remarks>
+    /// Permanently deletes a quest instance record and its associated data (objective progress,
+    /// <br/>character index entries). Publishes quest.instance.deleted lifecycle event. Used by
+    /// <br/>clean-deprecated sweep and character cleanup. Active quests are abandoned before deletion.
+    /// </remarks>
+
+
+
+    /// <returns>Quest instance deleted</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestInstanceResponse>> DeleteQuestInstance(DeleteQuestInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
     /// Get quest instance details
     /// </summary>
 
@@ -761,6 +778,56 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase, 
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:quest/abandon",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Delete a quest instance
+    /// </summary>
+    /// <remarks>
+    /// Permanently deletes a quest instance record and its associated data (objective progress,
+    /// <br/>character index entries). Publishes quest.instance.deleted lifecycle event. Used by
+    /// <br/>clean-deprecated sweep and character cleanup. Active quests are abandoned before deletion.
+    /// </remarks>
+    /// <returns>Quest instance deleted</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("quest/instance/delete")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestInstanceResponse>> DeleteQuestInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteQuestInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.DeleteQuestInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/instance/delete");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeleteQuestInstanceAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/instance/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:quest/instance/delete");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "quest",
+                "DeleteQuestInstance",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:quest/instance/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

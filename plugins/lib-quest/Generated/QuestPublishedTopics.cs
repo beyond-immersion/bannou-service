@@ -23,8 +23,17 @@ public static class QuestPublishedTopics
     /// <summary>Published when a quest definition is updated (including deprecation via changedFields).</summary>
     public const string QuestDefinitionUpdated = "quest.definition.updated";
 
-    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
+    /// <summary>Published by clean-deprecated sweep when a deprecated definition with zero remaining instances is permanently removed.</summary>
     public const string QuestDefinitionDeleted = "quest.definition.deleted";
+
+    /// <summary>Published when a quest instance is created (character accepts quest).</summary>
+    public const string QuestInstanceCreated = "quest.instance.created";
+
+    /// <summary>Published when a quest instance status changes (completed, failed, abandoned) with changedFields.</summary>
+    public const string QuestInstanceUpdated = "quest.instance.updated";
+
+    /// <summary>Published when a quest instance is permanently deleted (character cleanup or admin deletion).</summary>
+    public const string QuestInstanceDeleted = "quest.instance.deleted";
 
     /// <summary>Published when a character accepts a quest.</summary>
     public const string QuestAccepted = "quest.accepted";

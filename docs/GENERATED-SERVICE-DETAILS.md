@@ -339,7 +339,7 @@ The Puppetmaster service (L4 GameFeatures) orchestrates dynamic behaviors, regio
 
 ## Quest {#quest}
 
-**Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md) | **Map**: [docs/maps/QUEST.md](maps/QUEST.md)
+**Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md) | **Map**: [docs/maps/QUEST.md](maps/QUEST.md)
 
 The Quest service (L2 GameFoundation) provides objective-based gameplay progression as a thin orchestration layer over lib-contract. Translates game-flavored quest semantics (objectives, rewards, quest givers) into Contract infrastructure (milestones, prebound APIs, parties), leveraging Contract's state machine and cleanup orchestration while presenting a player-friendly API. Agnostic to prerequisite sources: L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` for validation without Quest depending on them. Exposes quest data to the Actor service via the Variable Provider Factory pattern for ABML behavior expressions.
 
@@ -427,7 +427,7 @@ Unified entity effects query layer (L4 GameFeatures) aggregating temporary contr
 
 ## Storyline {#storyline}
 
-**Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md) | **Map**: [docs/maps/STORYLINE.md](maps/STORYLINE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md) | **Map**: [docs/maps/STORYLINE.md](maps/STORYLINE.md)
 
 The Storyline service (L4 GameFeatures) wraps the `storyline-theory` and `storyline-storyteller` SDKs to provide HTTP endpoints for seeded narrative generation from compressed archives. Plans describe narrative arcs with phases, actions, and entity requirements -- callers (gods/regional watchers) decide whether to instantiate them. Also manages scenario definitions (reusable narrative templates with trigger conditions, mutations, and quest hooks) with a full CRUD lifecycle, condition-based discovery, fit scoring, and execution with distributed locking and cooldown enforcement. Provides character compression data for archival via `x-compression-callback`. Internal-only, requires the `developer` role for all endpoints.
 
@@ -490,7 +490,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 76
-- **Total endpoints**: 937
+- **Total endpoints**: 939
 
 ---
 

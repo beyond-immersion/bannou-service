@@ -244,6 +244,33 @@ paths:
         '409':
           description: Quest not in abandonable state
 
+  /quest/instance/delete:
+    post:
+      operationId: deleteQuestInstance
+      tags: [Instances]
+      summary: Delete a quest instance
+      description: |
+        Permanently deletes a quest instance record and its associated data (objective progress,
+        character index entries). Publishes quest.instance.deleted lifecycle event. Used by
+        clean-deprecated sweep and character cleanup. Active quests are abandoned before deletion.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteQuestInstanceRequest'
+      responses:
+        '200':
+          description: Quest instance deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstanceResponse'
+        '404':
+          description: Quest instance not found
+
   /quest/get:
     post:
       operationId: getQuest
@@ -1445,6 +1472,19 @@ components:
           $ref: '#/components/schemas/QuestCategory'
           nullable: true
           description: Quest category (if available)
+
+    # === INSTANCE DELETE MODEL ===
+    DeleteQuestInstanceRequest:
+      type: object
+      description: Request to permanently delete a quest instance
+      additionalProperties: false
+      required:
+      - questInstanceId
+      properties:
+        questInstanceId:
+          type: string
+          format: uuid
+          description: ID of the quest instance to delete
 
     # === CLEANUP MODELS ===
     DeleteByCharacterRequest:

@@ -1661,6 +1661,23 @@ public partial class ActiveQuestSummary
 }
 
 /// <summary>
+/// Request to permanently delete a quest instance
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteQuestInstanceRequest
+{
+
+    /// <summary>
+    /// ID of the quest instance to delete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("questInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid QuestInstanceId { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to delete all quest data for a character during character deletion cleanup
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

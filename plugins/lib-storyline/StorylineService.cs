@@ -78,6 +78,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
     private readonly ICacheableStateStore<CooldownMarker> _scenarioCooldownStore;
     private readonly ICacheableStateStore<ActiveScenarioEntry> _scenarioActiveStore;
     private readonly ICacheableStateStore<IdempotencyMarker> _scenarioIdempotencyStore;
+    private readonly IStateStore<string> _executionStringStore;
 
     // SDK - direct instantiation (pure computation, not DI)
     private readonly StorylineComposer _composer;
@@ -87,6 +88,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
     private const string COOLDOWN_KEY_PREFIX = "cooldown";
     private const string ACTIVE_KEY_PREFIX = "active";
     private const string LOCK_KEY_PREFIX = "lock";
+    private const string DEFINITION_EXECUTION_INDEX = "def-exec:";
 
     internal static string BuildPlanKey(Guid planId) => planId.ToString();
     internal static string BuildPlanIndexKey(Guid realmId) => $"{PLAN_INDEX_KEY_PREFIX}:{realmId}";
@@ -95,6 +97,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
     internal static string BuildCooldownKey(Guid characterId, Guid scenarioId) => $"{COOLDOWN_KEY_PREFIX}:{characterId}:{scenarioId}";
     internal static string BuildActiveKey(Guid characterId) => $"{ACTIVE_KEY_PREFIX}:{characterId}";
     internal static string BuildLockResource(Guid characterId, Guid scenarioId) => $"{LOCK_KEY_PREFIX}:{characterId}:{scenarioId}";
+    internal static string BuildDefinitionExecutionIndexKey(Guid scenarioId) => $"{DEFINITION_EXECUTION_INDEX}{scenarioId}";
 
     /// <summary>
     /// Creates a new StorylineService instance.
@@ -144,6 +147,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
         _scenarioCooldownStore = stateStoreFactory.GetCacheableStore<CooldownMarker>(StateStoreDefinitions.StorylineScenarioCooldown);
         _scenarioActiveStore = stateStoreFactory.GetCacheableStore<ActiveScenarioEntry>(StateStoreDefinitions.StorylineScenarioActive);
         _scenarioIdempotencyStore = stateStoreFactory.GetCacheableStore<IdempotencyMarker>(StateStoreDefinitions.StorylineScenarioIdempotency);
+        _executionStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.StorylineScenarioExecutions);
 
         // SDK instantiation - pure computation, no DI needed
         _composer = new StorylineComposer();
@@ -1125,6 +1129,14 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
         // Save execution record
         await _scenarioExecutionStore.SaveAsync(BuildExecutionKey(executionId), execution, null, cancellationToken);
 
+        // Maintain definition→execution reverse index for clean-deprecated sweep
+        await _executionStringStore.AddToStringListAsync(
+            BuildDefinitionExecutionIndexKey(body.ScenarioId),
+            executionId.ToString(),
+            _configuration.MaxConcurrencyRetries,
+            _logger,
+            cancellationToken);
+
         // Add to active set
         var activeEntry = new ActiveScenarioEntry
         {
@@ -1144,7 +1156,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
                 cancellationToken);
         }
 
-        // Publish triggered event via generated typed publisher per FOUNDATION TENETS
+        // Publish triggered action event via generated typed publisher per FOUNDATION TENETS
         await _messageBus.PublishScenarioTriggeredAsync(new ScenarioTriggeredEvent
         {
             ExecutionId = executionId,
@@ -1158,6 +1170,25 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             FitScore = null,
             PhaseCount = phases.Count,
             TriggeredAt = now
+        }, cancellationToken);
+
+        // Publish lifecycle created event
+        await _messageBus.PublishScenarioExecutionCreatedAsync(new ScenarioExecutionCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            ExecutionId = executionId,
+            ScenarioId = body.ScenarioId,
+            ScenarioCode = definition.Code,
+            PrimaryCharacterId = body.CharacterId,
+            OrchestratorId = body.OrchestratorId,
+            RealmId = definition.RealmId,
+            GameServiceId = definition.GameServiceId,
+            Status = ScenarioStatus.Active,
+            CurrentPhase = 1,
+            TotalPhases = phases.Count,
+            TriggeredAt = now,
+            CompletedAt = null
         }, cancellationToken);
 
         // Apply mutations (Phase 1: all mutations applied immediately)
@@ -1215,7 +1246,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
 
         stopwatch.Stop();
 
-        // Publish completed event via generated typed publisher per FOUNDATION TENETS
+        // Publish completed action event via generated typed publisher per FOUNDATION TENETS
         await _messageBus.PublishScenarioCompletedAsync(new ScenarioCompletedEvent
         {
             ExecutionId = executionId,
@@ -1233,6 +1264,26 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             DurationMs = (int)stopwatch.ElapsedMilliseconds,
             StartedAt = now,
             CompletedAt = execution.CompletedAt.Value
+        }, cancellationToken);
+
+        // Publish lifecycle updated event for status change
+        await _messageBus.PublishScenarioExecutionUpdatedAsync(new ScenarioExecutionUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = execution.CompletedAt.Value,
+            ExecutionId = executionId,
+            ScenarioId = body.ScenarioId,
+            ScenarioCode = definition.Code,
+            PrimaryCharacterId = body.CharacterId,
+            OrchestratorId = body.OrchestratorId,
+            RealmId = definition.RealmId,
+            GameServiceId = definition.GameServiceId,
+            Status = ScenarioStatus.Completed,
+            CurrentPhase = phases.Count,
+            TotalPhases = phases.Count,
+            TriggeredAt = now,
+            CompletedAt = execution.CompletedAt,
+            ChangedFields = new List<string> { "status", "completedAt", "currentPhase" }
         }, cancellationToken);
 
         _logger.LogInformation("Completed scenario {ScenarioId} execution {ExecutionId} in {DurationMs}ms",
@@ -2577,6 +2628,79 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
     #endregion
 
     /// <inheritdoc />
+    public async Task<(StatusCodes, DeleteScenarioExecutionResponse?)> DeleteScenarioExecutionAsync(
+        DeleteScenarioExecutionRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.storyline", "StorylineService.DeleteScenarioExecutionAsync");
+
+        var executionKey = BuildExecutionKey(body.ExecutionId);
+        var execution = await _scenarioExecutionStore.GetAsync(executionKey, cancellationToken);
+
+        if (execution == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (execution.Status == ScenarioStatus.Active)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Remove from active set (defensive — should already be absent for non-active)
+        await _scenarioActiveStore.RemoveFromSetAsync(
+            BuildActiveKey(execution.PrimaryCharacterId),
+            new ActiveScenarioEntry
+            {
+                ExecutionId = execution.ExecutionId,
+                ScenarioId = execution.ScenarioId,
+                ScenarioCode = execution.ScenarioCode
+            },
+            cancellationToken);
+
+        // Remove from definition→execution reverse index
+        await _executionStringStore.RemoveFromStringListAsync(
+            BuildDefinitionExecutionIndexKey(execution.ScenarioId),
+            execution.ExecutionId.ToString(),
+            _configuration.MaxConcurrencyRetries,
+            _logger,
+            cancellationToken);
+
+        // Delete execution record
+        await _scenarioExecutionStore.DeleteAsync(executionKey, cancellationToken);
+
+        // Publish lifecycle deleted event
+        var now = DateTimeOffset.UtcNow;
+        await _messageBus.PublishScenarioExecutionDeletedAsync(new ScenarioExecutionDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            ExecutionId = execution.ExecutionId,
+            ScenarioId = execution.ScenarioId,
+            ScenarioCode = execution.ScenarioCode,
+            PrimaryCharacterId = execution.PrimaryCharacterId,
+            OrchestratorId = execution.OrchestratorId,
+            RealmId = execution.RealmId,
+            GameServiceId = execution.GameServiceId,
+            Status = execution.Status,
+            CurrentPhase = execution.CurrentPhase,
+            TotalPhases = execution.TotalPhases,
+            TriggeredAt = execution.TriggeredAt,
+            CompletedAt = execution.CompletedAt
+        }, cancellationToken);
+
+        _logger.LogInformation("Scenario execution deleted: {ExecutionId} ({ScenarioCode})",
+            execution.ExecutionId, execution.ScenarioCode);
+
+        return (StatusCodes.OK, new DeleteScenarioExecutionResponse
+        {
+            ExecutionId = execution.ExecutionId,
+            ScenarioId = execution.ScenarioId,
+            ScenarioCode = execution.ScenarioCode
+        });
+    }
+
+    /// <inheritdoc />
     public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedScenarioDefinitionsAsync(
         CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
     {
@@ -2603,13 +2727,8 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
             deprecatedDefinitions,
             getEntityId: d => d.ScenarioId,
             getDeprecatedAt: d => d.DeprecatedAt,
-            hasInstancesAsync: async (d, ct) =>
-            {
-                // Check if any scenario executions with Active status reference this definition
-                var executions = await _scenarioExecutionStore.QueryAsync(
-                    e => e.ScenarioId == d.ScenarioId && e.Status == ScenarioStatus.Active, ct);
-                return executions.Count > 0;
-            },
+            hasInstancesAsync: (d, ct) =>
+                _executionStringStore.HasStringListEntriesAsync(BuildDefinitionExecutionIndexKey(d.ScenarioId), ct),
             deleteAndPublishAsync: async (d, ct) =>
             {
                 var scenarioKey = BuildScenarioDefinitionKey(d.ScenarioId);
@@ -2619,6 +2738,10 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
 
                 // Remove from Redis cache
                 await _scenarioCacheStore.DeleteAsync(scenarioKey, ct);
+
+                // Defensive cleanup of reverse index (should already be empty)
+                await _executionStringStore.DeleteAsync(
+                    BuildDefinitionExecutionIndexKey(d.ScenarioId), ct);
 
                 // Publish storyline.scenario-definition.deleted lifecycle event
                 await _messageBus.PublishScenarioDefinitionDeletedAsync(

@@ -127,7 +127,7 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 
 ## Stubs & Unimplemented Features
 
-1. **`CleanDeprecatedQuestDefinitionsAsync` (clean-deprecated endpoint)**: `POST /quest/definition/clean-deprecated` is schema-defined and generated (controller + interface) but the service method throws `NotImplementedException`. Sweeps deprecated quest definitions with zero remaining active instances. Uses shared `CleanDeprecatedRequest` (`gracePeriodDays`, `dryRun`) / `CleanDeprecatedResponse` (`cleaned`, `remaining`, `errors`, `cleanedIds`) from `common-api.yaml`. Roles: `[admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
+None. All schema-defined endpoints are implemented.
 
 ---
 
@@ -145,7 +145,7 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 4. **Client events for real-time objective tracking** ([#496](https://github.com/beyond-immersion/bannou-service/issues/496)): Push `QuestObjectiveProgressed` and `QuestStatusChanged` (consolidated lifecycle event with status discriminator for accepted/completed/failed/abandoned) client events via `IClientEventPublisher` using the Entity Session Registry (#426, now implemented). Sessions resolved via `character → session` bindings for all questor characters. Published from Quest's event handlers that process Contract state transitions. **Unblocked** — infrastructure dependency (#426) is closed.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/496 -->
 
-5. ~~**character deletion cleanup**~~: **FIXED** (2026-03-08) - Added `x-references` to quest-api.yaml declaring character dependency with CASCADE policy. Generated reference tracking code. `AcceptQuestAsync` now registers character references; `DeleteByCharacterAsync` endpoint abandons active quests (with best-effort contract termination), deletes objective progress, cooldowns, and character index. Cleanup callbacks registered on startup via `QuestServicePlugin`.
+5. ~~**character deletion cleanup**~~: **FIXED** (2026-03-08, enhanced 2026-03-13) - Added `x-references` to quest-api.yaml declaring character dependency with CASCADE policy. Generated reference tracking code. `AcceptQuestAsync` now registers character references; `DeleteByCharacterAsync` handles sole-questor vs multi-questor cleanup: sole questor instances are abandoned and fully deleted (via `DeleteInstanceRecordAsync`), multi-questor instances have the character removed from `QuestorCharacterIds` without destroying the quest for remaining questors. Cleanup callbacks registered on startup via `QuestServicePlugin`. `DeleteInstanceRecordAsync` publishes `quest.instance.deleted` lifecycle event and maintains the definition→instance reverse index.
 
 6. **Objective progress durability** ([#562](https://github.com/beyond-immersion/bannou-service/issues/562)): Redis-only progress storage with 5-minute TTL causes silent data loss for long-running quests. Contract milestones are binary and cannot store partial progress. Needs either durable storage or TTL aligned to quest deadline.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/562 -->
@@ -156,7 +156,7 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 
 ### Bugs (Fix Immediately)
 
-1. **`CleanDeprecatedDefinitionsAsync` uses full query scan instead of reverse index**: The `hasActiveInstancesAsync` delegate performs `_instanceStore.QueryAsync(i => i.DefinitionId == d.DefinitionId)` — a full table scan per deprecated definition. Should use a reverse index (definition→instance list) for O(1) lookup per IMPLEMENTATION TENETS B21. Reference: `lib-item` (`inst-template:{templateId}`), `lib-currency` (`balance-currency:{definitionId}`).
+No known bugs at this time.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -172,6 +172,12 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 5. **First questor used for abandoned event**: In `FailOrAbandonQuestAsync`, when called from event handler (not direct API), uses `QuestorCharacterIds.FirstOrDefault()` as the abandoning character since the specific abandoner isn't known from contract termination event.
 
 6. **Definition cache separate from MySQL store**: Definition cache (`quest-definition-cache`) is a Redis read-through cache of the MySQL `quest-definition-statestore`. Writes go to MySQL only; reads check cache first with fallback to MySQL.
+
+7. **Lifecycle events coexist with action events**: Quest publishes both action events (`quest.accepted`, `quest.completed`, `quest.failed`, `quest.abandoned`) and lifecycle events (`quest.instance.created`, `quest.instance.updated`, `quest.instance.deleted`). Status transitions publish both — e.g., completing a quest publishes `quest.completed` (action event for game logic) and `quest.instance.updated` (lifecycle event for infrastructure consumers). `DeleteInstanceRecordAsync` publishes `quest.instance.deleted`.
+
+8. **Reverse index for definition→instance mapping**: A string list reverse index (`def-inst:{definitionId}`) maps each quest definition to its active instance IDs. Maintained via `AddToStringListAsync` on instance creation and `RemoveFromStringListAsync` on instance deletion. Used by `CleanDeprecatedQuestDefinitionsAsync` for O(1) instance existence checks via `HasStringListEntriesAsync`, replacing the previous full MySQL query pattern.
+
+9. **Clean-deprecated now implemented**: `CleanDeprecatedQuestDefinitionsAsync` uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` with the reverse index for instance checking. Publishes `quest.definition.deleted` lifecycle event for each cleaned definition. Defensive cleanup of reverse index entry on each definition deletion.
 
 ### Design Considerations (Resolved)
 

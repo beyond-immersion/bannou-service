@@ -61,6 +61,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 |-------------|-----------|---------|
 | `board:{boardId}` | `BoardInstanceModel` | Owner-specific board instance linking ownerType+ownerId to template with container and realm context |
 | `board-owner:{ownerType}:{ownerId}:{boardTemplateId}` | `BoardInstanceModel` | Uniqueness key enforcing one board per template per owner (stores same data as `board:{boardId}`) |
+| `tpl-brd:{boardTemplateId}` | `List<string>` (JSON) | Reverse index: board template → board instance IDs (for O(1) clean-deprecated checks) |
 
 ### Store: `license-board-cache` (Backend: Redis)
 
@@ -159,9 +160,9 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 
 ## API Endpoints (Implementation Notes)
 
-### Board Template Deprecation Cleanup (1 endpoint, not yet implemented)
+### Board Template Deprecation Cleanup (1 endpoint)
 
-- **CleanDeprecatedBoardTemplates** (`/license/board-template/clean-deprecated`): **NOT IMPLEMENTED** (`NotImplementedException` stub). Admin-only. Should sweep deprecated board templates where zero board instances reference them. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) and `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds). Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` per T31 B20-B22.
+- **CleanDeprecatedBoardTemplates** (`/license/board-template/clean-deprecated`): Admin-only. Sweeps deprecated board templates where zero board instances reference them, using the reverse index (`tpl-brd:{boardTemplateId}`) for O(1) instance existence checks via `HasStringListEntriesAsync`. Uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`. For each cleaned template, deletes all associated license definitions, the template record, the cache entry, and the reverse index. Publishes `license.board-template.deleted` lifecycle event. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) and `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds).
 
 ### Board Template Management (6 endpoints, developer role)
 
@@ -278,7 +279,7 @@ Unlock License Flow (under distributed lock, saga-ordered)
 
 ## Stubs & Unimplemented Features
 
-1. **`CleanDeprecatedBoardTemplatesAsync` not implemented**: `POST /license/board-template/clean-deprecated` is schema-defined and generated (controller, interface) but the service method throws `NotImplementedException`. Should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per T31 B20-B22. Sweeps deprecated board templates with zero remaining board instances. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. `x-permissions: [role: admin]`.
+None. All schema-defined endpoints are implemented.
 
 ---
 
@@ -312,6 +313,10 @@ No known bugs at this time.
 - **CleanupByOwnerAsync does not acquire distributed locks**: The cleanup endpoint iterates through all boards for a deleted owner and deletes them without board-level locking. This is acceptable because cleanup is called during resource deletion coordination (the owner is already deleted, so no concurrent unlock operations should target these boards). A concurrent unlock attempt would fail at a prior step (board lookup or character validation) before reaching the lock phase.
 
 - **`LicenseBoardUpdatedEvent` model exists but is never published**: The `x-lifecycle` auto-generation creates Updated event models for all lifecycle entities. Since boards are immutable after creation, the `LicenseBoardUpdatedEvent` is intentionally excluded from `x-event-publications` and never published in code. The model remains as harmless dead code.
+
+- **Reverse index for template→board instance mapping**: A string list reverse index (`tpl-brd:{boardTemplateId}`) maps each board template to its board instance IDs. Maintained via `AddToStringListAsync` on board creation (both `CreateBoardAsync` and `CloneBoardAsync`) and `RemoveFromStringListAsync` on board deletion (both `DeleteBoardAsync` and `CleanupByOwnerAsync`). Used by `CleanDeprecatedBoardTemplatesAsync` for O(1) instance existence checks via `HasStringListEntriesAsync`.
+
+- **Clean-deprecated deletes associated definitions**: When `CleanDeprecatedBoardTemplatesAsync` deletes a board template, it also deletes all license definitions associated with that template (queried by template ID). This prevents orphaned definitions. Defensive reverse index cleanup is performed on each deleted template.
 
 ### Design Considerations (Requires Planning)
 

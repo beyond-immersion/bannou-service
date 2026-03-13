@@ -167,6 +167,21 @@ public static class QuestPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/quest/instance/delete",
+            Method = ServiceEndpointMethod.Post,
+            Description = "deleteQuestInstance",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/quest/get",
             Method = ServiceEndpointMethod.Post,
             Description = "getQuest",

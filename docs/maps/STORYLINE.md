@@ -13,9 +13,9 @@
 |-------|-------|
 | Plugin | lib-storyline |
 | Layer | L4 GameFeatures |
-| Endpoints | 16 |
+| Endpoints | 17 |
 | State Stores | storyline-plans (Redis), storyline-plan-index (Redis), storyline-scenario-definitions (MySQL), storyline-scenario-executions (MySQL), storyline-scenario-cache (Redis), storyline-scenario-cooldown (Redis), storyline-scenario-active (Redis), storyline-scenario-idempotency (Redis), storyline-lock (Redis) |
-| Events Published | 6 actually published (storyline.plan.composed, storyline.scenario.triggered, storyline.scenario.completed, storyline.scenario-definition.created, storyline.scenario-definition.updated, storyline.scenario-definition.deleted); 3 additional defined in schema but not yet published (storyline.scenario.phase-completed, storyline.scenario.failed, storyline.scenario.available) |
+| Events Published | 9 actually published (storyline.plan.composed, storyline.scenario.triggered, storyline.scenario.completed, storyline.scenario-definition.created, storyline.scenario-definition.updated, storyline.scenario-definition.deleted, storyline.scenario-execution.created, storyline.scenario-execution.updated, storyline.scenario-execution.deleted); 3 additional defined in schema but not yet published (storyline.scenario.phase-completed, storyline.scenario.failed, storyline.scenario.available) |
 | Events Consumed | 0 |
 | Client Events | 0 |
 | Background Services | 0 |
@@ -54,6 +54,7 @@
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `{executionId}` | `ScenarioExecutionModel` | Durable scenario execution history with status, phase progress, outcomes |
+| `def-exec:{scenarioId}` | `List<string>` (JSON) | Reverse index: definition → execution IDs (for O(1) clean-deprecated checks) |
 
 **Store**: `storyline-scenario-cooldown` (Backend: Redis, ICacheableStateStore)
 
@@ -114,6 +115,9 @@
 | `storyline.scenario-definition.created` | `ScenarioDefinitionCreatedEvent` | CreateScenarioDefinition -- after saving to MySQL and cache, includes all definition fields |
 | `storyline.scenario-definition.updated` | `ScenarioDefinitionUpdatedEvent` | UpdateScenarioDefinition -- after saving updated fields, includes changedFields list. Also published by DeprecateScenarioDefinition |
 | `storyline.scenario-definition.deleted` | `ScenarioDefinitionDeletedEvent` | CleanDeprecatedScenarioDefinitions -- published for each entity cleaned during deprecation sweep |
+| `storyline.scenario-execution.created` | `ScenarioExecutionCreatedEvent` | TriggerScenario -- lifecycle event after execution record created |
+| `storyline.scenario-execution.updated` | `ScenarioExecutionUpdatedEvent` | TriggerScenario -- lifecycle event after execution completed, with `changedFields` |
+| `storyline.scenario-execution.deleted` | `ScenarioExecutionDeletedEvent` | DeleteScenarioExecution -- lifecycle event after execution record deleted |
 
 **Defined in schema but NOT currently published**:
 - `storyline.scenario.phase-completed` -- Multi-phase execution not yet implemented
@@ -164,11 +168,12 @@ This plugin does not consume external events.
 | FindAvailableScenarios | POST /storyline/scenario/find-available | generated | [] | - | - |
 | TestScenarioTrigger | POST /storyline/scenario/test | generated | [developer] | - | - |
 | EvaluateScenarioFit | POST /storyline/scenario/evaluate-fit | generated | [] | - | - |
-| TriggerScenario | POST /storyline/scenario/trigger | generated | [] | scenario-execution, scenario-active, scenario-cooldown, scenario-idempotency | storyline.scenario.triggered, storyline.scenario.completed |
+| TriggerScenario | POST /storyline/scenario/trigger | generated | [] | scenario-execution, scenario-active, scenario-cooldown, scenario-idempotency, reverse-index | storyline.scenario.triggered, storyline.scenario.completed, storyline.scenario-execution.created, storyline.scenario-execution.updated |
 | GetActiveScenarios | POST /storyline/scenario/get-active | generated | [user] | - | - |
 | GetScenarioHistory | POST /storyline/scenario/get-history | generated | [user] | - | - |
 | GetCompressData | POST /storyline/get-compress-data | generated | [] | - | - |
-| CleanDeprecatedScenarioDefinitions | POST /storyline/scenario/clean-deprecated | generated | [admin] | scenario-definition, scenario-cache | storyline.scenario-definition.deleted |
+| DeleteScenarioExecution | POST /storyline/execution/delete | generated | [admin] | scenario-execution, scenario-active, reverse-index | storyline.scenario-execution.deleted |
+| CleanDeprecatedScenarioDefinitions | POST /storyline/scenario/clean-deprecated | generated | [admin] | scenario-definition, scenario-cache, reverse-index | storyline.scenario-definition.deleted |
 
 ---
 
@@ -518,6 +523,9 @@ LOCK storyline-lock:lock:{characterId}:{scenarioId}              -> 409 if fails
   // Create execution record
   WRITE _scenarioExecutionStore:{executionId} <- ScenarioExecutionModel { status=Active, currentPhase=1, totalPhases=phases.Count }
 
+  // Maintain reverse index (definition → execution list)
+  ETAG-WRITE _executionStringStore:"def-exec:{scenarioId}" <- append executionId
+
   // Add to active set
   WRITE _scenarioActiveStore (set):active:{characterId} <- ActiveScenarioEntry { executionId, scenarioId, scenarioCode }
 
@@ -526,6 +534,7 @@ LOCK storyline-lock:lock:{characterId}:{scenarioId}              -> 409 if fails
     WRITE _scenarioIdempotencyStore:{idempotencyKey} <- IdempotencyMarker [with TTL = config.ScenarioIdempotencyTtlSeconds]
 
   PUBLISH storyline.scenario.triggered { executionId, scenarioId, scenarioCode, primaryCharacterId, additionalParticipants, orchestratorId, realmId, gameServiceId, fitScore, phaseCount, triggeredAt }
+  PUBLISH storyline.scenario-execution.created (ScenarioExecutionCreatedEvent with all execution fields)
 
   // Apply mutations (all applied immediately in Phase 1)
   FOREACH mutation in mutations
@@ -560,6 +569,7 @@ LOCK storyline-lock:lock:{characterId}:{scenarioId}              -> 409 if fails
     WRITE _scenarioCooldownStore:cooldown:{characterId}:{scenarioId} <- CooldownMarker [with TTL = cooldownSeconds]
 
   PUBLISH storyline.scenario.completed { executionId, scenarioId, scenarioCode, primaryCharacterId, additionalParticipants, orchestratorId, realmId, gameServiceId, phasesCompleted, totalMutationsApplied, totalQuestsSpawned, questIds, durationMs, startedAt, completedAt }
+  PUBLISH storyline.scenario-execution.updated { changedFields: [status, completedAt, currentPhase] }
 
 RETURN (200, TriggerScenarioResponse { executionId, scenarioId, status=Completed, triggeredAt, mutationsApplied, questsSpawned })
 ```
@@ -620,6 +630,27 @@ activeArcs = activeScenarioCodes.Select(code => code.Split('_')[0]).Distinct()
 RETURN (200, StorylineArchive { resourceId=characterId, resourceType="storyline", archivedAt, schemaVersion=1, characterId, participations, activeArcs, completedStorylines })
 ```
 
+### DeleteScenarioExecution
+POST /storyline/execution/delete | Roles: [admin]
+
+```
+READ _scenarioExecutionStore:{executionId}                       -> 404 if null
+IF execution.Status == Active                                    -> 409 (must complete/fail first)
+
+// Remove from active set (defensive, in case still present)
+DELETE _scenarioActiveStore (set):active:{execution.PrimaryCharacterId} <- entry
+
+// Remove from reverse index
+ETAG-WRITE _executionStringStore:"def-exec:{execution.ScenarioId}" <- remove executionId
+
+// Delete execution record
+DELETE _scenarioExecutionStore:{executionId}
+
+PUBLISH storyline.scenario-execution.deleted (ScenarioExecutionDeletedEvent with all fields)
+
+RETURN (200, DeleteScenarioExecutionResponse { executionId, scenarioId, scenarioCode })
+```
+
 ### CleanDeprecatedScenarioDefinitions
 POST /storyline/scenario/clean-deprecated | Roles: [admin]
 
@@ -633,12 +664,14 @@ result = DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
   deprecatedDefinitions,
   getEntityId: d => d.ScenarioId,
   getDeprecatedAt: d => d.DeprecatedAt,
-  hasActiveInstancesAsync: (d, ct) =>
-    QUERY _scenarioExecutionStore WHERE ScenarioId == d.ScenarioId AND Status == Active
-    RETURN count > 0,
+  hasInstancesAsync: (d, ct) =>
+    // O(1) reverse index check (replaces full MySQL query)
+    _executionStringStore.HasStringListEntriesAsync(BuildDefinitionExecutionIndexKey(d.ScenarioId), ct),
   deleteAndPublishAsync: (d, ct) =>
     DELETE _scenarioDefinitionStore:{scenarioId}
     DELETE _scenarioCacheStore:{scenarioId}
+    // Defensive reverse index cleanup
+    DELETE _executionStringStore:BuildDefinitionExecutionIndexKey(scenarioId)
     PUBLISH storyline.scenario-definition.deleted (ScenarioDefinitionDeletedEvent with all fields + deleteReason),
   gracePeriodDays: body.GracePeriodDays,
   dryRun: body.DryRun

@@ -15,7 +15,7 @@
 | Layer | L2 GameFoundation |
 | Endpoints | 17 |
 | State Stores | item-template-store (MySQL), item-template-cache (Redis), item-instance-store (MySQL), item-instance-cache (Redis), item-lock (Redis) |
-| Events Published | 11 (item.template.created, item.template.updated, item.instance.created, item.instance.modified, item.instance.destroyed, item.instance.bound, item.instance.unbound, item.used, item.use-failed, item.use-step-completed, item.use-step-failed) |
+| Events Published | 12 (item.template.created, item.template.updated, item.template.deleted, item.instance.created, item.instance.modified, item.instance.destroyed, item.instance.bound, item.instance.unbound, item.used, item.use-failed, item.use-step-completed, item.use-step-failed) |
 | Events Consumed | 0 |
 | Client Events | 0 |
 | Background Services | 0 |
@@ -85,6 +85,7 @@
 |-------|-----------|---------|
 | `item.template.created` | `ItemTemplateCreatedEvent` | Template created |
 | `item.template.updated` | `ItemTemplateUpdatedEvent` | Template fields changed (changedFields populated) or deprecated (changedFields for deprecation fields) |
+| `item.template.deleted` | `ItemTemplateDeletedEvent` | Template permanently deleted by clean-deprecated sweep |
 | `item.instance.created` | `ItemInstanceCreatedEvent` | Instance created from template |
 | `item.instance.modified` | `ItemInstanceModifiedEvent` | Instance durability/stats/name/container/quantity changed, or quantity decremented on use |
 | `item.instance.destroyed` | `ItemInstanceDestroyedEvent` | Instance permanently deleted or consumed (last unit) |
@@ -137,7 +138,7 @@ This plugin does not consume external events.
 | ListItemsByContainer | POST /item/instance/list-by-container | user | - | - |
 | ListItemsByTemplate | POST /item/instance/list-by-template | admin | - | - |
 | BatchGetItemInstances | POST /item/instance/batch-get | user | - | - |
-| CleanDeprecatedItemTemplates | POST /item/template/clean-deprecated | admin | template, code-index, game-index, all-index, cache | item.template.deleted |
+| CleanDeprecatedItemTemplates | POST /item/template/clean-deprecated | admin | template, code-index, game-index, all-index, cache, reverse-index | item.template.deleted |
 
 ---
 
@@ -459,24 +460,32 @@ RETURN (200, BatchGetItemInstancesResponse { items, notFound })
 ### CleanDeprecatedItemTemplates
 POST /item/template/clean-deprecated | Roles: [admin]
 
-**Status: UNIMPLEMENTED** (`NotImplementedException` stub)
-
 ```
-// Implementation should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
-// per IMPLEMENTATION TENETS Category B clean-deprecated (B20-B22).
-//
-// Expected pseudocode:
-// QUERY all templates WHERE IsDeprecated == true
-// CALL DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
-//   deprecatedEntities: deprecated templates,
-//   getEntityId: t => t.TemplateId,
-//   getDeprecatedAt: t => t.DeprecatedAt,
-//   hasActiveInstancesAsync: check inst-template:{templateId} list is non-empty,
-//   deleteAndPublishAsync: delete template + indexes + cache, publish item.template.deleted,
-//   gracePeriodDays: body.GracePeriodDays,
-//   dryRun: body.DryRun,
-//   logger, telemetryProvider, ct)
-// RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
+// Load all templates via bulk get, filter deprecated in memory
+templates = BULK_GET template-store (all keys via "all-templates" index)
+deprecatedTemplates = templates.Where(t => t.IsDeprecated)
+IF count == 0
+  RETURN (200, CleanDeprecatedResponse { cleaned=0, remaining=0, errors=0, cleanedIds=[] })
+
+result = DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+  deprecatedTemplates,
+  getEntityId: t => t.TemplateId,
+  getDeprecatedAt: t => t.DeprecatedAt,
+  hasInstancesAsync: (t, ct) =>
+    _instanceStringStore.HasStringListEntriesAsync("inst-template:{templateId}", ct),
+  deleteAndPublishAsync: (t, ct) =>
+    DELETE template-store:"tpl:{templateId}"
+    DELETE template-store:"tpl-code:{gameId}:{code}"
+    ETAG-WRITE template-store:"tpl-game:{gameId}" <- remove templateId
+    ETAG-WRITE template-store:"all-templates" <- remove templateId
+    DELETE template-cache:"tpl:{templateId}"
+    DELETE instance-store:"inst-template:{templateId}"  // defensive reverse index cleanup
+    PUBLISH item.template.deleted (ItemTemplateDeletedEvent with all fields + deleteReason),
+  gracePeriodDays: body.GracePeriodDays,
+  dryRun: body.DryRun
+)
+
+RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ```
 
 ---

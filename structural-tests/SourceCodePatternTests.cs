@@ -103,4 +103,67 @@ public class SourceCodePatternTests
             $"Found {violations.Count} null-forgiving operator / unsafe null cast violation(s) " +
             $"across {grouped.Count()} plugin(s):{report}");
     }
+
+    /// <summary>
+    /// Validates that plugin files registering hosted services (AddHostedService calls)
+    /// extend StandardServicePlugin&lt;T&gt; and override ConfigureServices. Hosted services
+    /// registered in plugins that bypass StandardServicePlugin may lack proper lifecycle
+    /// management (scoped service resolution, consistent start/running/shutdown phases).
+    /// </summary>
+    [Fact]
+    public void Plugins_WithHostedServices_UseStandardServicePluginConfigureServices()
+    {
+        if (!Directory.Exists(PluginsDir))
+            return;
+
+        var violations = new List<string>();
+
+        foreach (var pluginDir in Directory.GetDirectories(PluginsDir, "lib-*"))
+        {
+            var dirName = Path.GetFileName(pluginDir);
+            if (dirName.EndsWith(".tests", StringComparison.Ordinal))
+                continue;
+
+            foreach (var pluginFile in Directory.GetFiles(pluginDir, "*Plugin.cs", SearchOption.TopDirectoryOnly))
+            {
+                var lines = File.ReadAllLines(pluginFile);
+                var relativeToRepo = Path.GetRelativePath(TestAssemblyDiscovery.RepoRoot, pluginFile);
+
+                bool hasHostedService = lines.Any(l =>
+                    l.Contains("AddHostedService", StringComparison.Ordinal));
+
+                if (!hasHostedService)
+                    continue;
+
+                bool extendsStandard = lines.Any(l =>
+                    l.Contains(": StandardServicePlugin<", StringComparison.Ordinal));
+
+                bool hasConfigureServicesOverride = lines.Any(l =>
+                {
+                    var trimmed = l.TrimStart();
+                    return trimmed.Contains("override", StringComparison.Ordinal) &&
+                            trimmed.Contains("ConfigureServices", StringComparison.Ordinal);
+                });
+
+                if (!extendsStandard)
+                {
+                    violations.Add(
+                        $"{relativeToRepo}: registers hosted services but extends BaseBannouPlugin " +
+                        $"directly — should extend StandardServicePlugin<T>");
+                }
+                else if (!hasConfigureServicesOverride)
+                {
+                    violations.Add(
+                        $"{relativeToRepo}: registers hosted services but does not override " +
+                        $"ConfigureServices on StandardServicePlugin<T>");
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"{violations.Count} plugin(s) register hosted services without proper " +
+            $"StandardServicePlugin<T> ConfigureServices override:\n" +
+            string.Join("\n", violations.Select(v => $"  - {v}")));
+    }
 }

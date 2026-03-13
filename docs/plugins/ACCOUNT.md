@@ -38,6 +38,9 @@ The Account plugin is an internal-only CRUD service (L1 AppFoundation) for manag
 | `EmailChangeLockExpirySeconds` | `ACCOUNT_EMAIL_CHANGE_LOCK_EXPIRY_SECONDS` | 10 | Lock expiry in seconds for email uniqueness check during email change (min: 1, max: 60) |
 | `ProviderFilterMaxScanSize` | `ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE` | 10000 | Maximum number of accounts to scan when filtering by provider in the admin-only list endpoint (min: 100, max: 100000) |
 | `AutoManageAnonymousRole` | `ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE` | true | When true, automatically manages "anonymous" role: adds it if roles would be empty, removes it when adding non-anonymous roles |
+| `RetentionPeriodDays` | `ACCOUNT_RETENTION_PERIOD_DAYS` | 30 | Days after soft-deletion before an account record is permanently purged from MySQL (min: 1, max: 3650) |
+| `RetentionCleanupIntervalSeconds` | `ACCOUNT_RETENTION_CLEANUP_INTERVAL_SECONDS` | 86400 | Interval between retention cleanup worker cycles in seconds (default: 24 hours) |
+| `RetentionCleanupStartupDelaySeconds` | `ACCOUNT_RETENTION_CLEANUP_STARTUP_DELAY_SECONDS` | 60 | Delay before the retention cleanup worker starts its first cycle after startup (min: 5, max: 600) |
 
 ## Visual Aid
 
@@ -99,13 +102,13 @@ On Delete: email-index removed (if exists), │
 
 8. **Provider index ownership validation with stale detection**: When adding an auth method, `AddAuthMethodAsync` checks if another account already owns the provider:externalId combination. If the owning account is soft-deleted (stale index from incomplete cleanup), the orphaned index is overwritten with a log message. Only returns `Conflict` if the owning account is still active.
 
-9. **Soft-delete is NOT deprecation**: Account deletion uses a soft-delete pattern (`DeletedAt` timestamp) for practical data retention and audit purposes. This is distinct from the deprecation lifecycle defined in IMPLEMENTATION TENETS. Accounts are identity instances, not definitions or templates referenced by other entities -- they fall squarely in's "immediate hard delete" category. The soft-delete exists for data retention policy compliance and to support stale index detection (quirk #8), not as a deprecation-before-delete workflow.
+9. **Soft-delete is NOT deprecation**: Account deletion uses a soft-delete pattern (`DeletedAt` timestamp) for practical data retention and audit purposes, with a background retention worker (`AccountRetentionWorker`) that permanently purges records after the configured retention period (default: 30 days). This is distinct from the deprecation lifecycle defined in IMPLEMENTATION TENETS. Accounts are identity instances, not definitions or templates referenced by other entities -- they fall squarely in the "immediate hard delete" category per the deprecation lifecycle tenet. The soft-delete exists for data retention policy compliance and to support stale index detection (quirk #8), not as a deprecation-before-delete workflow. Account is the sole service permitted to use soft-delete per FOUNDATION TENETS.
 
 10. **Metadata field is client-only per FOUNDATION TENETS**: The `Metadata` dictionary on `AccountModel` uses `additionalProperties: true` and is strictly client-opaque pass-through storage. No Bannou plugin reads specific keys from account metadata by convention. The service stores and returns it unchanged without inspection.
 
 ### Design Considerations (Requires Planning)
 
-None identified.
+*No active design considerations.*
 
 ## Work Tracking
 

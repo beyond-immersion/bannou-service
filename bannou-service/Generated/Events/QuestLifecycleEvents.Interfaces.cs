@@ -16,3 +16,7 @@ namespace BeyondImmersion.BannouService.Events;
 public partial class QuestDefinitionCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
 public partial class QuestDefinitionUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
 public partial class QuestDefinitionDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
+
+public partial class QuestInstanceCreatedEvent : ILifecycleCreatedEvent { }
+public partial class QuestInstanceUpdatedEvent : ILifecycleUpdatedEvent { }
+public partial class QuestInstanceDeletedEvent : ILifecycleDeletedEvent { }

@@ -153,6 +153,24 @@ public sealed class QuestProxy
     }
 
     /// <summary>
+    /// Delete a quest instance
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing QuestInstanceResponse on success.</returns>
+    public Task<ApiResponse<QuestInstanceResponse>> DeleteQuestInstanceAsync(
+        DeleteQuestInstanceRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeleteQuestInstanceRequest, QuestInstanceResponse>(
+            "/quest/instance/delete", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get quest instance details
     /// </summary>
     /// <param name="request">The request payload.</param>

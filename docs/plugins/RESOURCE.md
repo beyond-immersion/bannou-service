@@ -52,6 +52,10 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 | lib-faction | L4 | faction | (via generated `FactionCompressionCallbacks`) |
 | lib-obligation | L4 | obligation | (via generated `ObligationCompressionCallbacks`) |
 
+### Seeded Resource Providers (`ISeededResourceProvider` DI interface)
+
+Higher-layer plugins implement `ISeededResourceProvider` to expose embedded/static resources (ABML behaviors, scenario templates) that Resource aggregates through the `/resource/seeded/list` and `/resource/seeded/get` endpoints. Resource discovers providers via `IEnumerable<ISeededResourceProvider>` DI collection with per-provider error isolation.
+
 ### Other Consumers
 
 | Dependent | Layer | Relationship |
@@ -252,6 +256,12 @@ None currently.
 4. **Batch compression endpoint**: Add `/resource/compress/execute-batch` to compress multiple resources in a single request, improving efficiency for bulk archival operations (e.g., purging many dead characters). Design questions include partial success semantics, lock acquisition strategy, and configurable parallelism.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
 
+5. **lib-scene integration**: Not yet integrated with lib-resource (no `IResourceClient` usage, no generated reference tracking or compression files). When scene references to characters are added, will need `x-references` schema extension, cleanup endpoint, and optionally compression callbacks.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/598 -->
+
+6. **lib-seed compression integration**: Seed archival currently retains growth data, capability cache, and bond data indefinitely ([#366](https://github.com/beyond-immersion/bannou-service/issues/366)). Phase 2 of the seed cleanup strategy calls for lib-resource compression integration to archive growth/bond data before deletion, requiring `x-compression-callback` schema extension and compress/decompress endpoints in lib-seed.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/366 -->
+
 ---
 
 ## Integration Pattern
@@ -393,7 +403,7 @@ await resourceClient.DefineCompressCallbackAsync(
    {
        // body.Data contains Base64-encoded GZip JSON
        // Decompress, deserialize, restore to state stores
-       return (StatusCodes.OK, new RestoreFromArchiveResponse { Success = true });
+       return (StatusCodes.OK, new RestoreFromArchiveResponse());
    }
    ```
 
@@ -450,6 +460,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-03**: [#278](https://github.com/beyond-immersion/bannou-service/issues/278) - Priority ordering for cleanup callbacks (mirroring compression's existing priority system)
 - **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for bulk entity deletion (affects character-history, character-encounter, character-personality, actor)
 - **2026-03-08**: [#598](https://github.com/beyond-immersion/bannou-service/issues/598) - Evaluate lib-scene lib-resource integration scope (character references, game service cleanup, asset tracking, scene-to-scene references)
+- **2026-03-08**: [#366](https://github.com/beyond-immersion/bannou-service/issues/366) - lib-seed compression integration for growth/bond data archival before deletion
 
 ### Active
 
@@ -459,18 +470,3 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 *Historical entries cleared — see git history for past work tracking.*
 
-### Pending Integrations
-
-1. **lib-scene**: Not yet integrated with lib-resource (no `IResourceClient` usage, no generated reference tracking or compression files). When scene references to characters are added, will need `x-references` schema extension, cleanup endpoint, and optionally compression callbacks.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/598 -->
-
-2. **lib-seed**: Seed archival currently retains growth data, capability cache, and bond data indefinitely ([#366](https://github.com/beyond-immersion/bannou-service/issues/366)). Phase 2 of the seed cleanup strategy calls for lib-resource compression integration to archive growth/bond data before deletion, requiring `x-compression-callback` schema extension and compress/decompress endpoints in lib-seed.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/366 -->
-
----
-
-## Related Documents
-
-- [SERVICE-HIERARCHY.md](../reference/SERVICE-HIERARCHY.md) - Layer placement rationale
-- [TENETS.md](../reference/TENETS.md) - Compliance requirements
-- [SCHEMA-RULES.md](../reference/SCHEMA-RULES.md) - `x-references`, `x-resource-lifecycle`, and `x-compression-callback` schema extensions

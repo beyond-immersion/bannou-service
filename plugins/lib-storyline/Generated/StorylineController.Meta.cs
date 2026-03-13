@@ -6147,6 +6147,121 @@ public partial class StorylineController
 
     #endregion
 
+    #region Meta Endpoints for DeleteScenarioExecution
+
+    private static readonly string _DeleteScenarioExecution_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteScenarioExecutionRequest",
+    "$defs": {
+        "DeleteScenarioExecutionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to delete a scenario execution instance",
+            "required": [
+                "executionId"
+            ],
+            "properties": {
+                "executionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Execution instance to delete"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteScenarioExecution_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteScenarioExecutionResponse",
+    "$defs": {
+        "DeleteScenarioExecutionResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response from deleting a scenario execution",
+            "required": [
+                "executionId",
+                "scenarioId",
+                "scenarioCode"
+            ],
+            "properties": {
+                "executionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Deleted execution instance ID"
+                },
+                "scenarioId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Scenario definition that was referenced"
+                },
+                "scenarioCode": {
+                    "type": "string",
+                    "description": "Code of the referenced scenario"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteScenarioExecution_Info = """
+{
+    "summary": "Delete a scenario execution instance",
+    "description": "Permanently deletes a scenario execution record. Only non-active executions\n(Completed, Failed, Cancelled) can be deleted. Active executions must be\ncompleted or failed first.\n\nAdmin-only endpoint for data cleanup and housekeeping.\n",
+    "tags": [
+        "Scenario Execution"
+    ],
+    "deprecated": false,
+    "operationId": "DeleteScenarioExecution"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteScenarioExecution</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/execution/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteScenarioExecution_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Storyline",
+            "POST",
+            "/storyline/execution/delete",
+            _DeleteScenarioExecution_Info));
+
+    /// <summary>Returns request schema for DeleteScenarioExecution</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/execution/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteScenarioExecution_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/execution/delete",
+            "request-schema",
+            _DeleteScenarioExecution_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteScenarioExecution</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/execution/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteScenarioExecution_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/execution/delete",
+            "response-schema",
+            _DeleteScenarioExecution_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteScenarioExecution</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/storyline/execution/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteScenarioExecution_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Storyline",
+            "POST",
+            "/storyline/execution/delete",
+            _DeleteScenarioExecution_Info,
+            _DeleteScenarioExecution_RequestSchema,
+            _DeleteScenarioExecution_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GetCompressData
 
     private static readonly string _GetCompressData_RequestSchema = """

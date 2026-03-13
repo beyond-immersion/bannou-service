@@ -464,6 +464,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetScenarioHistoryResponse'
 
+  /storyline/execution/delete:
+    post:
+      summary: Delete a scenario execution instance
+      description: |
+        Permanently deletes a scenario execution record. Only non-active executions
+        (Completed, Failed, Cancelled) can be deleted. Active executions must be
+        completed or failed first.
+
+        Admin-only endpoint for data cleanup and housekeeping.
+      operationId: DeleteScenarioExecution
+      tags:
+      - Scenario Execution
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteScenarioExecutionRequest'
+      responses:
+        '200':
+          description: Execution deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteScenarioExecutionResponse'
+        '404':
+          description: Execution not found
+        '409':
+          description: Execution is still active
+
   # ===========================================================================
   # Compression Endpoints (Resource Service Integration)
   # ===========================================================================
@@ -2410,6 +2442,39 @@ components:
         totalCount:
           type: integer
           description: Total count for pagination
+
+    DeleteScenarioExecutionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to delete a scenario execution instance
+      required:
+      - executionId
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Execution instance to delete
+
+    DeleteScenarioExecutionResponse:
+      type: object
+      additionalProperties: false
+      description: Response from deleting a scenario execution
+      required:
+      - executionId
+      - scenarioId
+      - scenarioCode
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Deleted execution instance ID
+        scenarioId:
+          type: string
+          format: uuid
+          description: Scenario definition that was referenced
+        scenarioCode:
+          type: string
+          description: Code of the referenced scenario
 
     # ===========================================================================
     # Compression Models (Resource Service Integration)

@@ -2347,6 +2347,60 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Get scenario execution history\",\n    \"description\": \"Returns historical
         scenario executions for a character with pagination.\\n\",\n    \"tags\": [\n        \"Scenario Execution\"\n    ],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"GetScenarioHistory\"\n}"
+  /storyline/execution/delete:
+    post:
+      summary: Delete a scenario execution instance
+      description: |
+        Permanently deletes a scenario execution record. Only non-active executions
+        (Completed, Failed, Cancelled) can be deleted. Active executions must be
+        completed or failed first.
+
+        Admin-only endpoint for data cleanup and housekeeping.
+      operationId: DeleteScenarioExecution
+      tags:
+      - Scenario Execution
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteScenarioExecutionRequest'
+      responses:
+        '200':
+          description: Execution deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteScenarioExecutionResponse'
+        '404':
+          description: Execution not found
+        '409':
+          description: Execution is still active
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteScenarioExecutionRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteScenarioExecutionRequest\": {\n            \"type\": \"object\",\n          \
+        \  \"additionalProperties\": false,\n            \"description\": \"Request to delete a scenario execution instance\"\
+        ,\n            \"required\": [\n                \"executionId\"\n            ],\n            \"properties\": {\n \
+        \               \"executionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Execution instance to delete\"\n                }\n            }\n\
+        \        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteScenarioExecutionResponse\"\
+        ,\n    \"$defs\": {\n        \"DeleteScenarioExecutionResponse\": {\n            \"type\": \"object\",\n         \
+        \   \"additionalProperties\": false,\n            \"description\": \"Response from deleting a scenario execution\"\
+        ,\n            \"required\": [\n                \"executionId\",\n                \"scenarioId\",\n              \
+        \  \"scenarioCode\"\n            ],\n            \"properties\": {\n                \"executionId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Deleted execution instance ID\"\n                },\n                \"scenarioId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Scenario definition
+        that was referenced\"\n                },\n                \"scenarioCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Code of the referenced scenario\"\n                }\n            }\n  \
+        \      }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete a scenario execution instance\",\n    \"description\": \"Permanently
+        deletes a scenario execution record. Only non-active executions\\n(Completed, Failed, Cancelled) can be deleted. Active
+        executions must be\\ncompleted or failed first.\\n\\nAdmin-only endpoint for data cleanup and housekeeping.\\n\",\n\
+        \    \"tags\": [\n        \"Scenario Execution\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"DeleteScenarioExecution\"\
+        \n}"
   /storyline/get-compress-data:
     post:
       summary: Get storyline data for compression
@@ -4252,6 +4306,37 @@ components:
         totalCount:
           type: integer
           description: Total count for pagination
+    DeleteScenarioExecutionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to delete a scenario execution instance
+      required:
+      - executionId
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Execution instance to delete
+    DeleteScenarioExecutionResponse:
+      type: object
+      additionalProperties: false
+      description: Response from deleting a scenario execution
+      required:
+      - executionId
+      - scenarioId
+      - scenarioCode
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          description: Deleted execution instance ID
+        scenarioId:
+          type: string
+          format: uuid
+          description: Scenario definition that was referenced
+        scenarioCode:
+          type: string
+          description: Code of the referenced scenario
     GetCompressDataRequest:
       type: object
       description: Request to get storyline data for compression

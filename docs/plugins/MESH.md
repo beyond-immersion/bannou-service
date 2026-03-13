@@ -154,29 +154,26 @@ Event-Driven Auto-Registration
 
 ### Bugs (Fix Immediately)
 
-*No bugs identified.*
+1. **L0 subscribing to L3 events (`bannou.full-service-mappings`)**: Mesh (L0) subscribes to `bannou.full-service-mappings` events published by Orchestrator (L3). Per Foundation Tenets (Cross-Service Communication Discipline), a lower-layer service must never subscribe to events published by a higher-layer service. The fix: Orchestrator (L3) should call mesh (L0) API directly to update routing tables — hierarchy permits L3→L0 calls. The `bannou.service-heartbeat` event is a separate case — heartbeat events are published by any running node (including L0 infrastructure nodes), not exclusively by Orchestrator, so they are true infrastructure broadcasts.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-13:https://github.com/beyond-immersion/bannou-service/issues/638 -->
 
 ### Intentional Quirks (Documented Behavior)
 
 1. **`InvokeRawAsync` bypasses circuit breaker**: The raw API invocation path (`InvokeRawAsync`) intentionally skips circuit breaker checks and does not record success/failure to the breaker. This is by design because raw API execution targets services that may be optional or disabled — failures against absent services should not trip the circuit.
 
-### Operational Notes
+2. **Two-level routing model**: Mesh routing operates in two stages. First, `IServiceAppMappingResolver` maps a **service name** to an **app-id** (e.g., `"auth"` → `"bannou-auth-node1"`). This mapping is populated by Orchestrator's `FullServiceMappingsEvent` broadcasts after deployments and topology changes. Second, Mesh resolves the **app-id** to a specific **endpoint** using load balancing across all healthy instances registered under that app-id. Node affinity is handled at the first level (Orchestrator assigns per-node app-ids like `bannou-{service}-{nodeName}`), so Mesh's load balancing at the second level is always stateless. In development, all services map to the default `"bannou"` app-id (single instance); in production, Orchestrator controls which node each service routes to by publishing different mappings.
 
-These are standard behaviors worth understanding for operations and debugging:
+3. **Resilient routing fallback**: If health/load filtering eliminates all endpoints, `GetRoute` falls back to the full unfiltered list. Prefers degraded routing over total failure.
 
-1. **Two-level routing model**: Mesh routing operates in two stages. First, `IServiceAppMappingResolver` maps a **service name** to an **app-id** (e.g., `"auth"` → `"bannou-auth-node1"`). This mapping is populated by Orchestrator's `FullServiceMappingsEvent` broadcasts after deployments and topology changes. Second, Mesh resolves the **app-id** to a specific **endpoint** using load balancing across all healthy instances registered under that app-id. Node affinity is handled at the first level (Orchestrator assigns per-node app-ids like `bannou-{service}-{nodeName}`), so Mesh's load balancing at the second level is always stateless. In development, all services map to the default `"bannou"` app-id (single instance); in production, Orchestrator controls which node each service routes to by publishing different mappings.
+4. **Circuit breaker eventual consistency**: State syncs across instances via Redis + RabbitMQ events within milliseconds. Brief disagreement during propagation is expected and harmless.
 
-2. **Resilient routing fallback**: If health/load filtering eliminates all endpoints, `GetRoute` falls back to the full unfiltered list. Prefers degraded routing over total failure.
+5. **Global index lazy cleanup**: The `mesh-global-index` store cleans stale entries on access rather than via TTL. Endpoints themselves have TTL, so this is an optimization choice, not a bug.
 
-3. **Circuit breaker eventual consistency**: State syncs across instances via Redis + RabbitMQ events within milliseconds. Brief disagreement during propagation is expected and harmless.
-
-4. **Global index lazy cleanup**: The `mesh-global-index` store cleans stale entries on access rather than via TTL. Endpoints themselves have TTL, so this is an optimization choice, not a bug.
-
-5. **Empty mappings = reset**: `FullServiceMappingsEvent` with empty mappings resets all routing to default ("bannou"). This is intentional for container teardown.
+6. **Empty mappings = reset**: `FullServiceMappingsEvent` with empty mappings resets all routing to default ("bannou"). This is intentional for container teardown.
 
 ### Design Considerations (Requires Planning)
 
-*No design issues requiring planning - architecture is stable.*
+*No design issues requiring planning.*
 
 ---
 
@@ -184,4 +181,6 @@ These are standard behaviors worth understanding for operations and debugging:
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-*No active work items. All previous items completed — see git history for details.*
+### Active
+
+- [#638](https://github.com/beyond-immersion/bannou-service/issues/638) — T27: Mesh (L0) subscribes to Orchestrator (L3) full-service-mappings event (NEEDS_DESIGN)

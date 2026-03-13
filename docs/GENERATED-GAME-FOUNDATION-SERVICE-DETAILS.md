@@ -65,7 +65,7 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 
 ## Quest {#quest}
 
-**Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md) | **Map**: [docs/maps/QUEST.md](maps/QUEST.md)
+**Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/QUEST.md](plugins/QUEST.md) | **Map**: [docs/maps/QUEST.md](maps/QUEST.md)
 
 The Quest service (L2 GameFoundation) provides objective-based gameplay progression as a thin orchestration layer over lib-contract. Translates game-flavored quest semantics (objectives, rewards, quest givers) into Contract infrastructure (milestones, prebound APIs, parties), leveraging Contract's state machine and cleanup orchestration while presenting a player-friendly API. Agnostic to prerequisite sources: L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` for validation without Quest depending on them. Exposes quest data to the Actor service via the Variable Provider Factory pattern for ABML behavior expressions.
 
@@ -132,7 +132,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Services in layer**: 17
-- **Endpoints in layer**: 309
+- **Endpoints in layer**: 310
 
 ---
 

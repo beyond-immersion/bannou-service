@@ -209,14 +209,16 @@ RETURN (200, SessionUpdateResponse { permissionsChanged, newPermissions })
 POST /permission/clear-session-state | Roles: []
 
 ```
-READ permission:"session:{sessionId}:states"
-IF states null or empty
+LOCK permission-lock:"{sessionId}" timeout=SessionLockTimeoutSeconds
+ -> 409 if lock fails
+ READ permission:"session:{sessionId}:states"
+ IF states null or empty
  RETURN (200, SessionUpdateResponse { permissionsChanged: false })
 
-IF serviceId null or empty // Clear ALL states
+ IF serviceId null or empty // Clear ALL states
  WRITE permission:"session:{sessionId}:states" <- {} [TTL: SessionDataTtlSeconds]
  // see helper: RecompileSessionPermissions (with empty states)
-ELSE
+ ELSE
  IF serviceId not in states
  RETURN (200, SessionUpdateResponse { permissionsChanged: false })
  IF body.states filter provided and non-empty
@@ -228,8 +230,6 @@ ELSE
 
 RETURN (200, SessionUpdateResponse { permissionsChanged, newPermissions })
 ```
-
-// Note: No distributed lock — unlike UpdateSessionState/UpdateSessionRole.
 
 ### GetSessionInfo
 POST /permission/get-session-info | Roles: []

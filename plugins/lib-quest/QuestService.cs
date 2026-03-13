@@ -71,6 +71,9 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
     /// <summary>State store for quest cooldown entries (Redis).</summary>
     private readonly IStateStore<CooldownEntry> _cooldownStore;
 
+    /// <summary>String-typed state store for definition→instance reverse indexes.</summary>
+    private readonly IStateStore<string> _instanceStringStore;
+
     #region Key Prefixes
 
     private const string DEFINITION_KEY_PREFIX = "def:";
@@ -80,6 +83,7 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
     private const string CHARACTER_INDEX_KEY_PREFIX = "char:";
     private const string COOLDOWN_KEY_PREFIX = "cd:";
     private const string LOCK_KEY_PREFIX = "quest:lock:";
+    private const string DEFINITION_INSTANCE_INDEX = "def-inst:";
 
     #endregion
 
@@ -92,6 +96,7 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
     internal static string BuildCharacterIndexKey(Guid characterId) => $"{CHARACTER_INDEX_KEY_PREFIX}{characterId}";
     internal static string BuildCooldownKey(Guid characterId, string questCode) => $"{COOLDOWN_KEY_PREFIX}{characterId}:{questCode}";
     internal static string BuildLockKey(string resource) => $"{LOCK_KEY_PREFIX}{resource}";
+    internal static string BuildDefinitionInstanceIndexKey(Guid definitionId) => $"{DEFINITION_INSTANCE_INDEX}{definitionId}";
 
     #endregion
 
@@ -151,6 +156,7 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
         _progressStore = stateStoreFactory.GetStore<ObjectiveProgressModel>(StateStoreDefinitions.QuestObjectiveProgress);
         _characterIndex = stateStoreFactory.GetCacheableStore<CharacterQuestIndex>(StateStoreDefinitions.QuestCharacterIndex);
         _cooldownStore = stateStoreFactory.GetStore<CooldownEntry>(StateStoreDefinitions.QuestCooldown);
+        _instanceStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.QuestInstance);
 
         // Register event handlers via partial class (QuestServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -754,7 +760,15 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
             idx.ActiveQuestIds.Add(questInstanceId);
         }, cancellationToken);
 
-        // Publish quest accepted event
+        // Maintain definition→instance reverse index for clean-deprecated sweep
+        await _instanceStringStore.AddToStringListAsync(
+            BuildDefinitionInstanceIndexKey(definition.DefinitionId),
+            questInstanceId.ToString(),
+            _configuration.MaxConcurrencyRetries,
+            _logger,
+            cancellationToken);
+
+        // Publish quest accepted event (action event)
         var acceptedEvent = new QuestAcceptedEvent
         {
             EventId = Guid.NewGuid(),
@@ -766,6 +780,26 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
             GameServiceId = definition.GameServiceId
         };
         await _messageBus.PublishQuestAcceptedAsync(acceptedEvent, cancellationToken);
+
+        // Publish lifecycle created event
+        await _messageBus.PublishQuestInstanceCreatedAsync(new QuestInstanceCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            QuestInstanceId = questInstanceId,
+            DefinitionId = definition.DefinitionId,
+            ContractInstanceId = contractResponse.ContractId,
+            Code = definition.Code,
+            Name = definition.Name,
+            Status = QuestStatus.Active,
+            QuestGiverCharacterId = questInstance.QuestGiverCharacterId,
+            GameServiceId = definition.GameServiceId,
+            AcceptedAt = now,
+            CompletedAt = null,
+            Deadline = questInstance.Deadline,
+            CreatedAt = now,
+            UpdatedAt = now
+        }, cancellationToken);
 
         _logger.LogInformation("Quest accepted: {QuestInstanceId} ({Code}) by character {CharacterId}",
             questInstanceId, definition.Code, body.QuestorCharacterId);
@@ -843,7 +877,7 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                 idx.ActiveQuestIds?.Remove(body.QuestInstanceId);
             }, cancellationToken);
 
-            // Publish abandoned event
+            // Publish abandoned event (action event)
             var abandonedEvent = new QuestAbandonedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -853,6 +887,27 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                 AbandoningCharacterId = body.QuestorCharacterId
             };
             await _messageBus.PublishQuestAbandonedAsync(abandonedEvent, cancellationToken);
+
+            // Publish lifecycle updated event with changedFields
+            await _messageBus.PublishQuestInstanceUpdatedAsync(new QuestInstanceUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                QuestInstanceId = body.QuestInstanceId,
+                DefinitionId = instance.DefinitionId,
+                ContractInstanceId = instance.ContractInstanceId,
+                Code = instance.Code,
+                Name = instance.Name,
+                Status = QuestStatus.Abandoned,
+                QuestGiverCharacterId = instance.QuestGiverCharacterId,
+                GameServiceId = instance.GameServiceId,
+                AcceptedAt = instance.AcceptedAt,
+                CompletedAt = now,
+                Deadline = instance.Deadline,
+                CreatedAt = instance.AcceptedAt,
+                UpdatedAt = now,
+                ChangedFields = new List<string> { "status", "completedAt" }
+            }, cancellationToken);
 
             _logger.LogInformation("Quest abandoned: {QuestInstanceId} by character {CharacterId}",
                 body.QuestInstanceId, body.QuestorCharacterId);
@@ -1904,7 +1959,7 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                 }
             }
 
-            // Publish completed event
+            // Publish completed event (action event)
             var completedEvent = new QuestCompletedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -1916,6 +1971,27 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                 GameServiceId = current.GameServiceId
             };
             await _messageBus.PublishQuestCompletedAsync(completedEvent, cancellationToken);
+
+            // Publish lifecycle updated event with changedFields
+            await _messageBus.PublishQuestInstanceUpdatedAsync(new QuestInstanceUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                QuestInstanceId = instance.QuestInstanceId,
+                DefinitionId = current.DefinitionId,
+                ContractInstanceId = current.ContractInstanceId,
+                Code = current.Code,
+                Name = current.Name,
+                Status = QuestStatus.Completed,
+                QuestGiverCharacterId = current.QuestGiverCharacterId,
+                GameServiceId = current.GameServiceId,
+                AcceptedAt = current.AcceptedAt,
+                CompletedAt = now,
+                Deadline = current.Deadline,
+                CreatedAt = current.AcceptedAt,
+                UpdatedAt = now,
+                ChangedFields = new List<string> { "status", "completedAt" }
+            }, cancellationToken);
 
             _logger.LogInformation("Quest completed: {QuestInstanceId} ({Code})",
                 instance.QuestInstanceId, current.Code);
@@ -2438,14 +2514,17 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
     /// <summary>
     /// Deletes all quest data for a character. Called by lib-resource during character deletion cleanup.
     /// Abandons active quests, deletes objective progress, cooldowns, and character index.
+    /// Only deletes quest instances where the deleted character is the sole remaining questor.
+    /// For multi-questor instances, removes the character's participation without destroying the quest.
     /// </summary>
     /// <param name="body">Request containing the character ID to clean up.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Counts of deleted records.</returns>
+    /// <returns>Counts of affected records.</returns>
     public async Task<(StatusCodes, DeleteByCharacterResponse?)> DeleteByCharacterAsync(
         DeleteByCharacterRequest body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.DeleteByCharacterAsync");
         _logger.LogInformation("Deleting all quest data for character {CharacterId}", body.CharacterId);
 
         var indexKey = BuildCharacterIndexKey(body.CharacterId);
@@ -2456,7 +2535,7 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
         var cooldownsDeleted = 0;
 
         // Query ALL quest instances for this character (active, completed, abandoned, failed)
-        // to ensure comprehensive reference cleanup — the character index only tracks active quests
+        // to ensure comprehensive cleanup — the character index only tracks active quests
         var allInstances = await _instanceStore.QueryAsync(
             i => i.QuestorCharacterIds.Contains(body.CharacterId),
             cancellationToken: cancellationToken);
@@ -2465,7 +2544,9 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
         {
             try
             {
-                // Abandon active quests; completed/failed/abandoned instances just need reference cleanup
+                var isSoleQuestor = instance.QuestorCharacterIds.Count <= 1;
+
+                // Abandon active quests first (terminate contract, publish abandoned event)
                 if (instance.Status == QuestStatus.Active)
                 {
                     var instanceKey = BuildInstanceKey(instance.QuestInstanceId);
@@ -2473,61 +2554,98 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
 
                     if (current != null && current.Status == QuestStatus.Active)
                     {
-                        current.Status = QuestStatus.Abandoned;
-                        current.CompletedAt = DateTimeOffset.UtcNow;
+                        if (isSoleQuestor)
+                        {
+                            // Sole questor: abandon the entire quest
+                            current.Status = QuestStatus.Abandoned;
+                            current.CompletedAt = DateTimeOffset.UtcNow;
+
+                            // GetWithETagAsync returns non-null etag for existing records;
+                            // coalesce satisfies compiler's nullable analysis (will never execute)
+                            await _instanceStore.TrySaveAsync(instanceKey, current, etag ?? string.Empty, cancellationToken: cancellationToken);
+
+                            // Terminate underlying contract (best effort)
+                            try
+                            {
+                                await _contractClient.TerminateContractInstanceAsync(
+                                    new TerminateContractInstanceRequest
+                                    {
+                                        ContractId = current.ContractInstanceId,
+                                        RequestingEntityId = body.CharacterId,
+                                        RequestingEntityType = EntityType.Character,
+                                        Reason = "Character deleted - quest cleanup"
+                                    },
+                                    cancellationToken);
+                            }
+                            catch (ApiException ex)
+                            {
+                                _logger.LogWarning(ex,
+                                    "Failed to terminate contract for quest {QuestInstanceId} during character cleanup",
+                                    instance.QuestInstanceId);
+                            }
+
+                            // Publish abandoned event
+                            var now = DateTimeOffset.UtcNow;
+                            await _messageBus.PublishQuestAbandonedAsync(new QuestAbandonedEvent
+                            {
+                                EventId = Guid.NewGuid(),
+                                Timestamp = now,
+                                QuestInstanceId = instance.QuestInstanceId,
+                                QuestCode = current.Code,
+                                AbandoningCharacterId = body.CharacterId
+                            }, cancellationToken);
+
+                            // Publish lifecycle updated event for status change
+                            await _messageBus.PublishQuestInstanceUpdatedAsync(new QuestInstanceUpdatedEvent
+                            {
+                                EventId = Guid.NewGuid(),
+                                Timestamp = now,
+                                QuestInstanceId = instance.QuestInstanceId,
+                                DefinitionId = current.DefinitionId,
+                                ContractInstanceId = current.ContractInstanceId,
+                                Code = current.Code,
+                                Name = current.Name,
+                                Status = QuestStatus.Abandoned,
+                                QuestGiverCharacterId = current.QuestGiverCharacterId,
+                                GameServiceId = current.GameServiceId,
+                                AcceptedAt = current.AcceptedAt,
+                                CompletedAt = now,
+                                Deadline = current.Deadline,
+                                CreatedAt = current.AcceptedAt,
+                                UpdatedAt = now,
+                                ChangedFields = new List<string> { "status", "completedAt" }
+                            }, cancellationToken);
+
+                            instancesAbandoned++;
+                        }
+                        else
+                        {
+                            // Multi-questor: remove this character from the quest without abandoning it
+                            current.QuestorCharacterIds.Remove(body.CharacterId);
+
+                            // GetWithETagAsync returns non-null etag for existing records;
+                            // coalesce satisfies compiler's nullable analysis (will never execute)
+                            await _instanceStore.TrySaveAsync(instanceKey, current, etag ?? string.Empty, cancellationToken: cancellationToken);
+                        }
+                    }
+                }
+                else if (!isSoleQuestor)
+                {
+                    // Non-active multi-questor instance: remove character from questor list
+                    var instanceKey = BuildInstanceKey(instance.QuestInstanceId);
+                    var (current, etag) = await _instanceStore.GetWithETagAsync(instanceKey, cancellationToken);
+
+                    if (current != null)
+                    {
+                        current.QuestorCharacterIds.Remove(body.CharacterId);
 
                         // GetWithETagAsync returns non-null etag for existing records;
                         // coalesce satisfies compiler's nullable analysis (will never execute)
                         await _instanceStore.TrySaveAsync(instanceKey, current, etag ?? string.Empty, cancellationToken: cancellationToken);
-
-                        // Terminate underlying contract (best effort)
-                        try
-                        {
-                            await _contractClient.TerminateContractInstanceAsync(
-                                new TerminateContractInstanceRequest
-                                {
-                                    ContractId = current.ContractInstanceId,
-                                    RequestingEntityId = body.CharacterId,
-                                    RequestingEntityType = EntityType.Character,
-                                    Reason = "Character deleted - quest cleanup"
-                                },
-                                cancellationToken);
-                        }
-                        catch (ApiException ex)
-                        {
-                            _logger.LogWarning(ex,
-                                "Failed to terminate contract for quest {QuestInstanceId} during character cleanup",
-                                instance.QuestInstanceId);
-                        }
-
-                        // Publish abandoned event
-                        var abandonedEvent = new QuestAbandonedEvent
-                        {
-                            EventId = Guid.NewGuid(),
-                            Timestamp = DateTimeOffset.UtcNow,
-                            QuestInstanceId = instance.QuestInstanceId,
-                            QuestCode = current.Code,
-                            AbandoningCharacterId = body.CharacterId
-                        };
-                        await _messageBus.PublishQuestAbandonedAsync(abandonedEvent, cancellationToken);
-
-                        // Delete objective progress records for this instance
-                        var definition = await GetDefinitionModelAsync(current.DefinitionId, cancellationToken);
-                        if (definition?.Objectives != null)
-                        {
-                            foreach (var objective in definition.Objectives)
-                            {
-                                var progressKey = BuildProgressKey(instance.QuestInstanceId, objective.Code);
-                                await _progressStore.DeleteAsync(progressKey, cancellationToken);
-                                progressRecordsDeleted++;
-                            }
-                        }
-
-                        instancesAbandoned++;
                     }
                 }
 
-                // Unregister character reference for ALL instances (active, completed, abandoned)
+                // Unregister character reference
                 try
                 {
                     await UnregisterCharacterReferenceAsync(instance.QuestInstanceId.ToString(), body.CharacterId, cancellationToken);
@@ -2537,6 +2655,32 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                     _logger.LogWarning(ex,
                         "Failed to unregister character reference for quest {QuestInstanceId}",
                         instance.QuestInstanceId);
+                }
+
+                if (isSoleQuestor)
+                {
+                    // Sole questor: delete the entire instance record (progress, reverse index, lifecycle event)
+                    await DeleteInstanceRecordAsync(instance, cancellationToken);
+                }
+                else
+                {
+                    // Multi-questor: only delete this character's progress records
+                    var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
+                    if (definition?.Objectives != null)
+                    {
+                        foreach (var objective in definition.Objectives)
+                        {
+                            var progressKey = BuildProgressKey(instance.QuestInstanceId, objective.Code);
+                            await _progressStore.DeleteAsync(progressKey, cancellationToken);
+                            progressRecordsDeleted++;
+                        }
+                    }
+
+                    // Remove from this character's index
+                    await UpdateCharacterIndexAsync(body.CharacterId, idx =>
+                    {
+                        idx.ActiveQuestIds?.Remove(instance.QuestInstanceId);
+                    }, cancellationToken);
                 }
             }
             catch (Exception ex)
@@ -2575,7 +2719,7 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
         }
 
         _logger.LogInformation(
-            "Character cleanup complete for {CharacterId}: {InstancesAbandoned} instances abandoned, {ProgressDeleted} progress records deleted, {CooldownsDeleted} cooldowns deleted",
+            "Character cleanup complete for {CharacterId}: {InstancesAbandoned} abandoned, {ProgressRecordsDeleted} progress deleted, {CooldownsDeleted} cooldowns deleted",
             body.CharacterId, instancesAbandoned, progressRecordsDeleted, cooldownsDeleted);
 
         return (StatusCodes.OK, new DeleteByCharacterResponse
@@ -2637,6 +2781,101 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
     #endregion
 
     /// <inheritdoc />
+    public async Task<(StatusCodes, QuestInstanceResponse?)> DeleteQuestInstanceAsync(
+        DeleteQuestInstanceRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.DeleteQuestInstanceAsync");
+
+        var instanceKey = BuildInstanceKey(body.QuestInstanceId);
+        var instance = await _instanceStore.GetAsync(instanceKey, cancellationToken);
+
+        if (instance == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Active quests must be abandoned first — only non-active instances can be deleted
+        if (instance.Status == QuestStatus.Active)
+        {
+            _logger.LogWarning("Cannot delete active quest instance {QuestInstanceId} — abandon it first",
+                body.QuestInstanceId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        await DeleteInstanceRecordAsync(instance, cancellationToken);
+
+        var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
+        var response = await MapToInstanceResponseAsync(instance, definition, cancellationToken);
+        return (StatusCodes.OK, response);
+    }
+
+    /// <summary>
+    /// Deletes a quest instance record and all associated data (progress, indexes, reverse index).
+    /// Publishes quest.instance.deleted lifecycle event.
+    /// </summary>
+    private async Task DeleteInstanceRecordAsync(QuestInstanceModel instance, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.DeleteInstanceRecordAsync");
+
+        var instanceKey = BuildInstanceKey(instance.QuestInstanceId);
+
+        // Delete objective progress records
+        var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
+        if (definition?.Objectives != null)
+        {
+            foreach (var objective in definition.Objectives)
+            {
+                var progressKey = BuildProgressKey(instance.QuestInstanceId, objective.Code);
+                await _progressStore.DeleteAsync(progressKey, cancellationToken);
+            }
+        }
+
+        // Remove from character indexes
+        foreach (var characterId in instance.QuestorCharacterIds)
+        {
+            await UpdateCharacterIndexAsync(characterId, idx =>
+            {
+                idx.ActiveQuestIds?.Remove(instance.QuestInstanceId);
+            }, cancellationToken);
+        }
+
+        // Remove from definition→instance reverse index
+        await _instanceStringStore.RemoveFromStringListAsync(
+            BuildDefinitionInstanceIndexKey(instance.DefinitionId),
+            instance.QuestInstanceId.ToString(),
+            _configuration.MaxConcurrencyRetries,
+            _logger,
+            cancellationToken);
+
+        // Delete the instance record
+        await _instanceStore.DeleteAsync(instanceKey, cancellationToken);
+
+        // Publish lifecycle deleted event
+        var now = DateTimeOffset.UtcNow;
+        await _messageBus.PublishQuestInstanceDeletedAsync(new QuestInstanceDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            QuestInstanceId = instance.QuestInstanceId,
+            DefinitionId = instance.DefinitionId,
+            ContractInstanceId = instance.ContractInstanceId,
+            Code = instance.Code,
+            Name = instance.Name,
+            Status = instance.Status,
+            QuestGiverCharacterId = instance.QuestGiverCharacterId,
+            GameServiceId = instance.GameServiceId,
+            AcceptedAt = instance.AcceptedAt,
+            CompletedAt = instance.CompletedAt,
+            Deadline = instance.Deadline,
+            CreatedAt = instance.AcceptedAt,
+            UpdatedAt = now
+        }, cancellationToken);
+
+        _logger.LogInformation("Quest instance deleted: {QuestInstanceId} ({Code})",
+            instance.QuestInstanceId, instance.Code);
+    }
+
+    /// <inheritdoc />
     public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedQuestDefinitionsAsync(
         CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
     {
@@ -2651,13 +2890,8 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
             deprecated,
             getEntityId: d => d.DefinitionId,
             getDeprecatedAt: d => d.DeprecatedAt,
-            hasInstancesAsync: async (d, ct) =>
-            {
-                var activeInstances = await _instanceStore.QueryAsync(
-                    i => i.DefinitionId == d.DefinitionId && i.Status == QuestStatus.Active,
-                    cancellationToken: ct);
-                return activeInstances.Any();
-            },
+            hasInstancesAsync: (d, ct) =>
+                _instanceStringStore.HasStringListEntriesAsync(BuildDefinitionInstanceIndexKey(d.DefinitionId), ct),
             deleteAndPublishAsync: async (d, ct) =>
             {
                 // Delete from MySQL definition store
@@ -2666,6 +2900,10 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
 
                 // Invalidate Redis definition cache
                 await _definitionCache.DeleteAsync(definitionKey, ct);
+
+                // Clean up reverse index entry (should already be empty, but defensive)
+                await _instanceStringStore.DeleteAsync(
+                    BuildDefinitionInstanceIndexKey(d.DefinitionId), ct);
 
                 // Publish lifecycle deleted event
                 await _messageBus.PublishQuestDefinitionDeletedAsync(new QuestDefinitionDeletedEvent

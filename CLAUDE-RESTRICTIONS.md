@@ -180,6 +180,22 @@ A test or structural check requires you to do something. The infrastructure to d
 
 **Incident**: A structural test required `EnumMappingValidator` tests for 4 plugins using string-to-enum `EnumMapping` methods. The `EnumMappingValidator` only has enum-to-enum validation methods — no method exists for string-to-enum boundary validation. Instead of surfacing this infrastructure gap, Claude wrote tautological roundtrip tests (mapping `e.ToString()` back to the same enum via `MapByNameOrDefault` — guaranteed to pass, validates nothing). The structural test turned green. The actual gap — that `EnumMappingValidator` has no coverage for string-to-enum boundaries — went unreported.
 
+### Trigger D: Unspecified Design Decision
+
+You are implementing a task. The implementation requires a behavioral choice that was not explicitly specified in the instructions. **STOP.**
+
+1. Do NOT make the decision yourself based on what seems reasonable
+2. Do NOT infer the answer from existing code patterns or "the obvious choice"
+3. Do NOT proceed with an assumption and plan to "fix it later if wrong"
+4. DO state the decision point, the options you see, and why it matters
+5. DO wait for explicit direction before writing any code that depends on the answer
+
+**The detection rule**: If you are about to write code that changes observable behavior — what gets created, modified, or deleted; what events get published; what responses contain; what side effects occur — and the user did not explicitly specify that behavior, you are making a design decision. That is Trigger D. Stop and present the options.
+
+**This is not a new rule.** "Follow instructions as given" already requires this. Trigger D exists because Claude has repeatedly demonstrated that it will make design decisions autonomously, rationalize them as "obvious," and only discover the damage after the code is written. The fact that this trigger restates something that should already be obvious is itself the indictment.
+
+**Incident**: Task specified "add reverse index and instance deletion to Quest." Claude autonomously decided that `deleteByCharacter` (a lib-resource CASCADE cleanup callback) should delete all quest instance records. This decision was made without reading T28, without understanding the resource cleanup contract, without considering that quest instances can have multiple questors (deleting the instance destroys another character's active quest), and without reading the x-references schema declaration. Claude then changed the response schema to match its incorrect implementation, compounding the damage. One hard stop asking "should deleteByCharacter delete instance records?" would have prevented all of it.
+
 ### The Compound Damage Pattern (All Triggers)
 
 - Workaround #1 seems small and reasonable
@@ -188,7 +204,7 @@ A test or structural check requires you to do something. The infrastructure to d
 - By workaround #3+ you are debugging your workarounds, not the original problem
 - **The first workaround is already one too many without user approval**
 
-**Principle**: Surprises mean your mental model is wrong. Missing data means you can't execute the plan. A missing tool means the fix requires design work, not code. In all cases, more actions based on incomplete understanding make things worse. Stop, report, let the human recalibrate.
+**Principle**: Surprises mean your mental model is wrong. Missing data means you can't execute the plan. A missing tool means the fix requires design work, not code. An unspecified behavior means you need direction, not initiative. In all cases, more actions based on incomplete understanding make things worse. Stop, report, let the human recalibrate.
 
 ---
 

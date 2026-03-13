@@ -279,6 +279,24 @@ public sealed class StorylineProxy
     }
 
     /// <summary>
+    /// Delete a scenario execution instance
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing DeleteScenarioExecutionResponse on success.</returns>
+    public Task<ApiResponse<DeleteScenarioExecutionResponse>> DeleteScenarioExecutionAsync(
+        DeleteScenarioExecutionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeleteScenarioExecutionRequest, DeleteScenarioExecutionResponse>(
+            "/storyline/execution/delete", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get storyline data for compression
     /// </summary>
     /// <param name="request">The request payload.</param>

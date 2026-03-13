@@ -63,6 +63,9 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
     /// <summary>Cache state store for board unlock state (Redis-backed with TTL).</summary>
     private readonly IStateStore<BoardCacheModel> _boardCache;
 
+    /// <summary>String store for template→board reverse index (clean-deprecated O(1) check).</summary>
+    private readonly IStateStore<string> _boardStringStore;
+
     #region Key Prefixes
 
     private const string TEMPLATE_KEY_PREFIX = "board-tpl:";
@@ -71,12 +74,14 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
     private const string BOARD_OWNER_KEY_PREFIX = "board-owner:";
     private const string BOARD_CACHE_KEY_PREFIX = "cache:";
     private const string TEMPLATE_LOCK_KEY_PREFIX = "tpl:";
+    private const string TEMPLATE_BOARD_INDEX = "tpl-brd:";
 
     #endregion
 
     #region Key Building
 
     internal static string BuildTemplateKey(Guid boardTemplateId) => $"{TEMPLATE_KEY_PREFIX}{boardTemplateId}";
+    internal static string BuildTemplateBoardIndexKey(Guid boardTemplateId) => $"{TEMPLATE_BOARD_INDEX}{boardTemplateId}";
     internal static string BuildDefinitionKey(Guid boardTemplateId, string code) => $"{DEFINITION_KEY_PREFIX}{boardTemplateId}:{code}";
     internal static string BuildBoardKey(Guid boardId) => $"{BOARD_KEY_PREFIX}{boardId}";
     internal static string BuildBoardByOwnerKey(EntityType ownerType, Guid ownerId, Guid boardTemplateId) => $"{BOARD_OWNER_KEY_PREFIX}{ownerType.ToString().ToLowerInvariant()}:{ownerId}:{boardTemplateId}";
@@ -164,6 +169,7 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
         _definitionStore = stateStoreFactory.GetQueryableStore<LicenseDefinitionModel>(StateStoreDefinitions.LicenseDefinitions);
         _boardStore = stateStoreFactory.GetQueryableStore<BoardInstanceModel>(StateStoreDefinitions.LicenseBoards);
         _boardCache = stateStoreFactory.GetStore<BoardCacheModel>(StateStoreDefinitions.LicenseBoardCache);
+        _boardStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.LicenseBoards);
     }
 
     #region Adjacency Helper
@@ -1007,6 +1013,14 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
         // Save board instance
         await _boardStore.SaveAsync(BuildBoardKey(board.BoardId), board, cancellationToken: cancellationToken);
 
+        // Maintain template→board reverse index for clean-deprecated sweep
+        await _boardStringStore.AddToStringListAsync(
+            BuildTemplateBoardIndexKey(board.BoardTemplateId),
+            board.BoardId.ToString(),
+            _configuration.MaxConcurrencyRetries,
+            _logger,
+            cancellationToken);
+
         // Save uniqueness key (owner + template)
         await _boardStore.SaveAsync(
             BuildBoardByOwnerKey(board.OwnerType, board.OwnerId, board.BoardTemplateId),
@@ -1147,6 +1161,14 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
         await _boardStore.DeleteAsync(BuildBoardKey(board.BoardId), cancellationToken);
         await _boardStore.DeleteAsync(
             BuildBoardByOwnerKey(board.OwnerType, board.OwnerId, board.BoardTemplateId),
+            cancellationToken);
+
+        // Remove from template→board reverse index
+        await _boardStringStore.RemoveFromStringListAsync(
+            BuildTemplateBoardIndexKey(board.BoardTemplateId),
+            board.BoardId.ToString(),
+            _configuration.MaxConcurrencyRetries,
+            _logger,
             cancellationToken);
 
         // Invalidate cache
@@ -2142,6 +2164,14 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
 
         await _boardStore.SaveAsync(BuildBoardKey(newBoard.BoardId), newBoard, cancellationToken: cancellationToken);
 
+        // Maintain template→board reverse index for clean-deprecated sweep
+        await _boardStringStore.AddToStringListAsync(
+            BuildTemplateBoardIndexKey(newBoard.BoardTemplateId),
+            newBoard.BoardId.ToString(),
+            _configuration.MaxConcurrencyRetries,
+            _logger,
+            cancellationToken);
+
         // 13. Save uniqueness key
         await _boardStore.SaveAsync(
             BuildBoardByOwnerKey(newBoard.OwnerType, newBoard.OwnerId, newBoard.BoardTemplateId),
@@ -2273,6 +2303,14 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
                 BuildBoardByOwnerKey(board.OwnerType, board.OwnerId, board.BoardTemplateId),
                 cancellationToken);
 
+            // Remove from template→board reverse index
+            await _boardStringStore.RemoveFromStringListAsync(
+                BuildTemplateBoardIndexKey(board.BoardTemplateId),
+                board.BoardId.ToString(),
+                _configuration.MaxConcurrencyRetries,
+                _logger,
+                cancellationToken);
+
             // Invalidate board cache
             await _boardCache.DeleteAsync(
                 BuildBoardCacheKey(board.BoardId),
@@ -2316,14 +2354,8 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
             deprecatedTemplates,
             getEntityId: t => t.BoardTemplateId,
             getDeprecatedAt: t => t.DeprecatedAt,
-            hasInstancesAsync: async (t, ct) =>
-            {
-                // Check if any board instances reference this template
-                var boards = await _boardStore.QueryAsync(
-                    b => b.BoardTemplateId == t.BoardTemplateId,
-                    cancellationToken: ct);
-                return boards.Count > 0;
-            },
+            hasInstancesAsync: (t, ct) =>
+                _boardStringStore.HasStringListEntriesAsync(BuildTemplateBoardIndexKey(t.BoardTemplateId), ct),
             deleteAndPublishAsync: async (t, ct) =>
             {
                 // Delete all license definitions for this template
@@ -2340,6 +2372,10 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
                 // Delete the board template record
                 await _boardTemplateStore.DeleteAsync(
                     BuildTemplateKey(t.BoardTemplateId), ct);
+
+                // Defensive cleanup of reverse index (should already be empty)
+                await _boardStringStore.DeleteAsync(
+                    BuildTemplateBoardIndexKey(t.BoardTemplateId), ct);
 
                 // Publish the lifecycle deleted event
                 await _messageBus.PublishLicenseBoardTemplateDeletedAsync(

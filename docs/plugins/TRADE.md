@@ -557,11 +557,11 @@ TaxPolicy:
 
  # For assessed taxes
  assessmentFrequency: AssessmentFrequency # Weekly, Monthly, Seasonal, Annual
- gracePeriod: string # "7_game_days", "30_game_days"
+ gracePeriodGameDays: integer  # minimum: 1 — Number of game-days grace period before late penalties apply
  latePenaltyRate: decimal # Additional rate per period overdue
 
  # Status
- status: TariffPolicyStatus # Active, Suspended
+ status: TaxPolicyStatus # Active, Suspended
  effectiveFrom: timestamp
  effectiveUntil: timestamp (nullable)  # null = indefinite
 
@@ -1156,6 +1156,17 @@ RiskAssessment:
  response: { policy: TariffPolicy }
  notes: Returns OK if not deprecated (idempotent).
 
+/trade/tariff/policy/delete:
+ x-permissions: [role: admin]
+ description: "Delete a tariff policy"
+ request:
+ policyId: uuid
+ response: { }
+ errors:
+ - POLICY_NOT_FOUND
+ notes: |
+ Rejects with BadRequest if `isDeprecated == false`. Entity must be deprecated before deletion.
+
 /trade/tariff/calculate:
  x-permissions: []
  description: "Calculate tariffs for goods/currency crossing a border (pure calculation)"
@@ -1245,6 +1256,17 @@ TransactionReference:
  response: { definition: ContrabandDefinition }
  notes: Returns OK if not deprecated (idempotent).
 
+/trade/contraband/delete:
+ x-permissions: [role: admin]
+ description: "Delete a contraband definition"
+ request:
+ definitionId: uuid
+ response: { }
+ errors:
+ - DEFINITION_NOT_FOUND
+ notes: |
+ Rejects with BadRequest if `isDeprecated == false`. Entity must be deprecated before deletion.
+
 /trade/contraband/check:
  x-permissions: []
  description: "Check if goods/currency are contraband in a realm"
@@ -1283,7 +1305,7 @@ TransactionReference:
  collectionTarget: TaxCollectionTarget # Void, RealmTreasury, FactionTreasury
  collectionTargetId: uuid # Optional
  assessmentFrequency: AssessmentFrequency # For assessed taxes
- gracePeriod: string # Optional
+ gracePeriodGameDays: integer # Optional — minimum: 1
  latePenaltyRate: decimal # Optional
  exemptions: [{ entityType, entityId, reason }]
  effectiveFrom: timestamp
@@ -1318,6 +1340,17 @@ TransactionReference:
  policyId: uuid
  response: { policy: TaxPolicy }
  notes: Returns OK if not deprecated (idempotent).
+
+/trade/tax/policy/delete:
+ x-permissions: [role: admin]
+ description: "Delete a tax policy"
+ request:
+ policyId: uuid
+ response: { }
+ errors:
+ - POLICY_NOT_FOUND
+ notes: |
+ Rejects with BadRequest if `isDeprecated == false`. Entity must be deprecated before deletion.
 
 /trade/tax/calculate:
  x-permissions: []
@@ -1587,7 +1620,7 @@ VelocityHealthRange:
     with matching homeLocationId, removes supply/demand snapshots for the location.
 ```
 
-**Total endpoints: 48**
+**Total endpoints: 51**
 
 Note: Shipment, TariffRecord, TaxAssessment, and NpcEconomicProfile are instance/record entities — they use immediate delete or terminal status, not deprecation lifecycle.
 
@@ -2531,7 +2564,13 @@ When creating `trade-api.yaml`, `trade-events.yaml`, and `trade-configuration.ya
 
 #### Bugs (Fix Immediately)
 
-*No code exists. No bugs to report.*
+*No code exists, but the following design-level bugs are identifiable from the deep dive specification:*
+
+1. ~~**`gracePeriod` is a parseable string**~~: **FIXED** (2026-03-13) - Replaced `gracePeriod: string` with `gracePeriodGameDays: integer` (minimum: 1) in both the TaxPolicy data model and the tax/policy/create endpoint request. Units are now explicit in the field name per T21/T25.
+
+2. ~~**Missing delete endpoints for Category A entities**~~: **FIXED** (2026-03-13) - Added `/trade/tariff/policy/delete`, `/trade/contraband/delete`, and `/trade/tax/policy/delete` endpoints following the established TradeRoute delete pattern. All require `isDeprecated == true` before deletion (BadRequest if not deprecated). Updated total endpoint count from 48 to 51.
+
+3. ~~**TaxPolicy reuses `TariffPolicyStatus` enum**~~: **FIXED** (2026-03-13) - TaxPolicy data model now uses its own `TaxPolicyStatus` enum (Active, Suspended) instead of reusing `TariffPolicyStatus`. Added `TaxPolicyStatus` to the Enum Reference table.
 
 #### Intentional Quirks (Documented Behavior)
 
@@ -2543,37 +2582,31 @@ When creating `trade-api.yaml`, `trade-events.yaml`, and `trade-configuration.ya
 
 #### Design Considerations (Requires Planning)
 
-1. **Enum type safety (CORRECTED in audit)**: All Category C enum fields have been identified with PascalCase values and suggested enum names in the Enum Reference table below. Must be defined as proper schema enums at schema creation time.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-12 -->
+1. **Polymorphic type field enum strategy**: `ownerType` on TradeRoute includes "system" (not in EntityType). `ownerType` on Shipment includes "caravan_company" (not in EntityType). `carrierType` includes "npc" (NPCs are Characters in Bannou). `taxpayerType` includes "household" (not in EntityType). Per T14 decision tree test 3: valid values include non-entity roles. Options: (a) Service-specific enums (TradeOwnerType, CarrierType, TaxpayerType), or (b) Remap non-standard values to EntityType (caravan_company→Organization, npc→Character, system→??) and use `$ref: EntityType`. Decision required before schema creation.
 
-2. **Untyped object fields (RESOLVED)**: All previously untyped object fields have been replaced with named schemas (`RiskProfile`, `SeasonalAvailabilityEntry`, `FaucetEntry`, `SinkEntry`, `RiskAssessment`, `VelocityHealthRange`, `TransactionReference`). See Untyped Object Reference (RESOLVED) table below.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-12 -->
+2. **Shipment status state machine reconciliation**: Data model defines 7 states: Preparing, InTransit, AtCheckpoint, Arrived, Lost, Seized, Abandoned. Visual Aid diagram shows different states: CREATED, LOADING, IN_TRANSIT, ARRIVED, COMPLETED, CANCELLED, LOST/DELAYED, DISPUTED. Must unify to one canonical state set before schema creation.
 
-3. **Resource cleanup endpoints (RESOLVED in audit)**: x-references declarations added for `character`, `realm`, and `location` targets with cascade policy. Three cleanup callback endpoints (`/trade/cleanup-by-character`, `/trade/cleanup-by-realm`, `/trade/cleanup-by-location`) added to the API Endpoints section. Account deletion is handled transitively via Character's `account.deleted` handler triggering the `characterId` cleanup callback.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-12 -->
+3. **NpcTradingPersonality vs Character-Personality overlap**: NpcTradingPersonality defines 6 personality traits (riskTolerance, priceAwareness, loyaltyFactor, hoarding, bargainDrive, explorationRange) stored in Trade's NPC profile. Character-Personality (L4) manages personality traits via `${personality.*}` variable provider. Question: Should economic personality traits come from `${personality.*}` (avoiding data duplication) or be stored independently in Trade (providing economic-specific granularity)? Both are L4, so either approach is hierarchy-valid.
 
-11. **Polymorphic type field enum strategy** `AUDIT:NEEDS_DESIGN`
-   `ownerType` on TradeRoute includes "system" (not in EntityType). `ownerType` on Shipment includes "caravan_company" (not in EntityType). `carrierType` includes "npc" (NPCs are Characters in Bannou). `taxpayerType` includes "household" (not in EntityType). Per T14 decision tree test 3: valid values include non-entity roles. Options: (a) Service-specific enums (TradeOwnerType, CarrierType, TaxpayerType), or (b) Remap non-standard values to EntityType (caravan_company→Organization, npc→Character, system→??) and use `$ref: EntityType`. Decision required before schema creation.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-12 -->
+4. **NPC market-analysis recommendations format**: `/trade/npc/market-analysis` response includes `recommendations: [string]` with values like "Buy iron locally". If consumed by GOAP behaviors: should be structured `NpcRecommendation` objects with typed action, item, location, profit fields. If display-only: strings are acceptable. Decision depends on how ABML economic action handlers will consume this data.
 
-12. **Shipment status state machine reconciliation** `AUDIT:NEEDS_DESIGN`
-   Data model defines 7 states: Preparing, InTransit, AtCheckpoint, Arrived, Lost, Seized, Abandoned. Visual Aid diagram shows different states: CREATED, LOADING, IN_TRANSIT, ARRIVED, COMPLETED, CANCELLED, LOST/DELAYED, DISPUTED. Must unify to one canonical state set before schema creation.
+5. **NPC profile ownership**: Should NPC economic profiles live in Trade or in a shared location? **Recommendation**: Trade owns economic profiles because they're inseparable from trade logistics. The profile is consumed by the Trade variable provider and GOAP integration. Other services that need economic data query Trade.
 
-13. **NpcTradingPersonality vs Character-Personality overlap** `AUDIT:NEEDS_DESIGN`
-   NpcTradingPersonality defines 6 personality traits (riskTolerance, priceAwareness, loyaltyFactor, hoarding, bargainDrive, explorationRange) stored in Trade's NPC profile. Character-Personality (L4) manages personality traits via `${personality.*}` variable provider. Question: Should economic personality traits come from `${personality.*}` (avoiding data duplication) or be stored independently in Trade (providing economic-specific granularity)? Both are L4, so either approach is hierarchy-valid.
+6. **Velocity data source**: Should velocity come from direct Currency transaction queries or from Analytics event subscriptions? **Recommendation**: Direct Currency queries for accuracy. Analytics can provide supplementary data when available, but velocity computation must work without Analytics (graceful degradation).
 
-14. **NPC market-analysis recommendations format** `AUDIT:NEEDS_DESIGN`
-   `/trade/npc/market-analysis` response includes `recommendations: [string]` with values like "Buy iron locally". If consumed by GOAP behaviors: should be structured `NpcRecommendation` objects with typed action, item, location, profit fields. If display-only: strings are acceptable. Decision depends on how ABML economic action handlers will consume this data.
+7. **Tax enforcement scope**: Should Trade enforce tax consequences (asset seizure, imprisonment) or just report delinquency? **Recommendation**: Advisory only. Trade reports debt and suggests consequences. The game (or NPC actors via Obligation) decides enforcement.
 
-4. **NPC profile ownership**: Should NPC economic profiles live in Trade or in a shared location? **Recommendation**: Trade owns economic profiles because they're inseparable from trade logistics. The profile is consumed by the Trade variable provider and GOAP integration. Other services that need economic data query Trade.
+8. **Cross-realm currency conversion**: Should trade routes crossing realm boundaries use automatic Currency conversion? **Recommendation**: No automatic conversion. The game or NPC decides when and how to convert currency. Trade records the border crossing and reports applicable exchange rates.
 
-5. **Velocity data source**: Should velocity come from direct Currency transaction queries or from Analytics event subscriptions? **Recommendation**: Direct Currency queries for accuracy. Analytics can provide supplementary data when available, but velocity computation must work without Analytics (graceful degradation).
+9. **Relationship with lib-market**: Market handles exchange at a point (auctions, vendors). Trade handles logistics between points. They share supply/demand concepts but own different data. **Recommendation**: Trade subscribes to Market's price events for enrichment. Market subscribes to Trade's shipment arrival events for supply updates. Neither depends on the other.
 
-6. **Tax enforcement scope**: Should Trade enforce tax consequences (asset seizure, imprisonment) or just report delinquency? **Recommendation**: Advisory only. Trade reports debt and suggests consequences. The game (or NPC actors via Obligation) decides enforcement.
+10. **Workshop integration approach**: **Recommendation**: No direct integration. Workshop deposits outputs into inventory. Trade reads inventory levels for supply/demand. NPC GOAP connects them behaviorally: "Workshop produced iron → inventory full → GOAP goal: sell_surplus → create shipment."
 
-7. **Cross-realm currency conversion**: Should trade routes crossing realm boundaries use automatic Currency conversion? **Recommendation**: No automatic conversion. The game or NPC decides when and how to convert currency. Trade records the border crossing and reports applicable exchange rates.
-
-8. **Relationship with lib-market**: Market handles exchange at a point (auctions, vendors). Trade handles logistics between points. They share supply/demand concepts but own different data. **Recommendation**: Trade subscribes to Market's price events for enrichment. Market subscribes to Trade's shipment arrival events for supply updates. Neither depends on the other.
-
-9. **Workshop integration approach**: **Recommendation**: No direct integration. Workshop deposits outputs into inventory. Trade reads inventory levels for supply/demand. NPC GOAP connects them behaviorally: "Workshop produced iron → inventory full → GOAP goal: sell_surplus → create shipment."
-
-10. **Contract as potential dependency**: Contract (L1) is not required for core Trade functionality but may be needed for extensions (insurance policies, commodity futures). Contract was removed from hard dependencies as the core design uses Currency directly for tariff/tax collection and Escrow for custody.
+11. **Contract as potential dependency**: Contract (L1) is not required for core Trade functionality but may be needed for extensions (insurance policies, commodity futures). Contract was removed from hard dependencies as the core design uses Currency directly for tariff/tax collection and Escrow for custody.
 
 ### Enum Reference
 
@@ -2596,6 +2629,7 @@ Fields that must become proper enums at schema creation time:
 | ContrabandDefinition | type | ItemCategory, ItemTemplate, Currency | ContrabandTargetType |
 | TaxPolicy | taxType | Transaction, Income, Property, Wealth, Sales, Custom | TaxType |
 | TaxPolicy | collectionTarget | Void, RealmTreasury, FactionTreasury | TaxCollectionTarget |
+| TaxPolicy | status | Active, Suspended | TaxPolicyStatus |
 | TaxAssessment | status | Pending, Partial, Paid, Overdue, Defaulted | TaxAssessmentStatus |
 | EconomicVelocityMetrics | velocityTrend | Accelerating, Stable, Decelerating, Stagnant | VelocityTrend |
 | NpcEconomicProfile | economicRole | Merchant, Craftsman, Farmer, Miner, Fisher, Laborer, Noble, Consumer, None | EconomicRole |

@@ -225,6 +225,21 @@ public static class StorylinePermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/storyline/execution/delete",
+            Method = ServiceEndpointMethod.Post,
+            Description = "DeleteScenarioExecution",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

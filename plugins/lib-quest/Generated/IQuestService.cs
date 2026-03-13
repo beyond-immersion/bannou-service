@@ -70,6 +70,11 @@ public partial interface IQuestService : IBannouService
         Task<(StatusCodes, QuestInstanceResponse?)> AbandonQuestAsync(AbandonQuestRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DeleteQuestInstance operation
+        /// </summary>
+        Task<(StatusCodes, QuestInstanceResponse?)> DeleteQuestInstanceAsync(DeleteQuestInstanceRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GetQuest operation
         /// </summary>
         Task<(StatusCodes, QuestInstanceResponse?)> GetQuestAsync(GetQuestRequest body, CancellationToken cancellationToken = default(CancellationToken));

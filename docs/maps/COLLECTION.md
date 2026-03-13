@@ -30,6 +30,7 @@
 |-------------|-----------|---------|
 | `tpl:{entryTemplateId}` | `EntryTemplateModel` | Primary lookup by ID |
 | `tpl:{gameServiceId}:{collectionType}:{code}` | `EntryTemplateModel` | Code-uniqueness lookup within type + game |
+| `tpl-col:{entryTemplateId}` | `List<string>` (JSON) | Reverse index: entry template → collection instance IDs (for O(1) clean-deprecated checks) |
 
 **Store**: `collection-instances` (Backend: MySQL)
 
@@ -615,22 +616,27 @@ Account cleanup uses event subscription (Account Deletion Cleanup Obligation). C
 ### CleanDeprecatedEntryTemplates
 POST /collection/entry-template/clean-deprecated | Roles: [admin]
 
-**Status: UNIMPLEMENTED** (`NotImplementedException` stub)
-
 ```
-// Implementation should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
-// per IMPLEMENTATION TENETS Category B clean-deprecated (B20-B22).
-//
-// Expected pseudocode:
-// QUERY all entry templates WHERE IsDeprecated == true
-// CALL DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
-//   deprecatedEntities: deprecated templates,
-//   getEntityId: t => t.EntryTemplateId,
-//   getDeprecatedAt: t => t.DeprecatedAt,
-//   hasActiveInstancesAsync: check if any collection cache references this entry code,
-//   deleteAndPublishAsync: delete template from both keys + publish collection.entry-template.deleted,
-//   gracePeriodDays: body.GracePeriodDays,
-//   dryRun: body.DryRun,
-//   logger, telemetryProvider, ct)
-// RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
+QUERY _entryTemplateStore WHERE IsDeprecated == true
+IF count == 0
+  RETURN (200, CleanDeprecatedResponse { cleaned=0, remaining=0, errors=0, cleanedIds=[] })
+
+result = DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+  deprecatedTemplates,
+  getEntityId: t => t.EntryTemplateId,
+  getDeprecatedAt: t => t.DeprecatedAt,
+  hasInstancesAsync: (t, ct) =>
+    // O(1) reverse index check (replaces full collection scan)
+    _entryTemplateStringStore.HasStringListEntriesAsync(BuildTemplateCollectionIndexKey(t.EntryTemplateId), ct),
+  deleteAndPublishAsync: (t, ct) =>
+    DELETE _entryTemplateStore:"tpl:{entryTemplateId}"
+    DELETE _entryTemplateStore:"tpl:{gameId}:{collectionType}:{code}" // code lookup key
+    // Defensive reverse index cleanup
+    DELETE _entryTemplateStringStore:BuildTemplateCollectionIndexKey(entryTemplateId)
+    PUBLISH collection.entry-template.deleted (CollectionEntryTemplateDeletedEvent with all fields + deleteReason),
+  gracePeriodDays: body.GracePeriodDays,
+  dryRun: body.DryRun
+)
+
+RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ```

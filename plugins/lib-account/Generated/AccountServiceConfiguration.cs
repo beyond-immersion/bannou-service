@@ -106,6 +106,27 @@ public class AccountServiceConfiguration : BaseServiceConfiguration
     public int ProviderFilterMaxScanSize { get; set; } = 10000;
 
     /// <summary>
+    /// Number of days after soft-deletion before an account record is permanently purged from the state store. Per FOUNDATION TENETS, Account is the sole service permitted to use soft-delete, and this retention period ensures it is time-limited.
+    /// Environment variable: ACCOUNT_RETENTION_PERIOD_DAYS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3650)]
+    public int RetentionPeriodDays { get; set; } = 30;
+
+    /// <summary>
+    /// Interval in seconds between retention cleanup worker cycles (default 86400 = 24 hours)
+    /// Environment variable: ACCOUNT_RETENTION_CLEANUP_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 604800)]
+    public int RetentionCleanupIntervalSeconds { get; set; } = 86400;
+
+    /// <summary>
+    /// Delay in seconds before the retention cleanup worker starts its first cycle after application startup
+    /// Environment variable: ACCOUNT_RETENTION_CLEANUP_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 600)]
+    public int RetentionCleanupStartupDelaySeconds { get; set; } = 60;
+
+    /// <summary>
     /// When true, automatically manages the anonymous role. If removing roles would leave zero roles, anonymous is added automatically. If adding a non-anonymous role, anonymous is removed if present. This ensures accounts always have at least one role for permission resolution.
     /// Environment variable: ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE
     /// </summary>

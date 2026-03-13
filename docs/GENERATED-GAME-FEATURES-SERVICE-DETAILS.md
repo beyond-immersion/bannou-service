@@ -239,7 +239,7 @@ Unified entity effects query layer (L4 GameFeatures) aggregating temporary contr
 
 ## Storyline {#storyline}
 
-**Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md) | **Map**: [docs/maps/STORYLINE.md](maps/STORYLINE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md) | **Map**: [docs/maps/STORYLINE.md](maps/STORYLINE.md)
 
 The Storyline service (L4 GameFeatures) wraps the `storyline-theory` and `storyline-storyteller` SDKs to provide HTTP endpoints for seeded narrative generation from compressed archives. Plans describe narrative arcs with phases, actions, and entity requirements -- callers (gods/regional watchers) decide whether to instantiate them. Also manages scenario definitions (reusable narrative templates with trigger conditions, mutations, and quest hooks) with a full CRUD lifecycle, condition-based discovery, fit scoring, and execution with distributed locking and cooldown enforcement. Provides character compression data for archival via `x-compression-callback`. Internal-only, requires the `developer` role for all endpoints.
 
@@ -264,7 +264,7 @@ Time-based automated production service (L4 GameFeatures) for continuous backgro
 ## Summary
 
 - **Services in layer**: 42
-- **Endpoints in layer**: 354
+- **Endpoints in layer**: 355
 
 ---
 

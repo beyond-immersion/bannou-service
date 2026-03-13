@@ -20,6 +20,9 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACCOUNT_LIST_BATCH_SIZE` | int | `100` | Number of accounts to process per batch in list operations |
 | `ACCOUNT_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for list operations |
 | `ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE` | int | `10000` | Maximum number of accounts to scan when filtering by provide... |
+| `ACCOUNT_RETENTION_CLEANUP_INTERVAL_SECONDS` | int | `86400` | Interval in seconds between retention cleanup worker cycles ... |
+| `ACCOUNT_RETENTION_CLEANUP_STARTUP_DELAY_SECONDS` | int | `60` | Delay in seconds before the retention cleanup worker starts ... |
+| `ACCOUNT_RETENTION_PERIOD_DAYS` | int | `30` | Number of days after soft-deletion before an account record ... |
 
 ### Achievement
 
@@ -1230,6 +1233,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `STORYLINE_CONFIDENCE_PHASE_THRESHOLD` | int | `3` | Minimum number of phases to receive a phase count bonus |
 | `STORYLINE_DEFAULT_GENRE` | string | `drama` | Default genre when not specified and cannot be inferred |
 | `STORYLINE_DEFAULT_PLANNING_URGENCY` | string | `Medium` | Default urgency tier for GOAP planning (Low=1000/20, Medium=... |
+| `STORYLINE_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts ... |
 | `STORYLINE_MAX_SEED_SOURCES` | int | `10` | Maximum number of seed sources per compose request |
 | `STORYLINE_PLAN_CACHE_ENABLED` | bool | `true` | Whether to cache deterministic plans (those with explicit se... |
 | `STORYLINE_PLAN_CACHE_TTL_SECONDS` | int | `3600` | TTL in seconds for cached composed plans (default 3600 = 1 h... |
@@ -1341,9 +1345,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1057
+- **Total properties**: 1061
 - **Required (no default)**: 67
-- **Optional (has default)**: 990
+- **Optional (has default)**: 994
 
 ## Environment Variable Naming Convention
 

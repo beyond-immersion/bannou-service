@@ -34,12 +34,33 @@ public static class StorylineEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(StorylinePublishedTopics.ScenarioDefinitionUpdated, eventData, cancellationToken);
 
-    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
+    /// <summary>Published by clean-deprecated sweep when a deprecated definition with zero remaining executions is permanently removed.</summary>
     public static Task<bool> PublishScenarioDefinitionDeletedAsync(
         this IMessageBus messageBus,
         ScenarioDefinitionDeletedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(StorylinePublishedTopics.ScenarioDefinitionDeleted, eventData, cancellationToken);
+
+    /// <summary>Published when a scenario execution instance is created.</summary>
+    public static Task<bool> PublishScenarioExecutionCreatedAsync(
+        this IMessageBus messageBus,
+        ScenarioExecutionCreatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(StorylinePublishedTopics.ScenarioExecutionCreated, eventData, cancellationToken);
+
+    /// <summary>Published when a scenario execution status changes (completed, failed) with changedFields.</summary>
+    public static Task<bool> PublishScenarioExecutionUpdatedAsync(
+        this IMessageBus messageBus,
+        ScenarioExecutionUpdatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(StorylinePublishedTopics.ScenarioExecutionUpdated, eventData, cancellationToken);
+
+    /// <summary>Published when a scenario execution instance is permanently deleted.</summary>
+    public static Task<bool> PublishScenarioExecutionDeletedAsync(
+        this IMessageBus messageBus,
+        ScenarioExecutionDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(StorylinePublishedTopics.ScenarioExecutionDeleted, eventData, cancellationToken);
 
     /// <summary>Published when a storyline plan is generated.</summary>
     public static Task<bool> PublishStorylinePlanComposedAsync(

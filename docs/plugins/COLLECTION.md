@@ -55,6 +55,10 @@ The Collection service (L2 GameFoundation) manages universal content unlock and 
 │  │ tpl:{templateId}        │  │ tpl:{gameId}:{type}:{code}      │   │
 │  │ → EntryTemplateModel    │  │ → EntryTemplateModel (same)     │   │
 │  └──────────┬──────────────┘  └─────────────────────────────────┘   │
+│  ┌─────────────────────────┐                                        │
+│  │ tpl-col:{templateId}    │ ← reverse index: template → collection │
+│  │ → List<string> (JSON)   │   IDs (for O(1) clean-deprecated)      │
+│  └─────────────────────────┘                                        │
 │             │ itemTemplateId                                         │
 │             ▼                                                        │
 │  lib-item ──── Item Template (external)                              │
@@ -89,7 +93,7 @@ The Collection service (L2 GameFoundation) manages universal content unlock and 
 
 ## Stubs & Unimplemented Features
 
-1. **`CleanDeprecatedEntryTemplatesAsync` (clean-deprecated endpoint)**: `POST /collection/entry-template/clean-deprecated` is schema-defined and generated (controller + interface) but the service method throws `NotImplementedException`. Sweeps deprecated entry templates with zero remaining entries. Uses shared `CleanDeprecatedRequest` (`gracePeriodDays`, `dryRun`) / `CleanDeprecatedResponse` (`cleaned`, `remaining`, `errors`, `cleanedIds`) from `common-api.yaml`. Roles: `[admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
+None. All schema-defined endpoints are implemented.
 
 ## Potential Extensions
 
@@ -102,7 +106,9 @@ The Collection service (L2 GameFoundation) manages universal content unlock and 
 
 ### Bugs (Fix Immediately)
 
-1. **`CleanDeprecatedEntryTemplatesAsync` uses full query scan instead of reverse index**: The `hasActiveInstancesAsync` delegate iterates all collections matching the template's type, loads each collection's cache, and scans for matching entries — O(N*M) per deprecated template. Should use a reverse index (template→collection list) for O(1) lookup per IMPLEMENTATION TENETS B21. Reference: `lib-item` (`inst-template:{templateId}`), `lib-currency` (`balance-currency:{definitionId}`).
+No known bugs at this time.
+
+1. ~~**`CleanDeprecatedEntryTemplatesAsync` uses full query scan instead of reverse index**~~: **FIXED** (2026-03-13) - Added reverse index (`tpl-col:{entryTemplateId}`) mapping entry templates to collection instance IDs. `CleanDeprecatedEntryTemplatesAsync` now uses `HasStringListEntriesAsync` for O(1) instance existence checks. Implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -123,6 +129,10 @@ The Collection service (L2 GameFoundation) manages universal content unlock and 
 8. **No owner entity existence validation**: Collection follows the Seed pattern where owner validation is caller-responsibility. The service validates that `ownerType` maps to a known `ContainerOwnerType` and that the game service exists, but does not verify the owner entity (character, account, location, guild) actually exists. This is intentional: Collection is L2 and owner types span L1 (account), L2 (character, location), and L4 (guild via Faction). Injecting clients for all owner types would create hierarchy issues and break the polymorphic ownership model. Callers must ensure valid owners before creating collections.
 
 9. **No event-driven entry template cache invalidation**: When an entry template is updated or deleted, existing collection caches that reference it are not invalidated. Stale template data may be served until the cache TTL expires or the cache is rebuilt. Cache TTL (default 300s) bounds the staleness window.
+
+10. **Reverse index for entry template→collection mapping**: A string list reverse index (`tpl-col:{entryTemplateId}`) maps each entry template to the collection instance IDs that contain entries from that template. Maintained via `AddToStringListAsync` on entry grant and `RemoveFromStringListAsync` on collection deletion. Used by `CleanDeprecatedEntryTemplatesAsync` for O(1) instance existence checks via `HasStringListEntriesAsync`.
+
+11. **Clean-deprecated now implemented**: `CleanDeprecatedEntryTemplatesAsync` uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` with the reverse index for O(1) instance checking. Publishes `collection.entry-template.deleted` lifecycle event for each cleaned template. Defensive reverse index cleanup on each template deletion.
 
 ### Design Considerations (Requires Planning)
 

@@ -105,6 +105,11 @@ public partial interface IStorylineService : IBannouService
         Task<(StatusCodes, GetScenarioHistoryResponse?)> GetScenarioHistoryAsync(GetScenarioHistoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DeleteScenarioExecution operation
+        /// </summary>
+        Task<(StatusCodes, DeleteScenarioExecutionResponse?)> DeleteScenarioExecutionAsync(DeleteScenarioExecutionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GetCompressData operation
         /// </summary>
         Task<(StatusCodes, StorylineArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));

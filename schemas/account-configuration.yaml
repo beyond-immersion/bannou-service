@@ -80,6 +80,29 @@ x-service-configuration:
       maximum: 100000
       description: Maximum number of accounts to scan when filtering by provider (admin-only endpoint)
 
+    # Retention Cleanup Configuration
+    RetentionPeriodDays:
+      type: integer
+      env: ACCOUNT_RETENTION_PERIOD_DAYS
+      default: 30
+      minimum: 1
+      maximum: 3650
+      description: Number of days after soft-deletion before an account record is permanently purged from the state store. Per FOUNDATION TENETS, Account is the sole service permitted to use soft-delete, and this retention period ensures it is time-limited.
+    RetentionCleanupIntervalSeconds:
+      type: integer
+      env: ACCOUNT_RETENTION_CLEANUP_INTERVAL_SECONDS
+      default: 86400
+      minimum: 60
+      maximum: 604800
+      description: Interval in seconds between retention cleanup worker cycles (default 86400 = 24 hours)
+    RetentionCleanupStartupDelaySeconds:
+      type: integer
+      env: ACCOUNT_RETENTION_CLEANUP_STARTUP_DELAY_SECONDS
+      default: 60
+      minimum: 5
+      maximum: 600
+      description: Delay in seconds before the retention cleanup worker starts its first cycle after application startup
+
     # Role Management Configuration
     AutoManageAnonymousRole:
       type: boolean

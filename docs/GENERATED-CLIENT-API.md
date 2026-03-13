@@ -47,7 +47,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 23 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Bannou Puppetmaster Service API](#puppetmaster) | `client.Puppetmaster` | 6 | Orchestration service for dynamic behaviors, regional watche... |
-| [Bannou Quest Service API](#quest) | `client.Quest` | 18 | Quest system providing objective-based gameplay progression ... |
+| [Bannou Quest Service API](#quest) | `client.Quest` | 19 | Quest system providing objective-based gameplay progression ... |
 | [Bannou Realm Service API](#realm) | `client.Realm` | 13 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 21 | Relationship and relationship type management service for en... |
@@ -58,7 +58,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 9 | Repository pattern state management with Redis and MySQL bac... |
 | [Status Service API](#status) | `client.Status` | 19 | Unified entity effects query layer for temporary contract-ma... |
-| [Storyline Composer API](#storyline) | `client.Storyline` | 15 | Seeded narrative generation from compressed archives using t... |
+| [Storyline Composer API](#storyline) | `client.Storyline` | 16 | Seeded narrative generation from compressed archives using t... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
 | [Transit Service API](#transit) | `client.Transit` | 33 | Geographic connectivity graph, transit mode registry, and jo... |
@@ -1893,6 +1893,7 @@ Quest system providing objective-based gameplay progression as a thin orchestrat
 |--------|---------|----------|---------|
 | `AcceptquestAsync` | `AcceptQuestRequest` | `QuestInstanceResponse` | Accept a quest |
 | `AbandonquestAsync` | `AbandonQuestRequest` | `QuestInstanceResponse` | Abandon an active quest |
+| `DeleteQuestinstanceAsync` | `DeleteQuestInstanceRequest` | `QuestInstanceResponse` | Delete a quest instance |
 | `GetQuestAsync` | `GetQuestRequest` | `QuestInstanceResponse` | Get quest instance details |
 | `ListQuestsAsync` | `ListQuestsRequest` | `ListQuestsResponse` | List character's quests |
 | `ListAvailablequestsAsync` | `ListAvailableQuestsRequest` | `ListAvailableQuestsResponse` | List quests available to accept |
@@ -2398,6 +2399,7 @@ Seeded narrative generation from compressed archives using the storyline SDKs.
 | `TriggerscenarioAsync` | `TriggerScenarioRequest` | `TriggerScenarioResponse` | Execute a scenario |
 | `GetActivescenariosAsync` | `GetActiveScenariosRequest` | `GetActiveScenariosResponse` | Get active scenarios for a character |
 | `GetScenariohistoryAsync` | `GetScenarioHistoryRequest` | `GetScenarioHistoryResponse` | Get scenario execution history |
+| `DeleteScenarioexecutionAsync` | `DeleteScenarioExecutionRequest` | `DeleteScenarioExecutionResponse` | Delete a scenario execution instance |
 
 ---
 
@@ -2625,7 +2627,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 56
-- **Total methods**: 918
+- **Total methods**: 920
 
 ---
 

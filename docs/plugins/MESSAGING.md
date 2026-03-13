@@ -246,6 +246,8 @@ No bugs identified.
 
 12. **Publisher confirms add latency**: When `EnablePublisherConfirms` is true (default), each `BasicPublishAsync` waits for broker confirmation before returning. This adds ~1-5ms latency per publish but provides at-least-once delivery guarantees. Fully configurable via `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` and mitigated by `MESSAGING_ENABLE_PUBLISH_BATCHING` for high-throughput scenarios.
 
+13. **External subscription node affinity**: HTTP callback subscriptions are inherently node-local — the RabbitMQ consumer channel exists only on the node that created the subscription. `RemoveSubscription` checks the in-memory `_activeSubscriptions` dictionary first and returns 404 if the subscription handle isn't on the current node, even if the subscription exists in Redis. In multi-node deployments with shared `appId`, the `MessagingSubscriptionRecoveryService` recovers persisted subscriptions on whichever node starts (or restarts), creating competing consumers on the same deterministic queue name (`bannou-dynamic-{id:N}`). This means: (a) unsubscribe must route to a node that holds the active handle, and (b) after node failover, the recovered subscription lives on the recovering node, not the original.
+
 ### Design Considerations (Requires Planning)
 
 No active design considerations. All previous items were resolved to Intentional Quirks.

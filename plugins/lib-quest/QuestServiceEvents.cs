@@ -319,7 +319,7 @@ public partial class QuestService
                 }, CancellationToken.None);
             }
 
-            // Publish appropriate event
+            // Publish appropriate action event
             if (newStatus == QuestStatus.Abandoned)
             {
                 var abandonedEvent = new QuestAbandonedEvent
@@ -357,6 +357,27 @@ public partial class QuestService
                     current.Code,
                     reason);
             }
+
+            // Publish lifecycle updated event with changedFields
+            await _messageBus.PublishQuestInstanceUpdatedAsync(new QuestInstanceUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = timestamp,
+                QuestInstanceId = instance.QuestInstanceId,
+                DefinitionId = current.DefinitionId,
+                ContractInstanceId = current.ContractInstanceId,
+                Code = current.Code,
+                Name = current.Name,
+                Status = newStatus,
+                QuestGiverCharacterId = current.QuestGiverCharacterId,
+                GameServiceId = current.GameServiceId,
+                AcceptedAt = current.AcceptedAt,
+                CompletedAt = timestamp,
+                Deadline = current.Deadline,
+                CreatedAt = current.AcceptedAt,
+                UpdatedAt = timestamp,
+                ChangedFields = new List<string> { "status", "completedAt" }
+            }, CancellationToken.None);
 
             return;
         }

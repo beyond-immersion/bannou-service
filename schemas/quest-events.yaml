@@ -6,8 +6,8 @@ info:
 
     **Data Flow**:
     - Subscribes to: contract.milestone.completed, contract.fulfilled, contract.terminated
-    - Publishes: quest.definition.created, quest.definition.updated, quest.accepted, quest.objective.progressed, quest.completed, quest.failed, quest.abandoned
-    - Lifecycle events: auto-generated from x-lifecycle definition (quest.definition.created/updated/deleted)
+    - Publishes: quest.definition.created/updated/deleted, quest.instance.created/updated/deleted, quest.accepted, quest.objective.progressed, quest.completed, quest.failed, quest.abandoned
+    - Lifecycle events: auto-generated from x-lifecycle definition for both QuestDefinition and QuestInstance
   version: 1.0.0
 
   x-event-subscriptions:
@@ -34,9 +34,20 @@ info:
       description: Published when a quest definition is updated (including deprecation via changedFields)
     - topic: quest.definition.deleted
       event: QuestDefinitionDeletedEvent
-      description: Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.
+      description: Published by clean-deprecated sweep when a deprecated definition with zero remaining instances is permanently removed
 
-    # Quest instance events
+    # Instance lifecycle events (auto-generated from x-lifecycle)
+    - topic: quest.instance.created
+      event: QuestInstanceCreatedEvent
+      description: Published when a quest instance is created (character accepts quest)
+    - topic: quest.instance.updated
+      event: QuestInstanceUpdatedEvent
+      description: Published when a quest instance status changes (completed, failed, abandoned) with changedFields
+    - topic: quest.instance.deleted
+      event: QuestInstanceDeletedEvent
+      description: Published when a quest instance is permanently deleted (character cleanup or admin deletion)
+
+    # Quest action events (non-lifecycle, domain-specific semantics)
     - topic: quest.accepted
       event: QuestAcceptedEvent
       description: Published when a character accepts a quest
@@ -55,11 +66,12 @@ info:
 
 # Lifecycle events auto-generated from this definition.
 # QuestDefinition is Category B: deprecation published via "updated" with changedFields (per IMPLEMENTATION TENETS).
-# The auto-generated *.deleted variant exists in Generated/ but is never published (Category B infrastructure).
+# QuestInstance is the instance entity: lifecycle events track creation, status changes, and deletion.
 x-lifecycle:
   topic_prefix: quest
   QuestDefinition:
     deprecation: true
+    instanceEntity: QuestInstance
     model:
       definitionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the quest definition" }
       contractTemplateId: { type: string, format: uuid, required: true, description: "Underlying contract template ID" }
@@ -74,6 +86,21 @@ x-lifecycle:
       deadlineSeconds: { type: integer, nullable: true, description: "Time limit" }
       maxQuestors: { type: integer, required: true, description: "Max party size" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this definition belongs to" }
+    sensitive: []
+
+  QuestInstance:
+    model:
+      questInstanceId: { type: string, format: uuid, primary: true, required: true, description: "Unique quest instance identifier" }
+      definitionId: { type: string, format: uuid, required: true, description: "Quest definition this instance was created from" }
+      contractInstanceId: { type: string, format: uuid, required: true, description: "Underlying contract instance ID" }
+      code: { type: string, required: true, description: "Quest code (denormalized from definition)" }
+      name: { type: string, required: true, description: "Quest name (denormalized from definition)" }
+      status: { $ref: 'quest-api.yaml#/components/schemas/QuestStatus', required: true, description: "Current quest status" }
+      questGiverCharacterId: { type: string, format: uuid, nullable: true, description: "Quest giver NPC character ID" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this instance belongs to" }
+      acceptedAt: { type: string, format: date-time, required: true, description: "When the quest was accepted" }
+      completedAt: { type: string, format: date-time, nullable: true, description: "When the quest was completed/failed/abandoned" }
+      deadline: { type: string, format: date-time, nullable: true, description: "Quest deadline (null if no time limit)" }
     sensitive: []
 
 paths: {}

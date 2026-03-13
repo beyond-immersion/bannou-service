@@ -2,8 +2,8 @@
 
 > ⛔ **FROZEN DOCUMENT** — Defines authoritative development tenets enforced across the codebase. AI agents MUST NOT add, remove, modify, or reinterpret any content without explicit user instruction. If you believe something is incorrect, report the concern and wait — do not "fix" it. See CLAUDE.md § "Reference Documents Are Frozen."
 
-> **Version**: 9.1
-> **Last Updated**: 2026-02-28
+> **Version**: 9.2
+> **Last Updated**: 2026-03-13
 > **Scope**: All Bannou microservices and related infrastructure
 
 This document is the authoritative index for Bannou development standards. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
@@ -182,7 +182,7 @@ Tenets are organized into categories based on when they're needed:
 | **T15** | Browser-Facing Endpoints | GET/path-params only for OAuth, Website, WebSocket upgrade (exceptional) |
 | **T18** | Licensing Requirements | MIT/BSD/Apache only; GPL forbidden for linked code |
 | **T27** | Cross-Service Communication Discipline | Direct API for higher→lower; DI interfaces for lower↔higher; events for broadcast only; inverted subscriptions forbidden |
-| **T28** | Resource-Managed Cleanup | Dependent data cleanup via lib-resource only; never subscribe to lifecycle events for destruction; Account exempt for privacy |
+| **T28** | Resource-Managed Cleanup | Dependent data cleanup via lib-resource only; never subscribe to lifecycle events for destruction; Account exempt for privacy; no soft-delete patterns (Account sole exception with time-limited retention worker) |
 | **T29** | No Metadata Bag Contracts | `additionalProperties: true` is NEVER a data contract between services; metadata bags are client-only; services own their own domain data in their own schemas |
 | **T32** | Account Identity Boundary | accountId restricted to identity/session/access boundary; client-facing endpoints MUST NOT accept accountId; use webSocketSessionId or shortcuts |
 
@@ -371,6 +371,8 @@ Tenets are organized into categories based on when they're needed:
 | Using lib-resource to track account references | T28 | Subscribe to `account.deleted` instead; lib-resource registration for accounts is forbidden (privacy) |
 | Using lib-resource for high-frequency instance cleanup (items at scale) | T28 | Use DI Listener (`IItemInstanceDestructionListener`) + orphan reconciliation worker (T28 exception) |
 | Event subscription for high-frequency instance cleanup | T28 | Use DI Listener pattern, not event subscription — same T28 exception, but DI listener is the required mechanism |
+| Soft-delete pattern (retaining records with `DeletedAt` flag) | T28 | Use immediate hard delete; for definitions use deprecation lifecycle (T31); Account is the sole exception (time-limited retention worker) |
+| Open-ended soft-delete without retention worker | T28 | If Account, add retention worker with configurable purge period; if any other service, remove soft-delete entirely |
 | Async helper method without `StartActivity` span | T30 | Add `using var activity = _telemetryProvider.StartActivity(...)` |
 | Manually adding spans to generated code | T30 | Add to code generation templates, not generated files |
 | Missing `ITelemetryProvider` in helper service constructor | T30 | Add constructor parameter for span creation |

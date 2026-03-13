@@ -65,6 +65,7 @@ x-lifecycle:
   topic_prefix: license
   LicenseBoardTemplate:
     deprecation: true
+    instanceEntity: LicenseBoard
     model:
       boardTemplateId: { type: string, format: uuid, primary: true, required: true, description: "Unique board template identifier" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this template belongs to" }

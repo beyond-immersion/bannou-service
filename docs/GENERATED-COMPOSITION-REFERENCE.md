@@ -395,7 +395,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Inventory | L2 | Container and item placement with constraint models (slot/weight/grid/volumetric/unlimited) | 16 |
 | Item | L2 | Dual-model items -- templates (definitions) and instances (occurrences) with quantity models and binding | 17 |
 | Location | L2 | Hierarchical location tree within realms (cities, regions, buildings, rooms) with depth tracking | 25 |
-| Quest | L2 | Objective-based progression as thin orchestration over Contract with prerequisite provider extensibility | 19 |
+| Quest | L2 | Objective-based progression as thin orchestration over Contract with prerequisite provider extensibility | 20 |
 | Realm | L2 | Top-level persistent world management with deprecation lifecycle and seed-from-configuration | 13 |
 | Relationship | L2 | Entity-to-entity relationships with type taxonomy, bidirectional uniqueness, and ABML variable provider | 21 |
 | Seed | L2 | Generic progressive growth primitive with polymorphic ownership and phase-gated capabilities | 24 |
@@ -447,12 +447,12 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Scene | L4 | Hierarchical scene documents as node trees with checkout/commit workflow and version history | 19 |
 | Showtime | L4 | In-game streaming metagame (simulated audiences, hype trains, streamer career progression) | — |
 | Status | L4 | Unified entity effects query layer aggregating contract statuses and seed capabilities | 19 |
-| Storyline | L4 | Seeded narrative generation from compressed archives via storyline-theory/storyteller SDKs | 16 |
+| Storyline | L4 | Seeded narrative generation from compressed archives via storyline-theory/storyteller SDKs | 17 |
 | Trade | L4 | Economic logistics -- goods movement over game-time, border policies, supply/demand dynamics | — |
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**76 services, 937 endpoints**
+**76 services, 939 endpoints**
 
 For full per-service details: `docs/GENERATED-*-SERVICE-DETAILS.md`
 

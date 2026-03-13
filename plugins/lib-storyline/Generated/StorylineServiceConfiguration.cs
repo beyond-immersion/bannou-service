@@ -182,6 +182,13 @@ public class StorylineServiceConfiguration : BaseServiceConfiguration
     public int ScenarioTriggerLockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
+    /// Maximum retry attempts for optimistic concurrency conflicts on state store operations
+    /// Environment variable: STORYLINE_MAX_CONCURRENCY_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int MaxConcurrencyRetries { get; set; } = 3;
+
+    /// <summary>
     /// Base weight for scenario fit score calculation, applied when any required condition is met
     /// Environment variable: STORYLINE_SCENARIO_FIT_SCORE_BASE_WEIGHT
     /// </summary>

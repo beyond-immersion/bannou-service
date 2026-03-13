@@ -80,6 +80,8 @@ info:
 x-lifecycle:
   topic_prefix: collection
   CollectionEntryTemplate:
+    deprecation: true
+    instanceEntity: Collection
     model:
       entryTemplateId: { type: string, format: uuid, primary: true, required: true, description: "Unique entry template identifier" }
       code: { type: string, required: true, description: "Unique code within collection type and game service" }

@@ -1150,7 +1150,7 @@ public async Task<(StatusCodes, CleanDeprecatedResponse?)> CleanDeprecatedTempla
     CleanDeprecatedRequest body, CancellationToken ct)
 {
     using var activity = _telemetryProvider.StartActivity(
-        "bannou.myservice", "MyService.CleanDeprecatedTemplatesAsync");
+        "bannou.my-service", "MyService.CleanDeprecatedTemplates");
 
     // 1. Query all deprecated entities
     var deprecated = await _templateStore.QueryAsync(

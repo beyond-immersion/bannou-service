@@ -16,7 +16,7 @@
 | Events Published | 3 (account.created, account.updated, account.deleted) |
 | Events Consumed | 0 |
 | Client Events | 0 |
-| Background Services | 0 |
+| Background Services | 1 (AccountRetentionWorker) |
 
 ---
 
@@ -404,4 +404,33 @@ LOCK account-lock:account-email:{normalizedNewEmail} -> 409 if lock fails
 
 ## Background Services
 
-No background services.
+### AccountRetentionWorker
+
+**File**: `plugins/lib-account/Services/AccountRetentionWorker.cs`
+**Registration**: `AccountServicePlugin.ConfigureServices` → `AddHostedService<AccountRetentionWorker>()`
+
+Permanently purges soft-deleted account records after the configured retention period.
+
+**Configuration**:
+| Property | Default | Purpose |
+|----------|---------|---------|
+| `RetentionPeriodDays` | 30 | Days after soft-deletion before permanent purge |
+| `RetentionCleanupIntervalSeconds` | 86400 | Interval between cycles (default: 24h) |
+| `RetentionCleanupStartupDelaySeconds` | 60 | Delay before first cycle after startup |
+
+**Cycle pseudocode**:
+```
+cutoffUnix = NOW - RetentionPeriodDays
+QUERY account-statestore WHERE $.AccountId EXISTS
+                           AND $.DeletedAtUnix EXISTS
+                           AND $.DeletedAtUnix < cutoffUnix
+
+FOR EACH expired account:
+    DELETE account-{id}    // indexes + auth-methods already removed at soft-delete time
+    LOG purged account {id}
+```
+
+**Notes**:
+- No events published — `account.deleted` was already published at soft-delete time
+- Per-item error isolation — one corrupt record does not block the cycle
+- Only hard-deletes the account record; email/provider indexes and auth methods are already cleaned up by `DeleteAccountAsync`

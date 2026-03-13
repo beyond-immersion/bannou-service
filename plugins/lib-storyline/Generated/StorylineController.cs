@@ -292,6 +292,25 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
 
 
     /// <summary>
+    /// Delete a scenario execution instance
+    /// </summary>
+
+    /// <remarks>
+    /// Permanently deletes a scenario execution record. Only non-active executions
+    /// <br/>(Completed, Failed, Cancelled) can be deleted. Active executions must be
+    /// <br/>completed or failed first.
+    /// <br/>
+    /// <br/>Admin-only endpoint for data cleanup and housekeeping.
+    /// </remarks>
+
+
+
+    /// <returns>Execution deleted</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteScenarioExecutionResponse>> DeleteScenarioExecution(DeleteScenarioExecutionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
     /// Get storyline data for compression
     /// </summary>
 
@@ -1106,6 +1125,58 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:storyline/scenario/get-history",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Delete a scenario execution instance
+    /// </summary>
+    /// <remarks>
+    /// Permanently deletes a scenario execution record. Only non-active executions
+    /// <br/>(Completed, Failed, Cancelled) can be deleted. Active executions must be
+    /// <br/>completed or failed first.
+    /// <br/>
+    /// <br/>Admin-only endpoint for data cleanup and housekeeping.
+    /// </remarks>
+    /// <returns>Execution deleted</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("storyline/execution/delete")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteScenarioExecutionResponse>> DeleteScenarioExecution([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteScenarioExecutionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.DeleteScenarioExecution",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/execution/delete");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeleteScenarioExecutionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/execution/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:storyline/execution/delete");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "storyline",
+                "DeleteScenarioExecution",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:storyline/execution/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

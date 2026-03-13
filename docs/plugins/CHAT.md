@@ -169,7 +169,7 @@ No Chat changes are needed for this integration path -- the transport layer is r
 
 ### Bugs (Fix Immediately)
 
-*(None identified)*
+1. **DeprecateRoomType changedFields does not match B14**: The implementation map's `DeprecateRoomType` pseudocode sets `Status=Deprecated` and publishes `changedFields: ["status"]`. Per Implementation Tenets Category B (B14), deprecation must publish `changedFields` containing the deprecation field names (`["isDeprecated", "deprecatedAt", "deprecationReason"]`). Additionally, the deep dive's Deprecation Lifecycle section claims triple-field storage (`IsDeprecated`, `DeprecatedAt`, `DeprecationReason`) but the map shows only `Status` enum mutation — either the storage model is wrong or the map's pseudocode is incomplete. Both the changedFields and the storage model need to align with B14.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -202,6 +202,8 @@ No Chat changes are needed for this integration path -- the transport layer is r
 14. **Typing heartbeat deduplication**: Only the first typing signal for a session+room publishes `ChatTypingStartedClientEvent`. Subsequent heartbeat refreshes silently update the sorted set timestamp without re-publishing the start event. This prevents UI flicker from rapid heartbeat signals.
 
 15. **SendMessageBatch publishes per-message service events**: `SendMessageBatch` publishes a `ChatMessageSentEvent` for each successfully sent message in the batch, matching `SendMessage` behavior exactly. This ensures downstream consumers see all messages regardless of send path. RabbitMQ handles the per-message event volume efficiently even for large batches.
+
+16. **Ban expiry is silent**: The `BanExpiryWorker` deletes expired ban records from MySQL without publishing `chat.participant.unbanned` events. Contrast with `UnbanParticipant` which explicitly publishes the event. Ban record deletion is garbage collection — the actual state transition (participant becomes eligible to rejoin) happens passively when `ExpiresAt` passes, not when the worker cleans the record. Same passive-expiry pattern as mute auto-expiry (quirk #2).
 
 ### Deprecation Lifecycle (Category B)
 

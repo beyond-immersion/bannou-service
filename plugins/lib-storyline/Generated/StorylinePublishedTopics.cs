@@ -23,8 +23,17 @@ public static class StorylinePublishedTopics
     /// <summary>Published when a scenario definition is updated (including deprecation via changedFields).</summary>
     public const string ScenarioDefinitionUpdated = "storyline.scenario-definition.updated";
 
-    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
+    /// <summary>Published by clean-deprecated sweep when a deprecated definition with zero remaining executions is permanently removed.</summary>
     public const string ScenarioDefinitionDeleted = "storyline.scenario-definition.deleted";
+
+    /// <summary>Published when a scenario execution instance is created.</summary>
+    public const string ScenarioExecutionCreated = "storyline.scenario-execution.created";
+
+    /// <summary>Published when a scenario execution status changes (completed, failed) with changedFields.</summary>
+    public const string ScenarioExecutionUpdated = "storyline.scenario-execution.updated";
+
+    /// <summary>Published when a scenario execution instance is permanently deleted.</summary>
+    public const string ScenarioExecutionDeleted = "storyline.scenario-execution.deleted";
 
     /// <summary>Published when a storyline plan is generated.</summary>
     public const string StorylinePlanComposed = "storyline.plan.composed";

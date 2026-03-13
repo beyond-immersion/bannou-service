@@ -15,7 +15,7 @@
 | Layer | L2 GameFoundation |
 | Endpoints | 18 |
 | State Stores | quest-definition-statestore (MySQL), quest-instance-statestore (MySQL), quest-objective-progress (Redis), quest-definition-cache (Redis), quest-character-index (Redis), quest-cooldown (Redis) |
-| Events Published | 5 (quest.accepted, quest.objective.progressed, quest.completed, quest.failed, quest.abandoned) |
+| Events Published | 8 (quest.accepted, quest.objective.progressed, quest.completed, quest.failed, quest.abandoned, quest.instance.created, quest.instance.updated, quest.instance.deleted) |
 | Events Consumed | 7 (3 contract, 4 self-subscription) |
 | Client Events | 0 |
 | Background Services | 0 |
@@ -35,6 +35,7 @@
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `inst:{questInstanceId}` | `QuestInstanceModel` | Active/completed quest instance with status, party, deadlines |
+| `def-inst:{definitionId}` | `List<string>` (JSON) | Reverse index: definition → instance IDs (for O(1) clean-deprecated checks) |
 
 **Store**: `quest-objective-progress` (Backend: Redis)
 
@@ -94,6 +95,9 @@
 | `quest.completed` | `QuestCompletedEvent` | CompleteQuestAsync helper (via HandleQuestCompleted endpoint, HandleContractFulfilledAsync event handler) |
 | `quest.failed` | `QuestFailedEvent` | FailOrAbandonQuestAsync helper (via HandleContractTerminatedAsync when reason lacks "abandoned"/"player") |
 | `quest.abandoned` | `QuestAbandonedEvent` | AbandonQuest, FailOrAbandonQuestAsync helper (via HandleContractTerminatedAsync when reason contains "abandoned"/"player") |
+| `quest.instance.created` | `QuestInstanceCreatedEvent` | AcceptQuest -- lifecycle event published after instance creation |
+| `quest.instance.updated` | `QuestInstanceUpdatedEvent` | Status transitions (completed, failed, abandoned) -- lifecycle event with `changedFields` |
+| `quest.instance.deleted` | `QuestInstanceDeletedEvent` | DeleteInstanceRecordAsync -- published when an instance is fully deleted (e.g., sole-questor cleanup) |
 
 ---
 
@@ -177,7 +181,7 @@ IF null or not Active -> return
 | ListQuestDefinitions | POST /quest/definition/list | user | - | - |
 | UpdateQuestDefinition | POST /quest/definition/update | developer | definition, cache | - |
 | DeprecateQuestDefinition | POST /quest/definition/deprecate | developer | definition, cache | quest.definition.updated |
-| AcceptQuest | POST /quest/accept | user | instance, progress, index, resource-ref | quest.accepted |
+| AcceptQuest | POST /quest/accept | user | instance, progress, index, resource-ref, reverse-index | quest.accepted, quest.instance.created |
 | AbandonQuest | POST /quest/abandon | user | instance, index | quest.abandoned |
 | GetQuest | POST /quest/get | user | - | - |
 | ListQuests | POST /quest/list | user | - | - |
@@ -189,8 +193,8 @@ IF null or not Active -> return
 | HandleMilestoneCompleted | POST /quest/internal/milestone-completed | [] | - | - |
 | HandleQuestCompleted | POST /quest/internal/quest-completed | [] | instance, index, cooldown | quest.completed |
 | GetCompressData | POST /quest/get-compress-data | developer | - | - |
-| DeleteByCharacter | POST /quest/delete-by-character | [] | instance, progress, cooldown, index, resource-ref | quest.abandoned (per instance) |
-| CleanDeprecatedQuestDefinitions | POST /quest/definition/clean-deprecated | admin | definition, cache | quest.definition.deleted |
+| DeleteByCharacter | POST /quest/delete-by-character | [] | instance, progress, cooldown, index, resource-ref, reverse-index | quest.abandoned, quest.instance.updated, quest.instance.deleted (per instance) |
+| CleanDeprecatedQuestDefinitions | POST /quest/definition/clean-deprecated | admin | definition, cache, reverse-index | quest.definition.deleted |
 
 ---
 
@@ -332,7 +336,11 @@ LOCK "quest:lock:char:{questorCharacterId}" (QuestInstance store, LockExpirySeco
  ETAG-WRITE _characterIndex:"char:{questorCharacterId}"
  -> retry up to MaxConcurrencyRetries
 
+ // Maintain reverse index (definition → instance list)
+ ETAG-WRITE _instanceStringStore:"def-inst:{definitionId}" <- append questInstanceId
+
  PUBLISH "quest.accepted" { questInstanceId, definitionId, questCode, questorCharacterIds, gameServiceId }
+ PUBLISH quest.instance.created (QuestInstanceCreatedEvent with all instance fields)
 
 RETURN (200, QuestInstanceResponse)
 ```
@@ -558,27 +566,46 @@ READ _characterIndex:"char:{characterId}"
 QUERY _instanceStore WHERE QuestorCharacterIds CONTAINS characterId
 
 FOREACH instance in allInstances // per-item try-catch
- IF status == Active
- READ _instanceStore:"inst:{questInstanceId}" [with ETag]
- // Set Status = Abandoned, CompletedAt = UtcNow
- ETAG-WRITE _instanceStore:"inst:{questInstanceId}"
+  // Load definition for objective/event metadata
+  definition = GetDefinitionModelAsync(instance.DefinitionId)
 
- // Best-effort contract termination
- TRY CALL IContractClient.TerminateContractInstanceAsync(...)
- CATCH ApiException -> log warning, continue
+  IF instance.QuestorCharacterIds.Count <= 1 (sole questor)
+    // Full instance deletion path
+    IF status == Active
+      // Abandon: set Status = Abandoned, terminate contract, publish quest.abandoned
+      READ _instanceStore:"inst:{questInstanceId}" [with ETag]
+      ETAG-WRITE (Status=Abandoned, CompletedAt=UtcNow)
+      TRY CALL IContractClient.TerminateContractInstanceAsync(...)
+      PUBLISH quest.abandoned { questInstanceId, questCode, abandoningCharacterId }
+      PUBLISH quest.instance.updated { changedFields: [status, completedAt] }
+    // Delete ALL objective progress
+    FOREACH objective in definition.Objectives
+      DELETE _progressStore:"prog:{questInstanceId}:{objectiveCode}"
+    // Full deletion via DeleteInstanceRecordAsync
+    //   Deletes instance record, removes from character index,
+    //   removes from reverse index (def-inst:{definitionId}),
+    //   publishes quest.instance.deleted lifecycle event
+    CALL DeleteInstanceRecordAsync(instance, characterId)
+  ELSE (multi-questor)
+    // Partial cleanup: remove character without destroying quest
+    IF status == Active
+      READ _instanceStore:"inst:{questInstanceId}" [with ETag]
+      // Remove characterId from QuestorCharacterIds
+      ETAG-WRITE _instanceStore:"inst:{questInstanceId}"
+      PUBLISH quest.instance.updated { changedFields: [questorCharacterIds] }
+    // Delete character-specific progress records
+    FOREACH objective in definition.Objectives
+      DELETE _progressStore:"prog:{questInstanceId}:{objectiveCode}"
+    // Update character index (remove quest from active list)
+    READ _characterIndex:"char:{characterId}" [with ETag]
+    ETAG-WRITE _characterIndex (remove from ActiveQuestIds)
 
- PUBLISH "quest.abandoned" { questInstanceId, questCode, abandoningCharacterId: characterId }
-
- // Delete objective progress for this instance
- FOREACH objective in definition.Objectives
- DELETE _progressStore:"prog:{questInstanceId}:{objectiveCode}"
-
- // Unregister character reference for ALL instances (active, completed, abandoned)
- TRY CALL IResourceClient.UnregisterReferenceAsync(...)
- CATCH ApiException -> log warning, continue
+  // Unregister character reference for ALL instances
+  TRY CALL IResourceClient.UnregisterReferenceAsync(...)
+  CATCH ApiException -> log warning, continue
 
 FOREACH questCode in index.CompletedQuestCodes // per-item try-catch
- DELETE _cooldownStore:"cd:{characterId}:{questCode}"
+  DELETE _cooldownStore:"cd:{characterId}:{questCode}"
 
 DELETE _characterIndex:"char:{characterId}"
 
@@ -588,24 +615,29 @@ RETURN (200, DeleteByCharacterResponse { instancesAbandoned, progressRecordsDele
 ### CleanDeprecatedQuestDefinitions
 POST /quest/definition/clean-deprecated | Roles: [admin]
 
-**Status: UNIMPLEMENTED** (`NotImplementedException` stub)
-
 ```
-// Implementation should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
-// per IMPLEMENTATION TENETS Category B clean-deprecated (B20-B22).
-//
-// Expected pseudocode:
-// QUERY all definitions WHERE IsDeprecated == true
-// CALL DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
-//   deprecatedEntities: deprecated definitions,
-//   getEntityId: d => d.DefinitionId,
-//   getDeprecatedAt: d => d.DeprecatedAt,
-//   hasActiveInstancesAsync: query instance store for any Active instances with this definitionId,
-//   deleteAndPublishAsync: delete definition + invalidate cache, publish quest.definition.deleted,
-//   gracePeriodDays: body.GracePeriodDays,
-//   dryRun: body.DryRun,
-//   logger, telemetryProvider, ct)
-// RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
+QUERY _definitionStore WHERE IsDeprecated == true
+IF count == 0
+  RETURN (200, CleanDeprecatedResponse { cleaned=0, remaining=0, errors=0, cleanedIds=[] })
+
+result = DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+  deprecatedDefinitions,
+  getEntityId: d => d.DefinitionId,
+  getDeprecatedAt: d => d.DeprecatedAt,
+  hasInstancesAsync: (d, ct) =>
+    // O(1) reverse index check (replaces full MySQL query)
+    _instanceStringStore.HasStringListEntriesAsync(BuildDefinitionInstanceIndexKey(d.DefinitionId), ct),
+  deleteAndPublishAsync: (d, ct) =>
+    DELETE _definitionStore:"def:{definitionId}"
+    DELETE _definitionCache:"def:{definitionId}"
+    // Defensive reverse index cleanup
+    DELETE _instanceStringStore:BuildDefinitionInstanceIndexKey(definitionId)
+    PUBLISH quest.definition.deleted (QuestDefinitionDeletedEvent with all fields + deleteReason),
+  gracePeriodDays: body.GracePeriodDays,
+  dryRun: body.DryRun
+)
+
+RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ```
 
 ---

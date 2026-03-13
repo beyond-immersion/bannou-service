@@ -9,9 +9,9 @@ need deprecation marker interfaces, and the current state of Category B complian
 
 ## Summary
 
-- **Total deprecatable entities**: 19
-- **With `instanceEntity` declared**: 0
-- **Missing `instanceEntity`**: 19
+- **Total deprecatable entities**: 20
+- **With `instanceEntity` declared**: 5
+- **Missing `instanceEntity`**: 15
 
 ## All Deprecatable Entities
 
@@ -20,21 +20,22 @@ need deprecation marker interfaces, and the current state of Category B complian
 | Achievement | `AchievementDefinition` | — | Missing |
 | Character Encounter | `EncounterType` | — | Missing |
 | Chat | `ChatRoomType` | — | Missing |
+| Collection | `CollectionEntryTemplate` | `Collection` | OK |
 | Contract | `ContractTemplate` | — | Missing |
 | Currency | `CurrencyDefinition` | — | Missing |
 | Faction | `Faction` | — | Missing |
 | Gardener | `ScenarioTemplate` | — | Missing |
-| Item | `ItemTemplate` | — | Missing |
+| Item | `ItemTemplate` | `ItemInstance` | OK |
 | Leaderboard | `LeaderboardDefinition` | — | Missing |
-| License | `LicenseBoardTemplate` | — | Missing |
+| License | `LicenseBoardTemplate` | `LicenseBoard` | OK |
 | Location | `Location` | — | Missing |
-| Quest | `QuestDefinition` | — | Missing |
+| Quest | `QuestDefinition` | `QuestInstance` | OK |
 | Realm | `Realm` | — | Missing |
 | Relationship | `RelationshipType` | — | Missing |
 | Seed | `SeedType` | — | Missing |
 | Species | `Species` | — | Missing |
 | Status | `StatusTemplate` | — | Missing |
-| Storyline | `ScenarioDefinition` | — | Missing |
+| Storyline | `ScenarioDefinition` | `ScenarioExecution` | OK |
 | Transit | `TransitMode` | — | Missing |
 
 ## Entity Details
@@ -62,6 +63,14 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Topic prefix**: `chat`
 - **Instance entity**: `*(not declared)*`
 - **Model fields**: `code`, `displayName`, `gameServiceId`, `messageFormat`, `persistenceMode`, `allowAnonymousSenders`, `status`
+
+### Collection: CollectionEntryTemplate
+
+- **Service**: `collection`
+- **Schema**: `schemas/collection-events.yaml`
+- **Topic prefix**: `collection`
+- **Instance entity**: `Collection`
+- **Model fields**: `entryTemplateId`, `code`, `collectionType`, `gameServiceId`, `displayName`, `category`, `hideWhenLocked`, `itemTemplateId`
 
 ### Contract: ContractTemplate
 
@@ -100,7 +109,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `item`
 - **Schema**: `schemas/item-events.yaml`
 - **Topic prefix**: `item`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `ItemInstance`
 - **Model fields**: `templateId`, `code`, `gameId`, `name`, `description`, `category`, `rarity`, `quantityModel`, `maxStackSize`, `scope`, `soulboundType`, `tradeable`, `destroyable`, `hasDurability`, `maxDurability`, `isActive`, `migrationTargetId`
 
 ### Leaderboard: LeaderboardDefinition
@@ -116,7 +125,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `license`
 - **Schema**: `schemas/license-events.yaml`
 - **Topic prefix**: `license`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `LicenseBoard`
 - **Model fields**: `boardTemplateId`, `gameServiceId`, `name`, `gridWidth`, `gridHeight`, `boardContractTemplateId`, `adjacencyMode`, `isActive`
 
 ### Location: Location
@@ -132,7 +141,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `quest`
 - **Schema**: `schemas/quest-events.yaml`
 - **Topic prefix**: `quest`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `QuestInstance`
 - **Model fields**: `definitionId`, `contractTemplateId`, `code`, `name`, `description`, `category`, `difficulty`, `levelRequirement`, `repeatable`, `cooldownSeconds`, `deadlineSeconds`, `maxQuestors`, `gameServiceId`
 
 ### Realm: Realm
@@ -180,7 +189,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `storyline`
 - **Schema**: `schemas/storyline-events.yaml`
 - **Topic prefix**: `storyline`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `ScenarioExecution`
 - **Model fields**: `scenarioId`, `code`, `name`, `description`, `priority`, `enabled`, `realmId`, `gameServiceId`
 
 ### Transit: TransitMode

@@ -768,15 +768,15 @@ When creating `market-api.yaml`, the following fields MUST be defined as proper 
 | Supply signal | Variable provider | `Scarce`, `Normal`, `Abundant` | `SupplySignal` |
 | Bid status | `AuctionBidModel` | `Active`, `Outbid`, `Won`, `Released`, `Expired` | `BidStatus` |
 
-### / Dependency Classification (Corrected)
+### Dependency Classification (Corrected)
 
-Character (L2) and Location (L2) were originally listed as soft dependencies with graceful degradation. Per and SERVICE-HIERARCHY.md: when L4 is enabled, ALL of L2 must be running. L2 dependencies MUST be hard (constructor injection, crash at startup if missing). These have been moved to the hard dependencies table in this document.
+Character (L2) and Location (L2) were originally listed as soft dependencies with graceful degradation. Per SERVICE-HIERARCHY.md: when L4 is enabled, ALL of L2 must be running. L2 dependencies MUST be hard (constructor injection, crash at startup if missing). These have been moved to the hard dependencies table in this document.
 
 Only Escrow (L4) and Analytics (L4) remain as soft dependencies, which is correct -- L4-to-L4 dependencies require graceful degradation.
 
 ### Deprecation Lifecycle
 
-MarketDefinition is a configuration entity (per "You update or remove configuration, you don't deprecate it"). Active listings, vendors, and price history referencing a deleted definition are cleaned up via cascade on deletion. No deprecation/undeprecation endpoints needed. Listings use custom lifecycle events (not x-lifecycle) because their transitions carry domain-specific semantics (sold vs expired vs cancelled). VendorCatalog uses x-lifecycle for standard CRUD events.
+MarketDefinition does not require deprecation. Per the IMPLEMENTATION TENETS T31 decision tree: no external service stores `marketDefinitionId` — all references (listings, vendors, price history) are internal to lib-market. Internal references are cleaned up via cascade on deletion. Immediate hard delete with internal cascade is the correct pattern. If a future external service stores `marketDefinitionId`, this classification should be revisited (likely Category A). Listings use custom lifecycle events (not x-lifecycle) because their transitions carry domain-specific semantics (sold vs expired vs cancelled). VendorCatalog uses x-lifecycle for standard CRUD events.
 
 ### Resource Cleanup (Compliant)
 
@@ -794,7 +794,7 @@ Market is a multi-entity service. All event topics use Pattern C (`market.{entit
 
 ### Endpoint Count
 
-Manual count: 5 (definition) + 6 (auction) + 7 (vendor) + 4 (stock) + 3 (price) + 3 (cleanup) = **28 endpoints**. Matches GENERATED-SERVICE-DETAILS.md.
+Planned: 5 (definition) + 6 (auction) + 7 (vendor) + 4 (stock) + 3 (price) + 3 (cleanup) = **28 endpoints**. No schema exists yet — GENERATED-COMPOSITION-REFERENCE.md currently shows "—" for Market.
 
 ---
 
@@ -894,6 +894,10 @@ Before lib-market implementation:
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+*(No bugs identified — this is a pre-implementation specification.)*
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Listing fees are non-refundable sinks**: Cancelling a listing does NOT refund the listing fee. This is deliberate -- listing fees are a currency sink that prevents spam listings. The economic cost of listing incentivizes serious sellers and removes currency from circulation.
@@ -936,7 +940,9 @@ Before lib-market implementation:
 
 11. **Vendor wallet EntityType** *(from audit)*: Currency's wallet API uses `EntityType` enum for `ownerType`. The removed `VendorWalletOwnerType` config used string `"vendor"` which is not a valid EntityType. Options: (a) Use `EntityType.Character` since vendor NPCs are characters. (b) Add a `Vendor` value to EntityType if vendors need distinct wallet identity. This ties to DC#9 -- if NPCs are just Characters, their wallets use `EntityType.Character`.
 
-12. **`requirementsMet` trust boundary** *(from audit)*: The vendor Buy endpoint accepts `requirementsMet: boolean` in the request -- a caller-attestation pattern where lib-market trusts the caller's requirement validation. This is a design choice, not a tenet violation: Market is game-agnostic and cannot validate arbitrary requirements (level, reputation, faction standing). Options: (a) Keep as-is -- caller attests, Market records. (b) Remove the field entirely -- caller is responsible for gating before calling Buy. (c) Implement a `IRequirementProviderFactory` pattern where requirement plugins register and Market validates server-side. If kept, the field should be `required: true` with no default.
+12. **Buyout multi-service compensation** *(from tenet validation)*: The buyout flow involves sequential cross-service calls: Currency debit (buyer pays) → fee deduction → seller credit → Escrow release (item to buyer) → release all active bid holds. Per Implementation Tenets (multi-service call compensation), if step 4 (Escrow release) fails after steps 1-3 succeed, the buyer has paid but hasn't received the item. The settlement worker provides self-healing for expired auctions but does not cover the synchronous buyout flow. Options: (a) Implement catch-block compensation that reverses Currency operations on Escrow failure. (b) Document that a failed buyout transitions the listing to a "pending-settlement" state handled by the settlement worker (self-healing). Either way, the compensation or self-healing mechanism must be explicit — a comment acknowledging possible orphaned state is not sufficient per Implementation Tenets.
+
+13. **`requirementsMet` trust boundary** *(from audit)*: The vendor Buy endpoint accepts `requirementsMet: boolean` in the request -- a caller-attestation pattern where lib-market trusts the caller's requirement validation. This is a design choice, not a tenet violation: Market is game-agnostic and cannot validate arbitrary requirements (level, reputation, faction standing). Options: (a) Keep as-is -- caller attests, Market records. (b) Remove the field entirely -- caller is responsible for gating before calling Buy. (c) Implement a `IRequirementProviderFactory` pattern where requirement plugins register and Market validates server-side. If kept, the field should be `required: true` with no default.
 
 ---
 
@@ -944,13 +950,11 @@ Before lib-market implementation:
 
 | Issue | Title | Status | Relevance |
 |-------|-------|--------|-----------|
-| [#427](https://github.com/beyond-immersion/bannou-service/issues/427) | Market: Marketplace orchestration service | Open | Primary implementation tracking issue |
-| [#153](https://github.com/beyond-immersion/bannou-service/issues/153) | Escrow: Asset movement (deposit/release/refund) | Open | **Phase 0 blocker** -- auction item custody requires Escrow asset movement |
-| [#222](https://github.com/beyond-immersion/bannou-service/issues/222) | Escrow: Contract integration | Open | **Phase 0 blocker** -- conditional releases for auction settlement |
-| [#428](https://github.com/beyond-immersion/bannou-service/issues/428) | Market: Vendor negotiation API | Open | Extension -- personality-driven haggling |
-| [#429](https://github.com/beyond-immersion/bannou-service/issues/429) | Market: Cross-market price arbitrage detection | Open | Extension -- NPC trade opportunity events |
-| [#147](https://github.com/beyond-immersion/bannou-service/issues/147) | Relationship: Variable Provider Factory | Open | Required for NPC social bond awareness in vendor GOAP |
-| [#478](https://github.com/beyond-immersion/bannou-service/issues/478) | Market: Client events for auction/vendor updates | Open | Extension -- WebSocket push for outbid notifications |
-| [#556](https://github.com/beyond-immersion/bannou-service/issues/556) | Market: Auction sniping protection | Open | Extension -- bid-driven duration extension |
+| [#427](https://github.com/beyond-immersion/bannou-service/issues/427) | Economy Layer: Market, Trade & Taxation Services | Open | Primary implementation tracking issue (umbrella) |
+| [#153](https://github.com/beyond-immersion/bannou-service/issues/153) | Cross-Cutting: Escrow Asset Transfer Integration Broken | Open | **Phase 0 blocker** -- auction item custody requires Escrow asset movement |
+| [#222](https://github.com/beyond-immersion/bannou-service/issues/222) | Currency + Escrow: Missing Background Tasks (4 items) | Open | **Phase 0 blocker** -- partial progress (EscrowExpirationService implemented), remaining background tasks outstanding |
+| [#428](https://github.com/beyond-immersion/bannou-service/issues/428) | ABML Economic Action Handlers | Open | Prerequisite -- NPC brains need ABML action handlers to interact with economy |
+| [#429](https://github.com/beyond-immersion/bannou-service/issues/429) | Analytics: Economic Velocity & Distribution Extensions | Open | Extension -- analytics integration for economic health metrics |
+| [#147](https://github.com/beyond-immersion/bannou-service/issues/147) | Implement Phase 2 Variable Providers (Currency, Inventory, Relationship) | Open | Required for NPC social bond awareness in vendor GOAP |
 
 See also [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.

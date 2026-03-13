@@ -169,6 +169,14 @@ x-service-configuration:
       description: Timeout in seconds for the distributed lock during scenario trigger to prevent double-trigger race conditions
       env: STORYLINE_SCENARIO_TRIGGER_LOCK_TIMEOUT_SECONDS
 
+    MaxConcurrencyRetries:
+      type: integer
+      default: 3
+      minimum: 1
+      maximum: 10
+      description: Maximum retry attempts for optimistic concurrency conflicts on state store operations
+      env: STORYLINE_MAX_CONCURRENCY_RETRIES
+
     # Fit Score Calculation (IMPLEMENTATION TENETS compliant - no hardcoded tunables)
 
     ScenarioFitScoreBaseWeight:

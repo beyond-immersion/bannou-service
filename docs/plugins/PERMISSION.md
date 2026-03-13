@@ -4,7 +4,7 @@
 > **Schema**: schemas/permission-api.yaml
 > **Version**: 3.0.0
 > **Layer**: AppFoundation
-> **State Store**: permission-statestore (Redis)
+> **State Store**: permission (Redis), permission-lock (Redis)
 > **Implementation Map**: [docs/maps/PERMISSION.md](../maps/PERMISSION.md)
 > **Short**: RBAC capability manifest compilation from service x state x role permission matrices
 
@@ -29,7 +29,7 @@ Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. M
 
 ---
 
-### Type Field Classification
+## Type Field Classification
 
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
@@ -135,6 +135,7 @@ None. The service is feature-complete for its scope.
 ### Service Registration Observability Event (GH#461)
 
 Permission already publishes `permission.capability-update` via `IMessageBus` on every session recompilation (containing sessionId, version, capabilities, reason) — this serves as the recompilation observability event. GH#461 originally proposed two events, but `permission.recompiled` is redundant with the existing `permission.capability-update`. The remaining proposal is a `permission.service_registered` event for Analytics aggregation of service startup patterns and registration frequency. This would be fire-and-forget with no functional dependency. Low priority — no functional gap exists.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-13:https://github.com/beyond-immersion/bannou-service/issues/637 -->
 
 ---
 
@@ -150,7 +151,7 @@ None active.
 
 ### Design Considerations
 
-None active. Previous considerations were either fixed (parallel recompilation via `SemaphoreSlim`, atomic set operations via `ICacheableStateStore`) or closed as non-issues (individual key strategy is correct at current scale).
+1. ~~**ClearSessionState lacks distributed lock**~~: **FIXED** (2026-03-13) - ClearSessionState now acquires a distributed lock on the session ID via `IDistributedLockProvider` (using `StateStoreDefinitions.PermissionLock`) before the read-modify-write sequence, matching UpdateSessionState and UpdateSessionRole. Returns 409 Conflict on lock failure. All three session mutation methods now have identical locking discipline.
 
 ---
 

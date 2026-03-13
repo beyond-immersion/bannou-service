@@ -76,6 +76,7 @@ The plugin bridges HTTP requests to SDK calls. SDK types are exposed directly in
 | `ScenarioLocationMatchBonus` | `STORYLINE_SCENARIO_LOCATION_MATCH_BONUS` | `0.08` | Bonus added to fit score for matching location condition |
 | `ScenarioWorldStateMatchBonus` | `STORYLINE_SCENARIO_WORLD_STATE_MATCH_BONUS` | `0.05` | Bonus added to fit score for matching world state conditions |
 | `ScenarioFitScoreMinimumThreshold` | `STORYLINE_SCENARIO_FIT_SCORE_MINIMUM_THRESHOLD` | `0.3` | Minimum fit score required for a scenario to appear in find-available results |
+| `MaxConcurrencyRetries` | `STORYLINE_MAX_CONCURRENCY_RETRIES` | `3` | Maximum retry attempts for optimistic concurrency conflicts on state store operations (e.g., reverse index maintenance) |
 
 ---
 
@@ -143,6 +144,7 @@ State Store Key Relationships
  MySQL (durable):
  {scenarioId} → ScenarioDefinitionModel
  {executionId} → ScenarioExecutionModel
+ def-exec:{scenarioId} → List<string> (reverse index: definition → execution IDs)
 
  Redis (ephemeral):
  storyline:scenario:cache:{scenarioId} → ScenarioDefinitionModel (TTL read-through)
@@ -172,7 +174,9 @@ State Store Key Relationships
 
 8. **ScenarioAvailableEvent**: The topic constant exists (`StorylinePublishedTopics.ScenarioAvailable`) and the event schema is defined, but no code path currently publishes it. It would be emitted by a background process detecting newly available scenarios.
 
-9. **CleanDeprecatedScenarioDefinitionsAsync** (`POST /storyline/scenario/clean-deprecated`): Implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` — queries deprecated definitions, checks for active executions, deletes eligible entities, publishes `storyline.scenario-definition.deleted` lifecycle event. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. Permissions: `[role: admin]`.
+9. **CleanDeprecatedScenarioDefinitionsAsync** (`POST /storyline/scenario/clean-deprecated`): Implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` — queries deprecated definitions, checks for remaining executions via reverse index (`def-exec:{scenarioId}`) using O(1) `HasStringListEntriesAsync`, deletes eligible entities, publishes `storyline.scenario-definition.deleted` lifecycle event. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. Permissions: `[role: admin]`.
+
+10. **DeleteScenarioExecutionAsync** (`POST /storyline/execution/delete`): Deletes a scenario execution record. Rejects Active-status executions with `409 Conflict` (must complete or fail first). Removes from active set, reverse index (`def-exec:{scenarioId}`), and execution store. Publishes `storyline.scenario-execution.deleted` lifecycle event. Permissions: `[role: admin]`.
 
 ---
 
@@ -225,6 +229,12 @@ None identified.
 11. **GetCompressData uses `x-permissions: []`**: This endpoint is service-to-service only (called by lib-resource during character compression). It is not exposed to WebSocket clients.
 
 12. **Scenario trigger immediately completes**: The current implementation applies all mutations and spawns all quests synchronously within `TriggerScenarioAsync`, then marks the execution as `Completed`. This is a Phase 1 simplification; true multi-phase execution with background progression is a future capability (see Stubs #6).
+
+13. **Scenario execution lifecycle events**: `TriggerScenarioAsync` publishes both action events (`storyline.scenario.triggered`, `storyline.scenario.completed`) and lifecycle events (`storyline.scenario-execution.created`, `storyline.scenario-execution.updated`). The lifecycle events carry the full execution model for infrastructure consumers. `DeleteScenarioExecutionAsync` publishes `storyline.scenario-execution.deleted`.
+
+14. **Reverse index for definition→execution mapping**: A string list reverse index (`def-exec:{scenarioId}`) maps each scenario definition to its execution IDs. Maintained via `AddToStringListAsync` on execution creation and `RemoveFromStringListAsync` on execution deletion. Used by `CleanDeprecatedScenarioDefinitionsAsync` for O(1) instance existence checks via `HasStringListEntriesAsync`.
+
+15. **Execution deletion rejects Active status**: `DeleteScenarioExecutionAsync` returns `409 Conflict` for Active-status executions. Only completed, failed, or other terminal-status executions can be deleted. This prevents orphaning active scenario state.
 
 ### Deprecation Lifecycle (Category B)
 

@@ -34,12 +34,33 @@ public static class QuestEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(QuestPublishedTopics.QuestDefinitionUpdated, eventData, cancellationToken);
 
-    /// <summary>Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.</summary>
+    /// <summary>Published by clean-deprecated sweep when a deprecated definition with zero remaining instances is permanently removed.</summary>
     public static Task<bool> PublishQuestDefinitionDeletedAsync(
         this IMessageBus messageBus,
         QuestDefinitionDeletedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(QuestPublishedTopics.QuestDefinitionDeleted, eventData, cancellationToken);
+
+    /// <summary>Published when a quest instance is created (character accepts quest).</summary>
+    public static Task<bool> PublishQuestInstanceCreatedAsync(
+        this IMessageBus messageBus,
+        QuestInstanceCreatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(QuestPublishedTopics.QuestInstanceCreated, eventData, cancellationToken);
+
+    /// <summary>Published when a quest instance status changes (completed, failed, abandoned) with changedFields.</summary>
+    public static Task<bool> PublishQuestInstanceUpdatedAsync(
+        this IMessageBus messageBus,
+        QuestInstanceUpdatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(QuestPublishedTopics.QuestInstanceUpdated, eventData, cancellationToken);
+
+    /// <summary>Published when a quest instance is permanently deleted (character cleanup or admin deletion).</summary>
+    public static Task<bool> PublishQuestInstanceDeletedAsync(
+        this IMessageBus messageBus,
+        QuestInstanceDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(QuestPublishedTopics.QuestInstanceDeleted, eventData, cancellationToken);
 
     /// <summary>Published when a character accepts a quest.</summary>
     public static Task<bool> PublishQuestAcceptedAsync(

@@ -28,6 +28,7 @@ This is NOT a reference to claude-code's issues or any other repository.
 @docs/reference/TENETS.md
 
 **On-demand references** (read when needed, not auto-included):
+- `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` — Shared helpers, canonical implementation patterns, test validators. **Read this FIRST when searching for the canonical example of any pattern** (background workers, state store access, event publishing, deprecation, cleanup, enum mapping, telemetry, etc.)
 - `docs/reference/SERVICE-HIERARCHY.md` — Full hierarchy rules, Variable Provider Factory, DI Provider vs Listener safety, deployment modes (read when designing cross-layer communication)
 - `docs/GENERATED-*-SERVICE-DETAILS.md` — Full per-service details by layer (read when investigating a specific layer's services)
 - `docs/reference/ORCHESTRATION-PATTERNS.md` — Full orchestration specifications (bootstrap sequence, divine economy, dungeon patterns, living weapons)
@@ -69,6 +70,7 @@ These documents provide the high-level architectural north-star context for the 
 | **Code auditing** (reviewing implementations, checking tenet compliance, finding violations) | ALL tenet files in `docs/reference/tenets/`: `FOUNDATION.md`, `IMPLEMENTATION-BEHAVIOR.md`, `IMPLEMENTATION-DATA.md`, `QUALITY.md`, `TESTING-PATTERNS.md` |
 | **Schema auditing** (reviewing OpenAPI schemas, checking schema rules, validating schema design) | `docs/reference/SCHEMA-RULES.md` |
 | **High-level vision** (evaluating how services serve gameplay, cross-cutting feature planning, content flywheel analysis) | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode) |
+| **Canonical pattern lookup** (searching for the correct way to implement a pattern — background workers, state store access, event publishing, deprecation, cleanup, enum mapping, etc.) | `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` — read this FIRST before grepping the codebase for examples. It catalogs all shared helpers, canonical skeletons, and reference implementations with code samples and "when to use" guidance. |
 
 **Rules:**
 1. Every sub-agent prompt MUST include an explicit instruction to read the relevant documents listed above BEFORE doing any work
@@ -76,6 +78,7 @@ These documents provide the high-level architectural north-star context for the 
 3. The agent's prompt should specify which documents to read -- do not rely on the agent discovering them on its own
 4. For investigation agents, also include `docs/reference/SERVICE-HIERARCHY.md` when the task involves dependency analysis or layer validation
 5. For ANY agent working on a specific plugin (audit, map, test, implement, maintain), ALWAYS include both `docs/plugins/{SERVICE}.md` (deep dive) and `docs/maps/{SERVICE}.md` (implementation map) in the agent's reading list
+6. For ANY agent that needs to implement a pattern (background workers, event handlers, deprecation, cleanup, state store access, enum mapping, telemetry, etc.), instruct the agent to read `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` BEFORE searching the codebase for examples. The patterns file is the canonical source — grepping other services for "how they do it" risks copying violations or outdated patterns
 
 **Other Planning References**:
 

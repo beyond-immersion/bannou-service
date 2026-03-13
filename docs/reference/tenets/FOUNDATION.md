@@ -967,6 +967,48 @@ This exception is specific to Account due to the privacy constraint — no other
 
 lib-collection's `CollectionServiceEvents.cs` is the canonical reference for this pattern. It demonstrates: event consumer registration, telemetry spans, try-catch boundary, per-item error isolation in `CleanupCollectionsForOwnerAsync`, lifecycle event publishing for each deleted collection, and graceful handling of missing data.
 
+### Deletion Finality (No Soft-Delete Patterns)
+
+**Rule**: When a service deletes an entity, the deletion MUST be final — the entity record is removed from the state store. Soft-delete patterns (setting a `DeletedAt`/`IsDeleted` flag while retaining the record indefinitely) are **forbidden**.
+
+**Why soft-delete is prohibited**:
+
+1. **Dead record accumulation**: Soft-deleted records remain in the queryable store permanently, degrading query performance over time as the dead-to-live ratio grows
+2. **Query filter tax**: Every query and list operation must add "not deleted" filters, creating a bug surface where a missing filter silently returns deleted entities
+3. **Semantic ambiguity**: A record that exists but is "deleted" creates confused state — is it gone or not? Can it be restored? What happens if a new entity with the same natural key is created?
+4. **False deletion guarantee**: Downstream consumers that receive `*.deleted` events expect the entity to be gone. A soft-deleted entity that still exists (and is still queryable by ID) violates that expectation
+
+**The correct patterns for deferred deletion**:
+
+| Need | Correct Mechanism |
+|------|-------------------|
+| Referenced definitions need transition period | **Deprecation lifecycle** (T31) — deprecate first, then hard-delete |
+| Content templates persist for historical instances | **Category B deprecation** (T31) — deprecate-only, clean-deprecated sweep |
+| Data retention compliance (regulatory) | **Account retention worker** (see sole exception below) |
+| Undo/restore capability | Not supported at the entity level — use save-load service for game state snapshots |
+
+#### Sole Exception: Account Retention
+
+Account (L1) uses a **time-limited soft-delete** pattern. This is the sole exception to the deletion finality rule, justified by the same privacy and hierarchy constraints that make Account the exception to lib-resource (see Account Deletion Cleanup Obligation above):
+
+1. **Stale index detection**: Provider indexes from incomplete cleanup can be identified by checking if the owning account is soft-deleted, allowing safe index overwrite rather than a conflict error
+2. **Data retention compliance**: Regulatory requirements may mandate retaining account records for a defined period before permanent purge
+3. **Downstream cleanup window**: The retention period (configurable, default 30 days) guarantees that all `account.deleted` event consumers have processed the deletion before the record disappears
+
+**Account's soft-delete is time-limited, not open-ended.** A background retention worker (`AccountRetentionWorker`) periodically scans for soft-deleted accounts past the configurable retention period and permanently removes them from the state store. The worker follows the canonical BackgroundService polling loop pattern (T6) with per-item error isolation (T7).
+
+**Required configuration** (in `account-configuration.yaml`):
+
+| Property | Default | Purpose |
+|----------|---------|---------|
+| `RetentionPeriodDays` | 30 | Days after soft-delete before permanent purge |
+| `RetentionCleanupIntervalSeconds` | 86400 (24h) | How often the worker runs |
+| `RetentionCleanupStartupDelaySeconds` | 60 | Delay before first run after startup |
+
+**No additional events are published** during permanent purge — the `account.deleted` lifecycle event was already published at soft-delete time. The permanent purge is an internal storage cleanup, not a business event.
+
+**This exception does NOT generalize.** No other service may use soft-delete. If a service needs deferred deletion, it uses the deprecation lifecycle (T31). If a service needs data retention, it uses the save-load service or external archival. Account is the exception because it is already the exception to every other cleanup rule in T28.
+
 ### High-Frequency Instance Lifecycle Exception
 
 lib-resource cleanup is the correct default for persistent dependent data. However, when dependent data follows a **high-frequency template→instance pattern**, per-instance resource reference registration creates unacceptable overhead on the reference store and becomes the bottleneck itself.
