@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Moq;
-using Xunit.Abstractions;
 
 namespace BeyondImmersion.BannouService.Tests.History;
 

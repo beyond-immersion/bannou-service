@@ -4,14 +4,14 @@
 > **Schema**: schemas/market-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
-> **State Stores**: market-definitions (MySQL), market-listings (MySQL), market-bids (Redis), market-vendors (MySQL), market-vendor-stock (Redis), market-price-history (MySQL), market-settlement-queue (Redis), market-idempotency (Redis), market-lock (Redis)
+> **State Stores**: market-definitions (MySQL), market-listings (MySQL), market-bids (Redis), market-vendors (MySQL), market-vendor-stock (Redis), market-price-history (MySQL), market-settlement-queue (Redis), market-npc-profiles (MySQL), market-supply-demand (Redis), market-idempotency (Redis), market-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
 > **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
-> **Short**: Marketplace orchestration (auctions, NPC vendors, price discovery) composing Escrow/Currency/Item
+> **Short**: Marketplace orchestration (auctions, NPC vendors, price discovery, NPC economic profiles, supply/demand intelligence) composing Escrow/Currency/Item
 
 ## Overview
 
-Marketplace orchestration service (L4 GameFeatures) for auctions, NPC vendor management, and price discovery. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver game economy exchange mechanics. Game-agnostic: auction house rules, vendor personality templates, fee structures, and pricing modes are configured through market definitions, ABML behaviors, and seed type definitions at deployment time. Internal-only, never internet-facing.
+Marketplace orchestration service (L4 GameFeatures) for auctions, NPC vendor management, price discovery, NPC economic identity, and supply/demand market intelligence. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver game economy exchange mechanics. Owns both the exchange mechanisms (auctions, vendors) and the economic intelligence that informs them (NPC economic profiles, supply/demand snapshots). Trade (L4 peer) owns logistics -- moving goods between locations; Market owns what happens at a location. Game-agnostic: auction house rules, vendor personality templates, fee structures, and pricing modes are configured through market definitions, ABML behaviors, and seed type definitions at deployment time. Internal-only, never internet-facing.
 
 ---
 
@@ -46,19 +46,20 @@ lib-escrow remains the low-level exchange primitive. lib-market is the marketpla
 
 The economy architecture identifies three distinct services: **lib-market** (exchange), **lib-trade** (logistics), and **lib-economy** (intelligence). The question arises: why separate market from trade?
 
-**Market is about EXCHANGE** (buying and selling at a point of sale). Trade is about **LOGISTICS** (moving goods across distances, borders, tariffs). A game can have:
+**Market is about ECONOMICS AT A LOCATION** (buying, selling, price discovery, NPC economic identity, supply/demand intelligence). Trade is about **LOGISTICS BETWEEN LOCATIONS** (moving goods across distances, borders, tariffs, velocity monitoring). A game can have:
 - Markets without trade routes (local-only economy)
 - Trade routes without formal markets (caravan-based direct trading)
 - Both (markets at endpoints connected by trade routes)
 
 | Concern | lib-market | lib-trade |
 |---------|-----------|-----------|
-| **Core question** | "What is this item worth here?" | "How do I move this item there?" |
+| **Core question** | "What is economic activity like here?" | "How do goods flow between locations?" |
 | **Physical model** | Point of sale (stationary) | Route with legs (in motion) |
 | **Time model** | Listing duration (hours/days) | Transit duration (game-time travel) |
 | **Risk model** | Price risk (will it sell? at what price?) | Transit risk (bandits, storms, customs) |
-| **NPC role** | Vendor (buy/sell) or bidder (auction) | Carrier, customs officer, bandit |
+| **NPC role** | Vendor, bidder, economic actor (profile) | Carrier, customs officer, bandit |
 | **Currency flow** | Payment for goods | Tariffs, taxes, shipping costs |
+| **Intelligence** | Supply/demand snapshots, NPC profiles, price discovery | Velocity metrics, route profitability, arbitrage detection |
 | **Border concern** | None (local to a market) | Central (tariffs, contraband, customs) |
 
 A blacksmith NPC buys iron at the market (lib-market), but a merchant NPC ships iron from the mines to the city (lib-trade). Different systems, different APIs, different NPC GOAP actions.
@@ -276,13 +277,127 @@ When the rolling average price for an item shifts meaningfully (configurable thr
 
 ---
 
+## NPC Economic Profiles
+
+Market owns NPC economic identity -- what an NPC produces, consumes, and how they behave economically. This was originally in Trade but belongs here: understanding "what does this NPC do economically" is market intelligence, not logistics.
+
+```yaml
+NpcEconomicProfile:
+ characterId: uuid           # Links to Character service
+ economicRole: EconomicRole  # Merchant, Craftsman, Farmer, Miner, Fisher, Laborer, Noble, Consumer, None
+
+ # Production (what they make or gather -- rolling averages from actual activity)
+ produces: [NpcProductionEntry]
+
+ # Consumption (what they need)
+ consumes: [NpcConsumptionEntry]
+
+ # Trading behavior (personality-derived)
+ tradingPersonality: NpcTradingPersonality
+
+ # Financial state (computed from transaction history)
+ primaryWalletId: uuid
+ estimatedNetWorth: decimal   # Last computed
+ dailyRevenue: decimal        # Rolling average over last 7 game-days
+ dailyExpenses: decimal       # Rolling average over last 7 game-days
+
+ # Location economics
+ homeLocationId: uuid
+ tradingRadius: decimal       # How far they'll travel for trade (game-km)
+
+ modifiedAt: timestamp
+
+NpcProductionEntry:
+ templateId: uuid
+ templateCode: string
+ recentRatePerGameDay: decimal # Rolling average production rate (computed from actual output over last 7 game-days, not a fixed declaration)
+ skillLevel: decimal          # Production quality factor (0.0-1.0)
+ productionType: ProductionType # Steady (Workshop-backed), EventDriven (discovery/gathering), Seasonal (crop cycles)
+ workshopTaskId: uuid?        # Reference to active Workshop task (if Steady)
+
+NpcConsumptionEntry:
+ templateId: uuid
+ templateCode: string
+ recentRatePerGameDay: decimal # Rolling average consumption rate (computed from actual usage, not fixed)
+ priority: integer            # 1 = essential (food), 2 = important (tools), 3 = luxury
+ substitutes: [uuid]          # Alternative template IDs if primary unavailable
+
+NpcTradingPersonality:
+ riskTolerance: decimal       # minimum: 0, maximum: 1 — willingness to invest in risky ventures
+ priceAwareness: decimal      # minimum: 0, maximum: 1 — how closely they track market prices
+ loyaltyFactor: decimal       # minimum: 0, maximum: 1 — preference for repeat trading partners
+ hoarding: decimal            # minimum: 0, maximum: 1 — tendency to stockpile beyond immediate need
+ bargainDrive: decimal        # minimum: 0, maximum: 1 — how aggressively they negotiate
+ explorationRange: decimal    # minimum: 0, maximum: 1 — willingness to seek distant markets
+```
+
+### Key Design Change: Rolling Averages over Fixed Rates
+
+The original `ratePerGameDay` was a static declaration ("this farmer produces 10 wheat/day"). This fails for event-driven producers like information specialists, hunters, scouts, and any role whose output depends on what they discover or encounter.
+
+`recentRatePerGameDay` is a **rolling average computed from actual transaction history** -- the same data Market already tracks through auction sales, vendor transactions, and price history. A cartographer who sold 3 map scrolls last week and 5 this week has a `recentRatePerGameDay` of ~1.1. A farmer with steady Workshop output has a stable ~10.0.
+
+The `productionType` enum (Steady, EventDriven, Seasonal) tells the supply/demand snapshot worker how to interpret the rate: Steady rates are reliable predictions, EventDriven rates are volatile averages, Seasonal rates follow Worldstate calendar patterns. This distinction matters for demand forecasting — a merchant knows a farmer's output is predictable but a cartographer's is not.
+
+### Dynamic Production Entries
+
+The `produces` list grows at runtime as NPCs discover new things they can create. A cartographer's profile starts empty and gains "wolf field guide" when they first produce one. An alchemist gains "fire resistance potion" when they first brew one. The profile is a **living record of actual economic activity**, not a static role declaration.
+
+---
+
+## Supply/Demand Intelligence
+
+Market owns supply/demand snapshots -- the aggregate picture of what's available and wanted at each location. This data feeds NPC GOAP decisions, Trade's arbitrage detection, and divine economic intervention.
+
+```yaml
+SupplyDemandSnapshot:
+ locationId: uuid
+ realmId: uuid
+ computedAtGameTime: decimal
+
+ items: [SupplyDemandItem]
+
+ totalSupplyValue: decimal    # Total value of goods available
+ totalDemandValue: decimal    # Total value of goods wanted
+ supplyDemandRatio: decimal   # > 1.0 = oversupply, < 1.0 = undersupply
+
+SupplyDemandItem:
+ templateId: uuid
+ templateCode: string
+
+ # Supply (from multiple sources)
+ localSupply: integer                 # Units available at this location
+ localProductionRate: decimal         # Aggregated from NPC profiles at this location
+ inboundShipmentRate: decimal         # Units arriving per game-day via Trade shipments
+
+ # Demand (from multiple sources)
+ localConsumptionRate: decimal        # Aggregated from NPC profiles (consumption entries)
+ driveDemand: decimal                 # Aggregated from Disposition drives wanting this item category (soft, 0.0 if Disposition unavailable)
+ outboundShipmentRate: decimal        # Units leaving per game-day via Trade shipments
+
+ # Pricing
+ localPrice: decimal                  # Current average price from Market transactions
+ priceTrend: PriceTrend               # Up, Down, Stable (from price history)
+
+ # Supply signal (for variable provider)
+ supplySignal: SupplySignal           # Scarce, Normal, Abundant
+```
+
+### Demand Integration with Disposition
+
+The `driveDemand` field is the key addition for the information economy. Traditional supply/demand uses consumption rates -- "NPCs use 2 iron ingots/day, so demand = 2/day." But information demand comes from Disposition drives: "12 NPCs at this location have unsatisfied `master_necromancy` drives, so demand for necromantic knowledge is high even though nobody is currently consuming necromantic scrolls."
+
+The SupplyDemandSnapshotWorker optionally queries Disposition's `FindByDrive` endpoint (soft dependency) to compute drive-based demand for item categories. When Disposition is unavailable, `driveDemand` is 0.0 and supply/demand falls back to consumption-based modeling.
+
+---
+
 ## Dependencies (What This Plugin Relies On)
 
 ### Hard Dependencies (constructor injection -- crash if missing)
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Market definitions (MySQL), listings (MySQL), bids (Redis), vendors (MySQL), vendor stock (Redis), price history (MySQL), settlement queue (Redis), idempotency (Redis), distributed locks (Redis) |
+| lib-state (`IStateStoreFactory`) | Market definitions (MySQL), listings (MySQL), bids (Redis), vendors (MySQL), vendor stock (Redis), price history (MySQL), settlement queue (Redis), NPC profiles (MySQL), supply/demand snapshots (Redis), idempotency (Redis), distributed locks (Redis) |
 | lib-state (`IDistributedLockProvider`) | Listing mutation locks, bid placement locks, vendor stock locks, settlement locks |
 | lib-messaging (`IMessageBus`) | Publishing all market events (listing, bid, sale, vendor, price change); error event publishing via `TryPublishErrorAsync` |
 | lib-currency (`ICurrencyClient`) | Listing fee deduction, bid hold creation/release/capture, vendor buy/sell payments, transaction fee deduction, seller proceeds credit (L2) |
@@ -299,6 +414,10 @@ When the rolling average price for an item shifts meaningfully (configurable thr
 |------------|-------|-----------------------|
 | lib-escrow (`IEscrowClient`) | Item custody during active auction listings | Auctions disabled; vendor buy/sell still works (no custody needed for immediate purchase). Returns `ServiceUnavailable` for auction endpoints. |
 | lib-analytics (`IAnalyticsClient`) | Publishing economic events for velocity tracking | Market operates without analytics integration; price history still maintained locally |
+| lib-disposition (`IDispositionClient`) | Drive-based demand estimation for supply/demand snapshots (queries `FindByDrive` for drive urgency at locations) | `driveDemand` field is 0.0; supply/demand uses consumption-based modeling only |
+| lib-hearsay (`IHearsayClient`) | Belief saturation as demand reducer for information items (queries `GetBeliefSaturation` to assess whether knowledge is already known locally) | Information items valued equally regardless of local knowledge saturation |
+| lib-trade (`ITradeClient`) | Shipment flow data for supply/demand snapshots (inbound/outbound rates) | Shipment rates are 0.0; supply/demand uses only local production/consumption |
+| lib-worldstate (`IWorldstateClient`) | Game-time queries for rolling average computation and seasonal production pattern detection | Rolling averages use real-time approximation instead of game-time windows |
 
 ---
 
@@ -306,7 +425,9 @@ When the rolling average price for an item shifts meaningfully (configurable thr
 
 | Dependent | Relationship |
 |-----------|-------------|
-| *(none yet)* | Market is a new L4 service with no current consumers. Future dependents: lib-economy (queries price data for velocity monitoring), lib-trade (markets at route endpoints), NPC Actor behaviors (economic GOAP via Variable Provider Factory), divine actors (economic deity intervention via analytics events) |
+| lib-trade (L4) | Consumes supply/demand data for arbitrage detection and route planning. Subscribes to `market.supply-demand.shifted` events. Queries NPC economic profiles for merchant route decisions. |
+| lib-actor (L2) | Discovers `MarketCatalogVariableProviderFactory` and `MarketPriceVariableProviderFactory` via `IEnumerable<IVariableProviderFactory>` for NPC economic GOAP reasoning (`${market.*}`, `${market-price.*}`) |
+| divine actors (via Puppetmaster) | Economic deity god-actors (e.g., Hermes) observe price trends and supply/demand signals for narrative economic intervention |
 
 ---
 
@@ -369,6 +490,23 @@ Paginated queries by templateId, realmId, granularity, date range use `IJsonQuer
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `settle:{listingId}` | `SettlementQueueEntry` | Listings awaiting background settlement (expired with bids) |
+
+### NPC Profile Store
+**Store**: `market-npc-profiles` (Backend: MySQL, table: `market_npc_profiles`)
+
+| Key Pattern | Data Type | Purpose |
+|-------------|-----------|---------|
+| `profile:{characterId}` | `NpcEconomicProfileModel` | NPC economic identity -- role, production/consumption, trading personality, financial state |
+
+The `produces` list grows dynamically as NPCs engage in new economic activities (selling new item types, discovering new resources). The `recentRatePerGameDay` fields are recomputed from Market's transaction history by the SupplyDemandSnapshotWorker.
+
+### Supply/Demand Store
+**Store**: `market-supply-demand` (Backend: Redis, prefix: `market:supply`)
+
+| Key Pattern | Data Type | Purpose |
+|-------------|-----------|---------|
+| `snapshot:{locationId}` | `SupplyDemandSnapshotModel` | Computed supply/demand snapshot per location (ephemeral, recomputed periodically) |
+| `snapshot:{locationId}:{templateCode}` | `SupplyDemandItemModel` | Per-item supply/demand at a location for fast variable provider lookups |
 
 ### Idempotency Store
 **Store**: `market-idempotency` (Backend: Redis, prefix: `market:idemp`)
@@ -433,10 +571,15 @@ Every polymorphic "type" or "kind" field in the Market domain falls into one of 
 | `market.vendor.updated` | `MarketVendorUpdatedEvent` | Vendor catalog updated (x-lifecycle auto-generated, `topic_prefix: market`) |
 | `market.vendor.deleted` | `MarketVendorDeletedEvent` | Vendor catalog deleted (x-lifecycle auto-generated, `topic_prefix: market`) |
 | `market.settlement.failed` | `MarketSettlementFailedEvent` | Settlement worker failed to settle a listing (error event) |
+| `market.supply-demand.shifted` | `MarketSupplyDemandShiftedEvent` | Supply/demand snapshot changed significantly at a location (published by SupplyDemandSnapshotWorker). Consumers: Trade (arbitrage recalculation), divine actors (economic intervention). |
+| `market.npc-economic-profile.created` | `MarketNpcEconomicProfileCreatedEvent` | NPC economic profile created (x-lifecycle auto-generated) |
+| `market.npc-economic-profile.updated` | `MarketNpcEconomicProfileUpdatedEvent` | NPC economic profile updated (x-lifecycle auto-generated) |
+| `market.npc-economic-profile.deleted` | `MarketNpcEconomicProfileDeletedEvent` | NPC economic profile deleted (x-lifecycle auto-generated) |
 
 **x-lifecycle entities** (in `market-events.yaml`, with `topic_prefix: market`):
 - **MarketDefinition**: `marketId`, `gameServiceId`, `code`, `name`, `realmId`, `locationId`, `status`, `listingFee`, `transactionFeeRate`, `supportedCurrencies`
 - **VendorCatalog** (as `MarketVendor`): `vendorId`, `characterId`, `gameServiceId`, `realmId`, `catalogType`, `status`, `walletId`
+- **NpcEconomicProfile**: `characterId`, `economicRole`, `homeLocationId`, `estimatedNetWorth`, `dailyRevenue`, `dailyExpenses`, `tradingRadius`
 
 Listings use custom events (not x-lifecycle) because listing lifecycle transitions carry domain-specific semantics (sold vs expired vs cancelled with escrow/fee context) that don't fit the standard lifecycle payload.
 
@@ -492,6 +635,9 @@ Item templates are Category B (no delete endpoint). Market does not register ite
 | `BidHoldDurationDays` | `MARKET_BID_HOLD_DURATION_DAYS` | `3` | Duration of currency hold for bid reservation |
 | `DistributedLockTimeoutSeconds` | `MARKET_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for distributed lock acquisition |
 | `DefaultBuybackMultiplier` | `MARKET_DEFAULT_BUYBACK_MULTIPLIER` | `0.25` | Default fraction of base price vendors offer for buyback (25%) |
+| `SupplyDemandRefreshIntervalSeconds` | `MARKET_SUPPLY_DEMAND_REFRESH_INTERVAL_SECONDS` | `120` | How often supply/demand snapshots are recomputed (real-time seconds) |
+| `SupplyDemandWorkerStartupDelaySeconds` | `MARKET_SUPPLY_DEMAND_WORKER_STARTUP_DELAY_SECONDS` | `10` | Startup delay before supply/demand worker begins first cycle |
+| `ProfileRollingAverageGameDays` | `MARKET_PROFILE_ROLLING_AVERAGE_GAME_DAYS` | `7` | Game-days of transaction history used for NPC profile rolling averages |
 
 **Removed**: `VendorWalletOwnerType` -- Currency's wallet API uses `EntityType` enum, not free-form strings. Vendor wallets should use the appropriate `EntityType` value (likely `Character`, since vendor NPCs are characters). See DC#11.
 
@@ -523,6 +669,7 @@ Item templates are Category B (no delete endpoint). Market does not register ite
 | `MarketSettlementService` | Settles expired auction listings -- captures winning bids, releases escrowed items, credits sellers, handles failed settlements | `SettlementProcessingIntervalSeconds` (30s) | `market:lock:settlement-worker` |
 | `MarketRestockService` | Replenishes vendor stock for vendors with `restockInterval` configured -- sets stock to maxStock, publishes restock events | `RestockProcessingIntervalSeconds` (60s) | `market:lock:restock-worker` |
 | `MarketPriceAggregationService` | Aggregates raw transaction records into time-bucketed price history entries, detects and publishes meaningful price changes, prunes old history | `PriceAggregationIntervalSeconds` (300s) | `market:lock:price-aggregation-worker` |
+| `MarketSupplyDemandService` | Recomputes supply/demand snapshots per location. Aggregates NPC profile production/consumption rates, local inventory levels (via Inventory), inbound/outbound shipment rates (via Trade, soft), and drive-based demand (via Disposition, soft). Updates NPC profile rolling averages from transaction history. Publishes `market.supply-demand.shifted` events when significant changes occur. | `SupplyDemandRefreshIntervalSeconds` (120s) | `market:lock:supply-demand-worker` |
 
 All workers acquire distributed locks before processing to ensure multi-instance safety (only one instance processes at a time).
 
@@ -541,11 +688,19 @@ All workers acquire distributed locks before processing to ensure multi-instance
 - `${market.my_price.{templateCode}}` -- current price set for an item
 - `${market.competitor_price.{templateCode}}` -- average price at other vendors in same location
 
+**`${market.*}` variables** (profile-scoped, for any economic NPC GOAP):
+- `${market.role}` -- entity's economic role (Merchant, Craftsman, Farmer, etc.)
+- `${market.net_worth}` -- entity's estimated net worth
+- `${market.daily_profit}` -- entity's average daily revenue minus expenses
+- `${market.trading_radius}` -- how far this entity is willing to travel for trade (game-km)
+
 **`${market-price.*}` variables** (realm-scoped, for any economic NPC GOAP):
 - `${market-price.average.{templateCode}}` -- rolling average price
 - `${market-price.trend.{templateCode}}` -- price trend direction (Up/Down/Stable)
 - `${market-price.volume.{templateCode}}` -- recent transaction volume
-- `${market-price.supply.{templateCode}}` -- supply signal (Scarce/Normal/Abundant based on listing count)
+- `${market-price.supply.{templateCode}}` -- supply signal (Scarce/Normal/Abundant based on listing count and supply/demand snapshot)
+- `${market-price.demand.{templateCode}}` -- demand signal (None/Low/Normal/High/Desperate based on consumption + drive demand)
+- `${market-price.drive_demand.{templateCode}}` -- Disposition-based demand signal (0.0 if Disposition unavailable)
 
 ---
 
@@ -600,6 +755,21 @@ All endpoints: `x-permissions: []` (service-to-service only -- consumed by NPC G
 - **GetAveragePrice** (`/market/price/average`): Returns rolling average, min, max, median, volume for a template in a realm over a specified period. Reads from aggregated price history.
 - **GetPriceHistory** (`/market/price/history`): Returns time-bucketed price data points for a template in a realm at specified granularity (hour/day/week). Paginated. Used by NPC GOAP and admin dashboards.
 - **GetMarketStats** (`/market/stats`): Aggregate market health metrics for a market definition -- total active listings, total volume, average listing duration, sell-through rate, top traded items.
+
+### NPC Economics (3 endpoints)
+
+All endpoints: `x-permissions: []` (service-to-service only -- called by NPC Actor GOAP behaviors and game engine).
+
+- **GetProfile** (`/market/npc/profile/get`): Returns the NPC's economic profile including production/consumption rolling averages, trading personality, financial state. 404 if no profile exists. Rolling averages are recomputed by the SupplyDemandSnapshotWorker.
+- **SetProfile** (`/market/npc/profile/set`): Creates or updates an NPC's economic profile. `x-permissions: [role: developer]`. Initial production/consumption entries may be empty (populated dynamically from actual activity). Trading personality can be seeded from Character-Personality traits or set independently.
+- **GetMarketAnalysis** (`/market/npc/market-analysis`): Returns market analysis from an NPC's perspective, bounded by their trading radius and price awareness. Includes local prices, known arbitrage opportunities (filtered by awareness), and structured recommendations. Integrates with Hearsay (soft) for belief-filtered price knowledge and Disposition (soft) for drive-weighted opportunity scoring.
+
+### Supply/Demand Queries (2 endpoints)
+
+All endpoints: `x-permissions: []` (service-to-service only).
+
+- **GetSnapshot** (`/market/supply-demand/snapshot`): Returns current supply/demand snapshot for a location. Optionally filtered by item codes. Data includes local supply, production rates, consumption rates, drive demand, shipment flow, and pricing with trend direction.
+- **GetPriceDifferential** (`/market/supply-demand/price-differential`): Finds price differentials between locations for an item within a realm. Returns location pairs with price gaps, estimated transit costs (via Trade if available), and net arbitrage viability. This is the data NPC merchants use to decide where to trade.
 
 ### Cleanup Endpoints (3 endpoints)
 
@@ -794,7 +964,7 @@ Market is a multi-entity service. All event topics use Pattern C (`market.{entit
 
 ### Endpoint Count
 
-Planned: 5 (definition) + 6 (auction) + 7 (vendor) + 4 (stock) + 3 (price) + 3 (cleanup) = **28 endpoints**. No schema exists yet — GENERATED-COMPOSITION-REFERENCE.md currently shows "—" for Market.
+Planned: 5 (definition) + 6 (auction) + 7 (vendor) + 4 (stock) + 3 (price) + 3 (NPC economics) + 2 (supply/demand) + 3 (cleanup) = **33 endpoints**. No schema exists yet — GENERATED-COMPOSITION-REFERENCE.md currently shows "—" for Market.
 
 ---
 

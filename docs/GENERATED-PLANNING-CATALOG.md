@@ -95,6 +95,12 @@ Explores dungeon system extensions beyond the core DUNGEON deep dive, including 
 
 Designs a mana absorption mechanic where dungeons continuously sap mana from intruders who cross their domain boundary, creating a natural time limit on exploration, an economic cost for dungeon diving, and a non-lethal income stream that fuels the dungeon's own mana economy. The mechanic scales with dungeon cognitive stage (Dormant through Ancient) and composes entirely from existing Bannou primitives (Currency, Status, Seed, Actor, Environment) with no new services required. Inspired by Solo Leveling gate mechanics and Dungeon Core LitRPG, with formal grounding in Arcadia's pneuma thermodynamics.
 
+### Information Economy: Knowledge as Commodity in Living Worlds {#information-economy}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-13 | **North Stars**: #1, #2, #5 | [Full Document](planning/INFORMATION-ECONOMY.md)
+
+Describes how information becomes a first-class economic commodity through the composition of existing Bannou primitives, requiring zero new plugins. Reified as physical "itemized contract" items that inject Hearsay beliefs on consumption, information follows the same physical logistics as any tradeable good -- it must be discovered, recorded, transported, and can be stolen, forged, or destroyed. The discovery tier model from Lexicon creates natural expertise differentials that GOAP can price, causing NPC party composition to include non-combat specialists (cartographers, zoologists, archaeologists) when the economic math favors hiring experts over self-development. Markets for information emerge organically when characters discover valuable knowledge and other characters develop drives to acquire it.
+
 ### Location-Bound Production: From Farming to Factorio {#location-bound-production}
 
 **Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #3, #4, #5 | [Full Document](planning/LOCATION-BOUND-PRODUCTION.md)
@@ -165,6 +171,12 @@ Compiles established wildlife ecology research on predator coexistence, niche pa
 
 ## Implementation Plans
 
+### Batch Lifecycle Events: Normalized High-Frequency Event Publishing {#batch-lifecycle-events}
+
+**Type**: Implementation Plan | **Status**: Active | **Last Updated**: 2026-03-13 | **North Stars**: #1 | [Full Document](planning/BATCH-LIFECYCLE-EVENTS.md)
+
+Normalizes high-frequency event publishing across Bannou by extending x-lifecycle with a batch: true option that generates only batch event types, adding a shared EventBatcher helper to bannou-service, creating shared batch endpoint request/response models in common-api.yaml, and adding structural tests to enforce consistency. A structural analysis of x-references declarations revealed that nearly all 16 services storing per-character dependent data become high-frequency event publishers at 100K NPC scale, with their lifecycle events serving purely informational/analytics purposes (cleanup handled by lib-resource or DI Listeners, not event subscription). This establishes x-references targeting character-scale entities as a structural heuristic for batch: true candidacy, applicable to 15 of 16 x-references services.
+
 ### Git Registry Plugin - Self-Hosted Git Server for Bannou {#git-registry-plugin}
 
 **Type**: Implementation Plan | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: N/A | [Full Document](planning/GIT-REGISTRY-PLUGIN.md)
@@ -193,7 +205,7 @@ Records the results of a full cross-service architectural audit comparing VISION
 
 ## Summary
 
-- **Documents in catalog**: 29
+- **Documents in catalog**: 31
 
 ---
 

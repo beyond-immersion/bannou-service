@@ -24,6 +24,10 @@ info:
     - topic: permission.capability-update
       event: PermissionCapabilityUpdate
       description: Published when session capabilities are compiled or updated
+    # Bulk observability event for service registration patterns
+    - topic: permission.services-registered
+      event: PermissionServicesRegistered
+      description: Published periodically with accumulated service registrations for observability
 
 paths: {}  # Events don't have HTTP paths
 
@@ -31,6 +35,62 @@ components:
   schemas:
     # NOTE: Events the Permission service subscribes to (ServiceRegistrationEvent, SessionConnectedEvent, etc.)
     # are defined in their canonical locations and accessed via BeyondImmersion.BannouService.Events namespace
+
+    PermissionServicesRegistered:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Bulk observability event published periodically containing accumulated service
+        permission registrations. Fire-and-forget for Analytics aggregation of startup
+        patterns. Each node publishes independently (per IMPLEMENTATION TENETS
+        multi-instance safety acknowledgment).
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - registrations
+        - registrationCount
+        - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: "permission.services-registered"
+          description: 'Event type identifier: permission.services-registered'
+        registrations:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionRegistrationEntry'
+          description: List of service registrations accumulated during the batch window
+        registrationCount:
+          type: integer
+          minimum: 0
+          description: Number of registrations in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started for this batch
+
+    PermissionRegistrationEntry:
+      type: object
+      additionalProperties: false
+      description: Individual service registration entry within a bulk registration event
+      required:
+        - serviceId
+        - registeredAt
+      properties:
+        serviceId:
+          type: string
+          description: Service identifier that registered its permission matrix
+        version:
+          type: string
+          nullable: true
+          description: Service version string at registration time
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this individual service registration occurred
 
     PermissionCapabilityUpdate:
       allOf:

@@ -35,6 +35,20 @@ x-service-configuration:
       minimum: 1
       maximum: 60
       description: Timeout in seconds for distributed locks during session state and role update operations. Prevents lost updates when concurrent requests modify the same session.
+    RegistrationBatchIntervalSeconds:
+      type: integer
+      env: PERMISSION_REGISTRATION_BATCH_INTERVAL_SECONDS
+      default: 5
+      minimum: 1
+      maximum: 300
+      description: Interval in seconds between bulk registration event publishes. Accumulated registrations are flushed and published as a single event on this frequency.
+    RegistrationBatchStartupDelaySeconds:
+      type: integer
+      env: PERMISSION_REGISTRATION_BATCH_STARTUP_DELAY_SECONDS
+      default: 10
+      minimum: 0
+      maximum: 300
+      description: Startup delay in seconds before the registration batch worker begins. Allows initial service registrations to accumulate before the first publish.
     RoleHierarchy:
       type: array
       items:

@@ -26,4 +26,11 @@ public static class PermissionEventPublisher
         PermissionCapabilityUpdate eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(PermissionPublishedTopics.PermissionCapabilityUpdate, eventData, cancellationToken);
+
+    /// <summary>Published periodically with accumulated service registrations for observability.</summary>
+    public static Task<bool> PublishPermissionServicesRegisteredAsync(
+        this IMessageBus messageBus,
+        PermissionServicesRegistered eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(PermissionPublishedTopics.PermissionServicesRegistered, eventData, cancellationToken);
 }

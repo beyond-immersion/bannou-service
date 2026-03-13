@@ -73,6 +73,20 @@ public class PermissionServiceConfiguration : BaseServiceConfiguration
     public int SessionLockTimeoutSeconds { get; set; } = 10;
 
     /// <summary>
+    /// Interval in seconds between bulk registration event publishes. Accumulated registrations are flushed and published as a single event on this frequency.
+    /// Environment variable: PERMISSION_REGISTRATION_BATCH_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
+    public int RegistrationBatchIntervalSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Startup delay in seconds before the registration batch worker begins. Allows initial service registrations to accumulate before the first publish.
+    /// Environment variable: PERMISSION_REGISTRATION_BATCH_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
+    public int RegistrationBatchStartupDelaySeconds { get; set; } = 10;
+
+    /// <summary>
     /// Ordered role hierarchy from lowest to highest privilege. Index determines priority for permission compilation (comma-separated in env var).
     /// Environment variable: PERMISSION_ROLE_HIERARCHY
     /// </summary>

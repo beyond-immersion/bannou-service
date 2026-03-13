@@ -35,6 +35,7 @@ public class PermissionSessionActivityListenerTests
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly RegistrationEventBatcher _registrationBatcher;
 
     // Mocks specific to listener
     private readonly Mock<IRedisOperations> _mockRedisOps;
@@ -59,6 +60,11 @@ public class PermissionSessionActivityListenerTests
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _registrationBatcher = new RegistrationEventBatcher(
+            Mock.Of<IServiceProvider>(),
+            Mock.Of<ILogger<RegistrationEventBatcher>>(),
+            _configuration,
+            _mockTelemetryProvider.Object);
 
         _mockRedisOps = new Mock<IRedisOperations>();
         _mockListenerLogger = new Mock<ILogger<PermissionSessionActivityListener>>();
@@ -150,7 +156,8 @@ public class PermissionSessionActivityListenerTests
             _mockClientEventPublisher.Object,
             _mockTelemetryProvider.Object,
             _mockLockProvider.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _registrationBatcher);
     }
 
     private PermissionSessionActivityListener CreateListener()

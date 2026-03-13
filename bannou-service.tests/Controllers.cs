@@ -1,6 +1,5 @@
 using BeyondImmersion.BannouService.Controllers.Messages;
 using Microsoft.AspNetCore.Mvc;
-using Xunit.Abstractions;
 
 namespace BeyondImmersion.BannouService.Tests;
 

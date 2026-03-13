@@ -36,6 +36,7 @@ public class PermissionServiceTests
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly RegistrationEventBatcher _registrationBatcher;
 
     // State store constants (must match PermissionService)
     private const string STATE_STORE = "permission-statestore";
@@ -64,6 +65,11 @@ public class PermissionServiceTests
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _registrationBatcher = new RegistrationEventBatcher(
+            Mock.Of<IServiceProvider>(),
+            Mock.Of<ILogger<RegistrationEventBatcher>>(),
+            _mockConfiguration.Object,
+            _mockTelemetryProvider.Object);
 
         // Setup lock provider to always succeed by default
         var mockLockResponse = new Mock<ILockResponse>();
@@ -145,7 +151,8 @@ public class PermissionServiceTests
             _mockClientEventPublisher.Object,
             _mockTelemetryProvider.Object,
             _mockLockProvider.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _registrationBatcher);
     }
 
     #region Constructor Tests

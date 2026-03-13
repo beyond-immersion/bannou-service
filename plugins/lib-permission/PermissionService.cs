@@ -34,6 +34,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly RegistrationEventBatcher _registrationBatcher;
 
     // Constructor-cached state stores (FOUNDATION TENETS)
     private readonly IStateStore<Dictionary<string, object>> _permissionsStore;
@@ -68,7 +69,8 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
         IClientEventPublisher clientEventPublisher,
         ITelemetryProvider telemetryProvider,
         IDistributedLockProvider lockProvider,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        RegistrationEventBatcher registrationBatcher)
     {
         _logger = logger;
         _configuration = configuration;
@@ -76,6 +78,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
         _clientEventPublisher = clientEventPublisher;
         _telemetryProvider = telemetryProvider;
         _lockProvider = lockProvider;
+        _registrationBatcher = registrationBatcher;
 
         _permissionsStore = stateStoreFactory.GetStore<Dictionary<string, object>>(StateStoreDefinitions.Permission);
         _sessionStatesStore = stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission);
@@ -368,6 +371,8 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
             .SaveAsync(hashKey, newHash, cancellationToken: cancellationToken);
         _logger.LogDebug("Stored permission hash for {ServiceId}: {Hash}",
             body.ServiceId, newHash[..8]);
+
+        _registrationBatcher.Add(body.ServiceId, body.Version);
 
         return (StatusCodes.OK, new RegistrationResponse());
     }

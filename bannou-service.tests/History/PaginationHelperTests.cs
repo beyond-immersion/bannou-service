@@ -1,5 +1,4 @@
 using BeyondImmersion.BannouService.History;
-using Xunit.Abstractions;
 
 namespace BeyondImmersion.BannouService.Tests.History;
 

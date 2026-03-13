@@ -68,6 +68,7 @@ These documents provide the high-level architectural north-star context for the 
 | **Investigation** (understanding services, tracing dependencies, exploring architecture) | The layer-specific service details files: `docs/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FEATURES-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md`. For specific plugin investigation, also read `docs/maps/{SERVICE}.md` (implementation map) for endpoint details, dependencies, events, and method pseudocode. |
 | **Plugin work** (auditing, mapping, testing, implementing, or maintaining a specific plugin) | The plugin's deep dive `docs/plugins/{SERVICE}.md` AND its implementation map `docs/maps/{SERVICE}.md`. The deep dive provides context, quirks, and design rationale; the map provides method-level detail, state key patterns, dependency tables, and event inventories. **Always read both.** |
 | **Code auditing** (reviewing implementations, checking tenet compliance, finding violations) | ALL tenet files in `docs/reference/tenets/`: `FOUNDATION.md`, `IMPLEMENTATION-BEHAVIOR.md`, `IMPLEMENTATION-DATA.md`, `QUALITY.md`, `TESTING-PATTERNS.md` |
+| **Testing work** (writing, reviewing, or designing unit tests, structural tests, enum mapping tests, or any test code) | `docs/reference/tenets/TESTING-PATTERNS.md` — contains test placement rules, isolation boundaries, mocking patterns, capture patterns, structural validators, enum mapping tests, forbidden patterns, and tier scope. This is the sole testing reference for agents. |
 | **Schema auditing** (reviewing OpenAPI schemas, checking schema rules, validating schema design) | `docs/reference/SCHEMA-RULES.md` |
 | **High-level vision** (evaluating how services serve gameplay, cross-cutting feature planning, content flywheel analysis) | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode) |
 | **Canonical pattern lookup** (searching for the correct way to implement a pattern — background workers, state store access, event publishing, deprecation, cleanup, enum mapping, etc.) | `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` — read this FIRST before grepping the codebase for examples. It catalogs all shared helpers, canonical skeletons, and reference implementations with code samples and "when to use" guidance. |
@@ -173,6 +174,16 @@ scripts/generate-all-services.sh               # † Regenerate ALL services (sl
 # NEVER run `make test` (full suite) when only specific plugins were changed.
 # Test ONLY the affected test project:
 dotnet test plugins/lib-{service}.tests/lib-{service}.tests.csproj --no-restore
+
+# Structural Testing — cross-cutting convention/schema/assembly validation
+make test-structural                          # All structural tests (non-informational)
+make test-structural METHOD=Service_HasValidConstructor  # Specific test by method name
+make test-structural-info                     # All tests including informational (SkipUnless-gated)
+make test-structural-info METHOD=PackageReferences_AreLatestStableVersions  # Specific informational test
+# Informational tests (gated by SkipUnless, require explicit opt-in):
+#   PackageReferences_AreLatestStableVersions — NuGet version freshness (requires network)
+#   PluginPackages_DoNotDuplicateBannouServicePackages — transitive duplicate detection
+#   PluginPackages_AreReferencedInSource — unused plugin-specific package detection
 
 # Model Shape Inspection (for understanding service models without loading full schemas)
 # Prints compact model shapes (~6x smaller than schemas or generated C# code).

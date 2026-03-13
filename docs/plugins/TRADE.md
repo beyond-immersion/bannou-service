@@ -3,7 +3,7 @@
 > **Plugin**: lib-trade (not yet created)
 > **Schema**: `schemas/trade-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
-> **State Store**: trade-routes (MySQL), trade-shipments (Redis), trade-shipments-archive (MySQL), trade-tariff-policies (MySQL), trade-tariff-records (MySQL), trade-contraband (MySQL), trade-tax-policies (MySQL), trade-tax-assessments (MySQL), trade-npc-profiles (MySQL), trade-supply-demand (Redis), trade-velocity (Redis), trade-velocity-history (MySQL), trade-lock (Redis) — 12 stores, all planned
+> **State Store**: trade-routes (MySQL), trade-shipments (Redis), trade-shipments-archive (MySQL), trade-tariff-policies (MySQL), trade-tariff-records (MySQL), trade-contraband (MySQL), trade-tax-policies (MySQL), trade-tax-assessments (MySQL), trade-velocity (Redis), trade-velocity-history (MySQL), trade-lock (Redis) — 10 stores, all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
@@ -25,7 +25,7 @@ The Trade service (L4 GameFeatures) is the economic logistics and supply orchest
 
 Where Market handles exchange **at** a location (auctions, vendor catalogs, price discovery), Trade handles the logistics of moving goods **between** locations. Where Transit handles the raw mechanics of movement (connections, modes, journeys), Trade layers economic meaning onto that movement (cargo value, tariff liability, profit margins, supply chains). Distance creates value: iron costs 10g at the mine and 25g in the capital because someone paid the transit cost, bore the risk, and waited the travel time.
 
-Trade absorbs the "lib-economy" monitoring concept from the Economy Architecture planning document. Velocity tracking, NPC economic profiles, and supply/demand signals live here because they are inseparable from logistics -- you cannot monitor economic health without understanding how goods flow through the geography.
+Trade absorbs the velocity monitoring concept from the Economy Architecture planning document. Velocity tracking lives here because economic flow health is inseparable from logistics -- you cannot monitor velocity without understanding how goods move through the geography. NPC economic profiles and supply/demand signals live in Market, which owns economic identity and market intelligence. Trade consumes Market's supply/demand data for arbitrage detection and route planning.
 
 ### Three-Tier Usage
 
@@ -103,8 +103,8 @@ Trade monitors the faucet/sink balance via velocity metrics and publishes alerts
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │ TRADE (L4) │
-│ Trade Routes • Shipments • Tariffs • Taxes • NPC Economics │
-│ Supply/Demand • Velocity Monitoring │
+│ Trade Routes • Shipments • Tariffs • Taxes • Velocity Monitoring │
+│ (NPC Profiles & Supply/Demand → Market) │
 └────────┬──────────┬──────────┬──────────┬───────────────────────┘
  │ │ │ │
  uses │ uses │ uses │ uses │
@@ -610,98 +610,9 @@ TaxDebtSummary:  # Computed aggregate view — not a stored entity. Aggregated f
  suggestedConsequences: [string] # "wage_garnishment", "asset_seizure", "imprisonment" -- Category B — advisory consequences, game-enforced, Trade does not branch on these values
 ```
 
-### NPC Economic Profile
+### NPC Economic Profiles and Supply/Demand
 
-```yaml
-NpcEconomicProfile:
- characterId: uuid # Links to Character service
-
- # Economic role
- economicRole: EconomicRole # Merchant, Craftsman, Farmer, Miner, Fisher, Laborer, Noble, Consumer, None
-
- # Production (what they make or gather)
- produces: [NpcProductionEntry]
-
- # Consumption (what they need)
- consumes: [NpcConsumptionEntry]
-
- # Trading behavior (personality-derived)
- tradingPersonality: NpcTradingPersonality
-
- # Financial state (snapshot)
- primaryWalletId: uuid # Their main currency wallet
- estimatedNetWorth: decimal # Last computed
- dailyRevenue: decimal # Average over last 7 game-days
- dailyExpenses: decimal # Average over last 7 game-days
-
- # Location economics
- homeLocationId: uuid # Where they primarily operate
- tradingRadius: decimal # How far they'll travel for trade (game-km)
-
- modifiedAt: timestamp
-
-NpcProductionEntry:
- templateId: uuid # What item they produce
- templateCode: string # Denormalized
- ratePerGameDay: decimal # How many they produce per game-day
- skillLevel: decimal # Production quality factor (0.0-1.0)
- requiresWorkshop: boolean # Does this come from a Workshop task?
- workshopTaskId: uuid # Reference to active Workshop task (if applicable)
-
-NpcConsumptionEntry:
- templateId: uuid # What item they consume
- templateCode: string # Denormalized
- ratePerGameDay: decimal # How many they need per game-day
- priority: integer # 1 = essential (food), 2 = important (tools), 3 = luxury
- substitutes: [uuid] # Alternative template IDs if primary unavailable
-
-NpcTradingPersonality:
- riskTolerance: decimal  # minimum: 0, maximum: 1 — willingness to invest in risky ventures
- priceAwareness: decimal  # minimum: 0, maximum: 1 — how closely they track market prices
- loyaltyFactor: decimal  # minimum: 0, maximum: 1 — preference for repeat trading partners
- hoarding: decimal  # minimum: 0, maximum: 1 — tendency to stockpile beyond immediate need
- bargainDrive: decimal  # minimum: 0, maximum: 1 — how aggressively they negotiate
- explorationRange: decimal  # minimum: 0, maximum: 1 — willingness to seek distant markets
-```
-
-### Supply/Demand Snapshot
-
-```yaml
-SupplyDemandSnapshot:
- locationId: uuid
- realmId: uuid
- computedAtGameTime: decimal
-
- # Per-item signals
- items: [SupplyDemandItem]
-
- # Aggregate
- totalSupplyValue: decimal # Total value of goods available
- totalDemandValue: decimal # Total value of goods wanted
- supplyDemandRatio: decimal # > 1.0 = oversupply, < 1.0 = undersupply
-
-SupplyDemandItem:
- templateId: uuid
- templateCode: string
-
- # Supply
- localSupply: integer # Units available at this location
- localProductionRate: decimal # Units produced per game-day locally
- inboundShipmentRate: decimal # Units arriving per game-day via shipments
-
- # Demand
- localDemand: integer # Units wanted at this location
- localConsumptionRate: decimal # Units consumed per game-day locally
- outboundShipmentRate: decimal # Units leaving per game-day via shipments
-
- # Pricing
- localPrice: decimal # Current average price at this location
- lowestKnownPrice: decimal # Cheapest known source
- lowestPriceLocationId: uuid # Where that source is
- priceDifferential: decimal # localPrice - lowestKnownPrice
- transitCostToLowest: decimal # Cost to ship from cheapest source
- arbitrageOpportunity: boolean # priceDifferential > transitCostToLowest
-```
+NPC economic profiles and supply/demand snapshots are owned by **Market**, which manages economic identity and market intelligence. Trade consumes Market's supply/demand data via `${market-price.*}` variable providers for arbitrage detection and route planning. See [MARKET.md](MARKET.md) for the NPC economic profile model and supply/demand snapshot design.
 
 ### Economic Velocity Metrics
 
@@ -1424,97 +1335,9 @@ TransactionReference:
  Also used by divine oversight for economic health monitoring.
 ```
 
-### NPC Economics
+### NPC Economics and Supply/Demand
 
-```yaml
-/trade/npc/profile/get:
- x-permissions: []
- description: "Get an NPC's economic profile"
- request:
- characterId: uuid
- response: { profile: NpcEconomicProfile }
- errors:
- - PROFILE_NOT_FOUND
-
-/trade/npc/profile/set:
- x-permissions: [role: developer]
- description: "Create or update an NPC's economic profile"
- request:
- characterId: uuid
- economicRole: string
- produces: [NpcProductionEntry]
- consumes: [NpcConsumptionEntry]
- tradingPersonality: NpcTradingPersonality
- homeLocationId: uuid
- tradingRadius: decimal
- response: { profile: NpcEconomicProfile }
-
-/trade/npc/market-analysis:
- x-permissions: []
- description: "Get a market analysis from an NPC's perspective (bounded by their knowledge)"
- request:
- characterId: uuid # NPC performing analysis
- itemCodes: [string] # Optional -- specific items to analyze
- response:
- localPrices: [{ templateCode, price, supply, demand }]
- knownOpportunities: [ # Filtered by NPC's tradingRadius and awareness
- {
- templateCode: string
- buyLocationId: uuid
- buyPrice: decimal
- sellLocationId: uuid
- sellPrice: decimal
- estimatedProfit: decimal
- transitHours: decimal
- risk: decimal
- }
- ]
- recommendations: [string] # "Buy iron locally", "Ship swords to Riverside"
- notes: |
- Results are bounded by the NPC's economic profile:
- - Only considers locations within tradingRadius
- - Only considers items the NPC produces/consumes or knows about
- - priceAwareness affects accuracy of price data
- - NPC may not know about all opportunities (imperfect information)
- Integrates with Hearsay (L4) if available for belief-filtered price knowledge.
-```
-
-### Supply/Demand Queries
-
-```yaml
-/trade/supply-demand/snapshot:
- x-permissions: []
- description: "Get current supply/demand snapshot for a location"
- request:
- locationId: uuid
- itemCodes: [string] # Optional -- specific items
- response: { snapshot: SupplyDemandSnapshot }
-
-/trade/supply-demand/price-differential:
- x-permissions: []
- description: "Find price differentials between locations for an item"
- request:
- templateId: uuid
- realmId: uuid
- minDifferential: decimal # Optional -- minimum price gap to report
- response:
- differentials: [
- {
- lowPriceLocationId: uuid
- lowPrice: decimal
- highPriceLocationId: uuid
- highPrice: decimal
- differential: decimal
- transitHours: decimal # Via fastest mode
- transitCost: decimal
- netArbitrageProfit: decimal # differential - transitCost
- arbitrageViable: boolean # netArbitrageProfit > 0
- }
- ]
- notes: |
- Calls lib-transit route/calculate internally for transit cost estimation.
- This is the data that NPC merchants use to decide where to trade.
-```
+NPC economic profiles, market analysis, and supply/demand queries are owned by **Market**. See [MARKET.md](MARKET.md) for these endpoints. Trade consumes Market's supply/demand data for arbitrage detection and route cost estimation.
 
 ### Velocity Metrics
 
@@ -1622,7 +1445,7 @@ VelocityHealthRange:
 
 **Total endpoints: 51**
 
-Note: Shipment, TariffRecord, TaxAssessment, and NpcEconomicProfile are instance/record entities — they use immediate delete or terminal status, not deprecation lifecycle.
+Note: Shipment, TariffRecord, and TaxAssessment are instance/record entities — they use immediate delete or terminal status, not deprecation lifecycle. NpcEconomicProfile has moved to Market.
 
 ---
 
@@ -1675,12 +1498,10 @@ x-lifecycle:
   TaxPolicy:
     topic_prefix: trade
     # Generates: trade.tax-policy.created, trade.tax-policy.updated, trade.tax-policy.deleted
-  NpcEconomicProfile:
-    topic_prefix: trade
-    # Generates: trade.npc-economic-profile.created, trade.npc-economic-profile.updated, trade.npc-economic-profile.deleted
+  # NpcEconomicProfile: moved to Market (market.npc-economic-profile.*)
 ```
 
-Note: Category A entities (TradeRoute, TariffPolicy, TaxPolicy, ContrabandDefinition) get full created/updated/deleted lifecycle. NpcEconomicProfile also gets lifecycle events for profile management.
+Note: Category A entities (TradeRoute, TariffPolicy, TaxPolicy, ContrabandDefinition) get full created/updated/deleted lifecycle.
 
 #### x-event-publications
 
@@ -1727,8 +1548,7 @@ x-event-publications:
     event: TradeTaxDebtDefaultedEvent
   - topic: trade.velocity.alerted
     event: TradeVelocityAlertedEvent
-  - topic: trade.supply-demand.shifted
-    event: TradeSupplyDemandShiftedEvent
+  # supply-demand events moved to Market (market.supply-demand.shifted)
   - topic: trade.route.status-changed
     event: TradeRouteStatusChangedEvent
 ```
@@ -1803,7 +1623,7 @@ All custom events MUST use `allOf` with `BaseServiceEvent` from `common-events.y
 
 ### Published Events
 
-Note: Lifecycle events (created/updated/deleted) for TradeRoute, TariffPolicy, ContrabandDefinition, TaxPolicy, and NpcEconomicProfile are auto-generated via x-lifecycle above and are NOT listed here. Only custom events are listed below.
+Note: Lifecycle events (created/updated/deleted) for TradeRoute, TariffPolicy, ContrabandDefinition, and TaxPolicy are auto-generated via x-lifecycle above and are NOT listed here. Only custom events are listed below.
 
 ```yaml
 # Shipment lifecycle events
@@ -1872,13 +1692,7 @@ trade.velocity.alerted:
  consumers:
  - Puppetmaster (L4): divine economic intervention triggers
 
-trade.supply-demand.shifted:
- payload: { locationId, realmId, templateId, previousSupplyLevel, newSupplyLevel, priceChange }
- consumers:
- - Market (L4): vendor catalog pricing adjustment
- # NOTE: Actor (L2) cannot subscribe to this L4 event per tenets.
- # NPC economic behavior accesses supply/demand data via ${trade.supply.*}
- # and ${trade.demand.*} Variable Provider (pull-based, hierarchy-safe).
+# supply-demand.shifted events are now owned by Market (market.supply-demand.shifted)
 
 # Route events (trade.route.created is auto-generated via x-lifecycle)
 trade.route.status-changed:
@@ -1893,7 +1707,7 @@ trade.route.status-changed:
 | Topic | Handler | Action |
 |-------|---------|--------|
 | `transit.connection.status-changed` (verify against Transit's actual published topic name during implementation) | `HandleTransitConnectionStatusChangedAsync` | Updates trade route viability when a Transit connection changes status (closed, seasonal, etc.) |
-| Market price events (soft, when available) | `HandleMarketPriceChangedAsync` | Enriches supply/demand snapshots with current Market price data |
+| `market.supply-demand.shifted` (soft, when available) | `HandleSupplyDemandShiftedAsync` | Updates arbitrage opportunity calculations when Market supply/demand changes |
 
 **Account deletion**: Trade has no directly account-owned data. All entity ownership is via Character, Guild, Organization, or Faction entities. Account deletion cascades through Character deletion (Character subscribes to `account.deleted` per T28 obligation), which triggers Trade's x-references cleanup callback for `characterId`. Therefore, Trade does NOT need a direct `account.deleted` handler — cleanup is handled transitively via lib-resource x-references on `characterId`.
 
@@ -1925,13 +1739,6 @@ TradeServiceConfiguration:
  minimum: 1
  description: "How often the velocity worker recomputes metrics (real-time seconds)"
  env: TRADE_VELOCITY_CALCULATION_INTERVAL_SECONDS
-
- SupplyDemandRefreshIntervalSeconds:
- type: integer
- default: 120
- minimum: 1
- description: "How often supply/demand snapshots are recomputed (real-time seconds)"
- env: TRADE_SUPPLY_DEMAND_REFRESH_INTERVAL_SECONDS
 
  DefaultTransitCostPerKmPerKg:
  type: number
@@ -1996,13 +1803,6 @@ TradeServiceConfiguration:
  minimum: 0
  description: "Startup delay before velocity worker begins first cycle"
  env: TRADE_VELOCITY_WORKER_STARTUP_DELAY_SECONDS
-
- SupplyDemandWorkerStartupDelaySeconds:
- type: integer
- default: 10
- minimum: 0
- description: "Startup delay before supply/demand worker begins first cycle"
- env: TRADE_SUPPLY_DEMAND_WORKER_STARTUP_DELAY_SECONDS
 
  TaxAssessmentWorkerStartupDelaySeconds:
  type: integer
@@ -2096,18 +1896,6 @@ trade-tax-assessments:
   service: Trade
   purpose: Tax assessment records (durable)
 
-trade-npc-profiles:
-  backend: mysql
-  table: trade_npc_profiles
-  service: Trade
-  purpose: NPC economic profiles (durable)
-
-trade-supply-demand:
-  backend: redis
-  prefix: "trade:supply"
-  service: Trade
-  purpose: Computed supply/demand snapshots (ephemeral, recomputed periodically)
-
 trade-velocity:
   backend: redis
   prefix: "trade:velocity"
@@ -2170,25 +1958,7 @@ ${trade.shipment.total_value_in_transit}:
  type: decimal
  description: "Total value of goods currently in transit for this entity"
 
-# Supply/demand at current location
-${trade.supply.<item_code>.local}:
- type: string
- description: "Supply level at entity's current location"
- values: "scarce | low | normal | abundant | oversupplied"
- example: "${trade.supply.iron_ingot.local}"
-
-${trade.demand.<item_code>.local}:
- type: string
- description: "Demand level at entity's current location"
- values: "none | low | normal | high | desperate"
- example: "${trade.demand.iron_sword.local}"
-
-${trade.price.<item_code>.local}:
- type: decimal
- description: "Average price of item at entity's current location"
- example: "${trade.price.iron_ingot.local}"
-
-# Arbitrage opportunities (filtered by NPC awareness)
+# Arbitrage opportunities (filtered by NPC awareness, uses Market supply/demand data)
 ${trade.opportunity.best_profit}:
  type: decimal
  description: "Estimated profit of the best known trade opportunity"
@@ -2220,22 +1990,8 @@ ${trade.tax_debt.overdue}:
  type: boolean
  description: "Does this entity have overdue tax debt?"
 
-# NPC economic profile
-${trade.role}:
- type: string
- description: "Entity's economic role (merchant, craftsman, farmer, etc.)"
-
-${trade.net_worth}:
- type: decimal
- description: "Entity's estimated net worth"
-
-${trade.daily_profit}:
- type: decimal
- description: "Entity's average daily revenue minus expenses"
-
-${trade.trading_radius}:
- type: decimal
- description: "How far this entity is willing to travel for trade (game-km)"
+# NPC economic identity (from Market's economic profiles via ${market.*})
+# Trade does not own NPC profiles -- see Market for ${market.role}, ${market.net_worth}, etc.
 ```
 
 > **Naming convention**: Variable provider paths follow established snake_case convention, consistent with other providers (`${personality.risk_tolerance}`, `${world.time_of_day}`, `${location.current_depth}`). This is the standard for variable provider namespaces and is NOT an event topic naming violation.
@@ -2307,35 +2063,6 @@ VelocityCalculationWorker:
  dependencies:
  - lib-currency: transaction queries, wallet balance queries
  - Worldstate (L2): game-time period boundaries
-```
-
-### Supply/Demand Snapshot Worker
-
-```yaml
-SupplyDemandSnapshotWorker:
- interval: config.SupplyDemandRefreshIntervalSeconds
- pattern: |
-   T6 canonical background worker: configurable startup delay,
-   double-catch cancellation filter, WorkerErrorPublisher.TryPublishWorkerErrorAsync
-   for cycle failures, per-cycle telemetry span via ITelemetryProvider.StartActivity
- description: |
- Periodically recomputes supply/demand snapshots per location.
- Aggregates data from:
- - NPC economic profiles (production/consumption rates)
- - Active shipments (inbound/outbound flow)
- - Market listings (available supply and recent prices)
- - Inventory queries (local stock levels)
-
- Publishes trade.supply-demand.shifted events when significant changes occur.
-
- Results cached in Redis (trade-supply-demand) for fast variable
- provider access.
-
- dependencies:
- - NPC profile store: production/consumption rates
- - Active shipments store: flow rates
- - lib-market (L4, optional): price and listing data
- - lib-inventory (L2): local stock queries
 ```
 
 ### Tax Assessment Worker
@@ -2501,10 +2228,6 @@ Shipment lifecycle events (departed, leg-completed, arrived) at ~10,000 shipment
 
 Velocity computation queries Currency transaction history. With realm-scoped computation and configurable intervals (default 5 minutes), each computation scans transactions for the configured period window. At 100 locations per realm and 10 currencies, that's ~1,000 velocity computations per interval -- batched into a single worker cycle.
 
-### Supply/Demand Snapshots
-
-Supply/demand snapshots query NPC profiles, inventory levels, and shipment data per location. With 100 locations and 50 tracked item types per location, that's 5,000 supply/demand entries refreshed every 2 minutes. Each is a small Redis document (~200 bytes). Total footprint: ~1MB.
-
 ### Tax Assessment
 
 Tax assessment runs against eligible taxpayers per realm per policy. With progressive brackets and exemption checking, each assessment is a Currency wallet balance query + a calculation. Batch processing with fair scheduling prevents thundering herd on assessment boundaries.
@@ -2525,7 +2248,7 @@ The entire Trade service is aspirational. No schema files, generated code, or se
 7. `TradeServiceEvents.cs` -- Event handler implementations
 8. `TradeServiceModels.cs` -- Internal storage models
 9. `TradeVariableProviderFactory.cs` -- IVariableProviderFactory implementation for `${trade.*}`
-10. Background workers: VelocityCalculationWorker, SupplyDemandSnapshotWorker, TaxAssessmentWorker, ShipmentExpirationWorker
+10. Background workers: VelocityCalculationWorker, TaxAssessmentWorker, ShipmentExpirationWorker
 
 ### Schema Creation Requirements
 
@@ -2588,13 +2311,7 @@ When creating `trade-api.yaml`, `trade-events.yaml`, and `trade-configuration.ya
 <!-- AUDIT:NEEDS_DESIGN:2026-03-12 -->
 2. **Shipment status state machine reconciliation**: Data model defines 7 states: Preparing, InTransit, AtCheckpoint, Arrived, Lost, Seized, Abandoned. Visual Aid diagram shows different states: CREATED, LOADING, IN_TRANSIT, ARRIVED, COMPLETED, CANCELLED, LOST/DELAYED, DISPUTED. Must unify to one canonical state set before schema creation.
 
-<!-- AUDIT:NEEDS_DESIGN:2026-03-12 -->
-3. **NpcTradingPersonality vs Character-Personality overlap**: NpcTradingPersonality defines 6 personality traits (riskTolerance, priceAwareness, loyaltyFactor, hoarding, bargainDrive, explorationRange) stored in Trade's NPC profile. Character-Personality (L4) manages personality traits via `${personality.*}` variable provider. Question: Should economic personality traits come from `${personality.*}` (avoiding data duplication) or be stored independently in Trade (providing economic-specific granularity)? Both are L4, so either approach is hierarchy-valid.
-
-<!-- AUDIT:NEEDS_DESIGN:2026-03-12 -->
-4. **NPC market-analysis recommendations format**: `/trade/npc/market-analysis` response includes `recommendations: [string]` with values like "Buy iron locally". If consumed by GOAP behaviors: should be structured `NpcRecommendation` objects with typed action, item, location, profit fields. If display-only: strings are acceptable. Decision depends on how ABML economic action handlers will consume this data.
-
-5. **NPC profile ownership**: Should NPC economic profiles live in Trade or in a shared location? **Recommendation**: Trade owns economic profiles because they're inseparable from trade logistics. The profile is consumed by the Trade variable provider and GOAP integration. Other services that need economic data query Trade.
+3. **NPC economic profiles moved to Market**: NPC economic profiles, supply/demand snapshots, and market analysis endpoints are owned by Market (see [MARKET.md](MARKET.md)). Trade consumes Market's data for arbitrage detection and route planning via `${market-price.*}` variable providers and Market API queries.
 
 6. **Velocity data source**: Should velocity come from direct Currency transaction queries or from Analytics event subscriptions? **Recommendation**: Direct Currency queries for accuracy. Analytics can provide supplementary data when available, but velocity computation must work without Analytics (graceful degradation).
 
@@ -2602,7 +2319,7 @@ When creating `trade-api.yaml`, `trade-events.yaml`, and `trade-configuration.ya
 
 8. **Cross-realm currency conversion**: Should trade routes crossing realm boundaries use automatic Currency conversion? **Recommendation**: No automatic conversion. The game or NPC decides when and how to convert currency. Trade records the border crossing and reports applicable exchange rates.
 
-9. **Relationship with lib-market**: Market handles exchange at a point (auctions, vendors). Trade handles logistics between points. They share supply/demand concepts but own different data. **Recommendation**: Trade subscribes to Market's price events for enrichment. Market subscribes to Trade's shipment arrival events for supply updates. Neither depends on the other.
+9. **Relationship with lib-market**: Market handles exchange at a point (auctions, vendors) and owns NPC economic profiles and supply/demand intelligence. Trade handles logistics between points and owns velocity metrics. Trade consumes Market's supply/demand data for arbitrage. Market consumes Trade's shipment arrival events for supply updates. Market is a soft dependency of Trade (supply/demand data enriches route planning; graceful degradation: arbitrage detection unavailable without Market).
 
 10. **Workshop integration approach**: **Recommendation**: No direct integration. Workshop deposits outputs into inventory. Trade reads inventory levels for supply/demand. NPC GOAP connects them behaviorally: "Workshop produced iron → inventory full → GOAP goal: sell_surplus → create shipment."
 
@@ -2632,7 +2349,7 @@ Fields that must become proper enums at schema creation time:
 | TaxPolicy | status | Active, Suspended | TaxPolicyStatus |
 | TaxAssessment | status | Pending, Partial, Paid, Overdue, Defaulted | TaxAssessmentStatus |
 | EconomicVelocityMetrics | velocityTrend | Accelerating, Stable, Decelerating, Stagnant | VelocityTrend |
-| NpcEconomicProfile | economicRole | Merchant, Craftsman, Farmer, Miner, Fisher, Laborer, Noble, Consumer, None | EconomicRole |
+| *(NpcEconomicProfile moved to Market)* | economicRole | Merchant, Craftsman, Farmer, Miner, Fisher, Laborer, Noble, Consumer, None | EconomicRole (owned by Market) |
 | TaxPolicy | assessmentFrequency | Weekly, Monthly, Seasonal, Annual | AssessmentFrequency |
 | velocity alert event | alertType | Stagnant, Overheated, CriticalImbalance | VelocityAlertType |
 | faucet-sink-balance response | inflationRisk | Low, Moderate, High, Critical | InflationRisk |
@@ -2677,7 +2394,7 @@ This deep dive absorbs and refines concepts from `docs/guides/ECONOMY-SYSTEM.md`
 |-----------------|----------------|
 | Market (auctions, vendor catalogs, price discovery) | **lib-market** (separate aspirational plugin) |
 | Economy Orchestration (velocity, faucet/sink monitoring) | **lib-trade** velocity metrics + faucet/sink monitoring |
-| NPC Economic Participation (profiles, GOAP) | **lib-trade** NPC economic profiles + GOAP integration |
+| NPC Economic Participation (profiles, GOAP) | **lib-market** NPC economic profiles + supply/demand intelligence; Trade consumes via variable providers |
 | Price Queries / Metrics | Split: price queries → lib-market, metrics/NPC → **lib-trade** |
 | Quest Integration | **lib-quest** (already implemented, uses Currency/Item directly) |
 | ABML Action Handlers | Multiple services register their own handlers |
@@ -2687,7 +2404,7 @@ This deep dive absorbs and refines concepts from `docs/guides/ECONOMY-SYSTEM.md`
 | Exchange Rates | **lib-currency** extension (not in Trade) |
 | Taxation | **lib-trade** tax policy + assessment + collection |
 
-**Key refinement**: The economy system guide envisions velocity monitoring and NPC economic participation as cross-cutting concerns. This deep dive absorbs those into Trade because velocity monitoring, supply/demand signals, and NPC economic intelligence are inseparable from logistics operations. A separate lib-economy would be a thin wrapper with no unique data ownership.
+**Key refinement**: The economy system guide envisions velocity monitoring and NPC economic participation as cross-cutting concerns. Velocity monitoring lives in Trade because economic flow health is inseparable from logistics. NPC economic profiles and supply/demand signals live in Market, which owns economic identity and market intelligence — they were originally placed in Trade but belong with the service that manages exchange, price discovery, and vendor economics.
 
 **Key dependency**: Transit (L2) provides the travel infrastructure. Trade routes are economic overlays on Transit connections, providing the game-time travel calculation that makes distance-based economics work.
 

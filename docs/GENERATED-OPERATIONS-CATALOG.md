@@ -37,9 +37,9 @@ Release procedures for the Bannou platform and SDKs covering two independent ver
 
 ## Bannou Testing Documentation {#testing}
 
-**Last Updated**: 2026-03-08 | **Scope**: Test architecture, isolation boundaries, test placement rules, CI/CD pipeline integration, and testing commands for all tiers (unit, HTTP integration, WebSocket edge, infrastructure). | [Full Document](operations/TESTING.md)
+**Last Updated**: 2026-03-13 | **Scope**: Test commands, CI/CD pipeline integration, Docker Compose test configurations, and testing workflows for all tiers (unit, HTTP integration, WebSocket edge, infrastructure). | [Full Document](operations/TESTING.md)
 
-Three-tier testing architecture defining plugin isolation boundaries, test placement decision guide, and CI/CD pipeline integration. Required reading before writing, modifying, or debugging any tests. Covers core framework tests (bannou-service.tests), per-plugin unit tests (lib-*.tests), HTTP integration tests (http-tester), WebSocket edge tests (edge-tester), and infrastructure tests (lib-testing) with their respective project reference constraints.
+User-facing testing operations document covering test commands, CI/CD pipeline integration, Docker Compose configurations, and development workflows. Covers how to run core framework tests (bannou-service.tests), per-plugin unit tests (lib-*.tests), HTTP integration tests (http-tester), WebSocket edge tests (edge-tester), and infrastructure tests (lib-testing).
 
 ## Summary
 

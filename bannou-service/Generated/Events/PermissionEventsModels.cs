@@ -31,6 +31,81 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
+/// Bulk observability event published periodically containing accumulated service
+/// <br/>permission registrations. Fire-and-forget for Analytics aggregation of startup
+/// <br/>patterns. Each node publishes independently (per IMPLEMENTATION TENETS
+/// <br/>multi-instance safety acknowledgment).
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PermissionServicesRegistered : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: permission.services-registered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "permission.services-registered";
+
+    /// <summary>
+    /// List of service registrations accumulated during the batch window
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("registrations")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<PermissionRegistrationEntry> Registrations { get; set; } = new System.Collections.ObjectModel.Collection<PermissionRegistrationEntry>();
+
+    /// <summary>
+    /// Number of registrations in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("registrationCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int RegistrationCount { get; set; } = default!;
+
+    /// <summary>
+    /// When the accumulation window started for this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Individual service registration entry within a bulk registration event
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PermissionRegistrationEntry
+{
+
+    /// <summary>
+    /// Service identifier that registered its permission matrix
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Service version string at registration time
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public string? Version { get; set; } = default!;
+
+    /// <summary>
+    /// When this individual service registration occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset RegisteredAt { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Event published to specific Connect service instances (CONNECT_{session_id} channel).
 /// <br/>Contains compiled permission capabilities for a session with optional delta updates.
 /// <br/>

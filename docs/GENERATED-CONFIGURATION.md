@@ -1018,6 +1018,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | int | `50` | Maximum number of concurrent session recompilations during s... |
+| `PERMISSION_REGISTRATION_BATCH_INTERVAL_SECONDS` | int | `5` | Interval in seconds between bulk registration event publishe... |
+| `PERMISSION_REGISTRATION_BATCH_STARTUP_DELAY_SECONDS` | int | `10` | Startup delay in seconds before the registration batch worke... |
 | `PERMISSION_ROLE_HIERARCHY` | string[] | `['anonymous', 'user', 'developer', 'admin']` | Ordered role hierarchy from lowest to highest privilege. Ind... |
 | `PERMISSION_SESSION_DATA_TTL_SECONDS` | int | `600` | Redis TTL in seconds for session permission data keys (state... |
 | `PERMISSION_SESSION_LOCK_TIMEOUT_SECONDS` | int | `10` | Timeout in seconds for distributed locks during session stat... |
@@ -1346,9 +1348,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1062
+- **Total properties**: 1064
 - **Required (no default)**: 67
-- **Optional (has default)**: 995
+- **Optional (has default)**: 997
 
 ## Environment Variable Naming Convention
 

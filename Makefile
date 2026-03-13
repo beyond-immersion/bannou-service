@@ -524,6 +524,29 @@ test-sdks: ## Run all SDK tests
 	dotnet test sdks/bannou-sdks.sln
 	@echo "✅ SDK tests completed"
 
+# Structural tests — cross-cutting convention/schema/assembly validation
+# Usage: make test-structural                     # All structural tests (non-informational)
+#        make test-structural METHOD=PluginPackages_DoNotDuplicateBannouServicePackages  # Specific test
+#        make test-structural-info                 # All tests including informational (SkipUnless-gated)
+#        make test-structural-info METHOD=PackageReferences_AreLatestStableVersions      # Specific informational test
+test-structural: ## Run structural tests (convention/schema/assembly validation)
+	@if [ "$(METHOD)" ]; then \
+		echo "🧪 Running structural test: $(METHOD)..."; \
+		dotnet test --project structural-tests/structural-tests.csproj --filter-method "*$(METHOD)"; \
+	else \
+		echo "🧪 Running all structural tests..."; \
+		dotnet test --project structural-tests/structural-tests.csproj; \
+	fi
+
+test-structural-info: ## Run structural tests including informational (NuGet freshness, duplicates, unused)
+	@if [ "$(METHOD)" ]; then \
+		echo "🧪 Running informational structural test: $(METHOD)..."; \
+		BANNOU_RUN_INFORMATIONAL_TESTS=true dotnet test --project structural-tests/structural-tests.csproj --filter-method "*$(METHOD)"; \
+	else \
+		echo "🧪 Running all structural tests (including informational)..."; \
+		BANNOU_RUN_INFORMATIONAL_TESTS=true dotnet test --project structural-tests/structural-tests.csproj; \
+	fi
+
 # Infrastructure integration testing (matches CI workflow)
 # Uses minimal service configuration (TESTING service only) - no databases, no ingress
 # Stack: base + test + test.infrastructure (minimal dependencies)

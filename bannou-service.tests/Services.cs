@@ -1,5 +1,4 @@
 using BeyondImmersion.BannouService.Configuration;
-using Xunit.Abstractions;
 
 namespace BeyondImmersion.BannouService.Tests;
 

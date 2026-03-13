@@ -6,7 +6,47 @@
 > **When to Reference**: Before writing any test, during test review
 > **Related Tenets**: T11 (Testing Requirements), T12 (Test Integrity)
 
-This document expands on T11/T12 with specific patterns for WHAT to test at each tier and HOW to mock correctly.
+This document expands on T11/T12 with specific patterns for WHAT to test at each tier and HOW to mock correctly. It is the primary reference for agents writing, reviewing, or designing tests.
+
+---
+
+## Test Placement & Isolation Boundaries
+
+**BEFORE writing ANY test, you MUST know where it goes.** Each test project has strict reference constraints enforced by plugin isolation.
+
+### Plugin Isolation Rules (MANDATORY)
+
+| Test Project | Can Reference | Cannot Reference |
+|-------------|---------------|------------------|
+| `bannou-service.tests/` | `bannou-service` only | ANY `lib-*` plugin |
+| `lib-*.tests/` | Own `lib-*` plugin + `bannou-service` | Other `lib-*` plugins |
+| `lib-testing/` | `bannou-service` only | ANY `lib-*` plugin |
+| `structural-tests/` | All assemblies via reflection | (read-only scanning, no direct plugin code execution) |
+| `tools/http-tester/` | All services via generated clients | — |
+| `tools/edge-tester/` | All services via WebSocket protocol | — |
+
+**Why**: Plugins are dynamically loaded at runtime. Cross-plugin references in test projects will fail to compile or fail at runtime.
+
+### Test Placement Decision Guide
+
+| What are you testing? | Where does the test go? |
+|-----------------------|------------------------|
+| Specific service business logic with mocked dependencies | `plugins/lib-{service}.tests/` |
+| Service configuration of a specific plugin | `plugins/lib-{service}.tests/` (own plugin only) |
+| Core framework functionality (config binding, plugin loading) | `bannou-service.tests/` |
+| Cross-cutting structural conventions (naming, schemas, hierarchy) | `structural-tests/` |
+| Service-to-service communication, API endpoints | `tools/http-tester/` |
+| WebSocket protocol, Connect routing, binary protocol | `tools/edge-tester/` |
+| Infrastructure health (Docker, Redis, RabbitMQ connectivity) | `lib-testing/` |
+
+### Common Placement Mistakes
+
+- **WRONG**: Testing `AuthServiceConfiguration` in `lib-testing` or `bannou-service.tests` — neither can reference `lib-auth`
+- **CORRECT**: Testing `AuthServiceConfiguration` in `lib-auth.tests` (own plugin)
+- **WRONG**: Testing business logic from `lib-character` in `lib-auth.tests` — cross-plugin reference
+- **CORRECT**: Testing character endpoints via `tools/http-tester` (integration test)
+- **WRONG**: Testing config binding mechanism via a real plugin config class in `lib-testing`
+- **CORRECT**: Create a test config class IN `lib-testing` that mimics the pattern, test the mechanism itself
 
 ---
 
@@ -161,6 +201,18 @@ Most structural validators are **centralized in `structural-tests/StructuralTest
 
 Additionally, IL-level scanning validates no direct `JsonSerializer`, `Environment.GetEnvironmentVariable`, infrastructure client, or `Microsoft.AspNetCore.Http.StatusCodes` usage.
 
+### What Project Validation Tests Cover (Informational, On-Demand)
+
+Project-level validation lives in `structural-tests/ProjectValidationTests.cs`. These are all gated by `SkipUnless.InformationalTest()` — they produce diagnostic reports rather than enforcing pass/fail.
+
+| Test | What It Catches | Notes |
+|------|----------------|-------|
+| `PackageReferences_AreLatestStableVersions` | Outdated NuGet packages, version mismatches across projects, major-version updates for wildcard pins | Requires network (NuGet V3 flat container API, no auth) |
+| `PluginPackages_DoNotDuplicateBannouServicePackages` | Plugin packages redundantly duplicating what bannou-service already provides transitively via ServiceLib.targets | Pure csproj XML parsing, no network |
+| `PluginPackages_AreReferencedInSource` | Plugin-specific packages (not in bannou-service) with no matching `using` directives in plugin source files | Heuristic — uses `PackageNamespaceOverrides` dictionary for packages where namespace differs from package ID; review flagged packages before removing |
+
+**Adding namespace overrides**: When a new package is added whose NuGet ID differs from its runtime namespace (e.g., `BCrypt.Net-Next` → `BCrypt.Net`, `KubernetesClient` → `k8s`), add an entry to the `PackageNamespaceOverrides` dictionary in `ProjectValidationTests.cs`. Packages with empty arrays (`[]`) are treated as build-time only and excluded from unused detection.
+
 ### What Plugins Still Test Themselves
 
 Only **plugin-specific** validations remain in `lib-*.tests/`:
@@ -287,7 +339,15 @@ private (SpeciesService service, Mock<IStateStore<SpeciesModel>> storeMock) Crea
 
 Cross-cutting compliance tests that validate conventions, schemas, and assembly metadata without running any service code. These catch authoring mistakes at build time rather than at runtime.
 
-**Tests**:
+**Running structural tests:**
+```bash
+make test-structural                          # All structural tests (non-informational)
+make test-structural METHOD=Service_HasValidConstructor  # Specific test by method name
+make test-structural-info                     # All tests including informational (SkipUnless-gated)
+make test-structural-info METHOD=PackageReferences_AreLatestStableVersions  # Specific informational test
+```
+
+**Always-on tests** (run in CI, must pass):
 - Service conventions via reflection (constructor patterns, partial class structure, DI attributes)
 - Service layer hierarchy compliance (L0-L5 dependency rules via `ServiceHierarchyValidator`)
 - State store key builder patterns (const prefixes, `Build*Key` naming)
@@ -297,20 +357,30 @@ Cross-cutting compliance tests that validate conventions, schemas, and assembly 
 - Lifecycle schema hygiene (duplicate auto-injected fields in x-lifecycle models)
 - Client event schema structure (allOf with BaseClientEvent)
 
+**Informational tests** (gated by `SkipUnless.InformationalTest()`, run on demand):
+- `PackageReferences_AreLatestStableVersions` — NuGet version freshness check (requires network; queries NuGet V3 flat container API)
+- `PluginPackages_DoNotDuplicateBannouServicePackages` — detects plugin packages already available transitively via bannou-service/ServiceLib.targets
+- `PluginPackages_AreReferencedInSource` — detects plugin-specific packages with no matching `using` directives in source (heuristic; uses `PackageNamespaceOverrides` for packages where namespace differs from package ID)
+- `Service_CallsAllGeneratedEventPublishers` — lists declared events that are never published
+- `HelperServices_ShouldHaveConfigurationClasses` — checklist of helpers without dedicated configuration
+
 **Does NOT Test**:
 - Business logic correctness
 - Runtime behavior of any kind
 - HTTP routing or serialization
 - State persistence or event delivery
 
-**Two scanning approaches**:
+**Three scanning approaches**:
 
 | Approach | Tool | When to Use |
 |----------|------|-------------|
 | Line-based YAML scanning | `File.ReadAllLines` + regex | Simple pattern matching (enum casing, key presence, indentation rules) |
 | Structured YAML parsing | `SchemaParser` (YamlDotNet) | Semantic validation requiring nested structure traversal (x-lifecycle model fields, allOf references) |
+| Project file parsing | `XDocument` + NuGet V3 API | Package reference validation (version freshness, duplicates, unused packages) |
 
 **Adding new schema validations**: Use `SchemaParser` for anything that needs to understand YAML structure (nested mappings, cross-references, conditional field sets). Use line-based scanning only for flat pattern matching where the line position fully determines meaning.
+
+**Adding new project validations**: Use `ProjectValidationTests.cs` for csproj-level checks. Add namespace overrides to `PackageNamespaceOverrides` when a package's runtime namespace differs from its NuGet ID. Gate diagnostic/network-dependent tests with `SkipUnless.InformationalTest()`.
 
 ### Tier 1: Unit Tests (`lib-{service}.tests/`)
 
@@ -415,6 +485,9 @@ Assert.NotNull(response);
 | Service hierarchy violations | YES | No | No | No |
 | Forbidden import detection | YES | No | No | No |
 | Constructor DI patterns | YES | Also per-plugin | No | No |
+| NuGet version freshness | YES (informational) | No | No | No |
+| Duplicate transitive packages | YES (informational) | No | No | No |
+| Unused plugin packages | YES (informational) | No | No | No |
 | Input validation | No | YES | Implicit | Implicit |
 | Business rule (uniqueness) | No | YES | Verify with real DB | No |
 | CRUD operations | No | Minimal | YES | Verify client sees it |

@@ -435,7 +435,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | License | L4 | Grid-based progression boards (skill trees) orchestrating Inventory, Items, and Contracts | 21 |
 | Loot | L4 | Loot table management with weighted drops, contextual modifiers, and pity thresholds | — |
 | Mapping | L4 | Spatial data management with authority-based channels, 3D indexing, and design-time authoring | 19 |
-| Market | L4 | Marketplace orchestration (auctions, NPC vendors, price discovery) composing Escrow/Currency/Item | — |
+| Market | L4 | Marketplace orchestration (auctions, NPC vendors, price discovery, NPC economic profiles, supply/demand intelligence) composing Escrow/Currency/Item | — |
 | Matchmaking | L4 | Ticket-based matchmaking with skill windows, party support, accept/decline, and auto-requeue | 11 |
 | Music | L4 | Pure-computation music generation using formal theory (MusicTheory + MusicStoryteller SDKs) | 8 |
 | Obligation | L4 | Contract-aware GOAP action cost modifiers for NPC "second thoughts" before violating obligations | 11 |

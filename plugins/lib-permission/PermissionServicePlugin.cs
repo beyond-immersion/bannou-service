@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace BeyondImmersion.BannouService.Permission;
 
@@ -29,6 +30,13 @@ public class PermissionServicePlugin : StandardServicePlugin<IPermissionService>
         // Services resolve this during startup to push their permission matrices.
         services.AddSingleton<IPermissionRegistry>(sp =>
             (IPermissionRegistry)sp.GetRequiredService<IPermissionService>());
+
+        // Register RegistrationEventBatcher as Singleton + IHostedService.
+        // Shared instance: PermissionService injects it to call Add(),
+        // the host starts it as a BackgroundService for periodic flush.
+        services.AddSingleton<RegistrationEventBatcher>();
+        services.AddSingleton<IHostedService>(sp =>
+            sp.GetRequiredService<RegistrationEventBatcher>());
 
     }
 }

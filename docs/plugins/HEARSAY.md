@@ -24,6 +24,7 @@ The current morality pipeline (Faction norms -> Obligation costs -> GOAP modifie
 | **Norm beliefs** | Faction norms at locations | "Theft is severely punished here" | Perceived obligation costs (parallel to `${obligations.*}`) |
 | **Character beliefs** | Other characters | "Mira is dangerous and untrustworthy" | Social interaction decisions, approach/avoid, trade willingness |
 | **Location beliefs** | Places | "The swamp is cursed and deadly" | Travel cost, anxiety state, avoidance behavior |
+| **Knowledge beliefs** | Lexicon entries (concepts, species, objects) | "Wolves breathe fire" / "This herb cures poison" | Knowledge acquisition decisions, information valuation, teaching/appraisal accuracy |
 
 In Persona 5, rumors literally change reality. In Bannou, rumors change NPC *perception* of reality, which changes NPC behavior, which can change actual reality (self-fulfilling prophecy). A rumor that "the market is dangerous" causes NPCs to avoid it, which reduces traffic, which makes it actually more dangerous for those who remain. A god of mischief can destabilize a district by injecting false beliefs about draconian enforcement, causing merchants to flee before any enforcement actually happens.
 
@@ -32,7 +33,7 @@ In Persona 5, rumors literally change reality. In Bannou, rumors change NPC *per
 Every belief has the same structure regardless of domain:
 
 ```
-BeliefDomain enum: Norm, Character, Location # System-owned (IMPLEMENTATION TENETS Category C)
+BeliefDomain enum: Norm, Character, Location, Knowledge # System-owned (IMPLEMENTATION TENETS Category C)
 SourceChannel enum: DirectObservation, OfficialDecree, TrustedContact, SocialContact, Rumor, CulturalOsmosis
 
 BeliefEntry:
@@ -52,9 +53,9 @@ BeliefEntry:
 ```
 
 **Type safety notes (per IMPLEMENTATION TENETS)**:
-- `domain` is a `BeliefDomain` enum, not a string. Three system-owned behavioral modes that require code changes to extend (Category C).
+- `domain` is a `BeliefDomain` enum, not a string. Four system-owned behavioral modes that require code changes to extend (Category C).
 - `sourceChannel` is a `SourceChannel` enum, not a string. Six system-defined acquisition modes with hardcoded confidence ranges and per-channel processing logic (Category C). PascalCase values per tenets.
-- `subjectEntityId` is a `Guid`, not a composite string. For the Norm domain, this is the locationId and `claimCode` holds the violation type code. For Character and Location domains, this is the target entity's ID. The former composite `{locationId}:{violationType}` pattern violated (GUIDs must be `Guid` type, never embedded in strings).
+- `subjectEntityId` is a `Guid`, not a composite string. For the Norm domain, this is the locationId and `claimCode` holds the violation type code. For Character and Location domains, this is the target entity's ID. For the Knowledge domain, this is the Lexicon entry's ID and `claimCode` holds the trait or association code. The former composite `{locationId}:{violationType}` pattern violated (GUIDs must be `Guid` type, never embedded in strings).
 - `claimCode` remains an opaque `string` (Category B — game designers define new claim codes at deployment time).
 
 ### Subject Keys by Domain
@@ -64,6 +65,7 @@ BeliefEntry:
 | **Norm** | `locationId` (Guid) | `theft`, `violence`, `contraband` | Believed penalty magnitude |
 | **Character** | `targetCharacterId` (Guid) | `trustworthy`, `dangerous`, `dishonest`, `generous`, `skilled_fighter` | Impression strength (-1.0 to +1.0) |
 | **Location** | `locationId` (Guid) | `dangerous`, `profitable`, `cursed`, `lawless`, `sacred` | Perceived intensity (0.0 to 1.0) |
+| **Knowledge** | `lexiconEntryId` (Guid) | `fire_breathing`, `pack_hunter`, `venomous`, `malleable`, `edible` | Believed trait strength (0.0 to 1.0) |
 
 ### Information Channels
 
@@ -92,6 +94,7 @@ Where `reinforcementFactor` depends on the new source's channel type and `source
 - Norm beliefs: Slow decay (social rules persist in memory)
 - Character beliefs: Medium decay (impressions fade without reinforcement)
 - Location beliefs: Fast decay for dynamic claims (`dangerous`), slow for static claims (`sacred`)
+- Knowledge beliefs: Very slow decay (factual knowledge persists longest -- "wolves hunt in packs" doesn't expire quickly)
 
 **Correction**: When an NPC's belief is contradicted by direct observation (they expected punishment for theft but nothing happened, or they thought someone was dangerous but witnessed them being kind), confidence in the old belief drops sharply and a corrected belief forms at high confidence.
 
@@ -415,6 +418,7 @@ The god creates narrative opportunities by manipulating social information. If m
 | lib-character-personality (`ICharacterPersonalityClient`) | Personality-mediated belief receptivity (openness affects how readily NPCs accept new claims) | All NPCs have equal receptivity to new beliefs |
 | lib-puppetmaster (`IPuppetmasterClient`) | Divine rumor injection coordination, regional watcher notification of belief saturation events | Divine rumor injection unavailable; saturation events not notified |
 | lib-obligation (event-only: `obligation.violation.reported`) | Subscribing to violation events for witness-based belief creation about violating characters | No witness-based beliefs from violations; only encounter-triggered and faction-triggered beliefs |
+| lib-lexicon (`ILexiconClient`) | Querying Lexicon ground truth for Knowledge domain belief convergence (actual trait values for entries) | Knowledge beliefs never converge -- they persist at whatever confidence they were acquired at, and decay normally |
 | lib-storyline (`IStorylineClient`) | Querying active storylines to prevent belief corrections that would break active narrative arcs | No narrative protection -- beliefs converge freely even if a storyline depends on the misconception |
 
 ---
@@ -428,7 +432,7 @@ The god creates narrative opportunities by manipulating social information. If m
 | lib-disposition (L4, planned) | Soft dependency (`IHearsayClient`) for hearsay component of base feeling synthesis (`hearsayTrustSignal`, etc.). Also subscribes to `hearsay.belief.acquired` and `hearsay.belief.corrected` events to trigger feeling resynthesis when beliefs change. Gracefully degrades: hearsay weight redistributes to other sources when unavailable. |
 | lib-trade (L4, planned) | Soft dependency (`IHearsayClient`) for belief-filtered price knowledge in NPC market analysis (imperfect information about prices and trade conditions) |
 | lib-transit (L4, planned) | Registers `"hearsay"` `ITransitCostModifierProvider` to inject risk perception from believed dangers along transit connections into route cost calculations (e.g., "believes mountain road is cursed" → `RiskDelta: 0.4`) |
-| lib-lexicon (L4, planned) | Hearsay claims can reference Lexicon entry codes as claim targets. "I heard wolves breathe fire" is a Hearsay claim about Lexicon entry `wolf` with a trait `fire_breathing` that contradicts Lexicon ground truth. Bidirectional relationship. |
+| lib-lexicon (L4, planned) | The `Knowledge` belief domain stores beliefs about Lexicon entries, with `subjectEntityId` referencing the Lexicon entry's Guid and `claimCode` holding trait/association codes. "I heard wolves breathe fire" is `{ domain: Knowledge, subject: wolf_entry_id, claim: fire_breathing }` -- which may contradict Lexicon ground truth. Convergence for Knowledge beliefs checks against Lexicon trait data (soft dependency). Bidirectional: Lexicon provides ground truth for convergence; Hearsay provides the NPC's possibly-wrong understanding. See [INFORMATION-ECONOMY.md](../planning/INFORMATION-ECONOMY.md) for the economic implications of knowledge beliefs as tradeable information items. |
 | lib-character-lifecycle (L4, planned) | Soft dependency (`IHearsayClient`) for seeding initial beliefs in newborn characters from family cultural context (what the family "knows"). When unavailable, characters start with no inherited beliefs. |
 | lib-storyline (L4, planned) | Storyline can query hearsay for dramatic irony detection (belief vs. reality deltas) and use belief saturation as scenario preconditions |
 | lib-puppetmaster (L4, planned) | Regional watcher god actors inject rumors via hearsay API and monitor belief saturation for narrative opportunities |
@@ -534,6 +538,7 @@ Archives belief state for character compression. On restore, beliefs are NOT res
 | `NormDecayRatePerDay` | `HEARSAY_NORM_DECAY_RATE_PER_DAY` | `0.02` | Confidence decay rate per day for norm beliefs (range: 0.001-0.1) |
 | `CharacterDecayRatePerDay` | `HEARSAY_CHARACTER_DECAY_RATE_PER_DAY` | `0.05` | Confidence decay rate per day for character beliefs (range: 0.001-0.2) |
 | `LocationDecayRatePerDay` | `HEARSAY_LOCATION_DECAY_RATE_PER_DAY` | `0.03` | Confidence decay rate per day for location beliefs (range: 0.001-0.15) |
+| `KnowledgeDecayRatePerDay` | `HEARSAY_KNOWLEDGE_DECAY_RATE_PER_DAY` | `0.01` | Confidence decay rate per day for knowledge beliefs (range: 0.001-0.1). Slow decay -- factual knowledge persists longer than social impressions. |
 | `ConvergenceIntervalMinutes` | `HEARSAY_CONVERGENCE_INTERVAL_MINUTES` | `30` | How often the convergence worker processes beliefs (range: 5-120) |
 | `ConvergenceProximityRadius` | `HEARSAY_CONVERGENCE_PROXIMITY_RADIUS` | `1000` | Distance in meters within which proximity convergence applies (range: 100-10000) |
 | `ConvergenceRatePerCycle` | `HEARSAY_CONVERGENCE_RATE_PER_CYCLE` | `0.05` | How much beliefs drift toward ground truth per convergence cycle (range: 0.01-0.2) |
@@ -663,6 +668,16 @@ Implements `IVariableProviderFactory` (via `HearsayProviderFactory`) providing t
 | `${hearsay.location.<id>.has_heard_of}` | bool | Whether the NPC has heard ANYTHING about this location |
 | `${hearsay.location.fear_gradient}` | float | Current fear/anxiety modifier based on proximity to locations the NPC believes are dangerous. Computed from all known dangerous locations weighted by distance. |
 
+### Knowledge Beliefs
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `${hearsay.knowledge.<entryId>.has_heard_of}` | bool | Whether the NPC has heard ANYTHING about this Lexicon entry |
+| `${hearsay.knowledge.<entryId>.<claimCode>}` | float | Believed trait strength for a specific claim about a Lexicon entry (e.g., `fire_breathing`, `venomous`). Returns 0.0 if no belief. |
+| `${hearsay.knowledge.<entryId>.<claimCode>.confidence}` | float | Confidence in a specific knowledge claim |
+| `${hearsay.knowledge.<entryId>.claim_count}` | int | Number of distinct claims held about this entry |
+| `${hearsay.knowledge.<entryId>.accuracy}` | float | Average confidence-weighted accuracy of beliefs about this entry vs. Lexicon ground truth (requires Lexicon soft dependency; returns -1.0 if Lexicon unavailable). Range 0.0 (all wrong) to 1.0 (all correct). |
+
 ### Meta Variables
 
 | Variable | Type | Description |
@@ -791,7 +806,8 @@ Belief identity and propagation are owned here. Actual norm data comes from Fact
 │ │ │ - norms │ │ │ │ │
 │ │ │ - other characters │ │ Convergence worker │ │ │
 │ │ │ - locations │ │ (beliefs drift toward │ │ │
-│ │ │ │ │ reality over time) │ │ │
+│ │ │ - knowledge (lexicon)│ │ reality over time) │ │ │
+│ │ │ │ │ │ │ │
 │ │ └──────────┬──────────┘ │ │ │ │
 │ │ │ │ Decay worker │ │ │
 │ │ │ │ (old beliefs fade) │ │ │
@@ -806,9 +822,9 @@ Belief identity and propagation are owned here. Actual norm data comes from Fact
 │ │ ${hearsay.norm.believed_cost.<type>} │ │
 │ │ ${hearsay.character.<id>.reputation} │ │
 │ │ ${hearsay.location.<id>.danger} ──────► Actor │ │
-│ │ ${hearsay.location.fear_gradient} (L2) │ │
-│ │ ${hearsay.norm.awareness_ratio} ABML │ │
-│ │ GOAP │ │
+│ │ ${hearsay.knowledge.<id>.<claim>} (L2) │ │
+│ │ ${hearsay.location.fear_gradient} ABML │ │
+│ │ ${hearsay.norm.awareness_ratio} GOAP │ │
 │ └───────────────────────────────────────────────────────────┘ │
 │ │
 │ INJECTION POINTS: │

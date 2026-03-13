@@ -22,6 +22,31 @@
 
 ---
 
+## ⛔ NEVER SUPPRESS WARNINGS OR ANALYZER ERRORS (MANDATORY) ⛔
+
+**You MUST NEVER suppress, disable, or silence warnings or analyzer errors. Not in `Directory.Build.props`. Not in `.editorconfig`. Not in `<NoWarn>`. Not in `#pragma warning disable`. Not anywhere. EVER.**
+
+Warnings and analyzer errors are signals. They tell you something is wrong with the code. Suppressing them does not fix the problem — it hides the problem and guarantees it will never be fixed. This is the same anti-pattern as adding whitelists to structural tests: you are silencing the mechanism that exists to surface violations.
+
+**Forbidden actions (exhaustive)**:
+- Adding `<NoWarn>` entries to any `.csproj` or `Directory.Build.props`
+- Adding `#pragma warning disable` to any source file
+- Adding `dotnet_diagnostic.*.severity = none` to `.editorconfig`
+- Adding `[SuppressMessage]` attributes
+- Any other mechanism that causes a warning or analyzer error to stop appearing in build output
+
+**When you encounter warnings or analyzer errors**, you have exactly two options:
+1. **Fix the code** so the warning no longer applies
+2. **Stop and present the situation to the user** — explain what the warning is, how many occurrences exist, and what the fix would look like. Let the human decide.
+
+There is no third option. You do not get to decide that a warning is "stylistic" or "not important" or "too noisy to fix right now." Those are human decisions. Your job is to surface the problem, not to hide it.
+
+**Why this rule exists**: Claude encountered ~7,000 xunit v3 analyzer errors (xUnit1051) during a test framework migration. Instead of presenting the situation and asking how to proceed, Claude's immediate instinct was to add `xUnit1051` to `<NoWarn>` in `Directory.Build.props` — a frozen infrastructure file — silencing every single occurrence permanently. This would have hidden 7,000 real code issues behind a single line change and made them invisible to every future developer and CI run. The pattern is identical to structural test whitelists: encounter violations → silence them → present "clean" output. The violation count is irrelevant. Whether it's 1 warning or 7,000, the answer is never suppression.
+
+**Note**: The existing `CS8620;CS8619` suppressions in `Directory.Build.props` for Moq nullable inference issues were added by the human after careful evaluation. They are the exception that proves the rule — the human added them, not you. If the human wants to suppress a warning, they will do it themselves.
+
+---
+
 ## ⛔ FOLLOW INSTRUCTIONS AS GIVEN ⛔
 
 **You are REQUIRED to follow the instructions you are given, exactly as stated.** Do not substitute your own judgment for what was explicitly requested. Do not assume you already know the answer to something the user told you to go find out. Do not skip steps because you think you know what the result will be.
@@ -414,31 +439,26 @@ Never use `export` commands to set environment variables on the local machine. T
 - **The user will ask for tests when they want tests** - do not assume testing is needed
 - **Why this matters**: Integration tests take 5-10 minutes, rebuild containers, and are disruptive. Running them without being asked wastes significant time.
 
-### ⚠️ MANDATORY REFERENCE - TESTING.md for ALL Testing Tasks
-**CRITICAL**: For ANY task involving tests, testing architecture, or test placement, you MUST ALWAYS reference the testing documentation (`docs/operations/TESTING.md`) FIRST and IN FULL before proceeding with any work.
+### ⚠️ MANDATORY REFERENCE - TESTING-PATTERNS.md for ALL Testing Tasks
+**CRITICAL**: For ANY task involving writing, reviewing, designing, or debugging tests, you MUST read `docs/reference/tenets/TESTING-PATTERNS.md` FIRST and IN FULL before proceeding with any work. This is the agent-facing testing reference — it contains test placement rules, isolation boundaries, mocking patterns, capture patterns, structural validators, enum mapping tests, forbidden patterns, and tier scope decisions.
 
 **MANDATORY TESTING WORKFLOW**:
-1. Read `docs/operations/TESTING.md` completely to understand plugin isolation boundaries
-2. Use the decision guide to determine correct test placement
-3. Follow architectural constraints (unit-tests cannot reference plugins, lib-testing cannot reference other plugins, etc.)
-4. ALWAYS respond with "I have referred to the service testing document" to confirm you read it
+1. Read `docs/reference/tenets/TESTING-PATTERNS.md` completely
+2. Use the test placement decision guide to determine correct test location
+3. Follow plugin isolation constraints (each test project has strict reference rules)
+4. Follow the capture pattern for state store and event verification
+5. ALWAYS respond with "I have referred to TESTING-PATTERNS" to confirm you read it
 
-**⚠️ MANDATORY REFERENCE TRIGGERS** - You MUST reference `docs/operations/TESTING.md` for:
+**⚠️ MANDATORY REFERENCE TRIGGERS** - You MUST reference `docs/reference/tenets/TESTING-PATTERNS.md` for:
 - ANY task involving writing, modifying, or debugging tests
-- Questions about where to place tests (unit tests vs infrastructure tests vs integration tests)
-- Testing configuration classes, service functionality, or cross-service communication
-- Debugging test failures or compilation errors in test projects
-- Understanding test isolation boundaries and plugin loading constraints
+- Questions about where to place tests (which project, isolation boundaries)
+- Deciding what to mock vs what to test with real infrastructure
+- Writing enum mapping tests (EnumMappingValidator, A2 boundary tests)
+- Writing structural tests (schema validation, convention enforcement)
+- Reviewing or auditing existing test quality
 - ANY testing-related architectural decisions
 
-**TESTING ARCHITECTURE RULES** (from TESTING.md):
-- `unit-tests/`: Can ONLY reference `bannou-service`. CANNOT reference ANY `lib-*` plugins
-- `lib-*.tests/`: Can ONLY reference their own `lib-*` plugin + `bannou-service`. CANNOT reference other `lib-*` plugins
-- `lib-testing/`: Can ONLY reference `bannou-service`. CANNOT reference ANY other `lib-*` plugins
-- `http-tester/`: Can reference all services via generated clients
-- `edge-tester/`: Can test all services via WebSocket protocol
-
-**VIOLATION PREVENTION**: Never attempt to reference AuthServiceConfiguration from lib-testing, never reference plugin types from unit-tests, never test business logic in lib-testing
+**Note**: `docs/operations/TESTING.md` is the user-facing operations document for running tests, CI/CD commands, and Docker Compose configuration. Agents do NOT need to read it — all test placement and isolation rules agents need are in TESTING-PATTERNS.md.
 
 ### Always Check GitHub Actions for Testing Workflows
 **MANDATORY**: Before attempting any integration testing work, ALWAYS check `.github/workflows/ci.integration.yml` first to understand the proper testing approach.

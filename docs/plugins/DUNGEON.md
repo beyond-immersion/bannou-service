@@ -1002,7 +1002,7 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 ## Potential Extensions
 
-1. **Mana as Currency wallet vs. virtual resource**: The dungeon_core seed tracks `mana_reserves` growth (long-term capacity), but volatile mana balance needs a home. Currency wallet enables NPC economic participation (dungeon trades with merchants for materials). Virtual resource in actor state is simpler but isolated from the economy.
+1. ~~**Mana as Currency wallet vs. virtual resource**~~: **RESOLVED** — Currency wallet in DUNGEON_CORES system realm (see Design Consideration #1). The `dungeon_core` seed tracks `mana_reserves` growth (long-term capacity); the Currency wallet tracks volatile mana balance. Dungeon-realm-scoped economy enables dungeon-to-dungeon trade and dungeon merchant interaction without polluting the live NPC economy.
 
 2. **Mega-dungeon coordination**: Multiple dungeon cores in a mega-dungeon complex. Each core has its own `dungeon_core` seed and actor. Coordination via shared territory Contracts or a parent-child dungeon hierarchy.
 
@@ -1050,7 +1050,7 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 ### Design Considerations (Requires Planning)
 
-1. **Mana economy model**: Should dungeons have their own Currency wallet (enabling NPC economic participation) or use `current_mana` as a virtual resource in actor state? Currency wallet is richer but adds complexity. The planning document leaves this open.
+1. **Mana economy model**: ~~Should dungeons have their own Currency wallet or use `current_mana` as a virtual resource in actor state?~~ **RESOLVED**: Currency wallet in the DUNGEON_CORES system realm. Dungeons participate in *dungeon economies* (trading between dungeon cores, purchasing from dungeon-realm merchants, exchanging mana for materials) but NOT directly in NPC economies in live realms. The `realm_specific` currency scope pointed at the dungeon system realm keeps dungeon mana isolated from the live economy while still enabling economic participation through the standard Currency service APIs. This mirrors Divine's divinity economy pattern (realm-scoped to the PANTHEON system realm).
 
 2. **Dungeon garden type design (Pattern A only)**: The dungeon-as-garden concept requires: a registered garden type in Gardener, entity association rules for the dungeon context, ABML action handlers for Gardener APIs (analogous to Puppetmaster's `spawn_watcher:`, `watch:` handlers), and a gardener behavior document for the dungeon core actor. Pattern B does not use a dungeon garden -- the dungeon influence is routed through the character's Actor perception pipeline. This is a cross-service design effort.
 

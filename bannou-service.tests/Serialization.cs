@@ -1,7 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
 using System.Text.Json;
-using Xunit.Abstractions;
 
 namespace BeyondImmersion.BannouService.Tests;
 

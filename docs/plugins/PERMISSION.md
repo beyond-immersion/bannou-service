@@ -49,6 +49,8 @@ Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. M
 | `SessionDataTtlSeconds` | int | 600 | 0-604800 | `PERMISSION_SESSION_DATA_TTL_SECONDS` | Redis TTL for session data keys. With heartbeat-driven TTL refresh (~30s via `ISessionActivityListener`), active sessions continuously extend their TTL. Dead sessions expire naturally when heartbeats stop. Default 600 (10 min, ~20 heartbeat intervals of headroom). 0 disables |
 | `RoleHierarchy` | string[] | `["anonymous", "user", "developer", "admin"]` | - | `PERMISSION_ROLE_HIERARCHY` | Ordered role hierarchy from lowest to highest privilege (comma-separated in env var) |
 | `SessionLockTimeoutSeconds` | int | 10 | 1-60 | `PERMISSION_SESSION_LOCK_TIMEOUT_SECONDS` | Distributed lock expiry for session state/role update operations. Prevents lost updates from concurrent modifications |
+| `RegistrationBatchIntervalSeconds` | int | 5 | 1-300 | `PERMISSION_REGISTRATION_BATCH_INTERVAL_SECONDS` | Interval between bulk registration event publishes |
+| `RegistrationBatchStartupDelaySeconds` | int | 10 | 0-300 | `PERMISSION_REGISTRATION_BATCH_STARTUP_DELAY_SECONDS` | Startup delay before the registration batch worker begins |
 
 ---
 
@@ -132,10 +134,7 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-### Service Registration Observability Event (GH#461)
-
-Permission already publishes `permission.capability-update` via `IMessageBus` on every session recompilation (containing sessionId, version, capabilities, reason) — this serves as the recompilation observability event. GH#461 originally proposed two events, but `permission.recompiled` is redundant with the existing `permission.capability-update`. The remaining proposal is a `permission.service_registered` event for Analytics aggregation of service startup patterns and registration frequency. This would be fire-and-forget with no functional dependency. Low priority — no functional gap exists.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-13:https://github.com/beyond-immersion/bannou-service/issues/637 -->
+None currently proposed. GH#461's `permission.service_registered` observability event has been implemented (see GH#637) via bulk accumulator pattern — `RegistrationEventBatcher` publishes `permission.services-registered` on a configurable interval.
 
 ---
 

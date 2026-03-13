@@ -19,4 +19,7 @@ public static class PermissionPublishedTopics
 {
     /// <summary>Published when session capabilities are compiled or updated.</summary>
     public const string PermissionCapabilityUpdate = "permission.capability-update";
+
+    /// <summary>Published periodically with accumulated service registrations for observability.</summary>
+    public const string PermissionServicesRegistered = "permission.services-registered";
 }

@@ -275,7 +275,7 @@ Spatial data management service (L4 GameFeatures) for Arcadia game worlds. Provi
 
 **Deep Dive**: [docs/plugins/MARKET.md](plugins/MARKET.md)
 
-Marketplace orchestration service (L4 GameFeatures) for auctions, NPC vendor management, and price discovery. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver game economy exchange mechanics. Game-agnostic: auction house rules, vendor personality templates, fee structures, and pricing modes are configured through market definitions, ABML behaviors, and seed type definitions at deployment time. Internal-only, never internet-facing.
+Marketplace orchestration service (L4 GameFeatures) for auctions, NPC vendor management, price discovery, NPC economic identity, and supply/demand market intelligence. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver game economy exchange mechanics. Owns both the exchange mechanisms (auctions, vendors) and the economic intelligence that informs them (NPC economic profiles, supply/demand snapshots). Trade (L4 peer) owns logistics -- moving goods between locations; Market owns what happens at a location. Game-agnostic: auction house rules, vendor personality templates, fee structures, and pricing modes are configured through market definitions, ABML behaviors, and seed type definitions at deployment time. Internal-only, never internet-facing.
 
 ## Matchmaking {#matchmaking}
 

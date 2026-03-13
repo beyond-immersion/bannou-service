@@ -1,11 +1,12 @@
 # Bannou Testing Documentation
 
-> **Last Updated**: 2026-03-08
-> **Scope**: Test architecture, isolation boundaries, test placement rules, CI/CD pipeline integration, and testing commands for all tiers (unit, HTTP integration, WebSocket edge, infrastructure).
+> **Last Updated**: 2026-03-13
+> **Scope**: Test commands, CI/CD pipeline integration, Docker Compose test configurations, and testing workflows for all tiers (unit, HTTP integration, WebSocket edge, infrastructure).
+> **Audience**: Developers running tests locally or in CI. For test *writing* patterns (mocking, captures, validators, forbidden patterns, test placement), see `docs/reference/tenets/TESTING-PATTERNS.md`.
 
 ## Summary
 
-Three-tier testing architecture defining plugin isolation boundaries, test placement decision guide, and CI/CD pipeline integration. Required reading before writing, modifying, or debugging any tests. Covers core framework tests (bannou-service.tests), per-plugin unit tests (lib-*.tests), HTTP integration tests (http-tester), WebSocket edge tests (edge-tester), and infrastructure tests (lib-testing) with their respective project reference constraints.
+User-facing testing operations document covering test commands, CI/CD pipeline integration, Docker Compose configurations, and development workflows. Covers how to run core framework tests (bannou-service.tests), per-plugin unit tests (lib-*.tests), HTTP integration tests (http-tester), WebSocket edge tests (edge-tester), and infrastructure tests (lib-testing).
 
 ## 🚨 CRITICAL: Test Architecture Boundaries (READ FIRST)
 
@@ -60,6 +61,12 @@ make test-unit                 # Unit tests only
 make test-http                 # HTTP endpoint testing
 make test-edge                 # WebSocket protocol testing
 make test-infrastructure       # Infrastructure validation
+
+# Structural tests (convention/schema/assembly/project validation)
+make test-structural                          # All structural tests (non-informational)
+make test-structural METHOD=Service_HasValidConstructor  # Specific test by method name
+make test-structural-info                     # All tests including informational
+make test-structural-info METHOD=PackageReferences_AreLatestStableVersions  # Specific informational test
 ```
 
 ## Testing Architecture

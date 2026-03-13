@@ -15,10 +15,10 @@
 | Layer | L1 AppFoundation |
 | Endpoints | 8 |
 | State Stores | permission (Redis), permission-lock (Redis) |
-| Events Published | 1 (permission.capability-update) |
+| Events Published | 2 (permission.capability-update, permission.services-registered) |
 | Events Consumed | 1 (session.updated) |
 | Client Events | 1 (SessionCapabilitiesEvent) |
-| Background Services | 0 |
+| Background Services | 1 (RegistrationEventBatcher) |
 
 ---
 
@@ -76,6 +76,7 @@ No service client dependencies. Permission is a pure receiver — callers invoke
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `permission.capability-update` | `PermissionCapabilityUpdate` | Published on every session permission recompilation (service registration, state change, role change, connect, reconnect) |
+| `permission.services-registered` | `PermissionServicesRegistered` | Published periodically by RegistrationEventBatcher with accumulated non-idempotent service registrations (bulk observability, fire-and-forget) |
 
 ---
 
@@ -102,6 +103,7 @@ Session connected/disconnected/reconnected/heartbeat received via `ISessionActiv
 | `IEventConsumer` | Event handler registration (session.updated) |
 | `ITelemetryProvider` | Trace span creation |
 | `PermissionSessionActivityListener` | DI listener for session lifecycle and heartbeat TTL |
+| `RegistrationEventBatcher` | Background worker accumulating service registrations for bulk observability event publishing |
 
 ---
 
@@ -370,4 +372,32 @@ FOREACH authorization in evt.Authorizations
 
 ## Background Services
 
-No background services.
+### RegistrationEventBatcher
+
+**Type**: BackgroundService (Singleton, shared instance with PermissionService)
+**Trigger**: Timer-based polling loop
+
+```
+STARTUP DELAY: RegistrationBatchStartupDelaySeconds (default 10s)
+
+LOOP (every RegistrationBatchIntervalSeconds, default 5s):
+ IF _pendingRegistrations is empty -> continue
+
+ // Atomic swap-and-clear: replace accumulator with fresh empty dictionary
+ snapshot = Interlocked.Exchange(ref _pendingRegistrations, new ConcurrentDictionary)
+ IF snapshot is empty -> continue // Race: cleared between check and swap
+
+ entries = snapshot.Values.ToList()
+ windowStart = _windowStartedAt
+ _windowStartedAt = DateTimeOffset.UtcNow
+
+ PUBLISH permission.services-registered {
+   registrations: entries (serviceId, version, registeredAt per entry),
+   registrationCount: entries.Count,
+   windowStartedAt: windowStart
+ }
+
+SHUTDOWN: Best-effort final flush after loop exits
+```
+
+**Accumulation**: `PermissionService.RegisterServicePermissionsAsync` calls `_registrationBatcher.Add(serviceId, version)` after each successful non-idempotent registration. ConcurrentDictionary keyed by serviceId — re-registrations within a window update in place. Each node accumulates independently (per IMPLEMENTATION TENETS multi-instance safety acknowledgment — observability events are fire-and-forget).
