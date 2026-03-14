@@ -86,13 +86,13 @@ This plugin does not consume external events.
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| ListServices | POST /game-service/services/list | [] | - | - |
-| GetService | POST /game-service/services/get | [] | - | - |
-| CreateService | POST /game-service/services/create | [] | service, stub-index, list | game-service.created |
-| UpdateService | POST /game-service/services/update | [] | service | game-service.updated |
-| DeleteService | POST /game-service/services/delete | [] | service, stub-index, list | game-service.deleted |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| ListServices | POST /game-service/services/list | generated | [] | - | - |
+| GetService | POST /game-service/services/get | generated | [] | - | - |
+| CreateService | POST /game-service/services/create | generated | [] | service, stub-index, list | game-service.created |
+| UpdateService | POST /game-service/services/update | generated | [] | service | game-service.updated |
+| DeleteService | POST /game-service/services/delete | generated | [] | service, stub-index, list | game-service.deleted |
 
 ---
 
@@ -196,3 +196,9 @@ RETURN 200
 ## Background Services
 
 No background services.
+
+---
+
+## Non-Standard Implementation Patterns
+
+No non-standard patterns.

@@ -23,7 +23,7 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 | lib-state (`IStateStoreFactory`) | MySQL persistence for definitions, wallets, balances, transactions, holds; Redis caching for balances and holds; Redis idempotency store |
 | lib-state (`IDistributedLockProvider`) | Balance-level locks for atomic credit/debit/transfer/hold-creation; hold-level locks for capture serialization; wallet-level locks for close operations; index-level locks for list operations; autogain locks to prevent concurrent modification |
 | lib-messaging (`IMessageBus`) | Publishing all currency events (balance, wallet lifecycle, autogain, cap, hold, exchange rate); error event publishing via TryPublishErrorAsync |
-| lib-worldstate (`IWorldstateClient`, L2, **required future migration**) | Autogain worker MUST transition from real-time intervals to game-time via Worldstate's `GetElapsedGameTime` API. At the default 24:1 time ratio, real-time autogain dramatically under-credits compared to game-time. This affects the living economy: NPC passive income must track the simulated world's time, not server time. Migration requires adding an `AutogainTimeSource` config property (enum: `RealTime`, `GameTime`; default `GameTime` once Worldstate is implemented). Tracked in [#545](https://github.com/beyond-immersion/bannou-service/issues/545) (consolidated Currency+Seed game-time migration) and [#433](https://github.com/beyond-immersion/bannou-service/issues/433) (Currency-specific). |
+| lib-worldstate (`IWorldstateClient`, L2, **required future migration**) | Autogain worker MUST transition from real-time intervals to game-time via Worldstate's `GetElapsedGameTime` API. At the default 24:1 time ratio, real-time autogain dramatically under-credits compared to game-time. This affects the living economy: NPC passive income must track the simulated world's time, not server time. Migration requires adding an `AutogainTimeSource` config property (enum: `RealTime`, `GameTime`; default `GameTime` once Worldstate is implemented). Tracked in [#545](https://github.com/beyond-immersion/bannou-service/issues/545) (consolidated Currency+Seed game-time migration). |
 
 ---
 
@@ -461,11 +461,11 @@ Escrow Integration Flow
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/470 -->
 3. **Global supply cap enforcement**: `GlobalSupplyCap` is stored on currency definitions but never checked during credit operations. There is no aggregate tracking of total minted supply.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/471 -->
-6. **Item linkage**: `LinkedToItem`, `LinkedItemTemplateId`, and `LinkageMode` fields are stored on definitions but no logic enforces item-currency linkage (e.g., requiring item ownership for currency access).
+4. **Item linkage**: `LinkedToItem`, `LinkedItemTemplateId`, and `LinkageMode` fields are stored on definitions but no logic enforces item-currency linkage (e.g., requiring item ownership for currency access).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/473 -->
-7. **Transaction retention cleanup**: `TransactionRetentionDays` config exists but old transactions are only filtered at query time, never actually deleted. Transactions accumulate indefinitely.
+5. **Transaction retention cleanup**: `TransactionRetentionDays` config exists but old transactions are only filtered at query time, never actually deleted. Transactions accumulate indefinitely.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
-8. **CleanDeprecatedCurrencyDefinitionsAsync** (`POST /currency/definition/clean-deprecated`): Schema-defined and generated (controller + interface) but service implementation throws `NotImplementedException`. Sweeps deprecated currency definitions with zero remaining wallets. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) / `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds) from `common-api.yaml`. Permissions: `[role: admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
+6. **CleanDeprecatedCurrencyDefinitionsAsync** (`POST /currency/definition/clean-deprecated`): Schema-defined and generated (controller + interface) but service implementation throws `NotImplementedException`. Sweeps deprecated currency definitions with zero remaining wallets. Uses shared `CleanDeprecatedRequest` (gracePeriodDays, dryRun) / `CleanDeprecatedResponse` (cleaned, remaining, errors, cleanedIds) from `common-api.yaml`. Permissions: `[role: admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
 
 ---
 
@@ -473,21 +473,16 @@ Escrow Integration Flow
 
 1. **Aggregate tracking for analytics**: Maintain running totals (minted, burned, in-circulation) via transaction events. Use pre-computed Redis counters updated on each credit/debit for O(1) supply queries.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/211 -->
-2. ~~**Hold expiration background task**~~: **IMPLEMENTED** (2026-03-08) — Added `HoldExpirationTaskService` background worker.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/222 -->
-3. ~~**Currency expiration background task**~~: **IMPLEMENTED** (2026-03-08) — Added `CurrencyExpirationTaskService` background worker.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/222 -->
-4. **Global supply cap enforcement**: Track total supply per currency in a Redis counter. Check cap during credit operations. Reject or truncate credits that would exceed global cap.
+2. **Global supply cap enforcement**: Track total supply per currency in a Redis counter. Check cap during credit operations. Reject or truncate credits that would exceed global cap.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/471 -->
-5. **Item-linked currencies**: Enforce that item must exist in player inventory for linked currency operations. Query lib-item during credit/debit to validate linkage.
+3. **Item-linked currencies**: Enforce that item must exist in player inventory for linked currency operations. Query lib-item during credit/debit to validate linkage.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/473 -->
-6. **Transaction pruning background task**: Delete transactions older than TransactionRetentionDays to prevent unbounded state growth. Currently retention is only enforced at query time (filtered out of results).
+4. **Transaction pruning background task**: Delete transactions older than TransactionRetentionDays to prevent unbounded state growth. Currently retention is only enforced at query time (filtered out of results).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/222 -->
-7. **Universal value anchoring**: Add `UniversalValue` field to currency definitions representing intrinsic worth (relative to a 1.0 baseline). Exchange rates can then be computed dynamically from universal values plus location-scoped modifiers (tariff, war, festival, shortage) rather than requiring manual `ExchangeRateToBase` updates. Universal values shift in response to game events (gold discoveries lower gold's value, wartime increases weapon-currency values). See [Economy System Guide](../guides/ECONOMY-SYSTEM.md#8-exchange-rate-extensions).
+5. **Universal value anchoring**: Add `UniversalValue` field to currency definitions representing intrinsic worth (relative to a 1.0 baseline). Exchange rates can then be computed dynamically from universal values plus location-scoped modifiers (tariff, war, festival, shortage) rather than requiring manual `ExchangeRateToBase` updates. Universal values shift in response to game events (gold discoveries lower gold's value, wartime increases weapon-currency values). See [Economy System Guide](../guides/ECONOMY-SYSTEM.md#8-exchange-rate-extensions).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/478 -->
-8. **Location-scoped exchange rates**: Extend exchange rates to vary by scope (global, realm, location). A frontier outpost might offer worse rates than a capital city. Support modifier stacking with source tracking and expiry. Add buy/sell spread fields for NPC money changer profit margins. Enables arbitrage opportunities and regional economic variation.
+6. **Location-scoped exchange rates**: Extend exchange rates to vary by scope (global, realm, location). A frontier outpost might offer worse rates than a capital city. Support modifier stacking with source tracking and expiry. Add buy/sell spread fields for NPC money changer profit margins. Enables arbitrage opportunities and regional economic variation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/478 -->
-9. ~~**Client events for real-time wallet updates**~~: **IMPLEMENTED** (2026-02-27) - Three client events (`currency.balance_changed`, `currency.wallet_frozen`, `currency.wallet_unfrozen`) published via `IEntitySessionRegistry` at all balance mutation and wallet lifecycle points. See Published Client Events section above.
 
 ---
 
@@ -495,9 +490,7 @@ Escrow Integration Flow
 
 ### Bugs (Fix Immediately)
 
-1. ~~**EarnCapResetTime not updatable**~~: **FIXED** (2026-02-24) - Added `earnCapResetTime` to `UpdateCurrencyDefinitionRequest` schema and corresponding field update in `UpdateCurrencyDefinitionAsync`.
-
-2. **Missing Category B instance creation guard on balance/hold operations**: Per IMPLEMENTATION TENETS (Category B checklist B9/B15), all services with Category B entities MUST check deprecation status before creating new instances and reject with `BadRequest` if deprecated. Wallets are currency-agnostic containers (no `currencyDefinitionId` at creation time), so the guard belongs in `CreditCurrencyAsync`, `CreateHoldAsync`, and `ExecuteConversionAsync` — the first points where a specific `currencyDefinitionId` is bound to a balance or hold. None of these methods check `IsDeprecated` on the currency definition. The only code paths that reference `IsDeprecated` are `ListCurrencyDefinitions` (filter), `DeprecateCurrencyDefinition` (idempotency), and `CleanDeprecatedCurrencyDefinitions` (sweep). The Deprecation Lifecycle section below notes this as intentional, but the tenet does not define an exception for service-to-service callers. If Escrow or other L2 services genuinely need to operate on deprecated currencies, that exception must be added to the tenet.
+1. **Missing Category B instance creation guard on balance/hold operations**: Per IMPLEMENTATION TENETS (Category B checklist B9/B15), all services with Category B entities MUST check deprecation status before creating new instances and reject with `BadRequest` if deprecated. Wallets are currency-agnostic containers (no `currencyDefinitionId` at creation time), so the guard belongs in `CreditCurrencyAsync`, `CreateHoldAsync`, and `ExecuteConversionAsync` — the first points where a specific `currencyDefinitionId` is bound to a balance or hold. None of these methods check `IsDeprecated` on the currency definition. The only code paths that reference `IsDeprecated` are `ListCurrencyDefinitions` (filter), `DeprecateCurrencyDefinition` (idempotency), and `CleanDeprecatedCurrencyDefinitions` (sweep). The Deprecation Lifecycle section below notes this as intentional, but the tenet does not define an exception for service-to-service callers. If Escrow or other L2 services genuinely need to operate on deprecated currencies, that exception must be added to the tenet.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -529,7 +522,7 @@ Currency definitions are **Category B entities** — wallets and balances refere
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Account deletion does not trigger wallet cleanup**~~: **FIXED** (2026-03-08) - Added `account.deleted` event handler that CASCADE-deletes all account-owned wallets with balances, holds, transactions, and indexes. Remaining balances are destroyed (not transferred) since the owning account no longer exists. Character/guild deletion still needs lib-resource integration — see issue #556.
+1. **Non-account entity deletion does not trigger wallet cleanup**: Account deletion path is implemented (2026-03-08) via `account.deleted` handler. Character/guild deletion still needs lib-resource integration (`x-references`) — balance disposition (transfer vs burn) and frozen wallet handling need design decisions. See [#556](https://github.com/beyond-immersion/bannou-service/issues/556).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/556 -->
 
 2. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
@@ -547,16 +540,13 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Pending Design
 
 - **Global supply analytics** - Needs design decisions on aggregation strategy, minted/burned semantics, and escrow integration. Issue: https://github.com/beyond-immersion/bannou-service/issues/211
-- [#433](https://github.com/beyond-immersion/bannou-service/issues/433) / [#545](https://github.com/beyond-immersion/bannou-service/issues/545) - Currency autogain must transition from real-time to game-time via Worldstate (blocked by Worldstate implementation). #545 is the consolidated issue covering both Currency and Seed background workers.
+- [#545](https://github.com/beyond-immersion/bannou-service/issues/545) - Currency autogain must transition from real-time to game-time via Worldstate (blocked by Worldstate implementation). Consolidated issue covering both Currency and Seed background workers (supersedes #433).
 - [#470](https://github.com/beyond-immersion/bannou-service/issues/470) - Wallet distribution analytics stub returns all zeros. Needs aggregation strategy decision (shared with #211)
 - [#471](https://github.com/beyond-immersion/bannou-service/issues/471) - Global supply cap enforcement needs aggregation strategy (shared with #211). `GlobalSupplyCap` stored but never checked during credits.
 - [#473](https://github.com/beyond-immersion/bannou-service/issues/473) - Item linkage enforcement: `LinkedToItem`, `LinkedItemTemplateId`, and `LinkageMode` fields are stored but have zero runtime enforcement. Needs design decisions on what each linkage mode means and which operations to gate.
 - [#478](https://github.com/beyond-immersion/bannou-service/issues/478) - Universal value anchoring for dynamic exchange rates. Needs design on coexistence vs replacement of `ExchangeRateToBase`, modifier ownership (L2 vs L4), value change triggers, and relationship to location-scoped exchange rates.
-- [#556](https://github.com/beyond-immersion/bannou-service/issues/556) - Non-account entity deletion (characters, guilds) does not trigger wallet cleanup. Account deletion path implemented (2026-03-08). Character/guild paths still need lib-resource integration design (balance disposition, frozen wallet handling).
+- [#556](https://github.com/beyond-immersion/bannou-service/issues/556) - Non-account entity deletion (characters, guilds) does not trigger wallet cleanup. Account deletion path complete (2026-03-08). Character/guild paths need lib-resource `x-references` integration design (balance disposition, frozen wallet handling).
 
 ### Completed
 
-- **2026-03-08**: Issue [#222](https://github.com/beyond-immersion/bannou-service/issues/222) (partial) — Currency expiration background worker (`CurrencyExpirationTaskService`). Transaction cleanup from #222 remains pending.
-- **2026-03-08**: Issue [#222](https://github.com/beyond-immersion/bannou-service/issues/222) (partial) — Hold expiration background worker (`HoldExpirationTaskService`).
-- **2026-03-08**: Account deletion wallet cleanup — Added `account.deleted` event handler with CASCADE deletion of all account-owned wallets, balances, holds, transactions, and indexes. Per Account Deletion Cleanup Obligation. Issue [#556](https://github.com/beyond-immersion/bannou-service/issues/556) partially addressed (account path only; character/guild paths remain).
-- **2026-02-27**: Issue [#494](https://github.com/beyond-immersion/bannou-service/issues/494) - Client events for real-time wallet updates. Three client events published via IEntitySessionRegistry at all balance mutation and wallet lifecycle points.
+- **2026-03-14**: Maintenance pass — removed 7 confirmed FIXED/IMPLEMENTED strikethrough items (currency expiration, hold expiration, client events, EarnCapResetTime fix, account deletion cleanup). Added Bug for missing Category B instance creation guard. Removed superseded #433 reference (replaced by #545). Reclassified account deletion Design Consideration to focus on remaining character/guild paths.

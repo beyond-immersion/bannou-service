@@ -80,9 +80,12 @@ x-service-configuration:
       default: 60
       env: GAME_SESSION_LOCK_TIMEOUT_SECONDS
     SupportedGameServices:
-      type: string
-      description: Comma-separated list of supported game service stub names (e.g. "generic" or "arcadia,fantasia"). Only subscription.updated events for these services trigger shortcut publishing. Use "generic" for catch-all lobbies.
-      default: "generic"
+      type: array
+      items:
+        type: string
+        minLength: 1
+      description: List of supported game service stub names. Only subscription.updated events for these services trigger shortcut publishing. Use "generic" for catch-all lobbies.
+      default: ["generic"]
       env: GAME_SESSION_SUPPORTED_GAME_SERVICES
     GenericLobbiesEnabled:
       type: boolean

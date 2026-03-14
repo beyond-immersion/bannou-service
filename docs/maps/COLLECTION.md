@@ -15,7 +15,7 @@
 | Layer | L2 GameFoundation |
 | Endpoints | 23 |
 | State Stores | collection-entry-templates (MySQL), collection-instances (MySQL), collection-area-content-configs (MySQL), collection-cache (Redis), collection-lock (Redis) |
-| Events Published | 11 (entry-template.created/updated/deleted, created, deleted, area-content-config.created/updated/deleted, entry-unlocked, entry-grant-failed, milestone-reached, discovery-advanced) |
+| Events Published | 12 (entry-template.created/updated/deleted, created, deleted, area-content-config.created/updated/deleted, entry-unlocked, entry-grant-failed, milestone-reached, discovery-advanced) |
 | Events Consumed | 1 (account.deleted) |
 | Client Events | 3 (entry.unlocked, milestone-reached, discovery.advanced) |
 | Background Services | 0 |
@@ -85,6 +85,7 @@ Used for distributed locks on mutation operations. Lock keys use `tpl:{id}` for 
 |-------|-----------|---------|
 | `collection.entry-template.created` | `CollectionEntryTemplateCreatedEvent` | CreateEntryTemplate, SeedEntryTemplates |
 | `collection.entry-template.updated` | `CollectionEntryTemplateUpdatedEvent` | UpdateEntryTemplate (only if fields changed), DeprecateEntryTemplate |
+| `collection.entry-template.deleted` | `CollectionEntryTemplateDeletedEvent` | CleanDeprecatedEntryTemplates (via DeprecationCleanupHelper) |
 | `collection.created` | `CollectionCreatedEvent` | CreateCollection, GrantEntry (auto-create) |
 | `collection.deleted` | `CollectionDeletedEvent` | DeleteCollection, CleanupByCharacter, HandleAccountDeleted |
 | `collection.area-content-config.created` | `CollectionAreaContentConfigCreatedEvent` | SetAreaContentConfig (new config) |
@@ -95,7 +96,7 @@ Used for distributed locks on mutation operations. Lock keys use `tpl:{id}` for 
 | `collection.milestone-reached` | `CollectionMilestoneReachedEvent` | GrantEntry (25/50/75/100% thresholds) |
 | `collection.discovery-advanced` | `CollectionDiscoveryAdvancedEvent` | AdvanceDiscovery |
 
-Note: `collection.entry-template.deleted` is defined in the lifecycle schema but has no implementation trigger. Entry templates are Category B (deprecate-only, no delete) — deprecation publishes `entry-template.updated` with `changedFields`.
+Note: `collection.entry-template.deleted` is published by `CleanDeprecatedEntryTemplates` when a deprecated template with zero active instances is permanently removed via the Category B clean-deprecated sweep.
 
 ---
 
@@ -109,51 +110,64 @@ Note: `collection.entry-template.deleted` is defined in the lifecycle schema but
 
 ## DI Services
 
+#### Constructor Dependencies
+
 | Service | Role |
 |---------|------|
 | `ILogger<CollectionService>` | Structured logging |
 | `CollectionServiceConfiguration` | Typed configuration (limits, TTLs, page sizes, retry counts) |
-| `IStateStoreFactory` | State store access (4 stores + lock store, lazy-initialized) |
-| `IMessageBus` | Event publishing |
-| `IEventConsumer` | Event subscription registration (account.deleted) |
-| `IDistributedLockProvider` | Distributed lock acquisition |
-| `ITelemetryProvider` | Distributed tracing spans |
-| `IInventoryClient` | Container lifecycle and contents retrieval |
-| `IItemClient` | Item template validation and instance creation |
+| `IStateStoreFactory` | State store access (4 stores + lock store); not stored as field — used in constructor only |
+| `IMessageBus` | Event publishing (12 topics) |
+| `IEventConsumer` | Event subscription registration (account.deleted); not stored as field |
+| `IDistributedLockProvider` | Distributed lock acquisition for mutation operations |
+| `ITelemetryProvider` | Distributed tracing spans on async helpers |
+| `IInventoryClient` | Container lifecycle and contents retrieval for cache rebuild |
+| `IItemClient` | Item template validation and instance creation on grant |
 | `IGameServiceClient` | Game service existence validation |
 | `IResourceClient` | Character reference tracking and cleanup callback registration |
 | `IEntitySessionRegistry` | Client event push to owner WebSocket sessions |
-| `IEnumerable<ICollectionUnlockListener>` | DI-discovered unlock notification listeners |
+
+#### Collection-Injected Providers
+
+| Interface | Injection | Source | Role |
+|-----------|-----------|--------|------|
+| `IEnumerable<ICollectionUnlockListener>` | Collection (stored as `IReadOnlyList`) | External (lib-seed, lib-faction register implementations) | In-process unlock notification dispatch with per-listener error isolation |
+
+#### DI Interfaces Implemented by This Plugin
+
+| Interface | Registered As | Direction | Consumer |
+|-----------|---------------|-----------|----------|
+| `ICleanDeprecatedEntity` | Marker interface | — | Structural test `Services_WithDeprecation_MustImplementDeprecationInterface` validates Category B compliance |
 
 ---
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| CreateEntryTemplate | POST /collection/entry-template/create | developer | template (id + code keys) | entry-template.created |
-| GetEntryTemplate | POST /collection/entry-template/get | developer | - | - |
-| ListEntryTemplates | POST /collection/entry-template/list | developer | - | - |
-| UpdateEntryTemplate | POST /collection/entry-template/update | developer | template (id + code keys) | entry-template.updated |
-| DeprecateEntryTemplate | POST /collection/entry-template/deprecate | developer | template (id + code keys) | entry-template.updated |
-| SeedEntryTemplates | POST /collection/entry-template/seed | developer | template (id + code keys) | entry-template.created |
-| CreateCollection | POST /collection/create | developer | collection (id + owner keys), container | created |
-| GetCollection | POST /collection/get | user | cache (rebuild on miss) | - |
-| ListCollections | POST /collection/list | user | - | - |
-| DeleteCollection | POST /collection/delete | developer | collection (id + owner keys), cache, container | deleted |
-| GrantEntry | POST /collection/grant | user | collection (auto-create), cache, item, global-unlocks set | entry-unlocked, entry-grant-failed, milestone-reached, created |
-| HasEntry | POST /collection/has | user | cache (rebuild on miss) | - |
-| QueryEntries | POST /collection/query | user | cache (rebuild on miss) | - |
-| UpdateEntryMetadata | POST /collection/update-metadata | user | cache | - |
-| GetCompletionStats | POST /collection/stats | user | cache (rebuild on miss) | - |
-| SelectContentForArea | POST /collection/content/select-for-area | user | cache (rebuild on miss) | - |
-| SetAreaContentConfig | POST /collection/content/area-config/set | developer | area-config (id + code keys) | area-content-config.created, area-content-config.updated |
-| GetAreaContentConfig | POST /collection/content/area-config/get | user | - | - |
-| ListAreaContentConfigs | POST /collection/content/area-config/list | developer | - | - |
-| DeleteAreaContentConfig | POST /collection/content/area-config/delete | developer | area-config (id + code keys) | area-content-config.deleted |
-| AdvanceDiscovery | POST /collection/discovery/advance | user | cache | discovery-advanced |
-| CleanupByCharacter | POST /collection/cleanup-by-character | developer | collection (id + owner keys), cache, container | deleted |
-| CleanDeprecatedEntryTemplates | POST /collection/entry-template/clean-deprecated | admin | template (id + code keys) | entry-template.deleted |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| CreateEntryTemplate | POST /collection/entry-template/create | generated | developer | template (id + code keys) | entry-template.created |
+| GetEntryTemplate | POST /collection/entry-template/get | generated | developer | - | - |
+| ListEntryTemplates | POST /collection/entry-template/list | generated | developer | - | - |
+| UpdateEntryTemplate | POST /collection/entry-template/update | generated | developer | template (id + code keys) | entry-template.updated |
+| DeprecateEntryTemplate | POST /collection/entry-template/deprecate | generated | developer | template (id + code keys) | entry-template.updated |
+| SeedEntryTemplates | POST /collection/entry-template/seed | generated | developer | template (id + code keys) | entry-template.created |
+| CreateCollection | POST /collection/create | generated | developer | collection (id + owner keys), container | created |
+| GetCollection | POST /collection/get | generated | user | cache (rebuild on miss) | - |
+| ListCollections | POST /collection/list | generated | user | - | - |
+| DeleteCollection | POST /collection/delete | generated | developer | collection (id + owner keys), cache, container, reverse-index | deleted |
+| GrantEntry | POST /collection/grant | generated | user | collection (auto-create), cache, item, global-unlocks set, reverse-index | entry-unlocked, entry-grant-failed, milestone-reached, created |
+| HasEntry | POST /collection/has | generated | user | cache (rebuild on miss) | - |
+| QueryEntries | POST /collection/query | generated | user | cache (rebuild on miss) | - |
+| UpdateEntryMetadata | POST /collection/update-metadata | generated | user | cache | - |
+| GetCompletionStats | POST /collection/stats | generated | user | cache (rebuild on miss) | - |
+| SelectContentForArea | POST /collection/content/select-for-area | generated | user | cache (rebuild on miss) | - |
+| SetAreaContentConfig | POST /collection/content/area-config/set | generated | developer | area-config (id + code keys) | area-content-config.created, area-content-config.updated |
+| GetAreaContentConfig | POST /collection/content/area-config/get | generated | user | - | - |
+| ListAreaContentConfigs | POST /collection/content/area-config/list | generated | developer | - | - |
+| DeleteAreaContentConfig | POST /collection/content/area-config/delete | generated | developer | area-config (id + code keys) | area-content-config.deleted |
+| AdvanceDiscovery | POST /collection/discovery/advance | generated | user | cache | discovery-advanced |
+| CleanupByCharacter | POST /collection/cleanup-by-character | generated | [] | collection (id + owner keys), cache, container, reverse-index | deleted |
+| CleanDeprecatedEntryTemplates | POST /collection/entry-template/clean-deprecated | generated | admin | template (id + code keys), reverse-index | entry-template.deleted |
 
 ---
 
@@ -315,12 +329,15 @@ POST /collection/delete | Roles: [developer]
 ```
 LOCK CollectionLock:"col:{body.CollectionId}" -> 409 if fails
  READ CollectionStore:"col:{body.CollectionId}" -> 404 if null
+ // LoadOrRebuildCollectionCacheAsync for reverse-index cleanup
+ FOREACH entry in cache.UnlockedEntries
+   RemoveFromStringListAsync EntryTemplateStringStore:"tpl-col:{entry.EntryTemplateId}" <- collectionId
  CALL _inventoryClient.DeleteContainerAsync(collection.ContainerId) // tolerates 404
  DELETE CollectionCache:"cache:{collection.CollectionId}"
  DELETE CollectionStore:"col:{collection.CollectionId}"
  DELETE CollectionStore:"col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}"
  IF ownerType == Character
- CALL _resourceClient.UnregisterReferenceAsync(...)
+   CALL _resourceClient.UnregisterReferenceAsync(...)
  PUBLISH collection.deleted { collectionId, ownerId, ownerType, collectionType, gameServiceId, containerId }
  RETURN (200, CollectionResponse { entryCount: 0 })
 ```
@@ -569,7 +586,7 @@ LOCK CollectionLock:"col:{body.CollectionId}" -> 409 if fails
 ---
 
 ### CleanupByCharacter
-POST /collection/cleanup-by-character | Roles: [developer]
+POST /collection/cleanup-by-character | Roles: []
 
 ```
 // CleanupCollectionsForOwnerAsync(characterId, EntityType.Character):
@@ -577,6 +594,9 @@ QUERY CollectionStore WHERE $.OwnerId == characterId AND $.OwnerType == Characte
 FOREACH collection in results
  // Per-collection error isolation (catch, log warning, continue)
  CALL _inventoryClient.DeleteContainerAsync(collection.ContainerId)
+ // LoadOrRebuildCollectionCacheAsync for reverse-index cleanup
+ FOREACH entry in cache.UnlockedEntries
+   RemoveFromStringListAsync EntryTemplateStringStore:"tpl-col:{entry.EntryTemplateId}" <- collectionId
  DELETE CollectionCache:"cache:{collection.CollectionId}"
  DELETE CollectionStore:"col:{collection.CollectionId}"
  DELETE CollectionStore:"col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}"
@@ -603,6 +623,9 @@ QUERY CollectionStore WHERE $.OwnerId == accountId AND $.OwnerType == Account
 FOREACH collection in results
  // Per-collection error isolation (catch, log warning, continue)
  CALL _inventoryClient.DeleteContainerAsync(collection.ContainerId)
+ // LoadOrRebuildCollectionCacheAsync for reverse-index cleanup
+ FOREACH entry in cache.UnlockedEntries
+   RemoveFromStringListAsync EntryTemplateStringStore:"tpl-col:{entry.EntryTemplateId}" <- collectionId
  DELETE CollectionCache:"cache:{collection.CollectionId}"
  DELETE CollectionStore:"col:{collection.CollectionId}"
  DELETE CollectionStore:"col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}"
@@ -640,3 +663,24 @@ result = DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
 
 RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ```
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### OnRunningAsync (Plugin Lifecycle)
+
+```
+// Registers lib-resource cleanup callback for character-owned collections
+CREATE DI scope
+CALL IResourceClient.DefineCleanupCallbackAsync({
+  ResourceType: "character",
+  SourceType: "collection",
+  OnDeleteAction: Cascade,
+  CallbackEndpoint: "/collection/cleanup-by-character",
+  PayloadTemplate: '{"characterId": "{{resourceId}}"}'
+})
+// Logs success or warning based on registration result
+```
+
+This ensures character deletion triggers cascading collection cleanup via HTTP callback. Generated by `x-references` in `collection-api.yaml` into `CollectionReferenceTracking.cs`.

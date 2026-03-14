@@ -1,4 +1,7 @@
+using System.Reflection;
 using System.Text.RegularExpressions;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.StructuralTests;
@@ -790,34 +793,54 @@ public class SchemaValidationTests
     }
 
     /// <summary>
-    /// Validates that every x-lifecycle entity with <c>deprecation: true</c> declares an
-    /// <c>instanceEntity</c> field naming the lifecycle entity that represents instances of
+    /// Validates that every Category B x-lifecycle entity with <c>deprecation: true</c> declares
+    /// an <c>instanceEntity</c> field naming the lifecycle entity that represents instances of
     /// that template. Category B clean-deprecated sweep requires instance count checks;
     /// if instances cannot be deleted (no lifecycle DeletedEvent), cleanup can never succeed.
     /// The named instanceEntity must itself be an x-lifecycle entity in the same events file,
     /// guaranteeing it has Created/Updated/Deleted lifecycle events (including deletion capability).
+    /// <para>
+    /// Category A entities (IDeprecateAndMergeEntity — world-building definitions with merge
+    /// semantics) are exempt: they use x-references for delete eligibility, not instance counts.
+    /// </para>
     /// Per IMPLEMENTATION TENETS (Deprecation Lifecycle).
     /// </summary>
     [Fact]
     public void DeprecatableEntities_MustDeclareInstanceEntity()
     {
+        EnsurePluginAssembliesLoaded();
+
         var violations = new List<string>();
 
         foreach (var file in SchemaParser.GetEventSchemaFiles())
         {
             var fileName = Path.GetFileNameWithoutExtension(file);
+            var serviceName = fileName.EndsWith("-events", StringComparison.Ordinal)
+                ? fileName[..^"-events".Length]
+                : fileName;
             var entities = SchemaParser.GetLifecycleEntities(file).ToList();
             var entityNames = new HashSet<string>(entities.Select(e => e.EntityName), StringComparer.Ordinal);
+
+            // Determine service category via marker interface.
+            // instanceEntity is only required for Category B (ICleanDeprecatedEntity).
+            // Category A (IDeprecateAndMergeEntity) uses x-references for delete eligibility.
+            var serviceType = FindServiceTypeByName(serviceName);
+            var isCategoryB = serviceType != null &&
+                typeof(ICleanDeprecatedEntity).IsAssignableFrom(serviceType);
 
             foreach (var entity in entities)
             {
                 if (!entity.HasDeprecation)
                     continue;
 
+                // Category A entities do not need instanceEntity
+                if (!isCategoryB)
+                    continue;
+
                 if (string.IsNullOrEmpty(entity.InstanceEntity))
                 {
                     violations.Add(
-                        $"{fileName}.yaml: {entity.EntityName} has deprecation: true " +
+                        $"{fileName}.yaml: {entity.EntityName} has deprecation: true (Category B) " +
                         $"but no instanceEntity declared");
                     continue;
                 }
@@ -842,9 +865,64 @@ public class SchemaValidationTests
 
         Assert.True(
             violations.Count == 0,
-            $"Found {violations.Count} deprecatable entity/entities without valid instanceEntity " +
-            $"declaration across {grouped.Count()} schema file(s). Every entity with " +
-            $"deprecation: true must declare instanceEntity naming an x-lifecycle entity " +
-            $"in the same file (per IMPLEMENTATION TENETS — Deprecation Lifecycle):{report}");
+            $"Found {violations.Count} Category B deprecatable entity/entities without valid " +
+            $"instanceEntity declaration across {grouped.Count()} schema file(s). Every " +
+            $"Category B entity (ICleanDeprecatedEntity) with deprecation: true must declare " +
+            $"instanceEntity naming an x-lifecycle entity in the same file " +
+            $"(per IMPLEMENTATION TENETS — Deprecation Lifecycle):{report}");
+    }
+
+    /// <summary>
+    /// Ensures all plugin assemblies are loaded for marker interface reflection.
+    /// Mirrors the pattern from StructuralTests.EnsureAssembliesLoaded().
+    /// </summary>
+    private static void EnsurePluginAssembliesLoaded()
+    {
+        var outputDir = Path.GetDirectoryName(typeof(SchemaValidationTests).Assembly.Location);
+        if (outputDir == null)
+            return;
+
+        foreach (var dllPath in Directory.GetFiles(outputDir, "lib-*.dll"))
+        {
+            var dllFileName = Path.GetFileNameWithoutExtension(dllPath);
+            if (dllFileName.EndsWith(".tests", StringComparison.Ordinal))
+                continue;
+
+            try
+            {
+                var assemblyName = AssemblyName.GetAssemblyName(dllPath);
+                var existing = AppDomain.CurrentDomain.GetAssemblies()
+                    .FirstOrDefault(a => a.GetName().Name == assemblyName.Name);
+                if (existing == null)
+                    Assembly.LoadFrom(dllPath);
+            }
+            catch
+            {
+                // Skip assemblies that fail to load
+            }
+        }
+    }
+
+    /// <summary>
+    /// Finds the [BannouService]-attributed type matching the given service name.
+    /// Mirrors the pattern from StructuralTests.FindServiceTypeByName().
+    /// </summary>
+    private static Type? FindServiceTypeByName(string serviceName)
+    {
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            Type[] types;
+            try { types = assembly.GetTypes(); }
+            catch (ReflectionTypeLoadException) { continue; }
+
+            foreach (var type in types)
+            {
+                var attr = type.GetCustomAttribute<BannouServiceAttribute>();
+                if (attr != null && string.Equals(attr.Name, serviceName, StringComparison.Ordinal))
+                    return type;
+            }
+        }
+
+        return null;
     }
 }

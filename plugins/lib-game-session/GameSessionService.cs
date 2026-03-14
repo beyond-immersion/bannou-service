@@ -180,10 +180,8 @@ public partial class GameSessionService : IGameSessionService
         _gameServiceClient = gameServiceClient;
         _telemetryProvider = telemetryProvider;
 
-        // Initialize supported game services from configuration
-        // Central validation in PluginLoader ensures non-nullable strings are not empty
-        var configuredServices = configuration.SupportedGameServices.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        _supportedGameServices = new HashSet<string>(configuredServices, StringComparer.OrdinalIgnoreCase);
+        // Initialize supported game services from configuration (typed array per IMPLEMENTATION TENETS)
+        _supportedGameServices = new HashSet<string>(configuration.SupportedGameServices, StringComparer.OrdinalIgnoreCase);
 
         // Server salt from configuration - all instances must share the same salt
         _serverSalt = configuration.ServerSalt;
@@ -217,13 +215,20 @@ public partial class GameSessionService : IGameSessionService
                 continue;
             }
 
-            // Apply game type filter if provided (non-default value)
-            // GameType defaults to "generic" if not specified
-            // So we just skip filtering if the request body doesn't have explicit filter values
-
-            // Apply status filter - skip finished sessions by default
-            if (session.Status == SessionStatus.Finished)
+            // Apply game type filter if provided
+            if (body.GameType != null && session.GameType != body.GameType)
                 continue;
+
+            // Apply status filter if provided; otherwise skip finished sessions by default
+            if (body.Status.HasValue)
+            {
+                if (session.Status != body.Status.Value)
+                    continue;
+            }
+            else if (session.Status == SessionStatus.Finished)
+            {
+                continue;
+            }
 
             sessions.Add(session);
         }
@@ -298,11 +303,7 @@ public partial class GameSessionService : IGameSessionService
                 session.Reservations.Count, sessionId, reservationExpiry);
         }
 
-        // Save to state store
-        await _sessionStore
-            .SaveAsync(SESSION_KEY_PREFIX + session.SessionId, session, SessionTtlOptions, cancellationToken);
-
-        // Add to session list under distributed lock (read-modify-write)
+        // Acquire session-list lock before saving to prevent orphaned session records
         await using var listLock = await _lockProvider.LockAsync(
             StateStoreDefinitions.GameSessionLock, SESSION_LIST_KEY, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
         if (!listLock.Success)
@@ -311,6 +312,11 @@ public partial class GameSessionService : IGameSessionService
             return (StatusCodes.Conflict, null);
         }
 
+        // Save to state store (inside lock so no orphan if list update fails)
+        await _sessionStore
+            .SaveAsync(SESSION_KEY_PREFIX + session.SessionId, session, SessionTtlOptions, cancellationToken);
+
+        // Add to session list (read-modify-write under lock)
         var sessionIds = await _sessionListStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
 
         sessionIds.Add(session.SessionId.ToString());

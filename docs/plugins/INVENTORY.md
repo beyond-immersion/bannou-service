@@ -214,7 +214,7 @@ Stack Operations
 5. **Batch operations**: Add BatchAddItems, BatchRemoveItems, BatchTransfer to reduce cross-service call overhead. Would need careful lock ordering for multi-container operations.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/483 -->
 
-6. **Item event consumption**: Subscribe to `item.destroyed`, `item.bound`, `item.modified` events from lib-item to keep container counters synchronized when items are modified directly via lib-item (bypassing inventory). See also [#407](https://github.com/beyond-immersion/bannou-service/issues/407) (Item Decay) as a concrete need for consuming item lifecycle events.
+6. **Item destruction counter synchronization**: Implement `IItemInstanceDestructionListener` (DI Listener pattern, per Foundation Tenets) to receive notifications when items are destroyed directly via lib-item (bypassing inventory), and update container UsedSlots/ContentsWeight counters accordingly. Event subscription for this purpose is forbidden per Foundation Tenets (Resource-Managed Cleanup) — the DI Listener is the correct mechanism for high-frequency instance cleanup. For `item.bound` and `item.modified` (non-destruction mutations), a separate design decision is needed since no DI Listener exists for those cases. See also [#407](https://github.com/beyond-immersion/bannou-service/issues/407) (Item Decay) as a concrete need.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/484 -->
 
 7. **Mail as remote inventory**: Implement a mailbox system using inventory containers with COD (cash-on-delivery) escrow integration. See [#283](https://github.com/beyond-immersion/bannou-service/issues/283).
@@ -226,7 +226,14 @@ Stack Operations
 
 ### Bugs (Fix Immediately)
 
-(None currently identified.)
+1. **Missing `account.deleted` cleanup handler**: Inventory supports `ContainerOwnerType.Account` — containers can be owned by accounts. Per Foundation Tenets (Account Deletion Cleanup Obligation), every service with account-owned data MUST subscribe to `account.deleted` and clean up all account-owned data. Inventory does not implement `HandleAccountDeletedAsync` in `InventoryServiceEvents.cs`. This is not a design question — the tenet prescribes the exact fix: subscribe via `IEventConsumer`, implement cleanup of all account-owned containers (including destroying/detaching contained items), and publish `inventory.container.deleted` lifecycle events for each removed container. Reference implementation: `lib-collection/CollectionServiceEvents.cs`. See [#593](https://github.com/beyond-immersion/bannou-service/issues/593).
+<!-- AUDIT:TODO:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/593 -->
+
+2. **`WeightContribution.None` used as sentinel for "unspecified"**: When `WeightContribution.None` is explicitly specified in a create request, it's replaced with `DefaultWeightContribution` from config. This uses an enum value as a sentinel meaning "absent/use default" — a violation of Implementation Tenets (No Sentinel Values). The fix: make `weightContribution` nullable in the schema. `null` means "use config default." `None` means "no weight propagation." Currently there's no way to explicitly set "no weight propagation" unless the config default is changed.
+
+3. **Container deletion orphans items without compensation or self-healing**: When deleting with `ItemHandling.Destroy`, individual item destruction failures are logged but the container is deleted anyway. This orphans items (their `containerId` references a deleted container). Per Implementation Tenets (Multi-Service Call Compensation), acknowledging orphaned state without a resolution mechanism is forbidden. Either: (a) rollback container deletion when item destruction fails, or (b) document and implement a specific self-healing mechanism (e.g., an orphan item reconciliation worker that periodically checks for items with invalid container references).
+
+4. **MergeStacks source destruction failure orphans zero-quantity items**: When stacks are fully merged, failure to destroy the source item is logged as a warning but the merge proceeds. The source item may remain with zero quantity in lib-item — a ghost record. Per Implementation Tenets (Multi-Service Call Compensation), this orphaned state requires either compensation (undo the quantity transfer to target) or a documented self-healing mechanism (e.g., orphan reconciliation worker that purges zero-quantity items).
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -242,19 +249,13 @@ Stack Operations
 
 6. **Missing parent returns BadRequest not NotFound**: If `ParentContainerId` is specified but the parent doesn't exist, returns `StatusCodes.BadRequest` rather than NotFound.
 
-7. **Container deletion with "destroy" continues on item failure**: When deleting with `ItemHandling.Destroy`, individual item destruction failures are logged but don't stop the loop. The container is deleted even if some items couldn't be destroyed. This can orphan items.
+7. **DeleteContainer returns ServiceUnavailable on item service failure**: This is intentional to prevent orphaning items, but callers must handle this gracefully.
 
-8. **Merge stack source destruction failure non-fatal**: When stacks are fully merged, failure to destroy the source item logs a warning but the merge is still considered successful. The source item may remain with zero quantity in lib-item.
+8. **MoveItem/TransferItem generate multiple events per operation**: Cross-container MoveItem internally calls RemoveItemFromContainer (publishes `inventory.item.removed`) then AddItemToContainer (publishes `inventory.item.placed`), then publishes `inventory.item.moved` — 3 events total. TransferItem adds a 4th (`inventory.item.transferred`). Same-container MoveItem publishes only `inventory.item.moved` (1 event). Consumers should handle idempotently and be aware of the event sequence.
 
-9. **WeightContribution.None treated as "use default"**: If `WeightContribution.None` is explicitly specified in a create request, it's replaced with `DefaultWeightContribution` from config. There's no way to explicitly set "no weight propagation" unless the default is changed.
+9. **GetOrCreateContainer and ListContainers bypass Redis cache**: These methods read containers directly from MySQL via `containerStore.GetAsync()` instead of using `GetContainerWithCacheAsync()`. Only GetContainer, AddItemToContainer, RemoveItemFromContainer, and other single-container operations use the Redis cache read-through. For high-frequency GetOrCreateContainer calls (e.g., lazy creation pattern), this means every call hits MySQL.
 
-10. **DeleteContainer returns ServiceUnavailable on item service failure**: This is intentional to prevent orphaning items, but callers must handle this gracefully.
-
-11. **MoveItem/TransferItem generate multiple events per operation**: Cross-container MoveItem internally calls RemoveItemFromContainer (publishes `inventory.item.removed`) then AddItemToContainer (publishes `inventory.item.placed`), then publishes `inventory.item.moved` — 3 events total. TransferItem adds a 4th (`inventory.item.transferred`). Same-container MoveItem publishes only `inventory.item.moved` (1 event). Consumers should handle idempotently and be aware of the event sequence.
-
-12. **GetOrCreateContainer and ListContainers bypass Redis cache**: These methods read containers directly from MySQL via `containerStore.GetAsync()` instead of using `GetContainerWithCacheAsync()`. Only GetContainer, AddItemToContainer, RemoveItemFromContainer, and other single-container operations use the Redis cache read-through. For high-frequency GetOrCreateContainer calls (e.g., lazy creation pattern), this means every call hits MySQL.
-
-13. **Category constraints enforced at inventory layer only**: AllowedCategories/ForbiddenCategories are validated by Inventory's `AddItemToContainerAsync` and `CheckContainerFitForItem`, but lib-item's `CreateItemInstanceAsync` and `ModifyItemInstanceAsync` do not enforce them. This is an intentional architectural boundary: Inventory is the placement/constraint layer, Item is the data layer. Item cannot depend on Inventory (circular dependency — Inventory already depends on Item). Services that need category enforcement must go through Inventory's `AddItemToContainer`; services that own their containers (Collection, Status, License) can safely call lib-item directly because they control both the container configuration and the items being placed.
+10. **Category constraints enforced at inventory layer only**: AllowedCategories/ForbiddenCategories are validated by Inventory's `AddItemToContainerAsync` and `CheckContainerFitForItem`, but lib-item's `CreateItemInstanceAsync` and `ModifyItemInstanceAsync` do not enforce them. This is an intentional architectural boundary: Inventory is the placement/constraint layer, Item is the data layer. Item cannot depend on Inventory (circular dependency — Inventory already depends on Item). Services that need category enforcement must go through Inventory's `AddItemToContainer`; services that own their containers (Collection, Status, License) can safely call lib-item directly because they control both the container configuration and the items being placed.
 
 ### Design Considerations (Requires Planning)
 
@@ -276,9 +277,6 @@ Stack Operations
 6. **No escrow integration**: lib-escrow has a placeholder comment mentioning inventory but no actual integration. Asset custody for items in escrow is not implemented. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/153 -->
 
-7. **Container orphan cleanup on owner deletion**: When an owner entity is deleted, its inventory containers must be cleaned up. For L2 owners (Character, Location), cleanup is handled via lib-resource (`x-references` with CASCADE policy). For **Account-owned containers**, Inventory MUST subscribe to `account.deleted` and clean up all account-owned containers per tenets's Account Deletion Cleanup Obligation. This is the established pattern — accounts are the one entity where event-based cleanup is mandatory because lib-resource cannot track account references (privacy constraint). **Not yet implemented** — see [#593](https://github.com/beyond-immersion/bannou-service/issues/593). Reference implementation: `lib-collection/CollectionServiceEvents.cs`.
-<!-- AUDIT:TODO:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/593 -->
-
 ---
 
 ## Work Tracking
@@ -294,8 +292,10 @@ Stack Operations
 - **[#428](https://github.com/beyond-immersion/bannou-service/issues/428)**: ABML economic action handlers (inventory_add/inventory_has)
 - **[#481](https://github.com/beyond-immersion/bannou-service/issues/481)**: Container template/definition pattern for reusable container configs
 - **[#482](https://github.com/beyond-immersion/bannou-service/issues/482)**: Item category indexing for inventory query optimization
+- **[#483](https://github.com/beyond-immersion/bannou-service/issues/483)**: Batch item operations and serial deletion optimization
 - **[#484](https://github.com/beyond-immersion/bannou-service/issues/484)**: Item event consumption for container counter synchronization
 - **[#485](https://github.com/beyond-immersion/bannou-service/issues/485)**: N+1 query pattern — batch item listing across containers
+- **[#593](https://github.com/beyond-immersion/bannou-service/issues/593)**: Account deletion cleanup handler for account-owned containers
 
 ### Completed
 - **2026-02-25**: Reclassified "Category constraints are client-side only" from Design Considerations to Intentional Quirks (#13) — intentional architectural boundary (Inventory is placement layer, Item is data layer, no circular dependency)

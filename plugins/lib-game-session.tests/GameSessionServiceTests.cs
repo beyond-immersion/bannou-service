@@ -2556,7 +2556,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
 /// <summary>
 /// Tests for GameSession event handler pipeline: session.connected, subscription.updated,
 /// shortcut publishing, lobby creation, and subscription caching.
-/// Uses SupportedGameServices = "test-game" to match the test stub name.
+/// Uses SupportedGameServices = ["test-game"] to match the test stub name.
 /// </summary>
 public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceConfiguration>
 {
@@ -2629,14 +2629,14 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
     }
 
     /// <summary>
-    /// Configure with SupportedGameServices = "test-game" so IsOurService matches.
+    /// Configure with SupportedGameServices = ["test-game"] so IsOurService matches.
     /// </summary>
     protected override GameSessionServiceConfiguration CreateConfiguration()
     {
         return new GameSessionServiceConfiguration
         {
             ServerSalt = TEST_SERVER_SALT,
-            SupportedGameServices = TEST_STUB_NAME
+            SupportedGameServices = [TEST_STUB_NAME]
         };
     }
 
@@ -3014,7 +3014,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
         var config = new GameSessionServiceConfiguration
         {
             ServerSalt = TEST_SERVER_SALT,
-            SupportedGameServices = "generic",
+            SupportedGameServices = ["generic"],
             GenericLobbiesEnabled = true
         };
 
@@ -3083,7 +3083,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
         var config = new GameSessionServiceConfiguration
         {
             ServerSalt = TEST_SERVER_SALT,
-            SupportedGameServices = "generic",
+            SupportedGameServices = ["generic"],
             GenericLobbiesEnabled = false  // Explicitly disabled
         };
 
@@ -3132,7 +3132,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
         var config = new GameSessionServiceConfiguration
         {
             ServerSalt = TEST_SERVER_SALT,
-            SupportedGameServices = "generic",
+            SupportedGameServices = ["generic"],
             GenericLobbiesEnabled = true
         };
 

@@ -72,10 +72,7 @@ public class GameSessionStartupService : BackgroundService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.game-session", "GameSessionStartupService.InitializeSubscriptionCaches");
 
-        // Central validation in PluginLoader ensures non-nullable strings are not empty
-        var supportedGameServices = _configuration.SupportedGameServices.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        foreach (var stubName in supportedGameServices)
+        foreach (var stubName in _configuration.SupportedGameServices)
         {
             try
             {

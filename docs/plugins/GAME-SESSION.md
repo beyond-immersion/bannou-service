@@ -60,17 +60,7 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 
 ---
 
-## Dependents (What Relies On This Plugin)
-
-| Dependent | Layer | Relationship |
-|-----------|-------|-------------|
-| lib-matchmaking | L4 | Creates matchmade sessions with reservations via `IGameSessionClient.CreateGameSessionAsync`; calls `PublishJoinShortcutAsync` to notify players |
-| lib-gardener | L4 | Creates `gardener-scenario` sessions to back player scenarios via `IGameSessionClient.CreateGameSessionAsync`; calls `LeaveGameSessionByIdAsync` on completion/abandonment; subscribes to `game-session.deleted` for observational logging |
-| lib-analytics | L4 | Maps session IDs to game-service IDs via `IGameSessionClient.GetGameSessionAsync`; subscribes to `game-session.created`, `game-session.deleted`, and `game-session.action.performed` for event ingestion and cache maintenance |
-
----
-
-### Type Field Classification
+## Type Field Classification
 
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
@@ -80,6 +70,16 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 | `ChatMessageType` | C (System State) | Service-specific enum (`public`, `whisper`, `system`) | Finite set of system-owned message delivery modes |
 | `GameActionType` | B (Content Code) | Opaque string | Game-defined action type codes (e.g., `move`, `interact`, `attack`). Extensible without schema changes; new action types added at deployment time per game |
 | `GameType` | B (Content Code) | Opaque string | Game service stub name (e.g., "arcadia", "fantasia", "generic"). Extensible without schema changes; new games added by creating game service definitions |
+
+---
+
+## Dependents (What Relies On This Plugin)
+
+| Dependent | Layer | Relationship |
+|-----------|-------|-------------|
+| lib-matchmaking | L4 | Creates matchmade sessions with reservations via `IGameSessionClient.CreateGameSessionAsync`; calls `PublishJoinShortcutAsync` to notify players |
+| lib-gardener | L4 | Creates `gardener-scenario` sessions to back player scenarios via `IGameSessionClient.CreateGameSessionAsync`; calls `LeaveGameSessionByIdAsync` on completion/abandonment; subscribes to `game-session.deleted` for observational logging |
+| lib-analytics | L4 | Maps session IDs to game-service IDs via `IGameSessionClient.GetGameSessionAsync`; subscribes to `game-session.created`, `game-session.deleted`, and `game-session.action.performed` for event ingestion and cache maintenance |
 
 ---
 
@@ -99,6 +99,109 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 | `SupportedGameServices` | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `generic` | Game service stub names for horizontal scaling partitioning (should be typed array in config schema, not comma-delimited string) |
 | `GenericLobbiesEnabled` | `GAME_SESSION_GENERIC_LOBBIES_ENABLED` | `false` | Auto-publish generic shortcuts without subscription (see Generic Lobbies) |
 | `LockTimeoutSeconds` | `GAME_SESSION_LOCK_TIMEOUT_SECONDS` | `60` | Timeout in seconds for distributed session locks |
+
+---
+
+## Visual Aid
+
+```
+Session Types & Lifecycle
+===========================
+
+ LOBBY (persistent, per-game-service)
+ ┌────────────────────────────────────────────────────────────┐
+ │ Account subscribes to "arcadia" │
+ │ │ │
+ │ ▼ │
+ │ session.connected event │
+ │ │ │
+ │ ├── Check _accountSubscriptions cache │
+ │ │ (miss? → fetch from SubscriptionClient) │
+ │ │ │
+ │ ├── Store subscriber session (ETag optimistic retry) │
+ │ │ │
+ │ └── PublishJoinShortcutAsync │
+ │ │ │
+ │ ├── GetOrCreateLobbySessionAsync("arcadia") │
+ │ ├── Generate route GUID + target GUID │
+ │ └── IClientEventPublisher → ShortcutPublishedEvent│
+ │ │
+ │ Client invokes shortcut → /sessions/join │
+ │ │ │
+ │ ├── Validate subscriber session │
+ │ ├── Acquire distributed lock │
+ │ ├── Set permission state: in_game │
+ │ └── Publish player-joined event │
+ └────────────────────────────────────────────────────────────┘
+
+
+ MATCHMADE (temporary, created by matchmaking)
+ ┌────────────────────────────────────────────────────────────┐
+ │ MatchmakingService creates session with reservations │
+ │ │ │
+ │ ├── POST /sessions/create (SessionType=Matchmade, │
+ │ │ ExpectedPlayers=[A, B, C]) │
+ │ │ │
+ │ └── POST /sessions/publish-join-shortcut (per player) │
+ │ │ │
+ │ └── ShortcutPublishedEvent → WebSocket │
+ │ │
+ │ Client invokes shortcut → /sessions/join-session │
+ │ │ │
+ │ ├── Validate reservation token │
+ │ ├── Check reservation expiry │
+ │ ├── Mark reservation as claimed │
+ │ └── (same lock/permission/event flow as lobby) │
+ │ │
+ │ ReservationCleanupService (periodic background): │
+ │ │ │
+ │ ├── Find matchmade sessions past expiry │
+ │ ├── claimedCount < totalReservations? │
+ │ │ └── Cancel session, notify players, delete state │
+ │ └── Publish game-session.cancelled │
+ └────────────────────────────────────────────────────────────┘
+
+
+Subscription Cache Architecture
+=================================
+
+ Static ConcurrentDictionary<Guid, HashSet<string>>
+ (AccountId → Set of subscribed stubNames)
+ │
+ ├── Warmed at startup by GameSessionStartupService
+ │ (queries SubscriptionClient for all supported services)
+ │
+ ├── Updated on session.connected (cache miss → fetch)
+ │
+ └── Updated on subscription.updated events
+ (add/remove stubNames based on action + isActive)
+
+ Distributed Subscriber Sessions (lib-state with ETags):
+ │
+ ├── subscriber-sessions:{accountId} → SubscriberSessionsModel
+ │ (Set of WebSocket session GUIDs for this account)
+ │
+ ├── Written on session.connected (optimistic retry)
+ ├── Read on subscription.updated (find sessions to notify)
+ └── Deleted on session.disconnected
+```
+
+---
+
+## Stubs & Unimplemented Features
+
+*No current stubs.*
+
+---
+
+## Potential Extensions
+
+1. **Spectator mode**: Allow joining with a `Spectator` role that receives events but cannot perform actions.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/594 -->
+2. **Session persistence/replay**: Store action history for replay or late-join state reconstruction.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/595 -->
+3. **Cross-instance lobby sync**: Replace the single `session-list` key with a proper indexed query for scaling.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/557 -->
 
 ---
 
@@ -210,114 +313,15 @@ User connects → session.connected event
 
 ---
 
-## Visual Aid
-
-```
-Session Types & Lifecycle
-===========================
-
- LOBBY (persistent, per-game-service)
- ┌────────────────────────────────────────────────────────────┐
- │ Account subscribes to "arcadia" │
- │ │ │
- │ ▼ │
- │ session.connected event │
- │ │ │
- │ ├── Check _accountSubscriptions cache │
- │ │ (miss? → fetch from SubscriptionClient) │
- │ │ │
- │ ├── Store subscriber session (ETag optimistic retry) │
- │ │ │
- │ └── PublishJoinShortcutAsync │
- │ │ │
- │ ├── GetOrCreateLobbySessionAsync("arcadia") │
- │ ├── Generate route GUID + target GUID │
- │ └── IClientEventPublisher → ShortcutPublishedEvent│
- │ │
- │ Client invokes shortcut → /sessions/join │
- │ │ │
- │ ├── Validate subscriber session │
- │ ├── Acquire distributed lock │
- │ ├── Set permission state: in_game │
- │ └── Publish player-joined event │
- └────────────────────────────────────────────────────────────┘
-
-
- MATCHMADE (temporary, created by matchmaking)
- ┌────────────────────────────────────────────────────────────┐
- │ MatchmakingService creates session with reservations │
- │ │ │
- │ ├── POST /sessions/create (SessionType=Matchmade, │
- │ │ ExpectedPlayers=[A, B, C]) │
- │ │ │
- │ └── POST /sessions/publish-join-shortcut (per player) │
- │ │ │
- │ └── ShortcutPublishedEvent → WebSocket │
- │ │
- │ Client invokes shortcut → /sessions/join-session │
- │ │ │
- │ ├── Validate reservation token │
- │ ├── Check reservation expiry │
- │ ├── Mark reservation as claimed │
- │ └── (same lock/permission/event flow as lobby) │
- │ │
- │ ReservationCleanupService (periodic background): │
- │ │ │
- │ ├── Find matchmade sessions past expiry │
- │ ├── claimedCount < totalReservations? │
- │ │ └── Cancel session, notify players, delete state │
- │ └── Publish game-session.cancelled │
- └────────────────────────────────────────────────────────────┘
-
-
-Subscription Cache Architecture
-=================================
-
- Static ConcurrentDictionary<Guid, HashSet<string>>
- (AccountId → Set of subscribed stubNames)
- │
- ├── Warmed at startup by GameSessionStartupService
- │ (queries SubscriptionClient for all supported services)
- │
- ├── Updated on session.connected (cache miss → fetch)
- │
- └── Updated on subscription.updated events
- (add/remove stubNames based on action + isActive)
-
- Distributed Subscriber Sessions (lib-state with ETags):
- │
- ├── subscriber-sessions:{accountId} → SubscriberSessionsModel
- │ (Set of WebSocket session GUIDs for this account)
- │
- ├── Written on session.connected (optimistic retry)
- ├── Read on subscription.updated (find sessions to notify)
- └── Deleted on session.disconnected
-```
-
----
-
-## Stubs & Unimplemented Features
-
-*No current stubs.*
-
----
-
-## Potential Extensions
-
-1. **Spectator mode**: Allow joining with a `Spectator` role that receives events but cannot perform actions.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/594 -->
-2. **Session persistence/replay**: Store action history for replay or late-join state reconstruction.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/595 -->
-3. **Cross-instance lobby sync**: Replace the single `session-list` key with a proper indexed query for scaling.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/557 -->
-
----
-
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
 
-*(none)*
+1. **SupportedGameServices is a comma-delimited string parsed at runtime**: The `SupportedGameServices` configuration property is a comma-delimited string that is split and parsed at runtime. Per Implementation Tenets (Configuration-First), comma-delimited strings for structured configuration bypass compile-time type safety and schema validation. Should be a typed array in the configuration schema with individual entries or `$ref` items.
+
+2. **ListGameSessions does not apply GameType/Status filters**: The schema defines `GameType` and `Status` filter parameters on the list request, but the implementation ignores them, returning all non-finished sessions. This is dead schema (the properties exist but have no effect).
+
+3. **CreateGameSession orphans session record on session-list lock failure**: The session record is written to the state store BEFORE acquiring the session-list lock. If the lock acquisition fails (returns 409), the session record persists as an orphan — unreachable via listing, never cleaned up. The write should be inside the lock, or the session record should be deleted as compensation on lock failure.
 
 ### Intentional Quirks
 
@@ -341,8 +345,6 @@ Subscription Cache Architecture
 2. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/557 -->
 
-3. ~~**CleanupPlayerModel property name mismatch**~~: **FIXED** (2026-03-08) - `CleanupPlayerModel.WebSocketSessionId` did not match `GamePlayer.SessionId`'s JSON key, so it always deserialized as null and players were never notified of matchmade session cancellation via WebSocket. Renamed to `SessionId` to match. The minimal cleanup model pattern itself is intentional (performance optimization for periodic cleanup cycles); a comment now documents the property-name alignment requirement.
-
 ---
 
 ## Work Tracking
@@ -352,5 +354,6 @@ Subscription Cache Architecture
 ### Completed
 
 - **Join validates subscriber session but Leave does not** — Moved from Design Considerations to Intentional Quirk #6 (2026-03-08). Behavior is correct: authorization verified at join time; leave always succeeds regardless of subscription status.
-- **CleanupPlayerModel property name mismatch** — Fixed (2026-03-08). `WebSocketSessionId` renamed to `SessionId` to match `GamePlayer`'s serialized JSON key. Players are now correctly notified of matchmade session cancellation.
+- **CleanupPlayerModel property name mismatch** — Fixed and verified (2026-03-08). `WebSocketSessionId` renamed to `SessionId`. Comment documents the alignment requirement.
+- **KickPlayer Finished transition / permission clearing / SendChatMessage validation** — Code verified fixed (2026-03-14). Map bug notes outdated; map update needed. KickPlayer now transitions to Finished on 0 players and clears permission state. SendChatMessage now validates sender membership via server-side session ID.
 
