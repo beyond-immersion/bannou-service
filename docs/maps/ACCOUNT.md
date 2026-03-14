@@ -79,7 +79,7 @@ This plugin does not consume external events.
 | Service | Role |
 |---------|------|
 | `ILogger<AccountService>` | Structured logging |
-| `AccountServiceConfiguration` | Typed configuration access (9 properties) |
+| `AccountServiceConfiguration` | Typed configuration access (12 properties) |
 | `IStateStoreFactory` | State store access -- produces 4 typed stores cached in constructor |
 | `IMessageBus` | Event publishing (lifecycle + error events) |
 | `IDistributedLockProvider` | Distributed locks for email uniqueness |
@@ -89,26 +89,26 @@ This plugin does not consume external events.
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| ListAccounts | POST /account/list | admin | - | - |
-| CreateAccount | POST /account/create | [] | account, email-index | account.created |
-| GetAccount | POST /account/get | [] | - | - |
-| UpdateAccount | POST /account/update | [] | account | account.updated |
-| DeleteAccount | POST /account/delete | [] | account, email-index, provider-index, auth-methods | account.deleted |
-| GetAccountByEmail | POST /account/by-email | [] | - | - |
-| GetAuthMethods | POST /account/auth-methods/list | [] | - | - |
-| AddAuthMethod | POST /account/auth-methods/add | [] | auth-methods, provider-index | account.updated |
-| RemoveAuthMethod | POST /account/auth-methods/remove | [] | auth-methods, provider-index | account.updated |
-| GetAccountByProvider | POST /account/by-provider | [] | - | - |
-| UpdateProfile | POST /account/profile/update | user | account | account.updated |
-| UpdatePasswordHash | POST /account/password/update | [] | account | account.updated |
-| UpdateMfa | POST /account/mfa/update | [] | account | account.updated |
-| BatchGetAccounts | POST /account/batch-get | [] | - | - |
-| CountAccounts | POST /account/count | [] | - | - |
-| BulkUpdateRoles | POST /account/roles/bulk-update | admin | account | account.updated |
-| UpdateVerificationStatus | POST /account/verification/update | [] | account | account.updated |
-| UpdateEmail | POST /account/email/update | [] | account, email-index | account.updated |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| ListAccounts | POST /account/list | generated | admin | - | - |
+| CreateAccount | POST /account/create | generated | [] | account, email-index | account.created |
+| GetAccount | POST /account/get | generated | [] | - | - |
+| UpdateAccount | POST /account/update | generated | [] | account | account.updated |
+| DeleteAccount | POST /account/delete | generated | [] | account, email-index, provider-index, auth-methods | account.deleted |
+| GetAccountByEmail | POST /account/by-email | generated | [] | - | - |
+| GetAuthMethods | POST /account/auth-methods/list | generated | [] | - | - |
+| AddAuthMethod | POST /account/auth-methods/add | generated | [] | auth-methods, provider-index | account.updated |
+| RemoveAuthMethod | POST /account/auth-methods/remove | generated | [] | auth-methods, provider-index | account.updated |
+| GetAccountByProvider | POST /account/by-provider | generated | [] | - | - |
+| UpdateProfile | POST /account/profile/update | generated | user | account | account.updated |
+| UpdatePasswordHash | POST /account/password/update | generated | [] | account | account.updated |
+| UpdateMfa | POST /account/mfa/update | generated | [] | account | account.updated |
+| BatchGetAccounts | POST /account/batch-get | generated | [] | - | - |
+| CountAccounts | POST /account/count | generated | [] | - | - |
+| BulkUpdateRoles | POST /account/roles/bulk-update | generated | admin | account | account.updated |
+| UpdateVerificationStatus | POST /account/verification/update | generated | [] | account | account.updated |
+| UpdateEmail | POST /account/email/update | generated | [] | account, email-index | account.updated |
 
 ---
 
@@ -434,3 +434,9 @@ FOR EACH expired account:
 - No events published — `account.deleted` was already published at soft-delete time
 - Per-item error isolation — one corrupt record does not block the cycle
 - Only hard-deletes the account record; email/provider indexes and auth methods are already cleaned up by `DeleteAccountAsync`
+
+---
+
+## Non-Standard Implementation Patterns
+
+No non-standard patterns.

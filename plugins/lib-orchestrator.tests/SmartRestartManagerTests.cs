@@ -329,8 +329,5 @@ public class SmartRestartManagerTests : IAsyncLifetime
         Assert.Matches(@"\d{2}:\d{2}:\d{2}", result.Duration);
     }
 
-    ValueTask IAsyncLifetime.InitializeAsync() => throw new NotImplementedException();
-    ValueTask IAsyncDisposable.DisposeAsync() => throw new NotImplementedException();
-
     #endregion
 }

@@ -126,27 +126,27 @@
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| Login | POST /auth/login | anonymous | session, session-id-index, account-sessions, refresh_token, login-attempts | auth.login.successful / auth.login.failed |
-| Register | POST /auth/register | anonymous | session, session-id-index, account-sessions, refresh_token | auth.registration.successful |
-| InitOAuth | GET /auth/oauth/{provider}/init | anonymous | - | - |
-| CompleteOAuth | POST /auth/oauth/{provider}/callback | anonymous | session, session-id-index, account-sessions, refresh_token, oauth-link | auth.oauth.successful |
-| VerifySteamAuth | POST /auth/steam/verify | anonymous | session, session-id-index, account-sessions, refresh_token, oauth-link | auth.steam.successful |
-| RefreshToken | POST /auth/refresh | user | session, session-id-index, account-sessions, refresh_token | - |
-| ValidateToken | POST /auth/validate | user | session (TTL refresh) | - |
-| Logout | POST /auth/logout | user | session, session-id-index, account-sessions | session.invalidated |
-| GetSessions | POST /auth/sessions/list | user | account-sessions (lazy cleanup) | - |
-| TerminateSession | POST /auth/sessions/terminate | user | session, session-id-index, account-sessions | session.invalidated |
-| GetRevocationList | POST /auth/revocation-list | admin | - | - |
-| RequestPasswordReset | POST /auth/password/reset | anonymous | password-reset | - |
-| ConfirmPasswordReset | POST /auth/password/confirm | anonymous | password-reset | auth.password-reset.successful |
-| ListProviders | POST /auth/providers | anonymous | - | - |
-| SetupMfa | POST /auth/mfa/setup | user | mfa-setup | - |
-| EnableMfa | POST /auth/mfa/enable | user | mfa-setup (consumed) | auth.mfa.enabled |
-| DisableMfa | POST /auth/mfa/disable | user | - | auth.mfa.disabled |
-| AdminDisableMfa | POST /auth/mfa/admin-disable | admin | - | auth.mfa.disabled |
-| VerifyMfa | POST /auth/mfa/verify | anonymous | mfa-challenge (consumed), session, refresh_token | auth.mfa.verified / auth.mfa.failed, auth.login.successful |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| Login | POST /auth/login | generated | anonymous | session, session-id-index, account-sessions, refresh_token, login-attempts | auth.login.successful / auth.login.failed |
+| Register | POST /auth/register | generated | anonymous | session, session-id-index, account-sessions, refresh_token | auth.registration.successful |
+| InitOAuth | GET /auth/oauth/{provider}/init | x-controller-only | anonymous | - | - |
+| CompleteOAuth | POST /auth/oauth/{provider}/callback | generated | anonymous | session, session-id-index, account-sessions, refresh_token, oauth-link | auth.oauth.successful |
+| VerifySteamAuth | POST /auth/steam/verify | generated | anonymous | session, session-id-index, account-sessions, refresh_token, oauth-link | auth.steam.successful |
+| RefreshToken | POST /auth/refresh | generated | user | session, session-id-index, account-sessions, refresh_token | - |
+| ValidateToken | POST /auth/validate | generated | user | session (TTL refresh) | - |
+| Logout | POST /auth/logout | generated | user | session, session-id-index, account-sessions | session.invalidated |
+| GetSessions | POST /auth/sessions/list | generated | user | account-sessions (lazy cleanup) | - |
+| TerminateSession | POST /auth/sessions/terminate | generated | user | session, session-id-index, account-sessions | session.invalidated |
+| GetRevocationList | POST /auth/revocation-list | generated | admin | - | - |
+| RequestPasswordReset | POST /auth/password/reset | generated | anonymous | password-reset | - |
+| ConfirmPasswordReset | POST /auth/password/confirm | generated | anonymous | password-reset | auth.password-reset.successful |
+| ListProviders | POST /auth/providers | generated | anonymous | - | - |
+| SetupMfa | POST /auth/mfa/setup | generated | user | mfa-setup | - |
+| EnableMfa | POST /auth/mfa/enable | generated | user | mfa-setup (consumed) | auth.mfa.enabled |
+| DisableMfa | POST /auth/mfa/disable | generated | user | - | auth.mfa.disabled |
+| AdminDisableMfa | POST /auth/mfa/admin-disable | generated | admin | - | auth.mfa.disabled |
+| VerifyMfa | POST /auth/mfa/verify | generated | anonymous | mfa-challenge (consumed), session, refresh_token | auth.mfa.verified / auth.mfa.failed, auth.login.successful |
 
 ---
 
@@ -567,3 +567,37 @@ RETURN (200, AuthResponse { accountId, accessToken, refreshToken, expiresIn, con
 ## Background Services
 
 No background services. Edge revocation retry is triggered inline on each revocation call, not by a background worker.
+
+---
+
+## Non-Standard Implementation Patterns
+
+### x-controller-only: InitOAuth (GET /auth/oauth/{provider}/init)
+
+The InitOAuth endpoint uses `x-controller-only: true` because it returns a 302 redirect (browser-facing OAuth flow), not a JSON response. This makes the generated controller an `abstract class AuthControllerBase`. A manual `AuthController.cs` partial class inherits from the base and overrides the generated abstract method.
+
+The controller casts `_authService` to `(AuthService)` to access `InitOAuthAsync`, which is not on `IAuthService`. The method builds a provider-specific authorization URL from configuration and returns it. The controller wraps the result as a 302 redirect.
+
+### ConfigureServices: Email Provider Selection
+
+`AuthServicePlugin.ConfigureServices` selects the `IEmailService` implementation based on the `EmailProvider` configuration enum:
+
+```
+IF EmailProvider == None -> ConsoleEmailService (logs to console)
+IF EmailProvider == Sendgrid -> SendGridEmailService (requires SendGridApiKey + EmailFromAddress)
+IF EmailProvider == Smtp -> SmtpEmailService (requires SmtpHost + EmailFromAddress)
+IF EmailProvider == Ses -> SesEmailService (requires SesAccessKeyId + SesSecretAccessKey + EmailFromAddress)
+```
+
+Missing required configuration for the selected provider throws `InvalidOperationException` at startup (hard failure, correct for L1).
+
+### EffectiveConnectUrl Computed Property
+
+The `ConnectUrl` returned in all successful auth responses is derived from a computed property with override priority:
+
+```
+IF AppConfiguration.ServiceDomain is non-empty -> "wss://{ServiceDomain}/connect"
+ELSE -> config.ConnectUrl (default: "ws://localhost:5014/connect")
+```
+
+In production (`BANNOU_SERVICE_DOMAIN` is always set), the `AUTH_CONNECT_URL` configuration property is effectively dead.

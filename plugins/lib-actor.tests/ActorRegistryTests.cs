@@ -397,8 +397,5 @@ public class ActorRegistryTests : IAsyncLifetime
         Assert.NotNull(registry.GetActiveActorIds());
     }
 
-    ValueTask IAsyncLifetime.InitializeAsync() => throw new NotImplementedException();
-    ValueTask IAsyncDisposable.DisposeAsync() => throw new NotImplementedException();
-
     #endregion
 }

@@ -120,7 +120,7 @@ Room Lifecycle & Storage Bifurcation
 
 ## Stubs & Unimplemented Features
 
-1. **`CleanDeprecatedRoomTypesAsync` (clean-deprecated endpoint)**: `POST /chat/type/clean-deprecated` is schema-defined and generated (controller + interface) but the service method throws `NotImplementedException`. Sweeps deprecated room types with zero remaining rooms. Uses shared `CleanDeprecatedRequest` (`gracePeriodDays`, `dryRun`) / `CleanDeprecatedResponse` (`cleaned`, `remaining`, `errors`, `cleanedIds`) from `common-api.yaml`. Roles: `[admin]`. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` from `bannou-service/Helpers/DeprecationCleanupHelper.cs` per IMPLEMENTATION TENETS (Category B clean-deprecated, B20-B22).
+*(None -- all endpoints implemented)*
 
 ---
 
@@ -169,7 +169,7 @@ No Chat changes are needed for this integration path -- the transport layer is r
 
 ### Bugs (Fix Immediately)
 
-1. **DeprecateRoomType changedFields does not match B14**: The implementation map's `DeprecateRoomType` pseudocode sets `Status=Deprecated` and publishes `changedFields: ["status"]`. Per Implementation Tenets Category B (B14), deprecation must publish `changedFields` containing the deprecation field names (`["isDeprecated", "deprecatedAt", "deprecationReason"]`). Additionally, the deep dive's Deprecation Lifecycle section claims triple-field storage (`IsDeprecated`, `DeprecatedAt`, `DeprecationReason`) but the map shows only `Status` enum mutation — either the storage model is wrong or the map's pseudocode is incomplete. Both the changedFields and the storage model need to align with B14.
+*(None)*
 
 ### Intentional Quirks (Documented Behavior)
 

@@ -242,11 +242,11 @@ POST /chat/type/deprecate | Roles: [developer]
 
 ```
 LOCK chat-lock:type:{code} -> 409 if fails
- READ room-type:type:{scope}:{code} -> 404 if null
- IF already deprecated
- RETURN (200, RoomTypeResponse) // idempotent
- WRITE room-type:type:{scope}:{code} <- Status=Deprecated, UpdatedAt=now
- PUBLISH chat.room-type.updated { ..., changedFields: ["status"] }
+  READ room-type:type:{scope}:{code} -> 404 if null
+  IF already deprecated
+    RETURN (200, RoomTypeResponse) // idempotent
+  WRITE room-type:type:{scope}:{code} <- Status=Deprecated, IsDeprecated=true, DeprecatedAt=now, DeprecationReason=body.Reason
+  PUBLISH chat.room-type.updated { ..., changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"] }
 RETURN (200, RoomTypeResponse)
 ```
 
@@ -716,24 +716,18 @@ RETURN (200)
 ### CleanDeprecatedRoomTypes
 POST /chat/type/clean-deprecated | Roles: [admin]
 
-**Status: UNIMPLEMENTED** (`NotImplementedException` stub)
-
 ```
-// Implementation should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
-// per IMPLEMENTATION TENETS Category B clean-deprecated (B20-B22).
-//
-// Expected pseudocode:
-// QUERY all room types WHERE Status == Deprecated
-// CALL DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
-//   deprecatedEntities: deprecated room types,
-//   getEntityId: rt => rt.RoomTypeId (or derive from code),
-//   getDeprecatedAt: rt => rt.DeprecatedAt,
-//   hasActiveInstancesAsync: query rooms store for any rooms with this roomTypeCode,
-//   deleteAndPublishAsync: delete room type + publish chat.room-type.deleted,
-//   gracePeriodDays: body.GracePeriodDays,
-//   dryRun: body.DryRun,
-//   logger, telemetryProvider, ct)
-// RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
+CALL DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+  getDeprecatedEntities: QUERY room-types WHERE $.IsDeprecated == true,
+  getEntityId: SHA-256 deterministic GUID from composite string key,
+  getDeprecatedAt: rt => rt.DeprecatedAt,
+  hasActiveInstancesAsync: COUNT rooms WHERE $.RoomTypeCode == rt.Code -> true if > 0,
+  deleteAndPublishAsync:
+    DELETE room-type:type:{scope}:{code}
+    PUBLISH chat.room-type.deleted { code, displayName, ..., deletedReason="Category B clean-deprecated sweep" },
+  gracePeriodDays: body.GracePeriodDays,
+  dryRun: body.DryRun)
+RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ```
 
 ---
@@ -811,4 +805,23 @@ LOCK chat-lock:"message-retention-cleanup"
  PAGED(0, MessageRetentionBatchSize)
  FOREACH message in expired
  DELETE messages:{roomId}:{messageId}
+```
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### OnRunningAsync (built-in room type registration)
+
+```
+// After base.OnRunningAsync()
+FOREACH builtInType in ["text", "sentiment", "emoji"]
+  CALL chatService.RegisterRoomTypeAsync(builtInType)
+  // text: MessageFormat=Text, PersistenceMode=Persistent
+  // sentiment: MessageFormat=Sentiment, PersistenceMode=Persistent
+  // emoji: MessageFormat=Emoji, PersistenceMode=Ephemeral
+  // All registered with global scope (GameServiceId=null)
+  IF status == OK -> log info (newly registered)
+  IF status == Conflict -> log debug (already exists, idempotent)
+  IF other -> log error + TryPublishErrorAsync
 ```

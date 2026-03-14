@@ -727,7 +727,7 @@ public class AchievementServiceTests
         EnumMappingValidator.AssertStringToEnumCoverage<EntityType>(
             "system", "account", "character", "actor", "guild", "organization",
             "government", "faction", "location", "realm", "item", "monster",
-            "relationship", "session", "deity", "dungeon", "custom", "other");
+            "relationship", "session", "deity", "dungeon", "other");
     }
 
     #endregion
