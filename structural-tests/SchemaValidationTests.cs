@@ -46,8 +46,18 @@ public class SchemaValidationTests
     }
 
     /// <summary>
+    /// Enum values that are intentionally non-PascalCase. These are proper nouns or
+    /// industry-standard identifiers where PascalCase would be incorrect or unrecognizable.
+    /// </summary>
+    private static readonly HashSet<string> PascalCaseExceptions = new(StringComparer.Ordinal)
+    {
+        "iOS", // Apple platform name — "Ios" would be unrecognizable
+    };
+
+    /// <summary>
     /// Validates that all enum values in schema files use PascalCase.
     /// Wrong casing breaks NSwag C# code generation and causes serialization mismatches.
+    /// Values in <see cref="PascalCaseExceptions"/> are excluded from validation.
     /// Per SCHEMA-RULES.md and QUALITY TENETS naming conventions.
     /// </summary>
     [Fact]
@@ -118,7 +128,7 @@ public class SchemaValidationTests
                             .Select(v => StripYamlComment(v.Trim().Trim('\'', '"')));
                         foreach (var val in values)
                         {
-                            if (!string.IsNullOrEmpty(val) && !pascalCasePattern.IsMatch(val))
+                            if (!string.IsNullOrEmpty(val) && !PascalCaseExceptions.Contains(val) && !pascalCasePattern.IsMatch(val))
                             {
                                 violations.Add($"{fileName}:{i + 1}: enum value '{val}'");
                             }
@@ -135,7 +145,7 @@ public class SchemaValidationTests
                 if (trimmed.StartsWith("- ", StringComparison.Ordinal))
                 {
                     var value = StripYamlComment(trimmed[2..].Trim().Trim('\'', '"'));
-                    if (!string.IsNullOrEmpty(value) && !pascalCasePattern.IsMatch(value))
+                    if (!string.IsNullOrEmpty(value) && !PascalCaseExceptions.Contains(value) && !pascalCasePattern.IsMatch(value))
                     {
                         violations.Add($"{fileName}:{i + 1}: enum value '{value}'");
                     }

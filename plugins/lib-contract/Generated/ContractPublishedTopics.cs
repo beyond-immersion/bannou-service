@@ -39,7 +39,7 @@ public static class ContractPublishedTopics
     public const string ContractProposed = "contract.proposed";
 
     /// <summary>Published when one party consents to a contract.</summary>
-    public const string ContractConsentReceived = "contract.consent-received";
+    public const string ContractConsentReceived = "contract.consented";
 
     /// <summary>Published when all required parties have consented.</summary>
     public const string ContractAccepted = "contract.accepted";
@@ -90,10 +90,10 @@ public static class ContractPublishedTopics
     public const string ContractPartyTransferred = "contract.party.transferred";
 
     /// <summary>Published when a new clause type is registered.</summary>
-    public const string ClauseTypeRegistered = "contract.clausetype.registered";
+    public const string ClauseTypeRegistered = "contract.clause-type.registered";
 
     /// <summary>Published when template values are set on contract instance.</summary>
-    public const string ContractTemplateValuesSet = "contract.templatevalues.set";
+    public const string ContractTemplateValuesSet = "contract.template-values.set";
 
     /// <summary>Published when contract clauses are executed (distributions made).</summary>
     public const string ContractExecuted = "contract.executed";

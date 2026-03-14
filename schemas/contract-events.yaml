@@ -7,7 +7,7 @@ info:
 
     **Categories**:
     - Lifecycle events (auto-generated): contract.template.created/updated/deleted, contract.instance.created/updated/deleted
-    - Contract flow events: proposed, consent-received, accepted, activated, milestone events, breach events, fulfillment, termination
+    - Contract flow events: proposed, consented, accepted, activated, milestone events, breach events, fulfillment, termination
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -42,7 +42,7 @@ info:
     - topic: contract.proposed
       event: ContractProposedEvent
       description: Published when a contract is proposed to parties (awaiting consent)
-    - topic: contract.consent-received
+    - topic: contract.consented
       event: ContractConsentReceivedEvent
       description: Published when one party consents to a contract
     - topic: contract.accepted
@@ -97,10 +97,10 @@ info:
     - topic: contract.party.transferred
       event: ContractPartyTransferredEvent
       description: Published when a party role is transferred to new entity
-    - topic: contract.clausetype.registered
+    - topic: contract.clause-type.registered
       event: ClauseTypeRegisteredEvent
       description: Published when a new clause type is registered
-    - topic: contract.templatevalues.set
+    - topic: contract.template-values.set
       event: ContractTemplateValuesSetEvent
       description: Published when template values are set on contract instance
     - topic: contract.executed
@@ -200,8 +200,8 @@ components:
       properties:
         eventName:
           type: string
-          default: contract.consent-received
-          description: 'Event type identifier: contract.consent-received'
+          default: contract.consented
+          description: 'Event type identifier: contract.consented'
         contractId:
           type: string
           format: uuid
@@ -846,8 +846,8 @@ components:
       properties:
         eventName:
           type: string
-          default: contract.clausetype.registered
-          description: 'Event type identifier: contract.clausetype.registered'
+          default: contract.clause-type.registered
+          description: 'Event type identifier: contract.clause-type.registered'
         typeCode:
           type: string
           description: Clause type code
@@ -877,8 +877,8 @@ components:
       properties:
         eventName:
           type: string
-          default: contract.templatevalues.set
-          description: 'Event type identifier: contract.templatevalues.set'
+          default: contract.template-values.set
+          description: 'Event type identifier: contract.template-values.set'
         contractId:
           type: string
           format: uuid

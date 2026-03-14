@@ -166,6 +166,12 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 
 ---
 
+## Configuration
+
+Configuration details are extensive (35 properties covering deployment, pool, behavior loop, GOAP, perception, and timeouts). See the implementation map's DI Services section for the `ActorServiceConfiguration` reference.
+
+---
+
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -426,7 +432,7 @@ Actor State Model
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/391 -->
 4. **Actor migration**: Move running actors between pool nodes for load balancing without state loss.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/393 -->
-5. **Variable provider completeness audit**: Currency, inventory, and relationship providers are now implemented. Issue [#147](https://github.com/beyond-immersion/bannou-service/issues/147) may be closeable — verify cache TTL tuning and ABML expression coverage are complete.
+5. **Variable provider completeness audit**: Currency, inventory, and relationship providers are now implemented per issue [#147](https://github.com/beyond-immersion/bannou-service/issues/147). Remaining scope: cache TTL tuning and ABML expression coverage verification.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/147 -->
 6. **Director tap mechanism**: Actor publishes per-tick state snapshots (perceptions, variable provider outputs, GOAP plans, behavior position) to a `director.tap.{actorId}` RabbitMQ topic when a tap is active. Tap registration uses special perception types (`director_tap_start`/`director_tap_stop`) injected via `InjectPerception` that Actor recognizes as side-channel control signals (no-op for cognition, activate/deactivate tap publishing). Enables real-time developer observation without modifying the behavior loop. See [DIRECTOR.md](DIRECTOR.md) Tier 1.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/597 -->
@@ -515,6 +521,4 @@ Actor State Model
 
 ## Work Tracking
 
-### Implementation Gaps
-
-No implementation gaps identified requiring AUDIT markers.
+Active AUDIT markers exist across Stubs (#1, #2), Potential Extensions (#1-#14), Bugs (#1, #2), and Design Considerations (#1). All are `NEEDS_DESIGN` with linked GitHub issues.

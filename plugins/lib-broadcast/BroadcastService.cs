@@ -57,12 +57,15 @@ public partial class BroadcastService : IBroadcastService
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<BroadcastService> logger,
-        BroadcastServiceConfiguration configuration)
+        BroadcastServiceConfiguration configuration,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

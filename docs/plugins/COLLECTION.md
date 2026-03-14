@@ -108,8 +108,6 @@ None. All schema-defined endpoints are implemented.
 
 No known bugs at this time.
 
-1. ~~**`CleanDeprecatedEntryTemplatesAsync` uses full query scan instead of reverse index**~~: **FIXED** (2026-03-13) - Added reverse index (`tpl-col:{entryTemplateId}`) mapping entry templates to collection instance IDs. `CleanDeprecatedEntryTemplatesAsync` now uses `HasStringListEntriesAsync` for O(1) instance existence checks. Implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`.
-
 ### Intentional Quirks (Documented Behavior)
 
 1. **Polymorphic ownership via EntityType enum**: `ownerType` uses the shared `EntityType` enum (Category A per IMPLEMENTATION TENETS decision tree — all valid values are first-class Bannou entities). Valid owner types that map to `ContainerOwnerType`: `character`, `account`, `location`, `guild`. Unknown types are rejected at the `MapToContainerOwnerType` check, returning `BadRequest`.
@@ -130,9 +128,7 @@ No known bugs at this time.
 
 9. **No event-driven entry template cache invalidation**: When an entry template is updated or deleted, existing collection caches that reference it are not invalidated. Stale template data may be served until the cache TTL expires or the cache is rebuilt. Cache TTL (default 300s) bounds the staleness window.
 
-10. **Reverse index for entry template→collection mapping**: A string list reverse index (`tpl-col:{entryTemplateId}`) maps each entry template to the collection instance IDs that contain entries from that template. Maintained via `AddToStringListAsync` on entry grant and `RemoveFromStringListAsync` on collection deletion. Used by `CleanDeprecatedEntryTemplatesAsync` for O(1) instance existence checks via `HasStringListEntriesAsync`.
-
-11. **Clean-deprecated now implemented**: `CleanDeprecatedEntryTemplatesAsync` uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` with the reverse index for O(1) instance checking. Publishes `collection.entry-template.deleted` lifecycle event for each cleaned template. Defensive reverse index cleanup on each template deletion.
+10. **Reverse index for entry template→collection mapping**: A string list reverse index (`tpl-col:{entryTemplateId}`) maps each entry template to the collection instance IDs that contain entries from that template. Maintained via `AddToStringListAsync` on entry grant and `RemoveFromStringListAsync` on collection deletion. Used by `CleanDeprecatedEntryTemplatesAsync` for O(1) instance existence checks via `HasStringListEntriesAsync`. Clean-deprecated uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`.
 
 ### Design Considerations (Requires Planning)
 

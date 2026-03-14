@@ -23,7 +23,7 @@ namespace BeyondImmersion.BannouService.Telemetry;
 /// so that ITelemetryProvider is available for injection into those infrastructure libs.
 /// </para>
 /// </remarks>
-public class TelemetryServicePlugin : BaseBannouPlugin
+public class TelemetryServicePlugin : StandardServicePlugin<ITelemetryService>
 {
     /// <inheritdoc/>
     public override string PluginName => "telemetry";
@@ -31,8 +31,6 @@ public class TelemetryServicePlugin : BaseBannouPlugin
     /// <inheritdoc/>
     public override string DisplayName => "Telemetry Service";
 
-    private ITelemetryService? _service;
-    private IServiceProvider? _serviceProvider;
     private HealthTrackingExporter? _healthTrackingExporter;
 
     /// <summary>
@@ -41,7 +39,7 @@ public class TelemetryServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        Logger?.LogDebug("Configuring telemetry service dependencies");
+        base.ConfigureServices(services);
 
         // Register ITelemetryProvider as Singleton so it's available to all infrastructure libs
         services.AddSingleton<ITelemetryProvider>(sp =>
@@ -60,8 +58,34 @@ public class TelemetryServicePlugin : BaseBannouPlugin
 
         // Configure OpenTelemetry SDK
         ConfigureOpenTelemetry(services);
+    }
 
-        Logger?.LogDebug("Telemetry service dependencies configured");
+    /// <summary>
+    /// Configure application pipeline - maps Prometheus metrics endpoint.
+    /// </summary>
+    public override void ConfigureApplication(WebApplication app)
+    {
+        base.ConfigureApplication(app);
+
+        // Map Prometheus metrics endpoint if metrics are enabled
+        var config = app.Services.GetRequiredService<TelemetryServiceConfiguration>();
+        if (config.MetricsEnabled)
+        {
+            // Map Prometheus scraping endpoint at /metrics
+            // This exposes all registered meters for Prometheus to scrape
+            app.MapPrometheusScrapingEndpoint("/metrics");
+            Logger?.LogInformation("Prometheus metrics endpoint mapped at /metrics");
+        }
+
+        // Log final configuration summary
+        var appConfig = app.Services.GetRequiredService<AppConfiguration>();
+        var serviceName = !string.IsNullOrWhiteSpace(config.ServiceName)
+            ? config.ServiceName
+            : appConfig.EffectiveAppId;
+
+        Logger?.LogInformation(
+            "OpenTelemetry finalized: serviceName={ServiceName}, tracing={TracingEnabled}, metrics={MetricsEnabled}, endpoint={Endpoint}",
+            serviceName, config.TracingEnabled, config.MetricsEnabled, config.OtlpEndpoint);
     }
 
     /// <summary>
@@ -196,168 +220,5 @@ public class TelemetryServicePlugin : BaseBannouPlugin
         services.AddSingleton(_healthTrackingExporter);
 
         return new BatchActivityExportProcessor(_healthTrackingExporter);
-    }
-
-    /// <summary>
-    /// Configure application pipeline.
-    /// </summary>
-    public override void ConfigureApplication(WebApplication app)
-    {
-        Logger?.LogInformation("Configuring Telemetry service application pipeline");
-
-        // Store service provider for lifecycle management
-        _serviceProvider = app.Services;
-
-        // Map Prometheus metrics endpoint if metrics are enabled
-        var config = app.Services.GetRequiredService<TelemetryServiceConfiguration>();
-        if (config.MetricsEnabled)
-        {
-            // Map Prometheus scraping endpoint at /metrics
-            // This exposes all registered meters for Prometheus to scrape
-            app.MapPrometheusScrapingEndpoint("/metrics");
-            Logger?.LogInformation("Prometheus metrics endpoint mapped at /metrics");
-        }
-
-        // Log final configuration summary
-        var appConfig = app.Services.GetRequiredService<AppConfiguration>();
-        var serviceName = !string.IsNullOrWhiteSpace(config.ServiceName)
-            ? config.ServiceName
-            : appConfig.EffectiveAppId;
-
-        Logger?.LogInformation(
-            "OpenTelemetry finalized: serviceName={ServiceName}, tracing={TracingEnabled}, metrics={MetricsEnabled}, endpoint={Endpoint}",
-            serviceName, config.TracingEnabled, config.MetricsEnabled, config.OtlpEndpoint);
-    }
-
-    /// <summary>
-    /// Initialize the telemetry service.
-    /// </summary>
-    protected override async Task<bool> OnInitializeAsync()
-    {
-        Logger?.LogInformation("Initializing Telemetry service");
-
-        try
-        {
-            if (_serviceProvider == null)
-            {
-                Logger?.LogError("ServiceProvider not available - ConfigureApplication must be called first");
-                return false;
-            }
-
-            // Verify ITelemetryProvider is registered correctly
-            var telemetryProvider = _serviceProvider.GetService<ITelemetryProvider>();
-            if (telemetryProvider != null)
-            {
-                Logger?.LogInformation(
-                    "TelemetryProvider initialized: tracing={TracingEnabled}, metrics={MetricsEnabled}",
-                    telemetryProvider.TracingEnabled, telemetryProvider.MetricsEnabled);
-            }
-            else
-            {
-                Logger?.LogWarning("ITelemetryProvider not available in DI container");
-            }
-
-            await Task.CompletedTask;
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogError(ex, "Failed to initialize Telemetry service");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Start the service.
-    /// </summary>
-    protected override async Task<bool> OnStartAsync()
-    {
-        Logger?.LogInformation("Starting Telemetry service");
-
-        try
-        {
-            // Get service instance from DI container with proper scope handling
-            using var scope = _serviceProvider?.CreateScope();
-            _service = scope?.ServiceProvider.GetService<ITelemetryService>();
-
-            if (_service == null)
-            {
-                Logger?.LogError("Failed to resolve ITelemetryService from DI container");
-                return false;
-            }
-
-            // Call existing IBannouService.OnStartAsync if the service implements it
-            if (_service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnStartAsync for Telemetry service");
-                await bannouService.OnStartAsync(CancellationToken.None);
-            }
-
-            Logger?.LogInformation("Telemetry service started successfully");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogError(ex, "Failed to start Telemetry service");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Running phase.
-    /// </summary>
-    protected override async Task OnRunningAsync()
-    {
-        if (_service == null) return;
-
-        Logger?.LogDebug("Telemetry service running");
-
-        try
-        {
-            if (_service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Telemetry service");
-                await bannouService.OnRunningAsync(CancellationToken.None);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogWarning(ex, "Exception during Telemetry service running phase");
-        }
-    }
-
-    /// <summary>
-    /// Shutdown the service.
-    /// </summary>
-    protected override async Task OnShutdownAsync()
-    {
-        if (_service == null) return;
-
-        Logger?.LogInformation("Shutting down Telemetry service");
-
-        try
-        {
-            if (_service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Telemetry service");
-                await bannouService.OnShutdownAsync();
-            }
-
-            // Dispose TelemetryProvider if it implements IDisposable
-            if (_serviceProvider != null)
-            {
-                var telemetryProvider = _serviceProvider.GetService<ITelemetryProvider>();
-                if (telemetryProvider is IDisposable disposable)
-                {
-                    disposable.Dispose();
-                }
-            }
-
-            Logger?.LogInformation("Telemetry service shutdown complete");
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogWarning(ex, "Exception during Telemetry service shutdown");
-        }
     }
 }

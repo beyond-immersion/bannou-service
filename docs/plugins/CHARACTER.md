@@ -22,7 +22,6 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 
 | Extension | Value | Purpose |
 |-----------|-------|---------|
-| `x-service-layer` | `GameFoundation` | L2 service - depends on L0/L1/L2 only |
 | `x-resource-lifecycle` | `resourceType: character`, `gracePeriodSeconds: 2592000`, `cleanupPolicy: ALL_REQUIRED` | 30-day grace period before cleanup; deletion aborts if any cleanup callback fails |
 | `x-compression-callback` | `resourceType: character`, `priority: 0` | Provides base character data for hierarchical compression via Resource service |
 
@@ -111,7 +110,7 @@ None currently tracked.
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Dead event topic constants**~~: **FIXED** (2026-03-08) - Removed 6 unused `private const string` topic constants (`CHARACTER_CREATED_TOPIC`, etc.) that remained after migration to generated `CharacterEventPublisher` extension methods. Zero functional impact — the service already used generated publishers for all event publishing.
+None currently tracked.
 
 ### Intentional Quirks (Documented Behavior)
 

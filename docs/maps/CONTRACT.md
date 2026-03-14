@@ -15,7 +15,7 @@
 | Layer | L1 AppFoundation |
 | Endpoints | 32 |
 | State Stores | contract-statestore (Redis), contract-lock (Redis) |
-| Events Published | 27 (`contract.template.created`, `contract.template.updated`, `contract.template.deleted`, `contract.instance.created`, `contract.instance.updated`, `contract.instance.deleted`, `contract.proposed`, `contract.consent-received`, `contract.accepted`, `contract.activated`, `contract.milestone.completed`, `contract.milestone.failed`, `contract.breach.detected`, `contract.breach.cured`, `contract.fulfilled`, `contract.terminated`, `contract.expired`, `contract.payment.due`, `contract.prebound-api.executed`, `contract.prebound-api.failed`, `contract.prebound-api.validation-failed`, `contract.locked`, `contract.unlocked`, `contract.party.transferred`, `contract.clausetype.registered`, `contract.templatevalues.set`, `contract.executed`) |
+| Events Published | 27 (`contract.template.created`, `contract.template.updated`, `contract.template.deleted`, `contract.instance.created`, `contract.instance.updated`, `contract.instance.deleted`, `contract.proposed`, `contract.consented`, `contract.accepted`, `contract.activated`, `contract.milestone.completed`, `contract.milestone.failed`, `contract.breach.detected`, `contract.breach.cured`, `contract.fulfilled`, `contract.terminated`, `contract.expired`, `contract.payment.due`, `contract.prebound-api.executed`, `contract.prebound-api.failed`, `contract.prebound-api.validation-failed`, `contract.locked`, `contract.unlocked`, `contract.party.transferred`, `contract.clause-type.registered`, `contract.template-values.set`, `contract.executed`) |
 | Events Consumed | 0 |
 | Client Events | 0 |
 | Background Services | 1 (ContractExpirationService) |
@@ -60,6 +60,8 @@
 | lib-mesh (`IEventConsumer`) | L0 | Hard | Event consumer registration (unused in v1) |
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation on async helpers |
 
+**Marker interface**: `ICleanDeprecatedEntity` — Category B deprecation lifecycle compliance (structural test validated).
+
 No DI provider/listener interfaces implemented or consumed. No typed service clients injected — all cross-service calls go through `IServiceNavigator` at runtime (target service determined by prebound API definitions, not compile-time).
 
 ---
@@ -70,19 +72,19 @@ No DI provider/listener interfaces implemented or consumed. No typed service cli
 |-------|-----------|---------|
 | `contract.template.created` | `ContractTemplateCreatedEvent` | CreateContractTemplate |
 | `contract.template.updated` | `ContractTemplateUpdatedEvent` | UpdateContractTemplate |
-| `contract.template.deleted` | `ContractTemplateDeletedEvent` | Unused Category B infrastructure — contract templates are never deleted |
+| `contract.template.deleted` | `ContractTemplateDeletedEvent` | CleanDeprecatedContractTemplates (per eligible template in sweep) |
 | `contract.instance.created` | `ContractInstanceCreatedEvent` | CreateContractInstance |
 | `contract.instance.updated` | `ContractInstanceUpdatedEvent` | ProposeContractInstance, ConsentToContract, TerminateContractInstance, GetContractInstanceStatus (lazy), CompleteMilestone, FailMilestone, GetMilestone (lazy), ReportBreach, UpdateContractMetadata, LockContract, UnlockContract, TransferContractParty, SetContractTemplateValues, ExecuteContract |
 | `contract.instance.deleted` | `ContractInstanceDeletedEvent` | DeleteContractInstance |
 | `contract.proposed` | `ContractProposedEvent` | ProposeContractInstance |
-| `contract.consent-received` | `ContractConsentReceivedEvent` | ConsentToContract |
+| `contract.consented` | `ContractConsentReceivedEvent` | ConsentToContract |
 | `contract.accepted` | `ContractAcceptedEvent` | ConsentToContract (all consented) |
 | `contract.activated` | `ContractActivatedEvent` | ConsentToContract (immediate), GetContractInstanceStatus (lazy), ContractExpirationService |
 | `contract.milestone.completed` | `ContractMilestoneCompletedEvent` | CompleteMilestone |
 | `contract.milestone.failed` | `ContractMilestoneFailedEvent` | FailMilestone, ProcessOverdueMilestone (deadline enforcement) |
 | `contract.breach.detected` | `ContractBreachDetectedEvent` | ReportBreach, CheckBreachThreshold (auto-terminate) |
 | `contract.breach.cured` | `ContractBreachCuredEvent` | CureBreach |
-| `contract.fulfilled` | `ContractFulfilledEvent` | CompleteMilestone (all required complete) |
+| `contract.fulfilled` | `ContractFulfilledEvent` | CompleteMilestone (all required complete), ConsentToContract (no-milestone path), GetContractInstanceStatus (lazy Pending→Fulfilled) |
 | `contract.terminated` | `ContractTerminatedEvent` | TerminateContractInstance, CheckBreachThreshold |
 | `contract.expired` | `ContractExpiredEvent` | ConsentToContract (lazy consent deadline), GetContractInstanceStatus (lazy), ContractExpirationService |
 | `contract.payment.due` | `ContractPaymentDueEvent` | ContractExpirationService (payment schedule check) |
@@ -92,8 +94,8 @@ No DI provider/listener interfaces implemented or consumed. No typed service cli
 | `contract.locked` | `ContractLockedEvent` | LockContract |
 | `contract.unlocked` | `ContractUnlockedEvent` | UnlockContract |
 | `contract.party.transferred` | `ContractPartyTransferredEvent` | TransferContractParty |
-| `contract.clausetype.registered` | `ClauseTypeRegisteredEvent` | RegisterClauseType |
-| `contract.templatevalues.set` | `ContractTemplateValuesSetEvent` | SetContractTemplateValues |
+| `contract.clause-type.registered` | `ClauseTypeRegisteredEvent` | RegisterClauseType |
+| `contract.template-values.set` | `ContractTemplateValuesSetEvent` | SetContractTemplateValues |
 | `contract.executed` | `ContractExecutedEvent` | ExecuteContract |
 
 ---
@@ -131,13 +133,13 @@ This plugin does not consume external events. Schema declares `x-event-subscript
 | DeprecateContractTemplate | POST /contract/template/deprecate | admin | template | contract.template.updated |
 | CreateContractInstance | POST /contract/instance/create | user | instance, party-idx, template-idx, status-idx | contract.instance.created |
 | ProposeContractInstance | POST /contract/instance/propose | user | instance, status-idx | contract.proposed, contract.instance.updated |
-| ConsentToContract | POST /contract/instance/consent | user | instance, status-idx | contract.consent-received, contract.accepted, contract.activated, contract.expired, contract.instance.updated |
+| ConsentToContract | POST /contract/instance/consent | user | instance, status-idx | contract.consented, contract.accepted, contract.activated, contract.expired, contract.instance.updated |
 | GetContractInstance | POST /contract/instance/get | user | - | - |
 | QueryContractInstances | POST /contract/instance/query | user | - | - |
-| TerminateContractInstance | POST /contract/instance/terminate | user | instance, status-idx, party-idx | contract.terminated, contract.instance.updated |
+| TerminateContractInstance | POST /contract/instance/terminate | user | instance, status-idx | contract.terminated, contract.instance.updated |
 | DeleteContractInstance | POST /contract/instance/delete | developer | instance, party-idx, template-idx, status-idx, breach | contract.instance.deleted |
-| GetContractInstanceStatus | POST /contract/instance/get-status | user | instance, status-idx | contract.activated, contract.expired, contract.milestone.failed, contract.breach.detected, contract.instance.updated |
-| CompleteMilestone | POST /contract/milestone/complete | developer | instance, status-idx, party-idx | contract.milestone.completed, contract.fulfilled, contract.instance.updated |
+| GetContractInstanceStatus | POST /contract/instance/get-status | user | instance, status-idx | contract.activated, contract.fulfilled, contract.expired, contract.milestone.failed, contract.breach.detected, contract.instance.updated |
+| CompleteMilestone | POST /contract/milestone/complete | developer | instance, status-idx | contract.milestone.completed, contract.fulfilled, contract.instance.updated |
 | FailMilestone | POST /contract/milestone/fail | developer | instance | contract.milestone.failed, contract.breach.detected, contract.instance.updated |
 | GetMilestone | POST /contract/milestone/get | user | instance | contract.milestone.failed (lazy deadline), contract.instance.updated |
 | ReportBreach | POST /contract/breach/report | user | instance, breach | contract.breach.detected, contract.terminated, contract.instance.updated |
@@ -150,12 +152,12 @@ This plugin does not consume external events. Schema declares `x-event-subscript
 | LockContract | POST /contract/lock | developer | instance, idempotency | contract.locked, contract.instance.updated |
 | UnlockContract | POST /contract/unlock | developer | instance, idempotency | contract.unlocked, contract.instance.updated |
 | TransferContractParty | POST /contract/transfer-party | developer | instance, party-idx, idempotency | contract.party.transferred, contract.instance.updated |
-| RegisterClauseType | POST /contract/clause-type/register | admin | clause-type, all-clause-types | contract.clausetype.registered |
+| RegisterClauseType | POST /contract/clause-type/register | admin | clause-type, all-clause-types | contract.clause-type.registered |
 | ListClauseTypes | POST /contract/clause-type/list | developer | clause-type (lazy init) | - |
-| SetContractTemplateValues | POST /contract/instance/set-template-values | developer | instance | contract.templatevalues.set, contract.instance.updated |
+| SetContractTemplateValues | POST /contract/instance/set-template-values | developer | instance | contract.template-values.set, contract.instance.updated |
 | CheckAssetRequirements | POST /contract/instance/check-asset-requirements | developer | - | - |
 | ExecuteContract | POST /contract/instance/execute | developer | instance, idempotency | contract.executed, contract.prebound-api.*, contract.instance.updated |
-| CleanDeprecatedContractTemplates | POST /contract/template/clean-deprecated | admin | template, template-code, all-templates | *(unimplemented)* |
+| CleanDeprecatedContractTemplates | POST /contract/template/clean-deprecated | admin | template, template-code, all-templates, template-idx | contract.template.deleted |
 
 ---
 
@@ -292,9 +294,9 @@ LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if 
  // Record consent with timestamp
  IF not all required parties consented
  ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
- PUBLISH contract.consent-received { contractId, role, remainingConsentsNeeded }
+ PUBLISH contract.consented { contractId, role, remainingConsentsNeeded }
  ELSE // all consented
- PUBLISH contract.consent-received { contractId, role, remainingConsentsNeeded: 0 }
+ PUBLISH contract.consented { contractId, role, remainingConsentsNeeded: 0 }
  PUBLISH contract.accepted { contractId, templateCode, parties }
  IF effectiveFrom is null OR effectiveFrom <= now
  // Immediate activation
@@ -353,8 +355,6 @@ LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if 
  IF requestingEntity not a party -> 400
  // Transition to Terminated
  WRITE contract-statestore:status-idx:{oldStatus} <- remove contractId
- FOREACH party in parties
- WRITE contract-statestore:party-idx:{entityType}:{entityId} <- remove contractId
  ETAG-WRITE contract-statestore:instance:{contractId} <- status=Terminated, TerminatedAt=now
  PUBLISH contract.terminated { contractId, templateCode, requestingEntityId, reason }
  PUBLISH contract.instance.updated { contractId, status, changedFields=["status","terminatedAt"] }
@@ -385,11 +385,18 @@ POST /contract/instance/get-status | Roles: [user]
 READ contract-statestore:instance:{contractId} [with ETag] -> 404 if null
 // Lazy enforcement block
 IF status == Pending AND effectiveFrom <= now
- // Activate first milestone
+ // Activate contract
  WRITE contract-statestore:status-idx:Pending <- remove contractId
- WRITE contract-statestore:status-idx:Active <- append contractId
- ETAG-WRITE contract-statestore:instance:{contractId} <- status=Active
  PUBLISH contract.activated { contractId, templateCode, parties }
+ IF no milestones OR all required milestones already complete
+  // No-milestone path → straight to Fulfilled
+  WRITE contract-statestore:status-idx:Fulfilled <- append contractId
+  ETAG-WRITE contract-statestore:instance:{contractId} <- status=Fulfilled
+  PUBLISH contract.fulfilled { contractId, templateCode, parties }
+ ELSE
+  // Activate first milestone
+  WRITE contract-statestore:status-idx:Active <- append contractId
+  ETAG-WRITE contract-statestore:instance:{contractId} <- status=Active
  PUBLISH contract.instance.updated { contractId, status, changedFields=["status"] }
 IF status == Active AND effectiveUntil <= now
  // Expire contract
@@ -428,8 +435,7 @@ LOCK contract-lock:contract:{contractId} (ContractLockTimeoutSeconds) -> 409 if 
  IF all required milestones completed
  // Transition contract to Fulfilled
  WRITE contract-statestore:status-idx:Active <- remove contractId
- FOREACH party in parties
- WRITE contract-statestore:party-idx:{entityType}:{entityId} <- remove contractId
+ WRITE contract-statestore:status-idx:Fulfilled <- append contractId
  PUBLISH contract.fulfilled { contractId, templateCode, parties, milestonesCompleted }
  ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
  PUBLISH contract.milestone.completed { contractId, milestoneCode, preboundApisExecuted }
@@ -648,7 +654,7 @@ READ contract-statestore:clause-type:{typeCode} -> 409 if exists
 // see helper: EnsureBuiltInClauseTypes
 WRITE contract-statestore:clause-type:{typeCode} <- ClauseTypeModel from request
 WRITE contract-statestore:all-clause-types <- append typeCode
-PUBLISH contract.clausetype.registered { typeCode, category }
+PUBLISH contract.clause-type.registered { typeCode, category }
 RETURN (200, RegisterClauseTypeResponse)
 ```
 
@@ -677,7 +683,7 @@ FOREACH key in request.templateValues.Keys
  IF key does not match pattern ^[A-Za-z0-9_]+$ -> 400
 // Merge provided values into instance.TemplateValues (additive)
 ETAG-WRITE contract-statestore:instance:{contractId} -> 409 if ETag mismatch
-PUBLISH contract.templatevalues.set { contractId, keys }
+PUBLISH contract.template-values.set { contractId, keys }
 PUBLISH contract.instance.updated { contractId, status, changedFields=["templateValues"] }
 RETURN (200, SetTemplateValuesResponse { contractId, valueCount })
 ```
@@ -734,11 +740,23 @@ RETURN (200, ExecuteContractResponse { contractId, distributions })
 POST /contract/template/clean-deprecated | Roles: [admin]
 
 ```
-// UNIMPLEMENTED — throws NotImplementedException
-// Should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
-// Sweeps deprecated contract templates with zero remaining contract instances
-// Uses shared CleanDeprecatedRequest (gracePeriodDays, dryRun)
-// Returns shared CleanDeprecatedResponse (cleaned, remaining, errors, cleanedIds)
+READ contract-statestore:all-templates -> templateIds
+IF empty -> RETURN (200, CleanDeprecatedResponse { cleaned=0 })
+READ contract-statestore:template:{*} (bulk) -> all templates
+// Filter to deprecated templates only
+// Delegate to DeprecationCleanupHelper.ExecuteCleanupSweepAsync:
+//   getEntityId: template.TemplateId
+//   getDeprecatedAt: template.DeprecatedAt
+//   hasActiveInstances: READ contract-statestore:template-idx:{templateId} -> has entries?
+//   deleteAndPublish: (per eligible template)
+FOREACH eligible deprecated template (via helper)
+  DELETE contract-statestore:template:{templateId}
+  DELETE contract-statestore:template-code:{code}
+  WRITE contract-statestore:all-templates <- remove templateId
+  DELETE contract-statestore:template-idx:{templateId}
+  PUBLISH contract.template.deleted { templateId, code, name, deletedReason }
+// Helper handles: grace period filtering, dry-run mode, per-item error isolation
+RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ```
 
 ---

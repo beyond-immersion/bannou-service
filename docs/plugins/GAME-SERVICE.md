@@ -85,7 +85,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **Missing deprecation lifecycle (Category A)**: Game service records are referenced by ID from many L2/L4 services (seed types, collection types, license boards, factions, worldstate, status templates, analytics). Per IMPLEMENTATION TENETS (Deprecation Lifecycle), entities that other entities reference by ID MUST support a deprecation lifecycle before deletion. Game-service currently allows direct deletion without deprecation — no deprecate/undeprecate endpoints, no `IsDeprecated`/`DeprecatedAt`/`DeprecationReason` storage fields, no `includeDeprecated` parameter on the list endpoint, and `DeleteService` does not check deprecation status before proceeding. As a Category A entity (world-building definition with eventual deletion), game-service needs: deprecate endpoint, undeprecate endpoint, triple-field deprecation model, delete gated on `IsDeprecated == true`, and `includeDeprecated` on `ListServices`. The `IDeprecateAndMergeEntity` marker interface is also required.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -95,7 +95,7 @@ No bugs identified.
 
 3. **Service list as single key**: `game-service-list` stores all service IDs as a single `List<Guid>`. Every create/delete reads the full list, modifies it, and writes it back with ETag-based optimistic concurrency (configurable retry via `ServiceListRetryAttempts`). This pattern is appropriate because game services represent top-level games/applications (Arcadia, Fantasia) — realistically dozens, never thousands. The simplicity of a single-key list outweighs the theoretical scaling concern.
 
-4. **No concurrency control on updates**: `UpdateServiceAsync` uses plain `SaveAsync` without ETag-based optimistic concurrency or distributed locking. Two simultaneous updates to the same service will both succeed — last writer wins. This is acceptable because: all mutation endpoints require `admin` role, write frequency is extremely low (game service updates are rare admin operations), and there is no correctness invariant at risk (unlike `CreateServiceAsync` which uses distributed locking to enforce stub name uniqueness).
+4. **No concurrency control on updates**: `UpdateServiceAsync` uses plain `SaveAsync` without ETag-based optimistic concurrency or distributed locking. Two simultaneous updates to the same service will both succeed — last writer wins. This is acceptable because: all endpoints are service-to-service only (`x-permissions: []`, no WebSocket client access), write frequency is extremely low (game service updates are rare operational actions), and there is no correctness invariant at risk (unlike `CreateServiceAsync` which uses distributed locking to enforce stub name uniqueness).
 
 ### Design Considerations (Requires Planning)
 

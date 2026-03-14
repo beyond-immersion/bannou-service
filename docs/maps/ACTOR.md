@@ -136,7 +136,7 @@ All pool-node event handlers skip processing when `DeploymentMode == Bannou`.
 | Service | Role |
 |---------|------|
 | `ILogger<ActorService>` | Structured logging |
-| `ActorServiceConfiguration` | 35 config properties (deployment, pool, behavior loop, GOAP, perception, timeouts) |
+| `ActorServiceConfiguration` | 36 config properties (deployment, pool, behavior loop, GOAP, perception, timeouts) |
 | `IStateStoreFactory` | State store access (constructor-cached as `_templateStore`, `_templateIndexStore`) |
 | `IMessageBus` | Event publishing, pool commands |
 | `IEventConsumer` | Event handler registration |
@@ -165,25 +165,25 @@ All pool-node event handlers skip processing when `DeploymentMode == Bannou`.
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| CreateActorTemplate | POST /actor/template/create | developer | template, category-index, template-index | actor.template.created |
-| GetActorTemplate | POST /actor/template/get | admin | - | - |
-| ListActorTemplates | POST /actor/template/list | admin | - | - |
-| UpdateActorTemplate | POST /actor/template/update | developer | template, category-index | actor.template.updated |
-| DeleteActorTemplate | POST /actor/template/delete | developer | template, category-index, template-index | actor.template.deleted |
-| SpawnActor | POST /actor/spawn | developer | assignment (pool), registry (bannou) | actor.instance.created |
-| GetActor | POST /actor/get | admin | registry (auto-spawn) | - |
-| StopActor | POST /actor/stop | developer | assignment (pool), registry (bannou) | actor.instance.deleted |
-| BindActorCharacter | POST /actor/bind-character | developer | assignment (pool) | actor.instance.character-bound |
-| CleanupByCharacter | POST /actor/cleanup-by-character | developer | assignment (pool), registry (bannou) | - |
-| ListActors | POST /actor/list | admin | - | - |
-| InjectPerception | POST /actor/inject-perception | developer | - | - |
-| QueryOptions | POST /actor/query-options | [] | - | - |
-| StartEncounter | POST /actor/encounter/start | developer | encounter (in-memory) | actor.encounter.started |
-| UpdateEncounterPhase | POST /actor/encounter/update-phase | developer | encounter (in-memory) | actor.encounter.phase-changed |
-| EndEncounter | POST /actor/encounter/end | developer | encounter (in-memory) | actor.encounter.ended |
-| GetEncounter | POST /actor/encounter/get | admin | - | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| CreateActorTemplate | POST /actor/template/create | generated | developer | template, category-index, template-index | actor.template.created |
+| GetActorTemplate | POST /actor/template/get | generated | [] | - | - |
+| ListActorTemplates | POST /actor/template/list | generated | [] | - | - |
+| UpdateActorTemplate | POST /actor/template/update | generated | developer | template, category-index | actor.template.updated |
+| DeleteActorTemplate | POST /actor/template/delete | generated | developer | template, category-index, template-index | actor.template.deleted |
+| SpawnActor | POST /actor/spawn | generated | [] | assignment (pool), registry (bannou) | actor.instance.created |
+| GetActor | POST /actor/get | generated | [] | registry (auto-spawn) | - |
+| StopActor | POST /actor/stop | generated | [] | assignment (pool), registry (bannou) | actor.instance.deleted |
+| BindActorCharacter | POST /actor/bind-character | generated | [] | assignment (pool) | actor.instance.character-bound |
+| CleanupByCharacter | POST /actor/cleanup-by-character | generated | [] | assignment (pool), registry (bannou) | - |
+| ListActors | POST /actor/list | generated | [] | - | - |
+| InjectPerception | POST /actor/inject-perception | generated | [] | - | - |
+| QueryOptions | POST /actor/query-options | generated | [] | - | - |
+| StartEncounter | POST /actor/encounter/start | generated | [] | encounter (in-memory) | actor.encounter.started |
+| UpdateEncounterPhase | POST /actor/encounter/update-phase | generated | [] | encounter (in-memory) | actor.encounter.phase-changed |
+| EndEncounter | POST /actor/encounter/end | generated | [] | encounter (in-memory) | actor.encounter.ended |
+| GetEncounter | POST /actor/encounter/get | generated | [] | - | - |
 
 ---
 
@@ -207,7 +207,7 @@ RETURN (200, ActorTemplateResponse)
 ```
 
 ### GetActorTemplate
-POST /actor/template/get | Roles: [admin]
+POST /actor/template/get | Roles: []
 
 ```
 IF body.TemplateId has value
@@ -220,7 +220,7 @@ RETURN (200, ActorTemplateResponse)
 ```
 
 ### ListActorTemplates
-POST /actor/template/list | Roles: [admin]
+POST /actor/template/list | Roles: []
 
 ```
 READ actor-templates:_all_template_ids // default empty list if null
@@ -261,7 +261,7 @@ RETURN (200, DeleteActorTemplateResponse { StoppedActorCount })
 ```
 
 ### SpawnActor
-POST /actor/spawn | Roles: [developer]
+POST /actor/spawn | Roles: []
 
 ```
 READ actor-templates:{body.TemplateId} -> 404 if null
@@ -290,7 +290,7 @@ RETURN (200, ActorInstanceResponse)
 ```
 
 ### GetActor
-POST /actor/get | Roles: [admin]
+POST /actor/get | Roles: []
 
 ```
 // Three-level lookup:
@@ -318,7 +318,7 @@ RETURN (404, null)
 ```
 
 ### StopActor
-POST /actor/stop | Roles: [developer]
+POST /actor/stop | Roles: []
 
 ```
 IF bannou mode
@@ -341,7 +341,7 @@ ELSE (pool mode)
 ```
 
 ### BindActorCharacter
-POST /actor/bind-character | Roles: [developer]
+POST /actor/bind-character | Roles: []
 
 ```
 IF bannou mode
@@ -365,7 +365,7 @@ ELSE (pool mode)
 ```
 
 ### CleanupByCharacter
-POST /actor/cleanup-by-character | Roles: [developer]
+POST /actor/cleanup-by-character | Roles: []
 
 ```
 // Called by lib-resource cascade when character is deleted
@@ -385,7 +385,7 @@ RETURN (200, CleanupByCharacterResponse { ActorsCleanedUp, ActorIds })
 ```
 
 ### ListActors
-POST /actor/list | Roles: [admin]
+POST /actor/list | Roles: []
 
 ```
 IF pool mode AND body.NodeId is set
@@ -401,7 +401,7 @@ RETURN (200, ListActorsResponse { Actors, Total })
 ```
 
 ### InjectPerception
-POST /actor/inject-perception | Roles: [developer]
+POST /actor/inject-perception | Roles: []
 
 ```
 // Local-only — no pool-mode forwarding
@@ -432,7 +432,7 @@ RETURN (200, QueryOptionsResponse { ActorId, QueryType, Options, ComputedAt, Age
 ```
 
 ### StartEncounter
-POST /actor/encounter/start | Roles: [developer]
+POST /actor/encounter/start | Roles: []
 
 ```
 // FindActorAsync: check local registry, then pool assignments
@@ -449,7 +449,7 @@ RETURN (200, StartEncounterResponse)
 ```
 
 ### UpdateEncounterPhase
-POST /actor/encounter/update-phase | Roles: [developer]
+POST /actor/encounter/update-phase | Roles: []
 
 ```
 // FindActorAsync: check local registry, then pool assignments
@@ -467,7 +467,7 @@ RETURN (200, UpdateEncounterPhaseResponse { ActorId, PreviousPhase, CurrentPhase
 ```
 
 ### EndEncounter
-POST /actor/encounter/end | Roles: [developer]
+POST /actor/encounter/end | Roles: []
 
 ```
 // FindActorAsync: check local registry, then pool assignments
@@ -485,7 +485,7 @@ RETURN (200, EndEncounterResponse { ActorId, EncounterId, DurationMs })
 ```
 
 ### GetEncounter
-POST /actor/encounter/get | Roles: [admin]
+POST /actor/encounter/get | Roles: []
 
 ```
 // FindActorAsync: check local registry, then pool assignments

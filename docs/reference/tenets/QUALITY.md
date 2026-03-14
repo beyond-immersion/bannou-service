@@ -130,6 +130,10 @@ var result = await _service.GetAccountAsync(null);  // null is allowed by type s
 
 **"Endpoint group" definition** (for Pattern A vs Pattern C): An entity qualifies as an "endpoint group" when it appears as a path segment with multiple endpoints beneath it. For example, `/chat/message/send`, `/chat/message/edit`, `/chat/message/delete` — "message" is an endpoint group. A conceptual domain term that does NOT appear as a route path segment with its own set of endpoints is NOT an endpoint group. Example: Status has `/status/template/create` (template is an endpoint group) but no `/status/effect/...` routes — so "effect" is NOT an endpoint group, and the correct client event name is `status.effect-changed` (Pattern A), not `status.effect.changed` (Pattern C).
 
+**Compound entity names use kebab-case**: Multi-word entity segments in topic strings MUST use kebab-case (`clause-type`, `template-values`), never run-together (`clausetype`, `templatevalues`). This applies to both Pattern A and Pattern C. Dots separate structural segments (service, entity, action); hyphens separate words within a segment.
+
+**Prefer single-word actions**: Where a single word captures the same meaning, prefer it over a compound action. For example, `contract.consented` over `contract.consent-received`; `realm.merged` over `realm.merge-completed`. Multi-word actions are acceptable when a single word would be ambiguous or lose meaning (e.g., `prebound-api.validation-failed` is distinct from `prebound-api.failed` — collapsing to `prebound-api.rejected` would lose the "response validation" specificity).
+
 Configuration properties: PascalCase, include units in time-based names (`HeartbeatIntervalSeconds`), document environment variable in XML comment.
 
 ---

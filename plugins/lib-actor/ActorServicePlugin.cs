@@ -9,19 +9,26 @@ using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
-using BeyondImmersion.BannouService.Services;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Actor;
 
 /// <summary>
 /// Plugin wrapper for Actor service enabling plugin-based discovery and lifecycle management.
-/// Bridges existing IBannouService implementation with the new Plugin system.
 /// </summary>
-public class ActorServicePlugin : BaseBannouPlugin
+/// <remarks>
+/// <para>
+/// <b>Registration:</b> ActorPoolManager is always registered (required by ActorService).
+/// Additional components are registered based on deployment mode:
+/// <list type="bullet">
+/// <item>Pool node mode (ACTOR_POOL_NODE_ID set): Adds ActorPoolNodeWorker, HeartbeatEmitter</item>
+/// <item>Control plane mode (non-bannou): Adds PoolHealthMonitor</item>
+/// <item>Bannou mode: No additional components, actors run locally</item>
+/// </list>
+/// </para>
+/// </remarks>
+public class ActorServicePlugin : StandardServicePlugin<IActorService>
 {
     /// <inheritdoc/>
     public override string PluginName => "actor";
@@ -29,32 +36,12 @@ public class ActorServicePlugin : BaseBannouPlugin
     /// <inheritdoc/>
     public override string DisplayName => "Actor Service";
 
-    private IServiceProvider? _serviceProvider;
-    private ITelemetryProvider? _telemetryProvider;
-
     /// <summary>
-    /// Configure services for dependency injection - mimics existing [BannouService] registration.
+    /// Configure services for dependency injection.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Registration:</b> ActorPoolManager is always registered (required by ActorService).
-    /// Additional components are registered based on deployment mode:
-    /// <list type="bullet">
-    /// <item>Pool node mode (ACTOR_POOL_NODE_ID set): Adds ActorPoolNodeWorker, HeartbeatEmitter</item>
-    /// <item>Control plane mode (non-bannou): Adds PoolHealthMonitor</item>
-    /// <item>Bannou mode: No additional components, actors run locally</item>
-    /// </list>
-    /// </para>
-    /// </remarks>
     public override void ConfigureServices(IServiceCollection services)
     {
-        Logger?.LogDebug("Configuring service dependencies");
-
-        // Service registration is now handled centrally by PluginLoader based on [BannouService] attributes
-        // No need to register IActorService and ActorService here
-
-        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
-        // No need to register ActorServiceConfiguration here
+        base.ConfigureServices(services);
 
         // Register cognition handlers from bannou-service (used by DocumentExecutorFactory)
         services.AddSingleton<FilterAttentionHandler>();
@@ -83,93 +70,18 @@ public class ActorServicePlugin : BaseBannouPlugin
         services.AddSingleton<ActorPoolNodeWorker>();
         services.AddHostedService(sp => sp.GetRequiredService<ActorPoolNodeWorker>());
         services.AddHostedService<PoolHealthMonitor>();
-
-        Logger?.LogDebug("Registered all actor pool components (mode determined at runtime via configuration)");
-
-        Logger?.LogDebug("Service dependencies configured");
     }
 
     /// <summary>
-    /// Configure application pipeline - handles controller registration.
-    /// </summary>
-    public override void ConfigureApplication(WebApplication app)
-    {
-        Logger?.LogInformation("Configuring Actor service application pipeline");
-
-        // The generated ActorController should already be discovered via standard ASP.NET Core controller discovery
-
-        // Store service provider for lifecycle management
-        _serviceProvider = app.Services;
-        _telemetryProvider = app.Services.GetService<ITelemetryProvider>();
-
-        Logger?.LogInformation("Actor service application pipeline configured");
-    }
-
-    /// <summary>
-    /// Start the service - calls existing IBannouService lifecycle if present.
-    /// </summary>
-    protected override async Task<bool> OnStartAsync()
-    {
-        using var activity = _telemetryProvider?.StartActivity("bannou.actor", "ActorServicePlugin.OnStart");
-        Logger?.LogInformation("Starting Actor service");
-
-        try
-        {
-            // Resolve scoped service within a scope — do NOT store the reference beyond scope lifetime.
-            // IActorService is Scoped; storing it in a field causes use-after-dispose.
-            var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnStartAsync");
-            using var scope = serviceProvider.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IActorService>();
-
-            // Call existing IBannouService.OnStartAsync if the service implements it
-            if (service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnStartAsync for Actor service");
-                await bannouService.OnStartAsync(CancellationToken.None);
-            }
-
-            Logger?.LogInformation("Actor service started successfully");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogError(ex, "Failed to start Actor service");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Running phase - calls existing IBannouService lifecycle if present.
-    /// Also registers cleanup callbacks with lib-resource (must happen after all plugins are started).
+    /// Running phase - registers cleanup callbacks with lib-resource.
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        using var activity = _telemetryProvider?.StartActivity("bannou.actor", "ActorServicePlugin.OnRunning");
-        var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
-
-        Logger?.LogDebug("Actor service running");
-
-        try
-        {
-            // Resolve scoped service within a scope for the running phase lifecycle call
-            using var runningScope = serviceProvider.CreateScope();
-            var service = runningScope.ServiceProvider.GetRequiredService<IActorService>();
-
-            // Call existing IBannouService.OnRunningAsync if the service implements it
-            if (service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Actor service");
-                await bannouService.OnRunningAsync(CancellationToken.None);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogWarning(ex, "Exception during Actor service running phase");
-        }
+        await base.OnRunningAsync();
 
         // Register cleanup callbacks with lib-resource for character reference tracking.
         // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
-        using var scope = serviceProvider.CreateScope();
+        using var scope = ServiceProvider!.CreateScope();
         var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
 
         var success = await ActorService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
@@ -184,18 +96,16 @@ public class ActorServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Shutdown the service - calls existing IBannouService lifecycle if present.
+    /// Shutdown the service - stops all running actors before standard shutdown.
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        using var activity = _telemetryProvider?.StartActivity("bannou.actor", "ActorServicePlugin.OnShutdown");
         Logger?.LogInformation("Shutting down Actor service");
 
         try
         {
             // Stop all running actors via the singleton registry (not scoped service)
-            var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnShutdownAsync");
-            var registry = serviceProvider.GetRequiredService<IActorRegistry>();
+            var registry = ServiceProvider!.GetRequiredService<IActorRegistry>();
             var actors = registry.GetAllRunners().ToList();
             Logger?.LogInformation("Stopping {ActorCount} running actors", actors.Count);
 
@@ -212,23 +122,12 @@ public class ActorServicePlugin : BaseBannouPlugin
                     Logger?.LogWarning(ex, "Error stopping actor {ActorId} during shutdown", actor.ActorId);
                 }
             }
-
-            // Resolve scoped service for shutdown lifecycle call
-            using var scope = serviceProvider.CreateScope();
-            var service = scope.ServiceProvider.GetRequiredService<IActorService>();
-
-            // Call existing IBannouService.OnShutdownAsync if the service implements it
-            if (service is IBannouService bannouService)
-            {
-                Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Actor service");
-                await bannouService.OnShutdownAsync();
-            }
-
-            Logger?.LogInformation("Actor service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "Exception during Actor service shutdown");
+            Logger?.LogWarning(ex, "Exception during Actor service actor cleanup");
         }
+
+        await base.OnShutdownAsync();
     }
 }

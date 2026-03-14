@@ -459,11 +459,7 @@ Escrow Integration Flow
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/211 -->
 2. **Wallet distribution analytics**: `GetWalletDistribution` returns all zeros for wallet count, averages, percentiles, and Gini coefficient. No statistical computation is implemented.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/470 -->
-3. ~~**Currency expiration**~~: **IMPLEMENTED** (2026-03-08) — Added `CurrencyExpirationTaskService` background worker that scans balances with expiration policies and zeroes expired amounts, publishing `currency.expired`. Supported policies: `fixed_date`, `duration_from_earn`, `end_of_season`.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
-4. ~~**Hold expiration**~~: **IMPLEMENTED** (2026-03-08) — Added `HoldExpirationTaskService` background worker that scans active holds past their `ExpiresAt` timestamp and auto-releases them, returning reserved funds to available balance and publishing `currency.hold.expired`.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
-5. **Global supply cap enforcement**: `GlobalSupplyCap` is stored on currency definitions but never checked during credit operations. There is no aggregate tracking of total minted supply.
+3. **Global supply cap enforcement**: `GlobalSupplyCap` is stored on currency definitions but never checked during credit operations. There is no aggregate tracking of total minted supply.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/471 -->
 6. **Item linkage**: `LinkedToItem`, `LinkedItemTemplateId`, and `LinkageMode` fields are stored on definitions but no logic enforces item-currency linkage (e.g., requiring item ownership for currency access).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/473 -->
@@ -497,11 +493,13 @@ Escrow Integration Flow
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
 1. ~~**EarnCapResetTime not updatable**~~: **FIXED** (2026-02-24) - Added `earnCapResetTime` to `UpdateCurrencyDefinitionRequest` schema and corresponding field update in `UpdateCurrencyDefinitionAsync`.
 
-### Intentional Quirks
+2. **Missing Category B instance creation guard on balance/hold operations**: Per IMPLEMENTATION TENETS (Category B checklist B9/B15), all services with Category B entities MUST check deprecation status before creating new instances and reject with `BadRequest` if deprecated. Wallets are currency-agnostic containers (no `currencyDefinitionId` at creation time), so the guard belongs in `CreditCurrencyAsync`, `CreateHoldAsync`, and `ExecuteConversionAsync` — the first points where a specific `currencyDefinitionId` is bound to a balance or hold. None of these methods check `IsDeprecated` on the currency definition. The only code paths that reference `IsDeprecated` are `ListCurrencyDefinitions` (filter), `DeprecateCurrencyDefinition` (idempotency), and `CleanDeprecatedCurrencyDefinitions` (sweep). The Deprecation Lifecycle section below notes this as intentional, but the tenet does not define an exception for service-to-service callers. If Escrow or other L2 services genuinely need to operate on deprecated currencies, that exception must be added to the tenet.
+
+### Intentional Quirks (Documented Behavior)
 
 1. **Transfer debits full amount even when target cap truncates**: When the target wallet cap causes overflow with `cap_and_lose` behavior, the source is debited the full transfer amount but the target only receives the capped portion. The overflow amount is lost (burned) as a currency sink.
 
@@ -523,13 +521,13 @@ Currency definitions are **Category B entities** — wallets and balances refere
 
 - **Deprecation is one-way**: Once deprecated, a currency definition cannot be undeprecated. No undeprecate endpoint exists.
 - **No delete endpoint**: Currency definitions persist forever. Only deprecation is supported.
-- **No explicit instance creation guard on wallets**: Wallets can still be created for deprecated currencies. The deprecation affects discovery (filtered from list results) rather than preventing wallet creation. This differs from other Category B entities where instance creation is blocked — currency wallets can be created by L2 services (like Escrow) that may need to operate on currencies regardless of deprecation status.
+- **Missing instance creation guard** (see Bugs #2): No deprecation check exists in `CreditCurrencyAsync`, `CreateHoldAsync`, or `ExecuteConversionAsync` — balances and holds can be created against deprecated currency definitions. Only discovery is affected (filtered from list results). This is a violation of IMPLEMENTATION TENETS (Category B B9/B15) — operations that bind a `currencyDefinitionId` to new data must reject with `BadRequest` when the definition is deprecated. If an exception is warranted for service-to-service callers (e.g., Escrow), it must be added to the tenet.
 - **Storage model**: Currency definitions use triple-field deprecation: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?).
 - **Idempotent deprecation**: Deprecating an already-deprecated definition returns `OK` (not `Conflict`).
 - **List filtering**: `ListCurrencyDefinitions` includes `includeDeprecated` parameter (default: `false`).
 - **Events**: Deprecation is communicated via `currency.definition.updated` with `changedFields` containing the deprecation fields (no dedicated deprecation event per tenets).
 
-### Design Considerations
+### Design Considerations (Requires Planning)
 
 1. ~~**Account deletion does not trigger wallet cleanup**~~: **FIXED** (2026-03-08) - Added `account.deleted` event handler that CASCADE-deletes all account-owned wallets with balances, holds, transactions, and indexes. Remaining balances are destroyed (not transferred) since the owning account no longer exists. Character/guild deletion still needs lib-resource integration — see issue #556.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/556 -->

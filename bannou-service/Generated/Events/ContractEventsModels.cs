@@ -88,12 +88,12 @@ public partial class ContractConsentReceivedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: contract.consent-received
+    /// Event type identifier: contract.consented
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "contract.consent-received";
+    public override string EventName { get; set; } = "contract.consented";
 
     /// <summary>
     /// Contract instance ID
@@ -987,12 +987,12 @@ public partial class ClauseTypeRegisteredEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: contract.clausetype.registered
+    /// Event type identifier: contract.clause-type.registered
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "contract.clausetype.registered";
+    public override string EventName { get; set; } = "contract.clause-type.registered";
 
     /// <summary>
     /// Clause type code
@@ -1035,12 +1035,12 @@ public partial class ContractTemplateValuesSetEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: contract.templatevalues.set
+    /// Event type identifier: contract.template-values.set
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "contract.templatevalues.set";
+    public override string EventName { get; set; } = "contract.template-values.set";
 
     /// <summary>
     /// Contract instance ID

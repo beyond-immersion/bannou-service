@@ -13,7 +13,7 @@
 |-------|-------|
 | Plugin | lib-connect |
 | Layer | L1 AppFoundation |
-| Endpoints | 7 (4 generated + 3 controller-only) |
+| Endpoints | 10 (4 generated + 3 controller-only + 3 manual) |
 | State Stores | connect-statestore (Redis) |
 | Events Published | 3 (session.connected, session.disconnected, session.reconnected) |
 | Events Consumed | 2 static (session.invalidated, service.error) + 3 dynamic per-session |
@@ -94,17 +94,13 @@ All other events are normalized (NSwag name fix) and forwarded as binary WebSock
 
 ### Custom HTTP Event Endpoints
 
-Three manually-registered `MapPost` endpoints (in `OnStartAsync`) receive events via direct HTTP calls, not RabbitMQ subscriptions. These are same-instance only — the caller must target the Connect instance where the session is connected.
-
-| Route | Event Type | Handler | Action |
-|-------|-----------|---------|--------|
-| `POST /events/auth-events` | `AuthEvent` | `ProcessAuthEventAsync` | Login: no-op (Permission recompiles). Logout: no-op (optional disconnect commented out). TokenRefresh: validates session, disconnects if invalid. |
-| `POST /events/client-messages` | `ClientMessageEvent` | `ProcessClientMessageEventAsync` | Constructs binary message from event fields (channel, serviceGuid, messageId, payload, flags), sends to target client WebSocket. Silently drops if client not connected to this instance. |
-| `POST /events/client-rpc` | `ClientRPCEvent` | `ProcessClientRPCEventAsync` | Sends binary RPC message to client, registers `PendingRPCInfo` in `_pendingRPCs` for response forwarding. Timeout from event or `DefaultRpcTimeoutSeconds` config. Response arrives as binary Response-flagged message, forwarded via `ForwardRPCResponseAsync` to `{rpc.ResponseChannel}` topic. |
+Three manually-registered `MapPost` endpoints (in `OnStartAsync`) receive events via direct HTTP calls, not RabbitMQ subscriptions. These are same-instance only — the caller must target the Connect instance where the session is connected. See Methods section for full pseudo-code: ProcessAuthEvent, ProcessClientMessage, ProcessClientRPC.
 
 ---
 
 ## DI Services
+
+#### Constructor Dependencies
 
 | Service | Role |
 |---------|------|
@@ -118,27 +114,36 @@ Three manually-registered `MapPost` endpoints (in `OnStartAsync`) receive events
 | `IServiceScopeFactory` | Scoped DI for per-request IServiceNavigator |
 | `IAuthClient` | JWT validation |
 | `ITelemetryProvider` | Span instrumentation |
+| `IMeshInstanceIdentifier` | Process-stable instance identity (used in constructor, not stored) |
 | `IEventConsumer` | Event consumer registration (not stored) |
 | `ISessionManager` (BannouSessionManager) | Redis-backed session state CRUD, heartbeats, reconnection, account index |
 | `ICapabilityManifestBuilder` (CapabilityManifestBuilder) | API list and shortcut list construction for capability manifests |
 | `IEntitySessionRegistry` (EntitySessionRegistry) | Redis-backed dual-index entity-to-session mapping |
 | `InterNodeBroadcastManager` | Multi-node WebSocket broadcast relay and peer discovery |
 | `WebSocketConnectionManager` | In-memory WebSocket connection tracking (created internally, not injected) |
-| `IEnumerable<ISessionActivityListener>` | DI-discovered session lifecycle listeners |
+
+#### Collection-Injected Providers
+
+| Interface | Injection | Source | Role |
+|-----------|-----------|--------|------|
+| `IEnumerable<ISessionActivityListener>` | Collection | External (lib-permission implements `PermissionSessionActivityListener`) | Dispatches session lifecycle notifications (connect, disconnect, reconnect, heartbeat) to registered listeners |
 
 ---
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| ProxyInternalRequest | POST /internal/proxy | [] | - | - |
-| GetClientCapabilities | POST /client-capabilities | [user] | - | - |
-| ConnectWebSocket | GET /connect | [] | session, heartbeat, account-sessions, reconnect | session.connected, session.disconnected, session.reconnected |
-| ConnectWebSocketPost | POST /connect | [] | (identical to ConnectWebSocket) | (identical) |
-| BroadcastWebSocket | GET /connect/broadcast | [] | - | - |
-| GetEndpointMeta | POST /connect/get-endpoint-meta | [] | - | - |
-| GetAccountSessions | POST /connect/get-account-sessions | [admin] | - | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| ProxyInternalRequest | POST /internal/proxy | generated | [] | - | - |
+| GetClientCapabilities | POST /client-capabilities | generated | user | - | - |
+| ConnectWebSocket | GET /connect | x-controller-only | [] | session, heartbeat, account-sessions, reconnect | session.connected, session.disconnected, session.reconnected |
+| ConnectWebSocketPost | POST /connect | x-controller-only | [] | (identical to ConnectWebSocket) | (identical) |
+| BroadcastWebSocket | GET /connect/broadcast | x-controller-only | [] | - | - |
+| GetEndpointMeta | POST /connect/get-endpoint-meta | generated | [] | - | - |
+| GetAccountSessions | POST /connect/get-account-sessions | generated | admin | - | - |
+| ProcessAuthEvent | POST /events/auth-events | manual | internal | session | - |
+| ProcessClientMessage | POST /events/client-messages | manual | internal | - | - |
+| ProcessClientRPC | POST /events/client-rpc | manual | internal | pending-rpcs | {rpc.ResponseChannel} |
 
 ---
 
@@ -408,6 +413,66 @@ _connectionManager.SendMessageAsync(sessionId, message)
 
 ---
 
+### ProcessAuthEvent
+POST /events/auth-events | Source: manual | Roles: internal
+
+// Manually registered in OnStartAsync via MapPost. Same-instance only.
+
+```
+// Parse AuthEvent from request body
+IF NOT _connectionManager.HasConnection(sessionId)
+  RETURN  // Client not connected to this instance — no-op
+
+IF eventType == Login
+  // No-op — Permission service handles capability recompilation
+IF eventType == Logout
+  // No-op (disconnect commented out — Permission handles capability revocation)
+IF eventType == TokenRefresh
+  connection = _connectionManager.GetConnection(sessionId)
+  IF connection is null OR session invalid
+    CALL DisconnectAsync(sessionId, "Session invalid")
+```
+
+---
+
+### ProcessClientMessage
+POST /events/client-messages | Source: manual | Roles: internal
+
+// Manually registered in OnStartAsync via MapPost. Same-instance only.
+
+```
+// Parse ClientMessageEvent from request body
+IF NOT _connectionManager.HasConnection(clientId)
+  RETURN  // Client not on this instance — silently drop
+
+message = BinaryMessage(flags | Event, channel, serviceGuid, messageId, payload)
+_connectionManager.SendMessageAsync(clientId, message)
+```
+
+---
+
+### ProcessClientRPC
+POST /events/client-rpc | Source: manual | Roles: internal
+
+// Manually registered in OnStartAsync via MapPost. Same-instance only.
+
+```
+// Parse ClientRPCEvent from request body
+IF NOT _connectionManager.HasConnection(clientId)
+  RETURN  // Client not on this instance — silently drop
+
+message = BinaryMessage(flags, channel, serviceGuid, messageId, payload)
+_connectionManager.SendMessageAsync(clientId, message)
+
+timeout = event.TimeoutSeconds > 0 ? event.TimeoutSeconds : config.DefaultRpcTimeoutSeconds
+_pendingRPCs[messageId] = PendingRPCInfo { ResponseChannel, ClientId, TimeoutAt = now + timeout }
+// When client responds (binary Response-flagged message with matching MessageId):
+//   ForwardRPCResponseAsync publishes ClientRPCResponseEvent to {rpc.ResponseChannel}
+//   via _messageBus.TryPublishAsync(responseChannel, responseEvent, ct)
+```
+
+---
+
 ## Background Services
 
 ### PendingRPCCleanupTimer
@@ -445,3 +510,33 @@ FOREACH connection in _connections
     // Close WebSocket gracefully with timeout
     // Remove from connection registry
 ```
+
+---
+
+## Non-Standard Implementation Patterns
+
+### Plugin Lifecycle (OnStartAsync)
+
+Non-trivial startup logic — registers three manual HTTP event endpoints and initializes timers and broadcast mesh:
+
+```
+// Register manual MapPost routes for same-instance event delivery
+MAP POST /events/auth-events -> ProcessAuthEventAsync
+MAP POST /events/client-messages -> ProcessClientMessageEventAsync
+MAP POST /events/client-rpc -> ProcessClientRPCEventAsync
+
+// Start pending RPC cleanup timer
+START Timer: _pendingRPCCleanupTimer (interval = config.RpcCleanupIntervalSeconds)
+
+// Initialize inter-node broadcast mesh
+CALL _interNodeBroadcast.InitializeAsync(ct)
+  // If BroadcastInternalUrl is non-null AND mode != None:
+  //   WRITE connect:broadcast-registry <- SORTED SET ADD own entry (score = now)
+  //   Discover compatible peers from sorted set
+  //   Connect to peers via outbound WebSocket
+  //   START Timer: MaintenanceTimer (interval = config.BroadcastHeartbeatIntervalSeconds)
+```
+
+### Singleton Lifetime Override
+
+Connect is registered as `ServiceLifetime.Singleton` (unique among Bannou services) because it maintains in-memory WebSocket connection state (`WebSocketConnectionManager`, `_pendingRPCs`, `_sessionSubscriptions`). Scoped services (`IServiceNavigator`, `IHttpContextAccessor`) are resolved via `IServiceScopeFactory.CreateAsyncScope()` per request.

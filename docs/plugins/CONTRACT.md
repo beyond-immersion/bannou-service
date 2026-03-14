@@ -299,6 +299,8 @@ Prebound API Batched Execution
 <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/458 -->
 2. **Template inheritance**: Allow templates to extend other templates, inheriting milestones, terms, and party roles with overrides. ([#459](https://github.com/beyond-immersion/bannou-service/issues/459))
 <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/459 -->
+3. **Explicit decline endpoint**: Add `POST /contract/instance/decline` to transition Proposed→Declined, enabling dependent systems to distinguish explicit rejection from timeout expiration. `ContractStatus.Declined` and `ConsentStatus.Declined` enum values already exist but have no API path to reach them. ([#644](https://github.com/beyond-immersion/bannou-service/issues/644))
+<!-- AUDIT:NEEDS_DESIGN:2026-03-14:https://github.com/beyond-immersion/bannou-service/issues/644 -->
 
 ---
 
@@ -442,8 +444,8 @@ This section tracks active development work using AUDIT markers.
 
 ### Active Work
 
-- **Implementation map party-idx inaccuracy**: Map pseudocode for `TerminateContractInstance` and `CompleteMilestone` (Fulfilled transition) shows `party-idx` removal on terminal transitions, but code verification (2026-03-13) confirmed no terminal transition removes party-idx entries. Only `DeleteContractInstance` removes party-idx. Map pseudocode for these methods needs correction during next `/map-plugin contract` run.
+*No active work items.*
 
 ### Completed
 
-*Historical entries cleared. See git history for audit trail.*
+- **Implementation map party-idx inaccuracy** (2026-03-14): Fixed map pseudocode for `TerminateContractInstance` and `CompleteMilestone` — removed incorrect `party-idx` removal. Only `DeleteContractInstance` removes party-idx entries.

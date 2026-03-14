@@ -15,7 +15,7 @@
 | Layer | L1 AppFoundation |
 | Endpoints | 8 |
 | State Stores | permission (Redis), permission-lock (Redis) |
-| Events Published | 2 (permission.capability-update, permission.services-registered) |
+| Events Published | 2 (permission.capability-updated, permission.services-registered) |
 | Events Consumed | 1 (session.updated) |
 | Client Events | 1 (SessionCapabilitiesEvent) |
 | Background Services | 1 (RegistrationEventBatcher) |
@@ -54,7 +54,7 @@ Session keys (`session:*`) use TTL from `SessionDataTtlSeconds` (default 600s), 
 | Dependency | Layer | Type | Usage |
 |------------|-------|------|-------|
 | lib-state (`IStateStoreFactory`) | L0 | Hard | All Redis state — sessions, permissions, matrix, indexes, set operations |
-| lib-state (`IDistributedLockProvider`) | L0 | Hard | Session mutation locks (UpdateSessionState, UpdateSessionRole) |
+| lib-state (`IDistributedLockProvider`) | L0 | Hard | Session mutation locks (UpdateSessionState, UpdateSessionRole, ClearSessionState) |
 | lib-messaging (`IMessageBus`) | L0 | Hard | Error event publishing via TryPublishErrorAsync |
 | lib-messaging (`IEventConsumer`) | L0 | Hard | Subscription to session.updated from Auth |
 | lib-messaging (`IClientEventPublisher`) | L0 | Hard | Push SessionCapabilitiesEvent to session channels |
@@ -75,7 +75,7 @@ No service client dependencies. Permission is a pure receiver — callers invoke
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `permission.capability-update` | `PermissionCapabilityUpdate` | Published on every session permission recompilation (service registration, state change, role change, connect, reconnect) |
+| `permission.capability-updated` | `PermissionCapabilityUpdate` | Published on every session permission recompilation (service registration, state change, role change, connect, reconnect) |
 | `permission.services-registered` | `PermissionServicesRegistered` | Published periodically by RegistrationEventBatcher with accumulated non-idempotent service registrations (bulk observability, fire-and-forget) |
 
 ---
@@ -92,33 +92,41 @@ Session connected/disconnected/reconnected/heartbeat received via `ISessionActiv
 
 ## DI Services
 
+#### Constructor Dependencies
+
 | Service | Role |
 |---------|------|
 | `ILogger<PermissionService>` | Structured logging |
-| `PermissionServiceConfiguration` | RoleHierarchy, TTL, lock timeout, max recompilations |
+| `PermissionServiceConfiguration` | RoleHierarchy, TTL, lock timeout, max recompilations, batch intervals |
 | `IStateStoreFactory` | Redis state access (constructor-cached as `_permissionsStore`, `_sessionStatesStore`, `_stringStore`, `_hashSetStore`, `_registrationStore`, `_cacheStore`) |
 | `IDistributedLockProvider` | Distributed locks for session mutation |
-| `IMessageBus` | Service event publishing (permission.capability-update) + error events |
+| `IMessageBus` | Service event publishing (permission.capability-updated) + error events |
 | `IClientEventPublisher` | Session-specific capability push |
 | `IEventConsumer` | Event handler registration (session.updated) |
 | `ITelemetryProvider` | Trace span creation |
-| `PermissionSessionActivityListener` | DI listener for session lifecycle and heartbeat TTL |
 | `RegistrationEventBatcher` | Background worker accumulating service registrations for bulk observability event publishing |
+
+#### DI Interfaces Implemented by This Plugin
+
+| Interface | Registered As | Direction | Consumer |
+|-----------|---------------|-----------|----------|
+| `IPermissionRegistry` | `Singleton` (alias to `PermissionService` instance) | All plugins→L1 push | PluginLoader startup calls `RegisterServiceAsync` for each plugin's permission matrix |
+| `ISessionActivityListener` | `Singleton` (via `PermissionSessionActivityListener`) | L1→L1 push | Connect dispatches `OnConnected`, `OnDisconnected`, `OnReconnected`, `OnHeartbeat` |
 
 ---
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| GetCapabilities | POST /permission/capabilities | [] | - | - |
-| ValidateApiAccess | POST /permission/validate | [] | - | - |
-| RegisterServicePermissions | POST /permission/register-service | [] | matrix, hash, version, registration, service-states, session-permissions | permission.capability-update, PUSH session-capabilities |
-| UpdateSessionState | POST /permission/update-session-state | [] | session-states, session-permissions | permission.capability-update, PUSH session-capabilities |
-| UpdateSessionRole | POST /permission/update-session-role | [] | session-states, session-permissions | permission.capability-update, PUSH session-capabilities |
-| ClearSessionState | POST /permission/clear-session-state | [] | session-states, session-permissions | permission.capability-update, PUSH session-capabilities |
-| GetSessionInfo | POST /permission/get-session-info | [] | - | - |
-| GetRegisteredServices | POST /permission/services/list | [admin] | - | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| GetCapabilities | POST /permission/capabilities | generated | [] | - | - |
+| ValidateApiAccess | POST /permission/validate | generated | [] | - | - |
+| RegisterServicePermissions | POST /permission/register-service | generated | [] | matrix, hash, version, registration, service-states, session-permissions | permission.capability-updated, PUSH session-capabilities |
+| UpdateSessionState | POST /permission/update-session-state | generated | [] | session-states, session-permissions | permission.capability-updated, PUSH session-capabilities |
+| UpdateSessionRole | POST /permission/update-session-role | generated | [] | session-states, session-permissions | permission.capability-updated, PUSH session-capabilities |
+| ClearSessionState | POST /permission/clear-session-state | generated | [] | session-states, session-permissions | permission.capability-updated, PUSH session-capabilities |
+| GetSessionInfo | POST /permission/get-session-info | generated | [] | - | - |
+| GetRegisteredServices | POST /permission/services/list | generated | [admin] | - | - |
 
 ---
 
@@ -140,15 +148,15 @@ POST /permission/validate | Roles: []
 ```
 READ permission:"session:{sessionId}:permissions"
 IF permissions null OR serviceId not present
- RETURN (403, reason: "No permissions registered")
+  RETURN (200, ValidationResponse { allowed: false, reason: "No permissions registered" })
 // Deserialize endpoint list for requested service
 IF endpoint in allowed list
- RETURN (200)
+  RETURN (200, ValidationResponse { allowed: true })
 ELSE
- RETURN (403, reason: "Endpoint not in allowed list")
+  RETURN (200, ValidationResponse { allowed: false, reason: "Endpoint not in allowed list" })
 ```
 
-// 200 = allowed, 403 = denied. Status code communicates result.
+// Always 200. Authorization result is in the `allowed` boolean, not the status code.
 
 ### RegisterServicePermissions
 POST /permission/register-service | Roles: []
@@ -173,7 +181,8 @@ WRITE permission:registered_services ADD serviceId // Atomic SADD
 // Fan-out recompilation to all active sessions
 READ permission:active_sessions -> sessionIds
 FOREACH sessionId in sessionIds (parallel, bounded by MaxConcurrentRecompilations)
- // see helper: RecompileSessionPermissions
+  LOCK permission-lock:"{sessionId}" // Skip session silently if lock fails
+  // see helper: RecompileSessionPermissions
 
 WRITE permission:"permission_hash:{serviceId}" <- newHash // After recompilation completes
 RETURN (200, RegistrationResponse {})
@@ -294,7 +303,7 @@ Called from: RecompileSessionPermissions
 
 ```
 // Publish service event (broadcast to all subscribers, regardless of connection state)
-PUBLISH permission.capability-update { sessionId, version, updateType: Full, fullCapabilities, generatedAt, reason }
+PUBLISH permission.capability-updated { sessionId, version, updateType: Full, fullCapabilities, generatedAt, reason }
 
 // Push client event to session channel (gated by active connection)
 IF not skipActiveConnectionsCheck
@@ -401,3 +410,29 @@ SHUTDOWN: Best-effort final flush after loop exits
 ```
 
 **Accumulation**: `PermissionService.RegisterServicePermissionsAsync` calls `_registrationBatcher.Add(serviceId, version)` after each successful non-idempotent registration. ConcurrentDictionary keyed by serviceId — re-registrations within a window update in place. Each node accumulates independently (per IMPLEMENTATION TENETS multi-instance safety acknowledgment — observability events are fire-and-forget).
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### IPermissionServiceExtensions Interface
+
+`IPermissionServiceExtensions.cs` declares a partial `IPermissionService` interface adding non-schema methods callable internally by `PermissionSessionActivityListener`:
+
+- `HandleSessionConnectedAsync(sessionId, accountId, roles, authorizations)` — session connection lifecycle
+- `HandleSessionDisconnectedAsync(sessionId, reconnectable)` — session disconnection lifecycle
+- `RecompileForReconnectionAsync(sessionId)` — reconnection recompile trigger
+
+These are NOT HTTP endpoints. They are DI-invoked by the `PermissionSessionActivityListener` which holds a direct cast reference to `PermissionService` (same assembly, always co-located).
+
+#### IPermissionRegistry.RegisterServiceAsync (DI Override)
+
+`PermissionService` explicitly implements `IPermissionRegistry.RegisterServiceAsync`. This converts generic dictionary types into the generated `ServicePermissionMatrix`/`StatePermissions` models and delegates to `RegisterServicePermissionsAsync`. Non-OK results throw `InvalidOperationException` — startup permission registration failures are fatal.
+
+#### ConfigureServices DI Registration
+
+`PermissionServicePlugin.ConfigureServices` performs three non-trivial registrations:
+
+1. `IPermissionRegistry` as Singleton — factory lambda resolves `IPermissionService` and casts to `IPermissionRegistry`, enabling push-based startup registration by all plugins
+2. `RegistrationEventBatcher` as Singleton — shared instance receives `Add()` calls from `PermissionService`
+3. `RegistrationEventBatcher` as `IHostedService` — factory lambda resolves the shared Singleton, ensuring same instance runs as both accumulator and background service

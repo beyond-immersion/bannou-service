@@ -101,20 +101,20 @@ This plugin does not consume external events.
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| CreateCharacter | POST /character/create | admin | character, realm-index, global-index | character.created, character.realm.joined |
-| GetCharacter | POST /character/get | user | - | - |
-| UpdateCharacter | POST /character/update | admin | character | character.updated + client push |
-| DeleteCharacter | POST /character/delete | admin | character, realm-index, global-index | character.realm.left, character.deleted |
-| ListCharacters | POST /character/list | user | - | - |
-| GetEnrichedCharacter | POST /character/get-enriched | user | - | - |
-| CompressCharacter | POST /character/compress | admin | archive | character.compressed |
-| GetCharacterArchive | POST /character/get-archive | user | - | - |
-| CheckCharacterReferences | POST /character/check-references | admin | refcount | - |
-| GetCharactersByRealm | POST /character/by-realm | user | - | - |
-| TransferCharacterToRealm | POST /character/transfer-realm | admin | character, realm-index, global-index | character.realm.left, character.realm.joined, character.updated + client push |
-| GetCompressData | POST /character/get-compress-data | developer | - | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| CreateCharacter | POST /character/create | generated | admin | character, realm-index, global-index | character.created, character.realm.joined |
+| GetCharacter | POST /character/get | generated | user | - | - |
+| UpdateCharacter | POST /character/update | generated | admin | character | character.updated + client push |
+| DeleteCharacter | POST /character/delete | generated | admin | character, realm-index, global-index | character.realm.left, character.deleted |
+| ListCharacters | POST /character/list | generated | user | - | - |
+| GetEnrichedCharacter | POST /character/get-enriched | generated | user | - | - |
+| CompressCharacter | POST /character/compress | generated | admin | archive | character.compressed |
+| GetCharacterArchive | POST /character/get-archive | generated | user | - | - |
+| CheckCharacterReferences | POST /character/check-references | generated | admin | refcount | - |
+| GetCharactersByRealm | POST /character/by-realm | generated | user | - | - |
+| TransferCharacterToRealm | POST /character/transfer-realm | generated | admin | character, realm-index, global-index | character.realm.left, character.realm.joined, character.updated + client push |
+| GetCompressData | POST /character/get-compress-data | generated | [] | - | - |
 
 ---
 
@@ -308,7 +308,7 @@ RETURN (200, CharacterResponse)
 ```
 
 ### GetCompressData
-POST /character/get-compress-data | Roles: [developer]
+POST /character/get-compress-data | Roles: []
 
 ```
 READ character-global-index:{characterId}              -> 404 if null
@@ -329,3 +329,17 @@ RETURN (200, CharacterBaseArchive { resourceId, resourceType, characterId, name,
 ## Background Services
 
 No background services.
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### OnRunningAsync
+
+```
+// Register resource template for ABML ${candidate.character.*} validation
+CALL IResourceTemplateRegistry.Register(CharacterBaseTemplate)
+// Register compression callback with lib-resource
+CALL IResourceClient via CharacterCompressionCallbacks.RegisterAsync()
+  // Points lib-resource at POST /character/get-compress-data (priority: 0)
+```

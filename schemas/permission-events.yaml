@@ -21,7 +21,7 @@ info:
       handler: HandleSessionUpdated
   x-event-publications:
     # Permission capability updates sent to Connect service
-    - topic: permission.capability-update
+    - topic: permission.capability-updated
       event: PermissionCapabilityUpdate
       description: Published when session capabilities are compiled or updated
     # Bulk observability event for service registration patterns
@@ -110,7 +110,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "permission.capability-update"
+          default: "permission.capability-updated"
           description: Fixed event type identifier
         sessionId:
           type: string
