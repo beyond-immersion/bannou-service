@@ -34,6 +34,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
     private readonly Mock<IStateStore<ObjectiveProgressModel>> _mockProgressStore;
     private readonly Mock<ICacheableStateStore<CharacterQuestIndex>> _mockCharacterIndex;
     private readonly Mock<IStateStore<CooldownEntry>> _mockCooldownStore;
+    private readonly Mock<IStateStore<string>> _mockInstanceStringStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IContractClient> _mockContractClient;
     private readonly Mock<ICharacterClient> _mockCharacterClient;
@@ -57,6 +58,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         _mockProgressStore = new Mock<IStateStore<ObjectiveProgressModel>>();
         _mockCharacterIndex = new Mock<ICacheableStateStore<CharacterQuestIndex>>();
         _mockCooldownStore = new Mock<IStateStore<CooldownEntry>>();
+        _mockInstanceStringStore = new Mock<IStateStore<string>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockContractClient = new Mock<IContractClient>();
         _mockCharacterClient = new Mock<ICharacterClient>();
@@ -90,6 +92,23 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         _mockStateStoreFactory
             .Setup(f => f.GetStore<CooldownEntry>(StateStoreDefinitions.QuestCooldown))
             .Returns(_mockCooldownStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<string>(StateStoreDefinitions.QuestInstance))
+            .Returns(_mockInstanceStringStore.Object);
+
+        // Default string store behavior (reverse index operations)
+        _mockInstanceStringStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((string?)null, (string?)null));
+        _mockInstanceStringStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockInstanceStringStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockInstanceStringStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         // Default message bus setup
         _mockMessageBus
@@ -2808,16 +2827,14 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ObjectiveProgressModel?)null);
 
-        // Capture the published event
-        string? capturedTopic = null;
-        object? capturedEvent = null;
+        // Capture all published events (abandon publishes both action + lifecycle events)
+        var publishedEvents = new List<(string Topic, object Event)>();
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .Callback<string, object, CancellationToken>((topic, evt, _) =>
             {
-                capturedTopic = topic;
-                capturedEvent = evt;
+                publishedEvents.Add((topic, evt));
             })
             .ReturnsAsync(true);
 
@@ -2832,9 +2849,9 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.Equal(QuestPublishedTopics.QuestAbandoned, capturedTopic);
-        Assert.NotNull(capturedEvent);
-        var typedEvent = Assert.IsType<QuestAbandonedEvent>(capturedEvent);
+        var abandonedPublish = publishedEvents.FirstOrDefault(e => e.Topic == QuestPublishedTopics.QuestAbandoned);
+        Assert.NotEqual(default, abandonedPublish);
+        var typedEvent = Assert.IsType<QuestAbandonedEvent>(abandonedPublish.Event);
         Assert.Equal(instanceId, typedEvent.QuestInstanceId);
         Assert.Equal(characterId, typedEvent.AbandoningCharacterId);
     }

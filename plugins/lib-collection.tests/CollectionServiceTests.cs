@@ -35,6 +35,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     private readonly Mock<IQueryableStateStore<AreaContentConfigModel>> _mockAreaContentStore;
     private readonly Mock<IStateStore<CollectionCacheModel>> _mockCollectionCache;
     private readonly Mock<ICacheableStateStore<CollectionCacheModel>> _mockCacheableCollectionCache;
+    private readonly Mock<IStateStore<string>> _mockEntryTemplateStringStore;
 
     // Client mocks
     private readonly Mock<IInventoryClient> _mockInventoryClient;
@@ -75,6 +76,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockAreaContentStore = new Mock<IQueryableStateStore<AreaContentConfigModel>>();
         _mockCollectionCache = new Mock<IStateStore<CollectionCacheModel>>();
         _mockCacheableCollectionCache = new Mock<ICacheableStateStore<CollectionCacheModel>>();
+        _mockEntryTemplateStringStore = new Mock<IStateStore<string>>();
 
         // Initialize client mocks
         _mockInventoryClient = new Mock<IInventoryClient>();
@@ -104,6 +106,23 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockStateStoreFactory
             .Setup(f => f.GetCacheableStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache))
             .Returns(_mockCacheableCollectionCache.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<string>(StateStoreDefinitions.CollectionEntryTemplates))
+            .Returns(_mockEntryTemplateStringStore.Object);
+
+        // Default string store behavior (reverse index operations)
+        _mockEntryTemplateStringStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((string?)null, (string?)null));
+        _mockEntryTemplateStringStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockEntryTemplateStringStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockEntryTemplateStringStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         // Default save behavior
         _mockTemplateStore
@@ -977,6 +996,10 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .Setup(s => s.GetAsync($"col:{TestCollectionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
 
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache());
+
         _mockInventoryClient
             .Setup(c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DeleteContainerResponse());
@@ -1026,6 +1049,10 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockCollectionStore
             .Setup(s => s.GetAsync($"col:{TestCollectionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
+
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache());
 
         _mockInventoryClient
             .Setup(c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()))
@@ -2093,6 +2120,20 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<CollectionInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<CollectionInstanceModel> { collection1, collection2 });
 
+        // Cache hit for each collection avoids rebuild from inventory
+        _mockCollectionCache
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string key, CancellationToken _) =>
+            {
+                if (key.StartsWith("cache:"))
+                {
+                    var idStr = key["cache:".Length..];
+                    if (Guid.TryParse(idStr, out var id))
+                        return CreateTestCache(collectionId: id);
+                }
+                return null;
+            });
+
         _mockInventoryClient
             .Setup(c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DeleteContainerResponse());
@@ -2134,6 +2175,11 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockCollectionStore
             .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<CollectionInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<CollectionInstanceModel> { collection });
+
+        // Cache hit avoids rebuild from inventory
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{collection.CollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache(collectionId: collection.CollectionId));
 
         _mockInventoryClient
             .Setup(c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()))
@@ -3324,6 +3370,14 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<CollectionInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<CollectionInstanceModel> { collection1, collection2 });
 
+        // Cache hit for each collection avoids rebuild from inventory
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{collection1.CollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache(collectionId: collection1.CollectionId));
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{collection2.CollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache(collectionId: collection2.CollectionId));
+
         // First container delete succeeds, second throws
         var callCount = 0;
         _mockInventoryClient
@@ -3433,6 +3487,10 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             .Setup(s => s.GetAsync($"col:{TestCollectionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
 
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache());
+
         _mockInventoryClient
             .Setup(c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DeleteContainerResponse());
@@ -3466,6 +3524,10 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockCollectionStore
             .Setup(s => s.GetAsync($"col:{TestCollectionId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(collection);
+
+        _mockCollectionCache
+            .Setup(s => s.GetAsync($"cache:{TestCollectionId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestCache());
 
         _mockInventoryClient
             .Setup(c => c.DeleteContainerAsync(It.IsAny<DeleteContainerRequest>(), It.IsAny<CancellationToken>()))

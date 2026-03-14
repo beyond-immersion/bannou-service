@@ -33,6 +33,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     private readonly Mock<IQueryableStateStore<LicenseDefinitionModel>> _mockDefinitionStore;
     private readonly Mock<IQueryableStateStore<BoardInstanceModel>> _mockBoardStore;
     private readonly Mock<IStateStore<BoardCacheModel>> _mockBoardCache;
+    private readonly Mock<IStateStore<string>> _mockBoardStringStore;
 
     // Client mocks
     private readonly Mock<IContractClient> _mockContractClient;
@@ -69,6 +70,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         _mockDefinitionStore = new Mock<IQueryableStateStore<LicenseDefinitionModel>>();
         _mockBoardStore = new Mock<IQueryableStateStore<BoardInstanceModel>>();
         _mockBoardCache = new Mock<IStateStore<BoardCacheModel>>();
+        _mockBoardStringStore = new Mock<IStateStore<string>>();
 
         // Initialize client mocks
         _mockContractClient = new Mock<IContractClient>();
@@ -92,6 +94,23 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         _mockStateStoreFactory
             .Setup(f => f.GetStore<BoardCacheModel>(StateStoreDefinitions.LicenseBoardCache))
             .Returns(_mockBoardCache.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<string>(StateStoreDefinitions.LicenseBoards))
+            .Returns(_mockBoardStringStore.Object);
+
+        // Default string store behavior (reverse index operations)
+        _mockBoardStringStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((string?)null, (string?)null));
+        _mockBoardStringStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockBoardStringStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockBoardStringStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         // Default save behavior
         _mockTemplateStore
