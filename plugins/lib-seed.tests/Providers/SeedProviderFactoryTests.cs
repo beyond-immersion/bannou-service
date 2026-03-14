@@ -24,7 +24,7 @@ public class SeedProviderFactoryTests
         var mockCache = new Mock<ISeedDataCache>();
         var factory = new SeedProviderFactory(mockCache.Object, new NullTelemetryProvider());
 
-        var provider = await factory.CreateAsync(null, Guid.NewGuid(), null, CancellationToken.None);
+        var provider = await factory.CreateAsync(null, Guid.NewGuid(), null, TestContext.Current.CancellationToken);
 
         Assert.Same(SeedProvider.Empty, provider);
         mockCache.Verify(c => c.GetSeedDataOrLoadAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -40,7 +40,7 @@ public class SeedProviderFactoryTests
 
         var factory = new SeedProviderFactory(mockCache.Object, new NullTelemetryProvider());
 
-        var provider = await factory.CreateAsync(characterId, Guid.NewGuid(), null, CancellationToken.None);
+        var provider = await factory.CreateAsync(characterId, Guid.NewGuid(), null, TestContext.Current.CancellationToken);
 
         Assert.NotNull(provider);
         Assert.Equal("seed", provider.Name);
@@ -57,7 +57,7 @@ public class SeedProviderFactoryTests
 
         var factory = new SeedProviderFactory(mockCache.Object, new NullTelemetryProvider());
 
-        var provider = await factory.CreateAsync(characterId, Guid.NewGuid(), null, CancellationToken.None);
+        var provider = await factory.CreateAsync(characterId, Guid.NewGuid(), null, TestContext.Current.CancellationToken);
         var activeCount = provider.GetValue(new[] { "active_count" }.AsSpan());
 
         Assert.Equal(0, activeCount);
@@ -94,7 +94,7 @@ public class SeedProviderFactoryTests
 
         var factory = new SeedProviderFactory(mockCache.Object, new NullTelemetryProvider());
 
-        var provider = await factory.CreateAsync(characterId, Guid.NewGuid(), null, CancellationToken.None);
+        var provider = await factory.CreateAsync(characterId, Guid.NewGuid(), null, TestContext.Current.CancellationToken);
         var activeCount = provider.GetValue(new[] { "active_count" }.AsSpan());
         var phase = provider.GetValue(new[] { "guardian", "phase" }.AsSpan());
 

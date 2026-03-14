@@ -84,7 +84,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         var context = CreateTestContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         var context = CreateTestContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         var context = CreateTestContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         var context = CreateTestContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     #endregion
@@ -156,7 +156,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        var result = await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(ActionResult.Continue, result);
         _mockMemoryStore.Verify(s => s.StoreExperienceAsync(
@@ -193,7 +193,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(0.5f, capturedSignificance);
     }
@@ -232,7 +232,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.NotNull(capturedContext);
         Assert.Equal(2, capturedContext.Count);
@@ -262,7 +262,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.NotNull(capturedContext);
         Assert.Empty(capturedContext);
@@ -293,7 +293,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.NotNull(capturedContext);
         Assert.Empty(capturedContext);
@@ -332,7 +332,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.NotNull(capturedPerception);
         Assert.Equal("threat", capturedPerception.Category);
@@ -371,7 +371,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.NotNull(capturedContext);
         Assert.Equal(2, capturedContext.Count);  // Only Memory objects
@@ -406,7 +406,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(1.0f, capturedSignificance);
     }
@@ -436,7 +436,7 @@ public class StoreMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(0.75f, capturedSignificance, 2);
     }

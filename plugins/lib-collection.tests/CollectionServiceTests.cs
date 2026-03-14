@@ -367,7 +367,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateEntryTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateEntryTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -413,7 +413,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateEntryTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateEntryTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -443,7 +443,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateEntryTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateEntryTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -478,7 +478,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateEntryTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateEntryTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -499,7 +499,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.GetEntryTemplateAsync(
             new GetEntryTemplateRequest { EntryTemplateId = TestEntryTemplateId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -517,7 +517,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.GetEntryTemplateAsync(
             new GetEntryTemplateRequest { EntryTemplateId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -548,7 +548,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.ListEntryTemplatesAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListEntryTemplatesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -575,7 +575,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.UpdateEntryTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateEntryTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -606,7 +606,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.UpdateEntryTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateEntryTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -636,7 +636,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.UpdateEntryTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateEntryTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -657,7 +657,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.DeprecateEntryTemplateAsync(
             new DeprecateEntryTemplateRequest { EntryTemplateId = TestEntryTemplateId, Reason = "No longer used" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -703,7 +703,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.DeprecateEntryTemplateAsync(
             new DeprecateEntryTemplateRequest { EntryTemplateId = TestEntryTemplateId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert — idempotent: returns OK without re-saving
         Assert.Equal(StatusCodes.OK, status);
@@ -755,7 +755,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.SeedEntryTemplatesAsync(request, CancellationToken.None);
+        var (status, response) = await service.SeedEntryTemplatesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -795,7 +795,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateCollectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -843,7 +843,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateCollectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -864,7 +864,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateCollectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -896,7 +896,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateCollectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -929,7 +929,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateCollectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -959,7 +959,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.GetCollectionAsync(
             new GetCollectionRequest { CollectionId = TestCollectionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -986,7 +986,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.DeleteCollectionAsync(
             new DeleteCollectionRequest { CollectionId = TestCollectionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1036,7 +1036,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.DeleteCollectionAsync(
             new DeleteCollectionRequest { CollectionId = TestCollectionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - succeeds even though container already deleted
         Assert.Equal(StatusCodes.OK, status);
@@ -1066,7 +1066,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.ListCollectionsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListCollectionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1098,7 +1098,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.GrantEntryAsync(request, CancellationToken.None);
+        var (status, response) = await service.GrantEntryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1170,7 +1170,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.GrantEntryAsync(request, CancellationToken.None);
+        var (status, response) = await service.GrantEntryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1200,7 +1200,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.GrantEntryAsync(request, CancellationToken.None);
+        var (status, response) = await service.GrantEntryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1258,7 +1258,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.GrantEntryAsync(request, CancellationToken.None);
+        var (status, response) = await service.GrantEntryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1327,7 +1327,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.GrantEntryAsync(request, CancellationToken.None);
+        var (status, response) = await service.GrantEntryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1381,7 +1381,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.GrantEntryAsync(request, CancellationToken.None);
+        var (status, response) = await service.GrantEntryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
@@ -1431,7 +1431,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1456,7 +1456,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1512,7 +1512,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 GameServiceId = TestGameServiceId,
                 CollectionType = "bestiary"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1552,7 +1552,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 GameServiceId = TestGameServiceId,
                 CollectionType = "bestiary"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1595,7 +1595,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.SetAreaContentConfigAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetAreaContentConfigAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1646,7 +1646,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.SetAreaContentConfigAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetAreaContentConfigAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1672,7 +1672,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.GetAreaContentConfigAsync(
             new GetAreaContentConfigRequest { GameServiceId = TestGameServiceId, CollectionType = "music_library", AreaCode = "enchanted_forest" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1696,7 +1696,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "music_library",
                 AreaCode = "unknown_area"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1739,7 +1739,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "music_library",
                 AreaCode = "enchanted_forest"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1805,7 +1805,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "music_library",
                 AreaCode = "enchanted_forest"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1871,7 +1871,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.AdvanceDiscoveryAsync(
             new AdvanceDiscoveryRequest { CollectionId = TestCollectionId, EntryCode = "boss_dragon" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1931,7 +1931,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.AdvanceDiscoveryAsync(
             new AdvanceDiscoveryRequest { CollectionId = TestCollectionId, EntryCode = "boss_dragon" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1973,7 +1973,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.AdvanceDiscoveryAsync(
             new AdvanceDiscoveryRequest { CollectionId = TestCollectionId, EntryCode = "boss_dragon" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2033,7 +2033,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 Favorited = true,
                 KillCount = 3
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2069,7 +2069,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 EntryCode = "nonexistent",
                 PlayCount = 1
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2102,7 +2102,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.CleanupByCharacterAsync(
             new CleanupByCharacterRequest { CharacterId = characterId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2171,7 +2171,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.CleanupByCharacterAsync(
             new CleanupByCharacterRequest { CharacterId = characterId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2248,7 +2248,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2317,7 +2317,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "entry_two"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2387,7 +2387,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2446,7 +2446,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.GetCollectionAsync(
             new GetCollectionRequest { CollectionId = TestCollectionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2495,7 +2495,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.GetCollectionAsync(
             new GetCollectionRequest { CollectionId = TestCollectionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2597,7 +2597,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "entry_one"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2677,7 +2677,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "entry_three"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2747,7 +2747,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "entry_3"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - 3/8 = 37.5%, no milestone should be published (25% already crossed, 50% not yet)
         Assert.Equal(StatusCodes.OK, status);
@@ -2800,7 +2800,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2857,7 +2857,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - grant still succeeds even though first listener threw
         Assert.Equal(StatusCodes.OK, status);
@@ -2913,7 +2913,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2946,7 +2946,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 EntryCode = "boss_dragon",
                 PlayCount = 10
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2969,7 +2969,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.DeleteCollectionAsync(
             new DeleteCollectionRequest { CollectionId = TestCollectionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3043,7 +3043,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - should succeed after retry
         Assert.Equal(StatusCodes.OK, status);
@@ -3080,7 +3080,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateCollectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3116,7 +3116,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateCollectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3145,7 +3145,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.GrantEntryAsync(request, CancellationToken.None);
+        var (status, response) = await service.GrantEntryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3186,7 +3186,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3262,7 +3262,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, _) = await service.AdvanceDiscoveryAsync(
             new AdvanceDiscoveryRequest { CollectionId = TestCollectionId, EntryCode = "boss_dragon" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3341,7 +3341,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.CleanupByCharacterAsync(
             new CleanupByCharacterRequest { CharacterId = ownerId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - partial cleanup succeeds
         Assert.Equal(StatusCodes.OK, status);
@@ -3374,7 +3374,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateCollectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3412,7 +3412,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.CreateCollectionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateCollectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3442,7 +3442,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, response) = await service.DeleteCollectionAsync(
             new DeleteCollectionRequest { CollectionId = TestCollectionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3476,7 +3476,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         // Act
         var (status, _) = await service.DeleteCollectionAsync(
             new DeleteCollectionRequest { CollectionId = TestCollectionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3551,7 +3551,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "music_library",
                 AreaCode = "enchanted_forest"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - falls back to default since no theme overlap
         Assert.Equal(StatusCodes.OK, status);
@@ -3606,7 +3606,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "music_library",
                 AreaCode = "enchanted_forest"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3679,7 +3679,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                     CollectionType = "music_library",
                     AreaCode = "enchanted_forest"
                 },
-                CancellationToken.None);
+                TestContext.Current.CancellationToken);
 
             Assert.Equal(StatusCodes.OK, status);
             Assert.NotNull(response);
@@ -3730,7 +3730,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3770,7 +3770,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
                 CollectionType = "bestiary",
                 EntryCode = "boss_dragon"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

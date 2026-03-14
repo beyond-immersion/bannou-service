@@ -64,7 +64,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -86,7 +86,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -113,7 +113,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -140,7 +140,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -164,7 +164,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -192,7 +192,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -219,7 +219,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -248,7 +248,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -274,7 +274,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -298,7 +298,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -328,7 +328,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -354,7 +354,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -381,7 +381,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -403,7 +403,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -420,7 +420,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "my_impact");
         Assert.NotNull(result);
@@ -445,7 +445,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);
@@ -476,7 +476,7 @@ public class EvaluateGoalImpactHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<GoalImpactResult>(context, "goal_updates");
         Assert.NotNull(result);

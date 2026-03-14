@@ -68,7 +68,7 @@ public class DistributedCircuitBreakerTests
         SetupRedisGetCircuitState("test-app", CircuitState.Closed, 0);
 
         // Act
-        var state = await circuitBreaker.GetStateAsync("test-app");
+        var state = await circuitBreaker.GetStateAsync("test-app", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(CircuitState.Closed, state);
@@ -87,7 +87,7 @@ public class DistributedCircuitBreakerTests
         SetupRedisRecordFailure("test-app", CircuitState.Open, 3, stateChanged: true);
 
         // Act - Record failures to reach threshold
-        await circuitBreaker.RecordFailureAsync("test-app");
+        await circuitBreaker.RecordFailureAsync("test-app", TestContext.Current.CancellationToken);
 
         // Assert - Event should be published for state change
         _mockMessageBus.Verify(x => x.TryPublishAsync(
@@ -117,7 +117,7 @@ public class DistributedCircuitBreakerTests
         SetupRedisRecordSuccess("test-app", stateChanged: true, previousState: CircuitState.Open);
 
         // Act
-        await circuitBreaker.RecordSuccessAsync("test-app");
+        await circuitBreaker.RecordSuccessAsync("test-app", TestContext.Current.CancellationToken);
 
         // Assert - Event should be published for state change
         _mockMessageBus.Verify(x => x.TryPublishAsync(
@@ -147,7 +147,7 @@ public class DistributedCircuitBreakerTests
         });
 
         // Act - Get state after timeout elapsed
-        var state = await circuitBreaker.GetStateAsync("test-app");
+        var state = await circuitBreaker.GetStateAsync("test-app", TestContext.Current.CancellationToken);
 
         // Assert - Should transition to HalfOpen from local cache
         Assert.Equal(CircuitState.HalfOpen, state);
@@ -172,7 +172,7 @@ public class DistributedCircuitBreakerTests
         SetupRedisRecordFailure("test-app", CircuitState.Open, 3, stateChanged: true);
 
         // Act - Probe request fails
-        await circuitBreaker.RecordFailureAsync("test-app");
+        await circuitBreaker.RecordFailureAsync("test-app", TestContext.Current.CancellationToken);
 
         // Assert - Circuit should reopen
         _mockMessageBus.Verify(x => x.TryPublishAsync(
@@ -208,7 +208,7 @@ public class DistributedCircuitBreakerTests
         circuitBreaker.HandleStateChangeEvent(evt);
 
         // Assert - Next GetState should use cache (no Redis call)
-        var state = await circuitBreaker.GetStateAsync("other-instance-app");
+        var state = await circuitBreaker.GetStateAsync("other-instance-app", TestContext.Current.CancellationToken);
         Assert.Equal(CircuitState.Open, state);
 
         // Verify no Redis call was made (cache hit)
@@ -231,10 +231,10 @@ public class DistributedCircuitBreakerTests
         SetupRedisGetCircuitState("cached-app", CircuitState.Closed, 0);
 
         // Act - First call populates cache
-        await circuitBreaker.GetStateAsync("cached-app");
+        await circuitBreaker.GetStateAsync("cached-app", TestContext.Current.CancellationToken);
 
         // Second call should use cache
-        await circuitBreaker.GetStateAsync("cached-app");
+        await circuitBreaker.GetStateAsync("cached-app", TestContext.Current.CancellationToken);
 
         // Assert - Redis should only be called once
         _mockRedisOperations.Verify(x => x.ScriptEvaluateAsync(
@@ -266,7 +266,7 @@ public class DistributedCircuitBreakerTests
         SetupRedisGetCircuitState("clear-test", CircuitState.Closed, 0);
 
         // Assert - Next call should hit Redis
-        var state = await circuitBreaker.GetStateAsync("clear-test");
+        var state = await circuitBreaker.GetStateAsync("clear-test", TestContext.Current.CancellationToken);
         Assert.Equal(CircuitState.Closed, state);
 
         _mockRedisOperations.Verify(x => x.ScriptEvaluateAsync(
@@ -290,7 +290,7 @@ public class DistributedCircuitBreakerTests
         var circuitBreaker = CreateCircuitBreaker();
 
         // Act
-        var state = await circuitBreaker.GetStateAsync("no-redis-app");
+        var state = await circuitBreaker.GetStateAsync("no-redis-app", TestContext.Current.CancellationToken);
 
         // Assert - Should gracefully return Closed
         Assert.Equal(CircuitState.Closed, state);
@@ -306,11 +306,11 @@ public class DistributedCircuitBreakerTests
         var circuitBreaker = CreateCircuitBreaker(threshold: 2);
 
         // Act - Record failures locally
-        await circuitBreaker.RecordFailureAsync("local-app");
-        await circuitBreaker.RecordFailureAsync("local-app");
+        await circuitBreaker.RecordFailureAsync("local-app", TestContext.Current.CancellationToken);
+        await circuitBreaker.RecordFailureAsync("local-app", TestContext.Current.CancellationToken);
 
         // Assert - Should open locally after threshold
-        var state = await circuitBreaker.GetStateAsync("local-app");
+        var state = await circuitBreaker.GetStateAsync("local-app", TestContext.Current.CancellationToken);
         Assert.Equal(CircuitState.Open, state);
     }
 
@@ -328,7 +328,7 @@ public class DistributedCircuitBreakerTests
         var circuitBreaker = CreateCircuitBreaker();
 
         // Act
-        var state = await circuitBreaker.GetStateAsync("failing-redis-app");
+        var state = await circuitBreaker.GetStateAsync("failing-redis-app", TestContext.Current.CancellationToken);
 
         // Assert - Should gracefully return Closed
         Assert.Equal(CircuitState.Closed, state);
@@ -346,7 +346,7 @@ public class DistributedCircuitBreakerTests
         SetupRedisRecordFailure("publish-test", CircuitState.Open, 1, stateChanged: true);
 
         // Act
-        await circuitBreaker.RecordFailureAsync("publish-test");
+        await circuitBreaker.RecordFailureAsync("publish-test", TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(x => x.TryPublishAsync(
@@ -366,7 +366,7 @@ public class DistributedCircuitBreakerTests
         SetupRedisRecordFailure("no-publish-test", CircuitState.Closed, 1, stateChanged: false);
 
         // Act
-        await circuitBreaker.RecordFailureAsync("no-publish-test");
+        await circuitBreaker.RecordFailureAsync("no-publish-test", TestContext.Current.CancellationToken);
 
         // Assert - No event should be published
         _mockMessageBus.Verify(x => x.TryPublishAsync(

@@ -84,9 +84,9 @@ public class MessagingSubscriptionRecoveryServiceTests
         // Act
         await service.StartAsync(cts.Token);
         // Give it a moment to complete recovery
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         cts.Cancel();
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - Recovery was called (GetSetAsync was invoked)
         _mockSubscriptionStore.Verify(
@@ -109,10 +109,10 @@ public class MessagingSubscriptionRecoveryServiceTests
 
         // Act - Service should not crash
         await service.StartAsync(cts.Token);
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         cts.Cancel();
 
-        var exception = await Record.ExceptionAsync(() => service.StopAsync(CancellationToken.None));
+        var exception = await Record.ExceptionAsync(() => service.StopAsync(TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Null(exception);
@@ -127,10 +127,10 @@ public class MessagingSubscriptionRecoveryServiceTests
 
         // Act
         await service.StartAsync(cts.Token);
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         cts.Cancel();
 
-        var exception = await Record.ExceptionAsync(() => service.StopAsync(CancellationToken.None));
+        var exception = await Record.ExceptionAsync(() => service.StopAsync(TestContext.Current.CancellationToken));
 
         // Assert
         Assert.Null(exception);

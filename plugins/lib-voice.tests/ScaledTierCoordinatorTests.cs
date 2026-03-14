@@ -65,7 +65,7 @@ public class ScaledTierCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act
-        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 50, CancellationToken.None);
+        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 50, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -79,7 +79,7 @@ public class ScaledTierCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act
-        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 100, CancellationToken.None);
+        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 100, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -93,7 +93,7 @@ public class ScaledTierCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act
-        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 150, CancellationToken.None);
+        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 150, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -222,7 +222,7 @@ public class ScaledTierCoordinatorTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await coordinator.AllocateRtpServerAsync(roomId, CancellationToken.None);
+        var result = await coordinator.AllocateRtpServerAsync(roomId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -243,7 +243,7 @@ public class ScaledTierCoordinatorTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => coordinator.AllocateRtpServerAsync(roomId, CancellationToken.None));
+            () => coordinator.AllocateRtpServerAsync(roomId, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -268,7 +268,7 @@ public class ScaledTierCoordinatorTests
             .ReturnsAsync(new RtpEngineDeleteResponse { Result = "ok" });
 
         // Act
-        await coordinator.ReleaseRtpServerAsync(roomId, CancellationToken.None);
+        await coordinator.ReleaseRtpServerAsync(roomId, TestContext.Current.CancellationToken);
 
         // Assert
         _mockRtpEngineClient.Verify(r => r.DeleteAsync($"room-{roomId}", "bannou", It.IsAny<CancellationToken>()), Times.Once);
@@ -289,7 +289,7 @@ public class ScaledTierCoordinatorTests
             });
 
         // Act
-        await coordinator.ReleaseRtpServerAsync(roomId, CancellationToken.None);
+        await coordinator.ReleaseRtpServerAsync(roomId, TestContext.Current.CancellationToken);
 
         // Assert
         _mockRtpEngineClient.Verify(r => r.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -306,7 +306,7 @@ public class ScaledTierCoordinatorTests
             .ThrowsAsync(new Exception("Query failed"));
 
         // Act & Assert - Should throw (fail-fast behavior per Phase B1)
-        await Assert.ThrowsAsync<Exception>(() => coordinator.ReleaseRtpServerAsync(roomId, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => coordinator.ReleaseRtpServerAsync(roomId, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -324,7 +324,7 @@ public class ScaledTierCoordinatorTests
 
         // Act
         var result = await coordinator.BuildScaledConnectionInfoAsync(
-            roomId, sessionId, rtpServerUri, VoiceCodec.Opus, CancellationToken.None);
+            roomId, sessionId, rtpServerUri, VoiceCodec.Opus, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -346,7 +346,7 @@ public class ScaledTierCoordinatorTests
 
         // Act
         var result = await coordinator.BuildScaledConnectionInfoAsync(
-            roomId, Guid.NewGuid(), "udp://host:1234", VoiceCodec.G711, CancellationToken.None);
+            roomId, Guid.NewGuid(), "udp://host:1234", VoiceCodec.G711, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(VoiceCodec.G711, result.Codec);
@@ -361,7 +361,7 @@ public class ScaledTierCoordinatorTests
 
         // Act
         var result = await coordinator.BuildScaledConnectionInfoAsync(
-            roomId, Guid.NewGuid(), "udp://host:1234", VoiceCodec.G722, CancellationToken.None);
+            roomId, Guid.NewGuid(), "udp://host:1234", VoiceCodec.G722, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(VoiceCodec.G722, result.Codec);

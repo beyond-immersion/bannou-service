@@ -166,7 +166,7 @@ public class CloudflareEdgeProviderTests
         var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
-        var result = await provider.PushTokenRevocationAsync("test-jti", Guid.NewGuid(), TimeSpan.FromMinutes(60));
+        var result = await provider.PushTokenRevocationAsync("test-jti", Guid.NewGuid(), TimeSpan.FromMinutes(60), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -192,7 +192,7 @@ public class CloudflareEdgeProviderTests
             req.RequestUri.ToString().Contains($"token%3A{jti}"));
 
         // Act
-        var result = await _provider.PushTokenRevocationAsync(jti, accountId, ttl);
+        var result = await _provider.PushTokenRevocationAsync(jti, accountId, ttl, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -207,7 +207,7 @@ public class CloudflareEdgeProviderTests
         SetupMockResponse(HttpStatusCode.InternalServerError, content: "Internal server error");
 
         // Act
-        var result = await _provider.PushTokenRevocationAsync(jti, Guid.NewGuid(), TimeSpan.FromMinutes(60));
+        var result = await _provider.PushTokenRevocationAsync(jti, Guid.NewGuid(), TimeSpan.FromMinutes(60), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -227,7 +227,7 @@ public class CloudflareEdgeProviderTests
             .ThrowsAsync(new HttpRequestException("Connection failed"));
 
         // Act
-        var result = await _provider.PushTokenRevocationAsync(jti, Guid.NewGuid(), TimeSpan.FromMinutes(60));
+        var result = await _provider.PushTokenRevocationAsync(jti, Guid.NewGuid(), TimeSpan.FromMinutes(60), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -245,7 +245,7 @@ public class CloudflareEdgeProviderTests
         var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
-        var result = await provider.PushAccountRevocationAsync(Guid.NewGuid(), DateTimeOffset.UtcNow);
+        var result = await provider.PushAccountRevocationAsync(Guid.NewGuid(), DateTimeOffset.UtcNow, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -264,7 +264,7 @@ public class CloudflareEdgeProviderTests
             req.RequestUri.ToString().Contains($"account%3A{accountId}"));
 
         // Act
-        var result = await _provider.PushAccountRevocationAsync(accountId, issuedBefore);
+        var result = await _provider.PushAccountRevocationAsync(accountId, issuedBefore, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -287,7 +287,7 @@ public class CloudflareEdgeProviderTests
         };
 
         // Act
-        var result = await provider.PushBatchAsync(entries);
+        var result = await provider.PushBatchAsync(entries, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result);
@@ -307,7 +307,7 @@ public class CloudflareEdgeProviderTests
         SetupMockResponse(HttpStatusCode.OK);
 
         // Act
-        var result = await _provider.PushBatchAsync(entries);
+        var result = await _provider.PushBatchAsync(entries, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result);
@@ -320,7 +320,7 @@ public class CloudflareEdgeProviderTests
         var entries = new List<FailedEdgePushEntry>();
 
         // Act
-        var result = await _provider.PushBatchAsync(entries);
+        var result = await _provider.PushBatchAsync(entries, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, result);

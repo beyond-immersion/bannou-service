@@ -48,7 +48,7 @@ public sealed class InputWindowManagerTests : IDisposable
         };
 
         // Act
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(window);
@@ -68,7 +68,7 @@ public sealed class InputWindowManagerTests : IDisposable
         };
 
         // Act
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("custom-id", window.WindowId);
@@ -83,11 +83,11 @@ public sealed class InputWindowManagerTests : IDisposable
             TargetEntity = _targetEntity,
             WindowId = "duplicate"
         };
-        await _manager.CreateAsync(options);
+        await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _manager.CreateAsync(options));
+            () => _manager.CreateAsync(options, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public sealed class InputWindowManagerTests : IDisposable
         };
 
         // Act
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("b", window.DefaultValue);
@@ -130,10 +130,10 @@ public sealed class InputWindowManagerTests : IDisposable
                 new InputOption { Value = "b", Label = "Option B" }
             }
         };
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _manager.SubmitAsync(window.WindowId, _targetEntity, "a");
+        var result = await _manager.SubmitAsync(window.WindowId, _targetEntity, "a", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.Accepted);
@@ -155,10 +155,10 @@ public sealed class InputWindowManagerTests : IDisposable
                 new InputOption { Value = "b", Label = "Option B" }
             }
         };
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _manager.SubmitAsync(window.WindowId, _targetEntity, "invalid");
+        var result = await _manager.SubmitAsync(window.WindowId, _targetEntity, "invalid", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.Accepted);
@@ -173,11 +173,11 @@ public sealed class InputWindowManagerTests : IDisposable
         {
             TargetEntity = _targetEntity
         };
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
         var wrongEntity = Guid.NewGuid();
 
         // Act
-        var result = await _manager.SubmitAsync(window.WindowId, wrongEntity, "input");
+        var result = await _manager.SubmitAsync(window.WindowId, wrongEntity, "input", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.Accepted);
@@ -188,7 +188,7 @@ public sealed class InputWindowManagerTests : IDisposable
     public async Task SubmitAsync_NonexistentWindow_RejectsInput()
     {
         // Act
-        var result = await _manager.SubmitAsync("nonexistent", _targetEntity, "input");
+        var result = await _manager.SubmitAsync("nonexistent", _targetEntity, "input", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.Accepted);
@@ -203,11 +203,11 @@ public sealed class InputWindowManagerTests : IDisposable
         {
             TargetEntity = _targetEntity
         };
-        var window = await _manager.CreateAsync(options);
-        await _manager.SubmitAsync(window.WindowId, _targetEntity, "first");
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
+        await _manager.SubmitAsync(window.WindowId, _targetEntity, "first", TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _manager.SubmitAsync(window.WindowId, _targetEntity, "second");
+        var result = await _manager.SubmitAsync(window.WindowId, _targetEntity, "second", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.Accepted);
@@ -226,10 +226,10 @@ public sealed class InputWindowManagerTests : IDisposable
         {
             TargetEntity = _targetEntity
         };
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Act
-        await _manager.SubmitAsync(window.WindowId, _targetEntity, "input");
+        await _manager.SubmitAsync(window.WindowId, _targetEntity, "input", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(InputWindowState.Submitted, window.State);
@@ -246,11 +246,11 @@ public sealed class InputWindowManagerTests : IDisposable
             TargetEntity = _targetEntity,
             Timeout = TimeSpan.FromSeconds(5)
         };
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
         var initialRemaining = window.TimeRemaining;
 
         // Act
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         var laterRemaining = window.TimeRemaining;
 
         // Assert
@@ -272,7 +272,7 @@ public sealed class InputWindowManagerTests : IDisposable
             TargetEntity = _targetEntity,
             DefaultValue = "default"
         };
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Act
         _manager.Close(window.WindowId, useDefault: true);
@@ -290,7 +290,7 @@ public sealed class InputWindowManagerTests : IDisposable
         {
             TargetEntity = _targetEntity
         };
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Act
         _manager.Close(window.WindowId, useDefault: false);
@@ -311,7 +311,7 @@ public sealed class InputWindowManagerTests : IDisposable
         {
             TargetEntity = _targetEntity
         };
-        var created = await _manager.CreateAsync(options);
+        var created = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Act
         var found = _manager.GetWindow(created.WindowId);
@@ -338,9 +338,9 @@ public sealed class InputWindowManagerTests : IDisposable
         var entity1 = Guid.NewGuid();
         var entity2 = Guid.NewGuid();
 
-        await _manager.CreateAsync(new InputWindowOptions { TargetEntity = entity1 });
-        await _manager.CreateAsync(new InputWindowOptions { TargetEntity = entity1 });
-        await _manager.CreateAsync(new InputWindowOptions { TargetEntity = entity2 });
+        await _manager.CreateAsync(new InputWindowOptions { TargetEntity = entity1 }, TestContext.Current.CancellationToken);
+        await _manager.CreateAsync(new InputWindowOptions { TargetEntity = entity1 }, TestContext.Current.CancellationToken);
+        await _manager.CreateAsync(new InputWindowOptions { TargetEntity = entity2 }, TestContext.Current.CancellationToken);
 
         // Act
         var windows = _manager.GetWindowsForEntity(entity1);
@@ -354,10 +354,10 @@ public sealed class InputWindowManagerTests : IDisposable
     public async Task ActiveWindows_ReturnsOnlyWaiting()
     {
         // Arrange
-        var window1 = await _manager.CreateAsync(new InputWindowOptions { TargetEntity = _targetEntity });
-        var window2 = await _manager.CreateAsync(new InputWindowOptions { TargetEntity = _targetEntity });
+        var window1 = await _manager.CreateAsync(new InputWindowOptions { TargetEntity = _targetEntity }, TestContext.Current.CancellationToken);
+        var window2 = await _manager.CreateAsync(new InputWindowOptions { TargetEntity = _targetEntity }, TestContext.Current.CancellationToken);
 
-        await _manager.SubmitAsync(window1.WindowId, _targetEntity, "input");
+        await _manager.SubmitAsync(window1.WindowId, _targetEntity, "input", TestContext.Current.CancellationToken);
 
         // Act
         var active = _manager.ActiveWindows;
@@ -379,13 +379,13 @@ public sealed class InputWindowManagerTests : IDisposable
         {
             TargetEntity = _targetEntity
         };
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         InputWindowCompletedEventArgs? receivedArgs = null;
         _manager.WindowCompleted += (_, args) => receivedArgs = args;
 
         // Act
-        await _manager.SubmitAsync(window.WindowId, _targetEntity, "input");
+        await _manager.SubmitAsync(window.WindowId, _targetEntity, "input", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(receivedArgs);
@@ -406,16 +406,16 @@ public sealed class InputWindowManagerTests : IDisposable
         {
             TargetEntity = _targetEntity
         };
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Act
         var submitTask = Task.Run(async () =>
         {
             await Task.Delay(50);
             await _manager.SubmitAsync(window.WindowId, _targetEntity, "input");
-        });
+        }, TestContext.Current.CancellationToken);
 
-        var result = await window.WaitForCompletionAsync();
+        var result = await window.WaitForCompletionAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("input", result);
@@ -435,10 +435,10 @@ public sealed class InputWindowManagerTests : IDisposable
             TargetEntity = _targetEntity,
             WindowType = InputWindowType.Confirmation
         };
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _manager.SubmitAsync(window.WindowId, _targetEntity, true);
+        var result = await _manager.SubmitAsync(window.WindowId, _targetEntity, true, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.Accepted);
@@ -453,10 +453,10 @@ public sealed class InputWindowManagerTests : IDisposable
             TargetEntity = _targetEntity,
             WindowType = InputWindowType.Confirmation
         };
-        var window = await _manager.CreateAsync(options);
+        var window = await _manager.CreateAsync(options, TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _manager.SubmitAsync(window.WindowId, _targetEntity, "true");
+        var result = await _manager.SubmitAsync(window.WindowId, _targetEntity, "true", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.Accepted);

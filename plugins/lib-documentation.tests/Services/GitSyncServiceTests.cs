@@ -50,7 +50,7 @@ public class GitSyncServiceTests
     {
         // Arrange, Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _service.SyncRepositoryAsync("", "main", "/tmp/test"));
+            _service.SyncRepositoryAsync("", "main", "/tmp/test", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class GitSyncServiceTests
         var result = await _service.SyncRepositoryAsync(
             "not-a-valid-url",
             "main",
-            localPath);
+            localPath, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.Success);
@@ -96,7 +96,7 @@ public class GitSyncServiceTests
     {
         // Arrange, Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _service.GetChangedFilesAsync("/tmp/test", null, ""));
+            _service.GetChangedFilesAsync("/tmp/test", null, "", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public class GitSyncServiceTests
         var localPath = Path.Combine(_configuration.GitStoragePath, "nonexistent-" + Guid.NewGuid());
 
         // Act
-        var result = await _service.GetChangedFilesAsync(localPath, null, "abc123");
+        var result = await _service.GetChangedFilesAsync(localPath, null, "abc123", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -122,7 +122,7 @@ public class GitSyncServiceTests
     {
         // Arrange, Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _service.GetMatchingFilesAsync("", ["*.md"], []));
+            _service.GetMatchingFilesAsync("", ["*.md"], [], TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public class GitSyncServiceTests
         var localPath = Path.Combine(_configuration.GitStoragePath, "nonexistent-" + Guid.NewGuid());
 
         // Act
-        var result = await _service.GetMatchingFilesAsync(localPath, ["*.md"], []);
+        var result = await _service.GetMatchingFilesAsync(localPath, ["*.md"], [], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -149,12 +149,12 @@ public class GitSyncServiceTests
         try
         {
             // Create test files
-            await File.WriteAllTextAsync(Path.Combine(testDir, "doc1.md"), "# Document 1");
-            await File.WriteAllTextAsync(Path.Combine(testDir, "doc2.md"), "# Document 2");
-            await File.WriteAllTextAsync(Path.Combine(testDir, "readme.txt"), "Not a markdown file");
+            await File.WriteAllTextAsync(Path.Combine(testDir, "doc1.md"), "# Document 1", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(testDir, "doc2.md"), "# Document 2", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(testDir, "readme.txt"), "Not a markdown file", TestContext.Current.CancellationToken);
 
             // Act
-            var result = await _service.GetMatchingFilesAsync(testDir, ["*.md"], []);
+            var result = await _service.GetMatchingFilesAsync(testDir, ["*.md"], [], TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(2, result.Count);
@@ -182,14 +182,14 @@ public class GitSyncServiceTests
         try
         {
             // Create test files
-            await File.WriteAllTextAsync(Path.Combine(testDir, "doc1.md"), "# Document 1");
-            await File.WriteAllTextAsync(Path.Combine(subDir, "excluded.md"), "# Excluded");
+            await File.WriteAllTextAsync(Path.Combine(testDir, "doc1.md"), "# Document 1", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(subDir, "excluded.md"), "# Excluded", TestContext.Current.CancellationToken);
 
             // Act
             var result = await _service.GetMatchingFilesAsync(
                 testDir,
                 ["**/*.md"],
-                ["node_modules/**"]);
+                ["node_modules/**"], TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Single(result);
@@ -271,7 +271,7 @@ public class GitSyncServiceTests
         try
         {
             // Act
-            var result = await _service.ReadFileContentAsync(testDir, "nonexistent.md");
+            var result = await _service.ReadFileContentAsync(testDir, "nonexistent.md", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(string.Empty, result);
@@ -293,12 +293,12 @@ public class GitSyncServiceTests
         var testDir = Path.Combine(_configuration.GitStoragePath, "read-test-" + Guid.NewGuid());
         Directory.CreateDirectory(testDir);
         var expectedContent = "# Test Document\n\nThis is the content.";
-        await File.WriteAllTextAsync(Path.Combine(testDir, "test.md"), expectedContent);
+        await File.WriteAllTextAsync(Path.Combine(testDir, "test.md"), expectedContent, TestContext.Current.CancellationToken);
 
         try
         {
             // Act
-            var result = await _service.ReadFileContentAsync(testDir, "test.md");
+            var result = await _service.ReadFileContentAsync(testDir, "test.md", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expectedContent, result);
@@ -376,7 +376,7 @@ public class GitSyncServiceTests
         var localPath = Path.Combine(_configuration.GitStoragePath, "nonexistent-" + Guid.NewGuid());
 
         // Act & Assert - Should not throw
-        await _service.CleanupRepositoryAsync(localPath);
+        await _service.CleanupRepositoryAsync(localPath, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -385,10 +385,10 @@ public class GitSyncServiceTests
         // Arrange
         var testDir = Path.Combine(_configuration.GitStoragePath, "cleanup-test-" + Guid.NewGuid());
         Directory.CreateDirectory(testDir);
-        await File.WriteAllTextAsync(Path.Combine(testDir, "test.txt"), "content");
+        await File.WriteAllTextAsync(Path.Combine(testDir, "test.txt"), "content", TestContext.Current.CancellationToken);
 
         // Act
-        await _service.CleanupRepositoryAsync(testDir);
+        await _service.CleanupRepositoryAsync(testDir, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(Directory.Exists(testDir));

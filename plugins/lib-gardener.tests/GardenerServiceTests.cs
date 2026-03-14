@@ -298,7 +298,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         // Act
         var (status, response) = await service.EnterGardenAsync(
             new EnterGardenRequest { SessionId = _testSessionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -341,7 +341,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.EnterGardenAsync(
             new EnterGardenRequest { SessionId = _testSessionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
         Assert.Null(response);
@@ -361,7 +361,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.EnterGardenAsync(
             new EnterGardenRequest { SessionId = _testSessionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.Null(response);
@@ -387,7 +387,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.GetGardenStateAsync(
             new GetGardenStateRequest { SessionId = _testSessionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -406,7 +406,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.GetGardenStateAsync(
             new GetGardenStateRequest { SessionId = _testSessionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.Null(response);
@@ -435,7 +435,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.LeaveGardenAsync(
             new LeaveGardenRequest { SessionId = _testSessionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -474,7 +474,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.LeaveGardenAsync(
             new LeaveGardenRequest { SessionId = _testSessionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.Null(response);
@@ -499,7 +499,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.LeaveGardenAsync(
             new LeaveGardenRequest { SessionId = _testSessionId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
         Assert.Null(response);
@@ -539,7 +539,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 Position = new Vec3 { X = 10, Y = 0, Z = 10 }
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -593,7 +593,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 Position = new Vec3 { X = 10, Y = 0, Z = 10 }
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -628,7 +628,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 Position = new Vec3 { X = 1, Y = 0, Z = 1 }
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -668,7 +668,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.InteractWithPoiAsync(
             new InteractWithPoiRequest { SessionId = _testSessionId, PoiId = poiId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -707,7 +707,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.InteractWithPoiAsync(
             new InteractWithPoiRequest { SessionId = _testSessionId, PoiId = poiId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -738,7 +738,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, _) = await service.InteractWithPoiAsync(
             new InteractWithPoiRequest { SessionId = _testSessionId, PoiId = poiId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -787,7 +787,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.DeclinePoiAsync(
             new DeclinePoiRequest { SessionId = _testSessionId, PoiId = poiId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -846,7 +846,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -898,7 +898,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -925,7 +925,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -950,7 +950,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -973,7 +973,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1000,7 +1000,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1037,7 +1037,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 ScenarioTemplateId = _testTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1082,7 +1082,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 ScenarioInstanceId = scenarioId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -1133,7 +1133,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 ScenarioInstanceId = Guid.NewGuid() // Different ID
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1154,7 +1154,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 ScenarioInstanceId = Guid.NewGuid()
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -1190,7 +1190,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SessionId = _testSessionId,
                 ScenarioInstanceId = scenarioId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1269,7 +1269,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 CurrentScenarioInstanceId = currentScenarioId,
                 TargetTemplateId = targetTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1319,7 +1319,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 CurrentScenarioInstanceId = currentScenario.ScenarioInstanceId,
                 TargetTemplateId = targetTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1359,7 +1359,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 CurrentScenarioInstanceId = currentScenario.ScenarioInstanceId,
                 TargetTemplateId = targetTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1403,7 +1403,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                     new() { Domain = "combat.melee", Weight = 1.0f }
                 }
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1443,7 +1443,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                     new() { Domain = "combat.melee", Weight = 1.0f }
                 }
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -1458,7 +1458,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.GetTemplateAsync(
             new GetTemplateRequest { ScenarioTemplateId = _testTemplateId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1472,7 +1472,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, _) = await service.GetTemplateAsync(
             new GetTemplateRequest { ScenarioTemplateId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -1496,7 +1496,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.DeprecateTemplateAsync(
             new DeprecateTemplateRequest { ScenarioTemplateId = _testTemplateId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1525,7 +1525,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.GetPhaseConfigAsync(
             new GetPhaseConfigRequest(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1544,7 +1544,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.UpdatePhaseConfigAsync(
             new UpdatePhaseConfigRequest { CurrentPhase = DeploymentPhase.Beta },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1575,7 +1575,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, response) = await service.GetPhaseMetricsAsync(
             new GetPhaseMetricsRequest(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1600,7 +1600,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 BondId = Guid.NewGuid(),
                 ScenarioTemplateId = _testTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1666,7 +1666,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 BondId = bondId,
                 ScenarioTemplateId = _testTemplateId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1697,7 +1697,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var (status, _) = await service.GetSharedGardenStateAsync(
             new GetSharedGardenRequest { BondId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1817,7 +1817,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 TotalGrowth: 10.0f,
                 CrossPollinated: false,
                 Source: "test"),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.NotNull(savedGarden);
         Assert.True(savedGarden.NeedsReEvaluation);
@@ -1862,7 +1862,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 NewPhase: "awakening",
                 TotalGrowth: 50.0f,
                 Progressed: true),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.NotNull(savedGarden);
         Assert.Equal("awakening", savedGarden.CachedGrowthPhase);

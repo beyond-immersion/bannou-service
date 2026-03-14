@@ -34,7 +34,7 @@ public class EmailServiceTests
         var service = new ConsoleEmailService(mockLogger.Object);
 
         // Act
-        await service.SendAsync("user@example.com", "Test Subject", "Test Body");
+        await service.SendAsync("user@example.com", "Test Subject", "Test Body", TestContext.Current.CancellationToken);
 
         // Assert - verify logging occurred (LogDebug is invoked once)
         mockLogger.Verify(
@@ -67,7 +67,7 @@ public class EmailServiceTests
         var service = new SendGridEmailService(mockClient.Object, from, mockLogger.Object);
 
         // Act
-        await service.SendAsync("user@example.com", "Password Reset", "Click here to reset");
+        await service.SendAsync("user@example.com", "Password Reset", "Click here to reset", TestContext.Current.CancellationToken);
 
         // Assert
         mockClient.Verify(
@@ -97,7 +97,7 @@ public class EmailServiceTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.SendAsync("user@example.com", "Subject", "Body"));
+            () => service.SendAsync("user@example.com", "Subject", "Body", TestContext.Current.CancellationToken));
 
         Assert.Contains("Unauthorized", exception.Message);
     }
@@ -120,7 +120,7 @@ public class EmailServiceTests
         // Act - swallow the expected exception
         try
         {
-            await service.SendAsync("user@example.com", "Subject", "Body");
+            await service.SendAsync("user@example.com", "Subject", "Body", TestContext.Current.CancellationToken);
         }
         catch (InvalidOperationException)
         {
@@ -154,7 +154,7 @@ public class EmailServiceTests
         var service = new SendGridEmailService(mockClient.Object, from, mockLogger.Object);
 
         // Act
-        await service.SendAsync("user@example.com", "Test Subject", "Test Body");
+        await service.SendAsync("user@example.com", "Test Subject", "Test Body", TestContext.Current.CancellationToken);
 
         // Assert
         mockLogger.Verify(
@@ -208,7 +208,7 @@ public class EmailServiceTests
         var service = new SendGridEmailService(mockClient.Object, from, mockLogger.Object);
 
         // Act
-        await service.SendAsync("recipient@example.com", "Subject", "Body");
+        await service.SendAsync("recipient@example.com", "Subject", "Body", TestContext.Current.CancellationToken);
 
         // Assert - verify the sender address was used
         mockClient.Verify(

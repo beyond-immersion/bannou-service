@@ -168,7 +168,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DeprecateFactionAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeprecateFactionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -201,7 +201,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DeprecateFactionAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeprecateFactionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
         Assert.Equal(StatusCodes.OK, status);
@@ -228,7 +228,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var request = new DeprecateFactionRequest { FactionId = factionId };
 
         // Act
-        var (status, response) = await service.DeprecateFactionAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeprecateFactionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -250,7 +250,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var request = new DeprecateFactionRequest { FactionId = factionId };
 
         // Act
-        var (status, response) = await service.DeprecateFactionAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeprecateFactionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — dissolved is a terminal state
         Assert.Equal(StatusCodes.Conflict, status);
@@ -275,7 +275,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var request = new UndeprecateFactionRequest { FactionId = factionId };
 
         // Act
-        var (status, response) = await service.UndeprecateFactionAsync(request, CancellationToken.None);
+        var (status, response) = await service.UndeprecateFactionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -300,7 +300,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var request = new UndeprecateFactionRequest { FactionId = factionId };
 
         // Act
-        var (status, response) = await service.UndeprecateFactionAsync(request, CancellationToken.None);
+        var (status, response) = await service.UndeprecateFactionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
         Assert.Equal(StatusCodes.OK, status);
@@ -327,7 +327,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var request = new UndeprecateFactionRequest { FactionId = factionId };
 
         // Act
-        var (status, response) = await service.UndeprecateFactionAsync(request, CancellationToken.None);
+        var (status, response) = await service.UndeprecateFactionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -349,7 +349,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var request = new UndeprecateFactionRequest { FactionId = factionId };
 
         // Act
-        var (status, response) = await service.UndeprecateFactionAsync(request, CancellationToken.None);
+        var (status, response) = await service.UndeprecateFactionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — dissolved is a terminal state
         Assert.Equal(StatusCodes.Conflict, status);

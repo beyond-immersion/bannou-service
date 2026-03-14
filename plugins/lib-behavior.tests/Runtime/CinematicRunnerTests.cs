@@ -73,7 +73,7 @@ public sealed class CinematicRunnerTests
         var entities = new[] { entity1, entity2 };
 
         // Act
-        var started = await controller.StartAsync("test_cinematic", entities);
+        var started = await controller.StartAsync("test_cinematic", entities, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(started);
@@ -103,7 +103,7 @@ public sealed class CinematicRunnerTests
         var allowedChannels = new HashSet<string> { "expression", "attention" };
 
         // Act
-        await controller.StartAsync("test_cinematic", new[] { entity }, allowedChannels);
+        await controller.StartAsync("test_cinematic", new[] { entity }, allowedChannels, ct: TestContext.Current.CancellationToken);
 
         // Assert
         var gate = controlGates.Get(entity);
@@ -125,7 +125,7 @@ public sealed class CinematicRunnerTests
         controller.CinematicStarted += (_, args) => receivedArgs = args;
 
         // Act
-        await controller.StartAsync("test_cinematic", new[] { entity });
+        await controller.StartAsync("test_cinematic", new[] { entity }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(receivedArgs);
@@ -142,10 +142,10 @@ public sealed class CinematicRunnerTests
         await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic_1", new[] { entity });
+        await controller.StartAsync("test_cinematic_1", new[] { entity }, ct: TestContext.Current.CancellationToken);
 
         // Act
-        var started = await controller.StartAsync("test_cinematic_2", new[] { entity });
+        var started = await controller.StartAsync("test_cinematic_2", new[] { entity }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(started);
@@ -164,7 +164,7 @@ public sealed class CinematicRunnerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            () => controller.StartAsync("", new[] { entity }));
+            () => controller.StartAsync("", new[] { entity }, ct: TestContext.Current.CancellationToken));
     }
 
     // =========================================================================
@@ -180,7 +180,7 @@ public sealed class CinematicRunnerTests
         await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic", new[] { entity });
+        await controller.StartAsync("test_cinematic", new[] { entity }, ct: TestContext.Current.CancellationToken);
 
         // Act
         var result = controller.Evaluate();
@@ -225,14 +225,14 @@ public sealed class CinematicRunnerTests
         var entity2 = Guid.NewGuid();
         var entities = new[] { entity1, entity2 };
 
-        await controller.StartAsync("test_cinematic", entities);
+        await controller.StartAsync("test_cinematic", entities, ct: TestContext.Current.CancellationToken);
 
         // Verify control was taken
         Assert.Equal(ControlSource.Cinematic, controlGates.Get(entity1)!.CurrentSource);
         Assert.Equal(ControlSource.Cinematic, controlGates.Get(entity2)!.CurrentSource);
 
         // Act
-        await controller.CompleteAsync();
+        await controller.CompleteAsync(ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(CinematicRunnerState.Completed, controller.State);
@@ -249,13 +249,13 @@ public sealed class CinematicRunnerTests
         await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic", new[] { entity });
+        await controller.StartAsync("test_cinematic", new[] { entity }, ct: TestContext.Current.CancellationToken);
 
         CinematicCompletedEventArgs? receivedArgs = null;
         controller.CinematicCompleted += (_, args) => receivedArgs = args;
 
         // Act
-        await controller.CompleteAsync();
+        await controller.CompleteAsync(ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(receivedArgs);
@@ -274,7 +274,7 @@ public sealed class CinematicRunnerTests
         await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic", new[] { entity });
+        await controller.StartAsync("test_cinematic", new[] { entity }, ct: TestContext.Current.CancellationToken);
 
         var finalState = new EntityState
         {
@@ -287,7 +287,7 @@ public sealed class CinematicRunnerTests
         stateSync.StateSyncCompleted += (_, args) => syncArgs = args;
 
         // Act
-        await controller.CompleteAsync(ControlHandoff.InstantWithState(finalState));
+        await controller.CompleteAsync(ControlHandoff.InstantWithState(finalState), ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(syncArgs);
@@ -305,13 +305,13 @@ public sealed class CinematicRunnerTests
 
         var entity1 = Guid.NewGuid();
         var entity2 = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic", new[] { entity1, entity2 });
+        await controller.StartAsync("test_cinematic", new[] { entity1, entity2 }, ct: TestContext.Current.CancellationToken);
 
         var controlReturnedCount = 0;
         controller.ControlReturned += (_, args) => controlReturnedCount++;
 
         // Act
-        await controller.CompleteAsync();
+        await controller.CompleteAsync(ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, controlReturnedCount);
@@ -332,10 +332,10 @@ public sealed class CinematicRunnerTests
         await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic", new[] { entity });
+        await controller.StartAsync("test_cinematic", new[] { entity }, ct: TestContext.Current.CancellationToken);
 
         // Act
-        await controller.AbortAsync();
+        await controller.AbortAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(CinematicRunnerState.Completed, controller.State);
@@ -351,13 +351,13 @@ public sealed class CinematicRunnerTests
         await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic", new[] { entity });
+        await controller.StartAsync("test_cinematic", new[] { entity }, ct: TestContext.Current.CancellationToken);
 
         CinematicCompletedEventArgs? receivedArgs = null;
         controller.CinematicCompleted += (_, args) => receivedArgs = args;
 
         // Act
-        await controller.AbortAsync();
+        await controller.AbortAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(receivedArgs);
@@ -373,7 +373,7 @@ public sealed class CinematicRunnerTests
         await using var controller = CreateController(model);
 
         // Act - should not throw
-        await controller.AbortAsync();
+        await controller.AbortAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(CinematicRunnerState.Idle, controller.State);
@@ -392,8 +392,8 @@ public sealed class CinematicRunnerTests
         await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic", new[] { entity });
-        await controller.CompleteAsync();
+        await controller.StartAsync("test_cinematic", new[] { entity }, ct: TestContext.Current.CancellationToken);
+        await controller.CompleteAsync(ct: TestContext.Current.CancellationToken);
 
         // Act
         controller.Reset();
@@ -413,12 +413,12 @@ public sealed class CinematicRunnerTests
         await using var controller = CreateController(model);
 
         var entity = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic_1", new[] { entity });
-        await controller.CompleteAsync();
+        await controller.StartAsync("test_cinematic_1", new[] { entity }, ct: TestContext.Current.CancellationToken);
+        await controller.CompleteAsync(ct: TestContext.Current.CancellationToken);
         controller.Reset();
 
         // Act - start a new cinematic after reset
-        var started = await controller.StartAsync("test_cinematic_2", new[] { Guid.NewGuid() });
+        var started = await controller.StartAsync("test_cinematic_2", new[] { Guid.NewGuid() }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(started);
@@ -440,7 +440,7 @@ public sealed class CinematicRunnerTests
         var controller = CreateController(model, controlGates, stateSync);
 
         var entity = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic", new[] { entity });
+        await controller.StartAsync("test_cinematic", new[] { entity }, ct: TestContext.Current.CancellationToken);
 
         // Act
         await controller.DisposeAsync();
@@ -461,7 +461,7 @@ public sealed class CinematicRunnerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ObjectDisposedException>(
-            () => controller.StartAsync("test", new[] { Guid.NewGuid() }));
+            () => controller.StartAsync("test", new[] { Guid.NewGuid() }, ct: TestContext.Current.CancellationToken));
 
         Assert.Throws<ObjectDisposedException>(() => controller.Evaluate());
     }
@@ -481,7 +481,7 @@ public sealed class CinematicRunnerTests
         await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic", new[] { entity });
+        await controller.StartAsync("test_cinematic", new[] { entity }, ct: TestContext.Current.CancellationToken);
 
         var gate = controlGates.Get(entity)!;
 
@@ -510,7 +510,7 @@ public sealed class CinematicRunnerTests
 
         var entity = Guid.NewGuid();
         var allowedChannels = new HashSet<string> { "expression" };
-        await controller.StartAsync("test_cinematic", new[] { entity }, allowedChannels);
+        await controller.StartAsync("test_cinematic", new[] { entity }, allowedChannels, ct: TestContext.Current.CancellationToken);
 
         var gate = controlGates.Get(entity)!;
 
@@ -539,7 +539,7 @@ public sealed class CinematicRunnerTests
         await using var controller = CreateController(model, controlGates, stateSync);
 
         var entity = Guid.NewGuid();
-        await controller.StartAsync("test_cinematic", new[] { entity });
+        await controller.StartAsync("test_cinematic", new[] { entity }, ct: TestContext.Current.CancellationToken);
 
         var gate = controlGates.Get(entity)!;
 

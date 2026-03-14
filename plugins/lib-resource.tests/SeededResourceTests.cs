@@ -129,7 +129,7 @@ public class SeededResourceTests
         // Act
         var (status, response) = await service.ListSeededResourcesAsync(
             new ListSeededResourcesRequest { ResourceType = null },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -157,7 +157,7 @@ public class SeededResourceTests
         // Act
         var (status, response) = await service.ListSeededResourcesAsync(
             new ListSeededResourcesRequest { ResourceType = null },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -186,7 +186,7 @@ public class SeededResourceTests
         // Act
         var (status, response) = await service.ListSeededResourcesAsync(
             new ListSeededResourcesRequest { ResourceType = "behavior" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -212,7 +212,7 @@ public class SeededResourceTests
         // Act
         var (status, response) = await service.ListSeededResourcesAsync(
             new ListSeededResourcesRequest { ResourceType = "BEHAVIOR" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -238,7 +238,7 @@ public class SeededResourceTests
         // Act
         var (status, response) = await service.GetSeededResourceAsync(
             new GetSeededResourceRequest { ResourceType = "behavior", Identifier = "nonexistent" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -261,7 +261,7 @@ public class SeededResourceTests
         // Act
         var (status, response) = await service.GetSeededResourceAsync(
             new GetSeededResourceRequest { ResourceType = "species", Identifier = "human" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -285,7 +285,7 @@ public class SeededResourceTests
         // Act
         var (status, response) = await service.GetSeededResourceAsync(
             new GetSeededResourceRequest { ResourceType = "behavior", Identifier = "idle" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -321,7 +321,7 @@ public class SeededResourceTests
         // Act
         var (status, response) = await service.GetSeededResourceAsync(
             new GetSeededResourceRequest { ResourceType = "behavior", Identifier = "idle" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -347,7 +347,7 @@ public class SeededResourceTests
         // Act
         var (status, response) = await service.GetSeededResourceAsync(
             new GetSeededResourceRequest { ResourceType = "behavior", Identifier = "idle" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - this depends on provider implementation, TestSeededResourceProvider is case-sensitive
         // In production with EmbeddedResourceProvider, identifier matching is case-insensitive

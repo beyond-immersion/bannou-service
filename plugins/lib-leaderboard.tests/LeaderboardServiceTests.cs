@@ -148,7 +148,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.SubmitScoreAsync(request, CancellationToken.None);
+        var (status, _) = await service.SubmitScoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -196,7 +196,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.SubmitScoreBatchAsync(request, CancellationToken.None);
+        var (status, _) = await service.SubmitScoreBatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -220,7 +220,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.GetTopRanksAsync(request, CancellationToken.None);
+        var (status, _) = await service.GetTopRanksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -240,7 +240,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.GetTopRanksAsync(request, CancellationToken.None);
+        var (status, _) = await service.GetTopRanksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -260,7 +260,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.GetTopRanksAsync(request, CancellationToken.None);
+        var (status, _) = await service.GetTopRanksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -281,7 +281,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.GetTopRanksAsync(request, CancellationToken.None);
+        var (status, _) = await service.GetTopRanksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -308,7 +308,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.GetRanksAroundAsync(request, CancellationToken.None);
+        var (status, _) = await service.GetRanksAroundAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -331,7 +331,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.GetRanksAroundAsync(request, CancellationToken.None);
+        var (status, _) = await service.GetRanksAroundAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -355,7 +355,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.GetRanksAroundAsync(request, CancellationToken.None);
+        var (status, _) = await service.GetRanksAroundAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -392,7 +392,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.CreateSeasonAsync(request, CancellationToken.None);
+        var (status, _) = await service.CreateSeasonAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -419,7 +419,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.GetLeaderboardDefinitionAsync(request, CancellationToken.None);
+        var (status, _) = await service.GetLeaderboardDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -445,7 +445,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.SubmitScoreAsync(request, CancellationToken.None);
+        var (status, _) = await service.SubmitScoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -468,7 +468,7 @@ public class LeaderboardServiceTests
         };
 
         // Act
-        var (status, _) = await service.CreateSeasonAsync(request, CancellationToken.None);
+        var (status, _) = await service.CreateSeasonAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);

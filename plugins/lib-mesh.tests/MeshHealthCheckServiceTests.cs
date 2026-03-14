@@ -123,9 +123,9 @@ public class MeshHealthCheckServiceTests : IDisposable
         var service = CreateService(healthCheckEnabled: false);
 
         // Act
-        await service.StartAsync(CancellationToken.None);
-        await Task.Delay(200);
-        await service.StopAsync(CancellationToken.None);
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - GetAllEndpointsAsync should never be called
         _mockStateManager.Verify(
@@ -162,9 +162,9 @@ public class MeshHealthCheckServiceTests : IDisposable
         var service = CreateService(failureThreshold: 99);
 
         // Act
-        await service.StartAsync(CancellationToken.None);
-        await probeDone.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        await service.StopAsync(CancellationToken.None);
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await probeDone.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - healthy endpoint was probed (failed and marked unavailable)
         _mockStateManager.Verify(
@@ -214,9 +214,9 @@ public class MeshHealthCheckServiceTests : IDisposable
         var service = CreateService(failureThreshold: 99);
 
         // Act
-        await service.StartAsync(CancellationToken.None);
-        await heartbeatDone.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        await service.StopAsync(CancellationToken.None);
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await heartbeatDone.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - marked as Unavailable, not deregistered
         _mockStateManager.Verify(
@@ -252,9 +252,9 @@ public class MeshHealthCheckServiceTests : IDisposable
         var service = CreateService(failureThreshold: 1);
 
         // Act
-        await service.StartAsync(CancellationToken.None);
-        await deregisterDone.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        await service.StopAsync(CancellationToken.None);
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await deregisterDone.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - deregistered
         _mockStateManager.Verify(
@@ -297,9 +297,9 @@ public class MeshHealthCheckServiceTests : IDisposable
         var service = CreateService(failureThreshold: 0);
 
         // Act
-        await service.StartAsync(CancellationToken.None);
-        await heartbeatDone.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        await service.StopAsync(CancellationToken.None);
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await heartbeatDone.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - marked unavailable but NOT deregistered
         _mockStateManager.Verify(
@@ -341,9 +341,9 @@ public class MeshHealthCheckServiceTests : IDisposable
         var service = CreateService(failureThreshold: 99);
 
         // Act
-        await service.StartAsync(CancellationToken.None);
-        await heartbeatDone.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        await service.StopAsync(CancellationToken.None);
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await heartbeatDone.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - health check failed event published with correct data
         _mockMessageBus.Verify(
@@ -379,10 +379,10 @@ public class MeshHealthCheckServiceTests : IDisposable
         var service = CreateService();
 
         // Act
-        await service.StartAsync(CancellationToken.None);
-        await probeCycleDone.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        await Task.Delay(100); // Ensure no further processing
-        await service.StopAsync(CancellationToken.None);
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await probeCycleDone.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestContext.Current.CancellationToken); // Ensure no further processing
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - no state updates or event publishing
         _mockStateManager.Verify(

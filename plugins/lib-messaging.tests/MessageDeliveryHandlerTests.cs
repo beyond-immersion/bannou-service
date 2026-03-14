@@ -86,7 +86,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: null,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(RabbitMQMessageSubscriber.MessageDeliveryResult.Success, result);
@@ -118,7 +118,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: subscriptionId,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(RabbitMQMessageSubscriber.MessageDeliveryResult.Success, result);
@@ -141,7 +141,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: null,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - BannouJson returns null for invalid deserialization
         // OR it could throw - both result in a failure
@@ -175,7 +175,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: null,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - invalid JSON should result in deserialization failure or exception
         Assert.False(handlerCalled);
@@ -205,7 +205,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: null,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(handlerCalled);
@@ -228,7 +228,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: null,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - should publish error event
         _mockMessageBus.Verify(
@@ -264,7 +264,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: subscriptionId,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - verify error includes subscription ID in message
         _mockMessageBus.Verify(
@@ -300,7 +300,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: null,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - logger should have been called
         _mockLogger.Verify(
@@ -336,7 +336,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: null,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(RabbitMQMessageSubscriber.MessageDeliveryResult.HandlerError, result);
@@ -362,7 +362,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: subscriptionId,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - logger should log with subscription ID
         _mockLogger.Verify(
@@ -395,7 +395,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: null,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - logger should log the exception
         _mockLogger.Verify(
@@ -435,7 +435,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: Guid.NewGuid(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(RabbitMQMessageSubscriber.MessageDeliveryResult.Success, result);
@@ -465,7 +465,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: Guid.NewGuid(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(RabbitMQMessageSubscriber.MessageDeliveryResult.Success, result);
@@ -494,7 +494,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: Guid.NewGuid(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(RabbitMQMessageSubscriber.MessageDeliveryResult.Success, result);
@@ -525,7 +525,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: Guid.NewGuid(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(RabbitMQMessageSubscriber.MessageDeliveryResult.HandlerError, result);
@@ -552,7 +552,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: subscriptionId,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - logger should log with subscription ID and exception
         _mockLogger.Verify(
@@ -648,7 +648,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: null,
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(RabbitMQMessageSubscriber.MessageDeliveryResult.Success, result);
@@ -676,7 +676,7 @@ public class MessageDeliveryHandlerTests
             Handler,
             activity: null,
             subscriptionId: Guid.NewGuid(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(RabbitMQMessageSubscriber.MessageDeliveryResult.Success, result);

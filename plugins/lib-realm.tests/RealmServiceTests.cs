@@ -148,7 +148,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.GetRealmAsync(request);
+        var (status, response) = await service.GetRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -171,7 +171,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((RealmModel?)null);
 
         // Act
-        var (status, response) = await service.GetRealmAsync(request);
+        var (status, response) = await service.GetRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -203,7 +203,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.GetRealmByCodeAsync(request);
+        var (status, response) = await service.GetRealmByCodeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -224,7 +224,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.GetRealmByCodeAsync(request);
+        var (status, response) = await service.GetRealmByCodeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -251,7 +251,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((RealmModel?)null);
 
         // Act
-        var (status, response) = await service.GetRealmByCodeAsync(request);
+        var (status, response) = await service.GetRealmByCodeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -276,7 +276,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.RealmExistsAsync(request);
+        var (status, response) = await service.RealmExistsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -299,7 +299,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((RealmModel?)null);
 
         // Act
-        var (status, response) = await service.RealmExistsAsync(request);
+        var (status, response) = await service.RealmExistsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -323,7 +323,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.RealmExistsAsync(request);
+        var (status, response) = await service.RealmExistsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -344,7 +344,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         var request = new RealmsExistBatchRequest { RealmIds = new List<Guid>() };
 
         // Act
-        var (status, response) = await service.RealmsExistBatchAsync(request);
+        var (status, response) = await service.RealmsExistBatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -379,7 +379,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(bulkResult);
 
         // Act
-        var (status, response) = await service.RealmsExistBatchAsync(request);
+        var (status, response) = await service.RealmsExistBatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -421,7 +421,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(bulkResult);
 
         // Act
-        var (status, response) = await service.RealmsExistBatchAsync(request);
+        var (status, response) = await service.RealmsExistBatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -466,7 +466,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(bulkResult);
 
         // Act
-        var (status, response) = await service.RealmsExistBatchAsync(request);
+        var (status, response) = await service.RealmsExistBatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -515,7 +515,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync("new-etag");
 
         // Act
-        var (status, response) = await service.UpdateRealmAsync(request);
+        var (status, response) = await service.UpdateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -544,7 +544,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(((RealmModel?)null, (string?)null));
 
         // Act
-        var (status, response) = await service.UpdateRealmAsync(request);
+        var (status, response) = await service.UpdateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -578,7 +578,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync("new-etag");
 
         // Act
-        var (status, response) = await service.UpdateRealmAsync(request);
+        var (status, response) = await service.UpdateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -605,7 +605,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((RealmModel?)null);
 
         // Act
-        var status = await service.DeleteRealmAsync(request);
+        var status = await service.DeleteRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -625,7 +625,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(existingModel);
 
         // Act
-        var status = await service.DeleteRealmAsync(request);
+        var status = await service.DeleteRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — per IMPLEMENTATION TENETS: reject delete with BadRequest if not deprecated
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -653,7 +653,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(new List<Guid> { realmId });
 
         // Act
-        var status = await service.DeleteRealmAsync(request);
+        var status = await service.DeleteRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -686,7 +686,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(((RealmModel?)null, (string?)null));
 
         // Act
-        var (status, response) = await service.DeprecateRealmAsync(request);
+        var (status, response) = await service.DeprecateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -709,7 +709,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(existingModel);
 
         // Act
-        var (status, response) = await service.DeprecateRealmAsync(request);
+        var (status, response) = await service.DeprecateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
         Assert.Equal(StatusCodes.OK, status);
@@ -735,7 +735,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync("new-etag");
 
         // Act
-        var (status, response) = await service.DeprecateRealmAsync(request);
+        var (status, response) = await service.DeprecateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -766,7 +766,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(((RealmModel?)null, (string?)null));
 
         // Act
-        var (status, response) = await service.UndeprecateRealmAsync(request);
+        var (status, response) = await service.UndeprecateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -789,7 +789,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(existingModel);
 
         // Act
-        var (status, response) = await service.UndeprecateRealmAsync(request);
+        var (status, response) = await service.UndeprecateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
         Assert.Equal(StatusCodes.OK, status);
@@ -815,7 +815,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync("new-etag");
 
         // Act
-        var (status, response) = await service.UndeprecateRealmAsync(request);
+        var (status, response) = await service.UndeprecateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -908,7 +908,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.CreateRealmAsync(request);
+        var (status, response) = await service.CreateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -963,7 +963,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(Guid.NewGuid().ToString());
 
         // Act
-        var (status, response) = await service.CreateRealmAsync(request);
+        var (status, response) = await service.CreateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1017,7 +1017,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync("list-etag-2");
 
         // Act
-        var (status, response) = await service.CreateRealmAsync(request);
+        var (status, response) = await service.CreateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - code normalized to uppercase
         Assert.Equal(StatusCodes.OK, status);
@@ -1063,7 +1063,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync("list-etag-2");
 
         // Act
-        var (status, _) = await service.CreateRealmAsync(request);
+        var (status, _) = await service.CreateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1114,7 +1114,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Returns(Task.FromResult(new InitializeRealmClockResponse()));
 
         // Act
-        var (status, response) = await service.CreateRealmAsync(request);
+        var (status, response) = await service.CreateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - realm created successfully and worldstate clock initialized
         Assert.Equal(StatusCodes.OK, status);
@@ -1165,7 +1165,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ThrowsAsync(new ApiException("Worldstate unavailable", 503, null, null, null));
 
         // Act
-        var (status, response) = await service.CreateRealmAsync(request);
+        var (status, response) = await service.CreateRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - realm creation still succeeds despite worldstate failure
         Assert.Equal(StatusCodes.OK, status);
@@ -1193,7 +1193,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var (status, response) = await service.ListRealmsAsync(request);
+        var (status, response) = await service.ListRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1232,7 +1232,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(bulkResults);
 
         // Act
-        var (status, response) = await service.ListRealmsAsync(request);
+        var (status, response) = await service.ListRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1278,7 +1278,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(bulkResults);
 
         // Act
-        var (status, response) = await service.ListRealmsAsync(request);
+        var (status, response) = await service.ListRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1320,7 +1320,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(bulkResults);
 
         // Act
-        var (status, response) = await service.ListRealmsAsync(request);
+        var (status, response) = await service.ListRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1361,7 +1361,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(bulkResults);
 
         // Act
-        var (status, response) = await service.ListRealmsAsync(request);
+        var (status, response) = await service.ListRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - deprecated realm excluded
         Assert.Equal(StatusCodes.OK, status);
@@ -1403,7 +1403,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(bulkResults);
 
         // Act
-        var (status, response) = await service.ListRealmsAsync(request);
+        var (status, response) = await service.ListRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - both realms included
         Assert.Equal(StatusCodes.OK, status);
@@ -1454,7 +1454,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(bulkResults);
 
         // Act
-        var (status, response) = await service.ListRealmsAsync(request);
+        var (status, response) = await service.ListRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - only the matching realm returned
         Assert.Equal(StatusCodes.OK, status);
@@ -1491,7 +1491,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.MergeRealmsAsync(request);
+        var (status, response) = await service.MergeRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1518,7 +1518,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(failedLock.Object);
 
         // Act
-        var (status, response) = await service.MergeRealmsAsync(request);
+        var (status, response) = await service.MergeRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1549,7 +1549,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((RealmModel?)null);
 
         // Act
-        var (status, response) = await service.MergeRealmsAsync(request);
+        var (status, response) = await service.MergeRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1581,7 +1581,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(sourceModel);
 
         // Act
-        var (status, response) = await service.MergeRealmsAsync(request);
+        var (status, response) = await service.MergeRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1614,7 +1614,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(sourceModel);
 
         // Act
-        var (status, response) = await service.MergeRealmsAsync(request);
+        var (status, response) = await service.MergeRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1651,7 +1651,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((RealmModel?)null);
 
         // Act
-        var (status, response) = await service.MergeRealmsAsync(request);
+        var (status, response) = await service.MergeRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1726,7 +1726,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.MergeRealmsAsync(request);
+        var (status, response) = await service.MergeRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1852,7 +1852,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             });
 
         // Act
-        var (status, response) = await service.MergeRealmsAsync(request);
+        var (status, response) = await service.MergeRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1939,7 +1939,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync("list-etag-2");
 
         // Act
-        var (status, response) = await service.MergeRealmsAsync(request);
+        var (status, response) = await service.MergeRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1968,7 +1968,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedRealmsAsync(request);
+        var (status, response) = await service.SeedRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2026,7 +2026,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync("list-etag-2");
 
         // Act
-        var (status, response) = await service.SeedRealmsAsync(request);
+        var (status, response) = await service.SeedRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2063,7 +2063,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync(existingId.ToString());
 
         // Act
-        var (status, response) = await service.SeedRealmsAsync(request);
+        var (status, response) = await service.SeedRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2124,7 +2124,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync("new-etag");
 
         // Act
-        var (status, response) = await service.SeedRealmsAsync(request);
+        var (status, response) = await service.SeedRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2176,7 +2176,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((existingModel, "mock-etag"));
 
         // Act
-        var (status, response) = await service.SeedRealmsAsync(request);
+        var (status, response) = await service.SeedRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - no changes means seedUpdated = true (skips save but counts as updated)
         Assert.Equal(StatusCodes.OK, status);
@@ -2230,7 +2230,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.SeedRealmsAsync(request);
+        var (status, response) = await service.SeedRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - error reported for the conflict
         Assert.Equal(StatusCodes.OK, status);
@@ -2300,7 +2300,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ReturnsAsync("list-etag-2");
 
         // Act
-        var (status, response) = await service.SeedRealmsAsync(request);
+        var (status, response) = await service.SeedRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2337,7 +2337,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .ThrowsAsync(new InvalidOperationException("State store failure"));
 
         // Act
-        var (status, response) = await service.SeedRealmsAsync(request);
+        var (status, response) = await service.SeedRealmsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - error collected, not thrown
         Assert.Equal(StatusCodes.OK, status);
@@ -2471,7 +2471,7 @@ public class RealmLocationCompressionTests : ServiceTestBase<RealmServiceConfigu
 
         // Act
         var (status, result) = await service.GetLocationCompressContextAsync(
-            new GetLocationCompressContextRequest { LocationId = locationId });
+            new GetLocationCompressContextRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2498,7 +2498,7 @@ public class RealmLocationCompressionTests : ServiceTestBase<RealmServiceConfigu
 
         // Act
         var (status, result) = await service.GetLocationCompressContextAsync(
-            new GetLocationCompressContextRequest { LocationId = locationId });
+            new GetLocationCompressContextRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2535,7 +2535,7 @@ public class RealmLocationCompressionTests : ServiceTestBase<RealmServiceConfigu
 
         // Act
         var (status, result) = await service.GetLocationCompressContextAsync(
-            new GetLocationCompressContextRequest { LocationId = locationId });
+            new GetLocationCompressContextRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);

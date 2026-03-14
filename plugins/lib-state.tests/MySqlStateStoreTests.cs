@@ -89,10 +89,10 @@ public class MySqlStateStoreTests : IDisposable
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-        await _store.SaveAsync("key1", entity);
+        await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.GetAsync("key1");
+        var result = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -105,7 +105,7 @@ public class MySqlStateStoreTests : IDisposable
     public async Task GetAsync_WithNonExistentKey_ReturnsNull()
     {
         // Act
-        var result = await _store.GetAsync("nonexistent");
+        var result = await _store.GetAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -127,11 +127,11 @@ public class MySqlStateStoreTests : IDisposable
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             });
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         // Act
-        var result = await _store.GetAsync("corrupt-key");
+        var result = await _store.GetAsync("corrupt-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -154,10 +154,10 @@ public class MySqlStateStoreTests : IDisposable
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-        var savedEtag = await _store.SaveAsync("key1", entity);
+        var savedEtag = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var (value, etag) = await _store.GetWithETagAsync("key1");
+        var (value, etag) = await _store.GetWithETagAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(value);
@@ -170,7 +170,7 @@ public class MySqlStateStoreTests : IDisposable
     public async Task GetWithETagAsync_WithNonExistentKey_ReturnsNullValueAndNullETag()
     {
         // Act
-        var (value, etag) = await _store.GetWithETagAsync("nonexistent");
+        var (value, etag) = await _store.GetWithETagAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(value);
@@ -188,13 +188,13 @@ public class MySqlStateStoreTests : IDisposable
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
 
         // Act
-        var etag = await _store.SaveAsync("key1", entity);
+        var etag = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(etag);
         Assert.True(etag.Length > 0);
 
-        var retrieved = await _store.GetAsync("key1");
+        var retrieved = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal("Test", retrieved.Name);
     }
@@ -204,17 +204,17 @@ public class MySqlStateStoreTests : IDisposable
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-        var originalEtag = await _store.SaveAsync("key1", entity);
+        var originalEtag = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         entity.Value = 100;
-        var newEtag = await _store.SaveAsync("key1", entity);
+        var newEtag = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(newEtag);
         Assert.NotEqual(originalEtag, newEtag); // ETag should change
 
-        var retrieved = await _store.GetAsync("key1");
+        var retrieved = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal(100, retrieved.Value);
     }
@@ -226,8 +226,8 @@ public class MySqlStateStoreTests : IDisposable
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
 
         // Act
-        var etag1 = await _store.SaveAsync("key1", entity);
-        var etag2 = await _store.SaveAsync("key2", entity);
+        var etag1 = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
+        var etag2 = await _store.SaveAsync("key2", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - ETags should be different because key is included in hash
         Assert.NotEqual(etag1, etag2);
@@ -242,15 +242,15 @@ public class MySqlStateStoreTests : IDisposable
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-        var etag = await _store.SaveAsync("key1", entity);
+        var etag = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         entity.Value = 100;
-        var newEtag = await _store.TrySaveAsync("key1", entity, etag);
+        var newEtag = await _store.TrySaveAsync("key1", entity, etag, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(newEtag);
-        var retrieved = await _store.GetAsync("key1");
+        var retrieved = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal(100, retrieved.Value);
     }
@@ -260,15 +260,15 @@ public class MySqlStateStoreTests : IDisposable
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-        await _store.SaveAsync("key1", entity);
+        await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         entity.Value = 100;
-        var newEtag = await _store.TrySaveAsync("key1", entity, "wrong-etag");
+        var newEtag = await _store.TrySaveAsync("key1", entity, "wrong-etag", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(newEtag);
-        var retrieved = await _store.GetAsync("key1");
+        var retrieved = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal(42, retrieved.Value); // Original value preserved
     }
@@ -280,7 +280,7 @@ public class MySqlStateStoreTests : IDisposable
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
 
         // Act
-        var newEtag = await _store.TrySaveAsync("nonexistent", entity, "any-etag");
+        var newEtag = await _store.TrySaveAsync("nonexistent", entity, "any-etag", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(newEtag);
@@ -295,10 +295,10 @@ public class MySqlStateStoreTests : IDisposable
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-        await _store.SaveAsync("key1", entity);
+        await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var exists = await _store.ExistsAsync("key1");
+        var exists = await _store.ExistsAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(exists);
@@ -308,7 +308,7 @@ public class MySqlStateStoreTests : IDisposable
     public async Task ExistsAsync_WithNonExistentKey_ReturnsFalse()
     {
         // Act
-        var exists = await _store.ExistsAsync("nonexistent");
+        var exists = await _store.ExistsAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(exists);
@@ -322,12 +322,12 @@ public class MySqlStateStoreTests : IDisposable
     public async Task GetBulkAsync_WithExistingKeys_ReturnsAllValues()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Two", Value = 2 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Two", Value = 2 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" });
+        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, results.Count);
@@ -340,11 +340,11 @@ public class MySqlStateStoreTests : IDisposable
     public async Task GetBulkAsync_WithMixedExistingAndNonExistent_ReturnsOnlyExisting()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" });
+        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, results.Count);
@@ -357,7 +357,7 @@ public class MySqlStateStoreTests : IDisposable
     public async Task GetBulkAsync_WithEmptyKeys_ReturnsEmptyDictionary()
     {
         // Act
-        var results = await _store.GetBulkAsync(Array.Empty<string>());
+        var results = await _store.GetBulkAsync(Array.Empty<string>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(results);
@@ -379,7 +379,7 @@ public class MySqlStateStoreTests : IDisposable
         };
 
         // Act
-        var etags = await _store.SaveBulkAsync(items);
+        var etags = await _store.SaveBulkAsync(items, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, etags.Count);
@@ -388,7 +388,7 @@ public class MySqlStateStoreTests : IDisposable
         Assert.True(etags.ContainsKey("key3"));
 
         // Verify all were saved
-        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" });
+        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(3, results.Count);
     }
 
@@ -396,7 +396,7 @@ public class MySqlStateStoreTests : IDisposable
     public async Task SaveBulkAsync_WithEmptyItems_ReturnsEmptyDictionary()
     {
         // Act
-        var etags = await _store.SaveBulkAsync(new Dictionary<string, TestEntity>());
+        var etags = await _store.SaveBulkAsync(new Dictionary<string, TestEntity>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(etags);
@@ -410,11 +410,11 @@ public class MySqlStateStoreTests : IDisposable
     public async Task ExistsBulkAsync_WithMixedKeys_ReturnsExistingOnly()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var existing = await _store.ExistsBulkAsync(new[] { "key1", "key2", "key3", "key4" });
+        var existing = await _store.ExistsBulkAsync(new[] { "key1", "key2", "key3", "key4" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, existing.Count);
@@ -435,12 +435,12 @@ public class MySqlStateStoreTests : IDisposable
         var store1 = new MySqlStateStore<TestEntity>(_options, "store1", 10000, _mockLogger.Object);
         var store2 = new MySqlStateStore<TestEntity>(_options, "store2", 10000, _mockLogger.Object);
 
-        await store1.SaveAsync("key1", new TestEntity { Id = "1", Name = "Store1Data", Value = 1 });
-        await store2.SaveAsync("key1", new TestEntity { Id = "2", Name = "Store2Data", Value = 2 });
+        await store1.SaveAsync("key1", new TestEntity { Id = "1", Name = "Store1Data", Value = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await store2.SaveAsync("key1", new TestEntity { Id = "2", Name = "Store2Data", Value = 2 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result1 = await store1.GetAsync("key1");
-        var result2 = await store2.GetAsync("key1");
+        var result1 = await store1.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
+        var result2 = await store2.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result1);
@@ -467,7 +467,7 @@ public class MySqlStateStoreTests : IDisposable
 
         // Assert - Verify via GetBulkAsync since CountAsync may not work
         var keys = Enumerable.Range(1, 50).Select(i => $"key{i}").ToArray();
-        var results = await _store.GetBulkAsync(keys);
+        var results = await _store.GetBulkAsync(keys, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(50, results.Count);
     }
 
@@ -477,7 +477,7 @@ public class MySqlStateStoreTests : IDisposable
         // Arrange
         for (int i = 1; i <= 10; i++)
         {
-            await _store.SaveAsync($"key{i}", new TestEntity { Id = i.ToString(), Name = $"Entity{i}", Value = i });
+            await _store.SaveAsync($"key{i}", new TestEntity { Id = i.ToString(), Name = $"Entity{i}", Value = i }, cancellationToken: TestContext.Current.CancellationToken);
         }
 
         // Act - 100 concurrent reads

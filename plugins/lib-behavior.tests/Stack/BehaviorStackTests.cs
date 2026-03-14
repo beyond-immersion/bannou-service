@@ -275,7 +275,7 @@ public sealed class BehaviorStackTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(output.MergedEmissions);
@@ -296,7 +296,7 @@ public sealed class BehaviorStackTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(output.MergedEmissions);
@@ -325,7 +325,7 @@ public sealed class BehaviorStackTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert - Situational has higher effective priority, should win
         Assert.Single(output.MergedEmissions);
@@ -355,7 +355,7 @@ public sealed class BehaviorStackTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert - inactive layer should be skipped even though it has higher priority
         Assert.Equal("walk", output.GetEmission("movement")!.Intent);
@@ -384,7 +384,7 @@ public sealed class BehaviorStackTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert - should have outputs on all three channels
         Assert.Equal(3, output.MergedEmissions.Count);

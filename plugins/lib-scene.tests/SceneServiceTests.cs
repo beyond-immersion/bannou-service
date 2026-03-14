@@ -803,7 +803,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
             .ReturnsAsync((SceneIndexEntry?)null);
 
         // Act
-        var (status, response) = await service.GetSceneAsync(new GetSceneRequest { SceneId = sceneId });
+        var (status, response) = await service.GetSceneAsync(new GetSceneRequest { SceneId = sceneId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -835,7 +835,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
             .ReturnsAsync((SceneContentEntry?)null);
 
         // Act
-        var (status, response) = await service.GetSceneAsync(new GetSceneRequest { SceneId = sceneId });
+        var (status, response) = await service.GetSceneAsync(new GetSceneRequest { SceneId = sceneId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -873,7 +873,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
             });
 
         // Act
-        var (status, response) = await service.GetSceneAsync(new GetSceneRequest { SceneId = sceneId });
+        var (status, response) = await service.GetSceneAsync(new GetSceneRequest { SceneId = sceneId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -897,7 +897,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
             .ReturnsAsync((SceneIndexEntry?)null);
 
         // Act
-        var (status, response) = await service.DeleteSceneAsync(new DeleteSceneRequest { SceneId = sceneId });
+        var (status, response) = await service.DeleteSceneAsync(new DeleteSceneRequest { SceneId = sceneId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -929,7 +929,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
             .ReturnsAsync(new HashSet<Guid> { referencingSceneId });
 
         // Act
-        var (status, response) = await service.DeleteSceneAsync(new DeleteSceneRequest { SceneId = sceneId });
+        var (status, response) = await service.DeleteSceneAsync(new DeleteSceneRequest { SceneId = sceneId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -976,7 +976,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
             .ReturnsAsync("etag-2");
 
         // Act
-        var (status, response) = await service.DeleteSceneAsync(new DeleteSceneRequest { SceneId = sceneId });
+        var (status, response) = await service.DeleteSceneAsync(new DeleteSceneRequest { SceneId = sceneId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1008,7 +1008,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
         {
             GameId = gameId,
             SceneType = sceneType
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1040,7 +1040,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
         {
             GameId = gameId,
             SceneType = sceneType
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1080,7 +1080,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
             GameId = gameId,
             SceneType = sceneType,
             Rules = rules
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1113,7 +1113,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
         {
             SceneId = sceneId,
             EditorType = SceneEditorType.Session
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1158,7 +1158,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
         {
             SceneId = sceneId,
             EditorType = SceneEditorType.Session
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1210,7 +1210,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
             SceneId = sceneId,
             EditorType = SceneEditorType.Session,
             EditorId = "my-session-id"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1253,7 +1253,7 @@ public class SceneServiceBusinessLogicTests : ServiceTestBase<SceneServiceConfig
         {
             SceneId = sceneId,
             CheckoutToken = "wrong-token"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);

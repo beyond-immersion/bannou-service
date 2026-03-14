@@ -151,7 +151,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.UpdateActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -195,7 +195,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        await service.UpdateActorTemplateAsync(request, CancellationToken.None);
+        await service.UpdateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - verify all changed fields tracked in event
         Assert.NotNull(capturedEvent);
@@ -229,7 +229,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.UpdateActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -253,7 +253,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.UpdateActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -282,7 +282,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.UpdateActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - returns OK (timestamp always updated)
         Assert.Equal(StatusCodes.OK, status);
@@ -324,7 +324,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        await service.UpdateActorTemplateAsync(request, CancellationToken.None);
+        await service.UpdateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("actor.template.updated", capturedTopic);
@@ -369,7 +369,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        await service.UpdateActorTemplateAsync(request, CancellationToken.None);
+        await service.UpdateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedEvent);
@@ -397,7 +397,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        await service.UpdateActorTemplateAsync(request, CancellationToken.None);
+        await service.UpdateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - verify category index was saved
         _mockTemplateStore.Verify(s => s.SaveAsync(
@@ -435,7 +435,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.DeleteActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeleteActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -456,7 +456,7 @@ public class ActorServiceAdditionalTests
         var request = new DeleteActorTemplateRequest { TemplateId = templateId };
 
         // Act
-        var (status, response) = await service.DeleteActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeleteActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -499,7 +499,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.DeleteActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeleteActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -541,7 +541,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.DeleteActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeleteActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -588,7 +588,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.DeleteActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeleteActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - only the successful stop is counted
         Assert.Equal(StatusCodes.OK, status);
@@ -634,7 +634,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        await service.DeleteActorTemplateAsync(request, CancellationToken.None);
+        await service.DeleteActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("actor.template.deleted", capturedTopic);
@@ -686,7 +686,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        await service.DeleteActorTemplateAsync(request, CancellationToken.None);
+        await service.DeleteActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - event includes deleted reason with stopped count
         Assert.NotNull(capturedEvent);
@@ -718,7 +718,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        await service.DeleteActorTemplateAsync(request, CancellationToken.None);
+        await service.DeleteActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - both ID-based and category-based entries deleted
         _mockTemplateStore.Verify(s => s.DeleteAsync(templateId.ToString(), It.IsAny<CancellationToken>()), Times.Once);
@@ -753,7 +753,7 @@ public class ActorServiceAdditionalTests
         var request = new CleanupByCharacterRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.CleanupByCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.CleanupByCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -804,7 +804,7 @@ public class ActorServiceAdditionalTests
         var request = new CleanupByCharacterRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.CleanupByCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.CleanupByCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -849,7 +849,7 @@ public class ActorServiceAdditionalTests
         var request = new CleanupByCharacterRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.CleanupByCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.CleanupByCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - only successful cleanup counted
         Assert.Equal(StatusCodes.OK, status);
@@ -873,7 +873,7 @@ public class ActorServiceAdditionalTests
         var request = new CleanupByCharacterRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.CleanupByCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.CleanupByCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -932,7 +932,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.QueryOptionsAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryOptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -962,7 +962,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.QueryOptionsAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryOptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -999,7 +999,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.QueryOptionsAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryOptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - QueryOptions requires local actor, remote returns BadRequest
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1046,7 +1046,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.QueryOptionsAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryOptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - character context populated
         Assert.Equal(StatusCodes.OK, status);
@@ -1091,7 +1091,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.QueryOptionsAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryOptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1152,7 +1152,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.QueryOptionsAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryOptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - dict was converted to ActorOption
         Assert.Equal(StatusCodes.OK, status);
@@ -1195,7 +1195,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.BindActorCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.BindActorCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1224,7 +1224,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.BindActorCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.BindActorCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1257,7 +1257,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.BindActorCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.BindActorCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1296,7 +1296,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.BindActorCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.BindActorCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1347,7 +1347,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.BindActorCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.BindActorCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1391,7 +1391,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.BindActorCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.BindActorCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1430,7 +1430,7 @@ public class ActorServiceAdditionalTests
         };
 
         // Act
-        var (status, response) = await service.BindActorCharacterAsync(request, CancellationToken.None);
+        var (status, response) = await service.BindActorCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

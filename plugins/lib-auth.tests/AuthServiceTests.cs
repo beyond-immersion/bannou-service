@@ -297,7 +297,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.LoginAsync(request);
+        var (status, response) = await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -317,7 +317,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.LoginAsync(request);
+        var (status, response) = await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -337,7 +337,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RegisterAsync(request);
+        var (status, response) = await service.RegisterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -357,7 +357,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RegisterAsync(request);
+        var (status, response) = await service.RegisterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -376,7 +376,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.CompleteOAuthAsync(OAuthProvider.Discord, request);
+        var (status, response) = await service.CompleteOAuthAsync(OAuthProvider.Discord, request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -395,7 +395,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.VerifySteamAuthAsync(request);
+        var (status, response) = await service.VerifySteamAuthAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -414,7 +414,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.RefreshTokenAsync("valid-jwt", request);
+        var (status, response) = await service.RefreshTokenAsync("valid-jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -428,7 +428,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var (status, response) = await service.ValidateTokenAsync("");
+        var (status, response) = await service.ValidateTokenAsync("", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -445,7 +445,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act - pass a clearly invalid JWT format
-        var (status, response) = await service.ValidateTokenAsync("not-a-valid-jwt");
+        var (status, response) = await service.ValidateTokenAsync("not-a-valid-jwt", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -459,7 +459,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var status = await service.LogoutAsync("", null);
+        var status = await service.LogoutAsync("", null, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -472,7 +472,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var (status, response) = await service.GetSessionsAsync("");
+        var (status, response) = await service.GetSessionsAsync("", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -505,7 +505,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var (status, response) = await service.ListProvidersAsync();
+        var (status, response) = await service.ListProvidersAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -560,7 +560,7 @@ public class AuthServiceTests
             Mock.Of<IHttpContextAccessor>());
 
         // Act
-        var (status, response) = await service.ListProvidersAsync();
+        var (status, response) = await service.ListProvidersAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -582,7 +582,7 @@ public class AuthServiceTests
         var (status, response) = await service.InitOAuthAsync(
             OAuthProvider.Discord,
             "https://example.com/callback",
-            "test-state");
+            "test-state", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -601,7 +601,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var status = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - per schema, this endpoint returns no body (prevents email enumeration)
         Assert.Equal(StatusCodes.OK, status);
@@ -635,7 +635,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var status = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - per schema, this endpoint returns no body
         Assert.Equal(StatusCodes.OK, status);
@@ -654,7 +654,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var status = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -676,7 +676,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var status = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -694,7 +694,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var status = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -717,7 +717,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var status = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should return OK to prevent email enumeration attacks
         Assert.Equal(StatusCodes.OK, status);
@@ -747,7 +747,7 @@ public class AuthServiceTests
         var request = new PasswordResetRequest { Email = "user@example.com" };
 
         // Act
-        var status = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - returns OK and email service was called
         Assert.Equal(StatusCodes.OK, status);
@@ -790,7 +790,7 @@ public class AuthServiceTests
         var request = new PasswordResetRequest { Email = "user@example.com" };
 
         // Act
-        var status = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - still returns OK despite email failure (enumeration protection)
         Assert.Equal(StatusCodes.OK, status);
@@ -827,7 +827,7 @@ public class AuthServiceTests
         var request = new PasswordResetRequest { Email = "user@example.com" };
 
         // Act
-        await service.RequestPasswordResetAsync(request);
+        await service.RequestPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - error event published for monitoring
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
@@ -869,7 +869,7 @@ public class AuthServiceTests
         var request = new PasswordResetRequest { Email = "user@example.com" };
 
         // Act
-        var status = await service.RequestPasswordResetAsync(request);
+        var status = await service.RequestPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - still returns OK (fire-and-forget catches the exception)
         Assert.Equal(StatusCodes.OK, status);
@@ -896,7 +896,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var status = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -915,7 +915,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var status = await service.ConfirmPasswordResetAsync(request);
+        var status = await service.ConfirmPasswordResetAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -991,7 +991,7 @@ public class AuthServiceTests
         var request = new SteamVerifyRequest { Ticket = "valid-steam-ticket-hex" };
 
         // Act
-        var (status, response) = await service.VerifySteamAuthAsync(request);
+        var (status, response) = await service.VerifySteamAuthAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1039,7 +1039,7 @@ public class AuthServiceTests
         var request = new SteamVerifyRequest { Ticket = "any-ticket" };
 
         // Act
-        var (status, response) = await service.VerifySteamAuthAsync(request);
+        var (status, response) = await service.VerifySteamAuthAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1083,7 +1083,7 @@ public class AuthServiceTests
         var request = new SteamVerifyRequest { Ticket = "valid-ticket" };
 
         // Act
-        var (status, response) = await service.VerifySteamAuthAsync(request);
+        var (status, response) = await service.VerifySteamAuthAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
@@ -1128,7 +1128,7 @@ public class AuthServiceTests
         var request = new SteamVerifyRequest { Ticket = "invalid-ticket" };
 
         // Act
-        var (status, response) = await service.VerifySteamAuthAsync(request);
+        var (status, response) = await service.VerifySteamAuthAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -1182,7 +1182,7 @@ public class AuthServiceTests
         var request = new SteamVerifyRequest { Ticket = "valid-ticket" };
 
         // Act
-        var (status, response) = await service.VerifySteamAuthAsync(request);
+        var (status, response) = await service.VerifySteamAuthAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
@@ -1212,7 +1212,7 @@ public class AuthServiceTests
         var request = new SteamVerifyRequest { Ticket = "   " };
 
         // Act
-        var (status, response) = await service.VerifySteamAuthAsync(request);
+        var (status, response) = await service.VerifySteamAuthAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1240,7 +1240,7 @@ public class AuthServiceTests
         var request = new LoginRequest { Email = "attacker@example.com", Password = "guessing" };
 
         // Act
-        var (status, response) = await service.LoginAsync(request);
+        var (status, response) = await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -1276,7 +1276,7 @@ public class AuthServiceTests
         var request = new LoginRequest { Email = "persistent-attacker@example.com", Password = "still-guessing" };
 
         // Act
-        var (status, response) = await service.LoginAsync(request);
+        var (status, response) = await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -1311,7 +1311,7 @@ public class AuthServiceTests
         var request = new LoginRequest { Email = "user@example.com", Password = "wrong-password" };
 
         // Act
-        var (status, response) = await service.LoginAsync(request);
+        var (status, response) = await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -1358,7 +1358,7 @@ public class AuthServiceTests
         var request = new LoginRequest { Email = "nobody@example.com", Password = "anypassword" };
 
         // Act
-        var (status, response) = await service.LoginAsync(request);
+        var (status, response) = await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -1420,7 +1420,7 @@ public class AuthServiceTests
         var request = new LoginRequest { Email = "user@example.com", Password = correctPassword };
 
         // Act
-        var (status, response) = await service.LoginAsync(request);
+        var (status, response) = await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1480,7 +1480,7 @@ public class AuthServiceTests
         var request = new LoginRequest { Email = "user@example.com", Password = correctPassword };
 
         // Act
-        var (status, response) = await service.LoginAsync(request);
+        var (status, response) = await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - login should succeed since 4 < 5
         Assert.Equal(StatusCodes.OK, status);
@@ -1532,7 +1532,7 @@ public class AuthServiceTests
         var request = new LoginRequest { Email = "fresh@example.com", Password = correctPassword };
 
         // Act
-        var (status, response) = await service.LoginAsync(request);
+        var (status, response) = await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1556,7 +1556,7 @@ public class AuthServiceTests
 
         // Act - send email with mixed case and whitespace
         var request = new LoginRequest { Email = "  Attacker@Example.COM  ", Password = "guessing" };
-        var (status, response) = await service.LoginAsync(request);
+        var (status, response) = await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should be blocked because normalized email matches the counter
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -1594,7 +1594,7 @@ public class AuthServiceTests
         var request = new LoginRequest { Email = "test@example.com", Password = "pass" };
 
         // Act
-        await service.LoginAsync(request);
+        await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - TTL should be 30 * 60 = 1800 seconds
         _mockCacheableStore.Verify(s => s.IncrementAsync(
@@ -1635,7 +1635,7 @@ public class AuthServiceTests
             .ReturnsAsync("setup-token-123");
 
         // Act
-        var (status, response) = await service.SetupMfaAsync(jwt);
+        var (status, response) = await service.SetupMfaAsync(jwt, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1656,7 +1656,7 @@ public class AuthServiceTests
             .ReturnsAsync((StatusCodes.Unauthorized, (ValidateTokenResponse?)null));
 
         // Act
-        var (status, response) = await service.SetupMfaAsync("bad-jwt");
+        var (status, response) = await service.SetupMfaAsync("bad-jwt", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -1679,7 +1679,7 @@ public class AuthServiceTests
             .ReturnsAsync(new AccountResponse { AccountId = accountId, MfaEnabled = true });
 
         // Act
-        var (status, response) = await service.SetupMfaAsync("jwt");
+        var (status, response) = await service.SetupMfaAsync("jwt", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1702,7 +1702,7 @@ public class AuthServiceTests
             .ThrowsAsync(new ApiException("Not found", 404));
 
         // Act
-        var (status, response) = await service.SetupMfaAsync("jwt");
+        var (status, response) = await service.SetupMfaAsync("jwt", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1739,7 +1739,7 @@ public class AuthServiceTests
         var request = new MfaEnableRequest { SetupToken = "setup-token", TotpCode = "123456" };
 
         // Act
-        var status = await service.EnableMfaAsync("jwt", request);
+        var status = await service.EnableMfaAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1767,7 +1767,7 @@ public class AuthServiceTests
         var request = new MfaEnableRequest { SetupToken = "bad-token", TotpCode = "123456" };
 
         // Act
-        var status = await service.EnableMfaAsync("jwt", request);
+        var status = await service.EnableMfaAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1797,7 +1797,7 @@ public class AuthServiceTests
         var request = new MfaEnableRequest { SetupToken = "token", TotpCode = "123456" };
 
         // Act
-        var status = await service.EnableMfaAsync("jwt", request);
+        var status = await service.EnableMfaAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1829,7 +1829,7 @@ public class AuthServiceTests
         var request = new MfaEnableRequest { SetupToken = "token", TotpCode = "wrong" };
 
         // Act
-        var status = await service.EnableMfaAsync("jwt", request);
+        var status = await service.EnableMfaAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1865,7 +1865,7 @@ public class AuthServiceTests
         var request = new MfaDisableRequest { TotpCode = "123456" };
 
         // Act
-        var status = await service.DisableMfaAsync("jwt", request);
+        var status = await service.DisableMfaAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1902,7 +1902,7 @@ public class AuthServiceTests
         var request = new MfaDisableRequest { RecoveryCode = "RECOVERY-CODE" };
 
         // Act
-        var status = await service.DisableMfaAsync("jwt", request);
+        var status = await service.DisableMfaAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1926,7 +1926,7 @@ public class AuthServiceTests
         var request = new MfaDisableRequest { TotpCode = "123456" };
 
         // Act
-        var status = await service.DisableMfaAsync("jwt", request);
+        var status = await service.DisableMfaAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1950,7 +1950,7 @@ public class AuthServiceTests
         var request = new MfaDisableRequest(); // No code provided
 
         // Act
-        var status = await service.DisableMfaAsync("jwt", request);
+        var status = await service.DisableMfaAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1970,7 +1970,7 @@ public class AuthServiceTests
         var request = new AdminDisableMfaRequest { AccountId = accountId, Reason = "User requested via support" };
 
         // Act
-        var status = await service.AdminDisableMfaAsync(request);
+        var status = await service.AdminDisableMfaAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1998,7 +1998,7 @@ public class AuthServiceTests
         var request = new AdminDisableMfaRequest { AccountId = accountId };
 
         // Act
-        var status = await service.AdminDisableMfaAsync(request);
+        var status = await service.AdminDisableMfaAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2023,7 +2023,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetRevocationListAsync(request);
+        var (status, response) = await service.GetRevocationListAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2065,7 +2065,7 @@ public class AuthServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetRevocationListAsync(request);
+        var (status, response) = await service.GetRevocationListAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2093,7 +2093,7 @@ public class AuthServiceTests
         var request = new TerminateSessionRequest { SessionId = sessionId };
 
         // Act
-        var status = await service.TerminateSessionAsync("jwt", request);
+        var status = await service.TerminateSessionAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2134,7 +2134,7 @@ public class AuthServiceTests
         var request = new TerminateSessionRequest { SessionId = sessionId };
 
         // Act
-        var status = await service.TerminateSessionAsync("jwt", request);
+        var status = await service.TerminateSessionAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2198,7 +2198,7 @@ public class AuthServiceTests
         var request = new TerminateSessionRequest { SessionId = sessionId };
 
         // Act
-        var status = await service.TerminateSessionAsync("jwt", request);
+        var status = await service.TerminateSessionAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2228,7 +2228,7 @@ public class AuthServiceTests
         var request = new TerminateSessionRequest { SessionId = sessionId };
 
         // Act
-        var status = await service.TerminateSessionAsync("jwt", request);
+        var status = await service.TerminateSessionAsync("jwt", request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2269,7 +2269,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var status = await service.LogoutAsync("invalid-jwt", null);
+        var status = await service.LogoutAsync("invalid-jwt", null, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -2311,7 +2311,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var status = await service.LogoutAsync("valid-jwt", new LogoutRequest { AllSessions = false });
+        var status = await service.LogoutAsync("valid-jwt", new LogoutRequest { AllSessions = false }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2376,7 +2376,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var status = await service.LogoutAsync("valid-jwt", new LogoutRequest { AllSessions = true });
+        var status = await service.LogoutAsync("valid-jwt", new LogoutRequest { AllSessions = true }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2439,7 +2439,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var status = await service.LogoutAsync("valid-jwt", new LogoutRequest { AllSessions = false });
+        var status = await service.LogoutAsync("valid-jwt", new LogoutRequest { AllSessions = false }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2465,7 +2465,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var (status, response) = await service.GetSessionsAsync("bad-jwt");
+        var (status, response) = await service.GetSessionsAsync("bad-jwt", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -2507,7 +2507,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var (status, response) = await service.GetSessionsAsync("valid-jwt");
+        var (status, response) = await service.GetSessionsAsync("valid-jwt", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2539,7 +2539,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        var (status, response) = await service.GetSessionsAsync("valid-jwt");
+        var (status, response) = await service.GetSessionsAsync("valid-jwt", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2559,7 +2559,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        await service.InvalidateAccountSessionsAsync(accountId);
+        await service.InvalidateAccountSessionsAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert
         _mockSessionService.Verify(
@@ -2609,7 +2609,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        await service.PropagateRoleChangesAsync(accountId, newRoles, CancellationToken.None);
+        await service.PropagateRoleChangesAsync(accountId, newRoles, TestContext.Current.CancellationToken);
 
         // Assert - Verify session was saved with updated roles
         Assert.NotNull(capturedSession);
@@ -2641,7 +2641,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        await service.PropagateRoleChangesAsync(accountId, new List<string> { "admin" }, CancellationToken.None);
+        await service.PropagateRoleChangesAsync(accountId, new List<string> { "admin" }, TestContext.Current.CancellationToken);
 
         // Assert - No session store operations should occur
         _mockSessionStore.Verify(
@@ -2678,7 +2678,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        await service.PropagateRoleChangesAsync(accountId, new List<string> { "admin" }, CancellationToken.None);
+        await service.PropagateRoleChangesAsync(accountId, new List<string> { "admin" }, TestContext.Current.CancellationToken);
 
         // Assert - Session should NOT be saved (expired)
         _mockSessionStore.Verify(
@@ -2727,7 +2727,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        await service.PropagateEmailChangeAsync(accountId, newEmail, CancellationToken.None);
+        await service.PropagateEmailChangeAsync(accountId, newEmail, TestContext.Current.CancellationToken);
 
         // Assert - Email was updated
         Assert.NotNull(capturedSession);
@@ -2754,7 +2754,7 @@ public class AuthServiceTests
         var service = CreateAuthService();
 
         // Act
-        await service.PropagateEmailChangeAsync(accountId, "new@example.com", CancellationToken.None);
+        await service.PropagateEmailChangeAsync(accountId, "new@example.com", TestContext.Current.CancellationToken);
 
         // Assert
         _mockSessionStore.Verify(
@@ -2802,7 +2802,7 @@ public class AuthServiceTests
         var request = new LoginRequest { Email = "test@example.com", Password = password };
 
         // Act
-        var (status, response) = await service.LoginAsync(request);
+        var (status, response) = await service.LoginAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2838,7 +2838,7 @@ public class AuthServiceTests
         var request = new RegisterRequest { Username = "NewUser", Password = "password123", Email = "new@example.com" };
 
         // Act
-        var (status, response) = await service.RegisterAsync(request);
+        var (status, response) = await service.RegisterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2885,7 +2885,7 @@ public class AuthServiceTests
         var request = new MfaVerifyRequest { ChallengeToken = "challenge-token", TotpCode = "123456" };
 
         // Act
-        var (status, response) = await service.VerifyMfaAsync(request);
+        var (status, response) = await service.VerifyMfaAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2929,7 +2929,7 @@ public class AuthServiceTests
         var request = new MfaVerifyRequest { ChallengeToken = "challenge-token", RecoveryCode = "MY-RECOVERY" };
 
         // Act
-        var (status, response) = await service.VerifyMfaAsync(request);
+        var (status, response) = await service.VerifyMfaAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2958,7 +2958,7 @@ public class AuthServiceTests
         var request = new MfaVerifyRequest { ChallengeToken = "bad-token", TotpCode = "123456" };
 
         // Act
-        var (status, response) = await service.VerifyMfaAsync(request);
+        var (status, response) = await service.VerifyMfaAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -2991,7 +2991,7 @@ public class AuthServiceTests
         var request = new MfaVerifyRequest { ChallengeToken = "token", TotpCode = "wrong" };
 
         // Act
-        var (status, response) = await service.VerifyMfaAsync(request);
+        var (status, response) = await service.VerifyMfaAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3016,7 +3016,7 @@ public class AuthServiceTests
         var request = new MfaVerifyRequest { ChallengeToken = "token" }; // No code
 
         // Act
-        var (status, response) = await service.VerifyMfaAsync(request);
+        var (status, response) = await service.VerifyMfaAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3069,7 +3069,7 @@ public class AuthServiceTests
         var request = new MfaVerifyRequest { ChallengeToken = "token", RecoveryCode = "RECOVERY" };
 
         // Act
-        var (status, response) = await service.VerifyMfaAsync(request);
+        var (status, response) = await service.VerifyMfaAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

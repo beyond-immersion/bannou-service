@@ -183,7 +183,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.CreateItemTemplateAsync(request);
+        var (status, response) = await service.CreateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -219,7 +219,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.CreateItemTemplateAsync(request);
+        var (status, response) = await service.CreateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -252,7 +252,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(true);
 
         // Act
-        await service.CreateItemTemplateAsync(request);
+        await service.CreateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("item.template.created", capturedTopic);
@@ -283,7 +283,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync("etag");
 
         // Act
-        await service.CreateItemTemplateAsync(request);
+        await service.CreateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedModel);
@@ -310,7 +310,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync("etag");
 
         // Act
-        await service.CreateItemTemplateAsync(request);
+        await service.CreateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedModel);
@@ -337,7 +337,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync("etag");
 
         // Act
-        await service.CreateItemTemplateAsync(request);
+        await service.CreateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedModel);
@@ -363,7 +363,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new GetItemTemplateRequest { TemplateId = templateId };
 
         // Act
-        var (status, response) = await service.GetItemTemplateAsync(request);
+        var (status, response) = await service.GetItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -390,7 +390,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new GetItemTemplateRequest { Code = "test_sword", GameId = "game1" };
 
         // Act
-        var (status, response) = await service.GetItemTemplateAsync(request);
+        var (status, response) = await service.GetItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -410,7 +410,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new GetItemTemplateRequest { TemplateId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.GetItemTemplateAsync(request);
+        var (status, response) = await service.GetItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -454,7 +454,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ListItemTemplatesAsync(request);
+        var (status, response) = await service.ListItemTemplatesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -490,7 +490,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ListItemTemplatesAsync(request);
+        var (status, response) = await service.ListItemTemplatesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -529,7 +529,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.UpdateItemTemplateAsync(request);
+        var (status, response) = await service.UpdateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -553,7 +553,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new UpdateItemTemplateRequest { TemplateId = Guid.NewGuid(), Name = "New Name" };
 
         // Act
-        var (status, response) = await service.UpdateItemTemplateAsync(request);
+        var (status, response) = await service.UpdateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -589,7 +589,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new UpdateItemTemplateRequest { TemplateId = templateId, Name = "Updated" };
 
         // Act
-        await service.UpdateItemTemplateAsync(request);
+        await service.UpdateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("item.template.updated", capturedTopic);
@@ -628,7 +628,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DeprecateItemTemplateAsync(request);
+        var (status, response) = await service.DeprecateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -676,7 +676,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        await service.DeprecateItemTemplateAsync(request);
+        await service.DeprecateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
         Assert.Equal("item.template.updated", capturedTopic);
@@ -702,7 +702,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new DeprecateItemTemplateRequest { TemplateId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.DeprecateItemTemplateAsync(request);
+        var (status, response) = await service.DeprecateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -743,7 +743,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateItemInstanceAsync(request);
+        var (status, response) = await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -780,7 +780,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateItemInstanceAsync(request);
+        var (status, response) = await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -810,7 +810,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateItemInstanceAsync(request);
+        var (status, response) = await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -840,7 +840,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateItemInstanceAsync(request);
+        var (status, response) = await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — per IMPLEMENTATION TENETS: deprecated templates must not produce new instances
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -876,7 +876,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateItemInstanceAsync(request);
+        var (status, response) = await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -914,7 +914,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        await service.CreateItemInstanceAsync(request);
+        await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedModel);
@@ -959,7 +959,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        await service.CreateItemInstanceAsync(request);
+        await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("item.instance.created", capturedTopic);
@@ -989,7 +989,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new GetItemInstanceRequest { InstanceId = instanceId };
 
         // Act
-        var (status, response) = await service.GetItemInstanceAsync(request);
+        var (status, response) = await service.GetItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1009,7 +1009,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new GetItemInstanceRequest { InstanceId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.GetItemInstanceAsync(request);
+        var (status, response) = await service.GetItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1043,7 +1043,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ModifyItemInstanceAsync(request);
+        var (status, response) = await service.ModifyItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1074,7 +1074,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ModifyItemInstanceAsync(request);
+        var (status, response) = await service.ModifyItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1094,7 +1094,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new ModifyItemInstanceRequest { InstanceId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.ModifyItemInstanceAsync(request);
+        var (status, response) = await service.ModifyItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1123,7 +1123,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ModifyItemInstanceAsync(request);
+        var (status, response) = await service.ModifyItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1168,7 +1168,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.BindItemInstanceAsync(request);
+        var (status, response) = await service.BindItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1221,7 +1221,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        await service.BindItemInstanceAsync(request);
+        await service.BindItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("item.instance.bound", capturedTopic);
@@ -1254,7 +1254,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.BindItemInstanceAsync(request);
+        var (status, response) = await service.BindItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1292,7 +1292,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.BindItemInstanceAsync(request);
+        var (status, response) = await service.BindItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1317,7 +1317,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.BindItemInstanceAsync(request);
+        var (status, response) = await service.BindItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1361,7 +1361,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.UnbindItemInstanceAsync(request);
+        var (status, response) = await service.UnbindItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1394,7 +1394,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.UnbindItemInstanceAsync(request);
+        var (status, response) = await service.UnbindItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1417,7 +1417,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.UnbindItemInstanceAsync(request);
+        var (status, response) = await service.UnbindItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1465,7 +1465,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        await service.UnbindItemInstanceAsync(request);
+        await service.UnbindItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("item.instance.unbound", capturedTopic);
@@ -1510,7 +1510,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DestroyItemInstanceAsync(request);
+        var (status, response) = await service.DestroyItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1543,7 +1543,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DestroyItemInstanceAsync(request);
+        var (status, response) = await service.DestroyItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1577,7 +1577,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DestroyItemInstanceAsync(request);
+        var (status, response) = await service.DestroyItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1600,7 +1600,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DestroyItemInstanceAsync(request);
+        var (status, response) = await service.DestroyItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1638,7 +1638,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new ListItemsByContainerRequest { ContainerId = containerId };
 
         // Act
-        var (status, response) = await service.ListItemsByContainerAsync(request);
+        var (status, response) = await service.ListItemsByContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1659,7 +1659,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new ListItemsByContainerRequest { ContainerId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.ListItemsByContainerAsync(request);
+        var (status, response) = await service.ListItemsByContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1694,7 +1694,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new ListItemsByContainerRequest { ContainerId = containerId };
 
         // Act
-        var (status, response) = await service.ListItemsByContainerAsync(request);
+        var (status, response) = await service.ListItemsByContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1733,7 +1733,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ListItemsByTemplateAsync(request);
+        var (status, response) = await service.ListItemsByTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1771,7 +1771,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ListItemsByTemplateAsync(request);
+        var (status, response) = await service.ListItemsByTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1807,7 +1807,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.BatchGetItemInstancesAsync(request);
+        var (status, response) = await service.BatchGetItemInstancesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1837,7 +1837,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new GetItemTemplateRequest { TemplateId = templateId };
 
         // Act
-        var (status, response) = await service.GetItemTemplateAsync(request);
+        var (status, response) = await service.GetItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1862,7 +1862,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new GetItemInstanceRequest { InstanceId = instanceId };
 
         // Act
-        var (status, response) = await service.GetItemInstanceAsync(request);
+        var (status, response) = await service.GetItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1890,7 +1890,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var request = new UpdateItemTemplateRequest { TemplateId = templateId, Name = "Updated" };
 
         // Act
-        await service.UpdateItemTemplateAsync(request);
+        await service.UpdateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         _mockTemplateCacheStore.Verify(
@@ -1922,7 +1922,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync((ItemInstanceModel?)null);
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1965,7 +1965,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync((ItemTemplateModel?)null);
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
@@ -2017,7 +2017,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(template);
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2078,7 +2078,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ThrowsAsync(new ApiException("Contract template not found", 404, "", null, null));
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Helper catches exception and returns null, causing BadRequest;
         // per IMPLEMENTATION TENETS, error response is null
@@ -2151,7 +2151,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             });
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Per IMPLEMENTATION TENETS, error response is null, status code is sufficient
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2234,7 +2234,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2322,7 +2322,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2424,13 +2424,13 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             InstanceId = instanceId1,
             UserId = Guid.NewGuid(),
             UserType = EntityType.Character
-        });
+        }, TestContext.Current.CancellationToken);
         await service.UseItemAsync(new UseItemRequest
         {
             InstanceId = instanceId2,
             UserId = Guid.NewGuid(),
             UserType = EntityType.Character
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert - Both uses should have the same system party ID for the same game
         Assert.Equal(2, capturedSystemPartyIds.Count);
@@ -2503,7 +2503,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(true);
 
         // Act
-        await service.UseItemAsync(request);
+        await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Verify the contract request includes item and user context
         Assert.NotNull(capturedRequest);
@@ -2559,7 +2559,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(template);
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Per IMPLEMENTATION TENETS, error response is null, status code is sufficient
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2642,7 +2642,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             });
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2749,7 +2749,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Despite validation failure, use proceeds
         Assert.Equal(StatusCodes.OK, status);
@@ -2827,7 +2827,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Use failed but item was consumed (per IMPLEMENTATION TENETS, error response is null)
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2932,7 +2932,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             });
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Use failed but handler was invoked (per IMPLEMENTATION TENETS, error response is null)
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2971,7 +2971,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync((ItemInstanceModel?)null);
 
         // Act
-        var (status, response) = await service.UseItemStepAsync(request);
+        var (status, response) = await service.UseItemStepAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3024,7 +3024,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(template);
 
         // Act
-        var (status, response) = await service.UseItemStepAsync(request);
+        var (status, response) = await service.UseItemStepAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Per IMPLEMENTATION TENETS, error response is null, status code is sufficient
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3119,7 +3119,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             });
 
         // Act
-        var (status, response) = await service.UseItemStepAsync(request);
+        var (status, response) = await service.UseItemStepAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3223,7 +3223,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.UseItemStepAsync(request);
+        var (status, response) = await service.UseItemStepAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3297,7 +3297,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync(failedLock.Object);
 
         // Act
-        var (status, response) = await service.UseItemStepAsync(request);
+        var (status, response) = await service.UseItemStepAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3345,7 +3345,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.CreateItemTemplateAsync(request);
+        var (status, response) = await service.CreateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3389,7 +3389,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync("etag");
 
         // Act - template creation itself still succeeds (list add failure is non-fatal)
-        var (status, response) = await service.CreateItemTemplateAsync(request);
+        var (status, response) = await service.CreateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - template created successfully despite list operation failures
         Assert.Equal(StatusCodes.OK, status);
@@ -3444,7 +3444,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DestroyItemInstanceAsync(request);
+        var (status, response) = await service.DestroyItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3516,7 +3516,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, _) = await service.DestroyItemInstanceAsync(request);
+        var (status, _) = await service.DestroyItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3557,7 +3557,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateItemInstanceAsync(request);
+        var (status, response) = await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Continuous model preserves fractional quantities (no flooring)
         Assert.Equal(StatusCodes.OK, status);
@@ -3595,7 +3595,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        await service.CreateItemInstanceAsync(request);
+        await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Quantity at exactly max boundary should not be clamped
         Assert.NotNull(savedModel);
@@ -3632,7 +3632,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        await service.CreateItemInstanceAsync(request);
+        await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Discrete model floors fractional quantities
         Assert.NotNull(savedModel);
@@ -3669,7 +3669,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        await service.CreateItemInstanceAsync(request);
+        await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedModel);
@@ -3734,7 +3734,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ThrowsAsync(new ApiException("Contract template not found", 404, "", null, null));
 
         // Act
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Contract failure returns BadRequest and does NOT consume item
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3805,7 +3805,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ThrowsAsync(new ApiException("Contract creation failed", 500));
 
         // Act
-        var (status, _) = await service.UseItemAsync(request);
+        var (status, _) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Item NOT consumed because contract creation failed (step 6)
         // DestroyAlways only applies at milestone failure (step 7)
@@ -3878,7 +3878,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ThrowsAsync(new ApiException("Contract template not found", 404, "", null, null));
 
         // Act
-        var (status, response) = await service.UseItemStepAsync(request);
+        var (status, response) = await service.UseItemStepAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3951,7 +3951,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ThrowsAsync(new ApiException("Milestone not found", 404, "", null, null));
 
         // Act
-        var (status, response) = await service.UseItemStepAsync(request);
+        var (status, response) = await service.UseItemStepAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -4023,7 +4023,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.UseItemStepAsync(request);
+        var (status, response) = await service.UseItemStepAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Optimistic concurrency failure returns Conflict
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4066,7 +4066,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DeprecateItemTemplateAsync(request);
+        var (status, response) = await service.DeprecateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Per IMPLEMENTATION TENETS: idempotent deprecation returns OK without re-saving
         Assert.Equal(StatusCodes.OK, status);
@@ -4111,7 +4111,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        await service.DeprecateItemTemplateAsync(request);
+        await service.DeprecateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("item.template.updated", capturedTopic);
@@ -4148,7 +4148,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act
-        await service.DeprecateItemTemplateAsync(request);
+        await service.DeprecateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - cache must be invalidated after deprecation write
         _mockTemplateCacheStore.Verify(
@@ -4184,7 +4184,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.CreateItemTemplateAsync(request);
+        var (status, response) = await service.CreateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Conflict because code was atomically claimed by another process
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4205,7 +4205,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             .ReturnsAsync((existingTemplateId.ToString(), "existing-etag"));
 
         // Act
-        var (status, response) = await service.CreateItemTemplateAsync(request);
+        var (status, response) = await service.CreateItemTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - early exit: template store save was never called
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4390,7 +4390,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act - this should pre-flush the expired batch, then process the new use
-        var (status, response) = await service.UseItemAsync(request);
+        var (status, response) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4496,7 +4496,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         };
 
         // Act - contract creation fails, triggering RecordUseFailureAsync which pre-flushes
-        var (status, _) = await service.UseItemAsync(request);
+        var (status, _) = await service.UseItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - the request fails (contract creation error)
         Assert.Equal(StatusCodes.BadRequest, status);

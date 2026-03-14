@@ -60,7 +60,7 @@ public class MessagingUnhandledExceptionHandlerTests
             .ReturnsAsync(true);
 
         // Act
-        await handler.HandleAsync(exception, context, CancellationToken.None);
+        await handler.HandleAsync(exception, context, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
@@ -100,8 +100,8 @@ public class MessagingUnhandledExceptionHandlerTests
             .ReturnsAsync(true);
 
         // Act — two sequential calls
-        await handler.HandleAsync(exception, context, CancellationToken.None);
-        await handler.HandleAsync(new Exception("error 2"), context, CancellationToken.None);
+        await handler.HandleAsync(exception, context, TestContext.Current.CancellationToken);
+        await handler.HandleAsync(new Exception("error 2"), context, TestContext.Current.CancellationToken);
 
         // Assert — both should publish (flag was reset after first call)
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
@@ -136,7 +136,7 @@ public class MessagingUnhandledExceptionHandlerTests
             .ThrowsAsync(new InvalidOperationException("publish failed"));
 
         // Act — should not throw
-        await handler.HandleAsync(exception, context, CancellationToken.None);
+        await handler.HandleAsync(exception, context, TestContext.Current.CancellationToken);
 
         // Assert — publish was attempted
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
@@ -178,8 +178,8 @@ public class MessagingUnhandledExceptionHandlerTests
                 });
 
         // Act — first call fails, second should still work
-        await handler.HandleAsync(new Exception("error 1"), context, CancellationToken.None);
-        await handler.HandleAsync(new Exception("error 2"), context, CancellationToken.None);
+        await handler.HandleAsync(new Exception("error 1"), context, TestContext.Current.CancellationToken);
+        await handler.HandleAsync(new Exception("error 2"), context, TestContext.Current.CancellationToken);
 
         // Assert — both publish attempts were made (flag was reset despite first failure)
         Assert.Equal(2, callCount);
@@ -222,7 +222,7 @@ public class MessagingUnhandledExceptionHandlerTests
         var context = new UnhandledExceptionContext("svc", "op");
 
         // Act
-        await handler.HandleAsync(thrownException, context, CancellationToken.None);
+        await handler.HandleAsync(thrownException, context, TestContext.Current.CancellationToken);
 
         // Assert — stack trace contains method/class names, not the exception type
         Assert.NotNull(capturedStack);

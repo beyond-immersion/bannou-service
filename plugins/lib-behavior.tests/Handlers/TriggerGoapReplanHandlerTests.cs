@@ -109,7 +109,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        var result = await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(ActionResult.Continue, result);
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
@@ -123,7 +123,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         var action = CreateDomainAction("trigger_goap_replan", new Dictionary<string, object?>());
         var context = CreateTestContext();
 
-        var result = await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(ActionResult.Continue, result);
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
@@ -151,7 +151,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -167,7 +167,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         var action = CreateDomainAction("trigger_goap_replan", new Dictionary<string, object?>());
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -189,7 +189,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -205,7 +205,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -218,7 +218,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         var action = CreateDomainAction("trigger_goap_replan", new Dictionary<string, object?>());
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -240,7 +240,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -259,7 +259,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -273,7 +273,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         var action = CreateDomainAction("trigger_goap_replan", new Dictionary<string, object?>());
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -302,7 +302,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -321,7 +321,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -344,7 +344,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -362,7 +362,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         var action = CreateDomainAction("trigger_goap_replan", new Dictionary<string, object?>());
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -377,7 +377,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "my_replan_status");
         Assert.NotNull(status);
@@ -429,7 +429,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Verify planner was called
         _mockPlanner.Verify(
@@ -481,7 +481,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var status = GetScopeValue<ReplanStatus>(context, "replan_status");
         Assert.NotNull(status);
@@ -501,7 +501,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Verify planner was never called (insufficient context)
         _mockPlanner.Verify(

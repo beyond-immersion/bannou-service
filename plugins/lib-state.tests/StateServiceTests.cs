@@ -56,7 +56,7 @@ public class StateServiceTests
             .ReturnsAsync((expectedValue, expectedEtag));
 
         // Act
-        var (status, response) = await service.GetStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -75,7 +75,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("non-existing-store")).Returns(false);
 
         // Act
-        var (status, response) = await service.GetStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -95,7 +95,7 @@ public class StateServiceTests
             .ReturnsAsync((null, null));
 
         // Act
-        var (status, response) = await service.GetStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -115,7 +115,7 @@ public class StateServiceTests
             .ThrowsAsync(new Exception("Redis connection failed"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.GetStateAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.GetStateAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -141,7 +141,7 @@ public class StateServiceTests
             .ReturnsAsync(expectedEtag);
 
         // Act
-        var (status, response) = await service.SaveStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.SaveStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -164,7 +164,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("non-existing-store")).Returns(false);
 
         // Act
-        var (status, response) = await service.SaveStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.SaveStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -190,7 +190,7 @@ public class StateServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.SaveStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.SaveStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -216,7 +216,7 @@ public class StateServiceTests
             .ReturnsAsync("new-etag-456");
 
         // Act
-        var (status, response) = await service.SaveStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.SaveStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -248,7 +248,7 @@ public class StateServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        await service.SaveStateAsync(request, CancellationToken.None);
+        await service.SaveStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedOptions);
@@ -273,7 +273,7 @@ public class StateServiceTests
             .ThrowsAsync(new Exception("Save failed"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.SaveStateAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.SaveStateAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -293,7 +293,7 @@ public class StateServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.DeleteStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeleteStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -314,7 +314,7 @@ public class StateServiceTests
             .ReturnsAsync(false);
 
         // Act
-        var (status, response) = await service.DeleteStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeleteStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -332,7 +332,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("non-existing-store")).Returns(false);
 
         // Act
-        var (status, response) = await service.DeleteStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeleteStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -352,7 +352,7 @@ public class StateServiceTests
             .ThrowsAsync(new Exception("Delete failed"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.DeleteStateAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.DeleteStateAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -369,7 +369,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("non-existing-store")).Returns(false);
 
         // Act
-        var (status, response) = await service.QueryStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -388,7 +388,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.SupportsSearch("redis-store")).Returns(false);
 
         // Act
-        var (status, response) = await service.QueryStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -425,7 +425,7 @@ public class StateServiceTests
             .ReturnsAsync(queryResults);
 
         // Act
-        var (status, response) = await service.QueryStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -469,7 +469,7 @@ public class StateServiceTests
                 Limit: 10));
 
         // Act
-        await service.QueryStateAsync(request, CancellationToken.None);
+        await service.QueryStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedSort);
@@ -515,7 +515,7 @@ public class StateServiceTests
                 Limit: 10));
 
         // Act
-        await service.QueryStateAsync(request, CancellationToken.None);
+        await service.QueryStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedConditions);
@@ -561,7 +561,7 @@ public class StateServiceTests
                 Limit: 10));
 
         // Act
-        await service.QueryStateAsync(request, CancellationToken.None);
+        await service.QueryStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedConditions);
@@ -603,7 +603,7 @@ public class StateServiceTests
             .ReturnsAsync(searchResults);
 
         // Act
-        var (status, response) = await service.QueryStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -646,7 +646,7 @@ public class StateServiceTests
                 Limit: 10));
 
         // Act
-        await service.QueryStateAsync(request, CancellationToken.None);
+        await service.QueryStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("custom-idx", capturedIndexName);
@@ -685,7 +685,7 @@ public class StateServiceTests
                 Limit: 10));
 
         // Act
-        await service.QueryStateAsync(request, CancellationToken.None);
+        await service.QueryStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("my-store-idx", capturedIndexName);
@@ -703,7 +703,7 @@ public class StateServiceTests
             .Throws(new Exception("Backend check failed"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.QueryStateAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.QueryStateAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -733,7 +733,7 @@ public class StateServiceTests
             .ReturnsAsync(results);
 
         // Act
-        var (status, response) = await service.BulkGetStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.BulkGetStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -760,7 +760,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("non-existing-store")).Returns(false);
 
         // Act
-        var (status, response) = await service.BulkGetStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.BulkGetStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -784,7 +784,7 @@ public class StateServiceTests
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Act
-        var (status, response) = await service.BulkGetStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.BulkGetStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -810,7 +810,7 @@ public class StateServiceTests
             .ThrowsAsync(new Exception("Bulk get failed"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.BulkGetStateAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.BulkGetStateAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -847,7 +847,7 @@ public class StateServiceTests
             .ReturnsAsync(returnedEtags);
 
         // Act
-        var (status, response) = await service.BulkSaveStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.BulkSaveStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -874,7 +874,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("non-existing-store")).Returns(false);
 
         // Act
-        var (status, response) = await service.BulkSaveStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.BulkSaveStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -908,7 +908,7 @@ public class StateServiceTests
             .ReturnsAsync(new Dictionary<string, string> { { "key1", "etag-1" } });
 
         // Act
-        await service.BulkSaveStateAsync(request, CancellationToken.None);
+        await service.BulkSaveStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedOptions);
@@ -938,7 +938,7 @@ public class StateServiceTests
             .ThrowsAsync(new Exception("Bulk save failed"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.BulkSaveStateAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.BulkSaveStateAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -964,7 +964,7 @@ public class StateServiceTests
             .ReturnsAsync(existingKeys);
 
         // Act
-        var (status, response) = await service.BulkExistsStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.BulkExistsStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -988,7 +988,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("non-existing-store")).Returns(false);
 
         // Act
-        var (status, response) = await service.BulkExistsStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.BulkExistsStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1012,7 +1012,7 @@ public class StateServiceTests
             .ReturnsAsync(new HashSet<string>());
 
         // Act
-        var (status, response) = await service.BulkExistsStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.BulkExistsStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1037,7 +1037,7 @@ public class StateServiceTests
             .ThrowsAsync(new Exception("Bulk exists failed"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.BulkExistsStateAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.BulkExistsStateAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -1061,7 +1061,7 @@ public class StateServiceTests
             .ReturnsAsync(2);
 
         // Act
-        var (status, response) = await service.BulkDeleteStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.BulkDeleteStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1083,7 +1083,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("non-existing-store")).Returns(false);
 
         // Act
-        var (status, response) = await service.BulkDeleteStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.BulkDeleteStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1107,7 +1107,7 @@ public class StateServiceTests
             .ReturnsAsync(0);
 
         // Act
-        var (status, response) = await service.BulkDeleteStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.BulkDeleteStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1132,7 +1132,7 @@ public class StateServiceTests
             .ThrowsAsync(new Exception("Bulk delete failed"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.BulkDeleteStateAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.BulkDeleteStateAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -1151,7 +1151,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetBackendType("mysql-store")).Returns(StateBackend.MySql);
 
         // Act
-        var (status, response) = await service.ListStoresAsync(null, CancellationToken.None);
+        var (status, response) = await service.ListStoresAsync(null, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1175,7 +1175,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetBackendType(It.IsAny<string>())).Returns(StateBackend.Redis);
 
         // Act
-        var (status, response) = await service.ListStoresAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListStoresAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1196,7 +1196,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetBackendType(It.IsAny<string>())).Returns(StateBackend.MySql);
 
         // Act
-        var (status, response) = await service.ListStoresAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListStoresAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1214,7 +1214,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStoreNames()).Returns(Array.Empty<string>());
 
         // Act
-        var (status, response) = await service.ListStoresAsync(null, CancellationToken.None);
+        var (status, response) = await service.ListStoresAsync(null, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1232,7 +1232,7 @@ public class StateServiceTests
             .Throws(new Exception("Failed to list stores"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.ListStoresAsync(null, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.ListStoresAsync(null, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1251,7 +1251,7 @@ public class StateServiceTests
             .ReturnsAsync(100L);
 
         // Act
-        var (status, response) = await service.ListStoresAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListStoresAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1276,7 +1276,7 @@ public class StateServiceTests
 
         // Act
         var (status, response) = await service.ListStoresAsync(
-            new ListStoresRequest { IncludeStats = false }, CancellationToken.None);
+            new ListStoresRequest { IncludeStats = false }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

@@ -52,13 +52,13 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
             telemetryProviderMock.Object);
     }
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         foreach (var worker in _createdWorkers)
         {
-            await worker.StopAsync(CancellationToken.None);
+            await worker.StopAsync(TestContext.Current.CancellationToken);
             worker.Dispose();
         }
         _createdWorkers.Clear();
@@ -125,7 +125,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        var result = await worker.HandleSpawnCommandAsync(command, CancellationToken.None);
+        var result = await worker.HandleSpawnCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -163,7 +163,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        var result = await worker.HandleSpawnCommandAsync(command, CancellationToken.None);
+        var result = await worker.HandleSpawnCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -200,7 +200,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        await worker.HandleSpawnCommandAsync(command, CancellationToken.None);
+        await worker.HandleSpawnCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         _messageBusMock.Verify(
@@ -247,7 +247,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        var result = await worker.HandleSpawnCommandAsync(command, CancellationToken.None);
+        var result = await worker.HandleSpawnCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -282,7 +282,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        var result = await worker.HandleStopCommandAsync(command, CancellationToken.None);
+        var result = await worker.HandleStopCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -309,7 +309,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        var result = await worker.HandleMessageCommandAsync(command, CancellationToken.None);
+        var result = await worker.HandleMessageCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -338,7 +338,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        var result = await worker.HandleMessageCommandAsync(command, CancellationToken.None);
+        var result = await worker.HandleMessageCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -376,7 +376,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        await worker.HandleMessageCommandAsync(command, CancellationToken.None);
+        await worker.HandleMessageCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedPerception);
@@ -410,7 +410,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        await worker.HandleMessageCommandAsync(command, CancellationToken.None);
+        await worker.HandleMessageCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedPerception);
@@ -446,7 +446,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        await worker.HandleMessageCommandAsync(command, CancellationToken.None);
+        await worker.HandleMessageCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedPerception);
@@ -474,7 +474,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        var result = await worker.HandleBindCharacterCommandAsync(command, CancellationToken.None);
+        var result = await worker.HandleBindCharacterCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -501,7 +501,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         };
 
         // Act
-        var result = await worker.HandleBindCharacterCommandAsync(command, CancellationToken.None);
+        var result = await worker.HandleBindCharacterCommandAsync(command, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);

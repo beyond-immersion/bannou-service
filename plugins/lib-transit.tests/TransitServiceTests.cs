@@ -414,7 +414,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.RegisterModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RegisterModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -455,7 +455,7 @@ public class TransitServiceTests
             .ReturnsAsync(CreateTestModeModel("walking"));
 
         // Act
-        var (statusCode, response) = await service.RegisterModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RegisterModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -476,7 +476,7 @@ public class TransitServiceTests
             .ReturnsAsync(CreateTestModeModel("walking"));
 
         // Act
-        var (statusCode, response) = await service.GetModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -497,7 +497,7 @@ public class TransitServiceTests
             .ReturnsAsync((TransitModeModel?)null);
 
         // Act
-        var (statusCode, response) = await service.GetModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -527,7 +527,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (statusCode, response) = await service.DeprecateModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeprecateModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -561,7 +561,7 @@ public class TransitServiceTests
             .ReturnsAsync((model, "etag-1"));
 
         // Act
-        var (statusCode, response) = await service.DeprecateModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeprecateModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -597,7 +597,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (statusCode, response) = await service.UndeprecateModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UndeprecateModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -625,7 +625,7 @@ public class TransitServiceTests
             .ReturnsAsync((model, "etag-1"));
 
         // Act
-        var (statusCode, response) = await service.UndeprecateModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UndeprecateModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -655,7 +655,7 @@ public class TransitServiceTests
             .ReturnsAsync(model);
 
         // Act
-        var (statusCode, response) = await service.DeleteModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeleteModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -695,7 +695,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<JourneyArchiveModel>());
 
         // Act
-        var (statusCode, response) = await service.DeleteModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeleteModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -763,7 +763,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateConnectionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateConnectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -800,7 +800,7 @@ public class TransitServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.CreateConnectionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateConnectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -839,7 +839,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (statusCode, response) = await service.UpdateConnectionStatusAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateConnectionStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -878,7 +878,7 @@ public class TransitServiceTests
             .ReturnsAsync((model, "etag-1"));
 
         // Act
-        var (statusCode, response) = await service.UpdateConnectionStatusAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateConnectionStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -917,7 +917,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (statusCode, response) = await service.UpdateConnectionStatusAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateConnectionStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -957,7 +957,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<JourneyArchiveModel>());
 
         // Act
-        var (statusCode, response) = await service.DeleteConnectionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeleteConnectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1058,7 +1058,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1102,7 +1102,7 @@ public class TransitServiceTests
             .ReturnsAsync(CreateTestModeModel("horseback", isDeprecated: true, deprecationReason: "Horses extinct"));
 
         // Act
-        var (statusCode, response) = await service.CreateJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -1156,7 +1156,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.DepartJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DepartJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1193,7 +1193,7 @@ public class TransitServiceTests
             .ReturnsAsync(journey);
 
         // Act
-        var (statusCode, response) = await service.DepartJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DepartJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -1237,7 +1237,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.InterruptJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.InterruptJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1303,7 +1303,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.ResumeJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ResumeJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1343,7 +1343,7 @@ public class TransitServiceTests
             .ReturnsAsync(journey);
 
         // Act
-        var (statusCode, response) = await service.AbandonJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.AbandonJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -1386,7 +1386,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.AbandonJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.AbandonJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1453,7 +1453,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.AdvanceJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.AdvanceJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1511,7 +1511,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.AbandonJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.AbandonJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1573,7 +1573,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.RevealDiscoveryAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RevealDiscoveryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1632,7 +1632,7 @@ public class TransitServiceTests
             .ReturnsAsync(existingDiscovery);
 
         // Act
-        var (statusCode, response) = await service.RevealDiscoveryAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RevealDiscoveryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1733,7 +1733,7 @@ public class TransitServiceTests
             CurrentSeason: "spring");
 
         // Act
-        var results = await calculator.CalculateAsync(request, CancellationToken.None);
+        var results = await calculator.CalculateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(results);
@@ -1808,7 +1808,7 @@ public class TransitServiceTests
             CurrentSeason: "spring");
 
         // Act
-        var results = await calculator.CalculateAsync(request, CancellationToken.None);
+        var results = await calculator.CalculateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(results);
@@ -1904,7 +1904,7 @@ public class TransitServiceTests
             CurrentSeason: "winter");
 
         // Act
-        var results = await calculator.CalculateAsync(request, CancellationToken.None);
+        var results = await calculator.CalculateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(results);
@@ -2000,7 +2000,7 @@ public class TransitServiceTests
             CurrentSeason: "spring");
 
         // Act
-        var results = await calculator.CalculateAsync(request, CancellationToken.None);
+        var results = await calculator.CalculateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(results);
@@ -2037,7 +2037,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitModeModel> { activeMode, deprecatedMode });
 
         // Act
-        var (statusCode, response) = await service.ListModesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListModesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2065,7 +2065,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitModeModel> { activeMode, deprecatedMode });
 
         // Act
-        var (statusCode, response) = await service.ListModesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListModesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2098,7 +2098,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitModeModel> { landMode, waterMode, anyTerrainMode });
 
         // Act
-        var (statusCode, response) = await service.ListModesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListModesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2135,7 +2135,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitModeModel> { unrestrictedMode, restrictedMatch, restrictedNoMatch });
 
         // Act
-        var (statusCode, response) = await service.ListModesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListModesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2168,7 +2168,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitModeModel> { mode1, mode2 });
 
         // Act
-        var (statusCode, response) = await service.ListModesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListModesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2209,7 +2209,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (statusCode, response) = await service.UpdateModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2240,7 +2240,7 @@ public class TransitServiceTests
             .ReturnsAsync(((TransitModeModel?)null, (string?)null));
 
         // Act
-        var (statusCode, response) = await service.UpdateModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -2264,7 +2264,7 @@ public class TransitServiceTests
             .ReturnsAsync((model, "etag-1"));
 
         // Act
-        var (statusCode, response) = await service.UpdateModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2302,7 +2302,7 @@ public class TransitServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (statusCode, response) = await service.UpdateModeAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateModeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -2331,7 +2331,7 @@ public class TransitServiceTests
             .ReturnsAsync(model);
 
         // Act
-        var (statusCode, response) = await service.GetConnectionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetConnectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2358,7 +2358,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitConnectionModel> { model });
 
         // Act
-        var (statusCode, response) = await service.GetConnectionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetConnectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2380,7 +2380,7 @@ public class TransitServiceTests
             .ReturnsAsync((TransitConnectionModel?)null);
 
         // Act
-        var (statusCode, response) = await service.GetConnectionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetConnectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -2415,7 +2415,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitConnectionModel> { conn1, conn2 });
 
         // Act
-        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2451,7 +2451,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitConnectionModel> { matchFrom, matchTo, noMatch });
 
         // Act
-        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2483,7 +2483,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitConnectionModel> { openConn, closedConn });
 
         // Act
-        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2517,7 +2517,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitConnectionModel> { conn1, conn2, conn3 });
 
         // Act
-        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2560,7 +2560,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (statusCode, response) = await service.UpdateConnectionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateConnectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2593,7 +2593,7 @@ public class TransitServiceTests
             .ReturnsAsync(((TransitConnectionModel?)null, (string?)null));
 
         // Act
-        var (statusCode, response) = await service.UpdateConnectionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateConnectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -2642,7 +2642,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.ArriveJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ArriveJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2685,7 +2685,7 @@ public class TransitServiceTests
             .ReturnsAsync(journey);
 
         // Act
-        var (statusCode, response) = await service.ArriveJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ArriveJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -2713,7 +2713,7 @@ public class TransitServiceTests
             .ReturnsAsync((TransitJourneyModel?)null);
 
         // Act
-        var (statusCode, response) = await service.ArriveJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ArriveJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -2746,7 +2746,7 @@ public class TransitServiceTests
             .ReturnsAsync(failedLock.Object);
 
         // Act
-        var (statusCode, response) = await service.ArriveJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ArriveJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -2781,7 +2781,7 @@ public class TransitServiceTests
             .ReturnsAsync(journey);
 
         // Act
-        var (statusCode, response) = await service.GetJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2834,7 +2834,7 @@ public class TransitServiceTests
             .ReturnsAsync(archivedJourney);
 
         // Act
-        var (statusCode, response) = await service.GetJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2862,7 +2862,7 @@ public class TransitServiceTests
             .ReturnsAsync((JourneyArchiveModel?)null);
 
         // Act
-        var (statusCode, response) = await service.GetJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -2901,7 +2901,7 @@ public class TransitServiceTests
             .ReturnsAsync(archived);
 
         // Act
-        var (statusCode, response) = await service.ListJourneysAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListJourneysAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2937,7 +2937,7 @@ public class TransitServiceTests
             .ReturnsAsync(archived);
 
         // Act
-        var (statusCode, response) = await service.ListJourneysAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListJourneysAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2983,7 +2983,7 @@ public class TransitServiceTests
             .ReturnsAsync(archived);
 
         // Act
-        var (statusCode, response) = await service.QueryJourneysByConnectionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryJourneysByConnectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3012,7 +3012,7 @@ public class TransitServiceTests
             .ReturnsAsync((TransitConnectionModel?)null);
 
         // Act
-        var (statusCode, response) = await service.QueryJourneysByConnectionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryJourneysByConnectionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -3061,7 +3061,7 @@ public class TransitServiceTests
             .ReturnsAsync(new Location.LocationResponse { RealmId = TestRealmId });
 
         // Act
-        var (statusCode, response) = await service.AdvanceBatchJourneysAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.AdvanceBatchJourneysAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3151,7 +3151,7 @@ public class TransitServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.CalculateRouteAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CalculateRouteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3180,7 +3180,7 @@ public class TransitServiceTests
             .ThrowsAsync(new ApiException("Not found", 404));
 
         // Act
-        var (statusCode, response) = await service.CalculateRouteAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CalculateRouteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -3220,7 +3220,7 @@ public class TransitServiceTests
             .ThrowsAsync(new ApiException("Not found", 404));
 
         // Act
-        var (statusCode, response) = await service.CalculateRouteAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CalculateRouteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -3254,7 +3254,7 @@ public class TransitServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.ListDiscoveriesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListDiscoveriesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3326,7 +3326,7 @@ public class TransitServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.ListDiscoveriesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListDiscoveriesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3372,7 +3372,7 @@ public class TransitServiceTests
             .ReturnsAsync((TransitDiscoveryModel?)null);
 
         // Act
-        var (statusCode, response) = await service.CheckDiscoveriesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CheckDiscoveriesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3439,7 +3439,7 @@ public class TransitServiceTests
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var statusCode = await service.CleanupByLocationAsync(request, CancellationToken.None);
+        var statusCode = await service.CleanupByLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3484,7 +3484,7 @@ public class TransitServiceTests
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var statusCode = await service.CleanupByLocationAsync(request, CancellationToken.None);
+        var statusCode = await service.CleanupByLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3560,7 +3560,7 @@ public class TransitServiceTests
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var statusCode = await service.CleanupByCharacterAsync(request, CancellationToken.None);
+        var statusCode = await service.CleanupByCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3626,7 +3626,7 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var statusCode = await service.CleanupByCharacterAsync(request, CancellationToken.None);
+        var statusCode = await service.CleanupByCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3936,7 +3936,7 @@ public class TransitServiceTests
             .ReturnsAsync(new Location.LocationResponse { RealmId = TestRealmId });
 
         // Act
-        var (statusCode, response) = await service.ArriveJourneyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ArriveJourneyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3969,7 +3969,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitConnectionModel> { openConn, blockedConn });
 
         // Act
-        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -4006,7 +4006,7 @@ public class TransitServiceTests
             .ReturnsAsync(new List<TransitConnectionModel> { landConn, waterConn });
 
         // Act
-        var (statusCode, response) = await service.QueryConnectionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryConnectionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);

@@ -193,7 +193,7 @@ public class ActorRunnerTests
         var (runner, _) = CreateRunner();
 
         // Act
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActorStatus.Running, runner.Status);
@@ -205,12 +205,12 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         var originalStartTime = runner.StartedAt;
-        await Task.Delay(50); // Small delay to ensure different timestamp
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken); // Small delay to ensure different timestamp
 
         // Act
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(originalStartTime, runner.StartedAt);
@@ -224,7 +224,7 @@ public class ActorRunnerTests
         await runner.DisposeAsync();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => runner.StartAsync());
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => runner.StartAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -232,10 +232,10 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
 
         // Act
-        await runner.StopAsync(graceful: true);
+        await runner.StopAsync(graceful: true, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActorStatus.Stopped, runner.Status);
@@ -246,11 +246,11 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
-        await runner.StartAsync();
-        await runner.StopAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Act & Assert - should not throw
-        await runner.StopAsync();
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(ActorStatus.Stopped, runner.Status);
     }
 
@@ -259,10 +259,10 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
 
         // Act
-        await runner.StopAsync(graceful: false);
+        await runner.StopAsync(graceful: false, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActorStatus.Stopped, runner.Status);
@@ -273,13 +273,13 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
 
         // Act
         await runner.DisposeAsync();
 
         // Assert - trying to start should throw
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => runner.StartAsync());
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => runner.StartAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -303,7 +303,7 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
 
         var perception = new PerceptionData
         {
@@ -351,7 +351,7 @@ public class ActorRunnerTests
         // Arrange
         var config = CreateTestConfig(perceptionQueueSize: 5);
         var (runner, _) = CreateRunner(config: config);
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
 
         // Act - inject more than queue size
         for (int i = 0; i < 10; i++)
@@ -375,8 +375,8 @@ public class ActorRunnerTests
     {
         // Arrange
         var (runner, _) = CreateRunner();
-        await runner.StartAsync();
-        await runner.StopAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         var result = runner.InjectPerception(new PerceptionData
@@ -404,7 +404,7 @@ public class ActorRunnerTests
         var template = CreateTestTemplate();
         var characterId = Guid.NewGuid();
         var (runner, _) = CreateRunner(actorId, template, characterId);
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
 
         // Wait for at least one tick to confirm the loop is running
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
@@ -439,7 +439,7 @@ public class ActorRunnerTests
         // Arrange
         var template = CreateTestTemplate(tickIntervalMs: 50);
         var (runner, _) = CreateRunner(template: template);
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
 
         // Wait for at least 1 iteration deterministically (not wall-clock based)
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
@@ -463,9 +463,9 @@ public class ActorRunnerTests
         var (runner, _) = CreateRunner(template: template);
 
         // Act
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
-        await runner.StopAsync();
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(runner.LoopIterations > 0);
@@ -479,7 +479,7 @@ public class ActorRunnerTests
         var (runner, _) = CreateRunner(template: template);
 
         // Act
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         // Assert
@@ -499,7 +499,7 @@ public class ActorRunnerTests
         await runner.StartAsync(cts.Token);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
         await cts.CancelAsync();
-        await Task.Delay(200); // Allow time for cancellation to be processed
+        await Task.Delay(200, cancellationToken: TestContext.Current.CancellationToken); // Allow time for cancellation to be processed
 
         // Assert - loop should have stopped or be stopping
         Assert.True(runner.Status == ActorStatus.Running || runner.Status == ActorStatus.Stopped);
@@ -513,11 +513,11 @@ public class ActorRunnerTests
         var (runner, _) = CreateRunner(template: template);
 
         // Act - start and wait for iterations deterministically (not wall-clock based)
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
 
         // Wait for at least 3 iterations - proves the behavior loop is running with fast ticks
         await WaitForIterationsAsync(runner, 3, TimeSpan.FromSeconds(5));
-        await runner.StopAsync();
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - should have reached target iterations
         Assert.True(runner.LoopIterations >= 3);
@@ -532,9 +532,9 @@ public class ActorRunnerTests
         var (runner, _) = CreateRunner(template: template, config: config);
 
         // Act
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
-        await runner.StopAsync();
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - should use fallback and have some iterations
         Assert.True(runner.LoopIterations > 0);
@@ -555,9 +555,9 @@ public class ActorRunnerTests
             characterId: characterId);
 
         // Act
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
-        await runner.StopAsync();
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - runner should have completed without exceptions
         // Since ActorRunner doesn't automatically change state, we just verify it ran
@@ -574,9 +574,9 @@ public class ActorRunnerTests
             characterId: null); // No character ID
 
         // Act
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
-        await runner.StopAsync();
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - should not publish character state updates
         messageBusMock.Verify(
@@ -599,14 +599,14 @@ public class ActorRunnerTests
         var (runner, _) = CreateRunner(template: template);
 
         // Act - runner should continue despite internal errors
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         // Assert - runner should still be running
         Assert.Equal(ActorStatus.Running, runner.Status);
         Assert.True(runner.LoopIterations > 0);
 
-        await runner.StopAsync();
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -615,7 +615,7 @@ public class ActorRunnerTests
         // Arrange
         var template = CreateTestTemplate(tickIntervalMs: 10);
         var (runner, _) = CreateRunner(template: template);
-        await runner.StartAsync();
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         // Act
@@ -843,7 +843,7 @@ public class ActorRunnerTests
     {
         // Arrange — create without characterId (event-mode actor)
         var (runner, messageBusMock) = CreateRunner(characterId: null);
-        await runner.StartAsync(CancellationToken.None);
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         Assert.Null(runner.CharacterId);
@@ -851,13 +851,13 @@ public class ActorRunnerTests
         var characterId = Guid.NewGuid();
 
         // Act
-        await runner.BindCharacterAsync(characterId, CancellationToken.None);
+        await runner.BindCharacterAsync(characterId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(characterId, runner.CharacterId);
 
         // Cleanup
-        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
         await runner.DisposeAsync();
     }
 
@@ -867,13 +867,13 @@ public class ActorRunnerTests
         // Arrange
         var realmId = Guid.NewGuid();
         var (runner, messageBusMock) = CreateRunner(characterId: null, realmId: realmId);
-        await runner.StartAsync(CancellationToken.None);
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         var characterId = Guid.NewGuid();
 
         // Act
-        await runner.BindCharacterAsync(characterId, CancellationToken.None);
+        await runner.BindCharacterAsync(characterId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         messageBusMock.Verify(
@@ -887,7 +887,7 @@ public class ActorRunnerTests
             Times.Once);
 
         // Cleanup
-        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
         await runner.DisposeAsync();
     }
 
@@ -896,15 +896,15 @@ public class ActorRunnerTests
     {
         // Arrange — create with characterId already set
         var (runner, _) = CreateRunner(characterId: Guid.NewGuid());
-        await runner.StartAsync(CancellationToken.None);
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => runner.BindCharacterAsync(Guid.NewGuid(), CancellationToken.None));
+            () => runner.BindCharacterAsync(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken));
 
         // Cleanup
-        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
         await runner.DisposeAsync();
     }
 
@@ -916,7 +916,7 @@ public class ActorRunnerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => runner.BindCharacterAsync(Guid.NewGuid(), CancellationToken.None));
+            () => runner.BindCharacterAsync(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken));
 
         // Cleanup
         await runner.DisposeAsync();
@@ -931,7 +931,7 @@ public class ActorRunnerTests
         var (runner, messageBusMock) = CreateRunner(characterId: characterId, realmId: realmId);
 
         // Act
-        await runner.StartAsync(CancellationToken.None);
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         // Assert
@@ -946,7 +946,7 @@ public class ActorRunnerTests
             Times.Once);
 
         // Cleanup
-        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
         await runner.DisposeAsync();
     }
 
@@ -957,7 +957,7 @@ public class ActorRunnerTests
         var (runner, messageBusMock) = CreateRunner(characterId: null);
 
         // Act
-        await runner.StartAsync(CancellationToken.None);
+        await runner.StartAsync(TestContext.Current.CancellationToken);
         await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         // Assert
@@ -969,7 +969,7 @@ public class ActorRunnerTests
             Times.Never);
 
         // Cleanup
-        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
         await runner.DisposeAsync();
     }
 

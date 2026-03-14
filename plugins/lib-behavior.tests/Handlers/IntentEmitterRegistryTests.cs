@@ -122,7 +122,7 @@ public class IntentEmitterRegistryTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(emissions);
@@ -143,7 +143,7 @@ public class IntentEmitterRegistryTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(emissions);
@@ -169,7 +169,7 @@ public class IntentEmitterRegistryTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(emissions);
@@ -190,7 +190,7 @@ public class IntentEmitterRegistryTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert - dodge affects both combat and movement
         Assert.True(emissions.Count >= 2);
@@ -215,7 +215,7 @@ public class IntentEmitterRegistryTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(emissions);
@@ -241,7 +241,7 @@ public class IntentEmitterRegistryTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert - talk_to affects interaction and attention
         Assert.True(emissions.Count >= 2);
@@ -267,7 +267,7 @@ public class IntentEmitterRegistryTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(emissions);
@@ -290,7 +290,7 @@ public class IntentEmitterRegistryTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert - should fallback to action channel
         if (emissions.Count > 0)
@@ -316,7 +316,7 @@ public class IntentEmitterRegistryTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert - creatures use "locomotion" not "movement"
         Assert.Single(emissions);
@@ -335,7 +335,7 @@ public class IntentEmitterRegistryTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert - creatures don't have expression channel, should use fallback
         if (emissions.Count > 0)

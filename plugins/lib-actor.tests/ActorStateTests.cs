@@ -582,7 +582,7 @@ public class ActorStateTests
             tasks.Add(Task.Run(() =>
             {
                 state.SetFeeling($"feeling_{index % 10}", (index % 100) / 100.0);
-            }));
+            }, TestContext.Current.CancellationToken));
         }
         await Task.WhenAll(tasks);
 
@@ -607,7 +607,7 @@ public class ActorStateTests
             tasks.Add(Task.Run(() =>
             {
                 state.AddMemory($"memory_{index}", $"value_{index}");
-            }));
+            }, TestContext.Current.CancellationToken));
         }
         await Task.WhenAll(tasks);
 

@@ -61,7 +61,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         var context = CreateTestContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         var context = CreateTestContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     #endregion
@@ -91,7 +91,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -108,7 +108,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -131,7 +131,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -155,7 +155,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -177,7 +177,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -198,7 +198,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -218,7 +218,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -239,7 +239,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -263,7 +263,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -286,7 +286,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -311,7 +311,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -338,7 +338,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -358,7 +358,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -379,7 +379,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");
         Assert.NotNull(score);
@@ -396,7 +396,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var score = GetScopeValue<SignificanceScore>(context, "my_score");
         Assert.NotNull(score);
@@ -422,7 +422,7 @@ public class AssessSignificanceHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        var result = await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(ActionResult.Continue, result);
         var score = GetScopeValue<SignificanceScore>(context, "significance_score");

@@ -120,7 +120,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(failedLock.Object);
 
         // Act
-        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -172,7 +172,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(failedLock.Object);
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -226,7 +226,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(false);
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -271,7 +271,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(false);
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -314,7 +314,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(false);
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -354,7 +354,7 @@ public class VoiceServiceErrorPathTests
             });
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -405,7 +405,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -456,7 +456,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -507,7 +507,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -560,7 +560,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(1);
 
         // Act
-        var status = await service.AnswerPeerAsync(request, CancellationToken.None);
+        var status = await service.AnswerPeerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -585,7 +585,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(true);
 
         // Act
-        var status = await service.PeerHeartbeatAsync(request, CancellationToken.None);
+        var status = await service.PeerHeartbeatAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -620,7 +620,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var status = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.DeleteVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -655,7 +655,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var status = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.DeleteVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -691,7 +691,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -729,7 +729,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -797,7 +797,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -853,7 +853,7 @@ public class VoiceServiceErrorPathTests
             .ReturnsAsync(failedLock.Object);
 
         // Act
-        var status = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.LeaveVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - leave still succeeds even though broadcast lock failed
         Assert.Equal(StatusCodes.OK, status);

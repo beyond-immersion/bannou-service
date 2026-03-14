@@ -228,7 +228,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSeedAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateSeedAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -266,7 +266,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSeedAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateSeedAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -293,7 +293,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSeedAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateSeedAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -322,7 +322,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSeedAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateSeedAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -347,7 +347,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetSeedAsync(
-            new GetSeedRequest { SeedId = seedId }, CancellationToken.None);
+            new GetSeedRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -366,7 +366,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetSeedAsync(
-            new GetSeedRequest { SeedId = Guid.NewGuid() }, CancellationToken.None);
+            new GetSeedRequest { SeedId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -407,7 +407,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Act
         var (status, response) = await service.ActivateSeedAsync(
-            new ActivateSeedRequest { SeedId = targetSeedId }, CancellationToken.None);
+            new ActivateSeedRequest { SeedId = targetSeedId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -440,7 +440,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Act
         var (status, response) = await service.ArchiveSeedAsync(
-            new ArchiveSeedRequest { SeedId = seedId }, CancellationToken.None);
+            new ArchiveSeedRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -491,7 +491,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.RecordGrowthAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordGrowthAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -547,7 +547,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act
         var (status, response) = await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 2.0f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -593,7 +593,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act - add 3 growth to cross the 10-threshold for "awakening"
         var (status, _) = await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 3f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -648,7 +648,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.RecordGrowthBatchAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordGrowthBatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -687,7 +687,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetCapabilityManifestAsync(
-            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+            new GetCapabilityManifestRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -732,7 +732,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetCapabilityManifestAsync(
-            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+            new GetCapabilityManifestRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -779,7 +779,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetCapabilityManifestAsync(
-            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+            new GetCapabilityManifestRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -827,7 +827,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetCapabilityManifestAsync(
-            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+            new GetCapabilityManifestRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         // Assert - log(1 + 1.0) / log(2) = log(2)/log(2) = 1.0
         Assert.Equal(StatusCodes.OK, status);
@@ -876,7 +876,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.RegisterSeedTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.RegisterSeedTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -914,7 +914,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.RegisterSeedTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.RegisterSeedTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -949,7 +949,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.RegisterSeedTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.RegisterSeedTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -995,7 +995,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.InitiateBondAsync(request, CancellationToken.None);
+        var (status, response) = await service.InitiateBondAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1031,7 +1031,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.InitiateBondAsync(request, CancellationToken.None);
+        var (status, response) = await service.InitiateBondAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1065,7 +1065,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.InitiateBondAsync(request, CancellationToken.None);
+        var (status, response) = await service.InitiateBondAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1125,7 +1125,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ConfirmBondAsync(request, CancellationToken.None);
+        var (status, response) = await service.ConfirmBondAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1261,7 +1261,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 5f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedGrowth);
@@ -1304,7 +1304,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act: add 2f → depth=9f, but PeakDepth should stay at 10f
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 2f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedGrowth);
@@ -1347,7 +1347,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act: add 5f → depth=13f exceeds PeakDepth=8f
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 5f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedGrowth);
@@ -1418,7 +1418,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act: record growth only in "combat.melee"
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 3f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert: partner's combat.melee timer was reset, magic.fire was NOT
         _mockGrowthStore.Verify(s => s.SaveAsync(
@@ -1475,7 +1475,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 3f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert: partner growth was never read (non-permanent bond skips shared activity)
         _mockGrowthStore.Verify(s => s.GetAsync($"growth:{partnerId}", It.IsAny<CancellationToken>()), Times.Never);
@@ -1516,7 +1516,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act: cross the 10-threshold into "awakening"
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 3f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -1586,7 +1586,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act: record 10.0 growth on primary
         var (status, _) = await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 10f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert: sibling received 10.0 * 0.5 = 5.0 growth
         Assert.Equal(StatusCodes.OK, status);
@@ -1621,7 +1621,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 5f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert: no sibling query was made
         _mockSeedQueryStore.Verify(s => s.JsonQueryPagedAsync(
@@ -1668,7 +1668,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 10f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert: no growth saved for the archived sibling
         _mockGrowthStore.Verify(s => s.SaveAsync(
@@ -1727,7 +1727,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act: record 8.0 growth
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = primarySeedId, Domain = "magic.fire", Amount = 8f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert: dormant sibling received 8.0 * 0.25 = 2.0
         Assert.NotNull(savedDormantGrowth);
@@ -1806,7 +1806,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act: record 4.0 growth (bond multiplier is 1.5x, so primary gets 6.0, but sibling should get 4.0 * 1.0 = 4.0 raw)
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 4f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert: sibling got raw 4.0 (not bond-boosted 6.0)
         Assert.NotNull(savedSiblingGrowth);
@@ -1850,7 +1850,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 5f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert: primary seed's event has CrossPollinated = false
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -1921,7 +1921,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act
         var (status, _) = await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 10f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert: primary succeeds, sibling growth not saved
         Assert.Equal(StatusCodes.OK, status);
@@ -1983,7 +1983,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act: record 3.0 growth — sibling has 8.0 + 3.0 = 11.0, crossing "awakening" threshold at 10
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = primarySeedId, Domain = "combat.melee", Amount = 3f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert: sibling phase change event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -2026,7 +2026,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             GameServiceId = _testGameServiceId
         };
 
-        var (status, response) = await service.CreateSeedAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateSeedAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
@@ -2048,7 +2048,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             GameServiceId = Guid.NewGuid()
         };
 
-        var (status, response) = await service.CreateSeedAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateSeedAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.Null(response);
@@ -2082,7 +2082,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             Metadata = metadata
         };
 
-        await service.CreateSeedAsync(request, CancellationToken.None);
+        await service.CreateSeedAsync(request, TestContext.Current.CancellationToken);
 
         Assert.NotNull(savedSeed);
         Assert.NotNull(savedSeed.Metadata);
@@ -2112,7 +2112,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             GameServiceId = _testGameServiceId
         };
 
-        var (status, _) = await service.CreateSeedAsync(request, CancellationToken.None);
+        var (status, _) = await service.CreateSeedAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -2135,7 +2135,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 OwnerId = _testOwnerId,
                 OwnerType = EntityType.Character,
                 IncludeArchived = false
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -2156,7 +2156,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 OwnerType = EntityType.Character,
                 SeedTypeCode = "guardian",
                 IncludeArchived = false
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         _mockSeedQueryStore.Verify(s => s.JsonQueryPagedAsync(
             It.Is<IReadOnlyList<QueryCondition>>(c =>
@@ -2177,7 +2177,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 OwnerId = _testOwnerId,
                 OwnerType = EntityType.Character,
                 IncludeArchived = true
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         _mockSeedQueryStore.Verify(s => s.JsonQueryPagedAsync(
             It.Is<IReadOnlyList<QueryCondition>>(c =>
@@ -2197,7 +2197,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         SetupSeedQueryPagedAsync(new List<SeedModel>(), 0);
 
         await service.ListSeedsAsync(
-            new ListSeedsRequest { Page = 3, PageSize = 25 }, CancellationToken.None);
+            new ListSeedsRequest { Page = 3, PageSize = 25 }, TestContext.Current.CancellationToken);
 
         // Offset = (3-1) * 25 = 50
         _mockSeedQueryStore.Verify(s => s.JsonQueryPagedAsync(
@@ -2222,7 +2222,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 Status = SeedStatus.Active,
                 Page = 1,
                 PageSize = 10
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         _mockSeedQueryStore.Verify(s => s.JsonQueryPagedAsync(
             It.Is<IReadOnlyList<QueryCondition>>(c =>
@@ -2264,7 +2264,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             Metadata = new Dictionary<string, object> { ["custom"] = "value" }
         };
 
-        var (status, response) = await service.UpdateSeedAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateSeedAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -2293,7 +2293,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync((SeedModel?)null);
 
         var (status, _) = await service.UpdateSeedAsync(
-            new UpdateSeedRequest { SeedId = Guid.NewGuid(), DisplayName = "X" }, CancellationToken.None);
+            new UpdateSeedRequest { SeedId = Guid.NewGuid(), DisplayName = "X" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -2311,7 +2311,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(failLock.Object);
 
         var (status, _) = await service.UpdateSeedAsync(
-            new UpdateSeedRequest { SeedId = Guid.NewGuid(), DisplayName = "X" }, CancellationToken.None);
+            new UpdateSeedRequest { SeedId = Guid.NewGuid(), DisplayName = "X" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -2329,7 +2329,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync((SeedModel?)null);
 
         var (status, _) = await service.ActivateSeedAsync(
-            new ActivateSeedRequest { SeedId = Guid.NewGuid() }, CancellationToken.None);
+            new ActivateSeedRequest { SeedId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -2346,7 +2346,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(seed);
 
         var (status, response) = await service.ActivateSeedAsync(
-            new ActivateSeedRequest { SeedId = seedId }, CancellationToken.None);
+            new ActivateSeedRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -2371,7 +2371,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(seed);
 
         var (status, _) = await service.ActivateSeedAsync(
-            new ActivateSeedRequest { SeedId = seedId }, CancellationToken.None);
+            new ActivateSeedRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -2396,7 +2396,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(failLock.Object);
 
         var (status, _) = await service.ActivateSeedAsync(
-            new ActivateSeedRequest { SeedId = seedId }, CancellationToken.None);
+            new ActivateSeedRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -2414,7 +2414,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync((SeedModel?)null);
 
         var (status, _) = await service.ArchiveSeedAsync(
-            new ArchiveSeedRequest { SeedId = Guid.NewGuid() }, CancellationToken.None);
+            new ArchiveSeedRequest { SeedId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -2431,7 +2431,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(seed);
 
         var (status, response) = await service.ArchiveSeedAsync(
-            new ArchiveSeedRequest { SeedId = seedId }, CancellationToken.None);
+            new ArchiveSeedRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -2456,7 +2456,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync("etag");
 
         var (status, response) = await service.ArchiveSeedAsync(
-            new ArchiveSeedRequest { SeedId = seedId }, CancellationToken.None);
+            new ArchiveSeedRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(savedSeed);
@@ -2492,7 +2492,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(growth);
 
         var (status, response) = await service.GetGrowthAsync(
-            new GetGrowthRequest { SeedId = seedId }, CancellationToken.None);
+            new GetGrowthRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -2512,7 +2512,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync((SeedGrowthModel?)null);
 
         var (status, _) = await service.GetGrowthAsync(
-            new GetGrowthRequest { SeedId = Guid.NewGuid() }, CancellationToken.None);
+            new GetGrowthRequest { SeedId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -2540,7 +2540,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(seedType);
 
         var (status, response) = await service.GetGrowthPhaseAsync(
-            new GetGrowthPhaseRequest { SeedId = seedId }, CancellationToken.None);
+            new GetGrowthPhaseRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -2560,7 +2560,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync((SeedModel?)null);
 
         var (status, _) = await service.GetGrowthPhaseAsync(
-            new GetGrowthPhaseRequest { SeedId = Guid.NewGuid() }, CancellationToken.None);
+            new GetGrowthPhaseRequest { SeedId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -2584,7 +2584,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(seedType);
 
         var (status, response) = await service.GetGrowthPhaseAsync(
-            new GetGrowthPhaseRequest { SeedId = seedId }, CancellationToken.None);
+            new GetGrowthPhaseRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -2611,7 +2611,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = Guid.NewGuid(), Domain = "combat", Amount = 1f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -2629,7 +2629,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat", Amount = 1f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -2644,7 +2644,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = Guid.NewGuid(), Domain = "combat", Amount = 1f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -2695,7 +2695,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act: record 4.0 growth with 1.5x bond multiplier = 6.0
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 4f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.NotNull(savedGrowth);
         Assert.Equal(6.0f, savedGrowth.Domains["combat.melee"].Depth);
@@ -2739,7 +2739,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act: record 4.0 growth; pending bond should NOT apply 1.5x multiplier
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 4f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.NotNull(savedGrowth);
         Assert.Equal(4.0f, savedGrowth.Domains["combat.melee"].Depth);
@@ -2789,7 +2789,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat", Amount = 5f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.NotNull(savedBond);
         Assert.Equal(15f, savedBond.SharedGrowth); // 10 + 5
@@ -2816,7 +2816,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat", Amount = 1f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         _mockCapabilitiesStore.Verify(s => s.DeleteAsync(
             $"cap:{seedId}", It.IsAny<CancellationToken>()), Times.Once);
@@ -2857,7 +2857,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
 
         var (status, response) = await service.GetCapabilityManifestAsync(
-            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+            new GetCapabilityManifestRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -2897,7 +2897,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
 
         var (_, response) = await service.GetCapabilityManifestAsync(
-            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+            new GetCapabilityManifestRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.NotNull(response);
         var cap = Assert.Single(response.Capabilities);
@@ -2931,7 +2931,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
 
         var (status, response) = await service.GetCapabilityManifestAsync(
-            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+            new GetCapabilityManifestRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -2952,7 +2952,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync((SeedModel?)null);
 
         var (status, _) = await service.GetCapabilityManifestAsync(
-            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+            new GetCapabilityManifestRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -2996,7 +2996,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync("etag");
 
         await service.GetCapabilityManifestAsync(
-            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+            new GetCapabilityManifestRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.NotNull(savedManifest);
         Assert.Equal(6, savedManifest.Version);
@@ -3021,7 +3021,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag");
 
         var (status, response) = await service.GetCapabilityManifestAsync(
-            new GetCapabilityManifestRequest { SeedId = seedId }, CancellationToken.None);
+            new GetCapabilityManifestRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3044,7 +3044,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, response) = await service.GetSeedTypeAsync(
             new GetSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3061,7 +3061,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.GetSeedTypeAsync(
             new GetSeedTypeRequest { SeedTypeCode = "missing", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -3082,7 +3082,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, response) = await service.ListSeedTypesAsync(
             new ListSeedTypesRequest { GameServiceId = _testGameServiceId, IncludeDeprecated = false },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3102,7 +3102,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, response) = await service.ListSeedTypesAsync(
             new ListSeedTypesRequest { GameServiceId = _testGameServiceId, IncludeDeprecated = true },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3131,7 +3131,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 GameServiceId = _testGameServiceId,
                 DisplayName = "Updated Guardian",
                 MaxPerOwner = 5
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3159,7 +3159,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 SeedTypeCode = "missing",
                 GameServiceId = _testGameServiceId,
                 DisplayName = "X"
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -3182,7 +3182,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 SeedTypeCode = "guardian",
                 GameServiceId = _testGameServiceId,
                 DisplayName = "X"
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -3222,7 +3222,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 SeedTypeCode = "guardian",
                 GameServiceId = _testGameServiceId,
                 GrowthPhases = newPhases
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         // Seed should have been recomputed and phase change published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -3264,7 +3264,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 SeedTypeCode = "guardian",
                 GameServiceId = _testGameServiceId,
                 Reason = "Replaced by archon"
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3286,7 +3286,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.DeprecateSeedTypeAsync(
             new DeprecateSeedTypeRequest { SeedTypeCode = "missing", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -3305,7 +3305,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
         var (status, response) = await service.DeprecateSeedTypeAsync(
             new DeprecateSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3336,7 +3336,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, response) = await service.UndeprecateSeedTypeAsync(
             new UndeprecateSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3358,7 +3358,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.UndeprecateSeedTypeAsync(
             new UndeprecateSeedTypeRequest { SeedTypeCode = "missing", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -3377,7 +3377,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
         var (status, response) = await service.UndeprecateSeedTypeAsync(
             new UndeprecateSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3402,7 +3402,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var status = await service.DeleteSeedTypeAsync(
             new DeleteSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
 
@@ -3425,7 +3425,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var status = await service.DeleteSeedTypeAsync(
             new DeleteSeedTypeRequest { SeedTypeCode = "missing", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -3443,7 +3443,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var status = await service.DeleteSeedTypeAsync(
             new DeleteSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -3463,7 +3463,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var status = await service.DeleteSeedTypeAsync(
             new DeleteSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -3482,7 +3482,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var status = await service.DeleteSeedTypeAsync(
             new DeleteSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -3510,7 +3510,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(bond);
 
         var (status, response) = await service.GetBondAsync(
-            new GetBondRequest { BondId = bondId }, CancellationToken.None);
+            new GetBondRequest { BondId = bondId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3526,7 +3526,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync((SeedBondModel?)null);
 
         var (status, _) = await service.GetBondAsync(
-            new GetBondRequest { BondId = Guid.NewGuid() }, CancellationToken.None);
+            new GetBondRequest { BondId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -3544,7 +3544,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync((SeedModel?)null);
 
         var (status, _) = await service.GetBondForSeedAsync(
-            new GetBondForSeedRequest { SeedId = Guid.NewGuid() }, CancellationToken.None);
+            new GetBondForSeedRequest { SeedId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -3562,7 +3562,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(seed);
 
         var (status, _) = await service.GetBondForSeedAsync(
-            new GetBondForSeedRequest { SeedId = seedId }, CancellationToken.None);
+            new GetBondForSeedRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -3593,7 +3593,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(bond);
 
         var (status, response) = await service.GetBondForSeedAsync(
-            new GetBondForSeedRequest { SeedId = seedId }, CancellationToken.None);
+            new GetBondForSeedRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3642,7 +3642,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(bond);
 
         var (status, response) = await service.GetBondPartnersAsync(
-            new GetBondPartnersRequest { SeedId = seedId }, CancellationToken.None);
+            new GetBondPartnersRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3665,7 +3665,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .ReturnsAsync(seed);
 
         var (status, _) = await service.GetBondPartnersAsync(
-            new GetBondPartnersRequest { SeedId = seedId }, CancellationToken.None);
+            new GetBondPartnersRequest { SeedId = seedId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -3684,7 +3684,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.ConfirmBondAsync(
             new ConfirmBondRequest { BondId = Guid.NewGuid(), ConfirmingSeedId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -3709,7 +3709,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.ConfirmBondAsync(
             new ConfirmBondRequest { BondId = bondId, ConfirmingSeedId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -3737,7 +3737,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.ConfirmBondAsync(
             new ConfirmBondRequest { BondId = bondId, ConfirmingSeedId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -3777,7 +3777,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, response) = await service.ConfirmBondAsync(
             new ConfirmBondRequest { BondId = bondId, ConfirmingSeedId = seed2Id },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -3807,7 +3807,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.ConfirmBondAsync(
             new ConfirmBondRequest { BondId = Guid.NewGuid(), ConfirmingSeedId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -3826,7 +3826,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.InitiateBondAsync(
             new InitiateBondRequest { InitiatorSeedId = Guid.NewGuid(), TargetSeedId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -3848,7 +3848,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         var (status, _) = await service.InitiateBondAsync(
             new InitiateBondRequest { InitiatorSeedId = initiatorId, TargetSeedId = targetId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -3872,7 +3872,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act
         var (status, _) = await service.InitiateBondAsync(
             new InitiateBondRequest { InitiatorSeedId = initiatorId, TargetSeedId = targetId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3922,7 +3922,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSeedAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateSeedAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3970,7 +3970,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSeedAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateSeedAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4020,7 +4020,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.RegisterSeedTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.RegisterSeedTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4071,7 +4071,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.RegisterSeedTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.RegisterSeedTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4131,7 +4131,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 SeedTypeCode = "guardian",
                 GameServiceId = _testGameServiceId,
                 CapabilityRules = newRules
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4174,7 +4174,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             {
                 SeedTypeCode = "guardian",
                 GameServiceId = _testGameServiceId
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4234,7 +4234,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 SeedTypeCode = "guardian",
                 GameServiceId = _testGameServiceId,
                 CollectionGrowthMappings = mappings
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4276,7 +4276,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 SeedTypeCode = "guardian",
                 GameServiceId = _testGameServiceId,
                 GrowthDecayEnabled = true
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4308,7 +4308,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Act
         var (status, response) = await service.ListSeedsAsync(
-            new ListSeedsRequest { GrowthPhase = "awakening" }, CancellationToken.None);
+            new ListSeedsRequest { GrowthPhase = "awakening" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4337,7 +4337,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Act
         var (status, response) = await service.ListSeedsAsync(
-            new ListSeedsRequest { Status = SeedStatus.Active }, CancellationToken.None);
+            new ListSeedsRequest { Status = SeedStatus.Active }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4365,7 +4365,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
 
         // Act
         var (status, response) = await service.ListSeedsAsync(
-            new ListSeedsRequest(), CancellationToken.None);
+            new ListSeedsRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4409,7 +4409,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 Domain = "combat.melee",
                 Amount = 5f,
                 Source = "test"
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -4444,7 +4444,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 Domain = "combat.melee",
                 Amount = 5f,
                 Source = "test"
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -4496,7 +4496,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 Domain = "combat.melee",
                 Amount = 10f,
                 Source = "test"
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4562,7 +4562,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                     new GrowthEntry { Domain = "knowledge.lore", Amount = 3f },
                     new GrowthEntry { Domain = "social.trade", Amount = 2f }
                 }
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4648,7 +4648,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
                 Domain = "combat.melee",
                 Amount = 10f,
                 Source = "test"
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4725,7 +4725,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Act - seed3 confirms, completing the bond
         var (status, response) = await service.ConfirmBondAsync(
             new ConfirmBondRequest { BondId = bondId, ConfirmingSeedId = seed3Id },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

@@ -313,7 +313,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 
         var (status, response) = await service.AdminListRoomsAsync(
             new AdminListRoomsRequest { Page = 0, PageSize = 20 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -333,7 +333,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
             Status = ChatRoomStatus.Active,
             Page = 0,
             PageSize = 20,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         MockRoomStore.Verify(s => s.JsonQueryPagedAsync(
             It.Is<IReadOnlyList<QueryCondition>>(c =>
@@ -395,7 +395,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
         SetupRoomQuery(new List<ChatRoomModel>(), 0);
 
         var (status, response) = await service.AdminGetStatsAsync(
-            new AdminGetStatsRequest(), CancellationToken.None);
+            new AdminGetStatsRequest(), TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -426,7 +426,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
                 new List<JsonQueryResult<ChatRoomModel>>(), 0, 0, 1000));
 
         var (status, response) = await service.AdminForceCleanupAsync(
-            new AdminForceCleanupRequest(), CancellationToken.None);
+            new AdminForceCleanupRequest(), TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -463,7 +463,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
                 It.IsAny<ExecuteCompressRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ExecuteCompressResponse { ArchiveId = Guid.NewGuid() });
 
-        var result = await service.CleanupIdleRoomsAsync(CancellationToken.None);
+        var result = await service.CleanupIdleRoomsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(1, result.CleanedRooms);
         Assert.Equal(1, result.ArchivedRooms);
@@ -498,7 +498,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 
         SetupFindRoomTypeByCode(roomType);
 
-        var result = await service.CleanupIdleRoomsAsync(CancellationToken.None);
+        var result = await service.CleanupIdleRoomsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(1, result.CleanedRooms);
         Assert.Equal(0, result.ArchivedRooms);
@@ -530,7 +530,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
             .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(
                 new List<JsonQueryResult<ChatRoomModel>> { queryResult }, 1, 0, 1000));
 
-        var result = await service.CleanupIdleRoomsAsync(CancellationToken.None);
+        var result = await service.CleanupIdleRoomsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(0, result.CleanedRooms);
 
@@ -763,7 +763,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
             .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(
                 new List<JsonQueryResult<ChatRoomModel>>(), 0, 0, 1000));
 
-        var result = await service.CleanupIdleRoomsAsync(CancellationToken.None);
+        var result = await service.CleanupIdleRoomsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(0, result.CleanedRooms);
         Assert.Equal(0, result.ArchivedRooms);
@@ -807,7 +807,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
             .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(
                 new List<JsonQueryResult<ChatRoomModel>> { queryResult }, 1, 0, 1000));
 
-        var result = await service.CleanupIdleRoomsAsync(CancellationToken.None);
+        var result = await service.CleanupIdleRoomsAsync(TestContext.Current.CancellationToken);
 
         // Only 1 room cleaned (the idle one), the active room was never in the query
         Assert.Equal(1, result.CleanedRooms);

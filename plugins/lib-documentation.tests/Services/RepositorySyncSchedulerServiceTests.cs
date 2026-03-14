@@ -78,7 +78,7 @@ public class RepositorySyncSchedulerServiceTests
 
         // Act
         await service.StartAsync(cts.Token);
-        await Task.Delay(100); // Give it time to start
+        await Task.Delay(100, TestContext.Current.CancellationToken); // Give it time to start
         await service.StopAsync(cts.Token);
 
         // Assert - No scope should have been created since scheduler is disabled
@@ -100,7 +100,7 @@ public class RepositorySyncSchedulerServiceTests
         // Act
         await service.StartAsync(cts.Token);
         cts.Cancel();
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - Should complete without throwing
     }
@@ -133,9 +133,9 @@ public class RepositorySyncSchedulerServiceTests
 
         // Act - Start and wait briefly, then stop
         await service.StartAsync(cts.Token);
-        await Task.Delay(200); // Wait past startup delay (30s is configured, but we can't wait that long)
+        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait past startup delay (30s is configured, but we can't wait that long)
         cts.Cancel();
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - Service should have attempted to get bindings registry
         // Note: Due to 30s startup delay, the service may not have actually processed yet
@@ -160,7 +160,7 @@ public class RepositorySyncSchedulerServiceTests
         await service.StartAsync(cts.Token);
         // Cancel immediately - we're just testing that missing services are handled
         cts.Cancel();
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - Should not throw
     }

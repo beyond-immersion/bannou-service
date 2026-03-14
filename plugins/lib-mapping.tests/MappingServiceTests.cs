@@ -243,7 +243,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.CreateChannelAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateChannelAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -292,7 +292,7 @@ public class MappingServiceTests
             });
 
         // Act
-        var (status, response) = await service.CreateChannelAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateChannelAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -313,7 +313,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, _) = await service.CreateChannelAsync(request, CancellationToken.None);
+        var (status, _) = await service.CreateChannelAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -342,7 +342,7 @@ public class MappingServiceTests
         };
 
         // Act
-        await service.CreateChannelAsync(request, CancellationToken.None);
+        await service.CreateChannelAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync<MappingChannelCreatedEvent>(
@@ -364,7 +364,7 @@ public class MappingServiceTests
         };
 
         // Act
-        await service.CreateChannelAsync(request, CancellationToken.None);
+        await service.CreateChannelAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageSubscriber.Verify(m => m.SubscribeDynamicAsync<MapIngestEvent>(
@@ -395,7 +395,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var status = await service.ReleaseAuthorityAsync(request, CancellationToken.None);
+        var status = await service.ReleaseAuthorityAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -444,7 +444,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.PublishMapUpdateAsync(publishRequest, CancellationToken.None);
+        var (status, response) = await service.PublishMapUpdateAsync(publishRequest, TestContext.Current.CancellationToken);
 
         // Assert - Unauthorized returns null response
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -488,7 +488,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.QueryPointAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryPointAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -515,7 +515,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.QueryBoundsAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryBoundsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -556,7 +556,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.QueryObjectsByTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryObjectsByTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -590,7 +590,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.QueryAffordanceAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryAffordanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -634,7 +634,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.QueryAffordanceAsync(request, CancellationToken.None);
+        var (status, response) = await service.QueryAffordanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -661,7 +661,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.CheckoutForAuthoringAsync(request, CancellationToken.None);
+        var (status, response) = await service.CheckoutForAuthoringAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -697,7 +697,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.CheckoutForAuthoringAsync(request, CancellationToken.None);
+        var (status, response) = await service.CheckoutForAuthoringAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Conflict returns null response
         Assert.Equal(StatusCodes.Conflict, status);
@@ -718,7 +718,7 @@ public class MappingServiceTests
             Kind = MapKind.StaticGeometry,
             EditorId = "editor-123"
         };
-        var (_, checkoutResponse) = await service.CheckoutForAuthoringAsync(checkoutRequest, CancellationToken.None);
+        var (_, checkoutResponse) = await service.CheckoutForAuthoringAsync(checkoutRequest, TestContext.Current.CancellationToken);
         Assert.NotNull(checkoutResponse);
 
         // Setup checkout record for commit
@@ -741,7 +741,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.CommitAuthoringAsync(commitRequest, CancellationToken.None);
+        var (status, response) = await service.CommitAuthoringAsync(commitRequest, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -763,7 +763,7 @@ public class MappingServiceTests
             Kind = MapKind.Navigation,
             EditorId = "editor-123"
         };
-        var (_, checkoutResponse) = await service.CheckoutForAuthoringAsync(checkoutRequest, CancellationToken.None);
+        var (_, checkoutResponse) = await service.CheckoutForAuthoringAsync(checkoutRequest, TestContext.Current.CancellationToken);
         Assert.NotNull(checkoutResponse);
 
         // Setup checkout record for release
@@ -786,7 +786,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var status = await service.ReleaseAuthoringAsync(releaseRequest, CancellationToken.None);
+        var status = await service.ReleaseAuthoringAsync(releaseRequest, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -809,7 +809,7 @@ public class MappingServiceTests
             Kind = MapKind.DynamicObjects,
             NonAuthorityHandling = NonAuthorityHandlingMode.RejectAndAlert
         };
-        var (_, createResponse) = await service.CreateChannelAsync(createRequest, CancellationToken.None);
+        var (_, createResponse) = await service.CreateChannelAsync(createRequest, TestContext.Current.CancellationToken);
         Assert.NotNull(createResponse);
 
         // Setup authority record
@@ -849,7 +849,7 @@ public class MappingServiceTests
         };
 
         // Act - call internal handler directly
-        await service.HandleIngestEventAsync(createResponse.ChannelId, ingestEvent, CancellationToken.None);
+        await service.HandleIngestEventAsync(createResponse.ChannelId, ingestEvent, TestContext.Current.CancellationToken);
 
         // Assert - verify exactly one object was saved (one payload = one save)
         _mockObjectStore.Verify(s => s.SaveAsync(
@@ -879,7 +879,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.CreateDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -915,7 +915,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.CreateDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -941,7 +941,7 @@ public class MappingServiceTests
         var request = new GetDefinitionRequest { DefinitionId = definitionId };
 
         // Act
-        var (status, response) = await service.GetDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -958,7 +958,7 @@ public class MappingServiceTests
         var request = new GetDefinitionRequest { DefinitionId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.GetDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -983,7 +983,7 @@ public class MappingServiceTests
         var request = new ListDefinitionsRequest { Offset = 0, Limit = 10 };
 
         // Act
-        var (status, response) = await service.ListDefinitionsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListDefinitionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1010,7 +1010,7 @@ public class MappingServiceTests
         var request = new ListDefinitionsRequest { NameFilter = "Forest", Offset = 0, Limit = 10 };
 
         // Act
-        var (status, response) = await service.ListDefinitionsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListDefinitionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1044,7 +1044,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.UpdateDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1066,7 +1066,7 @@ public class MappingServiceTests
         };
 
         // Act
-        var (status, response) = await service.UpdateDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1094,7 +1094,7 @@ public class MappingServiceTests
         var request = new DeleteDefinitionRequest { DefinitionId = definitionId };
 
         // Act
-        var status = await service.DeleteDefinitionAsync(request, CancellationToken.None);
+        var status = await service.DeleteDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1111,7 +1111,7 @@ public class MappingServiceTests
         var request = new DeleteDefinitionRequest { DefinitionId = Guid.NewGuid() };
 
         // Act
-        var status = await service.DeleteDefinitionAsync(request, CancellationToken.None);
+        var status = await service.DeleteDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);

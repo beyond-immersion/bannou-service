@@ -185,7 +185,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         SetupQueueList(new List<string>());
 
         // Act
-        var (status, response) = await service.ListQueuesAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListQueuesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -209,7 +209,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync(new List<Guid>());
 
         // Act
-        var (status, response) = await service.ListQueuesAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListQueuesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -234,7 +234,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync(new List<Guid>());
 
         // Act
-        var (status, response) = await service.ListQueuesAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListQueuesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -255,7 +255,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         SetupExistingQueue(TEST_QUEUE_ID, CreateTestQueue());
 
         // Act
-        var (status, response) = await service.GetQueueAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetQueueAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -276,7 +276,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync((QueueModel?)null);
 
         // Act
-        var (status, response) = await service.GetQueueAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetQueueAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -311,7 +311,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         SetupQueueList(new List<string>());
 
         // Act
-        var (status, response) = await service.CreateQueueAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateQueueAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -350,7 +350,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         SetupExistingQueue(TEST_QUEUE_ID, CreateTestQueue());
 
         // Act
-        var (status, response) = await service.CreateQueueAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateQueueAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -384,7 +384,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync("etag-1");
 
         // Act
-        var (status, response) = await service.UpdateQueueAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateQueueAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -411,7 +411,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync((QueueModel?)null);
 
         // Act
-        var (status, response) = await service.UpdateQueueAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateQueueAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -437,7 +437,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync(new List<Guid>());
 
         // Act
-        var status = await service.DeleteQueueAsync(request, CancellationToken.None);
+        var status = await service.DeleteQueueAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -466,7 +466,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync((QueueModel?)null);
 
         // Act
-        var status = await service.DeleteQueueAsync(request, CancellationToken.None);
+        var status = await service.DeleteQueueAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -491,7 +491,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         // No session connected event fired - no session-to-account mapping exists
 
         // Act
-        var (status, response) = await service.JoinMatchmakingAsync(request, CancellationToken.None);
+        var (status, response) = await service.JoinMatchmakingAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - returns 400 because session is not mapped to an account
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -525,7 +525,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync((QueueModel?)null);
 
         // Act
-        var (status, response) = await service.JoinMatchmakingAsync(request, CancellationToken.None);
+        var (status, response) = await service.JoinMatchmakingAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -559,7 +559,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         SetupExistingQueue(TEST_QUEUE_ID, disabledQueue);
 
         // Act
-        var (status, response) = await service.JoinMatchmakingAsync(request, CancellationToken.None);
+        var (status, response) = await service.JoinMatchmakingAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - service returns Conflict for disabled queues
         Assert.Equal(StatusCodes.Conflict, status);
@@ -603,7 +603,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync(existingTickets);
 
         // Act
-        var (status, response) = await service.JoinMatchmakingAsync(request, CancellationToken.None);
+        var (status, response) = await service.JoinMatchmakingAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -649,7 +649,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
 
         // Act
-        var (status, response) = await service.JoinMatchmakingAsync(request, CancellationToken.None);
+        var (status, response) = await service.JoinMatchmakingAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -728,7 +728,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
 
         // Act
-        var status = await service.LeaveMatchmakingAsync(request, CancellationToken.None);
+        var status = await service.LeaveMatchmakingAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -761,7 +761,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync((TicketModel?)null);
 
         // Act
-        var status = await service.LeaveMatchmakingAsync(request, CancellationToken.None);
+        var status = await service.LeaveMatchmakingAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -812,7 +812,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync(new PendingMatchWrapper { MatchId = matchId });
 
         // Act
-        var (status, response) = await service.AcceptMatchAsync(request, CancellationToken.None);
+        var (status, response) = await service.AcceptMatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -844,7 +844,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync((MatchModel?)null);
 
         // Act
-        var (status, response) = await service.AcceptMatchAsync(request, CancellationToken.None);
+        var (status, response) = await service.AcceptMatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -888,7 +888,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync(new PendingMatchWrapper { MatchId = matchId });
 
         // Act
-        var (status, response) = await service.AcceptMatchAsync(request, CancellationToken.None);
+        var (status, response) = await service.AcceptMatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -961,7 +961,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
 
         // Act
-        var status = await service.DeclineMatchAsync(request, CancellationToken.None);
+        var status = await service.DeclineMatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -989,7 +989,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync((MatchModel?)null);
 
         // Act
-        var status = await service.DeclineMatchAsync(request, CancellationToken.None);
+        var status = await service.DeclineMatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1029,7 +1029,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         SetupExistingQueue(TEST_QUEUE_ID, CreateTestQueue());
 
         // Act
-        var (status, response) = await service.GetMatchmakingStatusAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetMatchmakingStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1054,7 +1054,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             .ReturnsAsync((TicketModel?)null);
 
         // Act
-        var (status, response) = await service.GetMatchmakingStatusAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetMatchmakingStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);

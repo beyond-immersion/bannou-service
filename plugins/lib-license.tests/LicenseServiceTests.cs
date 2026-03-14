@@ -367,7 +367,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateBoardTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateBoardTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -408,7 +408,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateBoardTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateBoardTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -436,7 +436,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateBoardTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateBoardTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -467,7 +467,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateBoardTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateBoardTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -488,7 +488,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.GetBoardTemplateAsync(
             new GetBoardTemplateRequest { BoardTemplateId = TestBoardTemplateId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -507,7 +507,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.GetBoardTemplateAsync(
             new GetBoardTemplateRequest { BoardTemplateId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -536,7 +536,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.DeprecateBoardTemplateAsync(
             new DeprecateBoardTemplateRequest { BoardTemplateId = TestBoardTemplateId, Reason = "Superseded" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -578,7 +578,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AddLicenseDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.AddLicenseDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -622,7 +622,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AddLicenseDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.AddLicenseDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -656,7 +656,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AddLicenseDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.AddLicenseDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -683,7 +683,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AddLicenseDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.AddLicenseDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -719,7 +719,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AddLicenseDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.AddLicenseDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -750,7 +750,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AddLicenseDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.AddLicenseDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -795,7 +795,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 BoardTemplateId = TestBoardTemplateId,
                 Code = "unlocked_skill"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -847,7 +847,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 BoardTemplateId = TestBoardTemplateId,
                 Code = "unlocked_skill"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - should detect the unlock via inventory rebuild, not miss it due to expired cache
         Assert.Equal(StatusCodes.Conflict, status);
@@ -898,7 +898,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -953,7 +953,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -988,7 +988,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1017,7 +1017,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1046,7 +1046,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1067,7 +1067,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.DeleteBoardAsync(
             new DeleteBoardRequest { BoardId = TestBoardId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1116,7 +1116,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.UnlockLicenseAsync(
             new UnlockLicenseRequest { BoardId = TestBoardId, LicenseCode = "start_skill" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1147,7 +1147,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.UnlockLicenseAsync(
             new UnlockLicenseRequest { BoardId = TestBoardId, LicenseCode = "diagonal_skill" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1187,7 +1187,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.UnlockLicenseAsync(
             new UnlockLicenseRequest { BoardId = TestBoardId, LicenseCode = "diagonal_skill" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1217,7 +1217,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.UnlockLicenseAsync(
             new UnlockLicenseRequest { BoardId = TestBoardId, LicenseCode = "far_skill" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1247,7 +1247,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.UnlockLicenseAsync(
             new UnlockLicenseRequest { BoardId = TestBoardId, LicenseCode = "already_done" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1282,7 +1282,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.UnlockLicenseAsync(
             new UnlockLicenseRequest { BoardId = TestBoardId, LicenseCode = "advanced_fire" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1313,7 +1313,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.UnlockLicenseAsync(
             new UnlockLicenseRequest { BoardId = TestBoardId, LicenseCode = "advanced_fire" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1350,7 +1350,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.UnlockLicenseAsync(
             new UnlockLicenseRequest { BoardId = TestBoardId, LicenseCode = "start_skill" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
@@ -1388,7 +1388,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, _) = await service.UnlockLicenseAsync(
             new UnlockLicenseRequest { BoardId = TestBoardId, LicenseCode = "start_skill" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1419,7 +1419,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         await service.UnlockLicenseAsync(
             new UnlockLicenseRequest { BoardId = TestBoardId, LicenseCode = "start_skill" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedEvent);
@@ -1454,7 +1454,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         await service.UnlockLicenseAsync(
             new UnlockLicenseRequest { BoardId = TestBoardId, LicenseCode = "start_skill" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedCache);
@@ -1495,7 +1495,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.CheckUnlockableAsync(
             new CheckUnlockableRequest { BoardId = TestBoardId, LicenseCode = "start_skill" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1533,7 +1533,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.CheckUnlockableAsync(
             new CheckUnlockableRequest { BoardId = TestBoardId, LicenseCode = "isolated_skill" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1569,7 +1569,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.CheckUnlockableAsync(
             new CheckUnlockableRequest { BoardId = TestBoardId, LicenseCode = "start_skill" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1609,7 +1609,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.GetBoardStateAsync(
             new BoardStateRequest { BoardId = TestBoardId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1650,7 +1650,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.GetBoardStateAsync(
             new BoardStateRequest { BoardId = TestBoardId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1689,7 +1689,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.GetBoardStateAsync(
             new BoardStateRequest { BoardId = TestBoardId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1729,7 +1729,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Act
         var (status, response) = await service.GetBoardStateAsync(
             new BoardStateRequest { BoardId = TestBoardId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1760,7 +1760,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var request = new CleanupByOwnerRequest { OwnerType = EntityType.Character, OwnerId = TestCharacterId };
 
         // Act
-        var (status, response) = await service.CleanupByOwnerAsync(request, CancellationToken.None);
+        var (status, response) = await service.CleanupByOwnerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1806,7 +1806,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var request = new CleanupByOwnerRequest { OwnerType = EntityType.Character, OwnerId = TestCharacterId };
 
         // Act
-        var (status, response) = await service.CleanupByOwnerAsync(request, CancellationToken.None);
+        var (status, response) = await service.CleanupByOwnerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1845,7 +1845,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AddLicenseDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.AddLicenseDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1881,7 +1881,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        await service.AddLicenseDefinitionAsync(request, CancellationToken.None);
+        await service.AddLicenseDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - verify lock was acquired on the correct key
         _mockLockProvider.Verify(
@@ -1919,7 +1919,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 BoardTemplateId = TestBoardTemplateId,
                 Code = "test_skill"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1949,7 +1949,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 BoardTemplateId = TestBoardTemplateId,
                 Code = "removable_skill"
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - verify lock was acquired on the correct key
         _mockLockProvider.Verify(
@@ -1994,7 +1994,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedBoardTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.SeedBoardTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2048,7 +2048,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedBoardTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.SeedBoardTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2106,7 +2106,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedBoardTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.SeedBoardTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - invalid_skill should be skipped, others created
         Assert.Equal(StatusCodes.OK, status);
@@ -2203,7 +2203,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2243,7 +2243,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 TargetOwnerType = EntityType.Character,
                 TargetOwnerId = Guid.NewGuid()
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2283,7 +2283,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2329,7 +2329,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2360,7 +2360,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 TargetOwnerType = EntityType.Account,
                 TargetOwnerId = Guid.NewGuid()
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2394,7 +2394,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 TargetOwnerType = EntityType.Character,
                 TargetOwnerId = Guid.NewGuid()
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2442,7 +2442,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2507,7 +2507,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2585,7 +2585,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
                 TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);

@@ -116,7 +116,7 @@ public class InterNodeBroadcastManagerTests
     {
         using var manager = CreateManager(BroadcastMode.None, null);
 
-        await manager.InitializeAsync(CancellationToken.None);
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Should not interact with state store at all
         _mockCacheStore.Verify(s => s.SortedSetAddAsync(
@@ -142,7 +142,7 @@ public class InterNodeBroadcastManagerTests
         using var manager = CreateManager(BroadcastMode.Both, "ws://localhost:5012/connect/broadcast");
 
         // Act
-        await manager.InitializeAsync(CancellationToken.None);
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Assert - registered self in sorted set
         _mockCacheStore.Verify(s => s.SortedSetAddAsync(
@@ -173,7 +173,7 @@ public class InterNodeBroadcastManagerTests
         using var manager = CreateManager(BroadcastMode.Receive, "ws://localhost:5012/connect/broadcast");
 
         // Act - should be a no-op since mode doesn't include Send
-        await manager.RelayBroadcastAsync(new byte[] { 1, 2, 3 }, CancellationToken.None);
+        await manager.RelayBroadcastAsync(new byte[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
 
         // No connections to verify against, but the method should return immediately
         Assert.Equal(0, manager.ActiveConnectionCount);
@@ -184,7 +184,7 @@ public class InterNodeBroadcastManagerTests
     {
         using var manager = CreateManager(BroadcastMode.None, null);
 
-        await manager.RelayBroadcastAsync(new byte[] { 1, 2, 3 }, CancellationToken.None);
+        await manager.RelayBroadcastAsync(new byte[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
 
         Assert.Equal(0, manager.ActiveConnectionCount);
     }
@@ -200,7 +200,7 @@ public class InterNodeBroadcastManagerTests
         var mockWs = new Mock<System.Net.WebSockets.WebSocket>();
 
         // Act - should return immediately without adding to connections
-        await manager.HandleIncomingConnectionAsync(mockWs.Object, Guid.NewGuid(), CancellationToken.None);
+        await manager.HandleIncomingConnectionAsync(mockWs.Object, Guid.NewGuid(), TestContext.Current.CancellationToken);
 
         Assert.Equal(0, manager.ActiveConnectionCount);
     }

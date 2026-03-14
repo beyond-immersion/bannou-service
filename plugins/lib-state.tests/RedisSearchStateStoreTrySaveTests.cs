@@ -59,7 +59,7 @@ public class RedisSearchStateStoreTrySaveTests
             .ReturnsAsync(RedisResult.Create((long)1));
 
         // Act
-        await _store.TrySaveAsync("key1", document, "");
+        await _store.TrySaveAsync("key1", document, "", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedScript);
@@ -86,7 +86,7 @@ public class RedisSearchStateStoreTrySaveTests
             .ReturnsAsync(RedisResult.Create((long)1));
 
         // Act
-        await _store.TrySaveAsync("key1", document, "");
+        await _store.TrySaveAsync("key1", document, "", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedKeys);
@@ -115,7 +115,7 @@ public class RedisSearchStateStoreTrySaveTests
             .ReturnsAsync(RedisResult.Create((long)1));
 
         // Act
-        await _store.TrySaveAsync("key1", document, "");
+        await _store.TrySaveAsync("key1", document, "", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedValues);
@@ -148,7 +148,7 @@ public class RedisSearchStateStoreTrySaveTests
             .ReturnsAsync(RedisResult.Create((long)1));
 
         // Act
-        var result = await _store.TrySaveAsync("key1", document, "");
+        var result = await _store.TrySaveAsync("key1", document, "", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("1", result);
@@ -169,7 +169,7 @@ public class RedisSearchStateStoreTrySaveTests
             .ReturnsAsync(RedisResult.Create((long)-1)); // Key already exists
 
         // Act
-        var result = await _store.TrySaveAsync("key1", document, "");
+        var result = await _store.TrySaveAsync("key1", document, "", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -199,7 +199,7 @@ public class RedisSearchStateStoreTrySaveTests
             .ReturnsAsync(RedisResult.Create((long)2));
 
         // Act
-        await _store.TrySaveAsync("key1", document, "1");
+        await _store.TrySaveAsync("key1", document, "1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedScript);
@@ -226,7 +226,7 @@ public class RedisSearchStateStoreTrySaveTests
             .ReturnsAsync(RedisResult.Create((long)2));
 
         // Act
-        await _store.TrySaveAsync("key1", document, "1");
+        await _store.TrySaveAsync("key1", document, "1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedKeys);
@@ -255,7 +255,7 @@ public class RedisSearchStateStoreTrySaveTests
             .ReturnsAsync(RedisResult.Create((long)2));
 
         // Act
-        await _store.TrySaveAsync("key1", document, "1");
+        await _store.TrySaveAsync("key1", document, "1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedValues);
@@ -289,7 +289,7 @@ public class RedisSearchStateStoreTrySaveTests
             .ReturnsAsync(RedisResult.Create((long)5)); // Version 4 -> 5
 
         // Act
-        var result = await _store.TrySaveAsync("key1", document, "4");
+        var result = await _store.TrySaveAsync("key1", document, "4", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("5", result);
@@ -310,7 +310,7 @@ public class RedisSearchStateStoreTrySaveTests
             .ReturnsAsync(RedisResult.Create((long)-1)); // Version mismatch
 
         // Act
-        var result = await _store.TrySaveAsync("key1", document, "1");
+        var result = await _store.TrySaveAsync("key1", document, "1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);

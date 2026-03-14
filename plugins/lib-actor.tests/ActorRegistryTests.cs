@@ -10,9 +10,9 @@ public class ActorRegistryTests : IAsyncLifetime
 {
     private readonly List<IActorRunner> _createdRunners = new();
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         foreach (var runner in _createdRunners)
         {
@@ -350,7 +350,7 @@ public class ActorRegistryTests : IAsyncLifetime
                 {
                     Interlocked.Increment(ref successCount);
                 }
-            }));
+            }, TestContext.Current.CancellationToken));
         }
         await Task.WhenAll(tasks);
 
@@ -388,7 +388,7 @@ public class ActorRegistryTests : IAsyncLifetime
                 {
                     registry.TryRemove($"actor-{index % 25}", out _);
                 }
-            }));
+            }, TestContext.Current.CancellationToken));
         }
         await Task.WhenAll(tasks);
 

@@ -126,10 +126,10 @@ public class SqliteStateStoreTests : IDisposable
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-        await _store.SaveAsync("key1", entity);
+        await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.GetAsync("key1");
+        var result = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -142,7 +142,7 @@ public class SqliteStateStoreTests : IDisposable
     public async Task GetAsync_WithNonExistentKey_ReturnsNull()
     {
         // Act
-        var result = await _store.GetAsync("nonexistent");
+        var result = await _store.GetAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -164,11 +164,11 @@ public class SqliteStateStoreTests : IDisposable
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             });
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         // Act
-        var result = await _store.GetAsync("corrupt-key");
+        var result = await _store.GetAsync("corrupt-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -191,10 +191,10 @@ public class SqliteStateStoreTests : IDisposable
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-        var savedEtag = await _store.SaveAsync("key1", entity);
+        var savedEtag = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var (value, etag) = await _store.GetWithETagAsync("key1");
+        var (value, etag) = await _store.GetWithETagAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(value);
@@ -207,7 +207,7 @@ public class SqliteStateStoreTests : IDisposable
     public async Task GetWithETagAsync_WithNonExistentKey_ReturnsNullValueAndNullETag()
     {
         // Act
-        var (value, etag) = await _store.GetWithETagAsync("nonexistent");
+        var (value, etag) = await _store.GetWithETagAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(value);
@@ -225,13 +225,13 @@ public class SqliteStateStoreTests : IDisposable
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
 
         // Act
-        var etag = await _store.SaveAsync("key1", entity);
+        var etag = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(etag);
         Assert.True(etag.Length > 0);
 
-        var retrieved = await _store.GetAsync("key1");
+        var retrieved = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal("Test", retrieved.Name);
     }
@@ -241,17 +241,17 @@ public class SqliteStateStoreTests : IDisposable
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-        var originalEtag = await _store.SaveAsync("key1", entity);
+        var originalEtag = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         entity.Value = 100;
-        var newEtag = await _store.SaveAsync("key1", entity);
+        var newEtag = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(newEtag);
         Assert.NotEqual(originalEtag, newEtag);
 
-        var retrieved = await _store.GetAsync("key1");
+        var retrieved = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal(100, retrieved.Value);
     }
@@ -263,8 +263,8 @@ public class SqliteStateStoreTests : IDisposable
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
 
         // Act
-        var etag1 = await _store.SaveAsync("key1", entity);
-        var etag2 = await _store.SaveAsync("key2", entity);
+        var etag1 = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
+        var etag2 = await _store.SaveAsync("key2", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - ETags should be different because key is included in hash
         Assert.NotEqual(etag1, etag2);
@@ -279,7 +279,7 @@ public class SqliteStateStoreTests : IDisposable
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _store.SaveAsync("key1", entity, options));
+            () => _store.SaveAsync("key1", entity, options, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -291,15 +291,15 @@ public class SqliteStateStoreTests : IDisposable
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-        var etag = await _store.SaveAsync("key1", entity);
+        var etag = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         entity.Value = 100;
-        var newEtag = await _store.TrySaveAsync("key1", entity, etag);
+        var newEtag = await _store.TrySaveAsync("key1", entity, etag, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(newEtag);
-        var retrieved = await _store.GetAsync("key1");
+        var retrieved = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal(100, retrieved.Value);
     }
@@ -309,15 +309,15 @@ public class SqliteStateStoreTests : IDisposable
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-        await _store.SaveAsync("key1", entity);
+        await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         entity.Value = 100;
-        var newEtag = await _store.TrySaveAsync("key1", entity, "wrong-etag");
+        var newEtag = await _store.TrySaveAsync("key1", entity, "wrong-etag", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(newEtag);
-        var retrieved = await _store.GetAsync("key1");
+        var retrieved = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal(42, retrieved.Value);
     }
@@ -329,7 +329,7 @@ public class SqliteStateStoreTests : IDisposable
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
 
         // Act
-        var newEtag = await _store.TrySaveAsync("nonexistent", entity, "any-etag");
+        var newEtag = await _store.TrySaveAsync("nonexistent", entity, "any-etag", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(newEtag);
@@ -343,14 +343,14 @@ public class SqliteStateStoreTests : IDisposable
     public async Task DeleteAsync_WithExistingKey_ReturnsTrueAndRemovesEntry()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test", Value = 42 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test", Value = 42 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var deleted = await _store.DeleteAsync("key1");
+        var deleted = await _store.DeleteAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(deleted);
-        var result = await _store.GetAsync("key1");
+        var result = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Null(result);
     }
 
@@ -358,7 +358,7 @@ public class SqliteStateStoreTests : IDisposable
     public async Task DeleteAsync_WithNonExistentKey_ReturnsFalse()
     {
         // Act
-        var deleted = await _store.DeleteAsync("nonexistent");
+        var deleted = await _store.DeleteAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(deleted);
@@ -372,10 +372,10 @@ public class SqliteStateStoreTests : IDisposable
     public async Task ExistsAsync_WithExistingKey_ReturnsTrue()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test", Value = 42 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test", Value = 42 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var exists = await _store.ExistsAsync("key1");
+        var exists = await _store.ExistsAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(exists);
@@ -385,7 +385,7 @@ public class SqliteStateStoreTests : IDisposable
     public async Task ExistsAsync_WithNonExistentKey_ReturnsFalse()
     {
         // Act
-        var exists = await _store.ExistsAsync("nonexistent");
+        var exists = await _store.ExistsAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(exists);
@@ -399,12 +399,12 @@ public class SqliteStateStoreTests : IDisposable
     public async Task GetBulkAsync_WithExistingKeys_ReturnsAllValues()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Two", Value = 2 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Two", Value = 2 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" });
+        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, results.Count);
@@ -417,11 +417,11 @@ public class SqliteStateStoreTests : IDisposable
     public async Task GetBulkAsync_WithMixedExistingAndNonExistent_ReturnsOnlyExisting()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" });
+        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, results.Count);
@@ -434,7 +434,7 @@ public class SqliteStateStoreTests : IDisposable
     public async Task GetBulkAsync_WithEmptyKeys_ReturnsEmptyDictionary()
     {
         // Act
-        var results = await _store.GetBulkAsync(Array.Empty<string>());
+        var results = await _store.GetBulkAsync(Array.Empty<string>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(results);
@@ -456,7 +456,7 @@ public class SqliteStateStoreTests : IDisposable
         };
 
         // Act
-        var etags = await _store.SaveBulkAsync(items);
+        var etags = await _store.SaveBulkAsync(items, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, etags.Count);
@@ -465,7 +465,7 @@ public class SqliteStateStoreTests : IDisposable
         Assert.True(etags.ContainsKey("key3"));
 
         // Verify all were saved
-        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" });
+        var results = await _store.GetBulkAsync(new[] { "key1", "key2", "key3" }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(3, results.Count);
     }
 
@@ -473,7 +473,7 @@ public class SqliteStateStoreTests : IDisposable
     public async Task SaveBulkAsync_WithEmptyItems_ReturnsEmptyDictionary()
     {
         // Act
-        var etags = await _store.SaveBulkAsync(new Dictionary<string, TestEntity>());
+        var etags = await _store.SaveBulkAsync(new Dictionary<string, TestEntity>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(etags);
@@ -487,11 +487,11 @@ public class SqliteStateStoreTests : IDisposable
     public async Task ExistsBulkAsync_WithMixedKeys_ReturnsExistingOnly()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var existing = await _store.ExistsBulkAsync(new[] { "key1", "key2", "key3", "key4" });
+        var existing = await _store.ExistsBulkAsync(new[] { "key1", "key2", "key3", "key4" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, existing.Count);
@@ -509,28 +509,28 @@ public class SqliteStateStoreTests : IDisposable
     public async Task DeleteBulkAsync_WithExistingKeys_DeletesAllAndReturnsCount()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Two", Value = 2 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Two", Value = 2 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var deleted = await _store.DeleteBulkAsync(new[] { "key1", "key2" });
+        var deleted = await _store.DeleteBulkAsync(new[] { "key1", "key2" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, deleted);
-        Assert.Null(await _store.GetAsync("key1"));
-        Assert.Null(await _store.GetAsync("key2"));
-        Assert.NotNull(await _store.GetAsync("key3"));
+        Assert.Null(await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Null(await _store.GetAsync("key2", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.NotNull(await _store.GetAsync("key3", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task DeleteBulkAsync_WithMixedKeys_ReturnsDeletedCount()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var deleted = await _store.DeleteBulkAsync(new[] { "key1", "key2", "key3" });
+        var deleted = await _store.DeleteBulkAsync(new[] { "key1", "key2", "key3" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, deleted);
@@ -540,7 +540,7 @@ public class SqliteStateStoreTests : IDisposable
     public async Task DeleteBulkAsync_WithEmptyKeys_ReturnsZero()
     {
         // Act
-        var deleted = await _store.DeleteBulkAsync(Array.Empty<string>());
+        var deleted = await _store.DeleteBulkAsync(Array.Empty<string>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, deleted);
@@ -554,12 +554,12 @@ public class SqliteStateStoreTests : IDisposable
     public async Task QueryAsync_WithMatchingPredicate_ReturnsFilteredResults()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10, Category = "A" });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20, Category = "B" });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30, Category = "A" });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10, Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20, Category = "B" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30, Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var results = await _store.QueryAsync(e => e.Category == "A");
+        var results = await _store.QueryAsync(e => e.Category == "A", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, results.Count);
@@ -571,10 +571,10 @@ public class SqliteStateStoreTests : IDisposable
     public async Task QueryAsync_WithNoMatches_ReturnsEmptyList()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var results = await _store.QueryAsync(e => e.Category == "NonExistent");
+        var results = await _store.QueryAsync(e => e.Category == "NonExistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(results);
@@ -584,12 +584,12 @@ public class SqliteStateStoreTests : IDisposable
     public async Task QueryAsync_WithNumericComparison_ReturnsFilteredResults()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var results = await _store.QueryAsync(e => e.Value > 15);
+        var results = await _store.QueryAsync(e => e.Value > 15, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, results.Count);
@@ -613,7 +613,7 @@ public class SqliteStateStoreTests : IDisposable
                 Name = $"Entity{i}",
                 Value = i,
                 Category = "Test"
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
         }
 
         // Act - Get page 1 (second page), page size 3
@@ -621,7 +621,7 @@ public class SqliteStateStoreTests : IDisposable
             predicate: null,
             page: 1,
             pageSize: 3,
-            orderBy: e => (object)e.Value);
+            orderBy: e => (object)e.Value, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result.Items.Count);
@@ -644,14 +644,14 @@ public class SqliteStateStoreTests : IDisposable
                 Name = $"Entity{i}",
                 Value = i,
                 Category = i % 2 == 0 ? "Even" : "Odd"
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
         }
 
         // Act - Get all even entries on first page
         var result = await _store.QueryPagedAsync(
             predicate: e => e.Category == "Even",
             page: 0,
-            pageSize: 10);
+            pageSize: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(5, result.Items.Count);
@@ -667,12 +667,12 @@ public class SqliteStateStoreTests : IDisposable
     public async Task CountAsync_WithNoPredicate_ReturnsTotal()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Two", Value = 2 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Two", Value = 2 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var count = await _store.CountAsync();
+        var count = await _store.CountAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, count);
@@ -682,12 +682,12 @@ public class SqliteStateStoreTests : IDisposable
     public async Task CountAsync_WithPredicate_ReturnsFilteredCount()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1, Category = "A" });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Two", Value = 2, Category = "B" });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3, Category = "A" });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "One", Value = 1, Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Two", Value = 2, Category = "B" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Three", Value = 3, Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var count = await _store.CountAsync(e => e.Category == "A");
+        var count = await _store.CountAsync(e => e.Category == "A", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, count);
@@ -697,7 +697,7 @@ public class SqliteStateStoreTests : IDisposable
     public async Task CountAsync_WithEmptyStore_ReturnsZero()
     {
         // Act
-        var count = await _store.CountAsync();
+        var count = await _store.CountAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, count);
@@ -711,13 +711,13 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonQueryAsync_WithStringEquality_ReturnsMatches()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10, Category = "A" });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20, Category = "B" });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30, Category = "A" });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10, Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20, Category = "B" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30, Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         var conditions = new List<QueryCondition> { Eq("Category", "A") };
-        var results = await _store.JsonQueryAsync(conditions);
+        var results = await _store.JsonQueryAsync(conditions, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, results.Count);
@@ -730,13 +730,13 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonQueryAsync_WithNumericComparison_ReturnsMatches()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         var conditions = new List<QueryCondition> { Gt("Value", 15) };
-        var results = await _store.JsonQueryAsync(conditions);
+        var results = await _store.JsonQueryAsync(conditions, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, results.Count);
@@ -748,11 +748,11 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonQueryAsync_WithEmptyConditions_ReturnsAll()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var results = await _store.JsonQueryAsync(new List<QueryCondition>());
+        var results = await _store.JsonQueryAsync(new List<QueryCondition>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, results.Count);
@@ -774,7 +774,7 @@ public class SqliteStateStoreTests : IDisposable
                 Name = $"Entity{i}",
                 Value = i,
                 Category = "Test"
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
         }
 
         // Act
@@ -782,7 +782,7 @@ public class SqliteStateStoreTests : IDisposable
             conditions: null,
             offset: 0,
             limit: 5,
-            sortBy: new JsonSortSpec { Path = "Value" });
+            sortBy: new JsonSortSpec { Path = "Value" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(5, result.Items.Count);
@@ -802,12 +802,12 @@ public class SqliteStateStoreTests : IDisposable
                 Name = $"Entity{i}",
                 Value = i,
                 Category = i % 2 == 0 ? "Even" : "Odd"
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
         }
 
         // Act
         var conditions = new List<QueryCondition> { Eq("Category", "Even") };
-        var result = await _store.JsonQueryPagedAsync(conditions, offset: 0, limit: 10);
+        var result = await _store.JsonQueryPagedAsync(conditions, offset: 0, limit: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(5, result.Items.Count);
@@ -822,12 +822,12 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonCountAsync_WithConditions_ReturnsFilteredCount()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Category = "A" });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Category = "B" });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Category = "A" });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Category = "B" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var count = await _store.JsonCountAsync(new List<QueryCondition> { Eq("Category", "A") });
+        var count = await _store.JsonCountAsync(new List<QueryCondition> { Eq("Category", "A") }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, count);
@@ -837,11 +837,11 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonCountAsync_WithEmptyConditions_ReturnsTotal()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha" });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta" });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var count = await _store.JsonCountAsync(null);
+        var count = await _store.JsonCountAsync(null, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, count);
@@ -855,13 +855,13 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonDistinctAsync_ReturnsUniqueValues()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Category = "A" });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Category = "B" });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Category = "A" });
-        await _store.SaveAsync("key4", new TestEntity { Id = "4", Name = "Delta", Category = "C" });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Category = "B" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key4", new TestEntity { Id = "4", Name = "Delta", Category = "C" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var distinct = await _store.JsonDistinctAsync("Category");
+        var distinct = await _store.JsonDistinctAsync("Category", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, distinct.Count);
@@ -874,13 +874,13 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonDistinctAsync_WithConditions_FiltersBeforeDistinct()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10, Category = "A" });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20, Category = "B" });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30, Category = "A" });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10, Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20, Category = "B" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30, Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         var conditions = new List<QueryCondition> { Gt("Value", 15) };
-        var distinct = await _store.JsonDistinctAsync("Category", conditions);
+        var distinct = await _store.JsonDistinctAsync("Category", conditions, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, distinct.Count);
@@ -896,12 +896,12 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonAggregateAsync_Sum_ReturnsSumOfValues()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var sum = await _store.JsonAggregateAsync("Value", JsonAggregation.Sum);
+        var sum = await _store.JsonAggregateAsync("Value", JsonAggregation.Sum, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(sum);
@@ -912,12 +912,12 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonAggregateAsync_Count_ReturnsCount()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var count = await _store.JsonAggregateAsync("Value", JsonAggregation.Count);
+        var count = await _store.JsonAggregateAsync("Value", JsonAggregation.Count, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(count);
@@ -928,12 +928,12 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonAggregateAsync_Avg_ReturnsAverage()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var avg = await _store.JsonAggregateAsync("Value", JsonAggregation.Avg);
+        var avg = await _store.JsonAggregateAsync("Value", JsonAggregation.Avg, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(avg);
@@ -944,12 +944,12 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonAggregateAsync_Min_ReturnsMinimum()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var min = await _store.JsonAggregateAsync("Value", JsonAggregation.Min);
+        var min = await _store.JsonAggregateAsync("Value", JsonAggregation.Min, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(min);
@@ -960,12 +960,12 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonAggregateAsync_Max_ReturnsMaximum()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var max = await _store.JsonAggregateAsync("Value", JsonAggregation.Max);
+        var max = await _store.JsonAggregateAsync("Value", JsonAggregation.Max, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(max);
@@ -976,13 +976,13 @@ public class SqliteStateStoreTests : IDisposable
     public async Task JsonAggregateAsync_WithConditions_FiltersBeforeAggregation()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10, Category = "A" });
-        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20, Category = "B" });
-        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30, Category = "A" });
+        await _store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Value = 10, Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Value = 20, Category = "B" }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Gamma", Value = 30, Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         var conditions = new List<QueryCondition> { Eq("Category", "A") };
-        var sum = await _store.JsonAggregateAsync("Value", JsonAggregation.Sum, conditions);
+        var sum = await _store.JsonAggregateAsync("Value", JsonAggregation.Sum, conditions, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(sum);
@@ -1000,12 +1000,12 @@ public class SqliteStateStoreTests : IDisposable
         var store1 = new SqliteStateStore<TestEntity>(_options, "store1", 10000, _mockLogger.Object);
         var store2 = new SqliteStateStore<TestEntity>(_options, "store2", 10000, _mockLogger.Object);
 
-        await store1.SaveAsync("key1", new TestEntity { Id = "1", Name = "Store1Data", Value = 1 });
-        await store2.SaveAsync("key1", new TestEntity { Id = "2", Name = "Store2Data", Value = 2 });
+        await store1.SaveAsync("key1", new TestEntity { Id = "1", Name = "Store1Data", Value = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await store2.SaveAsync("key1", new TestEntity { Id = "2", Name = "Store2Data", Value = 2 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result1 = await store1.GetAsync("key1");
-        var result2 = await store2.GetAsync("key1");
+        var result1 = await store1.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
+        var result2 = await store2.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result1);
@@ -1021,12 +1021,12 @@ public class SqliteStateStoreTests : IDisposable
         var store1 = new SqliteStateStore<TestEntity>(_options, "store1", 10000, _mockLogger.Object);
         var store2 = new SqliteStateStore<TestEntity>(_options, "store2", 10000, _mockLogger.Object);
 
-        await store1.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Category = "A" });
-        await store2.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Category = "A" });
+        await store1.SaveAsync("key1", new TestEntity { Id = "1", Name = "Alpha", Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
+        await store2.SaveAsync("key2", new TestEntity { Id = "2", Name = "Beta", Category = "A" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var results1 = await store1.QueryAsync(e => e.Category == "A");
-        var results2 = await store2.QueryAsync(e => e.Category == "A");
+        var results1 = await store1.QueryAsync(e => e.Category == "A", cancellationToken: TestContext.Current.CancellationToken);
+        var results2 = await store2.QueryAsync(e => e.Category == "A", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(results1);
@@ -1053,7 +1053,7 @@ public class SqliteStateStoreTests : IDisposable
 
         // Assert
         var keys = Enumerable.Range(1, 50).Select(i => $"key{i}").ToArray();
-        var results = await _store.GetBulkAsync(keys);
+        var results = await _store.GetBulkAsync(keys, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(50, results.Count);
     }
 
@@ -1063,7 +1063,7 @@ public class SqliteStateStoreTests : IDisposable
         // Arrange
         for (int i = 1; i <= 10; i++)
         {
-            await _store.SaveAsync($"key{i}", new TestEntity { Id = i.ToString(), Name = $"Entity{i}", Value = i });
+            await _store.SaveAsync($"key{i}", new TestEntity { Id = i.ToString(), Name = $"Entity{i}", Value = i }, cancellationToken: TestContext.Current.CancellationToken);
         }
 
         // Act - 100 concurrent reads

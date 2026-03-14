@@ -91,7 +91,7 @@ public sealed class IntentEmissionIntegrationTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(emissions);
@@ -114,7 +114,7 @@ public sealed class IntentEmissionIntegrationTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(emissions);
@@ -133,7 +133,7 @@ public sealed class IntentEmissionIntegrationTests
         var parameters = new Dictionary<string, object>();
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(emissions);
@@ -155,12 +155,12 @@ public sealed class IntentEmissionIntegrationTests
 
         // Test over 1.0
         var overParams = new Dictionary<string, object> { ["urgency"] = 2.0f };
-        var overEmissions = await emitter.EmitAsync(overParams, context, CancellationToken.None);
+        var overEmissions = await emitter.EmitAsync(overParams, context, TestContext.Current.CancellationToken);
         Assert.Equal(1.0f, overEmissions[0].Urgency);
 
         // Test under 0.0
         var underParams = new Dictionary<string, object> { ["urgency"] = -1.0f };
-        var underEmissions = await emitter.EmitAsync(underParams, context, CancellationToken.None);
+        var underEmissions = await emitter.EmitAsync(underParams, context, TestContext.Current.CancellationToken);
         Assert.Equal(0.0f, underEmissions[0].Urgency);
     }
 
@@ -179,7 +179,7 @@ public sealed class IntentEmissionIntegrationTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(emissions);
@@ -205,7 +205,7 @@ public sealed class IntentEmissionIntegrationTests
         };
 
         // Act - Without an archetype, emote returns empty (no expression channel)
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert - No emissions without archetype support
         Assert.Empty(emissions);
@@ -231,7 +231,7 @@ public sealed class IntentEmissionIntegrationTests
         };
 
         // Act
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(emissions);
@@ -311,7 +311,7 @@ public sealed class IntentEmissionIntegrationTests
             ["urgency"] = 0.9f
         };
 
-        var emissions = await emitter.EmitAsync(parameters, context, CancellationToken.None);
+        var emissions = await emitter.EmitAsync(parameters, context, TestContext.Current.CancellationToken);
 
         // Assert - Full pipeline works
         // Without archetype, falls back to "action" channel, intent is "attack_basic"

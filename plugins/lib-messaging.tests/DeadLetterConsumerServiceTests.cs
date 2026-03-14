@@ -409,10 +409,10 @@ public class DeadLetterConsumerServiceTests
         using var service = CreateService(config);
 
         // Act
-        await service.StartAsync(CancellationToken.None);
+        await service.StartAsync(TestContext.Current.CancellationToken);
         // Give ExecuteAsync a moment to run and return
-        await Task.Delay(50);
-        await service.StopAsync(CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert — should never attempt to create a channel
         _mockChannelManager.Verify(
@@ -436,9 +436,9 @@ public class DeadLetterConsumerServiceTests
         // Act
         await service.StartAsync(cts.Token);
         // Give ExecuteAsync time to set up the consumer
-        await Task.Delay(200);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
         cts.Cancel();
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert — channel was created
         _mockChannelManager.Verify(
@@ -508,11 +508,11 @@ public class DeadLetterConsumerServiceTests
 
         // Act — start then immediately cancel
         await service.StartAsync(cts.Token);
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         cts.Cancel();
 
         // Should not throw
-        var exception = await Record.ExceptionAsync(() => service.StopAsync(CancellationToken.None));
+        var exception = await Record.ExceptionAsync(() => service.StopAsync(TestContext.Current.CancellationToken));
         Assert.Null(exception);
     }
 
@@ -530,10 +530,10 @@ public class DeadLetterConsumerServiceTests
 
         // Act — should not throw; error is caught internally
         await service.StartAsync(cts.Token);
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         cts.Cancel();
 
-        var exception = await Record.ExceptionAsync(() => service.StopAsync(CancellationToken.None));
+        var exception = await Record.ExceptionAsync(() => service.StopAsync(TestContext.Current.CancellationToken));
         Assert.Null(exception);
     }
 
@@ -546,11 +546,11 @@ public class DeadLetterConsumerServiceTests
     {
         // Arrange — disabled config means no channel is ever created
         using var service = CreateService(CreateConfig(enabled: false));
-        await service.StartAsync(CancellationToken.None);
-        await Task.Delay(50);
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         // Act & Assert — should complete without exception
-        var exception = await Record.ExceptionAsync(() => service.StopAsync(CancellationToken.None));
+        var exception = await Record.ExceptionAsync(() => service.StopAsync(TestContext.Current.CancellationToken));
         Assert.Null(exception);
     }
 
@@ -568,11 +568,11 @@ public class DeadLetterConsumerServiceTests
         using var cts = new CancellationTokenSource();
 
         await service.StartAsync(cts.Token);
-        await Task.Delay(200);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
         cts.Cancel();
 
         // Act
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert — channel should have been closed
         mockChannel.Verify(
@@ -602,11 +602,11 @@ public class DeadLetterConsumerServiceTests
         using var cts = new CancellationTokenSource();
 
         await service.StartAsync(cts.Token);
-        await Task.Delay(200);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
         cts.Cancel();
 
         // Act & Assert — should not throw despite channel close failure
-        var exception = await Record.ExceptionAsync(() => service.StopAsync(CancellationToken.None));
+        var exception = await Record.ExceptionAsync(() => service.StopAsync(TestContext.Current.CancellationToken));
         Assert.Null(exception);
     }
 

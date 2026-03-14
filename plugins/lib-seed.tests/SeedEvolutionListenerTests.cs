@@ -186,7 +186,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 3f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         mockListener.Verify(l => l.OnGrowthRecordedAsync(
@@ -219,7 +219,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "dungeon.depth", Amount = 5f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         mockListener.Verify(l => l.OnGrowthRecordedAsync(
@@ -252,7 +252,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "dungeon.depth", Amount = 2f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         mockListener.Verify(l => l.OnGrowthRecordedAsync(
@@ -281,7 +281,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         // Act
         var (status, _) = await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 1f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - no exception, growth succeeds
         Assert.Equal(StatusCodes.OK, status);
@@ -327,7 +327,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
                 new GrowthEntry { Domain = "social.diplomacy", Amount = 1f }
             },
             Source = "test-batch"
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedNotification);
@@ -395,7 +395,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 4f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - should have two growth notifications: primary (not cross-pollinated) and sibling (cross-pollinated)
         Assert.Equal(2, capturedNotifications.Count);
@@ -452,7 +452,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 3f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedNotification);
@@ -500,7 +500,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 1f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - growth listener called, but phase listener NOT called
         mockListener.Verify(l => l.OnGrowthRecordedAsync(
@@ -555,7 +555,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         // Act - trigger capability computation
         await service.GetCapabilityManifestAsync(
             new GetCapabilityManifestRequest { SeedId = seedId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedNotification);
@@ -605,7 +605,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         // Act
         await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 2f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - healthy listener still called despite throwing listener
         healthyListener.Verify(l => l.OnGrowthRecordedAsync(
@@ -638,7 +638,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         // Act
         var (status, response) = await service.RecordGrowthAsync(
             new RecordGrowthRequest { SeedId = seedId, Domain = "combat.melee", Amount = 5f, Source = "test" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert - growth recording succeeds despite listener failure
         Assert.Equal(StatusCodes.OK, status);

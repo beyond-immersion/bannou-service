@@ -32,7 +32,7 @@ public class ChatServiceTypingTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             SessionId = TestSessionId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
 
@@ -68,7 +68,7 @@ public class ChatServiceTypingTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             SessionId = TestSessionId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
 
@@ -102,7 +102,7 @@ public class ChatServiceTypingTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             SessionId = TestSessionId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
 
@@ -129,7 +129,7 @@ public class ChatServiceTypingTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             SessionId = TestSessionId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
 
@@ -157,7 +157,7 @@ public class ChatServiceTypingTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             SessionId = TestSessionId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Member format should be "{roomId:N}:{sessionId:N}" (no hyphens)
         var expectedMember = $"{TestRoomId:N}:{TestSessionId:N}";

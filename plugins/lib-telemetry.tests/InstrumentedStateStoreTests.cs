@@ -50,7 +50,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.GetAsync("test-key");
+        var result = await _sut.GetAsync("test-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Same(expected, result);
@@ -66,7 +66,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(new TestEntity());
 
         // Act
-        await _sut.GetAsync("test-key");
+        await _sut.GetAsync("test-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - verify telemetry was recorded
         _telemetryMock.Verify(
@@ -105,7 +105,7 @@ public class InstrumentedStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.GetAsync("test-key"));
+            () => _sut.GetAsync("test-key", cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Same(expectedException, exception);
 
@@ -134,7 +134,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(expectedEtag);
 
         // Act
-        var result = await _sut.SaveAsync("test-key", entity);
+        var result = await _sut.SaveAsync("test-key", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(expectedEtag, result);
@@ -153,7 +153,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync("etag");
 
         // Act
-        await _sut.SaveAsync("test-key", entity);
+        await _sut.SaveAsync("test-key", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -178,7 +178,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.DeleteAsync("test-key");
+        var result = await _sut.DeleteAsync("test-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -198,7 +198,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.ExistsAsync("test-key");
+        var result = await _sut.ExistsAsync("test-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -224,7 +224,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.GetBulkAsync(keys);
+        var result = await _sut.GetBulkAsync(keys, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -246,7 +246,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync((expected, expectedEtag));
 
         // Act
-        var (value, etag) = await _sut.GetWithETagAsync("test-key");
+        var (value, etag) = await _sut.GetWithETagAsync("test-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Same(expected, value);
@@ -263,7 +263,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync((new TestEntity(), "etag-1"));
 
         // Act
-        await _sut.GetWithETagAsync("test-key");
+        await _sut.GetWithETagAsync("test-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -292,7 +292,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(((TestEntity?)null, (string?)null));
 
         // Act
-        var (value, etag) = await _sut.GetWithETagAsync("missing-key");
+        var (value, etag) = await _sut.GetWithETagAsync("missing-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(value);
@@ -310,7 +310,7 @@ public class InstrumentedStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.GetWithETagAsync("test-key"));
+            () => _sut.GetWithETagAsync("test-key", cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Same(expectedException, exception);
 
@@ -338,7 +338,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(expectedNewEtag);
 
         // Act
-        var result = await _sut.TrySaveAsync("test-key", entity, "etag-old");
+        var result = await _sut.TrySaveAsync("test-key", entity, "etag-old", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(expectedNewEtag, result);
@@ -357,7 +357,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var result = await _sut.TrySaveAsync("test-key", entity, "stale-etag");
+        var result = await _sut.TrySaveAsync("test-key", entity, "stale-etag", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -373,7 +373,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync("etag-new");
 
         // Act
-        await _sut.TrySaveAsync("test-key", entity, "etag-old");
+        await _sut.TrySaveAsync("test-key", entity, "etag-old", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -404,7 +404,7 @@ public class InstrumentedStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.TrySaveAsync("key", new TestEntity(), "etag"));
+            () => _sut.TrySaveAsync("key", new TestEntity(), "etag", cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Same(expectedException, exception);
     }
@@ -432,7 +432,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(expectedEtags);
 
         // Act
-        var result = await _sut.SaveBulkAsync(items);
+        var result = await _sut.SaveBulkAsync(items, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -454,7 +454,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Act
-        await _sut.SaveBulkAsync(items);
+        await _sut.SaveBulkAsync(items, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -477,7 +477,7 @@ public class InstrumentedStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.SaveBulkAsync(new[] { new KeyValuePair<string, TestEntity>("k", new TestEntity()) }));
+            () => _sut.SaveBulkAsync(new[] { new KeyValuePair<string, TestEntity>("k", new TestEntity()) }, cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Same(expectedException, exception);
     }
@@ -497,7 +497,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(expectedSet);
 
         // Act
-        var result = await _sut.ExistsBulkAsync(keys);
+        var result = await _sut.ExistsBulkAsync(keys, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -516,7 +516,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(new HashSet<string>());
 
         // Act
-        await _sut.ExistsBulkAsync(new[] { "key1" });
+        await _sut.ExistsBulkAsync(new[] { "key1" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -539,7 +539,7 @@ public class InstrumentedStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.ExistsBulkAsync(new[] { "key1" }));
+            () => _sut.ExistsBulkAsync(new[] { "key1" }, cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Same(expectedException, exception);
     }
@@ -558,7 +558,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(2);
 
         // Act
-        var result = await _sut.DeleteBulkAsync(keys);
+        var result = await _sut.DeleteBulkAsync(keys, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result);
@@ -574,7 +574,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(0);
 
         // Act
-        await _sut.DeleteBulkAsync(new[] { "key1" });
+        await _sut.DeleteBulkAsync(new[] { "key1" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -595,7 +595,7 @@ public class InstrumentedStateStoreTests
             .ReturnsAsync(0);
 
         // Act
-        var result = await _sut.DeleteBulkAsync(new[] { "missing1", "missing2" });
+        var result = await _sut.DeleteBulkAsync(new[] { "missing1", "missing2" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, result);
@@ -612,7 +612,7 @@ public class InstrumentedStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.DeleteBulkAsync(new[] { "key1" }));
+            () => _sut.DeleteBulkAsync(new[] { "key1" }, cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Same(expectedException, exception);
     }

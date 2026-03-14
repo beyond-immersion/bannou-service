@@ -67,7 +67,7 @@ public class NativeEventConsumerBackendTests
         var backend = CreateBackend();
 
         // Act
-        await backend.StartAsync(CancellationToken.None);
+        await backend.StartAsync(TestContext.Current.CancellationToken);
 
         // Assert
         _mockSubscriber.Verify(
@@ -102,7 +102,7 @@ public class NativeEventConsumerBackendTests
         var backend = CreateBackend();
 
         // Act
-        await backend.StartAsync(CancellationToken.None);
+        await backend.StartAsync(TestContext.Current.CancellationToken);
 
         // Assert
         _mockSubscriber.Verify(
@@ -146,7 +146,7 @@ public class NativeEventConsumerBackendTests
         var backend = CreateBackend();
 
         // Act
-        await backend.StartAsync(CancellationToken.None);
+        await backend.StartAsync(TestContext.Current.CancellationToken);
 
         // Assert
         _mockSubscriber.Verify(
@@ -191,7 +191,7 @@ public class NativeEventConsumerBackendTests
         var backend = CreateBackend();
 
         // Act
-        await backend.StartAsync(CancellationToken.None);
+        await backend.StartAsync(TestContext.Current.CancellationToken);
 
         // Assert - should still subscribe to the registered topic
         _mockSubscriber.Verify(
@@ -236,7 +236,7 @@ public class NativeEventConsumerBackendTests
         var backend = CreateBackend();
 
         // Act - should not throw despite one subscription failing
-        await backend.StartAsync(CancellationToken.None);
+        await backend.StartAsync(TestContext.Current.CancellationToken);
 
         // Assert - should still try to subscribe to the success topic
         _mockSubscriber.Verify(
@@ -261,10 +261,10 @@ public class NativeEventConsumerBackendTests
             .Returns(Enumerable.Empty<string>());
 
         var backend = CreateBackend();
-        await backend.StartAsync(CancellationToken.None);
+        await backend.StartAsync(TestContext.Current.CancellationToken);
 
         // Act & Assert - should complete without exception
-        var exception = await Record.ExceptionAsync(() => backend.StopAsync(CancellationToken.None));
+        var exception = await Record.ExceptionAsync(() => backend.StopAsync(TestContext.Current.CancellationToken));
         Assert.Null(exception);
     }
 
@@ -288,10 +288,10 @@ public class NativeEventConsumerBackendTests
             .ReturnsAsync(mockSubscription.Object);
 
         var backend = CreateBackend();
-        await backend.StartAsync(CancellationToken.None);
+        await backend.StartAsync(TestContext.Current.CancellationToken);
 
         // Act
-        await backend.StopAsync(CancellationToken.None);
+        await backend.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert
         mockSubscription.Verify(x => x.DisposeAsync(), Times.Once);
@@ -331,10 +331,10 @@ public class NativeEventConsumerBackendTests
             .ReturnsAsync(mockSubscription2.Object);
 
         var backend = CreateBackend();
-        await backend.StartAsync(CancellationToken.None);
+        await backend.StartAsync(TestContext.Current.CancellationToken);
 
         // Act - should not throw despite one dispose failing
-        await backend.StopAsync(CancellationToken.None);
+        await backend.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - both should have been attempted
         mockSubscription1.Verify(x => x.DisposeAsync(), Times.Once);
@@ -377,12 +377,12 @@ public class NativeEventConsumerBackendTests
             .Returns(mockScopeFactory.Object);
 
         var backend = CreateBackend();
-        await backend.StartAsync(CancellationToken.None);
+        await backend.StartAsync(TestContext.Current.CancellationToken);
 
         // Act - simulate receiving an event
         Assert.NotNull(capturedHandler);
         var testEvent = new TestEvent { Message = "Hello" };
-        await capturedHandler(testEvent, CancellationToken.None);
+        await capturedHandler(testEvent, TestContext.Current.CancellationToken);
 
         // Assert - should have dispatched to event consumer
         _mockEventConsumer.Verify(
@@ -425,12 +425,12 @@ public class NativeEventConsumerBackendTests
             .ThrowsAsync(new Exception("Dispatch failed"));
 
         var backend = CreateBackend();
-        await backend.StartAsync(CancellationToken.None);
+        await backend.StartAsync(TestContext.Current.CancellationToken);
 
         // Act & Assert - should rethrow the exception
         Assert.NotNull(capturedHandler);
         var testEvent = new TestEvent { Message = "Hello" };
-        await Assert.ThrowsAsync<Exception>(() => capturedHandler(testEvent, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => capturedHandler(testEvent, TestContext.Current.CancellationToken));
     }
 
     #endregion

@@ -230,7 +230,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
 
         // Act
         var (status, response) = await service.GetRealmTimeAsync(
-            new GetRealmTimeRequest { RealmId = _testRealmId }, CancellationToken.None);
+            new GetRealmTimeRequest { RealmId = _testRealmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -252,7 +252,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
 
         // Act
         var (status, response) = await service.GetRealmTimeAsync(
-            new GetRealmTimeRequest { RealmId = _testRealmId }, CancellationToken.None);
+            new GetRealmTimeRequest { RealmId = _testRealmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -282,7 +282,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
 
         // Act
         var (status, response) = await service.GetRealmTimeByCodeAsync(
-            new GetRealmTimeByCodeRequest { RealmCode = "omega" }, CancellationToken.None);
+            new GetRealmTimeByCodeRequest { RealmCode = "omega" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -301,7 +301,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
 
         // Act
         var (status, response) = await service.GetRealmTimeByCodeAsync(
-            new GetRealmTimeByCodeRequest { RealmCode = "nonexistent" }, CancellationToken.None);
+            new GetRealmTimeByCodeRequest { RealmCode = "nonexistent" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -332,7 +332,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.BatchGetRealmTimesAsync(
             new BatchGetRealmTimesRequest { RealmIds = new List<Guid> { realmId1, realmId2 } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -360,7 +360,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.BatchGetRealmTimesAsync(
             new BatchGetRealmTimesRequest { RealmIds = new List<Guid> { foundRealmId, missingRealmId } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -382,7 +382,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.BatchGetRealmTimesAsync(
             new BatchGetRealmTimesRequest { RealmIds = realmIds },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -457,7 +457,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.InitializeRealmClockAsync(request, CancellationToken.None);
+        var (status, response) = await service.InitializeRealmClockAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -516,7 +516,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.InitializeRealmClockAsync(
             new InitializeRealmClockRequest { RealmId = _testRealmId, CalendarTemplateCode = "standard" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -537,7 +537,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.InitializeRealmClockAsync(
             new InitializeRealmClockRequest { RealmId = _testRealmId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -559,7 +559,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.InitializeRealmClockAsync(
             new InitializeRealmClockRequest { RealmId = _testRealmId, CalendarTemplateCode = "nonexistent" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -583,7 +583,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.InitializeRealmClockAsync(
             new InitializeRealmClockRequest { RealmId = _testRealmId, CalendarTemplateCode = "standard" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -610,7 +610,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.InitializeRealmClockAsync(
             new InitializeRealmClockRequest { RealmId = _testRealmId, CalendarTemplateCode = "standard" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -665,7 +665,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.SetTimeRatioAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetTimeRatioAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -695,7 +695,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.SetTimeRatioAsync(
             new SetTimeRatioRequest { RealmId = _testRealmId, NewRatio = -1.0f, Reason = TimeRatioChangeReason.AdminAdjustment },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -712,7 +712,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.SetTimeRatioAsync(
             new SetTimeRatioRequest { RealmId = _testRealmId, NewRatio = 120.0f, Reason = TimeRatioChangeReason.AdminAdjustment },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -731,7 +731,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.SetTimeRatioAsync(
             new SetTimeRatioRequest { RealmId = _testRealmId, NewRatio = 120.0f, Reason = TimeRatioChangeReason.AdminAdjustment },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -764,7 +764,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, _) = await service.SetTimeRatioAsync(
             new SetTimeRatioRequest { RealmId = _testRealmId, NewRatio = 0.0f, Reason = TimeRatioChangeReason.Pause },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -814,7 +814,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.AdvanceClockAsync(
             new AdvanceClockRequest { RealmId = _testRealmId, GameSeconds = 3600 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -860,7 +860,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.AdvanceClockAsync(
             new AdvanceClockRequest { RealmId = _testRealmId, GameDays = 1 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -890,7 +890,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act - no time parameters specified
         var (status, response) = await service.AdvanceClockAsync(
             new AdvanceClockRequest { RealmId = _testRealmId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -907,7 +907,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.AdvanceClockAsync(
             new AdvanceClockRequest { RealmId = _testRealmId, GameSeconds = 100 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -926,7 +926,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.AdvanceClockAsync(
             new AdvanceClockRequest { RealmId = _testRealmId, GameSeconds = 100 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -967,7 +967,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.AdvanceClockAsync(
             new AdvanceClockRequest { RealmId = _testRealmId, GameSeconds = 100000 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1026,7 +1026,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.SeedCalendarAsync(request, CancellationToken.None);
+        var (status, response) = await service.SeedCalendarAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1070,7 +1070,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.SeedCalendarAsync(request, CancellationToken.None);
+        var (status, response) = await service.SeedCalendarAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1100,7 +1100,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.SeedCalendarAsync(request, CancellationToken.None);
+        var (status, response) = await service.SeedCalendarAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1143,7 +1143,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.SeedCalendarAsync(request, CancellationToken.None);
+        var (status, response) = await service.SeedCalendarAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1189,7 +1189,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.SeedCalendarAsync(request, CancellationToken.None);
+        var (status, response) = await service.SeedCalendarAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1238,7 +1238,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.GetElapsedGameTimeAsync(
             new GetElapsedGameTimeRequest { RealmId = _testRealmId, FromRealTime = from, ToRealTime = to },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1260,7 +1260,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.GetElapsedGameTimeAsync(
             new GetElapsedGameTimeRequest { RealmId = _testRealmId, FromRealTime = now, ToRealTime = now.AddSeconds(-1) },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1284,7 +1284,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
                 FromRealTime = DateTimeOffset.UtcNow.AddHours(-1),
                 ToRealTime = DateTimeOffset.UtcNow
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1328,7 +1328,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.UpdateCalendarAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateCalendarAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1366,7 +1366,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         };
 
         // Act
-        var (status, response) = await service.UpdateCalendarAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateCalendarAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1394,7 +1394,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.UpdateCalendarAsync(
             new UpdateCalendarRequest { GameServiceId = _testGameServiceId, TemplateCode = "nonexistent" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1422,7 +1422,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.DeleteCalendarAsync(
             new DeleteCalendarRequest { GameServiceId = _testGameServiceId, TemplateCode = "standard" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1456,7 +1456,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.DeleteCalendarAsync(
             new DeleteCalendarRequest { GameServiceId = _testGameServiceId, TemplateCode = "standard" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1475,7 +1475,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.DeleteCalendarAsync(
             new DeleteCalendarRequest { GameServiceId = _testGameServiceId, TemplateCode = "nonexistent" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1504,7 +1504,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.UpdateRealmConfigAsync(
             new UpdateRealmConfigRequest { RealmId = _testRealmId, DowntimePolicy = DowntimePolicy.Advance },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1553,7 +1553,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.UpdateRealmConfigAsync(
             new UpdateRealmConfigRequest { RealmId = _testRealmId, CalendarTemplateCode = "new-template" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1580,7 +1580,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.UpdateRealmConfigAsync(
             new UpdateRealmConfigRequest { RealmId = _testRealmId, CalendarTemplateCode = "nonexistent" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1604,7 +1604,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act - empty update
         var (status, response) = await service.UpdateRealmConfigAsync(
             new UpdateRealmConfigRequest { RealmId = _testRealmId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1625,7 +1625,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.UpdateRealmConfigAsync(
             new UpdateRealmConfigRequest { RealmId = _testRealmId, DowntimePolicy = DowntimePolicy.Advance },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1649,7 +1649,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
 
         // Act
         var (status, response) = await service.CleanupByRealmAsync(
-            new CleanupByRealmRequest { RealmId = _testRealmId }, CancellationToken.None);
+            new CleanupByRealmRequest { RealmId = _testRealmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1683,7 +1683,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
 
         // Act
         var (status, response) = await service.CleanupByRealmAsync(
-            new CleanupByRealmRequest { RealmId = _testRealmId }, CancellationToken.None);
+            new CleanupByRealmRequest { RealmId = _testRealmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1721,7 +1721,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.CleanupByGameServiceAsync(
             new CleanupByGameServiceRequest { GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1758,7 +1758,7 @@ public class WorldstateServiceTests : ServiceTestBase<WorldstateServiceConfigura
         // Act
         var (status, response) = await service.CleanupByGameServiceAsync(
             new CleanupByGameServiceRequest { GameServiceId = _testGameServiceId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

@@ -128,7 +128,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync(backstory);
 
         // Act
-        var result = await helper.GetAsync("entity-1");
+        var result = await helper.GetAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -148,7 +148,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync((TestBackstory?)null);
 
         // Act
-        var result = await helper.GetAsync("non-existent");
+        var result = await helper.GetAsync("non-existent", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -161,7 +161,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.GetAsync(""));
+            helper.GetAsync("", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -180,7 +180,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         };
 
         // Act
-        var result = await helper.SetAsync("entity-1", elements, replaceExisting: false);
+        var result = await helper.SetAsync("entity-1", elements, replaceExisting: false, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -224,7 +224,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         };
 
         // Act
-        var result = await helper.SetAsync("entity-1", newElements, replaceExisting: true);
+        var result = await helper.SetAsync("entity-1", newElements, replaceExisting: true, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -267,7 +267,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         };
 
         // Act
-        var result = await helper.SetAsync("entity-1", newElements, replaceExisting: false);
+        var result = await helper.SetAsync("entity-1", newElements, replaceExisting: false, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -293,7 +293,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.SetAsync("", new List<TestElement>(), replaceExisting: false));
+            helper.SetAsync("", new List<TestElement>(), replaceExisting: false, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -309,7 +309,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var element = new TestElement { ElementType = "trait", Key = "brave", Value = "Very brave", Strength = 0.8f };
 
         // Act
-        var result = await helper.AddElementAsync("entity-1", element);
+        var result = await helper.AddElementAsync("entity-1", element, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -343,7 +343,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var element = new TestElement { ElementType = "trait", Key = "wise", Value = "New element", Strength = 0.7f };
 
         // Act
-        var result = await helper.AddElementAsync("entity-1", element);
+        var result = await helper.AddElementAsync("entity-1", element, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -376,7 +376,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var element = new TestElement { ElementType = "trait", Key = "brave", Value = "Updated value", Strength = 0.9f };
 
         // Act
-        var result = await helper.AddElementAsync("entity-1", element);
+        var result = await helper.AddElementAsync("entity-1", element, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -394,7 +394,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.AddElementAsync("", new TestElement()));
+            helper.AddElementAsync("", new TestElement(), TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -411,7 +411,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync(true);
 
         // Act
-        var result = await helper.DeleteAsync("entity-1");
+        var result = await helper.DeleteAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -430,7 +430,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync((TestBackstory?)null);
 
         // Act
-        var result = await helper.DeleteAsync("entity-1");
+        var result = await helper.DeleteAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -445,7 +445,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.DeleteAsync(""));
+            helper.DeleteAsync("", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -459,7 +459,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync(true);
 
         // Act
-        var result = await helper.ExistsAsync("entity-1");
+        var result = await helper.ExistsAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -476,7 +476,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync(false);
 
         // Act
-        var result = await helper.ExistsAsync("entity-1");
+        var result = await helper.ExistsAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -489,7 +489,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.ExistsAsync(""));
+            helper.ExistsAsync("", TestContext.Current.CancellationToken));
     }
 
     [Fact]

@@ -49,7 +49,7 @@ public class InMemoryBulkOperationsTests : IDisposable
         };
 
         // Act
-        var etags = await _store.SaveBulkAsync(items);
+        var etags = await _store.SaveBulkAsync(items, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, etags.Count);
@@ -62,15 +62,15 @@ public class InMemoryBulkOperationsTests : IDisposable
         Assert.Equal("1", etags["key3"]);
 
         // Verify all items are retrievable
-        var retrieved1 = await _store.GetAsync("key1");
+        var retrieved1 = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved1);
         Assert.Equal("Alpha", retrieved1.Name);
 
-        var retrieved2 = await _store.GetAsync("key2");
+        var retrieved2 = await _store.GetAsync("key2", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved2);
         Assert.Equal("Beta", retrieved2.Name);
 
-        var retrieved3 = await _store.GetAsync("key3");
+        var retrieved3 = await _store.GetAsync("key3", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved3);
         Assert.Equal("Gamma", retrieved3.Name);
     }
@@ -79,7 +79,7 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SaveBulkAsync_WithEmptyItems_ReturnsEmptyDictionary()
     {
         // Act
-        var etags = await _store.SaveBulkAsync(new Dictionary<string, TestModel>());
+        var etags = await _store.SaveBulkAsync(new Dictionary<string, TestModel>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(etags);
@@ -89,8 +89,8 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SaveBulkAsync_OverwritingExistingKeys_IncrementsVersions()
     {
         // Arrange - Save initial values
-        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "Old1", Score = 1 });
-        await _store.SaveAsync("key2", new TestModel { Id = "2", Name = "Old2", Score = 2 });
+        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "Old1", Score = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestModel { Id = "2", Name = "Old2", Score = 2 }, cancellationToken: TestContext.Current.CancellationToken);
 
         var updates = new Dictionary<string, TestModel>
         {
@@ -99,14 +99,14 @@ public class InMemoryBulkOperationsTests : IDisposable
         };
 
         // Act
-        var etags = await _store.SaveBulkAsync(updates);
+        var etags = await _store.SaveBulkAsync(updates, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Versions should be "2" (incremented from initial "1")
         Assert.Equal("2", etags["key1"]);
         Assert.Equal("2", etags["key2"]);
 
         // Verify updated values
-        var retrieved1 = await _store.GetAsync("key1");
+        var retrieved1 = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved1);
         Assert.Equal("New1", retrieved1.Name);
         Assert.Equal(100, retrieved1.Score);
@@ -123,25 +123,25 @@ public class InMemoryBulkOperationsTests : IDisposable
         };
 
         // Act
-        await _store.SaveBulkAsync(items, new StateOptions { Ttl = 1 });
+        await _store.SaveBulkAsync(items, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Items exist immediately
-        Assert.NotNull(await _store.GetAsync("key1"));
-        Assert.NotNull(await _store.GetAsync("key2"));
+        Assert.NotNull(await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.NotNull(await _store.GetAsync("key2", cancellationToken: TestContext.Current.CancellationToken));
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Items should be expired
-        Assert.Null(await _store.GetAsync("key1"));
-        Assert.Null(await _store.GetAsync("key2"));
+        Assert.Null(await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Null(await _store.GetAsync("key2", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task SaveBulkAsync_MixedNewAndExisting_HandlesCorrectly()
     {
         // Arrange - Save one existing key
-        await _store.SaveAsync("existing-key", new TestModel { Id = "1", Name = "Existing", Score = 50 });
+        await _store.SaveAsync("existing-key", new TestModel { Id = "1", Name = "Existing", Score = 50 }, cancellationToken: TestContext.Current.CancellationToken);
 
         var items = new Dictionary<string, TestModel>
         {
@@ -150,7 +150,7 @@ public class InMemoryBulkOperationsTests : IDisposable
         };
 
         // Act
-        var etags = await _store.SaveBulkAsync(items);
+        var etags = await _store.SaveBulkAsync(items, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("2", etags["existing-key"]); // Version incremented
@@ -165,11 +165,11 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task ExistsBulkAsync_WithMixedKeys_ReturnsOnlyExistingKeys()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "One", Score = 1 });
-        await _store.SaveAsync("key3", new TestModel { Id = "3", Name = "Three", Score = 3 });
+        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "One", Score = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestModel { Id = "3", Name = "Three", Score = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var existing = await _store.ExistsBulkAsync(new[] { "key1", "key2", "key3", "key4" });
+        var existing = await _store.ExistsBulkAsync(new[] { "key1", "key2", "key3", "key4" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, existing.Count);
@@ -183,7 +183,7 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task ExistsBulkAsync_WithEmptyKeys_ReturnsEmptySet()
     {
         // Act
-        var existing = await _store.ExistsBulkAsync(Array.Empty<string>());
+        var existing = await _store.ExistsBulkAsync(Array.Empty<string>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(existing);
@@ -193,11 +193,11 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task ExistsBulkAsync_WithAllExisting_ReturnsAllKeys()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "One", Score = 1 });
-        await _store.SaveAsync("key2", new TestModel { Id = "2", Name = "Two", Score = 2 });
+        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "One", Score = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestModel { Id = "2", Name = "Two", Score = 2 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var existing = await _store.ExistsBulkAsync(new[] { "key1", "key2" });
+        var existing = await _store.ExistsBulkAsync(new[] { "key1", "key2" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, existing.Count);
@@ -209,7 +209,7 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task ExistsBulkAsync_WithAllNonExistent_ReturnsEmptySet()
     {
         // Act
-        var existing = await _store.ExistsBulkAsync(new[] { "nope1", "nope2", "nope3" });
+        var existing = await _store.ExistsBulkAsync(new[] { "nope1", "nope2", "nope3" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(existing);
@@ -219,15 +219,15 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task ExistsBulkAsync_ExcludesExpiredKeys()
     {
         // Arrange
-        await _store.SaveAsync("permanent", new TestModel { Id = "1", Name = "Permanent", Score = 1 });
+        await _store.SaveAsync("permanent", new TestModel { Id = "1", Name = "Permanent", Score = 1 }, cancellationToken: TestContext.Current.CancellationToken);
         await _store.SaveAsync("expiring", new TestModel { Id = "2", Name = "Expiring", Score = 2 },
-            new StateOptions { Ttl = 1 });
+            new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var existing = await _store.ExistsBulkAsync(new[] { "permanent", "expiring" });
+        var existing = await _store.ExistsBulkAsync(new[] { "permanent", "expiring" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(existing);
@@ -243,18 +243,18 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task DeleteBulkAsync_WithExistingKeys_DeletesAllAndReturnsCount()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "One", Score = 1 });
-        await _store.SaveAsync("key2", new TestModel { Id = "2", Name = "Two", Score = 2 });
-        await _store.SaveAsync("key3", new TestModel { Id = "3", Name = "Three", Score = 3 });
+        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "One", Score = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key2", new TestModel { Id = "2", Name = "Two", Score = 2 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestModel { Id = "3", Name = "Three", Score = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var deletedCount = await _store.DeleteBulkAsync(new[] { "key1", "key2", "key3" });
+        var deletedCount = await _store.DeleteBulkAsync(new[] { "key1", "key2", "key3" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, deletedCount);
-        Assert.Null(await _store.GetAsync("key1"));
-        Assert.Null(await _store.GetAsync("key2"));
-        Assert.Null(await _store.GetAsync("key3"));
+        Assert.Null(await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Null(await _store.GetAsync("key2", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Null(await _store.GetAsync("key3", cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(0, _store.Count);
     }
 
@@ -262,7 +262,7 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task DeleteBulkAsync_WithEmptyKeys_ReturnsZero()
     {
         // Act
-        var deletedCount = await _store.DeleteBulkAsync(Array.Empty<string>());
+        var deletedCount = await _store.DeleteBulkAsync(Array.Empty<string>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, deletedCount);
@@ -272,11 +272,11 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task DeleteBulkAsync_WithMixedExistingAndNonExistent_ReturnsDeletedCount()
     {
         // Arrange
-        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "One", Score = 1 });
-        await _store.SaveAsync("key3", new TestModel { Id = "3", Name = "Three", Score = 3 });
+        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "One", Score = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("key3", new TestModel { Id = "3", Name = "Three", Score = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - key2 doesn't exist
-        var deletedCount = await _store.DeleteBulkAsync(new[] { "key1", "key2", "key3" });
+        var deletedCount = await _store.DeleteBulkAsync(new[] { "key1", "key2", "key3" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, deletedCount);
@@ -286,7 +286,7 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task DeleteBulkAsync_WithAllNonExistent_ReturnsZero()
     {
         // Act
-        var deletedCount = await _store.DeleteBulkAsync(new[] { "nope1", "nope2" });
+        var deletedCount = await _store.DeleteBulkAsync(new[] { "nope1", "nope2" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, deletedCount);
@@ -296,16 +296,16 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task DeleteBulkAsync_LeavesOtherKeysUntouched()
     {
         // Arrange
-        await _store.SaveAsync("delete-me", new TestModel { Id = "1", Name = "Delete", Score = 1 });
-        await _store.SaveAsync("keep-me", new TestModel { Id = "2", Name = "Keep", Score = 2 });
+        await _store.SaveAsync("delete-me", new TestModel { Id = "1", Name = "Delete", Score = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("keep-me", new TestModel { Id = "2", Name = "Keep", Score = 2 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var deletedCount = await _store.DeleteBulkAsync(new[] { "delete-me" });
+        var deletedCount = await _store.DeleteBulkAsync(new[] { "delete-me" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, deletedCount);
-        Assert.Null(await _store.GetAsync("delete-me"));
-        Assert.NotNull(await _store.GetAsync("keep-me"));
+        Assert.Null(await _store.GetAsync("delete-me", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.NotNull(await _store.GetAsync("keep-me", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -319,13 +319,13 @@ public class InMemoryBulkOperationsTests : IDisposable
         var entity = new TestModel { Id = "new", Name = "Brand New", Score = 100 };
 
         // Act
-        var etag = await _store.TrySaveAsync("new-key", entity, string.Empty);
+        var etag = await _store.TrySaveAsync("new-key", entity, string.Empty, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(etag);
         Assert.Equal("1", etag);
 
-        var retrieved = await _store.GetAsync("new-key");
+        var retrieved = await _store.GetAsync("new-key", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal("Brand New", retrieved.Name);
     }
@@ -337,7 +337,7 @@ public class InMemoryBulkOperationsTests : IDisposable
         var entity = new TestModel { Id = "new", Name = "Brand New", Score = 100 };
 
         // Act - null is treated same as empty string
-        var etag = await _store.TrySaveAsync("new-key", entity, string.Empty);
+        var etag = await _store.TrySaveAsync("new-key", entity, string.Empty, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(etag);
@@ -349,18 +349,18 @@ public class InMemoryBulkOperationsTests : IDisposable
     {
         // Arrange - Create existing entry first
         var existing = new TestModel { Id = "existing", Name = "Original", Score = 50 };
-        await _store.SaveAsync("existing-key", existing);
+        await _store.SaveAsync("existing-key", existing, cancellationToken: TestContext.Current.CancellationToken);
 
         var newEntity = new TestModel { Id = "new", Name = "Competing Create", Score = 100 };
 
         // Act - Empty etag means "create new only"
-        var etag = await _store.TrySaveAsync("existing-key", newEntity, string.Empty);
+        var etag = await _store.TrySaveAsync("existing-key", newEntity, string.Empty, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should fail because key already exists
         Assert.Null(etag);
 
         // Original value should be preserved
-        var retrieved = await _store.GetAsync("existing-key");
+        var retrieved = await _store.GetAsync("existing-key", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal("Original", retrieved.Name);
     }
@@ -370,18 +370,18 @@ public class InMemoryBulkOperationsTests : IDisposable
     {
         // Arrange - Save with TTL
         var entity = new TestModel { Id = "1", Name = "Original", Score = 10 };
-        await _store.SaveAsync("ttl-key", entity, new StateOptions { Ttl = 60 });
-        var (_, etag) = await _store.GetWithETagAsync("ttl-key");
+        await _store.SaveAsync("ttl-key", entity, new StateOptions { Ttl = 60 }, cancellationToken: TestContext.Current.CancellationToken);
+        var (_, etag) = await _store.GetWithETagAsync("ttl-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Update via optimistic concurrency (TTL should be preserved)
         var updated = new TestModel { Id = "1", Name = "Updated", Score = 20 };
         Assert.NotNull(etag);
-        var newEtag = await _store.TrySaveAsync("ttl-key", updated, etag);
+        var newEtag = await _store.TrySaveAsync("ttl-key", updated, etag, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(newEtag);
         // Key should still exist (TTL was preserved, not removed)
-        var retrieved = await _store.GetAsync("ttl-key");
+        var retrieved = await _store.GetAsync("ttl-key", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal("Updated", retrieved.Name);
     }
@@ -395,18 +395,18 @@ public class InMemoryBulkOperationsTests : IDisposable
     {
         // Arrange
         var entity = new TestModel { Id = "1", Name = "Expiring", Score = 42 };
-        await _store.SaveAsync("expiring-key", entity, new StateOptions { Ttl = 1 });
+        await _store.SaveAsync("expiring-key", entity, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Verify it exists first
-        var (valueBefore, etagBefore) = await _store.GetWithETagAsync("expiring-key");
+        var (valueBefore, etagBefore) = await _store.GetWithETagAsync("expiring-key", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(valueBefore);
         Assert.NotNull(etagBefore);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var (value, etag) = await _store.GetWithETagAsync("expiring-key");
+        var (value, etag) = await _store.GetWithETagAsync("expiring-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(value);
@@ -418,14 +418,14 @@ public class InMemoryBulkOperationsTests : IDisposable
     {
         // Arrange
         var entity = new TestModel { Id = "1", Name = "Test", Score = 42 };
-        await _store.SaveAsync("key1", entity);
+        await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var (_, etag1) = await _store.GetWithETagAsync("key1");
+        var (_, etag1) = await _store.GetWithETagAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Save again to increment version
-        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "Updated", Score = 100 });
-        var (_, etag2) = await _store.GetWithETagAsync("key1");
+        await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "Updated", Score = 100 }, cancellationToken: TestContext.Current.CancellationToken);
+        var (_, etag2) = await _store.GetWithETagAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - ETags should be version strings
         Assert.Equal("1", etag1);
@@ -440,9 +440,9 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task GetKeyCountForStore_WithExistingStore_ReturnsCorrectCount()
     {
         // Arrange
-        await _store.SaveAsync("k1", new TestModel { Id = "1", Name = "One", Score = 1 });
-        await _store.SaveAsync("k2", new TestModel { Id = "2", Name = "Two", Score = 2 });
-        await _store.SaveAsync("k3", new TestModel { Id = "3", Name = "Three", Score = 3 });
+        await _store.SaveAsync("k1", new TestModel { Id = "1", Name = "One", Score = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("k2", new TestModel { Id = "2", Name = "Two", Score = 2 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("k3", new TestModel { Id = "3", Name = "Three", Score = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         var count = InMemoryStateStore<TestModel>.GetKeyCountForStore(_storeName);
@@ -465,12 +465,12 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task GetKeyCountForStore_AfterDeletions_ReturnsUpdatedCount()
     {
         // Arrange
-        await _store.SaveAsync("k1", new TestModel { Id = "1", Name = "One", Score = 1 });
-        await _store.SaveAsync("k2", new TestModel { Id = "2", Name = "Two", Score = 2 });
+        await _store.SaveAsync("k1", new TestModel { Id = "1", Name = "One", Score = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SaveAsync("k2", new TestModel { Id = "2", Name = "Two", Score = 2 }, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(2, InMemoryStateStore<TestModel>.GetKeyCountForStore(_storeName));
 
         // Act - Delete one
-        await _store.DeleteAsync("k1");
+        await _store.DeleteAsync("k1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, InMemoryStateStore<TestModel>.GetKeyCountForStore(_storeName));
@@ -484,7 +484,7 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task InMemoryStoreData_GetKeyCountForStore_MatchesStaticMethod()
     {
         // Arrange
-        await _store.SaveAsync("data-key", new TestModel { Id = "1", Name = "Data", Score = 42 });
+        await _store.SaveAsync("data-key", new TestModel { Id = "1", Name = "Data", Score = 42 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         var storeDataCount = InMemoryStoreData.GetKeyCountForStore(_storeName);
@@ -503,9 +503,9 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SaveAsync_ReturnsConsecutiveVersionStrings()
     {
         // Arrange & Act
-        var etag1 = await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "V1", Score = 1 });
-        var etag2 = await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "V2", Score = 2 });
-        var etag3 = await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "V3", Score = 3 });
+        var etag1 = await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "V1", Score = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        var etag2 = await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "V2", Score = 2 }, cancellationToken: TestContext.Current.CancellationToken);
+        var etag3 = await _store.SaveAsync("key1", new TestModel { Id = "1", Name = "V3", Score = 3 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("1", etag1);
@@ -517,8 +517,8 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SaveAsync_DifferentKeys_HaveIndependentVersions()
     {
         // Act
-        var etag1 = await _store.SaveAsync("key-a", new TestModel { Id = "1", Name = "A", Score = 1 });
-        var etag2 = await _store.SaveAsync("key-b", new TestModel { Id = "2", Name = "B", Score = 2 });
+        var etag1 = await _store.SaveAsync("key-a", new TestModel { Id = "1", Name = "A", Score = 1 }, cancellationToken: TestContext.Current.CancellationToken);
+        var etag2 = await _store.SaveAsync("key-b", new TestModel { Id = "2", Name = "B", Score = 2 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Each key starts at version 1 independently
         Assert.Equal("1", etag1);
@@ -533,7 +533,7 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task AddToSetAsync_BulkWithEmptyEnumerable_ReturnsZero()
     {
         // Act
-        var added = await _store.AddToSetAsync("test-set", Array.Empty<TestModel>().AsEnumerable());
+        var added = await _store.AddToSetAsync("test-set", Array.Empty<TestModel>().AsEnumerable(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, added);
@@ -548,16 +548,16 @@ public class InMemoryBulkOperationsTests : IDisposable
     {
         // Arrange
         var item = new TestModel { Id = "1", Name = "Expiring", Score = 10 };
-        await _store.AddToSetAsync("expiring-set", item, new StateOptions { Ttl = 1 });
+        await _store.AddToSetAsync("expiring-set", item, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Verify it exists
-        Assert.True(await _store.SetContainsAsync("expiring-set", item));
+        Assert.True(await _store.SetContainsAsync("expiring-set", item, cancellationToken: TestContext.Current.CancellationToken));
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var contains = await _store.SetContainsAsync("expiring-set", item);
+        var contains = await _store.SetContainsAsync("expiring-set", item, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(contains);
@@ -572,13 +572,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     {
         // Arrange
         var item = new TestModel { Id = "1", Name = "Expiring", Score = 10 };
-        await _store.AddToSetAsync("expiring-set", item, new StateOptions { Ttl = 1 });
+        await _store.AddToSetAsync("expiring-set", item, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var removed = await _store.RemoveFromSetAsync("expiring-set", item);
+        var removed = await _store.RemoveFromSetAsync("expiring-set", item, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(removed);
@@ -593,13 +593,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     {
         // Arrange
         var item = new TestModel { Id = "1", Name = "Expiring", Score = 10 };
-        await _store.AddToSetAsync("expiring-set", item, new StateOptions { Ttl = 1 });
+        await _store.AddToSetAsync("expiring-set", item, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var refreshed = await _store.RefreshSetTtlAsync("expiring-set", 60);
+        var refreshed = await _store.RefreshSetTtlAsync("expiring-set", 60, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(refreshed);
@@ -613,12 +613,12 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SortedSetRangeByRankAsync_WithNegativeIndices_WrapsFromEnd()
     {
         // Arrange - Add members with distinct scores
-        await _store.SortedSetAddAsync("rank-test", "alice", 100);
-        await _store.SortedSetAddAsync("rank-test", "bob", 200);
-        await _store.SortedSetAddAsync("rank-test", "charlie", 300);
+        await _store.SortedSetAddAsync("rank-test", "alice", 100, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SortedSetAddAsync("rank-test", "bob", 200, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.SortedSetAddAsync("rank-test", "charlie", 300, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Use negative stop index (-1 = last element), ascending
-        var result = await _store.SortedSetRangeByRankAsync("rank-test", 0, -1, descending: false);
+        var result = await _store.SortedSetRangeByRankAsync("rank-test", 0, -1, descending: false, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should return all 3 members in ascending order
         Assert.Equal(3, result.Count);
@@ -631,10 +631,10 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SortedSetRangeByRankAsync_WithStartBeyondCount_ReturnsEmpty()
     {
         // Arrange
-        await _store.SortedSetAddAsync("rank-test", "alice", 100);
+        await _store.SortedSetAddAsync("rank-test", "alice", 100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Start index beyond the set size
-        var result = await _store.SortedSetRangeByRankAsync("rank-test", 10, 20, descending: false);
+        var result = await _store.SortedSetRangeByRankAsync("rank-test", 10, 20, descending: false, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -648,7 +648,7 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SortedSetRankAsync_WithNonExistentSet_ReturnsNull()
     {
         // Act
-        var rank = await _store.SortedSetRankAsync("nonexistent-set", "member1");
+        var rank = await _store.SortedSetRankAsync("nonexistent-set", "member1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(rank);
@@ -662,13 +662,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SortedSetScoreAsync_WithExpiredSet_ReturnsNull()
     {
         // Arrange
-        await _store.SortedSetAddAsync("expiring-ss", "member1", 42.0, new StateOptions { Ttl = 1 });
+        await _store.SortedSetAddAsync("expiring-ss", "member1", 42.0, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var score = await _store.SortedSetScoreAsync("expiring-ss", "member1");
+        var score = await _store.SortedSetScoreAsync("expiring-ss", "member1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(score);
@@ -678,13 +678,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SortedSetRankAsync_WithExpiredSet_ReturnsNull()
     {
         // Arrange
-        await _store.SortedSetAddAsync("expiring-ss", "member1", 42.0, new StateOptions { Ttl = 1 });
+        await _store.SortedSetAddAsync("expiring-ss", "member1", 42.0, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var rank = await _store.SortedSetRankAsync("expiring-ss", "member1");
+        var rank = await _store.SortedSetRankAsync("expiring-ss", "member1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(rank);
@@ -694,13 +694,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SortedSetRemoveAsync_WithExpiredSet_ReturnsFalse()
     {
         // Arrange
-        await _store.SortedSetAddAsync("expiring-ss", "member1", 42.0, new StateOptions { Ttl = 1 });
+        await _store.SortedSetAddAsync("expiring-ss", "member1", 42.0, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var removed = await _store.SortedSetRemoveAsync("expiring-ss", "member1");
+        var removed = await _store.SortedSetRemoveAsync("expiring-ss", "member1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(removed);
@@ -710,13 +710,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SortedSetRangeByRankAsync_WithExpiredSet_ReturnsEmpty()
     {
         // Arrange
-        await _store.SortedSetAddAsync("expiring-ss", "member1", 42.0, new StateOptions { Ttl = 1 });
+        await _store.SortedSetAddAsync("expiring-ss", "member1", 42.0, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var range = await _store.SortedSetRangeByRankAsync("expiring-ss", 0, -1);
+        var range = await _store.SortedSetRangeByRankAsync("expiring-ss", 0, -1, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(range);
@@ -726,13 +726,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SortedSetRangeByScoreAsync_WithExpiredSet_ReturnsEmpty()
     {
         // Arrange
-        await _store.SortedSetAddAsync("expiring-ss", "member1", 42.0, new StateOptions { Ttl = 1 });
+        await _store.SortedSetAddAsync("expiring-ss", "member1", 42.0, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var range = await _store.SortedSetRangeByScoreAsync("expiring-ss", 0, 100);
+        var range = await _store.SortedSetRangeByScoreAsync("expiring-ss", 0, 100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(range);
@@ -746,13 +746,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SortedSetIncrementAsync_WithExpiredSet_ResetsAndCreatesNewMember()
     {
         // Arrange - Set that will expire
-        await _store.SortedSetAddAsync("expiring-ss", "member1", 100.0, new StateOptions { Ttl = 1 });
+        await _store.SortedSetAddAsync("expiring-ss", "member1", 100.0, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Increment on expired set should start from 0
-        var newScore = await _store.SortedSetIncrementAsync("expiring-ss", "member1", 5.0);
+        var newScore = await _store.SortedSetIncrementAsync("expiring-ss", "member1", 5.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should be 5.0 (started from 0 after clearing expired data)
         Assert.Equal(5.0, newScore);
@@ -766,13 +766,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task IncrementAsync_WithExpiredCounter_ResetsToZeroThenIncrements()
     {
         // Arrange
-        await _store.SetCounterAsync("expiring-counter", 100, new StateOptions { Ttl = 1 });
+        await _store.SetCounterAsync("expiring-counter", 100, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var newValue = await _store.IncrementAsync("expiring-counter", 5);
+        var newValue = await _store.IncrementAsync("expiring-counter", 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should be 5 (reset from expired 100 to 0, then +5)
         Assert.Equal(5, newValue);
@@ -786,19 +786,19 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task HashSetAsync_WithExpiredHash_ClearsAndSetsNewField()
     {
         // Arrange
-        await _store.HashSetAsync("expiring-hash", "old-field", "old-value", new StateOptions { Ttl = 1 });
+        await _store.HashSetAsync("expiring-hash", "old-field", "old-value", new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var isNew = await _store.HashSetAsync<string>("expiring-hash", "new-field", "new-value");
+        var isNew = await _store.HashSetAsync<string>("expiring-hash", "new-field", "new-value", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should be a new field (hash was cleared)
         Assert.True(isNew);
 
         // Old field should be gone
-        var oldValue = await _store.HashGetAsync<string>("expiring-hash", "old-field");
+        var oldValue = await _store.HashGetAsync<string>("expiring-hash", "old-field", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Null(oldValue);
     }
 
@@ -806,13 +806,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task HashDeleteAsync_WithExpiredHash_ReturnsFalse()
     {
         // Arrange
-        await _store.HashSetAsync("expiring-hash", "field1", "value1", new StateOptions { Ttl = 1 });
+        await _store.HashSetAsync("expiring-hash", "field1", "value1", new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var deleted = await _store.HashDeleteAsync("expiring-hash", "field1");
+        var deleted = await _store.HashDeleteAsync("expiring-hash", "field1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(deleted);
@@ -822,13 +822,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task HashExistsAsync_WithExpiredHash_ReturnsFalse()
     {
         // Arrange
-        await _store.HashSetAsync("expiring-hash", "field1", "value1", new StateOptions { Ttl = 1 });
+        await _store.HashSetAsync("expiring-hash", "field1", "value1", new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var exists = await _store.HashExistsAsync("expiring-hash", "field1");
+        var exists = await _store.HashExistsAsync("expiring-hash", "field1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(exists);
@@ -838,13 +838,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task HashIncrementAsync_WithExpiredHash_ResetsAndIncrements()
     {
         // Arrange
-        await _store.HashSetAsync("expiring-hash", "counter", "100", new StateOptions { Ttl = 1 });
+        await _store.HashSetAsync("expiring-hash", "counter", "100", new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var newValue = await _store.HashIncrementAsync("expiring-hash", "counter", 5);
+        var newValue = await _store.HashIncrementAsync("expiring-hash", "counter", 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should be 5 (reset from expired to 0, then +5)
         Assert.Equal(5, newValue);
@@ -854,13 +854,13 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task RefreshHashTtlAsync_WithExpiredHash_ReturnsFalse()
     {
         // Arrange
-        await _store.HashSetAsync("expiring-hash", "field1", "value1", new StateOptions { Ttl = 1 });
+        await _store.HashSetAsync("expiring-hash", "field1", "value1", new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var refreshed = await _store.RefreshHashTtlAsync("expiring-hash", 60);
+        var refreshed = await _store.RefreshHashTtlAsync("expiring-hash", 60, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(refreshed);
@@ -870,10 +870,10 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task HashSetManyAsync_WithExpiredHash_WithoutNewTtl_RemainsExpired()
     {
         // Arrange
-        await _store.HashSetAsync("expiring-hash", "old-field", "old-value", new StateOptions { Ttl = 1 });
+        await _store.HashSetAsync("expiring-hash", "old-field", "old-value", new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Add new fields WITHOUT providing new TTL options
         var fields = new Dictionary<string, string>
@@ -881,11 +881,11 @@ public class InMemoryBulkOperationsTests : IDisposable
             ["new-field1"] = "value1",
             ["new-field2"] = "value2"
         };
-        await _store.HashSetManyAsync("expiring-hash", fields);
+        await _store.HashSetManyAsync("expiring-hash", fields, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Container ExpiresAt is still in the past, so count returns 0
         // The items were added but the hash is still considered expired
-        var count = await _store.HashCountAsync("expiring-hash");
+        var count = await _store.HashCountAsync("expiring-hash", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(0, count);
     }
 
@@ -893,10 +893,10 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task HashSetManyAsync_WithExpiredHash_WithNewTtl_ClearsAndSetsNewFields()
     {
         // Arrange
-        await _store.HashSetAsync("expiring-hash-ttl", "old-field", "old-value", new StateOptions { Ttl = 1 });
+        await _store.HashSetAsync("expiring-hash-ttl", "old-field", "old-value", new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Add new fields WITH a new TTL (resets ExpiresAt)
         var fields = new Dictionary<string, string>
@@ -904,10 +904,10 @@ public class InMemoryBulkOperationsTests : IDisposable
             ["new-field1"] = "value1",
             ["new-field2"] = "value2"
         };
-        await _store.HashSetManyAsync("expiring-hash-ttl", fields, new StateOptions { Ttl = 60 });
+        await _store.HashSetManyAsync("expiring-hash-ttl", fields, new StateOptions { Ttl = 60 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - New TTL makes the hash visible again
-        var count = await _store.HashCountAsync("expiring-hash-ttl");
+        var count = await _store.HashCountAsync("expiring-hash-ttl", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(2, count);
     }
 
@@ -919,10 +919,10 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task HashGetAsync_RetrievesNumericFieldSetViaIncrement()
     {
         // Arrange - Set field via increment (creates a NumericField)
-        await _store.HashIncrementAsync("test-hash", "counter", 42);
+        await _store.HashIncrementAsync("test-hash", "counter", 42, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Retrieve as long
-        var value = await _store.HashGetAsync<long>("test-hash", "counter");
+        var value = await _store.HashGetAsync<long>("test-hash", "counter", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(42, value);
@@ -932,10 +932,10 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task HashExistsAsync_WithNumericField_ReturnsTrue()
     {
         // Arrange - Create a numeric field via increment
-        await _store.HashIncrementAsync("test-hash", "counter", 1);
+        await _store.HashIncrementAsync("test-hash", "counter", 1, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var exists = await _store.HashExistsAsync("test-hash", "counter");
+        var exists = await _store.HashExistsAsync("test-hash", "counter", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(exists);
@@ -945,11 +945,11 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task HashCountAsync_CountsBothStringAndNumericFields()
     {
         // Arrange
-        await _store.HashSetAsync("mixed-hash", "string-field", "hello");
-        await _store.HashIncrementAsync("mixed-hash", "numeric-field", 42);
+        await _store.HashSetAsync("mixed-hash", "string-field", "hello", cancellationToken: TestContext.Current.CancellationToken);
+        await _store.HashIncrementAsync("mixed-hash", "numeric-field", 42, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var count = await _store.HashCountAsync("mixed-hash");
+        var count = await _store.HashCountAsync("mixed-hash", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, count);
@@ -963,15 +963,15 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task HashSetAsync_OverwritesNumericFieldWithStringField()
     {
         // Arrange - Create a numeric field
-        await _store.HashIncrementAsync("test-hash", "field1", 100);
-        var numericValue = await _store.HashGetAsync<long>("test-hash", "field1");
+        await _store.HashIncrementAsync("test-hash", "field1", 100, cancellationToken: TestContext.Current.CancellationToken);
+        var numericValue = await _store.HashGetAsync<long>("test-hash", "field1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(100, numericValue);
 
         // Act - Overwrite with string field
-        await _store.HashSetAsync("test-hash", "field1", "now-a-string");
+        await _store.HashSetAsync("test-hash", "field1", "now-a-string", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should now be a string, numeric removed
-        var stringValue = await _store.HashGetAsync<string>("test-hash", "field1");
+        var stringValue = await _store.HashGetAsync<string>("test-hash", "field1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("now-a-string", stringValue);
     }
 
@@ -979,10 +979,10 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task HashIncrementAsync_OverwritesStringFieldWithNumericField()
     {
         // Arrange - Create a string field
-        await _store.HashSetAsync("test-hash", "field1", "hello");
+        await _store.HashSetAsync("test-hash", "field1", "hello", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Increment should try to parse string, fail gracefully, default to 0
-        var newValue = await _store.HashIncrementAsync("test-hash", "field1", 5);
+        var newValue = await _store.HashIncrementAsync("test-hash", "field1", 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should be 5 (0 + 5, since "hello" is not numeric)
         Assert.Equal(5, newValue);
@@ -997,10 +997,10 @@ public class InMemoryBulkOperationsTests : IDisposable
     {
         // Arrange
         var oldItem = new TestModel { Id = "old", Name = "Old", Score = 1 };
-        await _store.AddToSetAsync("expiring-set", oldItem, new StateOptions { Ttl = 1 });
+        await _store.AddToSetAsync("expiring-set", oldItem, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Add new items WITHOUT providing new TTL options
         var newItems = new[]
@@ -1008,12 +1008,12 @@ public class InMemoryBulkOperationsTests : IDisposable
             new TestModel { Id = "new1", Name = "New1", Score = 10 },
             new TestModel { Id = "new2", Name = "New2", Score = 20 }
         };
-        var added = await _store.AddToSetAsync("expiring-set", newItems.AsEnumerable());
+        var added = await _store.AddToSetAsync("expiring-set", newItems.AsEnumerable(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Items were added to internal storage, but container ExpiresAt
         // is still in the past, so count returns 0 (set appears expired)
         Assert.Equal(2, added);
-        var count = await _store.SetCountAsync("expiring-set");
+        var count = await _store.SetCountAsync("expiring-set", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(0, count);
     }
 
@@ -1022,10 +1022,10 @@ public class InMemoryBulkOperationsTests : IDisposable
     {
         // Arrange
         var oldItem = new TestModel { Id = "old", Name = "Old", Score = 1 };
-        await _store.AddToSetAsync("expiring-set-ttl", oldItem, new StateOptions { Ttl = 1 });
+        await _store.AddToSetAsync("expiring-set-ttl", oldItem, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Add new items WITH a new TTL (resets ExpiresAt)
         var newItems = new[]
@@ -1034,11 +1034,11 @@ public class InMemoryBulkOperationsTests : IDisposable
             new TestModel { Id = "new2", Name = "New2", Score = 20 }
         };
         var added = await _store.AddToSetAsync("expiring-set-ttl", newItems.AsEnumerable(),
-            new StateOptions { Ttl = 60 });
+            new StateOptions { Ttl = 60 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - New TTL makes the set visible again
         Assert.Equal(2, added);
-        var count = await _store.SetCountAsync("expiring-set-ttl");
+        var count = await _store.SetCountAsync("expiring-set-ttl", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(2, count);
     }
 
@@ -1050,19 +1050,19 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SortedSetAddBatchAsync_OnExpiredSet_WithoutNewTtl_RemainsExpired()
     {
         // Arrange
-        await _store.SortedSetAddAsync("expiring-ss", "old-member", 50.0, new StateOptions { Ttl = 1 });
+        await _store.SortedSetAddAsync("expiring-ss", "old-member", 50.0, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Add new entries WITHOUT providing new TTL options
         var entries = new[] { ("new1", 10.0), ("new2", 20.0) };
-        var added = await _store.SortedSetAddBatchAsync("expiring-ss", entries);
+        var added = await _store.SortedSetAddBatchAsync("expiring-ss", entries, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Items were added to internal storage, but container ExpiresAt
         // is still in the past, so count returns 0 (sorted set appears expired)
         Assert.Equal(2, added);
-        var count = await _store.SortedSetCountAsync("expiring-ss");
+        var count = await _store.SortedSetCountAsync("expiring-ss", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(0, count);
     }
 
@@ -1070,19 +1070,19 @@ public class InMemoryBulkOperationsTests : IDisposable
     public async Task SortedSetAddBatchAsync_OnExpiredSet_WithNewTtl_ClearsAndAddsNew()
     {
         // Arrange
-        await _store.SortedSetAddAsync("expiring-ss-ttl", "old-member", 50.0, new StateOptions { Ttl = 1 });
+        await _store.SortedSetAddAsync("expiring-ss-ttl", "old-member", 50.0, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Add new entries WITH a new TTL (resets ExpiresAt)
         var entries = new[] { ("new1", 10.0), ("new2", 20.0) };
         var added = await _store.SortedSetAddBatchAsync("expiring-ss-ttl", entries,
-            new StateOptions { Ttl = 60 });
+            new StateOptions { Ttl = 60 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - New TTL makes the sorted set visible again
         Assert.Equal(2, added);
-        var count = await _store.SortedSetCountAsync("expiring-ss-ttl");
+        var count = await _store.SortedSetCountAsync("expiring-ss-ttl", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(2, count);
     }
 

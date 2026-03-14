@@ -431,7 +431,7 @@ public class OAuthProviderServiceTests : IDisposable
     public async Task GetMockUserInfoAsync_ForDiscord_ShouldReturnMockInfo()
     {
         // Act
-        var result = await _service.GetMockUserInfoAsync(OAuthProvider.Discord);
+        var result = await _service.GetMockUserInfoAsync(OAuthProvider.Discord, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -444,7 +444,7 @@ public class OAuthProviderServiceTests : IDisposable
     public async Task GetMockUserInfoAsync_ForGoogle_ShouldReturnMockInfo()
     {
         // Act
-        var result = await _service.GetMockUserInfoAsync(OAuthProvider.Google);
+        var result = await _service.GetMockUserInfoAsync(OAuthProvider.Google, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -456,7 +456,7 @@ public class OAuthProviderServiceTests : IDisposable
     public async Task GetMockUserInfoAsync_ForTwitch_ShouldReturnMockInfo()
     {
         // Act
-        var result = await _service.GetMockUserInfoAsync(OAuthProvider.Twitch);
+        var result = await _service.GetMockUserInfoAsync(OAuthProvider.Twitch, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -472,7 +472,7 @@ public class OAuthProviderServiceTests : IDisposable
     public async Task GetMockSteamUserInfoAsync_ShouldReturnMockInfo()
     {
         // Act
-        var result = await _service.GetMockSteamUserInfoAsync();
+        var result = await _service.GetMockSteamUserInfoAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -515,7 +515,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync(existingAccount);
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result.Account);
@@ -561,7 +561,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync("etag");
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result.Account);
@@ -608,7 +608,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync(new AuthMethodResponse());
 
         // Act
-        await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, CancellationToken.None);
+        await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, TestContext.Current.CancellationToken);
 
         // Assert - verify AddAuthMethodAsync was called with correct parameters
         _mockAccountClient.Verify(c => c.AddAuthMethodAsync(
@@ -664,7 +664,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync(new AuthMethodResponse());
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Google, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Google, userInfo, TestContext.Current.CancellationToken);
 
         // Assert - verify AddAuthMethodAsync was called with correct parameters
         Assert.NotNull(result.Account);
@@ -711,7 +711,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ThrowsAsync(new ApiException("Conflict", 409));
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Twitch, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Twitch, userInfo, TestContext.Current.CancellationToken);
 
         // Assert - method should succeed despite 409 from sync
         Assert.NotNull(result.Account);
@@ -753,7 +753,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ThrowsAsync(new Exception("Service unavailable"));
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Steam, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Steam, userInfo, TestContext.Current.CancellationToken);
 
         // Assert - method should succeed despite sync failure (best-effort)
         Assert.NotNull(result.Account);
@@ -813,7 +813,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync("etag");
 
         // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, CancellationToken.None);
+        var result = await _service.FindOrCreateOAuthAccountAsync(OAuthProvider.Discord, userInfo, TestContext.Current.CancellationToken);
 
         // Assert - new account was created successfully
         Assert.NotNull(result.Account);
@@ -856,7 +856,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync(true);
 
         // Act
-        await _service.CleanupOAuthLinksForAccountAsync(accountId);
+        await _service.CleanupOAuthLinksForAccountAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert - Each link key should be deleted
         foreach (var linkKey in linkKeys)
@@ -879,7 +879,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync((List<string>?)null);
 
         // Act
-        await _service.CleanupOAuthLinksForAccountAsync(accountId);
+        await _service.CleanupOAuthLinksForAccountAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert - No deletions should occur
         _mockStringStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -920,7 +920,7 @@ public class OAuthProviderServiceTests : IDisposable
             .ReturnsAsync(true);
 
         // Act - Should NOT throw (catch swallows, publishes error)
-        await _service.CleanupOAuthLinksForAccountAsync(accountId);
+        await _service.CleanupOAuthLinksForAccountAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert - Error event was published
         Assert.Equal("auth", capturedServiceName);
@@ -940,7 +940,7 @@ public class OAuthProviderServiceTests : IDisposable
         var service = CreateServiceWithMockedHttp(httpClient);
 
         // Act
-        var result = await service.ValidateSteamTicketAsync("valid-ticket-hex");
+        var result = await service.ValidateSteamTicketAsync("valid-ticket-hex", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -955,7 +955,7 @@ public class OAuthProviderServiceTests : IDisposable
         var service = CreateServiceWithMockedHttp(httpClient);
 
         // Act
-        var result = await service.ValidateSteamTicketAsync("vac-banned-ticket");
+        var result = await service.ValidateSteamTicketAsync("vac-banned-ticket", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -969,7 +969,7 @@ public class OAuthProviderServiceTests : IDisposable
         var service = CreateServiceWithMockedHttp(httpClient);
 
         // Act
-        var result = await service.ValidateSteamTicketAsync("publisher-banned-ticket");
+        var result = await service.ValidateSteamTicketAsync("publisher-banned-ticket", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -983,7 +983,7 @@ public class OAuthProviderServiceTests : IDisposable
         var service = CreateServiceWithMockedHttp(httpClient);
 
         // Act
-        var result = await service.ValidateSteamTicketAsync("wrong-app-ticket");
+        var result = await service.ValidateSteamTicketAsync("wrong-app-ticket", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -997,7 +997,7 @@ public class OAuthProviderServiceTests : IDisposable
         var service = CreateServiceWithMockedHttp(httpClient);
 
         // Act
-        var result = await service.ValidateSteamTicketAsync("invalid-ticket");
+        var result = await service.ValidateSteamTicketAsync("invalid-ticket", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -1011,7 +1011,7 @@ public class OAuthProviderServiceTests : IDisposable
         var service = CreateServiceWithMockedHttp(httpClient);
 
         // Act
-        var result = await service.ValidateSteamTicketAsync("some-ticket");
+        var result = await service.ValidateSteamTicketAsync("some-ticket", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -1025,7 +1025,7 @@ public class OAuthProviderServiceTests : IDisposable
         var service = CreateServiceWithMockedHttp(httpClient);
 
         // Act
-        var result = await service.ValidateSteamTicketAsync("some-ticket");
+        var result = await service.ValidateSteamTicketAsync("some-ticket", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -1059,7 +1059,7 @@ public class OAuthProviderServiceTests : IDisposable
         var service = CreateServiceWithMockedHttp(httpClient, configWithoutKey);
 
         // Act
-        var result = await service.ValidateSteamTicketAsync("some-ticket");
+        var result = await service.ValidateSteamTicketAsync("some-ticket", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -1078,7 +1078,7 @@ public class OAuthProviderServiceTests : IDisposable
         var service = CreateServiceWithMockedHttp(httpClient, configWithoutAppId);
 
         // Act
-        var result = await service.ValidateSteamTicketAsync("some-ticket");
+        var result = await service.ValidateSteamTicketAsync("some-ticket", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -1092,7 +1092,7 @@ public class OAuthProviderServiceTests : IDisposable
         var service = CreateServiceWithMockedHttp(httpClient);
 
         // Act
-        var result = await service.ValidateSteamTicketAsync("some-ticket");
+        var result = await service.ValidateSteamTicketAsync("some-ticket", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -1120,7 +1120,7 @@ public class OAuthProviderServiceTests : IDisposable
         var service = CreateServiceWithMockedHttp(httpClient);
 
         // Act
-        await service.ValidateSteamTicketAsync("test-ticket-hex");
+        await service.ValidateSteamTicketAsync("test-ticket-hex", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedRequest);

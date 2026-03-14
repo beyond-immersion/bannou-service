@@ -399,7 +399,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreateCurrencyDefinitionAsync(request);
+        var (status, response) = await service.CreateCurrencyDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -442,7 +442,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreateCurrencyDefinitionAsync(request);
+        var (status, response) = await service.CreateCurrencyDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -472,7 +472,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreateCurrencyDefinitionAsync(request);
+        var (status, response) = await service.CreateCurrencyDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -494,7 +494,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new GetCurrencyDefinitionRequest { DefinitionId = _definitionId };
 
         // Act
-        var (status, response) = await service.GetCurrencyDefinitionAsync(request);
+        var (status, response) = await service.GetCurrencyDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -517,7 +517,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new GetCurrencyDefinitionRequest { Code = "GOLD" };
 
         // Act
-        var (status, response) = await service.GetCurrencyDefinitionAsync(request);
+        var (status, response) = await service.GetCurrencyDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -537,7 +537,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new GetCurrencyDefinitionRequest { DefinitionId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.GetCurrencyDefinitionAsync(request);
+        var (status, response) = await service.GetCurrencyDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -570,7 +570,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new ListCurrencyDefinitionsRequest { IncludeInactive = false };
 
         // Act
-        var (status, response) = await service.ListCurrencyDefinitionsAsync(request);
+        var (status, response) = await service.ListCurrencyDefinitionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -601,7 +601,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.UpdateCurrencyDefinitionAsync(request);
+        var (status, response) = await service.UpdateCurrencyDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -631,7 +631,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.UpdateCurrencyDefinitionAsync(request);
+        var (status, response) = await service.UpdateCurrencyDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -658,7 +658,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreateWalletAsync(request);
+        var (status, response) = await service.CreateWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -694,7 +694,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreateWalletAsync(request);
+        var (status, response) = await service.CreateWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -717,7 +717,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new GetWalletRequest { WalletId = _walletId };
 
         // Act
-        var (status, response) = await service.GetWalletAsync(request);
+        var (status, response) = await service.GetWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -738,7 +738,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new GetWalletRequest { WalletId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.GetWalletAsync(request);
+        var (status, response) = await service.GetWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -769,7 +769,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.GetOrCreateWalletAsync(request);
+        var (status, response) = await service.GetOrCreateWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -794,7 +794,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.GetOrCreateWalletAsync(request);
+        var (status, response) = await service.GetOrCreateWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -822,7 +822,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new FreezeWalletRequest { WalletId = _walletId, Reason = "Suspected fraud" };
 
         // Act
-        var (status, response) = await service.FreezeWalletAsync(request);
+        var (status, response) = await service.FreezeWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -849,7 +849,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new FreezeWalletRequest { WalletId = _walletId, Reason = "test" };
 
         // Act
-        var (status, _) = await service.FreezeWalletAsync(request);
+        var (status, _) = await service.FreezeWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -873,7 +873,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new UnfreezeWalletRequest { WalletId = _walletId };
 
         // Act
-        var (status, response) = await service.UnfreezeWalletAsync(request);
+        var (status, response) = await service.UnfreezeWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -897,7 +897,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new UnfreezeWalletRequest { WalletId = _walletId };
 
         // Act
-        var (status, _) = await service.UnfreezeWalletAsync(request);
+        var (status, _) = await service.UnfreezeWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -936,7 +936,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CloseWalletAsync(request);
+        var (status, response) = await service.CloseWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -967,7 +967,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.CloseWalletAsync(request);
+        var (status, _) = await service.CloseWalletAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -998,7 +998,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreditCurrencyAsync(request);
+        var (status, response) = await service.CreditCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1037,7 +1037,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreditCurrencyAsync(request);
+        var (status, response) = await service.CreditCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1063,7 +1063,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreditCurrencyAsync(request);
+        var (status, response) = await service.CreditCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1089,7 +1089,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.CreditCurrencyAsync(request);
+        var (status, _) = await service.CreditCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1115,7 +1115,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreditCurrencyAsync(request);
+        var (status, response) = await service.CreditCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1153,7 +1153,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreditCurrencyAsync(request);
+        var (status, response) = await service.CreditCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1184,7 +1184,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreditCurrencyAsync(request);
+        var (status, response) = await service.CreditCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1226,7 +1226,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.CreditCurrencyAsync(request);
+        var (status, _) = await service.CreditCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1259,7 +1259,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.DebitCurrencyAsync(request);
+        var (status, response) = await service.DebitCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1296,7 +1296,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.DebitCurrencyAsync(request);
+        var (status, response) = await service.DebitCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1326,7 +1326,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.DebitCurrencyAsync(request);
+        var (status, response) = await service.DebitCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1350,7 +1350,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.DebitCurrencyAsync(request);
+        var (status, _) = await service.DebitCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1393,7 +1393,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.TransferCurrencyAsync(request);
+        var (status, response) = await service.TransferCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1434,7 +1434,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.TransferCurrencyAsync(request);
+        var (status, _) = await service.TransferCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1457,7 +1457,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.TransferCurrencyAsync(request);
+        var (status, _) = await service.TransferCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1487,7 +1487,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.GetBalanceAsync(request);
+        var (status, response) = await service.GetBalanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1513,7 +1513,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.GetBalanceAsync(request);
+        var (status, _) = await service.GetBalanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1551,7 +1551,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.BatchGetBalancesAsync(request);
+        var (status, response) = await service.BatchGetBalancesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1588,7 +1588,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CalculateConversionAsync(request);
+        var (status, response) = await service.CalculateConversionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1616,7 +1616,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.CalculateConversionAsync(request);
+        var (status, _) = await service.CalculateConversionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1650,7 +1650,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.GetExchangeRateAsync(request);
+        var (status, response) = await service.GetExchangeRateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1686,7 +1686,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.UpdateExchangeRateAsync(request);
+        var (status, response) = await service.UpdateExchangeRateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1717,7 +1717,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.UpdateExchangeRateAsync(request);
+        var (status, _) = await service.UpdateExchangeRateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1743,7 +1743,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.UpdateExchangeRateAsync(request);
+        var (status, _) = await service.UpdateExchangeRateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1778,7 +1778,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CreateHoldAsync(request);
+        var (status, response) = await service.CreateHoldAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1820,7 +1820,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.CreateHoldAsync(request);
+        var (status, _) = await service.CreateHoldAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1842,7 +1842,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.CreateHoldAsync(request);
+        var (status, _) = await service.CreateHoldAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1893,7 +1893,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.CaptureHoldAsync(request);
+        var (status, response) = await service.CaptureHoldAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1934,7 +1934,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.CaptureHoldAsync(request);
+        var (status, _) = await service.CaptureHoldAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1966,7 +1966,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.CaptureHoldAsync(request);
+        var (status, _) = await service.CaptureHoldAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2005,7 +2005,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new ReleaseHoldRequest { HoldId = holdId };
 
         // Act
-        var (status, response) = await service.ReleaseHoldAsync(request);
+        var (status, response) = await service.ReleaseHoldAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2039,7 +2039,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new ReleaseHoldRequest { HoldId = holdId };
 
         // Act
-        var (status, _) = await service.ReleaseHoldAsync(request);
+        var (status, _) = await service.ReleaseHoldAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2072,7 +2072,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new GetHoldRequest { HoldId = holdId };
 
         // Act
-        var (status, response) = await service.GetHoldAsync(request);
+        var (status, response) = await service.GetHoldAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2093,7 +2093,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new GetHoldRequest { HoldId = Guid.NewGuid() };
 
         // Act
-        var (status, _) = await service.GetHoldAsync(request);
+        var (status, _) = await service.GetHoldAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2127,7 +2127,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.EscrowDepositAsync(request);
+        var (status, response) = await service.EscrowDepositAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2162,7 +2162,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.EscrowReleaseAsync(request);
+        var (status, response) = await service.EscrowReleaseAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2191,7 +2191,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.EscrowRefundAsync(request);
+        var (status, response) = await service.EscrowRefundAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2226,7 +2226,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new GetTransactionRequest { TransactionId = txId };
 
         // Act
-        var (status, response) = await service.GetTransactionAsync(request);
+        var (status, response) = await service.GetTransactionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2247,7 +2247,7 @@ public class CurrencyServiceBusinessLogicTests
         var request = new GetTransactionRequest { TransactionId = Guid.NewGuid() };
 
         // Act
-        var (status, _) = await service.GetTransactionAsync(request);
+        var (status, _) = await service.GetTransactionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2305,7 +2305,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.GetTransactionHistoryAsync(request);
+        var (status, response) = await service.GetTransactionHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2353,7 +2353,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, response) = await service.GetTransactionsByReferenceAsync(request);
+        var (status, response) = await service.GetTransactionsByReferenceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2391,7 +2391,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.BatchCreditCurrencyAsync(request);
+        var (status, _) = await service.BatchCreditCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2422,7 +2422,7 @@ public class CurrencyServiceBusinessLogicTests
         };
 
         // Act
-        var (status, _) = await service.BatchDebitCurrencyAsync(request);
+        var (status, _) = await service.BatchDebitCurrencyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);

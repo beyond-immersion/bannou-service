@@ -102,7 +102,7 @@ public class OpenrestyEdgeProviderTests
         var provider = new OpenrestyEdgeProvider(config, _mockStateStoreFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
-        var result = await provider.PushTokenRevocationAsync("test-jti", Guid.NewGuid(), TimeSpan.FromMinutes(60));
+        var result = await provider.PushTokenRevocationAsync("test-jti", Guid.NewGuid(), TimeSpan.FromMinutes(60), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -127,7 +127,7 @@ public class OpenrestyEdgeProviderTests
             .ReturnsAsync(entry);
 
         // Act
-        var result = await _provider.PushTokenRevocationAsync(jti, accountId, TimeSpan.FromMinutes(60));
+        var result = await _provider.PushTokenRevocationAsync(jti, accountId, TimeSpan.FromMinutes(60), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -143,7 +143,7 @@ public class OpenrestyEdgeProviderTests
             .ReturnsAsync((TokenRevocationEntry?)null);
 
         // Act
-        var result = await _provider.PushTokenRevocationAsync(jti, Guid.NewGuid(), TimeSpan.FromMinutes(60));
+        var result = await _provider.PushTokenRevocationAsync(jti, Guid.NewGuid(), TimeSpan.FromMinutes(60), TestContext.Current.CancellationToken);
 
         // Assert - returns true because entry might not be written yet (defense-in-depth)
         Assert.True(result);
@@ -158,7 +158,7 @@ public class OpenrestyEdgeProviderTests
             .ThrowsAsync(new Exception("Redis connection failed"));
 
         // Act
-        var result = await _provider.PushTokenRevocationAsync(jti, Guid.NewGuid(), TimeSpan.FromMinutes(60));
+        var result = await _provider.PushTokenRevocationAsync(jti, Guid.NewGuid(), TimeSpan.FromMinutes(60), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -176,7 +176,7 @@ public class OpenrestyEdgeProviderTests
         var provider = new OpenrestyEdgeProvider(config, _mockStateStoreFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
-        var result = await provider.PushAccountRevocationAsync(Guid.NewGuid(), DateTimeOffset.UtcNow);
+        var result = await provider.PushAccountRevocationAsync(Guid.NewGuid(), DateTimeOffset.UtcNow, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -201,7 +201,7 @@ public class OpenrestyEdgeProviderTests
             .ReturnsAsync(entry);
 
         // Act
-        var result = await _provider.PushAccountRevocationAsync(accountId, issuedBefore);
+        var result = await _provider.PushAccountRevocationAsync(accountId, issuedBefore, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -217,7 +217,7 @@ public class OpenrestyEdgeProviderTests
             .ThrowsAsync(new Exception("Redis connection failed"));
 
         // Act
-        var result = await _provider.PushAccountRevocationAsync(accountId, DateTimeOffset.UtcNow);
+        var result = await _provider.PushAccountRevocationAsync(accountId, DateTimeOffset.UtcNow, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -240,7 +240,7 @@ public class OpenrestyEdgeProviderTests
         };
 
         // Act
-        var result = await provider.PushBatchAsync(entries);
+        var result = await provider.PushBatchAsync(entries, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result);
@@ -263,7 +263,7 @@ public class OpenrestyEdgeProviderTests
             .ReturnsAsync(new AccountRevocationEntry { AccountId = accountId });
 
         // Act
-        var result = await _provider.PushBatchAsync(entries);
+        var result = await _provider.PushBatchAsync(entries, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result);
@@ -276,7 +276,7 @@ public class OpenrestyEdgeProviderTests
         var entries = new List<FailedEdgePushEntry>();
 
         // Act
-        var result = await _provider.PushBatchAsync(entries);
+        var result = await _provider.PushBatchAsync(entries, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, result);

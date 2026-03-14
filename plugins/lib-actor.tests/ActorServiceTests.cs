@@ -109,7 +109,7 @@ public class ActorServiceTests
             .ReturnsAsync(new List<string>());
 
         // Act
-        var (status, response) = await service.CreateActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -130,7 +130,7 @@ public class ActorServiceTests
         };
 
         // Act
-        var (status, response) = await service.CreateActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -149,7 +149,7 @@ public class ActorServiceTests
         };
 
         // Act
-        var (status, response) = await service.CreateActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -178,7 +178,7 @@ public class ActorServiceTests
             .ReturnsAsync(existingTemplate);
 
         // Act
-        var (status, response) = await service.CreateActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -202,7 +202,7 @@ public class ActorServiceTests
             .ReturnsAsync(new List<string>());
 
         // Act
-        await service.CreateActorTemplateAsync(request, CancellationToken.None);
+        await service.CreateActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - verify the convenience overload was called (topic, event, cancellationToken)
         _mockMessageBus.Verify(
@@ -236,7 +236,7 @@ public class ActorServiceTests
             .ReturnsAsync(template);
 
         // Act
-        var (status, response) = await service.GetActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -262,7 +262,7 @@ public class ActorServiceTests
             .ReturnsAsync(template);
 
         // Act
-        var (status, response) = await service.GetActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -281,7 +281,7 @@ public class ActorServiceTests
             .ReturnsAsync((ActorTemplateData?)null);
 
         // Act
-        var (status, response) = await service.GetActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -296,7 +296,7 @@ public class ActorServiceTests
         var request = new GetActorTemplateRequest();
 
         // Act
-        var (status, response) = await service.GetActorTemplateAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetActorTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -318,7 +318,7 @@ public class ActorServiceTests
             .ReturnsAsync(new List<string>());
 
         // Act
-        var (status, response) = await service.ListActorTemplatesAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListActorTemplatesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -359,7 +359,7 @@ public class ActorServiceTests
             .ReturnsAsync(templates);
 
         // Act
-        var (status, response) = await service.ListActorTemplatesAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListActorTemplatesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -419,7 +419,7 @@ public class ActorServiceTests
             .Returns(true);
 
         // Act
-        var (status, response) = await service.SpawnActorAsync(request, CancellationToken.None);
+        var (status, response) = await service.SpawnActorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -437,7 +437,7 @@ public class ActorServiceTests
             .ReturnsAsync((ActorTemplateData?)null);
 
         // Act
-        var (status, response) = await service.SpawnActorAsync(request, CancellationToken.None);
+        var (status, response) = await service.SpawnActorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -467,7 +467,7 @@ public class ActorServiceTests
             .Returns(true);
 
         // Act
-        var (status, response) = await service.SpawnActorAsync(request, CancellationToken.None);
+        var (status, response) = await service.SpawnActorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -496,7 +496,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("test-actor", out runner)).Returns(true);
 
         // Act
-        var (status, response) = await service.StopActorAsync(request, CancellationToken.None);
+        var (status, response) = await service.StopActorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -515,7 +515,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("nonexistent", out runner)).Returns(false);
 
         // Act
-        var (status, response) = await service.StopActorAsync(request, CancellationToken.None);
+        var (status, response) = await service.StopActorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -547,7 +547,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("test-actor", out runner)).Returns(true);
 
         // Act
-        var (status, response) = await service.GetActorAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetActorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -566,7 +566,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("nonexistent", out runner)).Returns(false);
 
         // Act
-        var (status, response) = await service.GetActorAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetActorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -646,7 +646,7 @@ public class ActorServiceTests
             .Returns(spawnedRunner.Object);
 
         // Act
-        var (status, response) = await service.GetActorAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetActorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         // Verify that Create was called with the extracted characterId and resolved realmId
@@ -698,7 +698,7 @@ public class ActorServiceTests
             .ReturnsAsync(template);
 
         // Act
-        var (status, response) = await service.GetActorAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetActorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         // Without characterId, realmId cannot be resolved, so auto-spawn fails
@@ -751,7 +751,7 @@ public class ActorServiceTests
             .ReturnsAsync(template);
 
         // Act
-        var (status, response) = await service.GetActorAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetActorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         // Invalid GUID means characterId is null, so realmId cannot be resolved, auto-spawn fails
@@ -788,7 +788,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.GetAllRunners()).Returns(new[] { mockRunner1.Object });
 
         // Act
-        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListActorsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -825,7 +825,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.GetAllRunners()).Returns(new[] { mockRunner1.Object, mockRunner2.Object });
 
         // Act
-        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListActorsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -857,7 +857,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.GetAllRunners()).Returns(new[] { mockRunner.Object });
 
         // Act
-        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListActorsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -881,7 +881,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.GetAllRunners()).Returns(new[] { mockRunner.Object });
 
         // Act
-        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListActorsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -930,7 +930,7 @@ public class ActorServiceTests
             .ReturnsAsync(assignments);
 
         // Act
-        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListActorsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -981,7 +981,7 @@ public class ActorServiceTests
             .ReturnsAsync(assignments);
 
         // Act
-        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListActorsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1020,7 +1020,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("test-actor", out runner)).Returns(true);
 
         // Act
-        var (status, response) = await service.InjectPerceptionAsync(request, CancellationToken.None);
+        var (status, response) = await service.InjectPerceptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1043,7 +1043,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("nonexistent", out runner)).Returns(false);
 
         // Act
-        var (status, response) = await service.InjectPerceptionAsync(request, CancellationToken.None);
+        var (status, response) = await service.InjectPerceptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1081,7 +1081,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
 
         // Act
-        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.StartEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1108,7 +1108,7 @@ public class ActorServiceTests
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
-        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.StartEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1140,7 +1140,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
 
         // Act
-        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.StartEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1185,7 +1185,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
 
         // Act
-        var (status, response) = await service.UpdateEncounterPhaseAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateEncounterPhaseAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1212,7 +1212,7 @@ public class ActorServiceTests
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
-        var (status, response) = await service.UpdateEncounterPhaseAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateEncounterPhaseAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1258,7 +1258,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
 
         // Act
-        var (status, response) = await service.EndEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.EndEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1284,7 +1284,7 @@ public class ActorServiceTests
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
-        var (status, response) = await service.EndEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.EndEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1329,7 +1329,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
 
         // Act
-        var (status, response) = await service.GetEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1366,7 +1366,7 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
 
         // Act
-        var (status, response) = await service.GetEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1391,7 +1391,7 @@ public class ActorServiceTests
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
-        var (status, response) = await service.GetEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Actor not found returns NotFound with null response
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1449,7 +1449,7 @@ public class ActorServiceTests
             .ReturnsAsync(new StartEncounterResponse());
 
         // Act
-        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.StartEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1508,7 +1508,7 @@ public class ActorServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var (status, response) = await service.UpdateEncounterPhaseAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateEncounterPhaseAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1569,7 +1569,7 @@ public class ActorServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var (status, response) = await service.EndEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.EndEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1638,7 +1638,7 @@ public class ActorServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var (status, response) = await service.GetEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1680,7 +1680,7 @@ public class ActorServiceTests
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
-        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.StartEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);

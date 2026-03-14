@@ -334,7 +334,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.CreateEscrowAsync(request);
+        var (status, response) = await service.CreateEscrowAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -360,7 +360,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateEscrowAsync(request);
+        var (status, response) = await service.CreateEscrowAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -387,7 +387,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateEscrowAsync(request);
+        var (status, response) = await service.CreateEscrowAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -415,7 +415,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateEscrowAsync(request);
+        var (status, response) = await service.CreateEscrowAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -449,7 +449,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             .ReturnsAsync((PartyPendingCount?)null);
 
         // Act
-        var (status, response) = await service.CreateEscrowAsync(request);
+        var (status, response) = await service.CreateEscrowAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -473,7 +473,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             .ReturnsAsync((PartyPendingCount?)null);
 
         // Act
-        await service.CreateEscrowAsync(request);
+        await service.CreateEscrowAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -501,7 +501,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             .ReturnsAsync("new-etag");
 
         // Act
-        await service.CreateEscrowAsync(request);
+        await service.CreateEscrowAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedCount);
@@ -525,7 +525,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             .ReturnsAsync(model);
 
         // Act
-        var (status, response) = await service.GetEscrowAsync(new GetEscrowRequest { EscrowId = escrowId });
+        var (status, response) = await service.GetEscrowAsync(new GetEscrowRequest { EscrowId = escrowId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -545,7 +545,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             .ReturnsAsync((EscrowAgreementModel?)null);
 
         // Act
-        var (status, response) = await service.GetEscrowAsync(new GetEscrowRequest { EscrowId = escrowId });
+        var (status, response) = await service.GetEscrowAsync(new GetEscrowRequest { EscrowId = escrowId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -573,7 +573,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             .ReturnsAsync(new List<EscrowAgreementModel> { model });
 
         // Act
-        var (status, response) = await service.ListEscrowsAsync(new ListEscrowsRequest { PartyId = partyId });
+        var (status, response) = await service.ListEscrowsAsync(new ListEscrowsRequest { PartyId = partyId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -597,7 +597,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             .ReturnsAsync(models);
 
         // Act
-        var (status, response) = await service.ListEscrowsAsync(new ListEscrowsRequest());
+        var (status, response) = await service.ListEscrowsAsync(new ListEscrowsRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -645,7 +645,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
                     new EscrowAssetInput { AssetType = AssetType.Currency, CurrencyAmount = 100, CurrencyCode = "GOLD" }
                 }
             }
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -680,7 +680,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = partyId,
             PartyType = EntityType.Account,
             IdempotencyKey = "dup-key"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -707,7 +707,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = Guid.NewGuid(),
             PartyType = EntityType.Account,
             IdempotencyKey = "key-1"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -734,7 +734,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = Guid.NewGuid(),
             PartyType = EntityType.Account,
             IdempotencyKey = "key-2"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -764,7 +764,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = Guid.NewGuid(), // Different from party in model
             PartyType = EntityType.Account,
             IdempotencyKey = "key-3"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -797,7 +797,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyType = EntityType.Account,
             IdempotencyKey = "key-4",
             DepositToken = null
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -840,7 +840,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
                     new EscrowAssetInput { AssetType = AssetType.Currency, CurrencyAmount = 50 }
                 }
             }
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -879,7 +879,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyType = EntityType.Account,
             IdempotencyKey = "key-6",
             Assets = new EscrowAssetBundleInput { Assets = new List<EscrowAssetInput>() }
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -914,7 +914,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             EscrowId = escrowId,
             PartyId = partyId,
             PartyType = EntityType.Account
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -944,7 +944,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             EscrowId = escrowId,
             PartyId = partyId,
             PartyType = EntityType.Account
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -983,7 +983,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = partyId,
             PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1009,7 +1009,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = Guid.NewGuid(),
             PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1035,7 +1035,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = Guid.NewGuid(),
             PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1070,7 +1070,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = partyId,
             PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1104,7 +1104,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = partyId,
             PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1138,7 +1138,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = partyId,
             PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Dispute
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1173,7 +1173,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyType = EntityType.Account,
             ConsentType = EscrowConsentType.Release,
             ReleaseToken = null
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1205,7 +1205,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         SetupAgreementGet(escrowId, model);
 
         // Act
-        var (status, response) = await service.GetConsentStatusAsync(new GetConsentStatusRequest { EscrowId = escrowId });
+        var (status, response) = await service.GetConsentStatusAsync(new GetConsentStatusRequest { EscrowId = escrowId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1247,7 +1247,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             OwnerId = partyId,
             OwnerType = EntityType.Account,
             TokenType = TokenType.Deposit
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1277,7 +1277,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             OwnerId = Guid.NewGuid(), // Different party
             OwnerType = EntityType.Account,
             TokenType = TokenType.Deposit
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1311,7 +1311,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = partyId,
             PartyType = EntityType.Account,
             Reason = "Goods not as described"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1337,7 +1337,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = Guid.NewGuid(),
             PartyType = EntityType.Account,
             Reason = "Too late"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1362,7 +1362,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = Guid.NewGuid(),
             PartyType = EntityType.Account,
             Reason = "Not found"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1392,7 +1392,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             PartyId = partyId,
             PartyType = EntityType.Account,
             Reason = "Test dispute"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -1418,7 +1418,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             Reason = "No longer needed"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1442,7 +1442,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         {
             EscrowId = escrowId,
             Reason = "Too late"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);

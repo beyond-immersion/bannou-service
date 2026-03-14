@@ -121,7 +121,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetInfrastructureHealthAsync(new InfrastructureHealthRequest(), CancellationToken.None);
+        var (statusCode, response) = await service.GetInfrastructureHealthAsync(new InfrastructureHealthRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -148,7 +148,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetInfrastructureHealthAsync(new InfrastructureHealthRequest(), CancellationToken.None);
+        var (statusCode, response) = await service.GetInfrastructureHealthAsync(new InfrastructureHealthRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
@@ -179,7 +179,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetInfrastructureHealthAsync(new InfrastructureHealthRequest(), CancellationToken.None);
+        var (statusCode, response) = await service.GetInfrastructureHealthAsync(new InfrastructureHealthRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
@@ -221,7 +221,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetServicesHealthAsync(new ServiceHealthRequest(), CancellationToken.None);
+        var (statusCode, response) = await service.GetServicesHealthAsync(new ServiceHealthRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -262,7 +262,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.RestartServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RestartServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -295,7 +295,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.RestartServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RestartServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Service returns (Conflict, null) when restart is declined
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -325,7 +325,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.ShouldRestartServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ShouldRestartServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -360,7 +360,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetBackendsAsync(new ListBackendsRequest(), CancellationToken.None);
+        var (statusCode, response) = await service.GetBackendsAsync(new ListBackendsRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -396,7 +396,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetStatusAsync(new GetStatusRequest(), CancellationToken.None);
+        var (statusCode, response) = await service.GetStatusAsync(new GetStatusRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -426,7 +426,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetStatusAsync(new GetStatusRequest(), CancellationToken.None);
+        var (statusCode, response) = await service.GetStatusAsync(new GetStatusRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -462,7 +462,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = "bannou" }, CancellationToken.None);
+        var (statusCode, response) = await service.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = "bannou" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -492,7 +492,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = "unknown-app" }, CancellationToken.None);
+        var (statusCode, response) = await service.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = "unknown-app" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -522,7 +522,7 @@ public class OrchestratorServiceTests
         // Act
         var (statusCode, response) = await service.GetServiceRoutingAsync(
             new GetServiceRoutingRequest(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -547,7 +547,7 @@ public class OrchestratorServiceTests
         // Act
         var (statusCode, response) = await service.GetServiceRoutingAsync(
             new GetServiceRoutingRequest(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -577,7 +577,7 @@ public class OrchestratorServiceTests
         // Act - filter for services starting with "a"
         var (statusCode, response) = await service.GetServiceRoutingAsync(
             new GetServiceRoutingRequest { ServiceFilter = "a" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -601,7 +601,7 @@ public class OrchestratorServiceTests
         // Act & Assert - exceptions propagate to generated controller for error handling
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetServiceRoutingAsync(
             new GetServiceRoutingRequest(),
-            CancellationToken.None));
+            TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -922,7 +922,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         _heartbeatHandler?.Invoke(heartbeat);
 
         // Allow async processing
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Assert - routing should be initialized
         Assert.NotNull(capturedRouting);
@@ -962,7 +962,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         _mockStateManager.Invocations.Clear();
 
         _heartbeatHandler?.Invoke(heartbeat);
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Assert - WriteServiceRoutingAsync for "auth" should NOT have been called with "bannou"
         // (heartbeat from "bannou" should be ignored because "auth" is routed to "bannou-auth")
@@ -1004,7 +1004,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         };
 
         _heartbeatHandler?.Invoke(heartbeat);
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Assert - routing should be updated (health status changed)
         Assert.NotNull(lastCapturedRouting);
@@ -1042,7 +1042,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         };
 
         _heartbeatHandler?.Invoke(heartbeat);
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         Assert.Equal("bannou-deployed-node", lastCapturedRouting?.AppId);
 
@@ -1506,7 +1506,7 @@ public class OrchestratorResetToDefaultTests
         };
 
         // Act
-        var (statusCode, response) = await service.DeployAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeployAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1579,7 +1579,7 @@ public class OrchestratorResetToDefaultTests
         };
 
         // Act
-        var (statusCode, response) = await service.DeployAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeployAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1673,7 +1673,7 @@ public class OrchestratorResetToDefaultTests
         };
 
         // Act
-        var (statusCode, response) = await service.DeployAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeployAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should deploy normally, not reset
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1748,7 +1748,7 @@ public class OrchestratorResetToDefaultTests
         };
 
         // Act
-        var (statusCode, response) = await service.DeployAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeployAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1864,7 +1864,7 @@ public class OrchestratorProcessingPoolTests
         var request = new ScalePoolRequest { PoolType = "", TargetInstances = 5 };
 
         // Act
-        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ScalePoolAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -1879,7 +1879,7 @@ public class OrchestratorProcessingPoolTests
         var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = -1 };
 
         // Act
-        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ScalePoolAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -1900,7 +1900,7 @@ public class OrchestratorProcessingPoolTests
         var request = new ScalePoolRequest { PoolType = "unknown-pool", TargetInstances = 5 };
 
         // Act
-        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ScalePoolAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - NotFound returns null response
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -1948,7 +1948,7 @@ public class OrchestratorProcessingPoolTests
         var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = 2 };
 
         // Act
-        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ScalePoolAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2001,7 +2001,7 @@ public class OrchestratorProcessingPoolTests
         var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = 1 };
 
         // Act
-        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ScalePoolAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2045,7 +2045,7 @@ public class OrchestratorProcessingPoolTests
         var request = new ScalePoolRequest { PoolType = "actor-shared", TargetInstances = 2 };
 
         // Act
-        var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ScalePoolAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2152,7 +2152,7 @@ public class OrchestratorProcessingPoolTests
         var request = new AcquireProcessorRequest { PoolType = "actor-shared" };
 
         // Act
-        var (statusCode, response) = await service.AcquireProcessorAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.AcquireProcessorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -2209,7 +2209,7 @@ public class OrchestratorProcessingPoolTests
         var request = new ReleaseProcessorRequest { LeaseId = leaseId, Success = true };
 
         // Act
-        var (statusCode, response) = await service.ReleaseProcessorAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ReleaseProcessorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -2268,7 +2268,7 @@ public class OrchestratorProcessingPoolTests
         var request = new ReleaseProcessorRequest { LeaseId = leaseId, Success = true };
 
         // Act
-        var (statusCode, response) = await service.ReleaseProcessorAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ReleaseProcessorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2338,7 +2338,7 @@ public class PresetLoaderTests
         var loader = CreateLoader();
 
         // Act
-        var preset = await loader.LoadPresetAsync("actor-pools");
+        var preset = await loader.LoadPresetAsync("actor-pools", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(preset);
@@ -2377,7 +2377,7 @@ public class PresetLoaderTests
         var loader = CreateLoader();
 
         // Act
-        var preset = await loader.LoadPresetAsync("simple-preset");
+        var preset = await loader.LoadPresetAsync("simple-preset", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(preset);
@@ -2394,7 +2394,7 @@ public class PresetLoaderTests
         var loader = CreateLoader();
 
         // Act
-        var preset = await loader.LoadPresetAsync("empty-pools");
+        var preset = await loader.LoadPresetAsync("empty-pools", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(preset);
@@ -2410,7 +2410,7 @@ public class PresetLoaderTests
         var loader = CreateLoader();
 
         // Act
-        var preset = await loader.LoadPresetAsync("custom-image-pool");
+        var preset = await loader.LoadPresetAsync("custom-image-pool", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(preset);
@@ -2427,7 +2427,7 @@ public class PresetLoaderTests
         var loader = CreateLoader();
 
         // Act
-        var preset = await loader.LoadPresetAsync("minimal-pool");
+        var preset = await loader.LoadPresetAsync("minimal-pool", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(preset);
@@ -2456,7 +2456,7 @@ public class PresetLoaderTests
         var loader = CreateLoader();
 
         // Act
-        var presets = await loader.ListPresetsAsync();
+        var presets = await loader.ListPresetsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, presets.Count);
@@ -2482,7 +2482,7 @@ public class PresetLoaderTests
         var loader = new PresetLoader(_mockLogger.Object, "/nonexistent/directory", _mockTelemetryProvider.Object);
 
         // Act
-        var presets = await loader.ListPresetsAsync();
+        var presets = await loader.ListPresetsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(presets);
@@ -2603,7 +2603,7 @@ public class OrchestratorTeardownTests
         var request = new TeardownRequest { DryRun = true, IncludeInfrastructure = false };
 
         // Act
-        var (statusCode, response) = await service.TeardownAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.TeardownAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2655,7 +2655,7 @@ public class OrchestratorTeardownTests
         var request = new TeardownRequest { DryRun = false, IncludeInfrastructure = true };
 
         // Act
-        var (statusCode, response) = await service.TeardownAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.TeardownAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2682,7 +2682,7 @@ public class OrchestratorTeardownTests
         var request = new TeardownRequest { DryRun = false };
 
         // Act
-        var (statusCode, response) = await service.TeardownAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.TeardownAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2724,7 +2724,7 @@ public class OrchestratorTeardownTests
         var request = new TeardownRequest { DryRun = false };
 
         // Act
-        var (statusCode, response) = await service.TeardownAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.TeardownAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2841,7 +2841,7 @@ public class OrchestratorUpdateTopologyTests
         var request = new TopologyUpdateRequest { Changes = new List<TopologyChange>() };
 
         // Act
-        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -2878,7 +2878,7 @@ public class OrchestratorUpdateTopologyTests
         };
 
         // Act
-        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2912,7 +2912,7 @@ public class OrchestratorUpdateTopologyTests
         };
 
         // Act
-        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2946,7 +2946,7 @@ public class OrchestratorUpdateTopologyTests
         };
 
         // Act
-        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -2979,7 +2979,7 @@ public class OrchestratorUpdateTopologyTests
         };
 
         // Act
-        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3011,7 +3011,7 @@ public class OrchestratorUpdateTopologyTests
         };
 
         // Act
-        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3046,7 +3046,7 @@ public class OrchestratorUpdateTopologyTests
         };
 
         // Act
-        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3087,7 +3087,7 @@ public class OrchestratorUpdateTopologyTests
         };
 
         // Act
-        var (statusCode, response) = await service.UpdateTopologyAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateTopologyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3200,7 +3200,7 @@ public class OrchestratorConfigVersionTests
         var request = new ConfigRollbackRequest { Reason = "test" };
 
         // Act
-        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -3219,7 +3219,7 @@ public class OrchestratorConfigVersionTests
         var request = new ConfigRollbackRequest { Reason = "test" };
 
         // Act
-        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -3239,7 +3239,7 @@ public class OrchestratorConfigVersionTests
         var request = new ConfigRollbackRequest { Reason = "test", TargetVersion = 5 };
 
         // Act
-        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -3260,7 +3260,7 @@ public class OrchestratorConfigVersionTests
         var request = new ConfigRollbackRequest { Reason = "test", TargetVersion = 3 };
 
         // Act
-        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -3283,7 +3283,7 @@ public class OrchestratorConfigVersionTests
         var request = new ConfigRollbackRequest { Reason = "test" };
 
         // Act
-        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
@@ -3330,7 +3330,7 @@ public class OrchestratorConfigVersionTests
         var request = new ConfigRollbackRequest { Reason = "test rollback" };
 
         // Act
-        var (statusCode, response) = await service.RollbackConfigurationAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RollbackConfigurationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3369,7 +3369,7 @@ public class OrchestratorConfigVersionTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetConfigVersionAsync(new GetConfigVersionRequest(), CancellationToken.None);
+        var (statusCode, response) = await service.GetConfigVersionAsync(new GetConfigVersionRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3391,7 +3391,7 @@ public class OrchestratorConfigVersionTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetConfigVersionAsync(new GetConfigVersionRequest(), CancellationToken.None);
+        var (statusCode, response) = await service.GetConfigVersionAsync(new GetConfigVersionRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3518,7 +3518,7 @@ public class OrchestratorContainerOpsTests
         };
 
         // Act
-        var (statusCode, response) = await service.RequestContainerRestartAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RequestContainerRestartAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3549,7 +3549,7 @@ public class OrchestratorContainerOpsTests
         };
 
         // Act
-        var (statusCode, response) = await service.RequestContainerRestartAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RequestContainerRestartAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
@@ -3579,7 +3579,7 @@ public class OrchestratorContainerOpsTests
         };
 
         // Act
-        var (statusCode, _) = await service.RequestContainerRestartAsync(request, CancellationToken.None);
+        var (statusCode, _) = await service.RequestContainerRestartAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3611,7 +3611,7 @@ public class OrchestratorContainerOpsTests
         var request = new GetLogsRequest { Service = "bannou", Tail = 100 };
 
         // Act
-        var (statusCode, response) = await service.GetLogsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetLogsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3642,7 +3642,7 @@ public class OrchestratorContainerOpsTests
         var request = new GetLogsRequest { Service = "bannou" };
 
         // Act
-        var (statusCode, response) = await service.GetLogsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetLogsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3673,7 +3673,7 @@ public class OrchestratorContainerOpsTests
         var request = new GetLogsRequest { Service = "bannou" };
 
         // Act
-        var (statusCode, response) = await service.GetLogsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetLogsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3703,7 +3703,7 @@ public class OrchestratorContainerOpsTests
         var request = new GetLogsRequest { Service = null, Container = "my-container" };
 
         // Act
-        var (statusCode, response) = await service.GetLogsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetLogsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3815,7 +3815,7 @@ public class OrchestratorPoolManagementTests
         var request = new AcquireProcessorRequest { PoolType = "" };
 
         // Act
-        var (statusCode, response) = await service.AcquireProcessorAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.AcquireProcessorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -3835,7 +3835,7 @@ public class OrchestratorPoolManagementTests
         var request = new AcquireProcessorRequest { PoolType = "actor-shared" };
 
         // Act
-        var (statusCode, response) = await service.AcquireProcessorAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.AcquireProcessorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.ServiceUnavailable, statusCode);
@@ -3876,7 +3876,7 @@ public class OrchestratorPoolManagementTests
         var request = new AcquireProcessorRequest { PoolType = "actor-shared", Priority = 5 };
 
         // Act
-        var (statusCode, response) = await service.AcquireProcessorAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.AcquireProcessorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3909,7 +3909,7 @@ public class OrchestratorPoolManagementTests
         var request = new ReleaseProcessorRequest { LeaseId = Guid.NewGuid(), Success = true };
 
         // Act
-        var (statusCode, response) = await service.ReleaseProcessorAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ReleaseProcessorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -3957,7 +3957,7 @@ public class OrchestratorPoolManagementTests
         var request = new ReleaseProcessorRequest { LeaseId = leaseId, Success = true };
 
         // Act
-        var (statusCode, response) = await service.ReleaseProcessorAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ReleaseProcessorAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -3988,7 +3988,7 @@ public class OrchestratorPoolManagementTests
         var request = new GetPoolStatusRequest { PoolType = "" };
 
         // Act
-        var (statusCode, response) = await service.GetPoolStatusAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetPoolStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -4025,7 +4025,7 @@ public class OrchestratorPoolManagementTests
         var request = new GetPoolStatusRequest { PoolType = "actor-shared", IncludeMetrics = false };
 
         // Act
-        var (statusCode, response) = await service.GetPoolStatusAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetPoolStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -4061,7 +4061,7 @@ public class OrchestratorPoolManagementTests
         var request = new GetPoolStatusRequest { PoolType = "actor-shared", IncludeMetrics = true };
 
         // Act
-        var (statusCode, response) = await service.GetPoolStatusAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetPoolStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -4084,7 +4084,7 @@ public class OrchestratorPoolManagementTests
         var request = new CleanupPoolRequest { PoolType = "" };
 
         // Act
-        var (statusCode, response) = await service.CleanupPoolAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CleanupPoolAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -4113,7 +4113,7 @@ public class OrchestratorPoolManagementTests
         var request = new CleanupPoolRequest { PoolType = "actor-shared", PreserveMinimum = true };
 
         // Act
-        var (statusCode, response) = await service.CleanupPoolAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CleanupPoolAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -4148,7 +4148,7 @@ public class OrchestratorPoolManagementTests
         var request = new CleanupPoolRequest { PoolType = "actor-shared", PreserveMinimum = true };
 
         // Act
-        var (statusCode, response) = await service.CleanupPoolAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CleanupPoolAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -4184,7 +4184,7 @@ public class OrchestratorPoolManagementTests
         var request = new CleanupPoolRequest { PoolType = "actor-shared", PreserveMinimum = false };
 
         // Act
-        var (statusCode, response) = await service.CleanupPoolAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CleanupPoolAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);

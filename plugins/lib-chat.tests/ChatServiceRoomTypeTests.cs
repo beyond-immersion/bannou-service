@@ -31,7 +31,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ChatRoomTypeModel?)null);
 
-        var (status, response) = await service.RegisterRoomTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.RegisterRoomTypeAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -66,7 +66,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
             PersistenceMode = PersistenceMode.Persistent,
         };
 
-        var (status, response) = await service.RegisterRoomTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.RegisterRoomTypeAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
         Assert.Null(response);
@@ -98,7 +98,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
             PersistenceMode = PersistenceMode.Persistent,
         };
 
-        var (status, response) = await service.RegisterRoomTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.RegisterRoomTypeAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
         Assert.Null(response);
@@ -133,7 +133,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
             },
         };
 
-        var (status, _) = await service.RegisterRoomTypeAsync(request, CancellationToken.None);
+        var (status, _) = await service.RegisterRoomTypeAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(savedModel);
@@ -154,7 +154,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
         SetupRoomType(roomType);
 
         var (status, response) = await service.GetRoomTypeAsync(
-            new GetRoomTypeRequest { Code = "text" }, CancellationToken.None);
+            new GetRoomTypeRequest { Code = "text" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -170,7 +170,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
             .ReturnsAsync((ChatRoomTypeModel?)null);
 
         var (status, response) = await service.GetRoomTypeAsync(
-            new GetRoomTypeRequest { Code = "nonexistent" }, CancellationToken.None);
+            new GetRoomTypeRequest { Code = "nonexistent" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.Null(response);
@@ -192,7 +192,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
         SetupRoomTypeQuery(types, 2);
 
         var (status, response) = await service.ListRoomTypesAsync(
-            new ListRoomTypesRequest { Page = 0, PageSize = 20 }, CancellationToken.None);
+            new ListRoomTypesRequest { Page = 0, PageSize = 20 }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -213,7 +213,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
             Status = RoomTypeStatus.Active,
             Page = 0,
             PageSize = 20,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         MockRoomTypeStore.Verify(s => s.JsonQueryPagedAsync(
             It.Is<IReadOnlyList<QueryCondition>>(c =>
@@ -249,7 +249,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
             Code = "text",
             DisplayName = "Updated Text Chat",
             DefaultMaxParticipants = 200,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -267,7 +267,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
             .ReturnsAsync((ChatRoomTypeModel?)null);
 
         var (status, _) = await service.UpdateRoomTypeAsync(
-            new UpdateRoomTypeRequest { Code = "nonexistent" }, CancellationToken.None);
+            new UpdateRoomTypeRequest { Code = "nonexistent" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -279,7 +279,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
         SetupLockFailure();
 
         var (status, _) = await service.UpdateRoomTypeAsync(
-            new UpdateRoomTypeRequest { Code = "text" }, CancellationToken.None);
+            new UpdateRoomTypeRequest { Code = "text" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -304,7 +304,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
             .ReturnsAsync("etag");
 
         var (status, response) = await service.DeprecateRoomTypeAsync(
-            new DeprecateRoomTypeRequest { Code = "text" }, CancellationToken.None);
+            new DeprecateRoomTypeRequest { Code = "text" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(savedModel);
@@ -319,7 +319,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
         SetupRoomType(existing);
 
         var (status, response) = await service.DeprecateRoomTypeAsync(
-            new DeprecateRoomTypeRequest { Code = "text" }, CancellationToken.None);
+            new DeprecateRoomTypeRequest { Code = "text" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -340,7 +340,7 @@ public class ChatServiceRoomTypeTests : ChatServiceTestBase
             .ReturnsAsync((ChatRoomTypeModel?)null);
 
         var (status, _) = await service.DeprecateRoomTypeAsync(
-            new DeprecateRoomTypeRequest { Code = "nonexistent" }, CancellationToken.None);
+            new DeprecateRoomTypeRequest { Code = "nonexistent" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }

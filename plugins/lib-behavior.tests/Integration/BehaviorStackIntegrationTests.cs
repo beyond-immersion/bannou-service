@@ -94,7 +94,7 @@ public sealed class BehaviorStackIntegrationTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert - Higher category layers override lower ones
         Assert.NotNull(output);
@@ -129,7 +129,7 @@ public sealed class BehaviorStackIntegrationTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert - Situational wins
         Assert.NotNull(output);
@@ -160,7 +160,7 @@ public sealed class BehaviorStackIntegrationTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert - Only active layer contributes
         Assert.Single(output.AllContributions);
@@ -258,8 +258,8 @@ public sealed class BehaviorStackIntegrationTests
         var merchantContext = new BehaviorEvaluationContext(merchant, _humanoidArchetype);
 
         // Act
-        var guardOutput = await guardStack.EvaluateAsync(guardContext, CancellationToken.None);
-        var merchantOutput = await merchantStack.EvaluateAsync(merchantContext, CancellationToken.None);
+        var guardOutput = await guardStack.EvaluateAsync(guardContext, TestContext.Current.CancellationToken);
+        var merchantOutput = await merchantStack.EvaluateAsync(merchantContext, TestContext.Current.CancellationToken);
 
         // Assert - Each entity has distinct behavior
         Assert.True(guardOutput.HasEmission("combat"));
@@ -295,13 +295,13 @@ public sealed class BehaviorStackIntegrationTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act - Before activation
-        var beforeOutput = await stack.EvaluateAsync(context, CancellationToken.None);
+        var beforeOutput = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Activate angry layer
         stack.ActivateLayer("angry");
 
         // After activation
-        var afterOutput = await stack.EvaluateAsync(context, CancellationToken.None);
+        var afterOutput = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("normal", beforeOutput.WinningLayers["expression"]);
@@ -367,7 +367,7 @@ public sealed class BehaviorStackIntegrationTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert - Higher priority wins
         Assert.Equal("anxious", output.WinningLayers["expression"]);
@@ -396,7 +396,7 @@ public sealed class BehaviorStackIntegrationTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert - Category (Situational) trumps priority (1000)
         Assert.Equal("situational-low", output.WinningLayers["movement"]);
@@ -425,7 +425,7 @@ public sealed class BehaviorStackIntegrationTests
         Assert.Empty(stack.ActiveLayers);
 
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
         Assert.Empty(output.MergedEmissions);
     }
 
@@ -452,7 +452,7 @@ public sealed class BehaviorStackIntegrationTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert - All contributions tracked, not just winners
         Assert.Equal(3, output.AllContributions.Count);
@@ -492,7 +492,7 @@ public sealed class BehaviorStackIntegrationTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert - Each channel won by different layer
         Assert.Equal("professional", output.WinningLayers["movement"]);
@@ -516,7 +516,7 @@ public sealed class BehaviorStackIntegrationTests
         var context = new BehaviorEvaluationContext(entityId, _humanoidArchetype);
 
         // Act
-        var output = await stack.EvaluateAsync(context, CancellationToken.None);
+        var output = await stack.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, output.ActiveChannels.Count);

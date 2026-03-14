@@ -229,7 +229,7 @@ public class ControlGateTests
         await gate.TakeControlAsync(options);
 
         // Act - wait for expiry
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         var currentSource = gate.CurrentSource;
 
         // Assert

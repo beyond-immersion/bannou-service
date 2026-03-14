@@ -139,7 +139,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.GetAccountSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetAccountSubscriptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -200,7 +200,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.GetAccountSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetAccountSubscriptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -263,7 +263,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.GetAccountSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetAccountSubscriptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -286,7 +286,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var (statusCode, response) = await service.GetAccountSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetAccountSubscriptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -331,7 +331,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -373,7 +373,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -413,7 +413,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -430,7 +430,7 @@ public class SubscriptionServiceTests
         var request = new QueryCurrentSubscriptionsRequest(); // No accountId or stubName
 
         // Act
-        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, statusCode);
@@ -467,7 +467,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.GetSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -490,7 +490,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync((SubscriptionDataModel?)null);
 
         // Act
-        var (statusCode, response) = await service.GetSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -538,7 +538,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync(new List<Guid>());
 
         // Act
-        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -569,7 +569,7 @@ public class SubscriptionServiceTests
             .ThrowsAsync(new ApiException("Not found", 404));
 
         // Act
-        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -621,7 +621,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -665,7 +665,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync(new List<Guid>());
 
         // Act
-        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -738,7 +738,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -764,7 +764,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync((SubscriptionDataModel?)null);
 
         // Act
-        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -817,7 +817,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.CancelSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CancelSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -860,7 +860,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.CancelSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CancelSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -888,7 +888,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync((SubscriptionDataModel?)null);
 
         // Act
-        var (statusCode, response) = await service.CancelSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CancelSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -942,7 +942,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RenewSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -998,7 +998,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RenewSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1026,7 +1026,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync((SubscriptionDataModel?)null);
 
         // Act
-        var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RenewSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -1074,7 +1074,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var result = await service.ExpireSubscriptionAsync(subscriptionId, CancellationToken.None);
+        var result = await service.ExpireSubscriptionAsync(subscriptionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -1095,7 +1095,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync((SubscriptionDataModel?)null);
 
         // Act
-        var result = await service.ExpireSubscriptionAsync(subscriptionId, CancellationToken.None);
+        var result = await service.ExpireSubscriptionAsync(subscriptionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -1125,7 +1125,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var result = await service.ExpireSubscriptionAsync(subscriptionId, CancellationToken.None);
+        var result = await service.ExpireSubscriptionAsync(subscriptionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -1147,7 +1147,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync(mockFailedLock.Object);
 
         // Act
-        var result = await service.ExpireSubscriptionAsync(subscriptionId, CancellationToken.None);
+        var result = await service.ExpireSubscriptionAsync(subscriptionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -1197,7 +1197,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync(mockFailedLock.Object);
 
         // Act
-        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -1258,7 +1258,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1315,7 +1315,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1350,7 +1350,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync(mockFailedLock.Object);
 
         // Act
-        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -1403,7 +1403,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1457,7 +1457,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1507,7 +1507,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1543,7 +1543,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync(mockFailedLock.Object);
 
         // Act
-        var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RenewSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -1594,7 +1594,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RenewSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1648,7 +1648,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RenewSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1705,7 +1705,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (statusCode, response) = await service.RenewSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RenewSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1765,7 +1765,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1791,7 +1791,7 @@ public class SubscriptionServiceTests
             .ThrowsAsync(new ApiException("Not found", 404));
 
         // Act
-        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1861,7 +1861,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.QueryCurrentSubscriptionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1895,7 +1895,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync(mockFailedLock.Object);
 
         // Act
-        var (statusCode, response) = await service.CancelSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CancelSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -1948,7 +1948,7 @@ public class SubscriptionServiceTests
             .ThrowsAsync(new InvalidOperationException("WebSocket connection unavailable"));
 
         // Act - Should succeed despite client event failure
-        var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Operation succeeds; client event failure is swallowed (best-effort)
         Assert.Equal(StatusCodes.OK, statusCode);

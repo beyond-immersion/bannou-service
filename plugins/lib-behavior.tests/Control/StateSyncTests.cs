@@ -34,7 +34,7 @@ public sealed class StateSyncTests
         var handoff = ControlHandoff.Instant();
 
         // Act
-        await stateSync.SyncStateAsync(entityId, state, handoff, CancellationToken.None);
+        await stateSync.SyncStateAsync(entityId, state, handoff, TestContext.Current.CancellationToken);
 
         // Assert - verify state was written to registry
         var retrievedState = registry.GetState(entityId);
@@ -59,7 +59,7 @@ public sealed class StateSyncTests
         var handoff = new ControlHandoff(HandoffStyle.Instant, null, SyncState: false);
 
         // Act
-        await stateSync.SyncStateAsync(entityId, state, handoff, CancellationToken.None);
+        await stateSync.SyncStateAsync(entityId, state, handoff, TestContext.Current.CancellationToken);
 
         // Assert - verify state was NOT written to registry
         Assert.False(registry.HasState(entityId));
@@ -83,7 +83,7 @@ public sealed class StateSyncTests
         var handoff = ControlHandoff.Blend(TimeSpan.FromSeconds(1), state);
 
         // Act
-        await stateSync.SyncStateAsync(entityId, state, handoff, CancellationToken.None);
+        await stateSync.SyncStateAsync(entityId, state, handoff, TestContext.Current.CancellationToken);
 
         // Assert - blend falls through to instant, state should be in registry
         var retrievedState = registry.GetState(entityId);
@@ -110,7 +110,7 @@ public sealed class StateSyncTests
         stateSync.StateSyncCompleted += (_, args) => receivedArgs = args;
 
         // Act
-        await stateSync.SyncStateAsync(entityId, state, handoff, CancellationToken.None);
+        await stateSync.SyncStateAsync(entityId, state, handoff, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(receivedArgs);
@@ -139,7 +139,7 @@ public sealed class StateSyncTests
         registry.StateUpdated += (_, args) => receivedArgs = args;
 
         // Act
-        await stateSync.SyncStateAsync(entityId, state, handoff, CancellationToken.None);
+        await stateSync.SyncStateAsync(entityId, state, handoff, TestContext.Current.CancellationToken);
 
         // Assert - registry event should have been raised
         Assert.NotNull(receivedArgs);
@@ -164,10 +164,10 @@ public sealed class StateSyncTests
         registry.StateUpdated += (_, args) => previousStateFromEvent = args.PreviousState;
 
         // Act - first sync
-        await stateSync.SyncStateAsync(entityId, firstState, handoff, CancellationToken.None);
+        await stateSync.SyncStateAsync(entityId, firstState, handoff, TestContext.Current.CancellationToken);
 
         // Act - second sync (should capture previous state)
-        await stateSync.SyncStateAsync(entityId, secondState, handoff, CancellationToken.None);
+        await stateSync.SyncStateAsync(entityId, secondState, handoff, TestContext.Current.CancellationToken);
 
         // Assert - second event should have captured first state as previous
         Assert.NotNull(previousStateFromEvent);
@@ -193,7 +193,7 @@ public sealed class StateSyncTests
         var handoff = new ControlHandoff(HandoffStyle.Explicit, null, true, state);
 
         // Act
-        await stateSync.SyncStateAsync(entityId, state, handoff, CancellationToken.None);
+        await stateSync.SyncStateAsync(entityId, state, handoff, TestContext.Current.CancellationToken);
 
         // Assert
         var retrievedState = registry.GetState(entityId);
@@ -257,7 +257,7 @@ public sealed class StateSyncTests
         var handoff = ControlHandoff.Instant();
 
         // Act
-        await stateSync.SyncStateAsync(entityId, state, handoff, CancellationToken.None);
+        await stateSync.SyncStateAsync(entityId, state, handoff, TestContext.Current.CancellationToken);
 
         // Assert - all properties should be preserved
         var retrieved = registry.GetState(entityId);

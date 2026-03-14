@@ -60,7 +60,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveAsync(
             reference,
             LocalizationContext.English,
-            NullDialogueExpressionContext.Instance);
+            NullDialogueExpressionContext.Instance, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Welcome to my shop!", result.Text);
@@ -83,7 +83,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveAsync(
             reference,
             LocalizationContext.English,
-            NullDialogueExpressionContext.Instance);
+            NullDialogueExpressionContext.Instance, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("I'm feeling great!", result.Text);
@@ -107,7 +107,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveAsync(
             reference,
             LocalizationContext.ForLocale("ja"),
-            NullDialogueExpressionContext.Instance);
+            NullDialogueExpressionContext.Instance, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("こんにちは！", result.Text);
@@ -127,7 +127,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveAsync(
             reference,
             LocalizationContext.ForLocale("en-US"),
-            NullDialogueExpressionContext.Instance);
+            NullDialogueExpressionContext.Instance, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Hello!", result.Text);
@@ -147,7 +147,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveAsync(
             reference,
             LocalizationContext.ForLocale("fr"),
-            NullDialogueExpressionContext.Instance);
+            NullDialogueExpressionContext.Instance, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Hello (inline)!", result.Text);
@@ -171,7 +171,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveAsync(
             reference,
             LocalizationContext.English,
-            context);
+            context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Special greeting!", result.Text);
@@ -192,7 +192,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveAsync(
             reference,
             LocalizationContext.English,
-            context);
+            context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("High priority", result.Text);
@@ -212,7 +212,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveAsync(
             reference,
             LocalizationContext.English,
-            context);
+            context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Localized text", result.Text);
@@ -236,7 +236,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveAsync(
             reference,
             LocalizationContext.English,
-            context);
+            context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Hello, Adventurer!", result.Text);
@@ -261,7 +261,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveOptionsAsync(
             options,
             LocalizationContext.English,
-            NullDialogueExpressionContext.Instance);
+            NullDialogueExpressionContext.Instance, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -286,7 +286,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveOptionsAsync(
             options,
             LocalizationContext.English,
-            context);
+            context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -309,7 +309,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveOptionsAsync(
             options,
             LocalizationContext.English,
-            NullDialogueExpressionContext.Instance);
+            NullDialogueExpressionContext.Instance, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result[0].IsDefault);
@@ -333,7 +333,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveAsync(
             reference,
             LocalizationContext.English,
-            NullDialogueExpressionContext.Instance);
+            NullDialogueExpressionContext.Instance, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Inline default", result.Text);
@@ -365,7 +365,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         var result = await _resolver.ResolveAsync(
             reference,
             LocalizationContext.English,
-            NullDialogueExpressionContext.Instance);
+            NullDialogueExpressionContext.Instance, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("High priority content", result.Text);

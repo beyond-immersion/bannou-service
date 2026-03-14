@@ -56,7 +56,7 @@ public class DocumentMergerTests
         resolver.Register("lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var merged = _merger.Merge(loaded);
@@ -91,7 +91,7 @@ public class DocumentMergerTests
         resolver.Register("c.yml", cDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(aDoc, "a.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(aDoc, "a.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var merged = _merger.Merge(loaded);
@@ -141,7 +141,7 @@ public class DocumentMergerTests
         resolver.Register("c.yml", cDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(aDoc, "a.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(aDoc, "a.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var merged = _merger.Merge(loaded);
@@ -166,7 +166,7 @@ public class DocumentMergerTests
         resolver.Register("lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var merged = _merger.Merge(loaded);
@@ -191,7 +191,7 @@ public class DocumentMergerTests
         resolver.Register("lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var merged = _merger.Merge(loaded);
@@ -224,7 +224,7 @@ public class DocumentMergerTests
         resolver.Register("lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var merged = _merger.Merge(loaded);
@@ -256,7 +256,7 @@ public class DocumentMergerTests
         resolver.Register("lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var merged = _merger.Merge(loaded);
@@ -284,7 +284,7 @@ public class DocumentMergerTests
         resolver.Register("lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var merged = _merger.Merge(loaded);
@@ -316,7 +316,7 @@ public class DocumentMergerTests
         resolver.Register("lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var merged = _merger.Merge(loaded);
@@ -347,14 +347,14 @@ public class DocumentMergerTests
         resolver.Register("lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Execute original (with imports)
-        var originalResult = await _executor.ExecuteAsync(loaded, "start");
+        var originalResult = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Merge and execute
         var merged = _merger.Merge(loaded);
-        var mergedResult = await _executor.ExecuteAsync(merged, "start");
+        var mergedResult = await _executor.ExecuteAsync(merged, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert - Both should produce the same logs
         Assert.True(originalResult.IsSuccess);
@@ -382,14 +382,14 @@ public class DocumentMergerTests
         resolver.Register("c.yml", cDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(aDoc, "a.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(aDoc, "a.yml", ct: TestContext.Current.CancellationToken);
 
         // Execute original
-        var originalResult = await _executor.ExecuteAsync(loaded, "start");
+        var originalResult = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Merge and execute
         var merged = _merger.Merge(loaded);
-        var mergedResult = await _executor.ExecuteAsync(merged, "start");
+        var mergedResult = await _executor.ExecuteAsync(merged, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(originalResult.IsSuccess, $"Original failed: {originalResult.Error}");
@@ -418,13 +418,13 @@ public class DocumentMergerTests
         resolver.Register("lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Merge
         var merged = _merger.Merge(loaded);
 
         // Act - Start from the merged imported flow
-        var result = await _executor.ExecuteAsync(merged, "lib.standalone");
+        var result = await _executor.ExecuteAsync(merged, "lib.standalone", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
@@ -449,7 +449,7 @@ public class DocumentMergerTests
         resolver.Register("ai.yml", aiDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var merged = _merger.Merge(loaded);
@@ -482,7 +482,7 @@ public class DocumentMergerTests
         resolver.Register("lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var merged = _merger.Merge(loaded);

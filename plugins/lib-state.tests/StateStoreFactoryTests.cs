@@ -291,7 +291,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             ["test-store"] = new() { Backend = StateBackend.Redis }
         }));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var store = factory.GetStore<TestModel>("test-store");
         Assert.NotNull(store);
     }
@@ -304,7 +304,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             ["cache-store"] = new() { Backend = StateBackend.Redis }
         }));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         // InMemoryStateStore implements ICacheableStateStore
         var store = factory.GetStore<TestModel>("cache-store");
         Assert.IsAssignableFrom<ICacheableStateStore<TestModel>>(store);
@@ -318,7 +318,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             ["cached-store"] = new() { Backend = StateBackend.Redis }
         }));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var store1 = factory.GetStore<TestModel>("cached-store");
         var store2 = factory.GetStore<TestModel>("cached-store");
 
@@ -333,7 +333,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             ["typed-store"] = new() { Backend = StateBackend.Redis }
         }));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var store1 = factory.GetStore<TestModel>("typed-store");
         var store2 = factory.GetStore<AnotherTestModel>("typed-store");
 
@@ -348,7 +348,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
         var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>()));
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => factory.GetStoreAsync<TestModel>("nonexistent"));
+            () => factory.GetStoreAsync<TestModel>("nonexistent", cancellationToken: TestContext.Current.CancellationToken));
         Assert.Contains("not configured", ex.Message);
     }
 
@@ -360,7 +360,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             ["async-store"] = new() { Backend = StateBackend.Redis }
         }));
 
-        var store = await factory.GetStoreAsync<TestModel>("async-store");
+        var store = await factory.GetStoreAsync<TestModel>("async-store", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(store);
     }
 
@@ -508,7 +508,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             ["cacheable"] = new() { Backend = StateBackend.Redis }
         }));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var store = factory.GetCacheableStore<TestModel>("cacheable");
         Assert.NotNull(store);
         Assert.IsAssignableFrom<ICacheableStateStore<TestModel>>(store);
@@ -522,7 +522,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
         var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>()));
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => factory.GetCacheableStoreAsync<TestModel>("nonexistent"));
+            () => factory.GetCacheableStoreAsync<TestModel>("nonexistent", cancellationToken: TestContext.Current.CancellationToken));
         Assert.Contains("not configured", ex.Message);
     }
 
@@ -534,7 +534,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             ["async-cacheable"] = new() { Backend = StateBackend.Redis }
         }));
 
-        var store = await factory.GetCacheableStoreAsync<TestModel>("async-cacheable");
+        var store = await factory.GetCacheableStoreAsync<TestModel>("async-cacheable", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(store);
         Assert.IsAssignableFrom<ICacheableStateStore<TestModel>>(store);
     }
@@ -547,7 +547,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
         var factory = TrackFactory(CreateInMemoryFactory(new Dictionary<string, StoreConfiguration>()));
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => factory.GetKeyCountAsync("nonexistent"));
+            () => factory.GetKeyCountAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken));
         Assert.Contains("not configured", ex.Message);
     }
 
@@ -560,12 +560,12 @@ public class StateStoreFactoryTests : IAsyncDisposable
         }));
 
         // Initialize and add some data
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var store = factory.GetStore<TestModel>("count-store");
-        await store.SaveAsync("key1", new TestModel { Name = "A" });
-        await store.SaveAsync("key2", new TestModel { Name = "B" });
+        await store.SaveAsync("key1", new TestModel { Name = "A" }, cancellationToken: TestContext.Current.CancellationToken);
+        await store.SaveAsync("key2", new TestModel { Name = "B" }, cancellationToken: TestContext.Current.CancellationToken);
 
-        var count = await factory.GetKeyCountAsync("count-store");
+        var count = await factory.GetKeyCountAsync("count-store", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(2, count);
     }
 
@@ -579,8 +579,8 @@ public class StateStoreFactoryTests : IAsyncDisposable
             [storeName] = new() { Backend = StateBackend.Redis }
         }));
 
-        await factory.InitializeAsync();
-        var count = await factory.GetKeyCountAsync(storeName);
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
+        var count = await factory.GetKeyCountAsync(storeName, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(0, count);
     }
 
@@ -595,7 +595,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
         }));
 
         // Should not throw
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
 
         // After init, stores should be accessible
         var store = factory.GetStore<TestModel>("init-store");
@@ -610,9 +610,9 @@ public class StateStoreFactoryTests : IAsyncDisposable
             ["idempotent-store"] = new() { Backend = StateBackend.Redis }
         }));
 
-        await factory.InitializeAsync();
-        await factory.InitializeAsync();
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Should still work fine
         var store = factory.GetStore<TestModel>("idempotent-store");
@@ -633,7 +633,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             messageBus: mockMessageBus.Object,
             enableErrorPublishing: true));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Get a store to trigger CreateErrorPublisher
         var store = factory.GetStore<TestModel>("error-store");
@@ -656,7 +656,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             },
             enableErrorPublishing: false));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var store = factory.GetStore<TestModel>("no-error-store");
         Assert.NotNull(store);
     }
@@ -671,7 +671,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             },
             messageBus: null));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var store = factory.GetStore<TestModel>("no-bus-store");
         Assert.NotNull(store);
     }
@@ -687,13 +687,13 @@ public class StateStoreFactoryTests : IAsyncDisposable
             [storeName] = new() { Backend = StateBackend.Redis }
         }));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
 
         var store = factory.GetStore<TestModel>(storeName);
         var model = new TestModel { Name = "test-value" };
 
-        await store.SaveAsync("key-1", model);
-        var result = await store.GetAsync("key-1");
+        await store.SaveAsync("key-1", model, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await store.GetAsync("key-1", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("test-value", result.Name);
@@ -708,17 +708,17 @@ public class StateStoreFactoryTests : IAsyncDisposable
             [storeName] = new() { Backend = StateBackend.Redis }
         }));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
 
         var cacheStore = factory.GetCacheableStore<TestModel>(storeName);
 
         // Add to sorted set
-        await cacheStore.SortedSetAddAsync("scores", "player-a", 100.0);
-        await cacheStore.SortedSetAddAsync("scores", "player-b", 200.0);
+        await cacheStore.SortedSetAddAsync("scores", "player-a", 100.0, cancellationToken: TestContext.Current.CancellationToken);
+        await cacheStore.SortedSetAddAsync("scores", "player-b", 200.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Query range
         var results = await cacheStore.SortedSetRangeByScoreAsync(
-            "scores", 0, 300);
+            "scores", 0, 300, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(2, results.Count);
     }
@@ -733,7 +733,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             ["dispose-store"] = new() { Backend = StateBackend.Redis }
         });
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var store1 = factory.GetStore<TestModel>("dispose-store");
         Assert.NotNull(store1);
 
@@ -806,7 +806,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             [storeName] = new() { Backend = StateBackend.Redis }
         }));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var store = factory.GetStore<TestModel>(storeName);
@@ -848,7 +848,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             enableErrorPublishing: true,
             deduplicationWindowSeconds: 60));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act — get a store; the factory creates the error publisher internally
         var store = factory.GetStore<TestModel>(storeName);
@@ -859,8 +859,8 @@ public class StateStoreFactoryTests : IAsyncDisposable
         Assert.NotNull(store);
 
         // Verify the store can do round-trip operations (proving it's functional)
-        await store.SaveAsync("key1", new TestModel { Name = "test" });
-        var retrieved = await store.GetAsync("key1");
+        await store.SaveAsync("key1", new TestModel { Name = "test" }, cancellationToken: TestContext.Current.CancellationToken);
+        var retrieved = await store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal("test", retrieved.Name);
     }
@@ -893,7 +893,7 @@ public class StateStoreFactoryTests : IAsyncDisposable
             messageBus: mockMessageBus.Object,
             enableErrorPublishing: true));
 
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act — get both stores
         var store1 = factory.GetStore<TestModel>(storeName1);

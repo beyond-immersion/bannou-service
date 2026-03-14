@@ -199,7 +199,7 @@ public class RealmHistoryServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, result) = await service.RecordRealmParticipationAsync(request, CancellationToken.None);
+        var (status, result) = await service.RecordRealmParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -264,7 +264,7 @@ public class RealmHistoryServiceTests
             .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
-        await service.RecordRealmParticipationAsync(request, CancellationToken.None);
+        await service.RecordRealmParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Index should now have 2 participation IDs
         _mockIndexStore.Verify(s => s.SaveAsync(
@@ -295,7 +295,7 @@ public class RealmHistoryServiceTests
         SetupJsonQueryPagedAsync(new List<RealmParticipationData>(), 0);
 
         // Act
-        var (status, result) = await service.GetRealmParticipationAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetRealmParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -340,7 +340,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.GetRealmParticipationAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetRealmParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -391,7 +391,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.GetRealmParticipationAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetRealmParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -424,7 +424,7 @@ public class RealmHistoryServiceTests
         SetupJsonQueryPagedAsync(new List<RealmParticipationData>(), 0);
 
         // Act
-        var (status, result) = await service.GetRealmEventParticipantsAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetRealmEventParticipantsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -469,7 +469,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.GetRealmEventParticipantsAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetRealmEventParticipantsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -506,7 +506,7 @@ public class RealmHistoryServiceTests
             .ReturnsAsync((RealmLoreData?)null);
 
         // Act
-        var (status, result) = await service.GetRealmLoreAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetRealmLoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Consistent with CharacterHistory's GetBackstory: NotFound when no document exists
         Assert.Equal(StatusCodes.NotFound, status);
@@ -540,7 +540,7 @@ public class RealmHistoryServiceTests
             .ReturnsAsync((RealmLoreData?)null);
 
         // Act
-        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetRealmLoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -604,7 +604,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetRealmLoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -641,7 +641,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetRealmLoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -683,7 +683,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetRealmLoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -725,7 +725,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetRealmLoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -768,7 +768,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.AddRealmLoreElementAsync(request, CancellationToken.None);
+        var (status, result) = await service.AddRealmLoreElementAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -812,7 +812,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.AddRealmLoreElementAsync(request, CancellationToken.None);
+        var (status, result) = await service.AddRealmLoreElementAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -842,7 +842,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetRealmLoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -866,7 +866,7 @@ public class RealmHistoryServiceTests
             .ReturnsAsync((RealmParticipationData?)null);
 
         // Act
-        var status = await service.DeleteRealmParticipationAsync(request, CancellationToken.None);
+        var status = await service.DeleteRealmParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -893,7 +893,7 @@ public class RealmHistoryServiceTests
         var request = new DeleteRealmLoreRequest { RealmId = realmId };
 
         // Act
-        var status = await service.DeleteRealmLoreAsync(request, CancellationToken.None);
+        var status = await service.DeleteRealmLoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -924,7 +924,7 @@ public class RealmHistoryServiceTests
         var request = new DeleteRealmLoreRequest { RealmId = realmId };
 
         // Act
-        var status = await service.DeleteRealmLoreAsync(request, CancellationToken.None);
+        var status = await service.DeleteRealmLoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1006,7 +1006,7 @@ public class RealmHistoryServiceTests
         var request = new DeleteAllRealmHistoryRequest { RealmId = realmId };
 
         // Act
-        var (status, result) = await service.DeleteAllRealmHistoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteAllRealmHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1039,7 +1039,7 @@ public class RealmHistoryServiceTests
         var request = new DeleteAllRealmHistoryRequest { RealmId = realmId };
 
         // Act
-        var (status, result) = await service.DeleteAllRealmHistoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteAllRealmHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1108,7 +1108,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SummarizeRealmHistoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.SummarizeRealmHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1139,7 +1139,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SummarizeRealmHistoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.SummarizeRealmHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1202,7 +1202,7 @@ public class RealmHistoryServiceTests
         var request = new GetCompressDataRequest { RealmId = realmId };
 
         // Act
-        var (status, result) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1232,7 +1232,7 @@ public class RealmHistoryServiceTests
         var request = new GetCompressDataRequest { RealmId = realmId };
 
         // Act
-        var (status, result) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1278,7 +1278,7 @@ public class RealmHistoryServiceTests
         var request = new GetCompressDataRequest { RealmId = realmId };
 
         // Act
-        var (status, result) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1303,7 +1303,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, result) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1377,7 +1377,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, result) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1445,7 +1445,7 @@ public class RealmHistoryServiceTests
         var request = new RestoreFromArchiveRequest { RealmId = realmId, Data = compressedData };
 
         // Act
-        await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — resource references registered for both participation and lore
         _mockResourceClient.Verify(r => r.RegisterReferenceAsync(
@@ -1481,7 +1481,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SetRealmLoreAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetRealmLoreAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1508,7 +1508,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.AddRealmLoreElementAsync(request, CancellationToken.None);
+        var (status, result) = await service.AddRealmLoreElementAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1534,7 +1534,7 @@ public class RealmHistoryServiceTests
         var request = new DeleteAllRealmHistoryRequest { RealmId = Guid.NewGuid() };
 
         // Act
-        var (status, result) = await service.DeleteAllRealmHistoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteAllRealmHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1571,7 +1571,7 @@ public class RealmHistoryServiceTests
         var request = new GetCompressDataRequest { RealmId = realmId };
 
         // Act
-        var (status, result) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1625,7 +1625,7 @@ public class RealmHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SummarizeRealmHistoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.SummarizeRealmHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — only top 3 by strength should appear
         Assert.Equal(StatusCodes.OK, status);

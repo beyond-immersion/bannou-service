@@ -368,7 +368,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.RegisterReferenceAsync(request, CancellationToken.None);
+        var (status, response) = await service.RegisterReferenceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -401,7 +401,7 @@ public class ResourceServiceTests
                 SourceType = "actor",
                 SourceId = Guid.NewGuid().ToString()
             };
-            await service.RegisterReferenceAsync(request, CancellationToken.None);
+            await service.RegisterReferenceAsync(request, TestContext.Current.CancellationToken);
         }
 
         // Assert - verify 3 entries were added
@@ -425,7 +425,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        await service.RegisterReferenceAsync(request, CancellationToken.None);
+        await service.RegisterReferenceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - grace period should be cleared
         Assert.Single(_capturedGraceDeletes);
@@ -461,7 +461,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.UnregisterReferenceAsync(request, CancellationToken.None);
+        var (status, response) = await service.UnregisterReferenceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -495,7 +495,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.UnregisterReferenceAsync(request, CancellationToken.None);
+        var (status, response) = await service.UnregisterReferenceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -536,7 +536,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        await service.UnregisterReferenceAsync(request, CancellationToken.None);
+        await service.UnregisterReferenceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - verify grace period event was published
         Assert.Single(_capturedPublishedEvents);
@@ -573,7 +573,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.CheckReferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.CheckReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -610,7 +610,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.CheckReferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.CheckReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -647,7 +647,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.CheckReferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.CheckReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -682,7 +682,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -717,7 +717,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -759,7 +759,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -801,7 +801,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -848,7 +848,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -877,7 +877,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.DefineCleanupCallbackAsync(request, CancellationToken.None);
+        var (status, response) = await service.DefineCleanupCallbackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -925,7 +925,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.DefineCleanupCallbackAsync(request, CancellationToken.None);
+        var (status, response) = await service.DefineCleanupCallbackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -961,7 +961,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ListReferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -994,7 +994,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ListReferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1031,7 +1031,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ListReferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1062,7 +1062,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.DefineCleanupCallbackAsync(request, CancellationToken.None);
+        var (status, response) = await service.DefineCleanupCallbackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1094,7 +1094,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.DefineCleanupCallbackAsync(request, CancellationToken.None);
+        var (status, response) = await service.DefineCleanupCallbackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1166,7 +1166,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1237,7 +1237,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1359,7 +1359,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1402,7 +1402,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.DefineCompressCallbackAsync(request, CancellationToken.None);
+        var (status, response) = await service.DefineCompressCallbackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1447,7 +1447,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.DefineCompressCallbackAsync(request, CancellationToken.None);
+        var (status, response) = await service.DefineCompressCallbackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1472,7 +1472,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.DefineCompressCallbackAsync(request, CancellationToken.None);
+        var (status, response) = await service.DefineCompressCallbackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1499,7 +1499,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1531,7 +1531,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1575,7 +1575,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1626,7 +1626,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1700,7 +1700,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1766,7 +1766,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1827,7 +1827,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        await service.ExecuteCompressAsync(request, CancellationToken.None);
+        await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - verify priority order: 10 -> 50 -> 100
         Assert.Equal(3, executionOrder.Count);
@@ -1884,7 +1884,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1933,7 +1933,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        await service.ExecuteCompressAsync(request, CancellationToken.None);
+        await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - verify compressed event was published
         var compressedEvent = _capturedPublishedEvents.FirstOrDefault(e => e.Topic == "resource.compressed");
@@ -1962,7 +1962,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteDecompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2001,7 +2001,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteDecompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2051,7 +2051,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2076,7 +2076,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2113,7 +2113,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ListCompressCallbacksAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListCompressCallbacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2145,7 +2145,7 @@ public class ResourceServiceTests
         var request = new ListCompressCallbacksRequest();
 
         // Act
-        var (status, response) = await service.ListCompressCallbacksAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListCompressCallbacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2217,7 +2217,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2249,7 +2249,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2304,7 +2304,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2358,7 +2358,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2405,7 +2405,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2459,7 +2459,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2516,7 +2516,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - verify snapshot created event was published
         var snapshotEvent = _capturedPublishedEvents.FirstOrDefault(e => e.Topic == "resource.snapshot.created");
@@ -2577,7 +2577,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2637,7 +2637,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2689,7 +2689,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2740,7 +2740,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2771,7 +2771,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2815,7 +2815,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2930,7 +2930,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteDecompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3017,7 +3017,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteDecompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3085,7 +3085,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteDecompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3145,7 +3145,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ListCleanupCallbacksAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListCleanupCallbacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3195,7 +3195,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.RemoveCleanupCallbackAsync(request, CancellationToken.None);
+        var (status, response) = await service.RemoveCleanupCallbackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3221,7 +3221,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.RemoveCleanupCallbackAsync(request, CancellationToken.None);
+        var (status, response) = await service.RemoveCleanupCallbackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3264,7 +3264,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3290,7 +3290,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3330,7 +3330,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3376,7 +3376,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3445,7 +3445,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3494,7 +3494,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.RegisterReferenceAsync(request, CancellationToken.None);
+        var (status, response) = await service.RegisterReferenceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3542,7 +3542,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.UnregisterReferenceAsync(request, CancellationToken.None);
+        var (status, response) = await service.UnregisterReferenceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3584,7 +3584,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.CheckReferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.CheckReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3635,7 +3635,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3721,7 +3721,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3808,7 +3808,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - verify callback-failed event was published
         var failedEvents = _capturedPublishedEvents
@@ -3909,7 +3909,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - DETACH doesn't block cleanup, it proceeds
         Assert.Equal(StatusCodes.OK, status);
@@ -3999,7 +3999,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - ALL_REQUIRED should abort on any failure
         Assert.Equal(StatusCodes.OK, status);
@@ -4114,7 +4114,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - BEST_EFFORT should continue despite partial failure
         Assert.Equal(StatusCodes.OK, status);
@@ -4192,7 +4192,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4253,7 +4253,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteDecompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4325,7 +4325,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteDecompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4381,7 +4381,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4438,7 +4438,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetSnapshotAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetSnapshotAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4489,7 +4489,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4558,7 +4558,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ExecuteCompressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4608,7 +4608,7 @@ public class ResourceServiceTests
         {
             ResourceType = "character",
             ResourceId = resourceId1
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
         Assert.Equal(StatusCodes.OK, status1);
 
         var checksum1 = _capturedArchiveSaves[0].Archive.Entries[0].DataChecksum;
@@ -4621,7 +4621,7 @@ public class ResourceServiceTests
         {
             ResourceType = "character",
             ResourceId = resourceId2
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
         Assert.Equal(StatusCodes.OK, status2);
 
         var checksum2 = _capturedArchiveSaves[0].Archive.Entries[0].DataChecksum;
@@ -4689,7 +4689,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        var (status, response) = await service.RemoveCleanupCallbackAsync(request, CancellationToken.None);
+        var (status, response) = await service.RemoveCleanupCallbackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4729,7 +4729,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        await service.DefineCleanupCallbackAsync(request, CancellationToken.None);
+        await service.DefineCleanupCallbackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - per-resource-type index was updated
         Assert.Contains(capturedSetAdds, add => add.Key == "callback-index:realm" && add.Value == "location");
@@ -4805,7 +4805,7 @@ public class ResourceServiceTests
         var request = new ListCleanupCallbacksRequest(); // No filter
 
         // Act
-        var (status, response) = await service.ListCleanupCallbacksAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListCleanupCallbacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4908,7 +4908,7 @@ public class ResourceServiceTests
         };
 
         // Act
-        await service.ExecuteCleanupAsync(request, CancellationToken.None);
+        await service.ExecuteCleanupAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - verify a callback-failed event was published for EACH failure
         var failedEvents = _capturedPublishedEvents

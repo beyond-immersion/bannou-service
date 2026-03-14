@@ -87,8 +87,8 @@ public class ChatBackgroundWorkerTests
 
         // Act & Assert - should not throw
         await worker.StartAsync(cts.Token);
-        await Task.Delay(50);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -120,8 +120,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - ban store should never be queried because lock was not acquired
         mockBanStore.Verify(s => s.JsonQueryPagedAsync(
@@ -167,8 +167,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - query happened but no deletions
         mockBanStore.Verify(s => s.JsonQueryPagedAsync(
@@ -236,8 +236,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - both bans deleted
         mockBanStore.Verify(s => s.DeleteAsync("ban:room1:session1", It.IsAny<CancellationToken>()), Times.Once);
@@ -297,8 +297,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - second ban still attempted after first failed
         mockBanStore.Verify(s => s.DeleteAsync("ban:succeed", It.IsAny<CancellationToken>()), Times.Once);
@@ -328,8 +328,8 @@ public class ChatBackgroundWorkerTests
 
         // Act & Assert
         await worker.StartAsync(cts.Token);
-        await Task.Delay(50);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -362,8 +362,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - ChatService should not be resolved when lock fails
         _mockScopedProvider.Verify(sp => sp.GetService(typeof(IChatService)), Times.Never);
@@ -396,8 +396,8 @@ public class ChatBackgroundWorkerTests
 
         // Act & Assert - should not throw, just log error and return
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
     }
 
     #endregion
@@ -424,8 +424,8 @@ public class ChatBackgroundWorkerTests
 
         // Act & Assert
         await worker.StartAsync(cts.Token);
-        await Task.Delay(50);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -457,8 +457,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - room type store should never be queried when lock fails
         mockRoomTypeStore.Verify(s => s.JsonQueryPagedAsync(
@@ -508,8 +508,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - no message deletion
         mockMessageStore.Verify(s => s.JsonQueryPagedAsync(
@@ -609,8 +609,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - both expired messages deleted
         mockMessageStore.Verify(s => s.DeleteAsync(
@@ -713,8 +713,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - second message still deleted after first failure
         mockMessageStore.Verify(s => s.DeleteAsync("msg:ok", It.IsAny<CancellationToken>()), Times.Once);
@@ -743,8 +743,8 @@ public class ChatBackgroundWorkerTests
 
         // Act & Assert
         await worker.StartAsync(cts.Token);
-        await Task.Delay(50);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -777,8 +777,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - no stop events published
         mockEntityRegistry.Verify(r => r.PublishToEntitySessionsAsync(
@@ -822,8 +822,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - entry removed from sorted set
         mockParticipantStore.Verify(s => s.SortedSetRemoveAsync(
@@ -871,8 +871,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - invalid entry skipped entirely (no remove, no publish)
         mockParticipantStore.Verify(s => s.SortedSetRemoveAsync(
@@ -919,8 +919,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - invalid GUID entry skipped (no remove, no publish)
         mockParticipantStore.Verify(s => s.SortedSetRemoveAsync(
@@ -973,8 +973,8 @@ public class ChatBackgroundWorkerTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - both entries removed and stop events published
         mockParticipantStore.Verify(s => s.SortedSetRemoveAsync(
@@ -1026,8 +1026,8 @@ public class ChatBackgroundWorkerTests
 
         // Act & Assert - worker should not crash; it logs error and continues
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Verify error event was published
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
@@ -1062,8 +1062,8 @@ public class ChatBackgroundWorkerTests
 
         // Act & Assert - should not crash
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Verify error event published
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(

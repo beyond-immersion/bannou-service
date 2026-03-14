@@ -176,7 +176,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     public async Task GetStore_ReturnsStateStore()
     {
         // Act
-        var store = await _factory.GetStoreAsync<TestEntity>(_uniqueStoreName);
+        var store = await _factory.GetStoreAsync<TestEntity>(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(store);
@@ -190,7 +190,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     public async Task GetCacheableStore_ReturnsCacheableStateStore()
     {
         // Act
-        var store = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName);
+        var store = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(store);
@@ -205,7 +205,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     public async Task GetCacheableStore_AlsoAssignableToStateStore()
     {
         // Act
-        var cacheableStore = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName);
+        var cacheableStore = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should be castable to IStateStore
         var baseStore = cacheableStore as IStateStore<TestEntity>;
@@ -223,13 +223,13 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     public async Task GetCacheableStore_SetOperations_Work()
     {
         // Arrange
-        var store = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName);
+        var store = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
         var item = new TestEntity { Id = "1", Name = "Test", Value = 42 };
 
         // Act
-        var added = await store.AddToSetAsync("test-set", item);
-        var contains = await store.SetContainsAsync("test-set", item);
-        var count = await store.SetCountAsync("test-set");
+        var added = await store.AddToSetAsync("test-set", item, cancellationToken: TestContext.Current.CancellationToken);
+        var contains = await store.SetContainsAsync("test-set", item, cancellationToken: TestContext.Current.CancellationToken);
+        var count = await store.SetCountAsync("test-set", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(added);
@@ -237,7 +237,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
         Assert.Equal(1, count);
 
         // Cleanup
-        await store.DeleteSetAsync("test-set");
+        await store.DeleteSetAsync("test-set", cancellationToken: TestContext.Current.CancellationToken);
     }
 
     /// <summary>
@@ -247,12 +247,12 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     public async Task GetCacheableStore_SortedSetOperations_Work()
     {
         // Arrange
-        var store = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName);
+        var store = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var added = await store.SortedSetAddAsync("test-zset", "member1", 100.0);
-        var score = await store.SortedSetScoreAsync("test-zset", "member1");
-        var count = await store.SortedSetCountAsync("test-zset");
+        var added = await store.SortedSetAddAsync("test-zset", "member1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
+        var score = await store.SortedSetScoreAsync("test-zset", "member1", cancellationToken: TestContext.Current.CancellationToken);
+        var count = await store.SortedSetCountAsync("test-zset", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(added);
@@ -260,7 +260,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
         Assert.Equal(1, count);
 
         // Cleanup
-        await store.SortedSetDeleteAsync("test-zset");
+        await store.SortedSetDeleteAsync("test-zset", cancellationToken: TestContext.Current.CancellationToken);
     }
 
     /// <summary>
@@ -270,12 +270,12 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     public async Task GetCacheableStore_CounterOperations_Work()
     {
         // Arrange
-        var store = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName);
+        var store = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var incremented = await store.IncrementAsync("test-counter", 5);
-        var value = await store.GetCounterAsync("test-counter");
-        var decremented = await store.DecrementAsync("test-counter", 2);
+        var incremented = await store.IncrementAsync("test-counter", 5, cancellationToken: TestContext.Current.CancellationToken);
+        var value = await store.GetCounterAsync("test-counter", cancellationToken: TestContext.Current.CancellationToken);
+        var decremented = await store.DecrementAsync("test-counter", 2, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(5, incremented);
@@ -283,7 +283,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
         Assert.Equal(3, decremented);
 
         // Cleanup
-        await store.DeleteCounterAsync("test-counter");
+        await store.DeleteCounterAsync("test-counter", cancellationToken: TestContext.Current.CancellationToken);
     }
 
     /// <summary>
@@ -293,13 +293,13 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     public async Task GetCacheableStore_HashOperations_Work()
     {
         // Arrange
-        var store = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName);
+        var store = await _factory.GetCacheableStoreAsync<TestEntity>(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var set = await store.HashSetAsync("test-hash", "field1", "value1");
-        var value = await store.HashGetAsync<string>("test-hash", "field1");
-        var exists = await store.HashExistsAsync("test-hash", "field1");
-        var count = await store.HashCountAsync("test-hash");
+        var set = await store.HashSetAsync("test-hash", "field1", "value1", cancellationToken: TestContext.Current.CancellationToken);
+        var value = await store.HashGetAsync<string>("test-hash", "field1", cancellationToken: TestContext.Current.CancellationToken);
+        var exists = await store.HashExistsAsync("test-hash", "field1", cancellationToken: TestContext.Current.CancellationToken);
+        var count = await store.HashCountAsync("test-hash", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(set);
@@ -308,7 +308,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
         Assert.Equal(1, count);
 
         // Cleanup
-        await store.DeleteHashAsync("test-hash");
+        await store.DeleteHashAsync("test-hash", cancellationToken: TestContext.Current.CancellationToken);
     }
 
     #endregion
@@ -322,7 +322,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     public async Task GetKeyCountAsync_EmptyInMemoryStore_ReturnsZero()
     {
         // Act
-        var count = await _factory.GetKeyCountAsync(_uniqueStoreName);
+        var count = await _factory.GetKeyCountAsync(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, count);
@@ -335,21 +335,21 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     public async Task GetKeyCountAsync_AfterAddingItems_ReturnsCorrectCount()
     {
         // Arrange
-        var store = await _factory.GetStoreAsync<TestEntity>(_uniqueStoreName);
-        await store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test1" });
-        await store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Test2" });
-        await store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Test3" });
+        var store = await _factory.GetStoreAsync<TestEntity>(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
+        await store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test1" }, cancellationToken: TestContext.Current.CancellationToken);
+        await store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Test2" }, cancellationToken: TestContext.Current.CancellationToken);
+        await store.SaveAsync("key3", new TestEntity { Id = "3", Name = "Test3" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var count = await _factory.GetKeyCountAsync(_uniqueStoreName);
+        var count = await _factory.GetKeyCountAsync(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, count);
 
         // Cleanup
-        await store.DeleteAsync("key1");
-        await store.DeleteAsync("key2");
-        await store.DeleteAsync("key3");
+        await store.DeleteAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
+        await store.DeleteAsync("key2", cancellationToken: TestContext.Current.CancellationToken);
+        await store.DeleteAsync("key3", cancellationToken: TestContext.Current.CancellationToken);
     }
 
     /// <summary>
@@ -359,23 +359,23 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     public async Task GetKeyCountAsync_AfterDeletingItems_ReturnsUpdatedCount()
     {
         // Arrange
-        var store = await _factory.GetStoreAsync<TestEntity>(_uniqueStoreName);
-        await store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test1" });
-        await store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Test2" });
+        var store = await _factory.GetStoreAsync<TestEntity>(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
+        await store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test1" }, cancellationToken: TestContext.Current.CancellationToken);
+        await store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Test2" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Verify initial count
-        var initialCount = await _factory.GetKeyCountAsync(_uniqueStoreName);
+        var initialCount = await _factory.GetKeyCountAsync(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(2, initialCount);
 
         // Act - delete one item
-        await store.DeleteAsync("key1");
-        var countAfterDelete = await _factory.GetKeyCountAsync(_uniqueStoreName);
+        await store.DeleteAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
+        var countAfterDelete = await _factory.GetKeyCountAsync(_uniqueStoreName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, countAfterDelete);
 
         // Cleanup
-        await store.DeleteAsync("key2");
+        await store.DeleteAsync("key2", cancellationToken: TestContext.Current.CancellationToken);
     }
 
     /// <summary>
@@ -386,7 +386,7 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
     {
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _factory.GetKeyCountAsync("non-existent-store-12345"));
+            () => _factory.GetKeyCountAsync("non-existent-store-12345", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     /// <summary>
@@ -400,8 +400,8 @@ public class StateStoreInterfaceHierarchyTests : IAsyncDisposable
         var logger = new Mock<ILogger<InMemoryStateStore<TestEntity>>>();
         var store = new InMemoryStateStore<TestEntity>(testStoreName, null, logger.Object);
 
-        await store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test1" });
-        await store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Test2" });
+        await store.SaveAsync("key1", new TestEntity { Id = "1", Name = "Test1" }, cancellationToken: TestContext.Current.CancellationToken);
+        await store.SaveAsync("key2", new TestEntity { Id = "2", Name = "Test2" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         var count = InMemoryStateStore<TestEntity>.GetKeyCountForStore(testStoreName);

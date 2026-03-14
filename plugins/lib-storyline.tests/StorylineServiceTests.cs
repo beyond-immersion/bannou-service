@@ -935,7 +935,7 @@ public class StorylineDeprecationTests : ServiceTestBase<StorylineServiceConfigu
         };
 
         // Act
-        var (status, _) = await service.DeprecateScenarioDefinitionAsync(request, CancellationToken.None);
+        var (status, _) = await service.DeprecateScenarioDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -979,7 +979,7 @@ public class StorylineDeprecationTests : ServiceTestBase<StorylineServiceConfigu
         var request = new DeprecateScenarioDefinitionRequest { ScenarioId = scenarioId };
 
         // Act
-        var (status, _) = await service.DeprecateScenarioDefinitionAsync(request, CancellationToken.None);
+        var (status, _) = await service.DeprecateScenarioDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1014,7 +1014,7 @@ public class StorylineDeprecationTests : ServiceTestBase<StorylineServiceConfigu
         };
 
         // Act
-        await service.DeprecateScenarioDefinitionAsync(request, CancellationToken.None);
+        await service.DeprecateScenarioDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — triple-field model per IMPLEMENTATION TENETS
         Assert.NotNull(savedModel);

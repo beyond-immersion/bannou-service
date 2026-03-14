@@ -95,7 +95,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.RequestUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -115,7 +115,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.RequestUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -136,7 +136,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.RequestUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -156,7 +156,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.RequestUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -201,7 +201,7 @@ public class AssetServiceTests
             .ReturnsAsync(uploadResult);
 
         // Act
-        var (status, result) = await service.RequestUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -245,7 +245,7 @@ public class AssetServiceTests
             .ReturnsAsync(multipartResult);
 
         // Act
-        var (status, result) = await service.RequestUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -304,7 +304,7 @@ public class AssetServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var (status, result) = await service.RequestUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -340,7 +340,7 @@ public class AssetServiceTests
             .ReturnsAsync((UploadSession?)null);
 
         // Act
-        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.CompleteUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -373,7 +373,7 @@ public class AssetServiceTests
             .ReturnsAsync(expiredSession);
 
         // Act
-        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.CompleteUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -412,7 +412,7 @@ public class AssetServiceTests
             .ReturnsAsync(session);
 
         // Act
-        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.CompleteUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -451,7 +451,7 @@ public class AssetServiceTests
             .ReturnsAsync(false);
 
         // Act
-        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.CompleteUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -528,7 +528,7 @@ public class AssetServiceTests
             .ReturnsAsync((new List<string>(), (string?)null));
 
         // Act
-        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.CompleteUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -617,7 +617,7 @@ public class AssetServiceTests
             .ReturnsAsync((new List<string>(), (string?)null));
 
         // Act
-        var (status, result) = await service.CompleteUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.CompleteUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -652,7 +652,7 @@ public class AssetServiceTests
             .ReturnsAsync((InternalAssetRecord?)null);
 
         // Act
-        var (status, result) = await service.GetAssetAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetAssetAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -708,7 +708,7 @@ public class AssetServiceTests
             .ReturnsAsync(downloadResult);
 
         // Act
-        var (status, result) = await service.GetAssetAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetAssetAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -740,7 +740,7 @@ public class AssetServiceTests
             .ReturnsAsync((InternalAssetRecord?)null);
 
         // Act
-        var (status, result) = await service.ListAssetVersionsAsync(request, CancellationToken.None);
+        var (status, result) = await service.ListAssetVersionsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -794,7 +794,7 @@ public class AssetServiceTests
             .ReturnsAsync(versions);
 
         // Act
-        var (status, result) = await service.ListAssetVersionsAsync(request, CancellationToken.None);
+        var (status, result) = await service.ListAssetVersionsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -832,7 +832,7 @@ public class AssetServiceTests
             .ReturnsAsync((List<string>?)null);
 
         // Act
-        var (status, result) = await service.SearchAssetsAsync(request, CancellationToken.None);
+        var (status, result) = await service.SearchAssetsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -929,7 +929,7 @@ public class AssetServiceTests
             .ReturnsAsync(asset3);
 
         // Act
-        var (status, result) = await service.SearchAssetsAsync(request, CancellationToken.None);
+        var (status, result) = await service.SearchAssetsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1008,7 +1008,7 @@ public class AssetServiceTests
             .ReturnsAsync(asset2);
 
         // Act
-        var (status, result) = await service.SearchAssetsAsync(request, CancellationToken.None);
+        var (status, result) = await service.SearchAssetsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1034,7 +1034,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.CreateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1053,7 +1053,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.CreateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1089,7 +1089,7 @@ public class AssetServiceTests
             .ReturnsAsync(existingBundle);
 
         // Act
-        var (status, result) = await service.CreateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1116,7 +1116,7 @@ public class AssetServiceTests
             .ReturnsAsync((InternalAssetRecord?)null);
 
         // Act
-        var (status, result) = await service.CreateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1186,7 +1186,7 @@ public class AssetServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, result) = await service.CreateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1213,7 +1213,7 @@ public class AssetServiceTests
             .ReturnsAsync((BundleMetadata?)null);
 
         // Act
-        var (status, result) = await service.GetBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1228,7 +1228,7 @@ public class AssetServiceTests
         var request = new GetBundleRequest { BundleId = "" };
 
         // Act
-        var (status, result) = await service.GetBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1261,7 +1261,7 @@ public class AssetServiceTests
             .ReturnsAsync(pendingBundle);
 
         // Act
-        var (status, result) = await service.GetBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1287,7 +1287,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.DeleteAssetAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteAssetAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1309,7 +1309,7 @@ public class AssetServiceTests
             .ReturnsAsync((InternalAssetRecord?)null);
 
         // Act
-        var (status, result) = await service.DeleteAssetAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteAssetAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1355,7 +1355,7 @@ public class AssetServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var (status, result) = await service.DeleteAssetAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteAssetAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1425,7 +1425,7 @@ public class AssetServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var (status, result) = await service.DeleteAssetAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteAssetAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1462,7 +1462,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.RequestBundleUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestBundleUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1482,7 +1482,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.RequestBundleUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestBundleUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1503,7 +1503,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.RequestBundleUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestBundleUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1523,7 +1523,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.RequestBundleUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestBundleUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1561,7 +1561,7 @@ public class AssetServiceTests
             .ReturnsAsync(existingBundle);
 
         // Act
-        var (status, result) = await service.RequestBundleUploadAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestBundleUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1590,7 +1590,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateMetabundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1613,7 +1613,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateMetabundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1636,7 +1636,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateMetabundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1675,7 +1675,7 @@ public class AssetServiceTests
             .ReturnsAsync(existingMetabundle);
 
         // Act
-        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateMetabundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1707,7 +1707,7 @@ public class AssetServiceTests
             .ReturnsAsync((BundleMetadata?)null);
 
         // Act
-        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateMetabundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1739,7 +1739,7 @@ public class AssetServiceTests
             .ReturnsAsync((InternalAssetRecord?)null);
 
         // Act
-        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateMetabundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1783,7 +1783,7 @@ public class AssetServiceTests
             .ReturnsAsync(pendingBundle);
 
         // Act
-        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateMetabundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1830,7 +1830,7 @@ public class AssetServiceTests
             .ReturnsAsync(pendingAsset);
 
         // Act
-        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateMetabundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1875,7 +1875,7 @@ public class AssetServiceTests
             .ReturnsAsync(wrongRealmBundle);
 
         // Act
-        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateMetabundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1961,7 +1961,7 @@ public class AssetServiceTests
             });
 
         // Act
-        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateMetabundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should return Conflict with null result per IMPLEMENTATION TENETS (error responses return null)
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1984,7 +1984,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.ResolveBundlesAsync(request, CancellationToken.None);
+        var (status, result) = await service.ResolveBundlesAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2070,7 +2070,7 @@ public class AssetServiceTests
                 "application/octet-stream"));
 
         // Act
-        var (status, result) = await service.ResolveBundlesAsync(request, CancellationToken.None);
+        var (status, result) = await service.ResolveBundlesAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2190,7 +2190,7 @@ public class AssetServiceTests
                 "application/octet-stream"));
 
         // Act
-        var (status, result) = await service.ResolveBundlesAsync(request, CancellationToken.None);
+        var (status, result) = await service.ResolveBundlesAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should pick big-bundle (covers all 3) instead of small-bundle-1 + small-bundle-2
         Assert.Equal(StatusCodes.OK, status);
@@ -2214,7 +2214,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.QueryBundlesByAssetAsync(request, CancellationToken.None);
+        var (status, result) = await service.QueryBundlesByAssetAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2280,7 +2280,7 @@ public class AssetServiceTests
             .ReturnsAsync(bundle2);
 
         // Act
-        var (status, result) = await service.QueryBundlesByAssetAsync(request, CancellationToken.None);
+        var (status, result) = await service.QueryBundlesByAssetAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2303,7 +2303,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.BulkGetAssetsAsync(request, CancellationToken.None);
+        var (status, result) = await service.BulkGetAssetsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2346,7 +2346,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.BulkGetAssetsAsync(request, CancellationToken.None);
+        var (status, result) = await service.BulkGetAssetsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2410,7 +2410,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.BulkGetAssetsAsync(request, CancellationToken.None);
+        var (status, result) = await service.BulkGetAssetsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2439,7 +2439,7 @@ public class AssetServiceTests
         var request = new GetJobStatusRequest { JobId = Guid.Empty };
 
         // Act
-        var (status, result) = await service.GetJobStatusAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetJobStatusAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2460,7 +2460,7 @@ public class AssetServiceTests
             .ReturnsAsync((MetabundleJob?)null);
 
         // Act
-        var (status, result) = await service.GetJobStatusAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetJobStatusAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2491,7 +2491,7 @@ public class AssetServiceTests
             .ReturnsAsync(job);
 
         // Act
-        var (status, result) = await service.GetJobStatusAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetJobStatusAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2555,7 +2555,7 @@ public class AssetServiceTests
                 ContentType: "application/bannou-bundle"));
 
         // Act
-        var (status, result) = await service.GetJobStatusAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetJobStatusAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2596,7 +2596,7 @@ public class AssetServiceTests
             .ReturnsAsync(job);
 
         // Act
-        var (status, result) = await service.GetJobStatusAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetJobStatusAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2618,7 +2618,7 @@ public class AssetServiceTests
         var request = new CancelJobRequest { JobId = Guid.Empty };
 
         // Act
-        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+        var (status, result) = await service.CancelJobAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2639,7 +2639,7 @@ public class AssetServiceTests
             .ReturnsAsync((MetabundleJob?)null);
 
         // Act
-        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+        var (status, result) = await service.CancelJobAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2676,7 +2676,7 @@ public class AssetServiceTests
             .ReturnsAsync("etag-123");
 
         // Act
-        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+        var (status, result) = await service.CancelJobAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2716,7 +2716,7 @@ public class AssetServiceTests
             .ReturnsAsync(job);
 
         // Act
-        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+        var (status, result) = await service.CancelJobAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2748,7 +2748,7 @@ public class AssetServiceTests
             .ReturnsAsync(job);
 
         // Act
-        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+        var (status, result) = await service.CancelJobAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2804,7 +2804,7 @@ public class AssetServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+        var (status, result) = await service.CancelJobAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2841,7 +2841,7 @@ public class AssetServiceTests
         var request = new UpdateBundleRequest { BundleId = "" };
 
         // Act
-        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.UpdateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2860,7 +2860,7 @@ public class AssetServiceTests
             .ReturnsAsync(((BundleMetadata?)null, (string?)null));
 
         // Act
-        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.UpdateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2881,7 +2881,7 @@ public class AssetServiceTests
             .ReturnsAsync((deletedBundle, "etag-1"));
 
         // Act
-        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.UpdateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2924,7 +2924,7 @@ public class AssetServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.UpdateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2961,7 +2961,7 @@ public class AssetServiceTests
             .ReturnsAsync((existingBundle, "etag-1"));
 
         // Act
-        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.UpdateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2993,7 +2993,7 @@ public class AssetServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.UpdateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3026,7 +3026,7 @@ public class AssetServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (status, result) = await service.UpdateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.UpdateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3049,7 +3049,7 @@ public class AssetServiceTests
         var request = new DeleteBundleRequest { BundleId = "" };
 
         // Act
-        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3068,7 +3068,7 @@ public class AssetServiceTests
             .ReturnsAsync(((BundleMetadata?)null, (string?)null));
 
         // Act
-        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3110,7 +3110,7 @@ public class AssetServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3149,7 +3149,7 @@ public class AssetServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3190,7 +3190,7 @@ public class AssetServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3221,7 +3221,7 @@ public class AssetServiceTests
             .ThrowsAsync(new InvalidOperationException("Storage unavailable"));
 
         // Act
-        var (status, result) = await service.DeleteBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.DeleteBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should still succeed and delete metadata
         Assert.Equal(StatusCodes.OK, status);
@@ -3246,7 +3246,7 @@ public class AssetServiceTests
         var request = new RestoreBundleRequest { BundleId = "" };
 
         // Act
-        var (status, result) = await service.RestoreBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.RestoreBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3265,7 +3265,7 @@ public class AssetServiceTests
             .ReturnsAsync(((BundleMetadata?)null, (string?)null));
 
         // Act
-        var (status, result) = await service.RestoreBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.RestoreBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3286,7 +3286,7 @@ public class AssetServiceTests
             .ReturnsAsync((activeBundle, "etag-1"));
 
         // Act
-        var (status, result) = await service.RestoreBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.RestoreBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3328,7 +3328,7 @@ public class AssetServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, result) = await service.RestoreBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.RestoreBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3362,7 +3362,7 @@ public class AssetServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, result) = await service.RestoreBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.RestoreBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3381,7 +3381,7 @@ public class AssetServiceTests
         var request = new QueryBundlesRequest { OwnerId = null };
 
         // Act
-        var (status, result) = await service.QueryBundlesAsync(request, CancellationToken.None);
+        var (status, result) = await service.QueryBundlesAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3402,7 +3402,7 @@ public class AssetServiceTests
             .ReturnsAsync(new List<string>());
 
         // Act
-        var (status, result) = await service.QueryBundlesAsync(request, CancellationToken.None);
+        var (status, result) = await service.QueryBundlesAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3442,7 +3442,7 @@ public class AssetServiceTests
             });
 
         // Act
-        var (status, result) = await service.QueryBundlesAsync(request, CancellationToken.None);
+        var (status, result) = await service.QueryBundlesAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3483,7 +3483,7 @@ public class AssetServiceTests
             });
 
         // Act
-        var (status, result) = await service.QueryBundlesAsync(request, CancellationToken.None);
+        var (status, result) = await service.QueryBundlesAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3526,7 +3526,7 @@ public class AssetServiceTests
             });
 
         // Act
-        var (status, result) = await service.QueryBundlesAsync(request, CancellationToken.None);
+        var (status, result) = await service.QueryBundlesAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3548,7 +3548,7 @@ public class AssetServiceTests
         var request = new ListBundleVersionsRequest { BundleId = "" };
 
         // Act
-        var (status, result) = await service.ListBundleVersionsAsync(request, CancellationToken.None);
+        var (status, result) = await service.ListBundleVersionsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3567,7 +3567,7 @@ public class AssetServiceTests
             .ReturnsAsync((BundleMetadata?)null);
 
         // Act
-        var (status, result) = await service.ListBundleVersionsAsync(request, CancellationToken.None);
+        var (status, result) = await service.ListBundleVersionsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3635,7 +3635,7 @@ public class AssetServiceTests
             });
 
         // Act
-        var (status, result) = await service.ListBundleVersionsAsync(request, CancellationToken.None);
+        var (status, result) = await service.ListBundleVersionsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3701,7 +3701,7 @@ public class AssetServiceTests
             });
 
         // Act
-        var (status, result) = await service.ListBundleVersionsAsync(request, CancellationToken.None);
+        var (status, result) = await service.ListBundleVersionsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3727,7 +3727,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.BulkGetAssetsAsync(request, CancellationToken.None);
+        var (status, result) = await service.BulkGetAssetsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3773,7 +3773,7 @@ public class AssetServiceTests
         };
 
         // Act
-        var (status, result) = await service.BulkGetAssetsAsync(request, CancellationToken.None);
+        var (status, result) = await service.BulkGetAssetsAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3850,7 +3850,7 @@ public class AssetServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, result) = await service.CreateBundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Large bundles are queued for async processing
         Assert.Equal(StatusCodes.OK, status);
@@ -3939,7 +3939,7 @@ public class AssetServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateMetabundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - async path returns OK with Queued status
         Assert.Equal(StatusCodes.OK, status);
@@ -4001,7 +4001,7 @@ public class AssetServiceTests
 
         // Act & Assert - Exception propagates to generated controller (per FOUNDATION TENETS)
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.CompleteUploadAsync(request, CancellationToken.None));
+            () => service.CompleteUploadAsync(request, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -4351,7 +4351,7 @@ public class AssetEventEmitterTests
             success: true,
             assetId: assetId,
             contentHash: contentHash,
-            size: size);
+            size: size, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -4384,7 +4384,7 @@ public class AssetEventEmitterTests
             uploadId,
             success: false,
             errorCode: UploadErrorCode.SizeExceeded,
-            errorMessage: "File exceeds maximum size");
+            errorMessage: "File exceeds maximum size", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -4418,7 +4418,7 @@ public class AssetEventEmitterTests
             versionId: "v1",
             contentHash: "hash123",
             size: 2048,
-            contentType: "image/png");
+            contentType: "image/png", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -4453,7 +4453,7 @@ public class AssetEventEmitterTests
             success: true,
             downloadUrl: downloadUrl,
             size: 4096,
-            assetCount: 5);
+            assetCount: 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);

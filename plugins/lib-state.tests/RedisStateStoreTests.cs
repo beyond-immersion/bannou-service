@@ -70,7 +70,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(RedisValue.Null);
 
         // Act
-        await _store.GetAsync("mykey");
+        await _store.GetAsync("mykey", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal($"{KeyPrefix}:mykey", capturedKey);
@@ -87,7 +87,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _store.DeleteAsync("mykey");
+        await _store.DeleteAsync("mykey", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - should delete both value and meta keys
         Assert.Contains($"{KeyPrefix}:mykey", capturedKeys);
@@ -105,7 +105,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _store.ExistsAsync("mykey");
+        await _store.ExistsAsync("mykey", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal($"{KeyPrefix}:mykey", capturedKey);
@@ -126,7 +126,7 @@ public class RedisStateStoreTests
             .ReturnsAsync((RedisValue)json);
 
         // Act
-        var result = await _store.GetAsync("key1");
+        var result = await _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -144,7 +144,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(RedisValue.Null);
 
         // Act
-        var result = await _store.GetAsync("nonexistent");
+        var result = await _store.GetAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -159,7 +159,7 @@ public class RedisStateStoreTests
             .ReturnsAsync((RedisValue)"{ invalid json");
 
         // Act
-        var result = await _store.GetAsync("corrupt-key");
+        var result = await _store.GetAsync("corrupt-key", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -182,7 +182,7 @@ public class RedisStateStoreTests
             .ThrowsAsync(new RedisConnectionException(ConnectionFailureType.UnableToConnect, "Test"));
 
         // Act & Assert
-        await Assert.ThrowsAsync<RedisConnectionException>(() => _store.GetAsync("key1"));
+        await Assert.ThrowsAsync<RedisConnectionException>(() => _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken));
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,
@@ -202,7 +202,7 @@ public class RedisStateStoreTests
             .ThrowsAsync(new RedisTimeoutException("Test", CommandStatus.Unknown));
 
         // Act & Assert
-        await Assert.ThrowsAsync<RedisTimeoutException>(() => _store.GetAsync("key1"));
+        await Assert.ThrowsAsync<RedisTimeoutException>(() => _store.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken));
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,
@@ -232,7 +232,7 @@ public class RedisStateStoreTests
             .ReturnsAsync((RedisValue)"5");
 
         // Act
-        var (value, etag) = await _store.GetWithETagAsync("key1");
+        var (value, etag) = await _store.GetWithETagAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(value);
@@ -255,7 +255,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(RedisValue.Null);
 
         // Act
-        var (value, etag) = await _store.GetWithETagAsync("key1");
+        var (value, etag) = await _store.GetWithETagAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(value);
@@ -274,7 +274,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(RedisValue.Null);
 
         // Act
-        var (value, etag) = await _store.GetWithETagAsync("nonexistent");
+        var (value, etag) = await _store.GetWithETagAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(value);
@@ -316,7 +316,7 @@ public class RedisStateStoreTests
             .Returns(mockTransaction.Object);
 
         // Act
-        await _store.SaveAsync("key1", entity);
+        await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockDatabase.Verify(db => db.CreateTransaction(It.IsAny<object?>()), Times.Once);
@@ -334,7 +334,7 @@ public class RedisStateStoreTests
             .Returns(mockTransaction.Object);
 
         // Act
-        var etag = await _store.SaveAsync("key1", entity);
+        var etag = await _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("7", etag);
@@ -352,7 +352,7 @@ public class RedisStateStoreTests
             .Returns(mockTransaction.Object);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _store.SaveAsync("key1", entity));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _store.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken));
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,
@@ -389,7 +389,7 @@ public class RedisStateStoreTests
             .Returns(mockTransaction.Object);
 
         // Act
-        var result = await _store.TrySaveAsync("key1", entity, "");
+        var result = await _store.TrySaveAsync("key1", entity, "", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("1", result);
@@ -406,7 +406,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true); // Key already exists
 
         // Act
-        var result = await _store.TrySaveAsync("key1", entity, "");
+        var result = await _store.TrySaveAsync("key1", entity, "", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -434,7 +434,7 @@ public class RedisStateStoreTests
             .Returns(mockTransaction.Object);
 
         // Act
-        var result = await _store.TrySaveAsync("key1", entity, "3");
+        var result = await _store.TrySaveAsync("key1", entity, "3", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("4", result);
@@ -451,7 +451,7 @@ public class RedisStateStoreTests
             .ReturnsAsync((RedisValue)"5"); // Different version
 
         // Act
-        var result = await _store.TrySaveAsync("key1", entity, "3");
+        var result = await _store.TrySaveAsync("key1", entity, "3", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -473,7 +473,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _store.DeleteAsync("key1");
+        var result = await _store.DeleteAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -488,7 +488,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(false);
 
         // Act
-        var result = await _store.DeleteAsync("nonexistent");
+        var result = await _store.DeleteAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -507,7 +507,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _store.ExistsAsync("key1");
+        var result = await _store.ExistsAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -522,7 +522,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(false);
 
         // Act
-        var result = await _store.ExistsAsync("nonexistent");
+        var result = await _store.ExistsAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -548,7 +548,7 @@ public class RedisStateStoreTests
             });
 
         // Act
-        var results = await _store.GetBulkAsync(new[] { "key1", "key2" });
+        var results = await _store.GetBulkAsync(new[] { "key1", "key2" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, results.Count);
@@ -571,7 +571,7 @@ public class RedisStateStoreTests
             });
 
         // Act
-        var results = await _store.GetBulkAsync(new[] { "key1", "key2" });
+        var results = await _store.GetBulkAsync(new[] { "key1", "key2" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(results);
@@ -583,7 +583,7 @@ public class RedisStateStoreTests
     public async Task GetBulkAsync_WithEmptyKeys_ReturnsEmptyDictionary()
     {
         // Act
-        var results = await _store.GetBulkAsync(Array.Empty<string>());
+        var results = await _store.GetBulkAsync(Array.Empty<string>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(results);
@@ -604,7 +604,7 @@ public class RedisStateStoreTests
             });
 
         // Act
-        var results = await _store.GetBulkAsync(new[] { "key1", "key2" });
+        var results = await _store.GetBulkAsync(new[] { "key1", "key2" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(results);
@@ -648,7 +648,7 @@ public class RedisStateStoreTests
             .Returns(mockTransaction.Object);
 
         // Act
-        var etags = await _store.SaveBulkAsync(items);
+        var etags = await _store.SaveBulkAsync(items, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, etags.Count);
@@ -660,7 +660,7 @@ public class RedisStateStoreTests
     public async Task SaveBulkAsync_WithEmptyItems_ReturnsEmptyDictionary()
     {
         // Act
-        var etags = await _store.SaveBulkAsync(new Dictionary<string, TestEntity>());
+        var etags = await _store.SaveBulkAsync(new Dictionary<string, TestEntity>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(etags);
@@ -681,7 +681,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var existing = await _store.ExistsBulkAsync(new[] { "key1", "key2", "key3" });
+        var existing = await _store.ExistsBulkAsync(new[] { "key1", "key2", "key3" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, existing.Count);
@@ -694,7 +694,7 @@ public class RedisStateStoreTests
     public async Task ExistsBulkAsync_WithEmptyKeys_ReturnsEmptySet()
     {
         // Act
-        var existing = await _store.ExistsBulkAsync(Array.Empty<string>());
+        var existing = await _store.ExistsBulkAsync(Array.Empty<string>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(existing);
@@ -713,7 +713,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(4); // 2 keys * 2 (value + meta)
 
         // Act
-        var count = await _store.DeleteBulkAsync(new[] { "key1", "key2" });
+        var count = await _store.DeleteBulkAsync(new[] { "key1", "key2" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, count);
@@ -723,7 +723,7 @@ public class RedisStateStoreTests
     public async Task DeleteBulkAsync_WithEmptyKeys_ReturnsZero()
     {
         // Act
-        var count = await _store.DeleteBulkAsync(Array.Empty<string>());
+        var count = await _store.DeleteBulkAsync(Array.Empty<string>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, count);
@@ -744,7 +744,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _store.AddToSetAsync("myset", new TestEntity { Id = "1" });
+        await _store.AddToSetAsync("myset", new TestEntity { Id = "1" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal($"{KeyPrefix}:set:myset", capturedKey);
@@ -766,7 +766,7 @@ public class RedisStateStoreTests
             });
 
         // Act
-        var result = await _store.GetSetAsync<TestEntity>("myset");
+        var result = await _store.GetSetAsync<TestEntity>("myset", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -789,7 +789,7 @@ public class RedisStateStoreTests
             });
 
         // Act
-        var result = await _store.GetSetAsync<TestEntity>("myset");
+        var result = await _store.GetSetAsync<TestEntity>("myset", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -805,7 +805,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(5);
 
         // Act
-        var count = await _store.SetCountAsync("myset");
+        var count = await _store.SetCountAsync("myset", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(5, count);
@@ -826,7 +826,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal($"{KeyPrefix}:zset:leaderboard", capturedKey);
@@ -841,7 +841,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(100.5);
 
         // Act
-        var score = await _store.SortedSetScoreAsync("leaderboard", "player1");
+        var score = await _store.SortedSetScoreAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(100.5, score);
@@ -856,7 +856,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(5);
 
         // Act
-        var rank = await _store.SortedSetRankAsync("leaderboard", "player1");
+        var rank = await _store.SortedSetRankAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(5, rank);
@@ -871,7 +871,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(10);
 
         // Act
-        var count = await _store.SortedSetCountAsync("leaderboard");
+        var count = await _store.SortedSetCountAsync("leaderboard", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(10, count);
@@ -892,7 +892,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(1);
 
         // Act
-        await _store.IncrementAsync("mycounter");
+        await _store.IncrementAsync("mycounter", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal($"{KeyPrefix}:counter:mycounter", capturedKey);
@@ -907,7 +907,7 @@ public class RedisStateStoreTests
             .ReturnsAsync((RedisValue)"42");
 
         // Act
-        var value = await _store.GetCounterAsync("mycounter");
+        var value = await _store.GetCounterAsync("mycounter", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(42, value);
@@ -922,7 +922,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(RedisValue.Null);
 
         // Act
-        var value = await _store.GetCounterAsync("nonexistent");
+        var value = await _store.GetCounterAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(value);
@@ -937,7 +937,7 @@ public class RedisStateStoreTests
             .ReturnsAsync((RedisValue)"not-a-number");
 
         // Act
-        var value = await _store.GetCounterAsync("mycounter");
+        var value = await _store.GetCounterAsync("mycounter", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(value);
@@ -966,7 +966,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _store.HashSetAsync("myhash", "field1", new TestEntity { Id = "1" });
+        await _store.HashSetAsync("myhash", "field1", new TestEntity { Id = "1" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal($"{KeyPrefix}:hash:myhash", capturedKey);
@@ -982,7 +982,7 @@ public class RedisStateStoreTests
             .ReturnsAsync((RedisValue)BannouJson.Serialize(entity));
 
         // Act
-        var result = await _store.HashGetAsync<TestEntity>("myhash", "field1");
+        var result = await _store.HashGetAsync<TestEntity>("myhash", "field1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -999,7 +999,7 @@ public class RedisStateStoreTests
             .ReturnsAsync((RedisValue)"{ corrupted }");
 
         // Act
-        var result = await _store.HashGetAsync<TestEntity>("myhash", "field1");
+        var result = await _store.HashGetAsync<TestEntity>("myhash", "field1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -1022,7 +1022,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(3);
 
         // Act
-        var count = await _store.HashCountAsync("myhash");
+        var count = await _store.HashCountAsync("myhash", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, count);
@@ -1042,7 +1042,7 @@ public class RedisStateStoreTests
             });
 
         // Act
-        var result = await _store.HashGetAllAsync<TestEntity>("myhash");
+        var result = await _store.HashGetAllAsync<TestEntity>("myhash", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -1083,7 +1083,7 @@ public class RedisStateStoreTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _store.SaveBulkAsync(items));
+            () => _store.SaveBulkAsync(items, cancellationToken: TestContext.Current.CancellationToken));
 
         _mockLogger.Verify(
             x => x.Log(
@@ -1125,7 +1125,7 @@ public class RedisStateStoreTests
             });
 
         // Act
-        var results = await _store.SortedSetRangeByScoreAsync("leaderboard", 0, 500);
+        var results = await _store.SortedSetRangeByScoreAsync("leaderboard", 0, 500, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, results.Count);
@@ -1165,7 +1165,7 @@ public class RedisStateStoreTests
 
         // Act
         var results = await _store.SortedSetRangeByScoreAsync(
-            "leaderboard", 0, 500, descending: true);
+            "leaderboard", 0, 500, descending: true, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(Order.Descending, capturedOrder);
@@ -1201,7 +1201,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(Array.Empty<SortedSetEntry>());
 
         // Act
-        await _store.SortedSetRangeByScoreAsync("leaderboard", 0, 1000, offset: 10, count: 5);
+        await _store.SortedSetRangeByScoreAsync("leaderboard", 0, 1000, offset: 10, count: 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(10, capturedOffset);
@@ -1231,7 +1231,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(Array.Empty<SortedSetEntry>());
 
         // Act
-        await _store.SortedSetRangeByScoreAsync("scores", 0, 100);
+        await _store.SortedSetRangeByScoreAsync("scores", 0, 100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal($"{KeyPrefix}:zset:scores", capturedKey);
@@ -1261,7 +1261,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(Array.Empty<SortedSetEntry>());
 
         // Act
-        await _store.SortedSetRangeByScoreAsync("leaderboard", 0, 100);
+        await _store.SortedSetRangeByScoreAsync("leaderboard", 0, 100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — the public API does not expose an Exclude parameter;
         // the implementation always passes Exclude.None to Redis
@@ -1302,7 +1302,7 @@ public class RedisStateStoreTests
         };
 
         // Act
-        await _store.HashSetManyAsync("myhash", fields);
+        await _store.HashSetManyAsync("myhash", fields, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal($"{KeyPrefix}:hash:myhash", capturedKey);
@@ -1322,7 +1322,7 @@ public class RedisStateStoreTests
     public async Task HashSetManyAsync_WithEmptyFields_DoesNotCallRedis()
     {
         // Act
-        await _store.HashSetManyAsync("myhash", new Dictionary<string, TestEntity>());
+        await _store.HashSetManyAsync("myhash", new Dictionary<string, TestEntity>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — no Redis calls should have been made
         _mockDatabase.Verify(
@@ -1364,7 +1364,7 @@ public class RedisStateStoreTests
         };
 
         // Act
-        await _store.HashSetManyAsync("myhash", fields, new StateOptions { Ttl = 300 });
+        await _store.HashSetManyAsync("myhash", fields, new StateOptions { Ttl = 300 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedTtl);
@@ -1399,7 +1399,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _store.RefreshSetTtlAsync("myset", 120);
+        var result = await _store.RefreshSetTtlAsync("myset", 120, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -1423,7 +1423,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(false);
 
         // Act
-        var result = await _store.RefreshSetTtlAsync("nonexistent", 60);
+        var result = await _store.RefreshSetTtlAsync("nonexistent", 60, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -1457,7 +1457,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _store.RefreshHashTtlAsync("myhash", 600);
+        var result = await _store.RefreshHashTtlAsync("myhash", 600, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -1481,7 +1481,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(false);
 
         // Act
-        var result = await _store.RefreshHashTtlAsync("nonexistent", 60);
+        var result = await _store.RefreshHashTtlAsync("nonexistent", 60, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -1505,7 +1505,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _store.DeleteHashAsync("myhash");
+        var result = await _store.DeleteHashAsync("myhash", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -1524,7 +1524,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(false);
 
         // Act
-        var result = await _store.DeleteHashAsync("nonexistent");
+        var result = await _store.DeleteHashAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -1557,7 +1557,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(9);
 
         // Act
-        var result = await _store.DecrementAsync("mycounter", 1);
+        var result = await _store.DecrementAsync("mycounter", 1, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(9, result);
@@ -1583,7 +1583,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(5);
 
         // Act
-        var result = await _store.DecrementAsync("mycounter", 5);
+        var result = await _store.DecrementAsync("mycounter", 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(5, result);
@@ -1616,7 +1616,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _store.DecrementAsync("mycounter", 1, new StateOptions { Ttl = 60 });
+        await _store.DecrementAsync("mycounter", 1, new StateOptions { Ttl = 60 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedTtl);
@@ -1645,7 +1645,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _store.SetCounterAsync("mycounter", 42);
+        await _store.SetCounterAsync("mycounter", 42, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — verify the correct key was used
         _mockDatabase.Verify(
@@ -1675,7 +1675,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _store.SetCounterAsync("mycounter", 100, new StateOptions { Ttl = 300 });
+        await _store.SetCounterAsync("mycounter", 100, new StateOptions { Ttl = 300 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert — verify TTL was passed (Expiration wraps TimeSpan, displayed as "EX 300")
         _mockDatabase.Verify(
@@ -1706,7 +1706,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _store.DeleteCounterAsync("mycounter");
+        var result = await _store.DeleteCounterAsync("mycounter", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -1725,7 +1725,7 @@ public class RedisStateStoreTests
             .ReturnsAsync(false);
 
         // Act
-        var result = await _store.DeleteCounterAsync("nonexistent");
+        var result = await _store.DeleteCounterAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);

@@ -83,7 +83,7 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
         var context = CreateTestContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
         var context = CreateTestContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     #endregion
@@ -129,7 +129,7 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        var result = await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(ActionResult.Continue, result);
         var memories = GetScopeValue<IReadOnlyList<Memory>>(context, "relevant_memories");
@@ -159,7 +159,7 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.NotNull(capturedPerceptions);
         Assert.Empty(capturedPerceptions);
@@ -191,7 +191,7 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(10, capturedLimit);
     }
@@ -219,7 +219,7 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(25, capturedLimit);
     }
@@ -248,7 +248,7 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<IReadOnlyList<Memory>>(context, "relevant_memories");
         Assert.NotNull(result);
@@ -275,7 +275,7 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var result = GetScopeValue<IReadOnlyList<Memory>>(context, "my_memories");
         Assert.NotNull(result);
@@ -316,7 +316,7 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.NotNull(capturedPerceptions);
         Assert.Single(capturedPerceptions);
@@ -355,7 +355,7 @@ public class QueryMemoryHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.NotNull(capturedPerceptions);
         Assert.Equal(2, capturedPerceptions.Count);

@@ -339,7 +339,7 @@ public class SessionShortcutTests
                 var shortcut = CreateTestShortcut($"shortcut_{index}", "test-service");
                 connectionState.AddOrUpdateShortcut(shortcut);
                 addedGuids.Add(shortcut.RouteGuid);
-            }));
+            }, TestContext.Current.CancellationToken));
         }
 
         await Task.WhenAll(tasks);

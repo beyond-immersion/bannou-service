@@ -43,7 +43,7 @@ public sealed class EntityLifecycleIntegrationTests
             .Build();
 
         // Act
-        var result = await _resolver.ResolveAsync("hero", bindings);
+        var result = await _resolver.ResolveAsync("hero", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -62,7 +62,7 @@ public sealed class EntityLifecycleIntegrationTests
             .Build();
 
         // Act
-        var result = await _resolver.ResolveAsync("exit_door", bindings);
+        var result = await _resolver.ResolveAsync("exit_door", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -81,7 +81,7 @@ public sealed class EntityLifecycleIntegrationTests
             .Build();
 
         // Act
-        var result = await _resolver.ResolveAsync("villain", bindings);
+        var result = await _resolver.ResolveAsync("villain", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -98,7 +98,7 @@ public sealed class EntityLifecycleIntegrationTests
             .Build();
 
         // Act
-        var result = await _resolver.ResolveAsync("mycharacter", bindings);
+        var result = await _resolver.ResolveAsync("mycharacter", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -114,7 +114,7 @@ public sealed class EntityLifecycleIntegrationTests
         var context = new EntityResolutionContext { RequestingEntity = selfId };
 
         // Act
-        var result = await _resolver.ResolveAsync("self", bindings, context);
+        var result = await _resolver.ResolveAsync("self", bindings, context, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -142,7 +142,7 @@ public sealed class EntityLifecycleIntegrationTests
         // Act
         var results = await _resolver.ResolveManyAsync(
             new[] { "hero", "villain", "door", "missing" },
-            bindings);
+            bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, results.Count);
@@ -293,8 +293,8 @@ public sealed class EntityLifecycleIntegrationTests
             .Build();
 
         // Step 3: Verify resolution works
-        var resolvedMerchant = await _resolver.ResolveAsync("merchant", bindings);
-        var resolvedBySeller = await _resolver.ResolveAsync("seller", bindings);
+        var resolvedMerchant = await _resolver.ResolveAsync("merchant", bindings, ct: TestContext.Current.CancellationToken);
+        var resolvedBySeller = await _resolver.ResolveAsync("seller", bindings, ct: TestContext.Current.CancellationToken);
         Assert.NotNull(resolvedMerchant);
         Assert.NotNull(resolvedBySeller);
         Assert.Equal(merchantId, resolvedMerchant.EntityId);
@@ -336,9 +336,9 @@ public sealed class EntityLifecycleIntegrationTests
         };
 
         // Act
-        var selfResolved = await _resolver.ResolveAsync("self", bindings, context);
-        var playerResolved = await _resolver.ResolveAsync("player", bindings, context);
-        var targetResolved = await _resolver.ResolveAsync("target", bindings, context);
+        var selfResolved = await _resolver.ResolveAsync("self", bindings, context, ct: TestContext.Current.CancellationToken);
+        var playerResolved = await _resolver.ResolveAsync("player", bindings, context, ct: TestContext.Current.CancellationToken);
+        var targetResolved = await _resolver.ResolveAsync("target", bindings, context, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(selfResolved);

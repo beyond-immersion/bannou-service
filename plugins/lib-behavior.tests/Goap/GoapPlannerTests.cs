@@ -49,7 +49,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(plan);
@@ -79,7 +79,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(plan);
@@ -101,7 +101,7 @@ public class GoapPlannerTests
         var actions = new List<GoapAction>();
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(plan);
@@ -129,7 +129,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(plan);
@@ -169,7 +169,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(plan);
@@ -200,7 +200,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(plan);
@@ -241,7 +241,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(plan);
@@ -279,7 +279,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(plan);
@@ -316,7 +316,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(plan); // Can't afford to buy food
@@ -344,7 +344,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(plan);
@@ -382,7 +382,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions, options);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, options, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(plan);
@@ -415,7 +415,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions, options);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, options, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(plan);
@@ -489,7 +489,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions, options);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, options, ct: TestContext.Current.CancellationToken);
 
         // Assert: Should return null due to timeout, not find a plan
         Assert.Null(plan);
@@ -528,7 +528,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions, options);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, options, ct: TestContext.Current.CancellationToken);
 
         // Assert: Should find a 4-action plan (1 → 5 requires 4 level-ups)
         Assert.NotNull(plan);
@@ -570,7 +570,7 @@ public class GoapPlannerTests
             .ToPlanningOptions();
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions, options);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, options, ct: TestContext.Current.CancellationToken);
 
         // Assert: Should return null - cannot solve 10000-step problem in 20ms with depth 3
         Assert.Null(plan);
@@ -598,7 +598,7 @@ public class GoapPlannerTests
         };
 
         // Act
-        var plan = await _planner.PlanAsync(currentState, goal, actions);
+        var plan = await _planner.PlanAsync(currentState, goal, actions, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(plan);
@@ -637,7 +637,7 @@ public class GoapPlannerTests
         var currentState = new WorldState().SetBoolean("done", false);
 
         // Act
-        var result = await _planner.ValidatePlanAsync(plan, 0, currentState);
+        var result = await _planner.ValidatePlanAsync(plan, 0, currentState, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsValid);
@@ -672,7 +672,7 @@ public class GoapPlannerTests
         var currentState = new WorldState().SetBoolean("done", false);
 
         // Act - current action index beyond plan length
-        var result = await _planner.ValidatePlanAsync(plan, 1, currentState);
+        var result = await _planner.ValidatePlanAsync(plan, 1, currentState, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsValid);
@@ -707,7 +707,7 @@ public class GoapPlannerTests
         var currentState = new WorldState().SetBoolean("done", true); // Already done!
 
         // Act
-        var result = await _planner.ValidatePlanAsync(plan, 0, currentState);
+        var result = await _planner.ValidatePlanAsync(plan, 0, currentState, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsValid);
@@ -742,7 +742,7 @@ public class GoapPlannerTests
         var currentState = new WorldState().SetNumeric("gold", 0); // Lost gold!
 
         // Act
-        var result = await _planner.ValidatePlanAsync(plan, 0, currentState);
+        var result = await _planner.ValidatePlanAsync(plan, 0, currentState, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.IsValid);
@@ -786,7 +786,7 @@ public class GoapPlannerTests
         var activeGoals = new List<InternalGoapGoal> { lowPriorityGoal, highPriorityGoal };
 
         // Act
-        var result = await _planner.ValidatePlanAsync(plan, 0, currentState, activeGoals);
+        var result = await _planner.ValidatePlanAsync(plan, 0, currentState, activeGoals, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.IsValid);

@@ -194,23 +194,23 @@ public class ConnectionStateTests
             tasks.Add(Task.Run(() =>
             {
                 state.AddServiceMapping($"service/{index}", Guid.NewGuid());
-            }));
+            }, TestContext.Current.CancellationToken));
             tasks.Add(Task.Run(() =>
             {
                 state.HasServiceMapping($"service/{index}");
-            }));
+            }, TestContext.Current.CancellationToken));
         }
         tasks.Add(Task.Run(() =>
         {
             state.ClearServiceMappings();
-        }));
+        }, TestContext.Current.CancellationToken));
         tasks.Add(Task.Run(() =>
         {
             state.UpdateAllServiceMappings(new Dictionary<string, Guid>
             {
                 ["final/endpoint"] = Guid.NewGuid()
             });
-        }));
+        }, TestContext.Current.CancellationToken));
 
         // Assert - should not throw (thread-safety via locks)
         await Task.WhenAll(tasks);
@@ -486,7 +486,7 @@ public class ConnectionStateTests
         // Act - concurrent recording and counting
         for (int i = 0; i < 50; i++)
         {
-            tasks.Add(Task.Run(() => state.RecordMessageForRateLimit()));
+            tasks.Add(Task.Run(() => state.RecordMessageForRateLimit(), TestContext.Current.CancellationToken));
             tasks.Add(Task.Run(() => state.GetMessageCountInWindow(1)));
         }
 

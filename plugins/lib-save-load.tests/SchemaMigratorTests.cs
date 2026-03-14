@@ -45,7 +45,7 @@ public class SchemaMigratorTests
         var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
-        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v1.0", CancellationToken.None);
+        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v1.0", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(path);
@@ -65,7 +65,7 @@ public class SchemaMigratorTests
         var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
-        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v2.0", CancellationToken.None);
+        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v2.0", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(path);
@@ -104,7 +104,7 @@ public class SchemaMigratorTests
         var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
-        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v2.0", CancellationToken.None);
+        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v2.0", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(path);
@@ -153,7 +153,7 @@ public class SchemaMigratorTests
         var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
-        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v3.0", CancellationToken.None);
+        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v3.0", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(path);
@@ -195,7 +195,7 @@ public class SchemaMigratorTests
         var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
-        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v3.0", CancellationToken.None);
+        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v3.0", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(path);
@@ -223,7 +223,7 @@ public class SchemaMigratorTests
         var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object, maxMigrationSteps: 5);
 
         // Act
-        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v15.0", CancellationToken.None);
+        var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v15.0", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(path);
@@ -242,7 +242,7 @@ public class SchemaMigratorTests
 
         // Act
         var result = await migrator.ApplyMigrationPathAsync(
-            "game", data, new List<string> { "v1.0" }, CancellationToken.None);
+            "game", data, new List<string> { "v1.0" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -274,7 +274,7 @@ public class SchemaMigratorTests
 
         // Act
         var result = await migrator.ApplyMigrationPathAsync(
-            "game", data, new List<string> { "v1.0", "v2.0" }, CancellationToken.None);
+            "game", data, new List<string> { "v1.0", "v2.0" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -299,7 +299,7 @@ public class SchemaMigratorTests
 
         // Act
         var result = await migrator.ApplyMigrationPathAsync(
-            "game", data, new List<string> { "v1.0", "v2.0" }, CancellationToken.None);
+            "game", data, new List<string> { "v1.0", "v2.0" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -329,7 +329,7 @@ public class SchemaMigratorTests
 
         // Act
         var result = await migrator.ApplyMigrationPathAsync(
-            "game", data, new List<string> { "v1.0", "v2.0" }, CancellationToken.None);
+            "game", data, new List<string> { "v1.0", "v2.0" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);

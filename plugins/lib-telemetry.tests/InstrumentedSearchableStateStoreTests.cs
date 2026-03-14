@@ -53,7 +53,7 @@ public class InstrumentedSearchableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.CreateIndexAsync("idx:test", schema);
+        var result = await _sut.CreateIndexAsync("idx:test", schema, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -74,7 +74,7 @@ public class InstrumentedSearchableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _sut.CreateIndexAsync("idx:test", new List<SearchSchemaField>());
+        await _sut.CreateIndexAsync("idx:test", new List<SearchSchemaField>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -117,7 +117,7 @@ public class InstrumentedSearchableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.SearchAsync("idx:test", "test query");
+        var result = await _sut.SearchAsync("idx:test", "test query", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, result.TotalCount);
@@ -139,7 +139,7 @@ public class InstrumentedSearchableStateStoreTests
             .ReturnsAsync(new SearchPagedResult<TestEntity>(new List<SearchResult<TestEntity>>(), 0, 0, 10));
 
         // Act
-        await _sut.SearchAsync("idx:test", "query");
+        await _sut.SearchAsync("idx:test", "query", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -166,7 +166,7 @@ public class InstrumentedSearchableStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.SearchAsync("idx:test", "query"));
+            () => _sut.SearchAsync("idx:test", "query", cancellationToken: TestContext.Current.CancellationToken));
         Assert.Same(expectedException, exception);
 
         _telemetryMock.Verify(
@@ -195,7 +195,7 @@ public class InstrumentedSearchableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.SuggestAsync("idx:test", "sug");
+        var result = await _sut.SuggestAsync("idx:test", "sug", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -217,7 +217,7 @@ public class InstrumentedSearchableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.DropIndexAsync("idx:test");
+        var result = await _sut.DropIndexAsync("idx:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -244,7 +244,7 @@ public class InstrumentedSearchableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.GetIndexInfoAsync("idx:test");
+        var result = await _sut.GetIndexInfoAsync("idx:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -268,7 +268,7 @@ public class InstrumentedSearchableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.ListIndexesAsync();
+        var result = await _sut.ListIndexesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -291,7 +291,7 @@ public class InstrumentedSearchableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.GetAsync("key1");
+        var result = await _sut.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Same(expected, result);

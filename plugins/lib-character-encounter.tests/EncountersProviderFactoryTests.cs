@@ -42,7 +42,7 @@ public class EncountersProviderFactoryTests
     {
         var factory = CreateFactory();
 
-        var provider = await factory.CreateAsync(null, Guid.NewGuid(), null, CancellationToken.None);
+        var provider = await factory.CreateAsync(null, Guid.NewGuid(), null, TestContext.Current.CancellationToken);
 
         // Empty provider returns 0 for count
         Assert.Equal(0, provider.GetValue(new[] { "count" }.AsSpan()));
@@ -102,7 +102,7 @@ public class EncountersProviderFactoryTests
             .ReturnsAsync(hasMetResponse);
 
         // Act
-        var provider = await factory.CreateAsync(characterId, realmId, null, CancellationToken.None);
+        var provider = await factory.CreateAsync(characterId, realmId, null, TestContext.Current.CancellationToken);
 
         // Assert — provider should have loaded sentiment and hasMet data
         var sentiment = provider.GetValue(new[] { "sentiment", otherCharId.ToString() }.AsSpan());
@@ -156,7 +156,7 @@ public class EncountersProviderFactoryTests
             .ReturnsAsync(encounters);
 
         // Act
-        await factory.CreateAsync(characterId, realmId, null, CancellationToken.None);
+        await factory.CreateAsync(characterId, realmId, null, TestContext.Current.CancellationToken);
 
         // Assert — should NOT call sentiment/hasMet for self
         _mockCache.Verify(c => c.GetSentimentOrLoadAsync(characterId, characterId, It.IsAny<CancellationToken>()), Times.Never);
@@ -173,7 +173,7 @@ public class EncountersProviderFactoryTests
             .ReturnsAsync((EncounterListResponse?)null);
 
         // Act
-        var provider = await factory.CreateAsync(characterId, Guid.NewGuid(), null, CancellationToken.None);
+        var provider = await factory.CreateAsync(characterId, Guid.NewGuid(), null, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, provider.GetValue(new[] { "count" }.AsSpan()));
@@ -228,7 +228,7 @@ public class EncountersProviderFactoryTests
             .ReturnsAsync(new HasMetResponse { HasMet = true, EncounterCount = 5 });
 
         // Act
-        var provider = await factory.CreateAsync(characterId, realmId, null, CancellationToken.None);
+        var provider = await factory.CreateAsync(characterId, realmId, null, TestContext.Current.CancellationToken);
 
         // Assert — grudges should contain the enemy (-0.8 is below -0.5 threshold)
         var grudges = provider.GetValue(new[] { "grudges" }.AsSpan());

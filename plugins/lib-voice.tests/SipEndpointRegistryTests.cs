@@ -91,7 +91,7 @@ public class SipEndpointRegistryTests
                 (_, list, _, _) => savedList = list);
 
         // Act
-        var result = await registry.RegisterAsync(roomId, sessionId, endpoint, "TestPlayer", CancellationToken.None);
+        var result = await registry.RegisterAsync(roomId, sessionId, endpoint, "TestPlayer", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -123,10 +123,10 @@ public class SipEndpointRegistryTests
             It.IsAny<CancellationToken>()));
 
         // First registration
-        await registry.RegisterAsync(roomId, sessionId, endpoint, "Player1", CancellationToken.None);
+        await registry.RegisterAsync(roomId, sessionId, endpoint, "Player1", TestContext.Current.CancellationToken);
 
         // Act - second registration with same session ID
-        var result = await registry.RegisterAsync(roomId, sessionId, endpoint, "Player1Again", CancellationToken.None);
+        var result = await registry.RegisterAsync(roomId, sessionId, endpoint, "Player1Again", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -170,7 +170,7 @@ public class SipEndpointRegistryTests
                 (_, list, _, _) => savedList = list);
 
         // Act
-        var result = await registry.RegisterAsync(roomId, newSessionId, endpoint, "NewPlayer", CancellationToken.None);
+        var result = await registry.RegisterAsync(roomId, newSessionId, endpoint, "NewPlayer", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -204,7 +204,7 @@ public class SipEndpointRegistryTests
             It.IsAny<CancellationToken>()));
 
         // Register first
-        await registry.RegisterAsync(roomId, sessionId, endpoint, "Player1", CancellationToken.None);
+        await registry.RegisterAsync(roomId, sessionId, endpoint, "Player1", TestContext.Current.CancellationToken);
 
         // Capture the saved list after unregister
         List<ParticipantRegistration>? savedAfterUnregister = null;
@@ -222,7 +222,7 @@ public class SipEndpointRegistryTests
                 });
 
         // Act
-        var removed = await registry.UnregisterAsync(roomId, sessionId, CancellationToken.None);
+        var removed = await registry.UnregisterAsync(roomId, sessionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(removed);
@@ -244,7 +244,7 @@ public class SipEndpointRegistryTests
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
-        var result = await registry.UnregisterAsync(roomId, sessionId, CancellationToken.None);
+        var result = await registry.UnregisterAsync(roomId, sessionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -269,10 +269,10 @@ public class SipEndpointRegistryTests
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()));
 
-        await registry.RegisterAsync(roomId, sessionId, CreateTestEndpoint(), "Player1", CancellationToken.None);
+        await registry.RegisterAsync(roomId, sessionId, CreateTestEndpoint(), "Player1", TestContext.Current.CancellationToken);
 
         // Act - try to unregister different session
-        var result = await registry.UnregisterAsync(roomId, otherSessionId, CancellationToken.None);
+        var result = await registry.UnregisterAsync(roomId, otherSessionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -301,11 +301,11 @@ public class SipEndpointRegistryTests
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()));
 
-        await registry.RegisterAsync(roomId, session1, CreateTestEndpoint(), "Player1", CancellationToken.None);
-        await registry.RegisterAsync(roomId, session2, CreateTestEndpoint(), "Player2", CancellationToken.None);
+        await registry.RegisterAsync(roomId, session1, CreateTestEndpoint(), "Player1", TestContext.Current.CancellationToken);
+        await registry.RegisterAsync(roomId, session2, CreateTestEndpoint(), "Player2", TestContext.Current.CancellationToken);
 
         // Act
-        var participants = await registry.GetRoomParticipantsAsync(roomId, CancellationToken.None);
+        var participants = await registry.GetRoomParticipantsAsync(roomId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, participants.Count);
@@ -325,7 +325,7 @@ public class SipEndpointRegistryTests
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
-        var participants = await registry.GetRoomParticipantsAsync(roomId, CancellationToken.None);
+        var participants = await registry.GetRoomParticipantsAsync(roomId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(participants);
@@ -356,7 +356,7 @@ public class SipEndpointRegistryTests
             .ReturnsAsync(storeParticipants);
 
         // Act
-        var participants = await registry.GetRoomParticipantsAsync(roomId, CancellationToken.None);
+        var participants = await registry.GetRoomParticipantsAsync(roomId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(participants);
@@ -386,19 +386,19 @@ public class SipEndpointRegistryTests
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()));
 
-        await registry.RegisterAsync(roomId, sessionId, CreateTestEndpoint(), "Player1", CancellationToken.None);
+        await registry.RegisterAsync(roomId, sessionId, CreateTestEndpoint(), "Player1", TestContext.Current.CancellationToken);
 
         // Wait briefly so heartbeat timestamp differs
         var beforeHeartbeat = DateTimeOffset.UtcNow;
 
         // Act
-        var result = await registry.UpdateHeartbeatAsync(roomId, sessionId, CancellationToken.None);
+        var result = await registry.UpdateHeartbeatAsync(roomId, sessionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
 
         // Verify the updated participant has a newer heartbeat
-        var participants = await registry.GetRoomParticipantsAsync(roomId, CancellationToken.None);
+        var participants = await registry.GetRoomParticipantsAsync(roomId, TestContext.Current.CancellationToken);
         Assert.Single(participants);
         Assert.True(participants[0].LastHeartbeat >= beforeHeartbeat);
     }
@@ -415,7 +415,7 @@ public class SipEndpointRegistryTests
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
-        var result = await registry.UpdateHeartbeatAsync(roomId, Guid.NewGuid(), CancellationToken.None);
+        var result = await registry.UpdateHeartbeatAsync(roomId, Guid.NewGuid(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -435,7 +435,7 @@ public class SipEndpointRegistryTests
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
-        var result = await registry.UpdateHeartbeatAsync(roomId, sessionId, CancellationToken.None);
+        var result = await registry.UpdateHeartbeatAsync(roomId, sessionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -463,18 +463,18 @@ public class SipEndpointRegistryTests
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()));
 
-        await registry.RegisterAsync(roomId, sessionId, CreateTestEndpoint("old-sdp"), "Player1", CancellationToken.None);
+        await registry.RegisterAsync(roomId, sessionId, CreateTestEndpoint("old-sdp"), "Player1", TestContext.Current.CancellationToken);
 
         var newEndpoint = CreateTestEndpoint("new-sdp-offer");
 
         // Act
-        var result = await registry.UpdateEndpointAsync(roomId, sessionId, newEndpoint, CancellationToken.None);
+        var result = await registry.UpdateEndpointAsync(roomId, sessionId, newEndpoint, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
 
         // Verify endpoint was updated
-        var participant = await registry.GetParticipantAsync(roomId, sessionId, CancellationToken.None);
+        var participant = await registry.GetParticipantAsync(roomId, sessionId, TestContext.Current.CancellationToken);
         Assert.NotNull(participant);
         Assert.Equal("new-sdp-offer", participant.Endpoint?.SdpOffer);
     }
@@ -491,7 +491,7 @@ public class SipEndpointRegistryTests
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
-        var result = await registry.UpdateEndpointAsync(roomId, Guid.NewGuid(), CreateTestEndpoint(), CancellationToken.None);
+        var result = await registry.UpdateEndpointAsync(roomId, Guid.NewGuid(), CreateTestEndpoint(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -519,10 +519,10 @@ public class SipEndpointRegistryTests
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()));
 
-        await registry.RegisterAsync(roomId, sessionId, CreateTestEndpoint(), "Player1", CancellationToken.None);
+        await registry.RegisterAsync(roomId, sessionId, CreateTestEndpoint(), "Player1", TestContext.Current.CancellationToken);
 
         // Act
-        var participant = await registry.GetParticipantAsync(roomId, sessionId, CancellationToken.None);
+        var participant = await registry.GetParticipantAsync(roomId, sessionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(participant);
@@ -542,7 +542,7 @@ public class SipEndpointRegistryTests
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
-        var result = await registry.GetParticipantAsync(roomId, Guid.NewGuid(), CancellationToken.None);
+        var result = await registry.GetParticipantAsync(roomId, Guid.NewGuid(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -569,12 +569,12 @@ public class SipEndpointRegistryTests
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()));
 
-        await registry.RegisterAsync(roomId, Guid.NewGuid(), CreateTestEndpoint(), "P1", CancellationToken.None);
-        await registry.RegisterAsync(roomId, Guid.NewGuid(), CreateTestEndpoint(), "P2", CancellationToken.None);
-        await registry.RegisterAsync(roomId, Guid.NewGuid(), CreateTestEndpoint(), "P3", CancellationToken.None);
+        await registry.RegisterAsync(roomId, Guid.NewGuid(), CreateTestEndpoint(), "P1", TestContext.Current.CancellationToken);
+        await registry.RegisterAsync(roomId, Guid.NewGuid(), CreateTestEndpoint(), "P2", TestContext.Current.CancellationToken);
+        await registry.RegisterAsync(roomId, Guid.NewGuid(), CreateTestEndpoint(), "P3", TestContext.Current.CancellationToken);
 
         // Act
-        var count = await registry.GetParticipantCountAsync(roomId, CancellationToken.None);
+        var count = await registry.GetParticipantCountAsync(roomId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, count);
@@ -592,7 +592,7 @@ public class SipEndpointRegistryTests
             .ReturnsAsync((List<ParticipantRegistration>?)null);
 
         // Act
-        var count = await registry.GetParticipantCountAsync(roomId, CancellationToken.None);
+        var count = await registry.GetParticipantCountAsync(roomId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, count);
@@ -621,11 +621,11 @@ public class SipEndpointRegistryTests
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()));
 
-        await registry.RegisterAsync(roomId, session1, CreateTestEndpoint(), "Player1", CancellationToken.None);
-        await registry.RegisterAsync(roomId, session2, CreateTestEndpoint(), "Player2", CancellationToken.None);
+        await registry.RegisterAsync(roomId, session1, CreateTestEndpoint(), "Player1", TestContext.Current.CancellationToken);
+        await registry.RegisterAsync(roomId, session2, CreateTestEndpoint(), "Player2", TestContext.Current.CancellationToken);
 
         // Act
-        var removed = await registry.ClearRoomAsync(roomId, CancellationToken.None);
+        var removed = await registry.ClearRoomAsync(roomId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, removed.Count);
@@ -650,7 +650,7 @@ public class SipEndpointRegistryTests
         var roomId = Guid.NewGuid();
 
         // Act
-        var removed = await registry.ClearRoomAsync(roomId, CancellationToken.None);
+        var removed = await registry.ClearRoomAsync(roomId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(removed);
@@ -683,8 +683,8 @@ public class SipEndpointRegistryTests
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()));
 
-        await registry.RegisterAsync(room1, Guid.NewGuid(), CreateTestEndpoint(), "P1", CancellationToken.None);
-        await registry.RegisterAsync(room2, Guid.NewGuid(), CreateTestEndpoint(), "P2", CancellationToken.None);
+        await registry.RegisterAsync(room1, Guid.NewGuid(), CreateTestEndpoint(), "P1", TestContext.Current.CancellationToken);
+        await registry.RegisterAsync(room2, Guid.NewGuid(), CreateTestEndpoint(), "P2", TestContext.Current.CancellationToken);
 
         // Act
         var roomIds = registry.GetAllTrackedRoomIds();

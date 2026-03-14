@@ -189,7 +189,7 @@ public class AccountServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateAccountAsync(request);
+        var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -235,7 +235,7 @@ public class AccountServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateAccountAsync(request);
+        var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -284,7 +284,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             PasswordHash = "new-hash"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -331,7 +331,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             EmailVerified = true
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -374,7 +374,7 @@ public class AccountServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateAccountAsync(request);
+        var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -424,7 +424,7 @@ public class AccountServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateAccountAsync(request);
+        var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -467,7 +467,7 @@ public class AccountServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateAccountAsync(request);
+        var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -518,7 +518,7 @@ public class AccountServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateAccountAsync(request);
+        var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -566,7 +566,7 @@ public class AccountServiceTests
                 new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
-        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest());
+        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -598,7 +598,7 @@ public class AccountServiceTests
                 new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
-        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = -5 });
+        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = -5 }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -630,7 +630,7 @@ public class AccountServiceTests
                 new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
-        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { PageSize = -10 });
+        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { PageSize = -10 }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -662,7 +662,7 @@ public class AccountServiceTests
                 new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
-        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = 0 });
+        var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = 0 }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -710,7 +710,7 @@ public class AccountServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateAccountAsync(request);
+        var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -757,7 +757,7 @@ public class AccountServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateAccountAsync(request);
+        var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -802,7 +802,7 @@ public class AccountServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateAccountAsync(request);
+        var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -849,7 +849,7 @@ public class AccountServiceTests
                 PasswordHash = "hashed_password"
             };
 
-            var (statusCode, response) = await service.CreateAccountAsync(request);
+            var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
             Assert.Equal(StatusCodes.OK, statusCode);
             Assert.NotNull(response);
@@ -899,7 +899,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.CreateAccountAsync(request);
+        var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Truncate to second precision to match Unix timestamp storage
         var afterCreation = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
@@ -949,7 +949,7 @@ public class AccountServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (statusCode, response) = await service.CreateAccountAsync(request);
+        var (statusCode, response) = await service.CreateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1059,7 +1059,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BatchGetAccountsAsync(request);
+        var (status, response) = await service.BatchGetAccountsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1102,7 +1102,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BatchGetAccountsAsync(request);
+        var (status, response) = await service.BatchGetAccountsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1140,7 +1140,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BatchGetAccountsAsync(request);
+        var (status, response) = await service.BatchGetAccountsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1194,7 +1194,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BatchGetAccountsAsync(request);
+        var (status, response) = await service.BatchGetAccountsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1224,7 +1224,7 @@ public class AccountServiceTests
         var request = new CountAccountsRequest();
 
         // Act
-        var (status, response) = await service.CountAccountsAsync(request);
+        var (status, response) = await service.CountAccountsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1250,7 +1250,7 @@ public class AccountServiceTests
         var request = new CountAccountsRequest { Email = "test@" };
 
         // Act
-        var (status, response) = await service.CountAccountsAsync(request);
+        var (status, response) = await service.CountAccountsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1279,7 +1279,7 @@ public class AccountServiceTests
         var request = new CountAccountsRequest { Role = "admin" };
 
         // Act
-        var (status, response) = await service.CountAccountsAsync(request);
+        var (status, response) = await service.CountAccountsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1310,7 +1310,7 @@ public class AccountServiceTests
         var request = new CountAccountsRequest { Verified = true };
 
         // Act
-        var (status, response) = await service.CountAccountsAsync(request);
+        var (status, response) = await service.CountAccountsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1336,7 +1336,7 @@ public class AccountServiceTests
         var request = new CountAccountsRequest { Email = "nonexistent@nowhere.com" };
 
         // Act
-        var (status, response) = await service.CountAccountsAsync(request);
+        var (status, response) = await service.CountAccountsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1366,7 +1366,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BulkUpdateRolesAsync(request);
+        var (status, response) = await service.BulkUpdateRolesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1393,7 +1393,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BulkUpdateRolesAsync(request);
+        var (status, response) = await service.BulkUpdateRolesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1423,7 +1423,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BulkUpdateRolesAsync(request);
+        var (status, response) = await service.BulkUpdateRolesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1451,7 +1451,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BulkUpdateRolesAsync(request);
+        var (status, response) = await service.BulkUpdateRolesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1478,7 +1478,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BulkUpdateRolesAsync(request);
+        var (status, response) = await service.BulkUpdateRolesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1503,7 +1503,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BulkUpdateRolesAsync(request);
+        var (status, response) = await service.BulkUpdateRolesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1547,7 +1547,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BulkUpdateRolesAsync(request);
+        var (status, response) = await service.BulkUpdateRolesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1586,7 +1586,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.BulkUpdateRolesAsync(request);
+        var (status, response) = await service.BulkUpdateRolesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1626,7 +1626,7 @@ public class AccountServiceTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var (status, response) = await service.BulkUpdateRolesAsync(request);
+        var (status, response) = await service.BulkUpdateRolesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1710,7 +1710,7 @@ public class AccountServiceTests
             .ReturnsAsync(authMethods);
 
         // Act
-        var (status, response) = await service.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+        var (status, response) = await service.GetAccountAsync(new GetAccountRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1739,7 +1739,7 @@ public class AccountServiceTests
             .ReturnsAsync((AccountModel?)null);
 
         // Act
-        var (status, response) = await service.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+        var (status, response) = await service.GetAccountAsync(new GetAccountRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1767,7 +1767,7 @@ public class AccountServiceTests
             .ReturnsAsync(account);
 
         // Act
-        var (status, response) = await service.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+        var (status, response) = await service.GetAccountAsync(new GetAccountRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1817,7 +1817,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.UpdateAccountAsync(request);
+        var (status, response) = await service.UpdateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1873,7 +1873,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.UpdateAccountAsync(request);
+        var (status, response) = await service.UpdateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1898,7 +1898,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             DisplayName = "New Name"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1930,7 +1930,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             DisplayName = "New Name"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1971,7 +1971,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             DisplayName = "New Name"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2016,7 +2016,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             DisplayName = "Same Name"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2068,7 +2068,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.UpdateAccountAsync(request);
+        var (status, response) = await service.UpdateAccountAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2128,7 +2128,7 @@ public class AccountServiceTests
             });
 
         // Act
-        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2171,7 +2171,7 @@ public class AccountServiceTests
             .ReturnsAsync(((AccountModel?)null, (string?)null));
 
         // Act
-        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2205,7 +2205,7 @@ public class AccountServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2243,7 +2243,7 @@ public class AccountServiceTests
             .ReturnsAsync((List<AuthMethodInfo>?)null);
 
         // Act
-        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2286,7 +2286,7 @@ public class AccountServiceTests
             .ReturnsAsync((List<AuthMethodInfo>?)null);
 
         // Act
-        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2339,7 +2339,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAccountByEmailAsync(
-            new GetAccountByEmailRequest { Email = "User@Test.Local" }); // Test case insensitivity
+            new GetAccountByEmailRequest { Email = "User@Test.Local" }, TestContext.Current.CancellationToken); // Test case insensitivity
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2360,7 +2360,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAccountByEmailAsync(
-            new GetAccountByEmailRequest { Email = "unknown@test.local" });
+            new GetAccountByEmailRequest { Email = "unknown@test.local" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2384,7 +2384,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAccountByEmailAsync(
-            new GetAccountByEmailRequest { Email = "orphan@test.local" });
+            new GetAccountByEmailRequest { Email = "orphan@test.local" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2418,7 +2418,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAccountByEmailAsync(
-            new GetAccountByEmailRequest { Email = "deleted@test.local" });
+            new GetAccountByEmailRequest { Email = "deleted@test.local" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2459,7 +2459,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAccountByProviderAsync(
-            new GetAccountByProviderRequest { Provider = OAuthProvider.Discord, ExternalId = "discord-123" });
+            new GetAccountByProviderRequest { Provider = OAuthProvider.Discord, ExternalId = "discord-123" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2479,7 +2479,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAccountByProviderAsync(
-            new GetAccountByProviderRequest { Provider = OAuthProvider.Google, ExternalId = "unknown" });
+            new GetAccountByProviderRequest { Provider = OAuthProvider.Google, ExternalId = "unknown" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2503,7 +2503,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAccountByProviderAsync(
-            new GetAccountByProviderRequest { Provider = OAuthProvider.Steam, ExternalId = "steam-999" });
+            new GetAccountByProviderRequest { Provider = OAuthProvider.Steam, ExternalId = "steam-999" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2536,7 +2536,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAccountByProviderAsync(
-            new GetAccountByProviderRequest { Provider = OAuthProvider.Twitch, ExternalId = "twitch-456" });
+            new GetAccountByProviderRequest { Provider = OAuthProvider.Twitch, ExternalId = "twitch-456" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2589,7 +2589,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAuthMethodsAsync(
-            new GetAuthMethodsRequest { AccountId = accountId });
+            new GetAuthMethodsRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2610,7 +2610,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAuthMethodsAsync(
-            new GetAuthMethodsRequest { AccountId = accountId });
+            new GetAuthMethodsRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2638,7 +2638,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAuthMethodsAsync(
-            new GetAuthMethodsRequest { AccountId = accountId });
+            new GetAuthMethodsRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2669,7 +2669,7 @@ public class AccountServiceTests
 
         // Act
         var (status, response) = await service.GetAuthMethodsAsync(
-            new GetAuthMethodsRequest { AccountId = accountId });
+            new GetAuthMethodsRequest { AccountId = accountId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2725,7 +2725,7 @@ public class AccountServiceTests
         };
 
         // Act
-        var (status, response) = await service.AddAuthMethodAsync(request);
+        var (status, response) = await service.AddAuthMethodAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2765,7 +2765,7 @@ public class AccountServiceTests
             AccountId = accountId,
             Provider = OAuthProvider.Discord,
             ExternalId = "ext-1"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2796,7 +2796,7 @@ public class AccountServiceTests
             AccountId = accountId,
             Provider = OAuthProvider.Discord,
             ExternalId = "ext-1"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2830,7 +2830,7 @@ public class AccountServiceTests
             AccountId = accountId,
             Provider = OAuthProvider.Google,
             ExternalId = ""
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2874,7 +2874,7 @@ public class AccountServiceTests
             AccountId = accountId,
             Provider = OAuthProvider.Discord,
             ExternalId = "disc-123"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2925,7 +2925,7 @@ public class AccountServiceTests
             AccountId = accountId,
             Provider = OAuthProvider.Google,
             ExternalId = "goog-456"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2985,7 +2985,7 @@ public class AccountServiceTests
             AccountId = accountId,
             Provider = OAuthProvider.Steam,
             ExternalId = "steam-orphan"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3034,7 +3034,7 @@ public class AccountServiceTests
             AccountId = accountId,
             Provider = OAuthProvider.Discord,
             ExternalId = "disc-new"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3092,7 +3092,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             MethodId = methodId
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3125,7 +3125,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             MethodId = Guid.NewGuid()
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3154,7 +3154,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             MethodId = Guid.NewGuid()
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3186,7 +3186,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             MethodId = Guid.NewGuid() // Non-existent method
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3233,7 +3233,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             MethodId = methodId
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3287,7 +3287,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             MethodId = methodId
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3338,7 +3338,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             MethodId = methodId
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3401,7 +3401,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             DisplayName = "New Display"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3430,7 +3430,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             DisplayName = "Anything"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3460,7 +3460,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             DisplayName = "Anything"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3495,7 +3495,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             DisplayName = "Same Name"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3547,7 +3547,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             DisplayName = "New"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3615,7 +3615,7 @@ public class AccountServiceTests
             MfaEnabled = true,
             MfaSecret = "totp-secret",
             MfaRecoveryCodes = new List<string> { "recovery-1", "recovery-2" }
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3647,7 +3647,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             MfaEnabled = true
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3676,7 +3676,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             MfaEnabled = false
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3712,7 +3712,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             MfaEnabled = true
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3738,7 +3738,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             PasswordHash = "new-hash"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3767,7 +3767,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             PasswordHash = "new-hash"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3804,7 +3804,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             PasswordHash = "new-hash"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3848,7 +3848,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             PasswordHash = "new-hash-value"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3876,7 +3876,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             EmailVerified = true
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3905,7 +3905,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             EmailVerified = true
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3942,7 +3942,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             EmailVerified = true
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4013,7 +4013,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             NewEmail = "new@test.local"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4069,7 +4069,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             NewEmail = "new@test.local"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4093,7 +4093,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             NewEmail = "taken@test.local"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4121,7 +4121,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             NewEmail = "new@test.local"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -4155,7 +4155,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             NewEmail = "new@test.local"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -4194,7 +4194,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             NewEmail = "Same@Test.Local" // Same email, different case
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4251,7 +4251,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             NewEmail = "rollback@test.local"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4308,7 +4308,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             NewEmail = "first@test.local"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4347,7 +4347,7 @@ public class AccountServiceTests
                 new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
-        await service.ListAccountsAsync(new ListAccountsRequest { Email = "test@example.com" });
+        await service.ListAccountsAsync(new ListAccountsRequest { Email = "test@example.com" }, TestContext.Current.CancellationToken);
 
         // Assert - should have base conditions (AccountId exists, DeletedAtUnix not exists) + email
         Assert.NotNull(capturedConditions);
@@ -4380,7 +4380,7 @@ public class AccountServiceTests
                 new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
-        await service.ListAccountsAsync(new ListAccountsRequest { DisplayName = "Alice" });
+        await service.ListAccountsAsync(new ListAccountsRequest { DisplayName = "Alice" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedConditions);
@@ -4413,7 +4413,7 @@ public class AccountServiceTests
                 new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
-        await service.ListAccountsAsync(new ListAccountsRequest { Verified = true });
+        await service.ListAccountsAsync(new ListAccountsRequest { Verified = true }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedConditions);
@@ -4451,7 +4451,7 @@ public class AccountServiceTests
             Email = "test@example.com",
             DisplayName = "Alice",
             Verified = false
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert - 2 base conditions + 3 filters = 5 total
         Assert.NotNull(capturedConditions);
@@ -4484,7 +4484,7 @@ public class AccountServiceTests
                 new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
-        await service.ListAccountsAsync(new ListAccountsRequest { Email = "   " });
+        await service.ListAccountsAsync(new ListAccountsRequest { Email = "   " }, TestContext.Current.CancellationToken);
 
         // Assert - only base conditions (AccountId exists + DeletedAtUnix not exists)
         Assert.NotNull(capturedConditions);
@@ -4515,7 +4515,7 @@ public class AccountServiceTests
                 new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
 
         // Act
-        await service.ListAccountsAsync(new ListAccountsRequest());
+        await service.ListAccountsAsync(new ListAccountsRequest(), TestContext.Current.CancellationToken);
 
         // Assert - AccountId exists + DeletedAtUnix not exists
         Assert.NotNull(capturedConditions);
@@ -4582,7 +4582,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             Metadata = sameMetadata
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert - no metadata change means no "metadata" in changed fields
         Assert.Equal(StatusCodes.OK, status);
@@ -4651,7 +4651,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             Metadata = differentMetadata
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4724,7 +4724,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             Metadata = extraMetadata
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4790,7 +4790,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             Metadata = new Dictionary<string, object> { { "theme", "dark" } }
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert - null existing → empty dict, vs non-empty new → change detected
         Assert.Equal(StatusCodes.OK, status);
@@ -4839,7 +4839,7 @@ public class AccountServiceTests
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
         {
             PageSize = 200
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -4882,7 +4882,7 @@ public class AccountServiceTests
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
         {
             PageSize = 100
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -4925,7 +4925,7 @@ public class AccountServiceTests
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
         {
             PageSize = 15
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -5022,7 +5022,7 @@ public class AccountServiceTests
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
         {
             Provider = AuthProvider.Discord
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -5087,7 +5087,7 @@ public class AccountServiceTests
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
         {
             Provider = AuthProvider.Steam
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert - newer account should come first (descending order)
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -5159,7 +5159,7 @@ public class AccountServiceTests
             Provider = AuthProvider.Google,
             Page = 2,
             PageSize = 1
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -5216,7 +5216,7 @@ public class AccountServiceTests
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest
         {
             Provider = AuthProvider.Discord
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -5292,7 +5292,7 @@ public class AccountServiceTests
 
         // Act & Assert - The exception should propagate (service re-throws after publishing error event)
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.GetAccountAsync(new GetAccountRequest { AccountId = accountId }));
+            () => service.GetAccountAsync(new GetAccountRequest { AccountId = accountId }, TestContext.Current.CancellationToken));
 
         // Assert on captured error event
         Assert.Equal("account", capturedServiceName);
@@ -5353,7 +5353,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             Metadata = jsonElement
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -5432,7 +5432,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             Metadata = jsonElement
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -5502,7 +5502,7 @@ public class AccountServiceTests
         {
             AccountId = accountId,
             Metadata = jsonElement
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

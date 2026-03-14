@@ -122,7 +122,7 @@ public class RedisDistributedLockProviderTests
         var resourceId = Guid.NewGuid().ToString();
 
         // Act
-        var result = await provider.LockAsync("test-store", resourceId, "owner-a", 30);
+        var result = await provider.LockAsync("test-store", resourceId, "owner-a", 30, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.Success);
@@ -138,11 +138,11 @@ public class RedisDistributedLockProviderTests
         await using var provider = CreateProvider();
         var resourceId = Guid.NewGuid().ToString();
 
-        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 30);
+        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 30, TestContext.Current.CancellationToken);
         Assert.True(first.Success);
 
         // Act — different owner tries same key
-        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30);
+        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(second.Success);
@@ -158,12 +158,12 @@ public class RedisDistributedLockProviderTests
         await using var provider = CreateProvider();
         var resourceId = Guid.NewGuid().ToString();
 
-        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 30);
+        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 30, TestContext.Current.CancellationToken);
         Assert.True(first.Success);
 
         // Act — dispose the first lock, then try again
         await first.DisposeAsync();
-        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30);
+        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30, TestContext.Current.CancellationToken);
 
         // Assert — should succeed since previous lock was released
         Assert.True(second.Success);
@@ -180,14 +180,14 @@ public class RedisDistributedLockProviderTests
         await using var provider = CreateProvider();
         var resourceId = Guid.NewGuid().ToString();
 
-        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 1);
+        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 1, TestContext.Current.CancellationToken);
         Assert.True(first.Success);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, TestContext.Current.CancellationToken);
 
         // Act — different owner tries after expiry
-        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30);
+        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30, TestContext.Current.CancellationToken);
 
         // Assert — succeeds because previous lock expired
         Assert.True(second.Success);
@@ -203,17 +203,17 @@ public class RedisDistributedLockProviderTests
         await using var provider = CreateProvider();
         var resourceId = Guid.NewGuid().ToString();
 
-        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 30);
+        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 30, TestContext.Current.CancellationToken);
         Assert.True(first.Success);
 
-        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30);
+        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30, TestContext.Current.CancellationToken);
         Assert.False(second.Success);
 
         // Act — dispose the failed lock response
         await second.DisposeAsync();
 
         // Assert — original lock still held, third attempt by different owner fails
-        var third = await provider.LockAsync("test-store", resourceId, "owner-c", 30);
+        var third = await provider.LockAsync("test-store", resourceId, "owner-c", 30, TestContext.Current.CancellationToken);
         Assert.False(third.Success);
     }
 

@@ -83,7 +83,7 @@ public class ActorLocalMemoryStoreTests
     public async Task FindRelevantAsync_EmptyPerceptions_ReturnsEmptyList()
     {
         var result = await _memoryStore.FindRelevantAsync(
-            "entity-1", [], 10, CancellationToken.None);
+            "entity-1", [], 10, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -94,7 +94,7 @@ public class ActorLocalMemoryStoreTests
         var perceptions = new List<Perception> { CreatePerception() };
 
         var result = await _memoryStore.FindRelevantAsync(
-            "entity-1", perceptions, 0, CancellationToken.None);
+            "entity-1", perceptions, 0, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -106,7 +106,7 @@ public class ActorLocalMemoryStoreTests
 
         var perceptions = new List<Perception> { CreatePerception() };
         var result = await _memoryStore.FindRelevantAsync(
-            "entity-1", perceptions, 10, CancellationToken.None);
+            "entity-1", perceptions, 10, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -127,7 +127,7 @@ public class ActorLocalMemoryStoreTests
         };
 
         var result = await _memoryStore.FindRelevantAsync(
-            entityId, perceptions, 10, CancellationToken.None);
+            entityId, perceptions, 10, TestContext.Current.CancellationToken);
 
         Assert.Single(result);
         Assert.Equal(memoryId, result[0].Id);
@@ -150,7 +150,7 @@ public class ActorLocalMemoryStoreTests
         };
 
         var result = await _memoryStore.FindRelevantAsync(
-            entityId, perceptions, 10, CancellationToken.None);
+            entityId, perceptions, 10, TestContext.Current.CancellationToken);
 
         Assert.Single(result);
         Assert.Equal(memoryId, result[0].Id);
@@ -193,7 +193,7 @@ public class ActorLocalMemoryStoreTests
         };
 
         var result = await _memoryStore.FindRelevantAsync(
-            entityId, perceptions, 10, CancellationToken.None);
+            entityId, perceptions, 10, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -221,7 +221,7 @@ public class ActorLocalMemoryStoreTests
         };
 
         var result = await _memoryStore.FindRelevantAsync(
-            entityId, perceptions, 2, CancellationToken.None);
+            entityId, perceptions, 2, TestContext.Current.CancellationToken);
 
         Assert.True(result.Count <= 2);
     }
@@ -248,7 +248,7 @@ public class ActorLocalMemoryStoreTests
         };
 
         var result = await _memoryStore.FindRelevantAsync(
-            entityId, perceptions, 10, CancellationToken.None);
+            entityId, perceptions, 10, TestContext.Current.CancellationToken);
 
         // Higher significance memory should come first due to relevance scoring
         if (result.Count >= 2)
@@ -287,7 +287,7 @@ public class ActorLocalMemoryStoreTests
             .ReturnsAsync("etag-2");
 
         await _memoryStore.StoreExperienceAsync(
-            entityId, perception, 0.85f, [], CancellationToken.None);
+            entityId, perception, 0.85f, [], TestContext.Current.CancellationToken);
 
         Assert.NotNull(savedMemory);
         Assert.Equal(entityId, savedMemory.EntityId);
@@ -322,7 +322,7 @@ public class ActorLocalMemoryStoreTests
             .ReturnsAsync("etag-2");
 
         await _memoryStore.StoreExperienceAsync(
-            entityId, perception, 0.8f, [], CancellationToken.None);
+            entityId, perception, 0.8f, [], TestContext.Current.CancellationToken);
 
         Assert.NotNull(savedIndex);
         Assert.Equal(2, savedIndex.Count);
@@ -359,7 +359,7 @@ public class ActorLocalMemoryStoreTests
             .ReturnsAsync("etag-new");
 
         await _memoryStore.StoreExperienceAsync(
-            entityId, perception, 0.8f, contextMemories, CancellationToken.None);
+            entityId, perception, 0.8f, contextMemories, TestContext.Current.CancellationToken);
 
         Assert.NotNull(savedMemory);
         Assert.Equal(2, savedMemory.RelatedMemoryIds.Count);
@@ -374,7 +374,7 @@ public class ActorLocalMemoryStoreTests
     [Fact]
     public async Task GetAllAsync_ZeroLimit_ReturnsEmptyList()
     {
-        var result = await _memoryStore.GetAllAsync("entity-1", 0, CancellationToken.None);
+        var result = await _memoryStore.GetAllAsync("entity-1", 0, TestContext.Current.CancellationToken);
         Assert.Empty(result);
     }
 
@@ -383,7 +383,7 @@ public class ActorLocalMemoryStoreTests
     {
         SetupEmptyIndex("entity-1");
 
-        var result = await _memoryStore.GetAllAsync("entity-1", 10, CancellationToken.None);
+        var result = await _memoryStore.GetAllAsync("entity-1", 10, TestContext.Current.CancellationToken);
         Assert.Empty(result);
     }
 
@@ -408,7 +408,7 @@ public class ActorLocalMemoryStoreTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(allMemoriesDict);
 
-        var result = await _memoryStore.GetAllAsync(entityId, 10, CancellationToken.None);
+        var result = await _memoryStore.GetAllAsync(entityId, 10, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
     }
@@ -430,7 +430,7 @@ public class ActorLocalMemoryStoreTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(memories);
 
-        var result = await _memoryStore.GetAllAsync(entityId, 2, CancellationToken.None);
+        var result = await _memoryStore.GetAllAsync(entityId, 2, TestContext.Current.CancellationToken);
 
         // Should only fetch last 2 (most recent)
         Assert.True(result.Count <= 2);
@@ -463,7 +463,7 @@ public class ActorLocalMemoryStoreTests
             .Callback<string, List<string>, string, StateOptions?, CancellationToken>((_, idx, _, _, _) => savedIndex = idx)
             .ReturnsAsync("etag-2");
 
-        await _memoryStore.RemoveAsync(entityId, memoryId, CancellationToken.None);
+        await _memoryStore.RemoveAsync(entityId, memoryId, TestContext.Current.CancellationToken);
 
         Assert.Contains(memoryId, deletedKey);
         Assert.NotNull(savedIndex);
@@ -484,7 +484,7 @@ public class ActorLocalMemoryStoreTests
             .ReturnsAsync((new List<string> { "other-mem" }, "etag-1"));
 
         // Should not throw
-        await _memoryStore.RemoveAsync(entityId, memoryId, CancellationToken.None);
+        await _memoryStore.RemoveAsync(entityId, memoryId, TestContext.Current.CancellationToken);
     }
 
     #endregion
@@ -509,7 +509,7 @@ public class ActorLocalMemoryStoreTests
             .Callback<string, CancellationToken>((_, _) => indexDeleted = true)
             .ReturnsAsync(true);
 
-        await _memoryStore.ClearAsync(entityId, CancellationToken.None);
+        await _memoryStore.ClearAsync(entityId, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, deletedKeys.Count);
         Assert.True(indexDeleted);
@@ -528,7 +528,7 @@ public class ActorLocalMemoryStoreTests
             .Callback<string, CancellationToken>((_, _) => indexDeleted = true)
             .ReturnsAsync(true);
 
-        await _memoryStore.ClearAsync(entityId, CancellationToken.None);
+        await _memoryStore.ClearAsync(entityId, TestContext.Current.CancellationToken);
 
         Assert.True(indexDeleted);
         _mockMemoryStore.Verify(

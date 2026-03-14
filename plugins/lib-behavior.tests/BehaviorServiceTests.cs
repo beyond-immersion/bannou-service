@@ -77,7 +77,7 @@ public class BehaviorServiceTests
         };
 
         // Act
-        var (status, response) = await service.GenerateGoapPlanAsync(request);
+        var (status, response) = await service.GenerateGoapPlanAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -107,7 +107,7 @@ public class BehaviorServiceTests
         };
 
         // Act
-        var (status, response) = await service.GenerateGoapPlanAsync(request);
+        var (status, response) = await service.GenerateGoapPlanAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -144,7 +144,7 @@ public class BehaviorServiceTests
         };
 
         // Act
-        var (status, response) = await service.GenerateGoapPlanAsync(request);
+        var (status, response) = await service.GenerateGoapPlanAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - OK with no plan because no actions available
         Assert.Equal(StatusCodes.OK, status);
@@ -202,7 +202,7 @@ public class BehaviorServiceTests
         };
 
         // Act
-        var (status, response) = await service.GenerateGoapPlanAsync(request);
+        var (status, response) = await service.GenerateGoapPlanAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - OK with no plan because goal unreachable
         Assert.Equal(StatusCodes.OK, status);
@@ -271,7 +271,7 @@ public class BehaviorServiceTests
         };
 
         // Act
-        var (status, response) = await service.GenerateGoapPlanAsync(request);
+        var (status, response) = await service.GenerateGoapPlanAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -341,7 +341,7 @@ public class BehaviorServiceTests
         };
 
         // Act
-        await service.GenerateGoapPlanAsync(request);
+        await service.GenerateGoapPlanAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedOptions);

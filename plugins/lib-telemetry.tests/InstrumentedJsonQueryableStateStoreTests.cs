@@ -58,7 +58,7 @@ public class InstrumentedJsonQueryableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.JsonQueryAsync(conditions);
+        var result = await _sut.JsonQueryAsync(conditions, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -80,7 +80,7 @@ public class InstrumentedJsonQueryableStateStoreTests
             .ReturnsAsync(new List<JsonQueryResult<TestEntity>>());
 
         // Act
-        await _sut.JsonQueryAsync(new List<QueryCondition>());
+        await _sut.JsonQueryAsync(new List<QueryCondition>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -113,7 +113,7 @@ public class InstrumentedJsonQueryableStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.JsonQueryAsync(new List<QueryCondition>()));
+            () => _sut.JsonQueryAsync(new List<QueryCondition>(), cancellationToken: TestContext.Current.CancellationToken));
         Assert.Same(expectedException, exception);
 
         _telemetryMock.Verify(
@@ -150,7 +150,7 @@ public class InstrumentedJsonQueryableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.JsonQueryPagedAsync(null, 0, 10);
+        var result = await _sut.JsonQueryPagedAsync(null, 0, 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, result.TotalCount);
@@ -172,7 +172,7 @@ public class InstrumentedJsonQueryableStateStoreTests
             .ReturnsAsync(15);
 
         // Act
-        var result = await _sut.JsonCountAsync(null);
+        var result = await _sut.JsonCountAsync(null, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(15, result);
@@ -193,7 +193,7 @@ public class InstrumentedJsonQueryableStateStoreTests
             .ReturnsAsync(0);
 
         // Act
-        await _sut.JsonCountAsync(null);
+        await _sut.JsonCountAsync(null, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -222,7 +222,7 @@ public class InstrumentedJsonQueryableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.JsonDistinctAsync("$.Name");
+        var result = await _sut.JsonDistinctAsync("$.Name", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -248,7 +248,7 @@ public class InstrumentedJsonQueryableStateStoreTests
             .ReturnsAsync((object?)100.0);
 
         // Act
-        var result = await _sut.JsonAggregateAsync("$.Score", JsonAggregation.Sum);
+        var result = await _sut.JsonAggregateAsync("$.Score", JsonAggregation.Sum, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(100.0, result);

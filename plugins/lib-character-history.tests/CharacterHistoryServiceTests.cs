@@ -146,7 +146,7 @@ public class CharacterHistoryServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, result) = await service.RecordParticipationAsync(request, CancellationToken.None);
+        var (status, result) = await service.RecordParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -232,7 +232,7 @@ public class CharacterHistoryServiceTests
             });
 
         // Act
-        await service.RecordParticipationAsync(request, CancellationToken.None);
+        await service.RecordParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Index should now have 2 record IDs
         _mockIndexStore.Verify(s => s.SaveAsync(
@@ -263,7 +263,7 @@ public class CharacterHistoryServiceTests
         SetupJsonQueryPagedAsync(new List<ParticipationData>(), 0);
 
         // Act
-        var (status, result) = await service.GetParticipationAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -308,7 +308,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.GetParticipationAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -359,7 +359,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.GetParticipationAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -392,7 +392,7 @@ public class CharacterHistoryServiceTests
         SetupJsonQueryPagedAsync(new List<ParticipationData>(), 0);
 
         // Act
-        var (status, result) = await service.GetEventParticipantsAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetEventParticipantsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -437,7 +437,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.GetEventParticipantsAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetEventParticipantsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -474,7 +474,7 @@ public class CharacterHistoryServiceTests
             .ReturnsAsync((BackstoryData?)null);
 
         // Act
-        var (status, result) = await service.GetBackstoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetBackstoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -520,7 +520,7 @@ public class CharacterHistoryServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, result) = await service.SetBackstoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetBackstoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -592,7 +592,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SetBackstoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetBackstoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -631,7 +631,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SetBackstoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetBackstoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -678,7 +678,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SetBackstoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetBackstoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -721,7 +721,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.SetBackstoryAsync(request, CancellationToken.None);
+        var (status, result) = await service.SetBackstoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should succeed because no new elements are added, just updates
         Assert.Equal(StatusCodes.OK, status);
@@ -759,7 +759,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.AddBackstoryElementAsync(request, CancellationToken.None);
+        var (status, result) = await service.AddBackstoryElementAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -797,7 +797,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, result) = await service.AddBackstoryElementAsync(request, CancellationToken.None);
+        var (status, result) = await service.AddBackstoryElementAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should succeed because this is an update, not a new element
         Assert.Equal(StatusCodes.OK, status);
@@ -821,7 +821,7 @@ public class CharacterHistoryServiceTests
             .ReturnsAsync((ParticipationData?)null);
 
         // Act
-        var status = await service.DeleteParticipationAsync(request, CancellationToken.None);
+        var status = await service.DeleteParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -860,7 +860,7 @@ public class CharacterHistoryServiceTests
         var request = new DeleteBackstoryRequest { CharacterId = characterId };
 
         // Act
-        var status = await service.DeleteBackstoryAsync(request, CancellationToken.None);
+        var status = await service.DeleteBackstoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -887,7 +887,7 @@ public class CharacterHistoryServiceTests
         var request = new DeleteBackstoryRequest { CharacterId = characterId };
 
         // Act
-        var status = await service.DeleteBackstoryAsync(request, CancellationToken.None);
+        var status = await service.DeleteBackstoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -929,7 +929,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, response) = await service.RecordParticipationAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordParticipationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -972,7 +972,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, response) = await service.SetBackstoryAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetBackstoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1012,7 +1012,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, _) = await service.SetBackstoryAsync(request, CancellationToken.None);
+        var (status, _) = await service.SetBackstoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1052,7 +1052,7 @@ public class CharacterHistoryServiceTests
         var request = new DeleteBackstoryRequest { CharacterId = characterId };
 
         // Act
-        var status = await service.DeleteBackstoryAsync(request, CancellationToken.None);
+        var status = await service.DeleteBackstoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1200,7 +1200,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, response) = await service.SummarizeHistoryAsync(request, CancellationToken.None);
+        var (status, response) = await service.SummarizeHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1233,7 +1233,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, response) = await service.SummarizeHistoryAsync(request, CancellationToken.None);
+        var (status, response) = await service.SummarizeHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1313,7 +1313,7 @@ public class CharacterHistoryServiceTests
         var request = new DeleteAllHistoryRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.DeleteAllHistoryAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeleteAllHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1350,7 +1350,7 @@ public class CharacterHistoryServiceTests
         var request = new DeleteAllHistoryRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.DeleteAllHistoryAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeleteAllHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1422,7 +1422,7 @@ public class CharacterHistoryServiceTests
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1476,7 +1476,7 @@ public class CharacterHistoryServiceTests
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1521,7 +1521,7 @@ public class CharacterHistoryServiceTests
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1549,7 +1549,7 @@ public class CharacterHistoryServiceTests
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1570,7 +1570,7 @@ public class CharacterHistoryServiceTests
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.GetCompressDataAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.GetCompressDataAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -1645,7 +1645,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1705,7 +1705,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1728,7 +1728,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1751,7 +1751,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1807,7 +1807,7 @@ public class CharacterHistoryServiceTests
         };
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.RestoreFromArchiveAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken));
     }
 
     /// <summary>

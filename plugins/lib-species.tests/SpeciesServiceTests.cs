@@ -125,7 +125,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetSpeciesAsync(
-            new GetSpeciesRequest { SpeciesId = speciesId });
+            new GetSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -149,7 +149,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetSpeciesAsync(
-            new GetSpeciesRequest { SpeciesId = speciesId });
+            new GetSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -184,7 +184,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetSpeciesByCodeAsync(
-            new GetSpeciesByCodeRequest { Code = code });
+            new GetSpeciesByCodeRequest { Code = code }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -206,7 +206,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetSpeciesByCodeAsync(
-            new GetSpeciesByCodeRequest { Code = "UNKNOWN" });
+            new GetSpeciesByCodeRequest { Code = "UNKNOWN" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -250,7 +250,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -284,7 +284,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -319,7 +319,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -369,7 +369,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.UpdateSpeciesAsync(request);
+        var (status, response) = await service.UpdateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -403,7 +403,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.UpdateSpeciesAsync(request);
+        var (status, response) = await service.UpdateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -453,7 +453,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, _) = await service.UpdateSpeciesAsync(request);
+        var (status, _) = await service.UpdateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -514,7 +514,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var status = await service.DeleteSpeciesAsync(
-            new DeleteSpeciesRequest { SpeciesId = speciesId });
+            new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -535,7 +535,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var status = await service.DeleteSpeciesAsync(
-            new DeleteSpeciesRequest { SpeciesId = speciesId });
+            new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -558,7 +558,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var (status, response) = await service.ListSpeciesAsync(new ListSpeciesRequest());
+        var (status, response) = await service.ListSpeciesAsync(new ListSpeciesRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -596,7 +596,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             });
 
         // Act
-        var (status, response) = await service.ListSpeciesAsync(new ListSpeciesRequest { IncludeDeprecated = true });
+        var (status, response) = await service.ListSpeciesAsync(new ListSpeciesRequest { IncludeDeprecated = true }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -636,7 +636,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.ListSpeciesAsync(
-            new ListSpeciesRequest { IsPlayable = true });
+            new ListSpeciesRequest { IsPlayable = true }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -698,7 +698,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AddSpeciesToRealmAsync(request);
+        var (status, response) = await service.AddSpeciesToRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -760,7 +760,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.RemoveSpeciesFromRealmAsync(request);
+        var (status, response) = await service.RemoveSpeciesFromRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -803,7 +803,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DeprecateSpeciesAsync(request);
+        var (status, response) = await service.DeprecateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -844,7 +844,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         var request = new UndeprecateSpeciesRequest { SpeciesId = speciesId };
 
         // Act
-        var (status, response) = await service.UndeprecateSpeciesAsync(request);
+        var (status, response) = await service.UndeprecateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -875,7 +875,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -897,7 +897,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, _) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -916,7 +916,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, _) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -937,7 +937,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, _) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -960,7 +960,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, _) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -994,7 +994,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1033,7 +1033,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1064,7 +1064,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId, DeleteAfterMerge = true });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId, DeleteAfterMerge = true }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1100,7 +1100,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId, DeleteAfterMerge = true });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId, DeleteAfterMerge = true }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1128,7 +1128,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -1158,7 +1158,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1187,7 +1187,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1219,7 +1219,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1251,7 +1251,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1288,7 +1288,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1318,7 +1318,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1345,7 +1345,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.DeprecateSpeciesAsync(
-            new DeprecateSpeciesRequest { SpeciesId = speciesId, DeprecationReason = "reason" });
+            new DeprecateSpeciesRequest { SpeciesId = speciesId, DeprecationReason = "reason" }, TestContext.Current.CancellationToken);
 
         // Assert - returns OK without re-saving (idempotent per IMPLEMENTATION TENETS)
         Assert.Equal(StatusCodes.OK, status);
@@ -1365,7 +1365,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.UndeprecateSpeciesAsync(
-            new UndeprecateSpeciesRequest { SpeciesId = speciesId });
+            new UndeprecateSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert - returns OK without re-saving (idempotent per IMPLEMENTATION TENETS)
         Assert.Equal(StatusCodes.OK, status);
@@ -1385,7 +1385,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var status = await service.DeleteSpeciesAsync(
-            new DeleteSpeciesRequest { SpeciesId = speciesId });
+            new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert - must be deprecated before deletion (Category A per IMPLEMENTATION TENETS)
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1408,7 +1408,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var status = await service.DeleteSpeciesAsync(
-            new DeleteSpeciesRequest { SpeciesId = speciesId });
+            new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1430,7 +1430,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         await service.DeleteSpeciesAsync(
-            new DeleteSpeciesRequest { SpeciesId = speciesId });
+            new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -1463,7 +1463,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.ListSpeciesAsync(
-            new ListSpeciesRequest { Page = 1, PageSize = 10 });
+            new ListSpeciesRequest { Page = 1, PageSize = 10 }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1496,7 +1496,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.ListSpeciesAsync(
-            new ListSpeciesRequest { Page = 1, PageSize = 10, IncludeDeprecated = true });
+            new ListSpeciesRequest { Page = 1, PageSize = 10, IncludeDeprecated = true }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1531,7 +1531,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.ListSpeciesByRealmAsync(
-            new ListSpeciesByRealmRequest { RealmId = realmId, Page = 1, PageSize = 10 });
+            new ListSpeciesByRealmRequest { RealmId = realmId, Page = 1, PageSize = 10 }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1566,7 +1566,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1595,7 +1595,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1617,7 +1617,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1652,7 +1652,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Code is upper-cased in response and saved model
         Assert.Equal(StatusCodes.OK, status);
@@ -1688,7 +1688,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1722,7 +1722,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1769,7 +1769,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1812,7 +1812,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.CreateSpeciesAsync(request);
+        var (status, response) = await service.CreateSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1850,7 +1850,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act & Assert - fail closed: CharacterService errors are thrown as InvalidOperationException
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }));
+            await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1872,7 +1872,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act & Assert - fail closed: throws InvalidOperationException
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }));
+            await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1894,7 +1894,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act & Assert - fail closed: any non-ApiException wraps as InvalidOperationException
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }));
+            await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1929,7 +1929,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ReturnsAsync(new List<Guid> { speciesId });
 
         // Act
-        var status = await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId });
+        var status = await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert - cleanup succeeded so deletion proceeds
         Assert.Equal(StatusCodes.OK, status);
@@ -1960,7 +1960,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ReturnsAsync(new Resource.ExecuteCleanupResponse { Success = false, AbortReason = "RESTRICT policy blocked" });
 
         // Act
-        var status = await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId });
+        var status = await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert - cleanup failed (RESTRICT), deletion blocked
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1987,7 +1987,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ThrowsAsync(new ApiException("Service error", 500, null, null, null));
 
         // Act
-        var status = await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId });
+        var status = await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert - fail closed: resource service unavailable blocks deletion
         Assert.Equal(StatusCodes.ServiceUnavailable, status);
@@ -2024,7 +2024,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ReturnsAsync(new List<Guid> { speciesId });
 
         // Act
-        var status = await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId });
+        var status = await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert - 404 from resource = no references registered, deletion proceeds
         Assert.Equal(StatusCodes.OK, status);
@@ -2065,7 +2065,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ReturnsAsync(new List<Guid> { speciesId });
 
         // Act
-        var status = await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId });
+        var status = await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2113,7 +2113,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ReturnsAsync(true);
 
         // Act
-        await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId });
+        await service.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedEvent);
@@ -2152,7 +2152,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = largeId, TargetSpeciesId = smallId });
+            new MergeSpeciesRequest { SourceSpeciesId = largeId, TargetSpeciesId = smallId }, TestContext.Current.CancellationToken);
 
         // Assert - smallest GUID locked first (deadlock prevention via deterministic ordering)
         Assert.Equal(2, lockOrder.Count);
@@ -2207,7 +2207,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert - both characters migrated across 2 pages
         Assert.Equal(StatusCodes.OK, status);
@@ -2236,7 +2236,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert - page fetch failure aborts with InternalServerError
         Assert.Equal(StatusCodes.InternalServerError, status);
@@ -2263,7 +2263,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
@@ -2341,7 +2341,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2380,7 +2380,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId, DeleteAfterMerge = true });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId, DeleteAfterMerge = true }, TestContext.Current.CancellationToken);
 
         // Assert - merge succeeds but source not deleted due to cleanup failure
         Assert.Equal(StatusCodes.OK, status);
@@ -2426,7 +2426,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId });
+            new MergeSpeciesRequest { SourceSpeciesId = sourceId, TargetSpeciesId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedEvent);
@@ -2455,7 +2455,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, _) = await service.MergeSpeciesAsync(
-            new MergeSpeciesRequest { SourceSpeciesId = speciesId, TargetSpeciesId = speciesId });
+            new MergeSpeciesRequest { SourceSpeciesId = speciesId, TargetSpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert - target is deprecated so returns BadRequest
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2494,7 +2494,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - species created but without the non-existent realm
         Assert.Equal(StatusCodes.OK, status);
@@ -2533,7 +2533,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - species created but realm skipped due to error
         Assert.Equal(StatusCodes.OK, status);
@@ -2589,7 +2589,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2623,7 +2623,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - code should be upper-cased
         Assert.Equal(StatusCodes.OK, status);
@@ -2675,7 +2675,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2726,7 +2726,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.SeedSpeciesAsync(request);
+        var (status, response) = await service.SeedSpeciesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - only the valid realm is assigned
         Assert.Equal(StatusCodes.OK, status);
@@ -2755,7 +2755,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.AddSpeciesToRealmAsync(
-            new AddSpeciesToRealmRequest { SpeciesId = speciesId, RealmId = realmId });
+            new AddSpeciesToRealmRequest { SpeciesId = speciesId, RealmId = realmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2778,7 +2778,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.AddSpeciesToRealmAsync(
-            new AddSpeciesToRealmRequest { SpeciesId = speciesId, RealmId = realmId });
+            new AddSpeciesToRealmRequest { SpeciesId = speciesId, RealmId = realmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2799,7 +2799,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.AddSpeciesToRealmAsync(
-            new AddSpeciesToRealmRequest { SpeciesId = speciesId, RealmId = realmId });
+            new AddSpeciesToRealmRequest { SpeciesId = speciesId, RealmId = realmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2822,7 +2822,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.AddSpeciesToRealmAsync(
-            new AddSpeciesToRealmRequest { SpeciesId = speciesId, RealmId = realmId });
+            new AddSpeciesToRealmRequest { SpeciesId = speciesId, RealmId = realmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2843,7 +2843,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.RemoveSpeciesFromRealmAsync(
-            new RemoveSpeciesFromRealmRequest { SpeciesId = speciesId, RealmId = realmId });
+            new RemoveSpeciesFromRealmRequest { SpeciesId = speciesId, RealmId = realmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2865,7 +2865,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.RemoveSpeciesFromRealmAsync(
-            new RemoveSpeciesFromRealmRequest { SpeciesId = speciesId, RealmId = realmId });
+            new RemoveSpeciesFromRealmRequest { SpeciesId = speciesId, RealmId = realmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2898,7 +2898,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.RemoveSpeciesFromRealmAsync(
-            new RemoveSpeciesFromRealmRequest { SpeciesId = speciesId, RealmId = realmId });
+            new RemoveSpeciesFromRealmRequest { SpeciesId = speciesId, RealmId = realmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2926,7 +2926,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         // Act & Assert - fail closed
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await service.RemoveSpeciesFromRealmAsync(
-                new RemoveSpeciesFromRealmRequest { SpeciesId = speciesId, RealmId = realmId }));
+                new RemoveSpeciesFromRealmRequest { SpeciesId = speciesId, RealmId = realmId }, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -2950,7 +2950,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         // Act & Assert - fail closed
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await service.RemoveSpeciesFromRealmAsync(
-                new RemoveSpeciesFromRealmRequest { SpeciesId = speciesId, RealmId = realmId }));
+                new RemoveSpeciesFromRealmRequest { SpeciesId = speciesId, RealmId = realmId }, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -2985,7 +2985,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         await service.AddSpeciesToRealmAsync(
-            new AddSpeciesToRealmRequest { SpeciesId = speciesId, RealmId = realmId });
+            new AddSpeciesToRealmRequest { SpeciesId = speciesId, RealmId = realmId }, TestContext.Current.CancellationToken);
 
         // Assert - event published with realmIds as changed field
         Assert.NotNull(capturedEvent);
@@ -3010,7 +3010,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.DeprecateSpeciesAsync(
-            new DeprecateSpeciesRequest { SpeciesId = speciesId, DeprecationReason = "reason" });
+            new DeprecateSpeciesRequest { SpeciesId = speciesId, DeprecationReason = "reason" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3044,7 +3044,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         await service.DeprecateSpeciesAsync(
-            new DeprecateSpeciesRequest { SpeciesId = speciesId, DeprecationReason = "Obsolete" });
+            new DeprecateSpeciesRequest { SpeciesId = speciesId, DeprecationReason = "Obsolete" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedEvent);
@@ -3067,7 +3067,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         var (status, response) = await service.UndeprecateSpeciesAsync(
-            new UndeprecateSpeciesRequest { SpeciesId = speciesId });
+            new UndeprecateSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3104,7 +3104,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
 
         // Act
         await service.UndeprecateSpeciesAsync(
-            new UndeprecateSpeciesRequest { SpeciesId = speciesId });
+            new UndeprecateSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedEvent);
@@ -3138,7 +3138,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             .ReturnsAsync("etag-1");
 
         // Act
-        await service.UndeprecateSpeciesAsync(new UndeprecateSpeciesRequest { SpeciesId = speciesId });
+        await service.UndeprecateSpeciesAsync(new UndeprecateSpeciesRequest { SpeciesId = speciesId }, TestContext.Current.CancellationToken);
 
         // Assert - saved model has deprecation fields cleared
         Assert.NotNull(savedModel);

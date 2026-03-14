@@ -110,7 +110,7 @@ public class GameServiceServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -147,7 +147,7 @@ public class GameServiceServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -204,7 +204,7 @@ public class GameServiceServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -230,7 +230,7 @@ public class GameServiceServiceTests
             .ReturnsAsync("existing-service-id");
 
         // Act
-        var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -266,7 +266,7 @@ public class GameServiceServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -299,7 +299,7 @@ public class GameServiceServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -334,7 +334,7 @@ public class GameServiceServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.GetServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -357,7 +357,7 @@ public class GameServiceServiceTests
             .ReturnsAsync((GameServiceRegistryModel?)null);
 
         // Act
-        var (statusCode, response) = await service.GetServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -389,7 +389,7 @@ public class GameServiceServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.GetServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -410,7 +410,7 @@ public class GameServiceServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (statusCode, response) = await service.GetServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -459,7 +459,7 @@ public class GameServiceServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.ListServicesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListServicesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -507,7 +507,7 @@ public class GameServiceServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.ListServicesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListServicesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -530,7 +530,7 @@ public class GameServiceServiceTests
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var (statusCode, response) = await service.ListServicesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListServicesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -579,7 +579,7 @@ public class GameServiceServiceTests
                 (key, data, options, ct) => savedModel = data);
 
         // Act
-        var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -627,7 +627,7 @@ public class GameServiceServiceTests
                 (key, data, options, ct) => savedModel = data);
 
         // Act
-        var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -654,7 +654,7 @@ public class GameServiceServiceTests
             .ReturnsAsync((GameServiceRegistryModel?)null);
 
         // Act
-        var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -675,7 +675,7 @@ public class GameServiceServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -717,7 +717,7 @@ public class GameServiceServiceTests
                 (key, data, options, ct) => savedModel = data);
 
         // Act
-        var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -764,7 +764,7 @@ public class GameServiceServiceTests
                 (key, data, options, ct) => savedModel = data);
 
         // Act
-        var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -807,7 +807,7 @@ public class GameServiceServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -847,7 +847,7 @@ public class GameServiceServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -898,7 +898,7 @@ public class GameServiceServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -921,7 +921,7 @@ public class GameServiceServiceTests
             .ReturnsAsync((GameServiceRegistryModel?)null);
 
         // Act
-        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -938,7 +938,7 @@ public class GameServiceServiceTests
         var request = new DeleteServiceRequest { ServiceId = Guid.Empty };
 
         // Act
-        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -993,7 +993,7 @@ public class GameServiceServiceTests
             });
 
         // Act
-        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -1031,7 +1031,7 @@ public class GameServiceServiceTests
             .ThrowsAsync(new ApiException("Resource service unavailable", 503, null, null, null));
 
         // Act
-        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -1100,7 +1100,7 @@ public class GameServiceServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1172,7 +1172,7 @@ public class GameServiceServiceTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var statusCode = await service.DeleteServiceAsync(request, CancellationToken.None);
+        var statusCode = await service.DeleteServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1211,7 +1211,7 @@ public class GameServiceServiceTests
             .ReturnsAsync(failedLock.Object);
 
         // Act
-        var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, statusCode);
@@ -1268,7 +1268,7 @@ public class GameServiceServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (statusCode, response) = await service.CreateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.CreateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1314,7 +1314,7 @@ public class GameServiceServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1357,7 +1357,7 @@ public class GameServiceServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1424,7 +1424,7 @@ public class GameServiceServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1489,7 +1489,7 @@ public class GameServiceServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (statusCode, response) = await service.UpdateServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.UpdateServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1529,7 +1529,7 @@ public class GameServiceServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.GetServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1562,7 +1562,7 @@ public class GameServiceServiceTests
             .ReturnsAsync((GameServiceRegistryModel?)null);
 
         // Act
-        var (statusCode, response) = await service.GetServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -1577,7 +1577,7 @@ public class GameServiceServiceTests
         var request = new GetServiceRequest();
 
         // Act
-        var (statusCode, response) = await service.GetServiceAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetServiceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -1623,7 +1623,7 @@ public class GameServiceServiceTests
         }
 
         // Act
-        var (statusCode, response) = await service.ListServicesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListServicesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1679,7 +1679,7 @@ public class GameServiceServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.ListServicesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListServicesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1742,7 +1742,7 @@ public class GameServiceServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.ListServicesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListServicesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1781,7 +1781,7 @@ public class GameServiceServiceTests
             });
 
         // Act
-        var (statusCode, response) = await service.ListServicesAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListServicesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);

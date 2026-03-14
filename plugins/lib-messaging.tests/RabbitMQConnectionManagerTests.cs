@@ -257,7 +257,7 @@ public class RabbitMQConnectionManagerTests : IAsyncDisposable
         var manager = CreateManager(config);
 
         // Act
-        var result = await manager.InitializeAsync();
+        var result = await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Assert - should fail gracefully after retries
         Assert.False(result);
@@ -280,7 +280,7 @@ public class RabbitMQConnectionManagerTests : IAsyncDisposable
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await manager.GetChannelAsync());
+            async () => await manager.GetChannelAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -296,7 +296,7 @@ public class RabbitMQConnectionManagerTests : IAsyncDisposable
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await manager.CreateConsumerChannelAsync());
+            async () => await manager.CreateConsumerChannelAsync(TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -317,7 +317,7 @@ public class RabbitMQConnectionManagerTests : IAsyncDisposable
             {
                 var count = manager.TotalActiveChannels;
                 Assert.True(count >= 0);
-            }));
+            }, TestContext.Current.CancellationToken));
         }
 
         // Assert - should complete without exceptions
@@ -338,7 +338,7 @@ public class RabbitMQConnectionManagerTests : IAsyncDisposable
             {
                 var count = manager.PooledChannelCount;
                 Assert.True(count >= 0);
-            }));
+            }, TestContext.Current.CancellationToken));
         }
 
         // Assert - should complete without exceptions

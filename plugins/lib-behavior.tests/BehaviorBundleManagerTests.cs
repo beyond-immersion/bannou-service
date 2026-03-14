@@ -91,7 +91,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync((BehaviorMetadata?)null);
 
         // Act
-        var isNew = await manager.RecordBehaviorAsync(behaviorId, assetId, null, metadata);
+        var isNew = await manager.RecordBehaviorAsync(behaviorId, assetId, null, metadata, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(isNew);
@@ -121,7 +121,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync(existingMetadata);
 
         // Act
-        var isNew = await manager.RecordBehaviorAsync(behaviorId, assetId, null, newMetadata);
+        var isNew = await manager.RecordBehaviorAsync(behaviorId, assetId, null, newMetadata, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(isNew);
@@ -146,7 +146,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync((BundleMembership?)null);
 
         // Act
-        await manager.RecordBehaviorAsync(behaviorId, assetId, bundleId, metadata);
+        await manager.RecordBehaviorAsync(behaviorId, assetId, bundleId, metadata, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMembershipStore.Verify(s => s.SaveAsync(
@@ -174,7 +174,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync((BundleMembership?)null);
 
         // Act
-        await manager.AddToBundleAsync(behaviorId, assetId, bundleId);
+        await manager.AddToBundleAsync(behaviorId, assetId, bundleId, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMembershipStore.Verify(s => s.SaveAsync(
@@ -208,7 +208,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync(existingMembership);
 
         // Act
-        await manager.AddToBundleAsync(behaviorId, assetId, bundleId);
+        await manager.AddToBundleAsync(behaviorId, assetId, bundleId, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMembershipStore.Verify(s => s.SaveAsync(
@@ -238,7 +238,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync(expectedMetadata);
 
         // Act
-        var result = await manager.GetMetadataAsync(behaviorId);
+        var result = await manager.GetMetadataAsync(behaviorId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -257,7 +257,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync((BehaviorMetadata?)null);
 
         // Act
-        var result = await manager.GetMetadataAsync(behaviorId);
+        var result = await manager.GetMetadataAsync(behaviorId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -285,7 +285,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync(metadata);
 
         // Act
-        var result = await manager.RemoveBehaviorAsync(behaviorId);
+        var result = await manager.RemoveBehaviorAsync(behaviorId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -327,7 +327,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync(membership);
 
         // Act
-        await manager.RemoveBehaviorAsync(behaviorId);
+        await manager.RemoveBehaviorAsync(behaviorId, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMembershipStore.Verify(s => s.SaveAsync(
@@ -351,7 +351,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync((BehaviorMetadata?)null);
 
         // Act
-        var result = await manager.RemoveBehaviorAsync(behaviorId);
+        var result = await manager.RemoveBehaviorAsync(behaviorId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -385,7 +385,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync(membership);
 
         // Act
-        var result = await manager.GetBundleMembershipAsync(bundleId);
+        var result = await manager.GetBundleMembershipAsync(bundleId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -429,7 +429,7 @@ public class BehaviorBundleManagerTests
         };
 
         // Act
-        await manager.SaveGoapMetadataAsync(behaviorId, metadata);
+        await manager.SaveGoapMetadataAsync(behaviorId, metadata, TestContext.Current.CancellationToken);
 
         // Assert
         _mockGoapMetadataStore.Verify(s => s.SaveAsync(
@@ -462,7 +462,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync(behaviorId);
 
         // Act
-        await manager.SaveGoapMetadataAsync(behaviorId, metadata);
+        await manager.SaveGoapMetadataAsync(behaviorId, metadata, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedMetadata);
@@ -493,7 +493,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync(expectedMetadata);
 
         // Act
-        var result = await manager.GetGoapMetadataAsync(behaviorId);
+        var result = await manager.GetGoapMetadataAsync(behaviorId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -516,7 +516,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync((CachedGoapMetadata?)null);
 
         // Act
-        var result = await manager.GetGoapMetadataAsync(behaviorId);
+        var result = await manager.GetGoapMetadataAsync(behaviorId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -539,7 +539,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await manager.RemoveGoapMetadataAsync(behaviorId);
+        var result = await manager.RemoveGoapMetadataAsync(behaviorId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -560,7 +560,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync((CachedGoapMetadata?)null);
 
         // Act
-        var result = await manager.RemoveGoapMetadataAsync(behaviorId);
+        var result = await manager.RemoveGoapMetadataAsync(behaviorId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -632,7 +632,7 @@ public class BehaviorBundleManagerTests
             .ReturnsAsync(behaviorId);
 
         // Act
-        await manager.SaveGoapMetadataAsync(behaviorId, metadata);
+        await manager.SaveGoapMetadataAsync(behaviorId, metadata, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedMetadata);

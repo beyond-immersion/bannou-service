@@ -70,7 +70,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, docId, title, slug, content, category, tags);
 
         // Assert - verify by searching
-        var results = await _service.SearchAsync(TEST_NAMESPACE, "getting started", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "getting started", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Single(results);
         Assert.Equal(docId, results[0].DocumentId);
         Assert.Equal(title, results[0].Title);
@@ -89,7 +89,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, docId, title, slug, null, DocumentCategory.Other, null);
 
         // Assert - verify by searching title
-        var results = await _service.SearchAsync(TEST_NAMESPACE, "empty content", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "empty content", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Single(results);
         Assert.Equal(docId, results[0].DocumentId);
     }
@@ -104,7 +104,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, docId, "Test Doc", "test-doc", "content", DocumentCategory.Other, null);
 
         // Assert
-        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
+        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(1, stats.TotalDocuments);
     }
 
@@ -121,7 +121,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, doc3Id, "Third Document", "third", "Content three", DocumentCategory.Tutorials, new[] { "tag1", "tag3" });
 
         // Assert
-        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
+        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(3, stats.TotalDocuments);
         Assert.Equal(2, stats.DocumentsByCategory[DocumentCategory.Tutorials]);
         Assert.Equal(1, stats.DocumentsByCategory[DocumentCategory.GettingStarted]);
@@ -140,7 +140,7 @@ public class SearchIndexServiceTests
             "Learn about authentication and authorization", DocumentCategory.Other, null);
 
         // Act
-        var results = await _service.SearchAsync(TEST_NAMESPACE, "authentication", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "authentication", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(results);
@@ -157,7 +157,7 @@ public class SearchIndexServiceTests
             "Learn about authentication", DocumentCategory.Other, null);
 
         // Act - search with prefix
-        var results = await _service.SearchAsync(TEST_NAMESPACE, "auth", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "auth", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(results);
@@ -180,7 +180,7 @@ public class SearchIndexServiceTests
             "Once you've started learning", DocumentCategory.Architecture, null);
 
         // Act
-        var results = await _service.SearchAsync(TEST_NAMESPACE, "getting started", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "getting started", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - doc1 should rank higher due to more term matches
         Assert.Equal(2, results.Count);
@@ -200,7 +200,7 @@ public class SearchIndexServiceTests
             "More learning content", DocumentCategory.GettingStarted, null);
 
         // Act
-        var results = await _service.SearchAsync(TEST_NAMESPACE, "tutorial", category: DocumentCategory.Tutorials, maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "tutorial", category: DocumentCategory.Tutorials, maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(results);
@@ -218,7 +218,7 @@ public class SearchIndexServiceTests
         }
 
         // Act
-        var results = await _service.SearchAsync(TEST_NAMESPACE, "common search", maxResults: 3);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "common search", maxResults: 3, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, results.Count);
@@ -232,7 +232,7 @@ public class SearchIndexServiceTests
             "A simple document", DocumentCategory.Other, null);
 
         // Act
-        var results = await _service.SearchAsync(TEST_NAMESPACE, "nonexistent term xyz", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "nonexistent term xyz", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(results);
@@ -242,7 +242,7 @@ public class SearchIndexServiceTests
     public async Task Search_InEmptyNamespace_ShouldReturnEmpty()
     {
         // Act
-        var results = await _service.SearchAsync("empty-namespace", "any term", maxResults: 10);
+        var results = await _service.SearchAsync("empty-namespace", "any term", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(results);
@@ -257,8 +257,8 @@ public class SearchIndexServiceTests
             "This is an important document with content", DocumentCategory.Other, null);
 
         // Act - search with stop words only should not match
-        var stopWordResults = await _service.SearchAsync(TEST_NAMESPACE, "the is an", maxResults: 10);
-        var contentResults = await _service.SearchAsync(TEST_NAMESPACE, "important", maxResults: 10);
+        var stopWordResults = await _service.SearchAsync(TEST_NAMESPACE, "the is an", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
+        var contentResults = await _service.SearchAsync(TEST_NAMESPACE, "important", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(stopWordResults); // Stop words filtered
@@ -274,9 +274,9 @@ public class SearchIndexServiceTests
             "Learn about AUTHENTICATION", DocumentCategory.Other, null);
 
         // Act
-        var lowerResults = await _service.SearchAsync(TEST_NAMESPACE, "authentication", maxResults: 10);
-        var upperResults = await _service.SearchAsync(TEST_NAMESPACE, "AUTHENTICATION", maxResults: 10);
-        var mixedResults = await _service.SearchAsync(TEST_NAMESPACE, "AuThEnTiCaTiOn", maxResults: 10);
+        var lowerResults = await _service.SearchAsync(TEST_NAMESPACE, "authentication", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
+        var upperResults = await _service.SearchAsync(TEST_NAMESPACE, "AUTHENTICATION", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
+        var mixedResults = await _service.SearchAsync(TEST_NAMESPACE, "AuThEnTiCaTiOn", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(lowerResults);
@@ -304,8 +304,8 @@ public class SearchIndexServiceTests
             "About the author", DocumentCategory.Other, null);
 
         // Act - high min score should filter out low-relevance results
-        var highThreshold = await _service.QueryAsync(TEST_NAMESPACE, "auth", minRelevanceScore: 0.8, maxResults: 10);
-        var lowThreshold = await _service.QueryAsync(TEST_NAMESPACE, "auth", minRelevanceScore: 0.1, maxResults: 10);
+        var highThreshold = await _service.QueryAsync(TEST_NAMESPACE, "auth", minRelevanceScore: 0.8, maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
+        var lowThreshold = await _service.QueryAsync(TEST_NAMESPACE, "auth", minRelevanceScore: 0.1, maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(lowThreshold.Count >= highThreshold.Count);
@@ -315,7 +315,7 @@ public class SearchIndexServiceTests
     public async Task Query_InEmptyNamespace_ShouldReturnEmpty()
     {
         // Act
-        var results = await _service.QueryAsync("nonexistent-namespace", "any query", maxResults: 10);
+        var results = await _service.QueryAsync("nonexistent-namespace", "any query", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(results);
@@ -339,7 +339,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, doc3Id, "Advanced Guide", "advanced", "Content", DocumentCategory.Architecture, new[] { "expert" });
 
         // Act
-        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, doc1Id.ToString(), maxSuggestions: 5);
+        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, doc1Id.ToString(), maxSuggestions: 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - doc2 should be related (same category + shared tags)
         Assert.Contains(doc2Id, related);
@@ -356,7 +356,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Related Doc", "related-doc", "Content", DocumentCategory.Tutorials, new[] { "tag1" });
 
         // Act
-        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, "source-doc", maxSuggestions: 5);
+        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, "source-doc", maxSuggestions: 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Contains(doc2Id, related);
@@ -376,7 +376,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, unrelatedId, "Unrelated", "unrelated", "Content", DocumentCategory.Other, new[] { "different" }); // Different
 
         // Act
-        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, sourceId.ToString(), maxSuggestions: 5);
+        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, sourceId.ToString(), maxSuggestions: 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - related doc should be first due to matching category + tags
         Assert.Equal(relatedId, related[0]);
@@ -391,7 +391,7 @@ public class SearchIndexServiceTests
             "Learn Python programming", DocumentCategory.Tutorials, null);
 
         // Act - search term that doesn't match any doc ID/slug/title exactly
-        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, "python", maxSuggestions: 5);
+        var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, "python", maxSuggestions: 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - should fall back to search and find the Python document
         Assert.Contains(docId, related);
@@ -401,7 +401,7 @@ public class SearchIndexServiceTests
     public async Task GetRelatedSuggestions_InEmptyNamespace_ShouldReturnEmpty()
     {
         // Act
-        var related = await _service.GetRelatedSuggestionsAsync("empty-namespace", "anything", maxSuggestions: 5);
+        var related = await _service.GetRelatedSuggestionsAsync("empty-namespace", "anything", maxSuggestions: 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(related);
@@ -422,7 +422,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Doc Two", "doc-2", "Content", DocumentCategory.Other, null);
 
         // Act
-        var ids = await _service.ListDocumentIdsAsync(TEST_NAMESPACE);
+        var ids = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, ids.Count);
@@ -441,7 +441,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, guideId, "Guide", "guide", "Content", DocumentCategory.GettingStarted, null);
 
         // Act
-        var tutorialIds = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, category: DocumentCategory.Tutorials);
+        var tutorialIds = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, category: DocumentCategory.Tutorials, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(tutorialIds);
@@ -461,9 +461,9 @@ public class SearchIndexServiceTests
         }
 
         // Act
-        var page1 = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, skip: 0, take: 3);
-        var page2 = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, skip: 3, take: 3);
-        var page3 = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, skip: 6, take: 3);
+        var page1 = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, skip: 0, take: 3, cancellationToken: TestContext.Current.CancellationToken);
+        var page2 = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, skip: 3, take: 3, cancellationToken: TestContext.Current.CancellationToken);
+        var page3 = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, skip: 6, take: 3, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, page1.Count);
@@ -479,7 +479,7 @@ public class SearchIndexServiceTests
     public async Task ListDocumentIds_InEmptyNamespace_ShouldReturnEmpty()
     {
         // Act
-        var ids = await _service.ListDocumentIdsAsync("empty-namespace");
+        var ids = await _service.ListDocumentIdsAsync("empty-namespace", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(ids);
@@ -494,7 +494,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Mango Document", "mango", "Content", DocumentCategory.Other, null);
 
         // Act
-        var ids = await _service.ListDocumentIdsAsync(TEST_NAMESPACE);
+        var ids = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
 
         // Verify count is correct
         Assert.Equal(3, ids.Count);
@@ -513,7 +513,7 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Doc 3", "doc-3", "Content", DocumentCategory.GettingStarted, new[] { "tag3" });
 
         // Act
-        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
+        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, stats.TotalDocuments);
@@ -526,7 +526,7 @@ public class SearchIndexServiceTests
     public async Task GetNamespaceStats_ForEmptyNamespace_ShouldReturnZeros()
     {
         // Act
-        var stats = await _service.GetNamespaceStatsAsync("empty-namespace");
+        var stats = await _service.GetNamespaceStatsAsync("empty-namespace", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, stats.TotalDocuments);
@@ -546,18 +546,18 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, docId, "To Be Removed", "to-remove", "Content", DocumentCategory.Other, new[] { "tag1" });
 
         // Verify it's indexed
-        var beforeStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
+        var beforeStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(1, beforeStats.TotalDocuments);
 
         // Act
         _service.RemoveDocument(TEST_NAMESPACE, docId);
 
         // Assert
-        var afterStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
+        var afterStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(0, afterStats.TotalDocuments);
 
         // Search should not find it
-        var searchResults = await _service.SearchAsync(TEST_NAMESPACE, "removed", maxResults: 10);
+        var searchResults = await _service.SearchAsync(TEST_NAMESPACE, "removed", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Empty(searchResults);
     }
 
@@ -590,14 +590,14 @@ public class SearchIndexServiceTests
         _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Doc 1", "doc-1", "Content", DocumentCategory.Other, new[] { "shared-tag", "unique-tag-1" });
         _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Doc 2", "doc-2", "Content", DocumentCategory.Other, new[] { "shared-tag", "unique-tag-2" });
 
-        var beforeStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
+        var beforeStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(3, beforeStats.TotalTags); // shared-tag, unique-tag-1, unique-tag-2
 
         // Act
         _service.RemoveDocument(TEST_NAMESPACE, doc1Id);
 
         // Assert
-        var afterStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
+        var afterStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(2, afterStats.TotalTags); // shared-tag (still used), unique-tag-2
     }
 
@@ -610,7 +610,7 @@ public class SearchIndexServiceTests
             "Original content about alpha and beta", DocumentCategory.Tutorials, new[] { "old-tag" });
 
         // Verify original terms are searchable
-        var alphaResults = await _service.SearchAsync(TEST_NAMESPACE, "alpha", maxResults: 10);
+        var alphaResults = await _service.SearchAsync(TEST_NAMESPACE, "alpha", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Single(alphaResults);
 
         // Act - re-index the same document with completely different content
@@ -618,16 +618,16 @@ public class SearchIndexServiceTests
             "Updated content about gamma and delta", DocumentCategory.Tutorials, new[] { "new-tag" });
 
         // Assert - old terms should NOT match this document anymore
-        var staleResults = await _service.SearchAsync(TEST_NAMESPACE, "alpha", maxResults: 10);
+        var staleResults = await _service.SearchAsync(TEST_NAMESPACE, "alpha", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Empty(staleResults);
 
         // New terms should match
-        var freshResults = await _service.SearchAsync(TEST_NAMESPACE, "gamma", maxResults: 10);
+        var freshResults = await _service.SearchAsync(TEST_NAMESPACE, "gamma", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Single(freshResults);
         Assert.Equal(docId, freshResults[0].DocumentId);
 
         // Document count should still be 1 (update, not duplicate)
-        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
+        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(1, stats.TotalDocuments);
     }
 
@@ -640,14 +640,14 @@ public class SearchIndexServiceTests
             "Content with unique words", DocumentCategory.Other, null);
 
         // Verify it's findable
-        var beforeResults = await _service.SearchAsync(TEST_NAMESPACE, "unique searchable", maxResults: 10);
+        var beforeResults = await _service.SearchAsync(TEST_NAMESPACE, "unique searchable", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Single(beforeResults);
 
         // Act
         _service.RemoveDocument(TEST_NAMESPACE, docId);
 
         // Assert - terms from removed document should no longer match
-        var afterResults = await _service.SearchAsync(TEST_NAMESPACE, "unique searchable", maxResults: 10);
+        var afterResults = await _service.SearchAsync(TEST_NAMESPACE, "unique searchable", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Empty(afterResults);
     }
 
@@ -666,8 +666,8 @@ public class SearchIndexServiceTests
         _service.IndexDocument("namespace-2", ns2DocId, "Namespace 2 Doc", "ns2-doc", "Content for NS2", DocumentCategory.Other, null);
 
         // Act
-        var ns1Results = await _service.SearchAsync("namespace-1", "namespace", maxResults: 10);
-        var ns2Results = await _service.SearchAsync("namespace-2", "namespace", maxResults: 10);
+        var ns1Results = await _service.SearchAsync("namespace-1", "namespace", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
+        var ns2Results = await _service.SearchAsync("namespace-2", "namespace", maxResults: 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(ns1Results);
@@ -686,8 +686,8 @@ public class SearchIndexServiceTests
         _service.IndexDocument("namespace-b", Guid.NewGuid(), "Doc B1", "b1", "Content", DocumentCategory.GettingStarted, null);
 
         // Act
-        var statsA = await _service.GetNamespaceStatsAsync("namespace-a");
-        var statsB = await _service.GetNamespaceStatsAsync("namespace-b");
+        var statsA = await _service.GetNamespaceStatsAsync("namespace-a", cancellationToken: TestContext.Current.CancellationToken);
+        var statsB = await _service.GetNamespaceStatsAsync("namespace-b", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, statsA.TotalDocuments);
@@ -708,7 +708,7 @@ public class SearchIndexServiceTests
             .ReturnsAsync((HashSet<Guid>?)null);
 
         // Act
-        var count = await _service.RebuildIndexAsync(TEST_NAMESPACE);
+        var count = await _service.RebuildIndexAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, count);
@@ -724,7 +724,7 @@ public class SearchIndexServiceTests
             .ReturnsAsync(new HashSet<Guid>());
 
         // Act
-        var count = await _service.RebuildIndexAsync(TEST_NAMESPACE);
+        var count = await _service.RebuildIndexAsync(TEST_NAMESPACE, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, count);

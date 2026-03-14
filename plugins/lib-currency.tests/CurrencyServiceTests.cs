@@ -538,7 +538,7 @@ public class CurrencyConversionConcurrencyTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteConversionAsync(request);
+        var (status, response) = await service.ExecuteConversionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should be rejected before any debit occurs
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -611,7 +611,7 @@ public class CurrencyConversionConcurrencyTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteConversionAsync(request);
+        var (status, response) = await service.ExecuteConversionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - credit failed with Conflict, compensation should have fired
         Assert.Equal(StatusCodes.Conflict, status);
@@ -683,7 +683,7 @@ public class CurrencyConversionConcurrencyTests
         };
 
         // Act
-        var (status, response) = await service.ExecuteConversionAsync(request);
+        var (status, response) = await service.ExecuteConversionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - conversion should succeed (earn cap bypassed for conversions)
         Assert.Equal(StatusCodes.OK, status);

@@ -48,7 +48,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -80,7 +80,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -104,7 +104,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -128,7 +128,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -152,7 +152,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -176,7 +176,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -208,7 +208,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -243,7 +243,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -275,7 +275,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -299,7 +299,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -330,7 +330,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -365,7 +365,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -395,7 +395,7 @@ public class StorytellerIntegrationTests
         };
 
         // Act
-        var (status, response) = await service.GenerateCompositionAsync(request, CancellationToken.None);
+        var (status, response) = await service.GenerateCompositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

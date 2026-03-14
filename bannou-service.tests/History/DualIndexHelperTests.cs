@@ -103,7 +103,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
-        var result = await helper.AddRecordAsync(record, recordId, primaryKey, secondaryKey);
+        var result = await helper.AddRecordAsync(record, recordId, primaryKey, secondaryKey, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -152,7 +152,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
-        await helper.AddRecordAsync(record, recordId, primaryKey, secondaryKey);
+        await helper.AddRecordAsync(record, recordId, primaryKey, secondaryKey, TestContext.Current.CancellationToken);
 
         // Assert - Verify index now has both records
         mockIndexStore.Verify(s => s.SaveAsync(
@@ -170,7 +170,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         var helper = CreateHelper(mockFactory, mockLockProvider);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.AddRecordAsync(new TestRecord(), "", "pk", "sk"));
+            helper.AddRecordAsync(new TestRecord(), "", "pk", "sk", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -185,7 +185,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync(record);
 
         // Act
-        var result = await helper.GetRecordAsync("rec-1");
+        var result = await helper.GetRecordAsync("rec-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -204,7 +204,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync((TestRecord?)null);
 
         // Act
-        var result = await helper.GetRecordAsync("non-existent");
+        var result = await helper.GetRecordAsync("non-existent", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -217,7 +217,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         var helper = CreateHelper(mockFactory, mockLockProvider);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.GetRecordAsync(""));
+            helper.GetRecordAsync("", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -237,7 +237,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync(index);
 
         // Act
-        var result = await helper.GetRecordIdsByPrimaryKeyAsync("entity-1");
+        var result = await helper.GetRecordIdsByPrimaryKeyAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -257,7 +257,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
-        var result = await helper.GetRecordIdsByPrimaryKeyAsync("entity-1");
+        var result = await helper.GetRecordIdsByPrimaryKeyAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -270,7 +270,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         var helper = CreateHelper(mockFactory, mockLockProvider);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.GetRecordIdsByPrimaryKeyAsync(""));
+            helper.GetRecordIdsByPrimaryKeyAsync("", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -290,7 +290,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync(index);
 
         // Act
-        var result = await helper.GetRecordIdsBySecondaryKeyAsync("event-1");
+        var result = await helper.GetRecordIdsBySecondaryKeyAsync("event-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -327,7 +327,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             });
 
         // Act
-        var result = await helper.GetRecordsByPrimaryKeyAsync("entity-1");
+        var result = await helper.GetRecordsByPrimaryKeyAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -367,7 +367,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync(secondaryIndex);
 
         // Act
-        var result = await helper.RemoveRecordAsync("rec-1", primaryKey, secondaryKey);
+        var result = await helper.RemoveRecordAsync("rec-1", primaryKey, secondaryKey, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -398,7 +398,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync((TestRecord?)null);
 
         // Act
-        var result = await helper.RemoveRecordAsync("rec-1", "entity-1", "event-1");
+        var result = await helper.RemoveRecordAsync("rec-1", "entity-1", "event-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -413,7 +413,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         var helper = CreateHelper(mockFactory, mockLockProvider);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.RemoveRecordAsync("", "entity-1", "event-1"));
+            helper.RemoveRecordAsync("", "entity-1", "event-1", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -475,7 +475,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync((IEnumerable<string> keys, CancellationToken _) => keys.Count());
 
         // Act
-        var result = await helper.RemoveAllByPrimaryKeyAsync(primaryKey, r => r.EventId);
+        var result = await helper.RemoveAllByPrimaryKeyAsync(primaryKey, r => r.EventId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.LockAcquired);
@@ -492,7 +492,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         var helper = CreateHelper(mockFactory, mockLockProvider);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.RemoveAllByPrimaryKeyAsync("", r => r.EventId));
+            helper.RemoveAllByPrimaryKeyAsync("", r => r.EventId, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -512,7 +512,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync(index);
 
         // Act
-        var result = await helper.HasRecordsForPrimaryKeyAsync("entity-1");
+        var result = await helper.HasRecordsForPrimaryKeyAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -535,7 +535,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync(index);
 
         // Act
-        var result = await helper.HasRecordsForPrimaryKeyAsync("entity-1");
+        var result = await helper.HasRecordsForPrimaryKeyAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -552,7 +552,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
-        var result = await helper.HasRecordsForPrimaryKeyAsync("entity-1");
+        var result = await helper.HasRecordsForPrimaryKeyAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -575,7 +575,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync(index);
 
         // Act
-        var result = await helper.GetRecordCountByPrimaryKeyAsync("entity-1");
+        var result = await helper.GetRecordCountByPrimaryKeyAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result);
@@ -592,7 +592,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
             .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
-        var result = await helper.GetRecordCountByPrimaryKeyAsync("entity-1");
+        var result = await helper.GetRecordCountByPrimaryKeyAsync("entity-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, result);
@@ -605,6 +605,6 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
         var helper = CreateHelper(mockFactory, mockLockProvider);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.GetRecordCountByPrimaryKeyAsync(""));
+            helper.GetRecordCountByPrimaryKeyAsync("", TestContext.Current.CancellationToken));
     }
 }

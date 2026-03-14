@@ -117,7 +117,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.CreateDocumentAsync(request);
+        var (status, response) = await _service.CreateDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -137,7 +137,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.CreateDocumentAsync(request);
+        var (status, response) = await _service.CreateDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -157,7 +157,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.CreateDocumentAsync(request);
+        var (status, response) = await _service.CreateDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -175,7 +175,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.GetDocumentAsync(request);
+        var (status, response) = await _service.GetDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -193,7 +193,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.GetDocumentAsync(request);
+        var (status, response) = await _service.GetDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -211,7 +211,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.DeleteDocumentAsync(request);
+        var (status, response) = await _service.DeleteDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -229,7 +229,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.SearchDocumentationAsync(request);
+        var (status, response) = await _service.SearchDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -247,7 +247,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.SearchDocumentationAsync(request);
+        var (status, response) = await _service.SearchDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -265,7 +265,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.QueryDocumentationAsync(request);
+        var (status, response) = await _service.QueryDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -283,7 +283,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.QueryDocumentationAsync(request);
+        var (status, response) = await _service.QueryDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -300,7 +300,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.ListDocumentsAsync(request);
+        var (status, response) = await _service.ListDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -318,7 +318,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.RecoverDocumentAsync(request);
+        var (status, response) = await _service.RecoverDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Guid.Empty results in NotFound (not BadRequest) per established pattern
         Assert.Equal(StatusCodes.NotFound, status);
@@ -336,7 +336,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.BulkUpdateDocumentsAsync(request);
+        var (status, response) = await _service.BulkUpdateDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Empty list results in OK with empty results per established pattern
         Assert.Equal(StatusCodes.OK, status);
@@ -356,7 +356,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.BulkDeleteDocumentsAsync(request);
+        var (status, response) = await _service.BulkDeleteDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Empty list results in OK with empty results per established pattern
         Assert.Equal(StatusCodes.OK, status);
@@ -376,7 +376,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.ImportDocumentationAsync(request);
+        var (status, response) = await _service.ImportDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Empty list results in OK with zero counts per established pattern
         Assert.Equal(StatusCodes.OK, status);
@@ -411,7 +411,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(existingDocId.ToString());
 
         // Act
-        var (status, response) = await _service.CreateDocumentAsync(request);
+        var (status, response) = await _service.CreateDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -446,7 +446,7 @@ public class DocumentationServiceTests
             .ReturnsAsync((HashSet<string>?)null);
 
         // Act
-        var (status, response) = await _service.BindRepositoryAsync(request);
+        var (status, response) = await _service.BindRepositoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -469,7 +469,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.BindRepositoryAsync(request);
+        var (status, response) = await _service.BindRepositoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -490,7 +490,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.BindRepositoryAsync(request);
+        var (status, response) = await _service.BindRepositoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -522,7 +522,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(existingBinding);
 
         // Act
-        var (status, response) = await _service.BindRepositoryAsync(request);
+        var (status, response) = await _service.BindRepositoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -561,7 +561,7 @@ public class DocumentationServiceTests
             .ReturnsAsync((HashSet<Guid>?)null);
 
         // Act
-        var (status, response) = await _service.UnbindRepositoryAsync(request);
+        var (status, response) = await _service.UnbindRepositoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -584,7 +584,7 @@ public class DocumentationServiceTests
             .ReturnsAsync((RepositoryBinding?)null);
 
         // Act
-        var (status, response) = await _service.UnbindRepositoryAsync(request);
+        var (status, response) = await _service.UnbindRepositoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -617,7 +617,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(existingBinding);
 
         // Act
-        var (status, response) = await _service.GetRepositoryStatusAsync(request);
+        var (status, response) = await _service.GetRepositoryStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -641,7 +641,7 @@ public class DocumentationServiceTests
             .ReturnsAsync((RepositoryBinding?)null);
 
         // Act
-        var (status, response) = await _service.GetRepositoryStatusAsync(request);
+        var (status, response) = await _service.GetRepositoryStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -682,7 +682,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(binding2);
 
         // Act
-        var (status, response) = await _service.ListRepositoryBindingsAsync(request);
+        var (status, response) = await _service.ListRepositoryBindingsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -706,7 +706,7 @@ public class DocumentationServiceTests
             .ReturnsAsync((HashSet<string>?)null);
 
         // Act
-        var (status, response) = await _service.ListRepositoryBindingsAsync(request);
+        var (status, response) = await _service.ListRepositoryBindingsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -740,7 +740,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(existingBinding);
 
         // Act
-        var (status, response) = await _service.UpdateRepositoryBindingAsync(request);
+        var (status, response) = await _service.UpdateRepositoryBindingAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -765,7 +765,7 @@ public class DocumentationServiceTests
             .ReturnsAsync((RepositoryBinding?)null);
 
         // Act
-        var (status, response) = await _service.UpdateRepositoryBindingAsync(request);
+        var (status, response) = await _service.UpdateRepositoryBindingAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -798,7 +798,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(existingBinding);
 
         // Act
-        var (status, response) = await _service.CreateDocumentAsync(request);
+        var (status, response) = await _service.CreateDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -829,7 +829,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(existingBinding);
 
         // Act
-        var (status, response) = await _service.UpdateDocumentAsync(request);
+        var (status, response) = await _service.UpdateDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -859,7 +859,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(existingBinding);
 
         // Act
-        var (status, response) = await _service.DeleteDocumentAsync(request);
+        var (status, response) = await _service.DeleteDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -877,7 +877,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.SyncRepositoryAsync(request);
+        var (status, response) = await _service.SyncRepositoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -899,7 +899,7 @@ public class DocumentationServiceTests
             .ReturnsAsync((RepositoryBinding?)null);
 
         // Act
-        var (status, response) = await _service.SyncRepositoryAsync(request);
+        var (status, response) = await _service.SyncRepositoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -925,7 +925,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(new List<SearchResult>());
 
         // Act
-        var (status, _) = await _service.SearchDocumentationAsync(request);
+        var (status, _) = await _service.SearchDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -948,7 +948,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(new List<SearchResult>());
 
         // Act
-        var (status, _) = await _service.QueryDocumentationAsync(request);
+        var (status, _) = await _service.QueryDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -985,7 +985,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.ListDocumentsAsync(request);
+        var (status, response) = await _service.ListDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1006,7 +1006,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.ListDocumentsAsync(request);
+        var (status, response) = await _service.ListDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1027,7 +1027,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.ListDocumentsAsync(request);
+        var (status, response) = await _service.ListDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1048,7 +1048,7 @@ public class DocumentationServiceTests
         };
 
         // Act
-        var (status, response) = await _service.ListDocumentsAsync(request);
+        var (status, response) = await _service.ListDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1071,7 +1071,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(new List<SearchResult>());
 
         // Act
-        var (status, response) = await _service.SearchDocumentationAsync(request);
+        var (status, response) = await _service.SearchDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1094,7 +1094,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(new List<SearchResult>());
 
         // Act
-        var (status, response) = await _service.SearchDocumentationAsync(request);
+        var (status, response) = await _service.SearchDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1117,7 +1117,7 @@ public class DocumentationServiceTests
             .ReturnsAsync(new List<SearchResult>());
 
         // Act
-        var (status, response) = await _service.SearchDocumentationAsync(request);
+        var (status, response) = await _service.SearchDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

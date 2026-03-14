@@ -116,7 +116,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
 
         // Act
         var (status, response) = await service.GetRelationshipTypeAsync(
-            new GetRelationshipTypeRequest { RelationshipTypeId = typeId });
+            new GetRelationshipTypeRequest { RelationshipTypeId = typeId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -138,7 +138,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
 
         // Act
         var (status, response) = await service.GetRelationshipTypeAsync(
-            new GetRelationshipTypeRequest { RelationshipTypeId = typeId });
+            new GetRelationshipTypeRequest { RelationshipTypeId = typeId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -169,7 +169,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
 
         // Act
         var (status, response) = await service.GetRelationshipTypeByCodeAsync(
-            new GetRelationshipTypeByCodeRequest { Code = code });
+            new GetRelationshipTypeByCodeRequest { Code = code }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -189,7 +189,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
 
         // Act
         var (status, response) = await service.GetRelationshipTypeByCodeAsync(
-            new GetRelationshipTypeByCodeRequest { Code = "UNKNOWN" });
+            new GetRelationshipTypeByCodeRequest { Code = "UNKNOWN" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -216,7 +216,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.CreateRelationshipTypeAsync(request);
+        var (status, response) = await service.CreateRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -239,7 +239,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.CreateRelationshipTypeAsync(request);
+        var (status, response) = await service.CreateRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -281,7 +281,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.CreateRelationshipTypeAsync(request);
+        var (status, response) = await service.CreateRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -303,7 +303,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, _) = await service.CreateRelationshipTypeAsync(request);
+        var (status, _) = await service.CreateRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -337,7 +337,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.UpdateRelationshipTypeAsync(request);
+        var (status, response) = await service.UpdateRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -363,7 +363,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.UpdateRelationshipTypeAsync(request);
+        var (status, response) = await service.UpdateRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -389,7 +389,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, _) = await service.UpdateRelationshipTypeAsync(request);
+        var (status, _) = await service.UpdateRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -433,7 +433,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
 
         // Act
         var status = await service.DeleteRelationshipTypeAsync(
-            new DeleteRelationshipTypeRequest { RelationshipTypeId = typeId });
+            new DeleteRelationshipTypeRequest { RelationshipTypeId = typeId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -452,7 +452,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
 
         // Act
         var status = await service.DeleteRelationshipTypeAsync(
-            new DeleteRelationshipTypeRequest { RelationshipTypeId = typeId });
+            new DeleteRelationshipTypeRequest { RelationshipTypeId = typeId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -473,7 +473,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var (status, response) = await service.ListRelationshipTypesAsync(new ListRelationshipTypesRequest());
+        var (status, response) = await service.ListRelationshipTypesAsync(new ListRelationshipTypesRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -504,7 +504,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
 
         // Act
         var (status, response) = await service.ListRelationshipTypesAsync(
-            new ListRelationshipTypesRequest { IncludeDeprecated = true });
+            new ListRelationshipTypesRequest { IncludeDeprecated = true }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -534,7 +534,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
 
         // Act
         var (status, response) = await service.GetChildRelationshipTypesAsync(
-            new GetChildRelationshipTypesRequest { ParentTypeId = parentId });
+            new GetChildRelationshipTypesRequest { ParentTypeId = parentId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -557,7 +557,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
 
         // Act
         var (status, response) = await service.GetAncestorsAsync(
-            new GetAncestorsRequest { TypeId = typeId });
+            new GetAncestorsRequest { TypeId = typeId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -584,7 +584,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.MatchesHierarchyAsync(request);
+        var (status, response) = await service.MatchesHierarchyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -615,7 +615,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.DeprecateRelationshipTypeAsync(request);
+        var (status, response) = await service.DeprecateRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -640,7 +640,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         var request = new UndeprecateRelationshipTypeRequest { RelationshipTypeId = typeId };
 
         // Act
-        var (status, response) = await service.UndeprecateRelationshipTypeAsync(request);
+        var (status, response) = await service.UndeprecateRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -664,7 +664,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         var request = new UndeprecateRelationshipTypeRequest { RelationshipTypeId = typeId };
 
         // Act
-        var (status, response) = await service.UndeprecateRelationshipTypeAsync(request);
+        var (status, response) = await service.UndeprecateRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
         Assert.Equal(StatusCodes.OK, status);
@@ -693,7 +693,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.DeprecateRelationshipTypeAsync(request);
+        var (status, response) = await service.DeprecateRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
         Assert.Equal(StatusCodes.OK, status);
@@ -729,7 +729,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.MergeRelationshipTypeAsync(request);
+        var (status, response) = await service.MergeRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -758,7 +758,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.MergeRelationshipTypeAsync(request);
+        var (status, response) = await service.MergeRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -791,7 +791,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.MergeRelationshipTypeAsync(request);
+        var (status, response) = await service.MergeRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -827,7 +827,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.MergeRelationshipTypeAsync(request);
+        var (status, response) = await service.MergeRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -866,7 +866,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.MergeRelationshipTypeAsync(request);
+        var (status, response) = await service.MergeRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -951,7 +951,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.MergeRelationshipTypeAsync(request);
+        var (status, response) = await service.MergeRelationshipTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -975,7 +975,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.SeedRelationshipTypesAsync(request);
+        var (status, response) = await service.SeedRelationshipTypesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1002,7 +1002,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.SeedRelationshipTypesAsync(request);
+        var (status, response) = await service.SeedRelationshipTypesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1034,7 +1034,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.SeedRelationshipTypesAsync(request);
+        var (status, response) = await service.SeedRelationshipTypesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1071,7 +1071,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.SeedRelationshipTypesAsync(request);
+        var (status, response) = await service.SeedRelationshipTypesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1099,7 +1099,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.SeedRelationshipTypesAsync(request);
+        var (status, response) = await service.SeedRelationshipTypesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1128,7 +1128,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.SeedRelationshipTypesAsync(request);
+        var (status, response) = await service.SeedRelationshipTypesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1156,7 +1156,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.SeedRelationshipTypesAsync(request);
+        var (status, response) = await service.SeedRelationshipTypesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1202,7 +1202,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         var request = new GetChildRelationshipTypesRequest { ParentTypeId = parentId };
 
         // Act
-        var (status, response) = await service.GetChildRelationshipTypesAsync(request);
+        var (status, response) = await service.GetChildRelationshipTypesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1259,7 +1259,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.GetChildRelationshipTypesAsync(request);
+        var (status, response) = await service.GetChildRelationshipTypesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1295,7 +1295,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.MatchesHierarchyAsync(request);
+        var (status, response) = await service.MatchesHierarchyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1340,7 +1340,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.MatchesHierarchyAsync(request);
+        var (status, response) = await service.MatchesHierarchyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1377,7 +1377,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         };
 
         // Act
-        var (status, response) = await service.MatchesHierarchyAsync(request);
+        var (status, response) = await service.MatchesHierarchyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1419,7 +1419,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         var request = new GetAncestorsRequest { TypeId = grandchildId };
 
         // Act
-        var (status, response) = await service.GetAncestorsAsync(request);
+        var (status, response) = await service.GetAncestorsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

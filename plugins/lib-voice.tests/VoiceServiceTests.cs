@@ -115,7 +115,7 @@ public class VoiceServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -156,7 +156,7 @@ public class VoiceServiceTests
             .ReturnsAsync(existingRoomId.ToString());
 
         // Act
-        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -185,7 +185,7 @@ public class VoiceServiceTests
         _mockP2PCoordinator.Setup(p => p.GetP2PMaxParticipants()).Returns(8);
 
         // Act
-        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -225,7 +225,7 @@ public class VoiceServiceTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var (status, result) = await service.GetVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -250,7 +250,7 @@ public class VoiceServiceTests
             .ReturnsAsync((VoiceRoomData?)null);
 
         // Act
-        var (status, result) = await service.GetVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -290,7 +290,7 @@ public class VoiceServiceTests
             .ReturnsAsync(participants);
 
         // Act
-        var (status, result) = await service.GetVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -323,7 +323,7 @@ public class VoiceServiceTests
             .ReturnsAsync((VoiceRoomData?)null);
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -366,7 +366,7 @@ public class VoiceServiceTests
             .ReturnsAsync(false);
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -442,7 +442,7 @@ public class VoiceServiceTests
             .ReturnsAsync(1);
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -494,7 +494,7 @@ public class VoiceServiceTests
             .ReturnsAsync(false); // Already registered
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -581,7 +581,7 @@ public class VoiceServiceTests
             });
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -633,7 +633,7 @@ public class VoiceServiceTests
             .ReturnsAsync(1);
 
         // Act
-        var status = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.LeaveVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -658,7 +658,7 @@ public class VoiceServiceTests
             .ReturnsAsync((ParticipantRegistration?)null);
 
         // Act
-        var status = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.LeaveVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -706,7 +706,7 @@ public class VoiceServiceTests
             .ReturnsAsync(2);
 
         // Act
-        var status = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.DeleteVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -741,7 +741,7 @@ public class VoiceServiceTests
             .ReturnsAsync((VoiceRoomData?)null);
 
         // Act
-        var status = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.DeleteVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -764,7 +764,7 @@ public class VoiceServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var status = await service.PeerHeartbeatAsync(request, CancellationToken.None);
+        var status = await service.PeerHeartbeatAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -783,7 +783,7 @@ public class VoiceServiceTests
             .ReturnsAsync(false);
 
         // Act
-        var status = await service.PeerHeartbeatAsync(request, CancellationToken.None);
+        var status = await service.PeerHeartbeatAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -836,7 +836,7 @@ public class VoiceServiceTests
             .ReturnsAsync(1);
 
         // Act
-        var status = await service.AnswerPeerAsync(request, CancellationToken.None);
+        var status = await service.AnswerPeerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -871,7 +871,7 @@ public class VoiceServiceTests
             .ReturnsAsync((ParticipantRegistration?)null);
 
         // Act
-        var status = await service.AnswerPeerAsync(request, CancellationToken.None);
+        var status = await service.AnswerPeerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -901,7 +901,7 @@ public class VoiceServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -946,7 +946,7 @@ public class VoiceServiceTests
             .Callback<string, VoiceRoomData, StateOptions?, CancellationToken>((_, data, _, _) => savedRoom = data);
 
         // Act
-        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -985,7 +985,7 @@ public class VoiceServiceTests
             .Callback<string, VoiceRoomData, StateOptions?, CancellationToken>((_, data, _, _) => savedRoom = data);
 
         // Act
-        var (status, result) = await service.CreateVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.CreateVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1039,7 +1039,7 @@ public class VoiceServiceTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1090,7 +1090,7 @@ public class VoiceServiceTests
             });
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -1141,7 +1141,7 @@ public class VoiceServiceTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1191,7 +1191,7 @@ public class VoiceServiceTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1241,7 +1241,7 @@ public class VoiceServiceTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var (status, _) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, _) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1292,7 +1292,7 @@ public class VoiceServiceTests
             .ReturnsAsync(1);
 
         // Act
-        var status = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.LeaveVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1340,7 +1340,7 @@ public class VoiceServiceTests
             .ReturnsAsync(roomData);
 
         // Act
-        var status = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.LeaveVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1392,7 +1392,7 @@ public class VoiceServiceTests
             .ReturnsAsync(roomData);
 
         // Act
-        var status = await service.LeaveVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.LeaveVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1434,7 +1434,7 @@ public class VoiceServiceTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var status = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.DeleteVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1473,7 +1473,7 @@ public class VoiceServiceTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var status = await service.DeleteVoiceRoomAsync(request, CancellationToken.None);
+        var status = await service.DeleteVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1532,7 +1532,7 @@ public class VoiceServiceTests
         };
 
         // Act
-        var (status, result) = await service.RequestBroadcastConsentAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestBroadcastConsentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1581,7 +1581,7 @@ public class VoiceServiceTests
         };
 
         // Act
-        var (status, result) = await service.RequestBroadcastConsentAsync(request, CancellationToken.None);
+        var (status, result) = await service.RequestBroadcastConsentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1626,7 +1626,7 @@ public class VoiceServiceTests
         };
 
         // Act
-        var (status, result) = await service.RespondBroadcastConsentAsync(request, CancellationToken.None);
+        var (status, result) = await service.RespondBroadcastConsentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1677,7 +1677,7 @@ public class VoiceServiceTests
         };
 
         // Act
-        var (status, result) = await service.RespondBroadcastConsentAsync(request, CancellationToken.None);
+        var (status, result) = await service.RespondBroadcastConsentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1733,7 +1733,7 @@ public class VoiceServiceTests
         };
 
         // Act
-        var (status, result) = await service.RespondBroadcastConsentAsync(request, CancellationToken.None);
+        var (status, result) = await service.RespondBroadcastConsentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1777,7 +1777,7 @@ public class VoiceServiceTests
         };
 
         // Act
-        var (status, result) = await service.RespondBroadcastConsentAsync(request, CancellationToken.None);
+        var (status, result) = await service.RespondBroadcastConsentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — lock failure returns Conflict without touching state
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1815,7 +1815,7 @@ public class VoiceServiceTests
         var request = new StopBroadcastConsentRequest { RoomId = roomId };
 
         // Act
-        var status = await service.StopBroadcastAsync(request, CancellationToken.None);
+        var status = await service.StopBroadcastAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1857,7 +1857,7 @@ public class VoiceServiceTests
         var request = new StopBroadcastConsentRequest { RoomId = roomId };
 
         // Act
-        var status = await service.StopBroadcastAsync(request, CancellationToken.None);
+        var status = await service.StopBroadcastAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1896,7 +1896,7 @@ public class VoiceServiceTests
         var request = new BroadcastStatusRequest { RoomId = roomId };
 
         // Act
-        var (status, result) = await service.GetBroadcastStatusAsync(request, CancellationToken.None);
+        var (status, result) = await service.GetBroadcastStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2001,7 +2001,7 @@ public class VoiceServiceTests
             .ReturnsAsync(false);
 
         // Act
-        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+        var (status, result) = await service.JoinVoiceRoomAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2135,7 +2135,7 @@ public class ParticipantEvictionWorkerTests
             .ReturnsAsync(0);
 
         // Act - call internal ProcessEvictionCycleAsync directly
-        await worker.ProcessEvictionCycleAsync(CancellationToken.None);
+        await worker.ProcessEvictionCycleAsync(TestContext.Current.CancellationToken);
 
         // Assert - participant was unregistered
         _mockEndpointRegistry.Verify(r => r.UnregisterAsync(roomId, staleSessionId, It.IsAny<CancellationToken>()), Times.Once);
@@ -2187,7 +2187,7 @@ public class ParticipantEvictionWorkerTests
             .ReturnsAsync(0);
 
         // Act
-        await worker.ProcessEvictionCycleAsync(CancellationToken.None);
+        await worker.ProcessEvictionCycleAsync(TestContext.Current.CancellationToken);
 
         // Assert - room was deleted
         _mockRoomStore.Verify(s => s.DeleteAsync($"voice:room:{roomId}", It.IsAny<CancellationToken>()), Times.Once);
@@ -2234,7 +2234,7 @@ public class ParticipantEvictionWorkerTests
             .ReturnsAsync(0);
 
         // Act
-        await worker.ProcessEvictionCycleAsync(CancellationToken.None);
+        await worker.ProcessEvictionCycleAsync(TestContext.Current.CancellationToken);
 
         // Assert - room was NOT deleted (within grace period)
         _mockRoomStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -2287,7 +2287,7 @@ public class ParticipantEvictionWorkerTests
             .ReturnsAsync(2);
 
         // Act
-        await worker.ProcessEvictionCycleAsync(CancellationToken.None);
+        await worker.ProcessEvictionCycleAsync(TestContext.Current.CancellationToken);
 
         // Assert - room was saved with Inactive broadcast state
         _mockRoomStore.Verify(s => s.SaveAsync(

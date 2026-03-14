@@ -211,7 +211,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.CreateContractTemplateAsync(request);
+        var (status, response) = await service.CreateContractTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -235,7 +235,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .ReturnsAsync(Guid.NewGuid().ToString());
 
         // Act
-        var (status, response) = await service.CreateContractTemplateAsync(request);
+        var (status, response) = await service.CreateContractTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -260,7 +260,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         // Act
         var (status, response) = await service.GetContractTemplateAsync(
-            new GetContractTemplateRequest { TemplateId = templateId });
+            new GetContractTemplateRequest { TemplateId = templateId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -281,7 +281,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         // Act
         var (status, response) = await service.GetContractTemplateAsync(
-            new GetContractTemplateRequest { TemplateId = templateId });
+            new GetContractTemplateRequest { TemplateId = templateId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -307,7 +307,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         // Act
         var (status, response) = await service.GetContractTemplateAsync(
-            new GetContractTemplateRequest { Code = code });
+            new GetContractTemplateRequest { Code = code }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -323,7 +323,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         // Act
         var (status, response) = await service.GetContractTemplateAsync(
-            new GetContractTemplateRequest());
+            new GetContractTemplateRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -352,7 +352,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         // Act
         var (status, response) = await service.DeprecateContractTemplateAsync(
-            new DeprecateContractTemplateRequest { TemplateId = templateId, Reason = "Superseded" });
+            new DeprecateContractTemplateRequest { TemplateId = templateId, Reason = "Superseded" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -372,7 +372,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         // Act
         var (status, response) = await service.DeprecateContractTemplateAsync(
-            new DeprecateContractTemplateRequest { TemplateId = templateId });
+            new DeprecateContractTemplateRequest { TemplateId = templateId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -416,7 +416,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CreateContractInstanceAsync(request);
+        var (status, response) = await service.CreateContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -447,7 +447,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CreateContractInstanceAsync(request);
+        var (status, response) = await service.CreateContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -482,7 +482,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             });
 
         // Act
-        var (status, response) = await service.ListContractTemplatesAsync(new ListContractTemplatesRequest());
+        var (status, response) = await service.ListContractTemplatesAsync(new ListContractTemplatesRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -501,7 +501,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .ReturnsAsync((List<string>?)null);
 
         // Act
-        var (status, response) = await service.ListContractTemplatesAsync(new ListContractTemplatesRequest());
+        var (status, response) = await service.ListContractTemplatesAsync(new ListContractTemplatesRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -537,7 +537,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.UpdateContractTemplateAsync(request);
+        var (status, response) = await service.UpdateContractTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -563,7 +563,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.UpdateContractTemplateAsync(request);
+        var (status, response) = await service.UpdateContractTemplateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -597,7 +597,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new ProposeContractInstanceRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.ProposeContractInstanceAsync(request);
+        var (status, response) = await service.ProposeContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -624,7 +624,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new ProposeContractInstanceRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.ProposeContractInstanceAsync(request);
+        var (status, response) = await service.ProposeContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -669,7 +669,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ConsentToContractAsync(request);
+        var (status, response) = await service.ConsentToContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -700,7 +700,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ConsentToContractAsync(request);
+        var (status, response) = await service.ConsentToContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -748,7 +748,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ConsentToContractAsync(request);
+        var (status, response) = await service.ConsentToContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -795,7 +795,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ConsentToContractAsync(request);
+        var (status, response) = await service.ConsentToContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -827,7 +827,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceAsync(request);
+        var (status, response) = await service.GetContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -849,7 +849,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceAsync(request);
+        var (status, response) = await service.GetContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -895,7 +895,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.TerminateContractInstanceAsync(request);
+        var (status, response) = await service.TerminateContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -934,7 +934,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.TerminateContractInstanceAsync(request);
+        var (status, response) = await service.TerminateContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -963,7 +963,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1018,7 +1018,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1072,7 +1072,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1116,7 +1116,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1173,7 +1173,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1214,7 +1214,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1254,7 +1254,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1306,7 +1306,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1348,7 +1348,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1392,7 +1392,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CompleteMilestoneAsync(request);
+        var (status, response) = await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1427,7 +1427,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CompleteMilestoneAsync(request);
+        var (status, response) = await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1470,7 +1470,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.FailMilestoneAsync(request);
+        var (status, response) = await service.FailMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1510,7 +1510,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.FailMilestoneAsync(request);
+        var (status, response) = await service.FailMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1548,7 +1548,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.GetMilestoneAsync(request);
+        var (status, response) = await service.GetMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1579,7 +1579,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.GetMilestoneAsync(request);
+        var (status, response) = await service.GetMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1625,7 +1625,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ReportBreachAsync(request);
+        var (status, response) = await service.ReportBreachAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1654,7 +1654,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ReportBreachAsync(request);
+        var (status, response) = await service.ReportBreachAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1698,7 +1698,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CureBreachAsync(request);
+        var (status, response) = await service.CureBreachAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1720,7 +1720,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new CureBreachRequest { BreachId = breachId };
 
         // Act
-        var (status, response) = await service.CureBreachAsync(request);
+        var (status, response) = await service.CureBreachAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1756,7 +1756,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetBreachRequest { BreachId = breachId };
 
         // Act
-        var (status, response) = await service.GetBreachAsync(request);
+        var (status, response) = await service.GetBreachAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1778,7 +1778,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetBreachRequest { BreachId = breachId };
 
         // Act
-        var (status, response) = await service.GetBreachAsync(request);
+        var (status, response) = await service.GetBreachAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1816,7 +1816,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.UpdateContractMetadataAsync(request);
+        var (status, response) = await service.UpdateContractMetadataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1842,7 +1842,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.UpdateContractMetadataAsync(request);
+        var (status, response) = await service.UpdateContractMetadataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1871,7 +1871,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractMetadataRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractMetadataAsync(request);
+        var (status, response) = await service.GetContractMetadataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1892,7 +1892,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractMetadataRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractMetadataAsync(request);
+        var (status, response) = await service.GetContractMetadataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1922,7 +1922,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckContractConstraintAsync(request);
+        var (status, response) = await service.CheckContractConstraintAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1967,7 +1967,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckContractConstraintAsync(request);
+        var (status, response) = await service.CheckContractConstraintAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2015,7 +2015,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckContractConstraintAsync(request);
+        var (status, response) = await service.CheckContractConstraintAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2088,7 +2088,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckContractConstraintAsync(request);
+        var (status, response) = await service.CheckContractConstraintAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2155,7 +2155,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckContractConstraintAsync(request);
+        var (status, response) = await service.CheckContractConstraintAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2202,7 +2202,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckContractConstraintAsync(request);
+        var (status, response) = await service.CheckContractConstraintAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2247,7 +2247,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckContractConstraintAsync(request);
+        var (status, response) = await service.CheckContractConstraintAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2292,7 +2292,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckContractConstraintAsync(request);
+        var (status, response) = await service.CheckContractConstraintAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — completed contract doesn't block
         Assert.Equal(StatusCodes.OK, status);
@@ -2337,7 +2337,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckContractConstraintAsync(request);
+        var (status, response) = await service.CheckContractConstraintAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2402,7 +2402,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckContractConstraintAsync(request);
+        var (status, response) = await service.CheckContractConstraintAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — both default to Partial, so no conflict
         Assert.Equal(StatusCodes.OK, status);
@@ -2432,7 +2432,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryActiveContractsAsync(request);
+        var (status, response) = await service.QueryActiveContractsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2472,7 +2472,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryActiveContractsAsync(request);
+        var (status, response) = await service.QueryActiveContractsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2530,7 +2530,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryActiveContractsAsync(request);
+        var (status, response) = await service.QueryActiveContractsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2600,7 +2600,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryActiveContractsAsync(request);
+        var (status, response) = await service.QueryActiveContractsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — "quest_*" matches "quest_main" and "quest_side" but not "employment_contract"
         Assert.Equal(StatusCodes.OK, status);
@@ -2648,7 +2648,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryActiveContractsAsync(request);
+        var (status, response) = await service.QueryActiveContractsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2721,7 +2721,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryActiveContractsAsync(request);
+        var (status, response) = await service.QueryActiveContractsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2769,7 +2769,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryActiveContractsAsync(request);
+        var (status, response) = await service.QueryActiveContractsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — case-insensitive matching (StringComparer.OrdinalIgnoreCase)
         Assert.Equal(StatusCodes.OK, status);
@@ -2912,7 +2912,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CompleteMilestoneAsync(request);
+        var (status, response) = await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3000,7 +3000,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CompleteMilestoneAsync(request);
+        var (status, response) = await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - milestone still completes even if prebound API fails
         Assert.Equal(StatusCodes.OK, status);
@@ -3090,7 +3090,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CompleteMilestoneAsync(request);
+        var (status, response) = await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - milestone still completes
         Assert.Equal(StatusCodes.OK, status);
@@ -3172,7 +3172,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CompleteMilestoneAsync(request);
+        var (status, response) = await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3257,7 +3257,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.FailMilestoneAsync(request);
+        var (status, response) = await service.FailMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3331,7 +3331,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CompleteMilestoneAsync(request);
+        var (status, response) = await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - milestone still completes even though API threw exception
         Assert.Equal(StatusCodes.OK, status);
@@ -3386,7 +3386,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CompleteMilestoneAsync(request);
+        var (status, response) = await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3481,7 +3481,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        await service.CompleteMilestoneAsync(request);
+        await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - verify context contains expected contract data
         Assert.NotNull(capturedContext);
@@ -3542,7 +3542,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.LockContractAsync(request);
+        var (status, response) = await service.LockContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3585,7 +3585,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.LockContractAsync(request);
+        var (status, response) = await service.LockContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3624,7 +3624,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.LockContractAsync(request);
+        var (status, response) = await service.LockContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3662,7 +3662,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.UnlockContractAsync(request);
+        var (status, response) = await service.UnlockContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3695,7 +3695,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.UnlockContractAsync(request);
+        var (status, response) = await service.UnlockContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -3748,7 +3748,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.TransferContractPartyAsync(request);
+        var (status, response) = await service.TransferContractPartyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3786,7 +3786,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.TransferContractPartyAsync(request);
+        var (status, response) = await service.TransferContractPartyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -3829,7 +3829,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.RegisterClauseTypeAsync(request);
+        var (status, response) = await service.RegisterClauseTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3861,7 +3861,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.RegisterClauseTypeAsync(request);
+        var (status, response) = await service.RegisterClauseTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3905,7 +3905,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new ListClauseTypesRequest();
 
         // Act
-        var (status, response) = await service.ListClauseTypesAsync(request);
+        var (status, response) = await service.ListClauseTypesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3949,7 +3949,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.SetContractTemplateValuesAsync(request);
+        var (status, response) = await service.SetContractTemplateValuesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3984,7 +3984,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.SetContractTemplateValuesAsync(request);
+        var (status, response) = await service.SetContractTemplateValuesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -4026,7 +4026,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.SetContractTemplateValuesAsync(request);
+        var (status, response) = await service.SetContractTemplateValuesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4071,7 +4071,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckAssetRequirementsAsync(request);
+        var (status, response) = await service.CheckAssetRequirementsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4126,7 +4126,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckAssetRequirementsAsync(request);
+        var (status, response) = await service.CheckAssetRequirementsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -4157,7 +4157,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ExecuteContractAsync(request);
+        var (status, response) = await service.ExecuteContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -4188,7 +4188,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ExecuteContractAsync(request);
+        var (status, response) = await service.ExecuteContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -4223,7 +4223,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ExecuteContractAsync(request);
+        var (status, response) = await service.ExecuteContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4267,7 +4267,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ExecuteContractAsync(request);
+        var (status, response) = await service.ExecuteContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4292,7 +4292,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ExecuteContractAsync(request);
+        var (status, response) = await service.ExecuteContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -4330,7 +4330,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.TerminateContractInstanceAsync(request);
+        var (status, response) = await service.TerminateContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -4369,7 +4369,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ConsentToContractAsync(request);
+        var (status, response) = await service.ConsentToContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -4408,7 +4408,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new ProposeContractInstanceRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.ProposeContractInstanceAsync(request);
+        var (status, response) = await service.ProposeContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4441,7 +4441,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CompleteMilestoneAsync(request);
+        var (status, response) = await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4476,7 +4476,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.TerminateContractInstanceAsync(request);
+        var (status, response) = await service.TerminateContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4505,7 +4505,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new ExecuteContractRequest { ContractInstanceId = contractId };
 
         // Act
-        var (status, response) = await service.ExecuteContractAsync(request);
+        var (status, response) = await service.ExecuteContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4562,7 +4562,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CompleteMilestoneAsync(request);
+        var (status, response) = await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4624,7 +4624,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.FailMilestoneAsync(request);
+        var (status, response) = await service.FailMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -4727,7 +4727,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ExecuteContractAsync(request);
+        var (status, response) = await service.ExecuteContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4823,7 +4823,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ExecuteContractAsync(request);
+        var (status, response) = await service.ExecuteContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -4919,7 +4919,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ExecuteContractAsync(request);
+        var (status, response) = await service.ExecuteContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -5139,7 +5139,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             .ReturnsAsync(true);
 
         // Act
-        await service.PublishPaymentDueEventAsync(model, 3, CancellationToken.None);
+        await service.PublishPaymentDueEventAsync(model, 3, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(publishedEvent);
@@ -5185,7 +5185,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -5223,7 +5223,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -5260,7 +5260,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+        var (status, response) = await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -5313,7 +5313,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new GetContractInstanceStatusRequest { ContractId = contractId };
 
         // Act
-        await service.GetContractInstanceStatusAsync(request);
+        await service.GetContractInstanceStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedModel);
@@ -5361,7 +5361,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryContractInstancesAsync(request);
+        var (status, response) = await service.QueryContractInstancesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -5402,7 +5402,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryContractInstancesAsync(request);
+        var (status, response) = await service.QueryContractInstancesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -5440,7 +5440,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryContractInstancesAsync(request);
+        var (status, response) = await service.QueryContractInstancesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -5456,7 +5456,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var request = new QueryContractInstancesRequest();
 
         // Act
-        var (status, response) = await service.QueryContractInstancesAsync(request);
+        var (status, response) = await service.QueryContractInstancesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -5483,7 +5483,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryContractInstancesAsync(request);
+        var (status, response) = await service.QueryContractInstancesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -5514,7 +5514,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         // Act — idempotent per IMPLEMENTATION TENETS
         var (status, response) = await service.DeprecateContractTemplateAsync(
-            new DeprecateContractTemplateRequest { TemplateId = templateId, Reason = "New reason" });
+            new DeprecateContractTemplateRequest { TemplateId = templateId, Reason = "New reason" }, TestContext.Current.CancellationToken);
 
         // Assert - OK without re-saving (idempotent early return)
         Assert.Equal(StatusCodes.OK, status);
@@ -5544,7 +5544,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.LockContractAsync(request);
+        var (status, response) = await service.LockContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -5574,7 +5574,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.UnlockContractAsync(request);
+        var (status, response) = await service.UnlockContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -5608,7 +5608,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.TransferContractPartyAsync(request);
+        var (status, response) = await service.TransferContractPartyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -5644,7 +5644,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.TransferContractPartyAsync(request);
+        var (status, response) = await service.TransferContractPartyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -5677,7 +5677,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.TransferContractPartyAsync(request);
+        var (status, response) = await service.TransferContractPartyAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -5706,7 +5706,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.SetContractTemplateValuesAsync(request);
+        var (status, response) = await service.SetContractTemplateValuesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -5734,7 +5734,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CheckAssetRequirementsAsync(request);
+        var (status, response) = await service.CheckAssetRequirementsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -5801,7 +5801,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ExecuteContractAsync(request);
+        var (status, response) = await service.ExecuteContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -5833,7 +5833,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CompleteMilestoneAsync(request);
+        var (status, response) = await service.CompleteMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -5862,7 +5862,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.FailMilestoneAsync(request);
+        var (status, response) = await service.FailMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -5901,7 +5901,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CureBreachAsync(request);
+        var (status, response) = await service.CureBreachAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -5995,7 +5995,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ReportBreachAsync(request);
+        var (status, response) = await service.ReportBreachAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -6037,7 +6037,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ConsentToContractAsync(request);
+        var (status, response) = await service.ConsentToContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -6068,7 +6068,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.TerminateContractInstanceAsync(request);
+        var (status, response) = await service.TerminateContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -6105,7 +6105,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.TerminateContractInstanceAsync(request);
+        var (status, response) = await service.TerminateContractInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -6143,7 +6143,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ConsentToContractAsync(request);
+        var (status, response) = await service.ConsentToContractAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -6176,7 +6176,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.FailMilestoneAsync(request);
+        var (status, response) = await service.FailMilestoneAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -6212,7 +6212,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ReportBreachAsync(request);
+        var (status, response) = await service.ReportBreachAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -6258,7 +6258,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.CureBreachAsync(request);
+        var (status, response) = await service.CureBreachAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);

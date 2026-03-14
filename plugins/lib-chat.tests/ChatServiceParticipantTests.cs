@@ -36,7 +36,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             SenderType = "player",
             SenderId = Guid.NewGuid(),
             DisplayName = "Player1",
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -69,7 +69,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, _) = await service.JoinRoomAsync(new JoinRoomRequest
         {
             RoomId = TestRoomId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Unauthorized, status);
     }
@@ -92,7 +92,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, response) = await service.JoinRoomAsync(new JoinRoomRequest
         {
             RoomId = TestRoomId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -118,7 +118,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, _) = await service.JoinRoomAsync(new JoinRoomRequest
         {
             RoomId = TestRoomId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Forbidden, status);
         ClearCallerSession();
@@ -150,7 +150,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, _) = await service.JoinRoomAsync(new JoinRoomRequest
         {
             RoomId = TestRoomId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Forbidden, status);
         ClearCallerSession();
@@ -181,7 +181,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, _) = await service.JoinRoomAsync(new JoinRoomRequest
         {
             RoomId = TestRoomId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
         ClearCallerSession();
@@ -206,7 +206,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, response) = await service.LeaveRoomAsync(new LeaveRoomRequest
         {
             RoomId = TestRoomId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -246,7 +246,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, _) = await service.LeaveRoomAsync(new LeaveRoomRequest
         {
             RoomId = TestRoomId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         ClearCallerSession();
@@ -276,7 +276,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             RoomId = TestRoomId,
             TargetSessionId = targetSession,
             Reason = "Testing",
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
 
@@ -310,7 +310,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             TargetSessionId = target.SessionId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Forbidden, status);
         ClearCallerSession();
@@ -347,7 +347,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             TargetSessionId = targetSession,
             Reason = "Bad behavior",
             DurationMinutes = 60,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
 
@@ -402,7 +402,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             TargetSessionId = targetSession,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
 
@@ -432,7 +432,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             TargetSessionId = Guid.NewGuid(),
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -466,7 +466,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             RoomId = TestRoomId,
             TargetSessionId = targetSession,
             DurationMinutes = 30,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
 
@@ -506,7 +506,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             TargetSessionId = Guid.NewGuid(),
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         ClearCallerSession();
@@ -532,7 +532,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, response) = await service.ListParticipantsAsync(new ListParticipantsRequest
         {
             RoomId = TestRoomId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -599,7 +599,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, _) = await service.LeaveRoomAsync(new LeaveRoomRequest
         {
             RoomId = TestRoomId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -667,7 +667,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, _) = await service.LeaveRoomAsync(new LeaveRoomRequest
         {
             RoomId = TestRoomId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -721,7 +721,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         var (status, _) = await service.LeaveRoomAsync(new LeaveRoomRequest
         {
             RoomId = TestRoomId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Assert - no promotion save (only the delete for removal)
         Assert.Equal(StatusCodes.OK, status);
@@ -775,7 +775,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             SenderType = "player",
             SenderId = Guid.NewGuid(),
             DisplayName = "NewPlayer",
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Assert - should be rejected because room is full at max 5 (room override)
         Assert.Equal(StatusCodes.Conflict, status);
@@ -820,7 +820,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             SenderType = "player",
             SenderId = Guid.NewGuid(),
             DisplayName = "NewPlayer",
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Assert - full at room type default
         Assert.Equal(StatusCodes.Conflict, status);
@@ -868,7 +868,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             SenderType = "player",
             SenderId = Guid.NewGuid(),
             DisplayName = "NewPlayer",
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -927,7 +927,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             RoomId = TestRoomId,
             TargetSessionId = targetSession,
             NewRole = ChatParticipantRole.Moderator,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -980,7 +980,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             RoomId = TestRoomId,
             TargetSessionId = targetSession,
             NewRole = ChatParticipantRole.ReadOnly,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Forbidden, status);
         ClearCallerSession();
@@ -1007,7 +1007,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             RoomId = TestRoomId,
             TargetSessionId = ownerSession,
             NewRole = ChatParticipantRole.Moderator,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
         ClearCallerSession();
@@ -1036,7 +1036,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             RoomId = TestRoomId,
             TargetSessionId = targetSession,
             NewRole = ChatParticipantRole.Owner,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
         ClearCallerSession();
@@ -1063,7 +1063,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             RoomId = TestRoomId,
             TargetSessionId = Guid.NewGuid(), // not in room
             NewRole = ChatParticipantRole.Moderator,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         ClearCallerSession();
@@ -1083,7 +1083,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             RoomId = TestRoomId,
             TargetSessionId = Guid.NewGuid(),
             NewRole = ChatParticipantRole.Moderator,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Unauthorized, status);
     }
@@ -1107,7 +1107,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             RoomId = Guid.NewGuid(),
             TargetSessionId = Guid.NewGuid(),
             NewRole = ChatParticipantRole.Moderator,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         ClearCallerSession();
@@ -1128,7 +1128,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             RoomId = TestRoomId,
             TargetSessionId = Guid.NewGuid(),
             NewRole = ChatParticipantRole.Moderator,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
 
@@ -1193,7 +1193,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             TargetSessionId = targetSession,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1249,7 +1249,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             TargetSessionId = Guid.NewGuid(),
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         ClearCallerSession();
@@ -1275,7 +1275,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             TargetSessionId = Guid.NewGuid(),
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Forbidden, status);
         ClearCallerSession();
@@ -1309,7 +1309,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             TargetSessionId = targetSession,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
         ClearCallerSession();
@@ -1328,7 +1328,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
         {
             RoomId = TestRoomId,
             TargetSessionId = Guid.NewGuid(),
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Unauthorized, status);
     }
@@ -1368,7 +1368,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             SenderType = "player",
             SenderId = Guid.NewGuid(),
             DisplayName = "Player1",
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Current behavior: Archived rooms are NOT rejected (only Locked is checked)
         Assert.Equal(StatusCodes.OK, status);

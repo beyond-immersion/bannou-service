@@ -187,7 +187,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(new List<string>());
 
         // Act
-        var (status, response) = await service.CreateGameSessionAsync(request);
+        var (status, response) = await service.CreateGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -236,7 +236,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(new List<string>());
 
         // Act
-        var (status, response) = await service.CreateGameSessionAsync(request);
+        var (status, response) = await service.CreateGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -261,7 +261,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ThrowsAsync(new Exception("State store connection failed"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.CreateGameSessionAsync(request));
+        await Assert.ThrowsAsync<Exception>(() => service.CreateGameSessionAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -293,7 +293,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(sessionModel);
 
         // Act
-        var (status, response) = await service.GetGameSessionAsync(request);
+        var (status, response) = await service.GetGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -315,7 +315,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
-        var (status, response) = await service.GetGameSessionAsync(request);
+        var (status, response) = await service.GetGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -334,7 +334,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ThrowsAsync(new Exception("State store unavailable"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.GetGameSessionAsync(request));
+        await Assert.ThrowsAsync<Exception>(() => service.GetGameSessionAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -353,7 +353,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(new List<string>());
 
         // Act
-        var (status, response) = await service.ListGameSessionsAsync(request);
+        var (status, response) = await service.ListGameSessionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -388,7 +388,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             });
 
         // Act
-        var (status, response) = await service.ListGameSessionsAsync(request);
+        var (status, response) = await service.ListGameSessionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -434,7 +434,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             });
 
         // Act
-        var (status, response) = await service.ListGameSessionsAsync(request);
+        var (status, response) = await service.ListGameSessionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -475,7 +475,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
-        var (status, response) = await service.JoinGameSessionAsync(request);
+        var (status, response) = await service.JoinGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -517,7 +517,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
-        var (status, response) = await service.JoinGameSessionAsync(request);
+        var (status, response) = await service.JoinGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -555,7 +555,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
-        var (status, response) = await service.JoinGameSessionAsync(request);
+        var (status, response) = await service.JoinGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -598,7 +598,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
 
         // Act
-        var (status, response) = await service.JoinGameSessionAsync(request);
+        var (status, response) = await service.JoinGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -647,7 +647,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
 
         // Act
-        var (status, response) = await service.JoinGameSessionAsync(request);
+        var (status, response) = await service.JoinGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -703,7 +703,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
 
         // Act
-        var status = await service.LeaveGameSessionAsync(request);
+        var status = await service.LeaveGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -741,7 +741,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
-        var status = await service.LeaveGameSessionAsync(request);
+        var status = await service.LeaveGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -775,7 +775,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
-        var (status, response) = await service.PerformGameActionAsync(request);
+        var (status, response) = await service.PerformGameActionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -807,7 +807,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
-        var (status, response) = await service.PerformGameActionAsync(request);
+        var (status, response) = await service.PerformGameActionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -844,7 +844,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
-        var (status, response) = await service.PerformGameActionAsync(request);
+        var (status, response) = await service.PerformGameActionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -882,7 +882,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
-        var (status, response) = await service.PerformGameActionAsync(request);
+        var (status, response) = await service.PerformGameActionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -951,7 +951,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+        var (status, response) = await service.JoinGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1023,7 +1023,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
 
         // Act
-        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+        var (status, response) = await service.JoinGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1081,7 +1081,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(model);
 
         // Act
-        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+        var (status, response) = await service.JoinGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1128,7 +1128,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(model);
 
         // Act
-        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+        var (status, response) = await service.JoinGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -1177,7 +1177,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(model);
 
         // Act
-        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+        var (status, response) = await service.JoinGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1201,7 +1201,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
-        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+        var (status, response) = await service.JoinGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1235,7 +1235,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(model);
 
         // Act
-        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+        var (status, response) = await service.JoinGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1275,7 +1275,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(model);
 
         // Act
-        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+        var (status, response) = await service.JoinGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1315,7 +1315,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(model);
 
         // Act
-        var (status, response) = await service.JoinGameSessionByIdAsync(request);
+        var (status, response) = await service.JoinGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1382,7 +1382,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(true);
 
         // Act
-        var status = await service.LeaveGameSessionByIdAsync(request);
+        var status = await service.LeaveGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1420,7 +1420,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
-        var status = await service.LeaveGameSessionByIdAsync(request);
+        var status = await service.LeaveGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1458,7 +1458,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(model);
 
         // Act
-        var status = await service.LeaveGameSessionByIdAsync(request);
+        var status = await service.LeaveGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1511,7 +1511,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
 
         // Act
-        var status = await service.LeaveGameSessionByIdAsync(request);
+        var status = await service.LeaveGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1568,7 +1568,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
 
         // Act
-        var status = await service.LeaveGameSessionByIdAsync(request);
+        var status = await service.LeaveGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1611,7 +1611,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(model);
 
         // Act
-        var status = await service.LeaveGameSessionByIdAsync(request);
+        var status = await service.LeaveGameSessionByIdAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1678,7 +1678,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.PublishJoinShortcutAsync(request);
+        var (status, response) = await service.PublishJoinShortcutAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1713,7 +1713,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
-        var (status, response) = await service.PublishJoinShortcutAsync(request);
+        var (status, response) = await service.PublishJoinShortcutAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1759,7 +1759,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(model);
 
         // Act
-        var (status, response) = await service.PublishJoinShortcutAsync(request);
+        var (status, response) = await service.PublishJoinShortcutAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1826,7 +1826,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(true);
 
         // Act
-        var status = await service.KickPlayerAsync(request);
+        var status = await service.KickPlayerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1864,7 +1864,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
-        var status = await service.KickPlayerAsync(request);
+        var status = await service.KickPlayerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1899,7 +1899,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(model);
 
         // Act
-        var status = await service.KickPlayerAsync(request);
+        var status = await service.KickPlayerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1952,7 +1952,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
 
         // Act
-        var status = await service.KickPlayerAsync(request);
+        var status = await service.KickPlayerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2006,7 +2006,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(2);
 
         // Act
-        var status = await service.SendChatMessageAsync(request);
+        var status = await service.SendChatMessageAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2069,7 +2069,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(true);
 
         // Act
-        var status = await service.SendChatMessageAsync(request);
+        var status = await service.SendChatMessageAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2105,7 +2105,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
-        var status = await service.SendChatMessageAsync(request);
+        var status = await service.SendChatMessageAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2135,7 +2135,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((GameSessionModel?)null);
 
         // Act
-        var status = await service.SendChatMessageAsync(request);
+        var status = await service.SendChatMessageAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2189,7 +2189,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
 
         // Act
-        var (status, response) = await service.JoinGameSessionAsync(request);
+        var (status, response) = await service.JoinGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2231,7 +2231,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
-        var (status, response) = await service.JoinGameSessionAsync(request);
+        var (status, response) = await service.JoinGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2259,7 +2259,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((SubscriberSessionsModel?)null);
 
         // Act
-        var (status, response) = await service.JoinGameSessionAsync(request);
+        var (status, response) = await service.JoinGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -2300,7 +2300,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         SetupExistingLobby(TEST_GAME_TYPE, lobby);
 
         // Act
-        var status = await service.LeaveGameSessionAsync(request);
+        var status = await service.LeaveGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2350,7 +2350,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
 
         // Act
-        var status = await service.LeaveGameSessionAsync(request);
+        var status = await service.LeaveGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2404,7 +2404,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .Callback<string, GameSessionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m);
 
         // Act
-        var status = await service.LeaveGameSessionAsync(request);
+        var status = await service.LeaveGameSessionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2465,7 +2465,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.PerformGameActionAsync(request);
+        var (status, response) = await service.PerformGameActionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2520,7 +2520,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             });
 
         // Act
-        var (status, response) = await service.ListGameSessionsAsync(request);
+        var (status, response) = await service.ListGameSessionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2541,7 +2541,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             .ReturnsAsync((List<string>?)null);
 
         // Act
-        var (status, response) = await service.ListGameSessionsAsync(request);
+        var (status, response) = await service.ListGameSessionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

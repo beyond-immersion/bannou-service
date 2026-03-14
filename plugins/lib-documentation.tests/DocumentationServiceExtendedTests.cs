@@ -199,7 +199,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(storedDoc);
 
         // Act
-        var (status, html) = await _service.ViewDocumentBySlugAsync("my-doc", TEST_NAMESPACE);
+        var (status, html) = await _service.ViewDocumentBySlugAsync("my-doc", TEST_NAMESPACE, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -219,7 +219,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, html) = await _service.ViewDocumentBySlugAsync("nonexistent-slug", TEST_NAMESPACE);
+        var (status, html) = await _service.ViewDocumentBySlugAsync("nonexistent-slug", TEST_NAMESPACE, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -245,7 +245,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(storedDoc);
 
         // Act
-        var (status, html) = await _service.ViewDocumentBySlugAsync("bad-doc", TEST_NAMESPACE);
+        var (status, html) = await _service.ViewDocumentBySlugAsync("bad-doc", TEST_NAMESPACE, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
@@ -283,7 +283,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((DocumentationService.StoredDocument?)null);
 
         // Act
-        var (status, html) = await _service.ViewDocumentBySlugAsync("orphan-slug", TEST_NAMESPACE);
+        var (status, html) = await _service.ViewDocumentBySlugAsync("orphan-slug", TEST_NAMESPACE, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -307,7 +307,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(storedDoc);
 
         // Act
-        var (status, html) = await _service.ViewDocumentBySlugAsync("test-slug", null);
+        var (status, html) = await _service.ViewDocumentBySlugAsync("test-slug", null, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -330,7 +330,7 @@ public class DocumentationServiceExtendedTests
         };
 
         // Act
-        var (status, response) = await _service.SuggestRelatedTopicsAsync(request);
+        var (status, response) = await _service.SuggestRelatedTopicsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -363,7 +363,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(suggestedDoc);
 
         // Act
-        var (status, response) = await _service.SuggestRelatedTopicsAsync(request);
+        var (status, response) = await _service.SuggestRelatedTopicsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -398,7 +398,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(suggestedDoc);
 
         // Act
-        var (status, response) = await _service.SuggestRelatedTopicsAsync(request);
+        var (status, response) = await _service.SuggestRelatedTopicsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -431,7 +431,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(suggestedDoc);
 
         // Act
-        var (status, response) = await _service.SuggestRelatedTopicsAsync(request);
+        var (status, response) = await _service.SuggestRelatedTopicsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -463,7 +463,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(suggestedDoc);
 
         // Act
-        var (status, response) = await _service.SuggestRelatedTopicsAsync(request);
+        var (status, response) = await _service.SuggestRelatedTopicsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -488,7 +488,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(new List<Guid>());
 
         // Act
-        var (status, response) = await _service.SuggestRelatedTopicsAsync(request);
+        var (status, response) = await _service.SuggestRelatedTopicsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -546,7 +546,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(new List<Guid> { documentId });
 
         // Act
-        var (status, response) = await _service.RecoverDocumentAsync(request);
+        var (status, response) = await _service.RecoverDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -581,7 +581,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(expiredTrashedDoc);
 
         // Act
-        var (status, response) = await _service.RecoverDocumentAsync(request);
+        var (status, response) = await _service.RecoverDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -618,7 +618,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(Guid.NewGuid().ToString());
 
         // Act
-        var (status, response) = await _service.RecoverDocumentAsync(request);
+        var (status, response) = await _service.RecoverDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -640,7 +640,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((DocumentationService.TrashedDocument?)null);
 
         // Act
-        var (status, response) = await _service.RecoverDocumentAsync(request);
+        var (status, response) = await _service.RecoverDocumentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -679,7 +679,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(doc2);
 
         // Act
-        var (status, response) = await _service.BulkUpdateDocumentsAsync(request);
+        var (status, response) = await _service.BulkUpdateDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -716,7 +716,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((DocumentationService.StoredDocument?)null);
 
         // Act
-        var (status, response) = await _service.BulkUpdateDocumentsAsync(request);
+        var (status, response) = await _service.BulkUpdateDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -758,7 +758,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await _service.BulkUpdateDocumentsAsync(request);
+        var (status, response) = await _service.BulkUpdateDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -812,7 +812,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await _service.BulkDeleteDocumentsAsync(request);
+        var (status, response) = await _service.BulkDeleteDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -849,7 +849,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((DocumentationService.StoredDocument?)null);
 
         // Act
-        var (status, response) = await _service.BulkDeleteDocumentsAsync(request);
+        var (status, response) = await _service.BulkDeleteDocumentsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -895,7 +895,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(new HashSet<Guid>());
 
         // Act
-        var (status, response) = await _service.ImportDocumentationAsync(request);
+        var (status, response) = await _service.ImportDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -935,7 +935,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(existingDocId.ToString());
 
         // Act
-        var (status, response) = await _service.ImportDocumentationAsync(request);
+        var (status, response) = await _service.ImportDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -974,7 +974,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(existingDocId.ToString());
 
         // Act
-        var (status, response) = await _service.ImportDocumentationAsync(request);
+        var (status, response) = await _service.ImportDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1021,7 +1021,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(existingDoc);
 
         // Act
-        var (status, response) = await _service.ImportDocumentationAsync(request);
+        var (status, response) = await _service.ImportDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1049,7 +1049,7 @@ public class DocumentationServiceExtendedTests
         };
 
         // Act
-        var (status, response) = await _service.ImportDocumentationAsync(request);
+        var (status, response) = await _service.ImportDocumentationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1090,7 +1090,7 @@ public class DocumentationServiceExtendedTests
             });
 
         // Act
-        var (status, response) = await _service.ListTrashcanAsync(request);
+        var (status, response) = await _service.ListTrashcanAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1117,7 +1117,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var (status, response) = await _service.ListTrashcanAsync(request);
+        var (status, response) = await _service.ListTrashcanAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1149,7 +1149,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((new List<Guid> { docId1, docId2 }, "etag-1"));
 
         // Act
-        var (status, response) = await _service.PurgeTrashcanAsync(request);
+        var (status, response) = await _service.PurgeTrashcanAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1187,7 +1187,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (status, response) = await _service.PurgeTrashcanAsync(request);
+        var (status, response) = await _service.PurgeTrashcanAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1210,7 +1210,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(((List<Guid>?)null, (string?)null));
 
         // Act
-        var (status, response) = await _service.PurgeTrashcanAsync(request);
+        var (status, response) = await _service.PurgeTrashcanAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1257,7 +1257,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(DateTimeOffset.UtcNow.ToString("o"));
 
         // Act
-        var (status, response) = await _service.GetNamespaceStatsAsync(request);
+        var (status, response) = await _service.GetNamespaceStatsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1301,7 +1301,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await _service.GetNamespaceStatsAsync(request);
+        var (status, response) = await _service.GetNamespaceStatsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1327,7 +1327,7 @@ public class DocumentationServiceExtendedTests
         };
 
         // Act
-        var (status, response) = await _service.CreateDocumentationArchiveAsync(request);
+        var (status, response) = await _service.CreateDocumentationArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1353,7 +1353,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((HashSet<Guid>?)null);
 
         // Act
-        var (status, response) = await _service.CreateDocumentationArchiveAsync(request);
+        var (status, response) = await _service.CreateDocumentationArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1407,7 +1407,7 @@ public class DocumentationServiceExtendedTests
             .Returns((object?)null);
 
         // Act
-        var (status, response) = await _service.CreateDocumentationArchiveAsync(request);
+        var (status, response) = await _service.CreateDocumentationArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1431,7 +1431,7 @@ public class DocumentationServiceExtendedTests
         };
 
         // Act
-        var (status, response) = await _service.ListDocumentationArchivesAsync(request);
+        var (status, response) = await _service.ListDocumentationArchivesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1486,7 +1486,7 @@ public class DocumentationServiceExtendedTests
             });
 
         // Act
-        var (status, response) = await _service.ListDocumentationArchivesAsync(request);
+        var (status, response) = await _service.ListDocumentationArchivesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1512,7 +1512,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var (status, response) = await _service.ListDocumentationArchivesAsync(request);
+        var (status, response) = await _service.ListDocumentationArchivesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1535,7 +1535,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((DocumentationArchive?)null);
 
         // Act
-        var (status, response) = await _service.RestoreDocumentationArchiveAsync(request);
+        var (status, response) = await _service.RestoreDocumentationArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1575,7 +1575,7 @@ public class DocumentationServiceExtendedTests
             });
 
         // Act
-        var (status, response) = await _service.RestoreDocumentationArchiveAsync(request);
+        var (status, response) = await _service.RestoreDocumentationArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Forbidden, status);
@@ -1610,7 +1610,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((RepositoryBinding?)null);
 
         // Act
-        var (status, response) = await _service.RestoreDocumentationArchiveAsync(request);
+        var (status, response) = await _service.RestoreDocumentationArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1651,7 +1651,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync("etag-2");
 
         // Act
-        var (status, response) = await _service.DeleteDocumentationArchiveAsync(request);
+        var (status, response) = await _service.DeleteDocumentationArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1677,7 +1677,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((DocumentationArchive?)null);
 
         // Act
-        var (status, response) = await _service.DeleteDocumentationArchiveAsync(request);
+        var (status, response) = await _service.DeleteDocumentationArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1741,7 +1741,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync((HashSet<Guid>?)null);
 
         // Act
-        var (status, response) = await _service.SyncRepositoryAsync(request);
+        var (status, response) = await _service.SyncRepositoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1781,7 +1781,7 @@ public class DocumentationServiceExtendedTests
             .ReturnsAsync(new HashSet<string> { TEST_NAMESPACE });
 
         // Act
-        var (status, response) = await _service.SyncRepositoryAsync(request);
+        var (status, response) = await _service.SyncRepositoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

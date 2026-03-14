@@ -192,7 +192,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.GetLocationAsync(request);
+        var (status, response) = await service.GetLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -215,7 +215,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
-        var (status, response) = await service.GetLocationAsync(request);
+        var (status, response) = await service.GetLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -247,7 +247,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.GetLocationByCodeAsync(request);
+        var (status, response) = await service.GetLocationByCodeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -268,7 +268,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.GetLocationByCodeAsync(request);
+        var (status, response) = await service.GetLocationByCodeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -308,7 +308,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             });
 
         // Act
-        var (status, response) = await service.ListLocationsByRealmAsync(request);
+        var (status, response) = await service.ListLocationsByRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -329,7 +329,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var (status, response) = await service.ListLocationsByRealmAsync(request);
+        var (status, response) = await service.ListLocationsByRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -356,7 +356,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.LocationExistsAsync(request);
+        var (status, response) = await service.LocationExistsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -380,7 +380,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.LocationExistsAsync(request);
+        var (status, response) = await service.LocationExistsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -402,7 +402,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
-        var (status, response) = await service.LocationExistsAsync(request);
+        var (status, response) = await service.LocationExistsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -434,7 +434,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.UpdateLocationAsync(request);
+        var (status, response) = await service.UpdateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -462,7 +462,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
-        var (status, response) = await service.UpdateLocationAsync(request);
+        var (status, response) = await service.UpdateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -484,7 +484,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.UpdateLocationAsync(request);
+        var (status, response) = await service.UpdateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - no changes means no save and no event
         Assert.Equal(StatusCodes.OK, status);
@@ -519,7 +519,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.DeprecateLocationAsync(request);
+        var (status, response) = await service.DeprecateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -547,7 +547,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.DeprecateLocationAsync(request);
+        var (status, response) = await service.DeprecateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - IMPLEMENTATION TENETS: deprecation must be idempotent (return OK when already deprecated)
         Assert.Equal(StatusCodes.OK, status);
@@ -567,7 +567,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
-        var (status, response) = await service.DeprecateLocationAsync(request);
+        var (status, response) = await service.DeprecateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -592,7 +592,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.UndeprecateLocationAsync(request);
+        var (status, response) = await service.UndeprecateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -620,7 +620,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(testModel);
 
         // Act
-        var (status, response) = await service.UndeprecateLocationAsync(request);
+        var (status, response) = await service.UndeprecateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - IMPLEMENTATION TENETS: undeprecation must be idempotent (return OK when not deprecated)
         Assert.Equal(StatusCodes.OK, status);
@@ -640,7 +640,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
-        var (status, response) = await service.UndeprecateLocationAsync(request);
+        var (status, response) = await service.UndeprecateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -668,7 +668,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
-        var (status, response) = await service.ValidateTerritoryAsync(request);
+        var (status, response) = await service.ValidateTerritoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -708,7 +708,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(rootModel);
 
         // Act
-        var (status, response) = await service.ValidateTerritoryAsync(request);
+        var (status, response) = await service.ValidateTerritoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -743,7 +743,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(locationModel);
 
         // Act
-        var (status, response) = await service.ValidateTerritoryAsync(request);
+        var (status, response) = await service.ValidateTerritoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -780,7 +780,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(rootModel);
 
         // Act
-        var (status, response) = await service.ValidateTerritoryAsync(request);
+        var (status, response) = await service.ValidateTerritoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -813,7 +813,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(locationModel);
 
         // Act
-        var (status, response) = await service.ValidateTerritoryAsync(request);
+        var (status, response) = await service.ValidateTerritoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -846,7 +846,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(locationModel);
 
         // Act
-        var (status, response) = await service.ValidateTerritoryAsync(request);
+        var (status, response) = await service.ValidateTerritoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should pass since no overlap in exclusive mode
         Assert.Equal(StatusCodes.OK, status);
@@ -877,7 +877,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(locationModel);
 
         // Act
-        var (status, response) = await service.ValidateTerritoryAsync(request);
+        var (status, response) = await service.ValidateTerritoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - location overlaps with itself, so exclusive mode fails
         Assert.Equal(StatusCodes.OK, status);
@@ -918,7 +918,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             });
 
         // Act
-        var (status, response) = await service.ListRootLocationsAsync(request);
+        var (status, response) = await service.ListRootLocationsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -939,7 +939,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var (status, response) = await service.ListRootLocationsAsync(request);
+        var (status, response) = await service.ListRootLocationsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -987,7 +987,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             });
 
         // Act
-        var (status, response) = await service.ListLocationsByParentAsync(request);
+        var (status, response) = await service.ListLocationsByParentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1016,7 +1016,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((List<Guid>?)null);
 
         // Act
-        var (status, response) = await service.ListLocationsByParentAsync(request);
+        var (status, response) = await service.ListLocationsByParentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1061,7 +1061,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.CreateLocationAsync(request);
+        var (status, response) = await service.CreateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1097,7 +1097,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(new RealmExistsResponse { Exists = false, IsActive = false });
 
         // Act
-        var (status, response) = await service.CreateLocationAsync(request);
+        var (status, response) = await service.CreateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1123,7 +1123,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(Guid.NewGuid().ToString());
 
         // Act
-        var (status, response) = await service.CreateLocationAsync(request);
+        var (status, response) = await service.CreateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1157,7 +1157,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(parentModel);
 
         // Act
-        var (status, response) = await service.CreateLocationAsync(request);
+        var (status, response) = await service.CreateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1190,7 +1190,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
-        var (status, response) = await service.CreateLocationAsync(request);
+        var (status, response) = await service.CreateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1225,7 +1225,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(parentModel);
 
         // Act
-        var (status, response) = await service.CreateLocationAsync(request);
+        var (status, response) = await service.CreateLocationAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1272,7 +1272,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(true);
 
         // Act
-        var status = await service.DeleteLocationAsync(new DeleteLocationRequest { LocationId = locationId });
+        var status = await service.DeleteLocationAsync(new DeleteLocationRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1300,7 +1300,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(testModel);
 
         // Act
-        var status = await service.DeleteLocationAsync(new DeleteLocationRequest { LocationId = locationId });
+        var status = await service.DeleteLocationAsync(new DeleteLocationRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert - Category A requires deprecation before deletion
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1318,7 +1318,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync((LocationService.LocationModel?)null);
 
         // Act
-        var status = await service.DeleteLocationAsync(new DeleteLocationRequest { LocationId = locationId });
+        var status = await service.DeleteLocationAsync(new DeleteLocationRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1343,7 +1343,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(new List<Guid> { Guid.NewGuid() });
 
         // Act
-        var status = await service.DeleteLocationAsync(new DeleteLocationRequest { LocationId = locationId });
+        var status = await service.DeleteLocationAsync(new DeleteLocationRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1378,7 +1378,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(new ExecuteCleanupResponse { Success = false, AbortReason = "RESTRICT policy" });
 
         // Act
-        var status = await service.DeleteLocationAsync(new DeleteLocationRequest { LocationId = locationId });
+        var status = await service.DeleteLocationAsync(new DeleteLocationRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1426,7 +1426,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.SetLocationParentAsync(
-            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = newParentId });
+            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = newParentId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1456,7 +1456,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.SetLocationParentAsync(
-            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = parentId });
+            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = parentId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1479,7 +1479,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, _) = await service.SetLocationParentAsync(
-            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = Guid.NewGuid() });
+            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1504,7 +1504,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, _) = await service.SetLocationParentAsync(
-            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = newParentId });
+            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = newParentId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1532,7 +1532,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, _) = await service.SetLocationParentAsync(
-            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = newParentId });
+            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = newParentId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1569,7 +1569,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act - try to set locationId's parent to childId (creating circular ref)
         var (status, _) = await service.SetLocationParentAsync(
-            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = childId });
+            new SetLocationParentRequest { LocationId = locationId, ParentLocationId = childId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1612,7 +1612,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.RemoveLocationParentAsync(
-            new RemoveLocationParentRequest { LocationId = locationId });
+            new RemoveLocationParentRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1641,7 +1641,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.RemoveLocationParentAsync(
-            new RemoveLocationParentRequest { LocationId = locationId });
+            new RemoveLocationParentRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1664,7 +1664,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, _) = await service.RemoveLocationParentAsync(
-            new RemoveLocationParentRequest { LocationId = locationId });
+            new RemoveLocationParentRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1710,7 +1710,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             });
 
         // Act
-        var (status, response) = await service.ListLocationsAsync(request);
+        var (status, response) = await service.ListLocationsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1749,7 +1749,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             .ReturnsAsync(cacheResult);
 
         // Act
-        var (status, response) = await service.ListLocationsAsync(request);
+        var (status, response) = await service.ListLocationsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1791,7 +1791,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.GetLocationAncestorsAsync(
-            new GetLocationAncestorsRequest { LocationId = roomId });
+            new GetLocationAncestorsRequest { LocationId = roomId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1816,7 +1816,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.GetLocationAncestorsAsync(
-            new GetLocationAncestorsRequest { LocationId = rootId });
+            new GetLocationAncestorsRequest { LocationId = rootId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1837,7 +1837,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, _) = await service.GetLocationAncestorsAsync(
-            new GetLocationAncestorsRequest { LocationId = locationId });
+            new GetLocationAncestorsRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1886,7 +1886,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.GetLocationDescendantsAsync(
-            new GetLocationDescendantsRequest { LocationId = rootId });
+            new GetLocationDescendantsRequest { LocationId = rootId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1908,7 +1908,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, _) = await service.GetLocationDescendantsAsync(
-            new GetLocationDescendantsRequest { LocationId = locationId });
+            new GetLocationDescendantsRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1958,7 +1958,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryLocationsByPositionAsync(request);
+        var (status, response) = await service.QueryLocationsByPositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1999,7 +1999,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryLocationsByPositionAsync(request);
+        var (status, response) = await service.QueryLocationsByPositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2036,7 +2036,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.QueryLocationsByPositionAsync(request);
+        var (status, response) = await service.QueryLocationsByPositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2088,7 +2088,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.TransferLocationToRealmAsync(
-            new TransferLocationToRealmRequest { LocationId = locationId, TargetRealmId = targetRealmId });
+            new TransferLocationToRealmRequest { LocationId = locationId, TargetRealmId = targetRealmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2117,7 +2117,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.TransferLocationToRealmAsync(
-            new TransferLocationToRealmRequest { LocationId = locationId, TargetRealmId = realmId });
+            new TransferLocationToRealmRequest { LocationId = locationId, TargetRealmId = realmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2149,7 +2149,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, _) = await service.TransferLocationToRealmAsync(
-            new TransferLocationToRealmRequest { LocationId = locationId, TargetRealmId = targetRealmId });
+            new TransferLocationToRealmRequest { LocationId = locationId, TargetRealmId = targetRealmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2182,7 +2182,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, _) = await service.TransferLocationToRealmAsync(
-            new TransferLocationToRealmRequest { LocationId = locationId, TargetRealmId = targetRealmId });
+            new TransferLocationToRealmRequest { LocationId = locationId, TargetRealmId = targetRealmId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2238,7 +2238,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ReportEntityPositionAsync(request);
+        var (status, response) = await service.ReportEntityPositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2295,7 +2295,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.ReportEntityPositionAsync(request);
+        var (status, response) = await service.ReportEntityPositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2329,7 +2329,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         };
 
         // Act
-        var (status, _) = await service.ReportEntityPositionAsync(request);
+        var (status, _) = await service.ReportEntityPositionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2360,7 +2360,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.GetEntityLocationAsync(
-            new GetEntityLocationRequest { EntityType = "character", EntityId = entityId });
+            new GetEntityLocationRequest { EntityType = "character", EntityId = entityId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2384,7 +2384,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.GetEntityLocationAsync(
-            new GetEntityLocationRequest { EntityType = "character", EntityId = entityId });
+            new GetEntityLocationRequest { EntityType = "character", EntityId = entityId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2417,7 +2417,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.ListEntitiesAtLocationAsync(
-            new ListEntitiesAtLocationRequest { LocationId = locationId });
+            new ListEntitiesAtLocationRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2451,7 +2451,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.ListEntitiesAtLocationAsync(
-            new ListEntitiesAtLocationRequest { LocationId = locationId, EntityType = "character" });
+            new ListEntitiesAtLocationRequest { LocationId = locationId, EntityType = "character" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2490,7 +2490,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.ClearEntityPositionAsync(
-            new ClearEntityPositionRequest { EntityType = "character", EntityId = entityId });
+            new ClearEntityPositionRequest { EntityType = "character", EntityId = entityId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2520,7 +2520,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Act
         var (status, response) = await service.ClearEntityPositionAsync(
-            new ClearEntityPositionRequest { EntityType = "character", EntityId = entityId });
+            new ClearEntityPositionRequest { EntityType = "character", EntityId = entityId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2573,7 +2573,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.SeedLocationsAsync(request);
+        var (status, response) = await service.SeedLocationsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2608,7 +2608,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.SeedLocationsAsync(request);
+        var (status, response) = await service.SeedLocationsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2651,7 +2651,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         };
 
         // Act
-        var (status, response) = await service.SeedLocationsAsync(request);
+        var (status, response) = await service.SeedLocationsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2785,7 +2785,7 @@ public class LocationCompressionTests : ServiceTestBase<LocationServiceConfigura
 
         // Act
         var (status, result) = await service.GetLocationCompressDataAsync(
-            new GetLocationCompressDataRequest { LocationId = locationId });
+            new GetLocationCompressDataRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2827,7 +2827,7 @@ public class LocationCompressionTests : ServiceTestBase<LocationServiceConfigura
 
         // Act
         var (status, result) = await service.GetLocationCompressDataAsync(
-            new GetLocationCompressDataRequest { LocationId = locationId });
+            new GetLocationCompressDataRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2851,7 +2851,7 @@ public class LocationCompressionTests : ServiceTestBase<LocationServiceConfigura
 
         // Act
         var (status, result) = await service.GetLocationCompressDataAsync(
-            new GetLocationCompressDataRequest { LocationId = locationId });
+            new GetLocationCompressDataRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2909,7 +2909,7 @@ public class LocationCompressionTests : ServiceTestBase<LocationServiceConfigura
 
         // Act
         var (status, result) = await service.GetLocationCompressDataAsync(
-            new GetLocationCompressDataRequest { LocationId = locationId });
+            new GetLocationCompressDataRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2983,7 +2983,7 @@ public class LocationCompressionTests : ServiceTestBase<LocationServiceConfigura
 
         // Act
         var (status, result) = await service.GetLocationCompressDataAsync(
-            new GetLocationCompressDataRequest { LocationId = locationId });
+            new GetLocationCompressDataRequest { LocationId = locationId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

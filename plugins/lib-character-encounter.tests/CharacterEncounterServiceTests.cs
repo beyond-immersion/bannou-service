@@ -291,7 +291,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.CreateEncounterTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateEncounterTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -323,7 +323,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.CreateEncounterTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateEncounterTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -344,7 +344,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.CreateEncounterTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateEncounterTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Built-in codes cannot be created as custom types
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -361,7 +361,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.GetEncounterTypeAsync(
-            new GetEncounterTypeRequest { Code = "DIALOGUE" }, CancellationToken.None);
+            new GetEncounterTypeRequest { Code = "DIALOGUE" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -379,7 +379,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.GetEncounterTypeAsync(
-            new GetEncounterTypeRequest { Code = "NONEXISTENT" }, CancellationToken.None);
+            new GetEncounterTypeRequest { Code = "NONEXISTENT" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -411,7 +411,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.ListEncounterTypesAsync(
-            new ListEncounterTypesRequest { IncludeDeprecated = true }, CancellationToken.None);
+            new ListEncounterTypesRequest { IncludeDeprecated = true }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -445,7 +445,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.UpdateEncounterTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateEncounterTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -478,7 +478,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.UpdateEncounterTypeAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateEncounterTypeAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Built-in types can be updated with limited fields
         Assert.Equal(StatusCodes.OK, status);
@@ -503,7 +503,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.DeprecateEncounterTypeAsync(
-            new DeprecateEncounterTypeRequest { Code = "CUSTOM", Reason = "No longer needed" }, CancellationToken.None);
+            new DeprecateEncounterTypeRequest { Code = "CUSTOM", Reason = "No longer needed" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -523,7 +523,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act — idempotent per IMPLEMENTATION TENETS
         var (status, response) = await service.DeprecateEncounterTypeAsync(
-            new DeprecateEncounterTypeRequest { Code = "CUSTOM" }, CancellationToken.None);
+            new DeprecateEncounterTypeRequest { Code = "CUSTOM" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -578,7 +578,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -613,7 +613,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -656,7 +656,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -702,7 +702,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -749,7 +749,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - IMPLEMENTATION TENETS: ImpactIntensity stored and mapped to response
         Assert.Equal(StatusCodes.OK, status);
@@ -815,7 +815,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.QueryByCharacterAsync(
-            new QueryByCharacterRequest { CharacterId = characterId }, CancellationToken.None);
+            new QueryByCharacterRequest { CharacterId = characterId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -837,7 +837,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.QueryByCharacterAsync(
-            new QueryByCharacterRequest { CharacterId = characterId }, CancellationToken.None);
+            new QueryByCharacterRequest { CharacterId = characterId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -885,7 +885,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.QueryBetweenAsync(
-            new QueryBetweenRequest { CharacterIdA = charA, CharacterIdB = charB }, CancellationToken.None);
+            new QueryBetweenRequest { CharacterIdA = charA, CharacterIdB = charB }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -915,7 +915,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.HasMetAsync(
-            new HasMetRequest { CharacterIdA = charA, CharacterIdB = charB }, CancellationToken.None);
+            new HasMetRequest { CharacterIdA = charA, CharacterIdB = charB }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -938,7 +938,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.HasMetAsync(
-            new HasMetRequest { CharacterIdA = charA, CharacterIdB = charB }, CancellationToken.None);
+            new HasMetRequest { CharacterIdA = charA, CharacterIdB = charB }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -998,7 +998,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.GetSentimentAsync(
-            new GetSentimentRequest { CharacterId = characterId, TargetCharacterId = targetId }, CancellationToken.None);
+            new GetSentimentRequest { CharacterId = characterId, TargetCharacterId = targetId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1035,7 +1035,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.BatchGetSentimentAsync(request, CancellationToken.None);
+        var (status, response) = await service.BatchGetSentimentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1058,7 +1058,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.BatchGetSentimentAsync(request, CancellationToken.None);
+        var (status, response) = await service.BatchGetSentimentAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - MaxBatchSize is 100
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1100,7 +1100,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.GetPerspectiveAsync(
-            new GetPerspectiveRequest { EncounterId = encounterId, CharacterId = characterId }, CancellationToken.None);
+            new GetPerspectiveRequest { EncounterId = encounterId, CharacterId = characterId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1156,7 +1156,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.UpdatePerspectiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdatePerspectiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1202,7 +1202,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        await service.UpdatePerspectiveAsync(request, CancellationToken.None);
+        await service.UpdatePerspectiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedEvent);
@@ -1242,7 +1242,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RefreshMemoryAsync(request, CancellationToken.None);
+        var (status, response) = await service.RefreshMemoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1279,7 +1279,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.RefreshMemoryAsync(
-            new RefreshMemoryRequest { EncounterId = encounterId, CharacterId = characterId }, CancellationToken.None);
+            new RefreshMemoryRequest { EncounterId = encounterId, CharacterId = characterId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1330,7 +1330,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, _) = await service.DeleteEncounterAsync(
-            new DeleteEncounterRequest { EncounterId = encounterId }, CancellationToken.None);
+            new DeleteEncounterRequest { EncounterId = encounterId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1349,7 +1349,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, _) = await service.DeleteEncounterAsync(
-            new DeleteEncounterRequest { EncounterId = encounterId }, CancellationToken.None);
+            new DeleteEncounterRequest { EncounterId = encounterId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1394,7 +1394,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.DeleteByCharacterAsync(
-            new DeleteByCharacterRequest { CharacterId = characterId }, CancellationToken.None);
+            new DeleteByCharacterRequest { CharacterId = characterId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1428,7 +1428,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.DecayMemoriesAsync(
-            new DecayMemoriesRequest { CharacterId = characterId, DryRun = false }, CancellationToken.None);
+            new DecayMemoriesRequest { CharacterId = characterId, DryRun = false }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1460,7 +1460,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.DecayMemoriesAsync(
-            new DecayMemoriesRequest { CharacterId = characterId, DryRun = true }, CancellationToken.None);
+            new DecayMemoriesRequest { CharacterId = characterId, DryRun = true }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1499,7 +1499,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1555,7 +1555,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Should succeed because type is different
         Assert.Equal(StatusCodes.OK, status);
@@ -1610,7 +1610,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Should succeed because timestamp is outside tolerance
         Assert.Equal(StatusCodes.OK, status);
@@ -1630,7 +1630,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.DeprecateEncounterTypeAsync(
-            new DeprecateEncounterTypeRequest { Code = "NONEXISTENT" }, CancellationToken.None);
+            new DeprecateEncounterTypeRequest { Code = "NONEXISTENT" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1657,7 +1657,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.DeprecateEncounterTypeAsync(
-            new DeprecateEncounterTypeRequest { Code = "CUSTOM", Reason = "Obsolete" }, CancellationToken.None);
+            new DeprecateEncounterTypeRequest { Code = "CUSTOM", Reason = "Obsolete" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1694,7 +1694,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1726,7 +1726,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1801,7 +1801,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordEncounterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1875,7 +1875,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, _) = await service.DeleteEncounterAsync(
-            new DeleteEncounterRequest { EncounterId = encounterId }, CancellationToken.None);
+            new DeleteEncounterRequest { EncounterId = encounterId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2068,7 +2068,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2096,7 +2096,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2118,7 +2118,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2197,7 +2197,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2223,7 +2223,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetCompressDataAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetCompressDataAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -2300,7 +2300,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2377,7 +2377,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2400,7 +2400,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - IMPLEMENTATION TENETS: null payload for errors
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2422,7 +2422,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - IMPLEMENTATION TENETS: null payload for errors
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2457,7 +2457,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2540,7 +2540,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2600,7 +2600,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RestoreFromArchiveAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion

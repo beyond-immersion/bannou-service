@@ -45,7 +45,7 @@ public class ChannelSchedulerTests
             ["B"] = "channel_b"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(4, result.Logs.Count);
@@ -66,7 +66,7 @@ public class ChannelSchedulerTests
             ["main"] = "main"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Logs.Count);
@@ -85,7 +85,7 @@ public class ChannelSchedulerTests
         var scheduler = CreateScheduler();
         var result = await scheduler.ExecuteAsync(
             parseResult.Value!,
-            new Dictionary<string, string>());
+            new Dictionary<string, string>(), ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.IsSuccess);
         Assert.Contains("No channels", result.ErrorMessage);
@@ -105,7 +105,7 @@ public class ChannelSchedulerTests
             ["main"] = "nonexistent_flow"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.IsSuccess);
         Assert.Contains("not found", result.ErrorMessage);
@@ -130,7 +130,7 @@ public class ChannelSchedulerTests
             ["receiver"] = "receiver"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         // Both channels should complete
@@ -153,7 +153,7 @@ public class ChannelSchedulerTests
             ["receiver"] = "receiver"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Contains(result.Logs, l => l.Message == "Got: hello world");
@@ -175,7 +175,7 @@ public class ChannelSchedulerTests
             ["R2"] = "receiver2"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Contains(result.Logs, l => l.Message == "R1 got it");
@@ -201,7 +201,7 @@ public class ChannelSchedulerTests
             ["slow"] = "slow"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         // Both channels should complete past the barrier
@@ -225,7 +225,7 @@ public class ChannelSchedulerTests
             ["ch3"] = "ch3"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Contains(result.Logs, l => l.Message == "CH1 done");
@@ -252,7 +252,7 @@ public class ChannelSchedulerTests
             ["ch2"] = "ch2"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.IsSuccess);
         Assert.Contains("Deadlock", result.ErrorMessage);
@@ -284,7 +284,7 @@ public class ChannelSchedulerTests
             ["sender"] = "sender"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         // Should fail - waiter times out waiting for signal that never comes
         // (sender sends different signals, keeping things active but not satisfying waiter)
@@ -314,7 +314,7 @@ public class ChannelSchedulerTests
             ["bad"] = "bad"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.IsSuccess);
         Assert.Equal("bad", result.FailedChannel);
@@ -334,7 +334,7 @@ public class ChannelSchedulerTests
             ["main"] = "returner"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.ChannelResults);
@@ -361,7 +361,7 @@ public class ChannelSchedulerTests
             ["ch2"] = "ch2"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         // Each channel should see its own value
@@ -387,7 +387,7 @@ public class ChannelSchedulerTests
             ["writer"] = "writer"
         };
 
-        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, rootScope);
+        var result = await scheduler.ExecuteAsync(parseResult.Value!, channelFlows, rootScope, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         // Both channels should see the shared data

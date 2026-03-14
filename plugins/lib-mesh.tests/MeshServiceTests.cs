@@ -74,7 +74,7 @@ public class MeshServiceTests
         var request = new GetEndpointsRequest { AppId = "bannou" };
 
         // Act
-        var (statusCode, response) = await service.GetEndpointsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetEndpointsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -101,7 +101,7 @@ public class MeshServiceTests
         var request = new GetEndpointsRequest { AppId = "bannou", ServiceName = "auth" };
 
         // Act
-        var (statusCode, response) = await service.GetEndpointsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetEndpointsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -123,7 +123,7 @@ public class MeshServiceTests
         var request = new GetEndpointsRequest { AppId = "bannou" };
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.GetEndpointsAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.GetEndpointsAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -149,7 +149,7 @@ public class MeshServiceTests
         var request = new ListEndpointsRequest();
 
         // Act
-        var (statusCode, response) = await service.ListEndpointsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListEndpointsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -178,7 +178,7 @@ public class MeshServiceTests
         var request = new ListEndpointsRequest { AppIdFilter = "bannou-auth" };
 
         // Act
-        var (statusCode, response) = await service.ListEndpointsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.ListEndpointsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -214,7 +214,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.RegisterEndpointAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RegisterEndpointAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -242,7 +242,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.RegisterEndpointAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.RegisterEndpointAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
@@ -277,7 +277,7 @@ public class MeshServiceTests
         };
 
         // Act
-        await service.RegisterEndpointAsync(request, CancellationToken.None);
+        await service.RegisterEndpointAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedEndpoint);
@@ -321,7 +321,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.DeregisterEndpointAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeregisterEndpointAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -346,7 +346,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.DeregisterEndpointAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeregisterEndpointAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -388,7 +388,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.HeartbeatAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.HeartbeatAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -414,7 +414,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.HeartbeatAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.HeartbeatAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -454,7 +454,7 @@ public class MeshServiceTests
         };
 
         // Act
-        await service.HeartbeatAsync(request, CancellationToken.None);
+        await service.HeartbeatAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(90, capturedTtl);
@@ -496,7 +496,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.HeartbeatAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.HeartbeatAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -544,7 +544,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.HeartbeatAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.HeartbeatAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -575,7 +575,7 @@ public class MeshServiceTests
         var request = new GetRouteRequest { AppId = "bannou" };
 
         // Act
-        var (statusCode, response) = await service.GetRouteAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetRouteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -597,7 +597,7 @@ public class MeshServiceTests
         var request = new GetRouteRequest { AppId = "bannou" };
 
         // Act
-        var (statusCode, response) = await service.GetRouteAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetRouteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -622,7 +622,7 @@ public class MeshServiceTests
         var request = new GetRouteRequest { AppId = "bannou", ServiceName = "auth" };
 
         // Act
-        var (statusCode, response) = await service.GetRouteAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetRouteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -653,7 +653,7 @@ public class MeshServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.GetRouteAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetRouteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -700,7 +700,7 @@ public class MeshServiceTests
         {
             var (_, response) = await service.GetRouteAsync(
                 new GetRouteRequest { AppId = "bannou", Algorithm = LoadBalancerAlgorithm.Weighted },
-                CancellationToken.None);
+                TestContext.Current.CancellationToken);
             if (response?.Endpoint.Host == "light") lightCount++;
             else heavyCount++;
         }
@@ -741,8 +741,8 @@ public class MeshServiceTests
         var request = new GetRouteRequest { AppId = "bannou-rr", Algorithm = LoadBalancerAlgorithm.RoundRobin };
 
         // Act
-        var (_, response1) = await service.GetRouteAsync(request, CancellationToken.None);
-        var (_, response2) = await service.GetRouteAsync(request, CancellationToken.None);
+        var (_, response1) = await service.GetRouteAsync(request, TestContext.Current.CancellationToken);
+        var (_, response2) = await service.GetRouteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should alternate between the two endpoints
         Assert.NotNull(response1);
@@ -768,7 +768,7 @@ public class MeshServiceTests
         var request = new GetRouteRequest { AppId = "bannou", Algorithm = LoadBalancerAlgorithm.Random };
 
         // Act
-        var (statusCode, response) = await service.GetRouteAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetRouteAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should select one of the available endpoints
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -813,7 +813,7 @@ public class MeshServiceTests
         {
             var (_, response) = await service.GetRouteAsync(
                 new GetRouteRequest { AppId = "bannou-wrr", Algorithm = LoadBalancerAlgorithm.WeightedRoundRobin },
-                CancellationToken.None);
+                TestContext.Current.CancellationToken);
             if (response?.Endpoint.Host == "light") lightCount++;
             else heavyCount++;
         }
@@ -849,7 +849,7 @@ public class MeshServiceTests
         {
             var (statusCode, response) = await service.GetRouteAsync(
                 new GetRouteRequest { AppId = "bannou", Algorithm = algo },
-                CancellationToken.None);
+                TestContext.Current.CancellationToken);
 
             Assert.Equal(StatusCodes.OK, statusCode);
             Assert.NotNull(response);
@@ -871,7 +871,7 @@ public class MeshServiceTests
         var request = new GetMappingsRequest();
 
         // Act
-        var (statusCode, response) = await service.GetMappingsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetMappingsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - returns empty mappings from resolver
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -893,7 +893,7 @@ public class MeshServiceTests
         var request = new GetMappingsRequest();
 
         // Act
-        var (statusCode, response) = await service.GetMappingsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetMappingsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -921,7 +921,7 @@ public class MeshServiceTests
         var request = new GetMappingsRequest { ServiceNameFilter = "auth" };
 
         // Act
-        var (statusCode, response) = await service.GetMappingsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetMappingsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -958,7 +958,7 @@ public class MeshServiceTests
         var request = new GetHealthRequest();
 
         // Act
-        var (statusCode, response) = await service.GetHealthAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetHealthAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -990,7 +990,7 @@ public class MeshServiceTests
         var request = new GetHealthRequest();
 
         // Act
-        var (statusCode, response) = await service.GetHealthAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetHealthAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1021,7 +1021,7 @@ public class MeshServiceTests
         var request = new GetHealthRequest();
 
         // Act
-        var (statusCode, response) = await service.GetHealthAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.GetHealthAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1194,7 +1194,7 @@ public class MeshStateManagerTests
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
 
         // Act
-        var result = await manager.InitializeAsync();
+        var result = await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Assert - should return false when initialization fails
         Assert.False(result);
@@ -1226,7 +1226,7 @@ public class MeshStateManagerTests
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
 
         // Act
-        var result = await manager.InitializeAsync();
+        var result = await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -1257,8 +1257,8 @@ public class MeshStateManagerTests
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
 
         // Act
-        var result1 = await manager.InitializeAsync();
-        var result2 = await manager.InitializeAsync();
+        var result1 = await manager.InitializeAsync(TestContext.Current.CancellationToken);
+        var result2 = await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Assert - both return true, but factory only called once
         Assert.True(result1);
@@ -1306,7 +1306,7 @@ public class MeshStateManagerTests
             .ReturnsAsync(true);
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var (isHealthy, message, operationTime) = await manager.CheckHealthAsync();
@@ -1347,7 +1347,7 @@ public class MeshStateManagerTests
             });
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var (isHealthy, message, _) = await manager.CheckHealthAsync();
@@ -1390,7 +1390,7 @@ public class MeshStateManagerTests
         SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         var endpoint = new MeshEndpoint
         {
@@ -1443,7 +1443,7 @@ public class MeshStateManagerTests
             .ThrowsAsync(new Exception("Redis write failed"));
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         var endpoint = new MeshEndpoint { InstanceId = Guid.NewGuid(), AppId = "test", Host = "h", Port = 1 };
 
@@ -1482,7 +1482,7 @@ public class MeshStateManagerTests
         SetupInitializedManager(mockEndpointStore, mockAppIdIndexStore, mockGlobalIndexStore);
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         var instanceId = Guid.NewGuid();
         var appId = "test-app";
@@ -1513,7 +1513,7 @@ public class MeshStateManagerTests
             .ThrowsAsync(new Exception("Redis delete failed"));
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var result = await manager.DeregisterEndpointAsync(Guid.NewGuid(), "test");
@@ -1554,7 +1554,7 @@ public class MeshStateManagerTests
             .ReturnsAsync((MeshEndpoint?)null);
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var result = await manager.UpdateHeartbeatAsync(Guid.NewGuid(), "app", EndpointStatus.Healthy, 50, 100, null, 90);
@@ -1596,7 +1596,7 @@ public class MeshStateManagerTests
             .ReturnsAsync("etag");
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         var issues = new List<string> { "high memory" };
 
@@ -1659,7 +1659,7 @@ public class MeshStateManagerTests
             .ReturnsAsync(new MeshEndpoint { InstanceId = unhealthyId, AppId = "test-app", Status = EndpointStatus.Unavailable });
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var endpoints = await manager.GetEndpointsForAppIdAsync("test-app");
@@ -1694,7 +1694,7 @@ public class MeshStateManagerTests
             .ReturnsAsync(new MeshEndpoint { InstanceId = unhealthyId, AppId = "test-app", Status = EndpointStatus.Unavailable });
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var endpoints = await manager.GetEndpointsForAppIdAsync("test-app", includeUnhealthy: true);
@@ -1725,7 +1725,7 @@ public class MeshStateManagerTests
             .ReturnsAsync((MeshEndpoint?)null);
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var endpoints = await manager.GetEndpointsForAppIdAsync("test-app");
@@ -1777,7 +1777,7 @@ public class MeshStateManagerTests
             .ReturnsAsync(new MeshEndpoint { InstanceId = id2, AppId = "app-b", Host = "h2", Port = 2 });
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var endpoints = await manager.GetAllEndpointsAsync();
@@ -1811,7 +1811,7 @@ public class MeshStateManagerTests
             .ReturnsAsync(new MeshEndpoint { InstanceId = id2, AppId = "other-service", Host = "h2", Port = 2 });
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var endpoints = await manager.GetAllEndpointsAsync("bannou");
@@ -1842,7 +1842,7 @@ public class MeshStateManagerTests
             .ReturnsAsync((MeshEndpoint?)null);
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var endpoints = await manager.GetAllEndpointsAsync();
@@ -1887,7 +1887,7 @@ public class MeshStateManagerTests
             .ReturnsAsync(expected);
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var result = await manager.GetEndpointByInstanceIdAsync(instanceId);
@@ -1912,7 +1912,7 @@ public class MeshStateManagerTests
             .ReturnsAsync((MeshEndpoint?)null);
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act
         var result = await manager.GetEndpointByInstanceIdAsync(Guid.NewGuid());
@@ -1936,7 +1936,7 @@ public class MeshStateManagerTests
             .ThrowsAsync(new Exception("Redis failure"));
 
         await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
-        await manager.InitializeAsync();
+        await manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Act & Assert - state store failures propagate to caller
         await Assert.ThrowsAsync<Exception>(() => manager.GetEndpointByInstanceIdAsync(Guid.NewGuid()));
@@ -2091,7 +2091,7 @@ public class MeshInvocationClientTests : IDisposable
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            client.InvokeMethodWithResponseAsync(request, CancellationToken.None));
+            client.InvokeMethodWithResponseAsync(request, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -2108,7 +2108,7 @@ public class MeshInvocationClientTests : IDisposable
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<MeshInvocationException>(() =>
-            client.InvokeMethodWithResponseAsync(request, CancellationToken.None));
+            client.InvokeMethodWithResponseAsync(request, TestContext.Current.CancellationToken));
 
         Assert.Equal("non-existent-app", exception.AppId);
         Assert.Equal(503, exception.StatusCode);
@@ -2132,7 +2132,7 @@ public class MeshInvocationClientTests : IDisposable
             });
 
         // Act
-        var result = await client.IsServiceAvailableAsync("bannou", CancellationToken.None);
+        var result = await client.IsServiceAvailableAsync("bannou", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -2149,7 +2149,7 @@ public class MeshInvocationClientTests : IDisposable
             .ReturnsAsync(new List<MeshEndpoint>()); // Return empty list
 
         // Act
-        var result = await client.IsServiceAvailableAsync("non-existent", CancellationToken.None);
+        var result = await client.IsServiceAvailableAsync("non-existent", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);

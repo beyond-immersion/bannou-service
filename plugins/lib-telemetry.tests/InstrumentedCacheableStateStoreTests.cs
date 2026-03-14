@@ -49,7 +49,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.AddToSetAsync("test-set", item);
+        var result = await _sut.AddToSetAsync("test-set", item, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -66,7 +66,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _sut.AddToSetAsync("test-set", item);
+        await _sut.AddToSetAsync("test-set", item, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -96,7 +96,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(2);
 
         // Act
-        var result = await _sut.AddToSetAsync("test-set", items);
+        var result = await _sut.AddToSetAsync("test-set", items, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2L, result);
@@ -112,7 +112,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.RemoveFromSetAsync("test-set", item);
+        var result = await _sut.RemoveFromSetAsync("test-set", item, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -128,7 +128,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.GetSetAsync<TestEntity>("test-set");
+        var result = await _sut.GetSetAsync<TestEntity>("test-set", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -144,7 +144,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.SetContainsAsync("test-set", item);
+        var result = await _sut.SetContainsAsync("test-set", item, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -159,7 +159,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(5);
 
         // Act
-        var result = await _sut.SetCountAsync("test-set");
+        var result = await _sut.SetCountAsync("test-set", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(5, result);
@@ -174,7 +174,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.DeleteSetAsync("test-set");
+        var result = await _sut.DeleteSetAsync("test-set", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -189,7 +189,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.RefreshSetTtlAsync("test-set", 60);
+        var result = await _sut.RefreshSetTtlAsync("test-set", 60, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -208,7 +208,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        var result = await _sut.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -224,7 +224,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _sut.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        await _sut.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -246,7 +246,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(2);
 
         // Act
-        var result = await _sut.SortedSetAddBatchAsync("leaderboard", entries);
+        var result = await _sut.SortedSetAddBatchAsync("leaderboard", entries, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result);
@@ -261,7 +261,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.SortedSetRemoveAsync("leaderboard", "player1");
+        var result = await _sut.SortedSetRemoveAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -276,7 +276,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(100.5);
 
         // Act
-        var result = await _sut.SortedSetScoreAsync("leaderboard", "player1");
+        var result = await _sut.SortedSetScoreAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(100.5, result);
@@ -291,7 +291,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(5L);
 
         // Act
-        var result = await _sut.SortedSetRankAsync("leaderboard", "player1", descending: true);
+        var result = await _sut.SortedSetRankAsync("leaderboard", "player1", descending: true, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(5L, result);
@@ -307,7 +307,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.SortedSetRangeByRankAsync("leaderboard", 0, 9, descending: true);
+        var result = await _sut.SortedSetRangeByRankAsync("leaderboard", 0, 9, descending: true, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -323,7 +323,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.SortedSetRangeByScoreAsync("leaderboard", 100.0, 200.0);
+        var result = await _sut.SortedSetRangeByScoreAsync("leaderboard", 100.0, 200.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -338,7 +338,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(100);
 
         // Act
-        var result = await _sut.SortedSetCountAsync("leaderboard");
+        var result = await _sut.SortedSetCountAsync("leaderboard", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(100, result);
@@ -353,7 +353,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(110.0);
 
         // Act
-        var result = await _sut.SortedSetIncrementAsync("leaderboard", "player1", 10.0);
+        var result = await _sut.SortedSetIncrementAsync("leaderboard", "player1", 10.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(110.0, result);
@@ -368,7 +368,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.SortedSetDeleteAsync("leaderboard");
+        var result = await _sut.SortedSetDeleteAsync("leaderboard", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -389,7 +389,7 @@ public class InstrumentedCacheableStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.SortedSetAddAsync("leaderboard", "player1", 100.0));
+            () => _sut.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Same(expectedException, exception);
 
@@ -414,7 +414,7 @@ public class InstrumentedCacheableStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.AddToSetAsync("test-set", new TestEntity()));
+            () => _sut.AddToSetAsync("test-set", new TestEntity(), cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Same(expectedException, exception);
     }
@@ -432,7 +432,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(15);
 
         // Act
-        var result = await _sut.IncrementAsync("counter:test", 5);
+        var result = await _sut.IncrementAsync("counter:test", 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(15, result);
@@ -448,7 +448,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(1);
 
         // Act
-        await _sut.IncrementAsync("counter:test");
+        await _sut.IncrementAsync("counter:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -471,7 +471,7 @@ public class InstrumentedCacheableStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.IncrementAsync("counter:test"));
+            () => _sut.IncrementAsync("counter:test", cancellationToken: TestContext.Current.CancellationToken));
         Assert.Same(expectedException, exception);
     }
 
@@ -484,7 +484,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(7);
 
         // Act
-        var result = await _sut.DecrementAsync("counter:test", 3);
+        var result = await _sut.DecrementAsync("counter:test", 3, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(7, result);
@@ -500,7 +500,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(0);
 
         // Act
-        await _sut.DecrementAsync("counter:test");
+        await _sut.DecrementAsync("counter:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -521,7 +521,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(42L);
 
         // Act
-        var result = await _sut.GetCounterAsync("counter:test");
+        var result = await _sut.GetCounterAsync("counter:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(42L, result);
@@ -537,7 +537,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync((long?)null);
 
         // Act
-        var result = await _sut.GetCounterAsync("missing");
+        var result = await _sut.GetCounterAsync("missing", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -552,7 +552,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(0L);
 
         // Act
-        await _sut.GetCounterAsync("counter:test");
+        await _sut.GetCounterAsync("counter:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -573,7 +573,7 @@ public class InstrumentedCacheableStateStoreTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await _sut.SetCounterAsync("counter:test", 100);
+        await _sut.SetCounterAsync("counter:test", 100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _innerStoreMock.Verify(x => x.SetCounterAsync("counter:test", 100, null, It.IsAny<CancellationToken>()), Times.Once);
@@ -588,7 +588,7 @@ public class InstrumentedCacheableStateStoreTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await _sut.SetCounterAsync("counter:test", 50);
+        await _sut.SetCounterAsync("counter:test", 50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -609,7 +609,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.DeleteCounterAsync("counter:test");
+        var result = await _sut.DeleteCounterAsync("counter:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -625,7 +625,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(false);
 
         // Act
-        var result = await _sut.DeleteCounterAsync("missing");
+        var result = await _sut.DeleteCounterAsync("missing", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -640,7 +640,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _sut.DeleteCounterAsync("counter:test");
+        await _sut.DeleteCounterAsync("counter:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -665,7 +665,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync("value1");
 
         // Act
-        var result = await _sut.HashGetAsync<string>("hash:test", "field1");
+        var result = await _sut.HashGetAsync<string>("hash:test", "field1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("value1", result);
@@ -681,7 +681,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var result = await _sut.HashGetAsync<string>("hash:test", "missing");
+        var result = await _sut.HashGetAsync<string>("hash:test", "missing", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -696,7 +696,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync("val");
 
         // Act
-        await _sut.HashGetAsync<string>("hash:test", "field1");
+        await _sut.HashGetAsync<string>("hash:test", "field1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -717,7 +717,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.HashSetAsync("hash:test", "field1", "value1");
+        var result = await _sut.HashSetAsync("hash:test", "field1", "value1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -733,7 +733,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _sut.HashSetAsync("hash:test", "field1", "value1");
+        await _sut.HashSetAsync("hash:test", "field1", "value1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -759,7 +759,7 @@ public class InstrumentedCacheableStateStoreTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await _sut.HashSetManyAsync("hash:test", fields);
+        await _sut.HashSetManyAsync("hash:test", fields, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _innerStoreMock.Verify(
@@ -776,7 +776,7 @@ public class InstrumentedCacheableStateStoreTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await _sut.HashSetManyAsync("hash:test", new[] { new KeyValuePair<string, string>("f", "v") });
+        await _sut.HashSetManyAsync("hash:test", new[] { new KeyValuePair<string, string>("f", "v") }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -797,7 +797,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.HashDeleteAsync("hash:test", "field1");
+        var result = await _sut.HashDeleteAsync("hash:test", "field1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -813,7 +813,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(false);
 
         // Act
-        var result = await _sut.HashDeleteAsync("hash:test", "missing");
+        var result = await _sut.HashDeleteAsync("hash:test", "missing", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -828,7 +828,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.HashExistsAsync("hash:test", "field1");
+        var result = await _sut.HashExistsAsync("hash:test", "field1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -844,7 +844,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(false);
 
         // Act
-        await _sut.HashExistsAsync("hash:test", "field1");
+        await _sut.HashExistsAsync("hash:test", "field1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -865,7 +865,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(15);
 
         // Act
-        var result = await _sut.HashIncrementAsync("hash:test", "counter", 5);
+        var result = await _sut.HashIncrementAsync("hash:test", "counter", 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(15, result);
@@ -881,7 +881,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(1);
 
         // Act
-        await _sut.HashIncrementAsync("hash:test", "counter");
+        await _sut.HashIncrementAsync("hash:test", "counter", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -907,7 +907,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.HashGetAllAsync<string>("hash:test");
+        var result = await _sut.HashGetAllAsync<string>("hash:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -925,7 +925,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Act
-        await _sut.HashGetAllAsync<string>("hash:test");
+        await _sut.HashGetAllAsync<string>("hash:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -946,7 +946,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(5);
 
         // Act
-        var result = await _sut.HashCountAsync("hash:test");
+        var result = await _sut.HashCountAsync("hash:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(5, result);
@@ -962,7 +962,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(0);
 
         // Act
-        await _sut.HashCountAsync("hash:test");
+        await _sut.HashCountAsync("hash:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -983,7 +983,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.DeleteHashAsync("hash:test");
+        var result = await _sut.DeleteHashAsync("hash:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -999,7 +999,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(false);
 
         // Act
-        var result = await _sut.DeleteHashAsync("missing");
+        var result = await _sut.DeleteHashAsync("missing", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -1014,7 +1014,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _sut.DeleteHashAsync("hash:test");
+        await _sut.DeleteHashAsync("hash:test", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -1035,7 +1035,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.RefreshHashTtlAsync("hash:test", 300);
+        var result = await _sut.RefreshHashTtlAsync("hash:test", 300, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -1051,7 +1051,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(false);
 
         // Act
-        var result = await _sut.RefreshHashTtlAsync("missing", 300);
+        var result = await _sut.RefreshHashTtlAsync("missing", 300, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -1066,7 +1066,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(true);
 
         // Act
-        await _sut.RefreshHashTtlAsync("hash:test", 60);
+        await _sut.RefreshHashTtlAsync("hash:test", 60, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -1089,7 +1089,7 @@ public class InstrumentedCacheableStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.HashGetAsync<string>("hash:test", "field1"));
+            () => _sut.HashGetAsync<string>("hash:test", "field1", cancellationToken: TestContext.Current.CancellationToken));
         Assert.Same(expectedException, exception);
 
         _telemetryMock.Verify(
@@ -1115,7 +1115,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.GetAsync("key1");
+        var result = await _sut.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Same(expected, result);
@@ -1131,7 +1131,7 @@ public class InstrumentedCacheableStateStoreTests
             .ReturnsAsync("etag-1");
 
         // Act
-        var result = await _sut.SaveAsync("key1", entity);
+        var result = await _sut.SaveAsync("key1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("etag-1", result);

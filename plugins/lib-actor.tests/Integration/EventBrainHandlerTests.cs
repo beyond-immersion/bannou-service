@@ -98,7 +98,7 @@ public sealed class EventBrainHandlerTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -129,7 +129,7 @@ public sealed class EventBrainHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            () => handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     // =========================================================================
@@ -173,7 +173,7 @@ public sealed class EventBrainHandlerTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -199,7 +199,7 @@ public sealed class EventBrainHandlerTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -227,7 +227,7 @@ public sealed class EventBrainHandlerTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -254,7 +254,7 @@ public sealed class EventBrainHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            () => handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     // =========================================================================
@@ -310,7 +310,7 @@ public sealed class EventBrainHandlerTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -337,7 +337,7 @@ public sealed class EventBrainHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            () => handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     // =========================================================================
@@ -383,7 +383,7 @@ public sealed class EventBrainHandlerTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -407,7 +407,7 @@ public sealed class EventBrainHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            () => handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     // =========================================================================
@@ -471,7 +471,7 @@ public sealed class EventBrainHandlerTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -496,7 +496,7 @@ public sealed class EventBrainHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            () => handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     // =========================================================================
@@ -565,7 +565,7 @@ public sealed class EventBrainHandlerTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -598,7 +598,7 @@ public sealed class EventBrainHandlerTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -620,7 +620,7 @@ public sealed class EventBrainHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+            () => handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken).AsTask());
     }
 
     // =========================================================================
@@ -685,7 +685,7 @@ public sealed class EventBrainHandlerTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -717,7 +717,7 @@ public sealed class EventBrainHandlerTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -745,7 +745,7 @@ public sealed class EventBrainHandlerTests
         var action = new DomainAction("end_encounter", new Dictionary<string, object?>());
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);

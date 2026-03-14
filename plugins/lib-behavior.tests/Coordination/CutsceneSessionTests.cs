@@ -75,7 +75,7 @@ public sealed class CutsceneSessionTests : IDisposable
         _session.SyncPoints.RegisterSyncPoint("sync1");
 
         // Act
-        var result = await _session.ReportSyncReachedAsync("sync1", _participants[0]);
+        var result = await _session.ReportSyncReachedAsync("sync1", _participants[0], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.AllReached);
@@ -92,7 +92,7 @@ public sealed class CutsceneSessionTests : IDisposable
         SyncPointResult? lastResult = null;
         foreach (var participant in _participants)
         {
-            lastResult = await _session.ReportSyncReachedAsync("sync1", participant);
+            lastResult = await _session.ReportSyncReachedAsync("sync1", participant, TestContext.Current.CancellationToken);
         }
 
         // Assert
@@ -111,7 +111,7 @@ public sealed class CutsceneSessionTests : IDisposable
         // Act
         foreach (var participant in _participants)
         {
-            await _session.ReportSyncReachedAsync("sync1", participant);
+            await _session.ReportSyncReachedAsync("sync1", participant, TestContext.Current.CancellationToken);
         }
 
         // Assert
@@ -133,7 +133,7 @@ public sealed class CutsceneSessionTests : IDisposable
         };
 
         // Act
-        var window = await _session.CreateInputWindowAsync(options);
+        var window = await _session.CreateInputWindowAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(window);
@@ -148,13 +148,13 @@ public sealed class CutsceneSessionTests : IDisposable
         {
             TargetEntity = _participants[0]
         };
-        var window = await _session.CreateInputWindowAsync(options);
+        var window = await _session.CreateInputWindowAsync(options, TestContext.Current.CancellationToken);
 
         // Act
         var result = await _session.SubmitInputAsync(
             window.WindowId,
             _participants[0],
-            "test-input");
+            "test-input", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.Accepted);
@@ -168,13 +168,13 @@ public sealed class CutsceneSessionTests : IDisposable
         {
             TargetEntity = _participants[0]
         };
-        var window = await _session.CreateInputWindowAsync(options);
+        var window = await _session.CreateInputWindowAsync(options, TestContext.Current.CancellationToken);
 
         InputWindowResultEventArgs? receivedArgs = null;
         _session.InputWindowResult += (_, args) => receivedArgs = args;
 
         // Act
-        await _session.SubmitInputAsync(window.WindowId, _participants[0], "test-input");
+        await _session.SubmitInputAsync(window.WindowId, _participants[0], "test-input", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(receivedArgs);
@@ -196,7 +196,7 @@ public sealed class CutsceneSessionTests : IDisposable
         await _session.CreateInputWindowAsync(new InputWindowOptions
         {
             TargetEntity = _participants[0]
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(stateChange);
@@ -211,7 +211,7 @@ public sealed class CutsceneSessionTests : IDisposable
         _session.StateChanged += (_, args) => stateChange = args;
 
         // Act
-        await _session.CompleteAsync();
+        await _session.CompleteAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(stateChange);
@@ -226,7 +226,7 @@ public sealed class CutsceneSessionTests : IDisposable
         _session.StateChanged += (_, args) => stateChange = args;
 
         // Act
-        await _session.AbortAsync("test reason");
+        await _session.AbortAsync("test reason", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(stateChange);
@@ -237,12 +237,12 @@ public sealed class CutsceneSessionTests : IDisposable
     public async Task CompleteAsync_WhenAlreadyCompleted_IsIdempotent()
     {
         // Arrange
-        await _session.CompleteAsync();
+        await _session.CompleteAsync(TestContext.Current.CancellationToken);
         var stateChangeCount = 0;
         _session.StateChanged += (_, _) => stateChangeCount++;
 
         // Act
-        await _session.CompleteAsync();
+        await _session.CompleteAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, stateChangeCount); // No additional state change

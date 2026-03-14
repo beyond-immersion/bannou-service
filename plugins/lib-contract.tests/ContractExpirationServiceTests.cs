@@ -94,8 +94,8 @@ public class ContractExpirationServiceTests
 
         // Act & Assert - should not throw
         await worker.StartAsync(cts.Token);
-        await Task.Delay(50);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -113,8 +113,8 @@ public class ContractExpirationServiceTests
 
         // Act & Assert - runs one cycle then cancels during interval delay
         await worker.StartAsync(cts.Token);
-        await Task.Delay(200);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Verify at least one scope was created (one check cycle ran)
         _mockScopeFactory.Verify(f => f.CreateScope(), Times.AtLeastOnce);
@@ -137,8 +137,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - contract service never called
         _mockContractService.Verify(
@@ -166,8 +166,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - contract service never called
         _mockContractService.Verify(
@@ -207,8 +207,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - each pending contract checked
         _mockContractService.Verify(
@@ -248,8 +248,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - only the valid contract checked, invalid one silently skipped
         _mockContractService.Verify(
@@ -295,8 +295,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - second contract still checked despite first failing
         _mockContractService.Verify(
@@ -334,8 +334,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - each active contract checked
         _mockContractService.Verify(
@@ -373,8 +373,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - only the valid contract checked
         _mockContractService.Verify(
@@ -413,8 +413,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - second contract still checked despite first failing
         _mockContractService.Verify(
@@ -459,8 +459,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - instance store never queried (payment schedule skipped)
         mockInstanceStore.Verify(
@@ -519,8 +519,8 @@ public class ContractExpirationServiceTests
 
         // Act - should not crash; loop catches and publishes error
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - error event published
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
@@ -562,8 +562,8 @@ public class ContractExpirationServiceTests
 
         // Act & Assert - worker should not crash even when error publishing fails
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // If we got here without exception, the test passes - the loop survived
     }
@@ -598,8 +598,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - both pending and active contracts checked
         _mockContractService.Verify(
@@ -639,8 +639,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - pending contract was checked (activated path)
         _mockContractService.Verify(
@@ -675,8 +675,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(150);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - service was still called (just didn't count as activated)
         _mockContractService.Verify(
@@ -819,8 +819,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(350);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(350, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - payment due event was published via the concrete service path
         concreteMessageBus.Verify(
@@ -944,8 +944,8 @@ public class ContractExpirationServiceTests
 
         // Act
         await worker.StartAsync(cts.Token);
-        await Task.Delay(350);
-        await worker.StopAsync(CancellationToken.None);
+        await Task.Delay(350, TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - NO payment due event published (payment is in the future)
         concreteMessageBus.Verify(

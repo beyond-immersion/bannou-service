@@ -46,7 +46,7 @@ public class LocalMeshStateManagerTests : IAsyncDisposable
     public async Task InitializeAsync_ShouldReturnTrue()
     {
         // Act
-        var result = await _manager.InitializeAsync();
+        var result = await _manager.InitializeAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);

@@ -50,7 +50,7 @@ public sealed class AbmlEmissionIntegrationTests
         });
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -83,7 +83,7 @@ public sealed class AbmlEmissionIntegrationTests
         var action = new DomainAction("unknown_action", new Dictionary<string, object?>());
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -108,7 +108,7 @@ public sealed class AbmlEmissionIntegrationTests
         var action = new DomainAction("custom_action", new Dictionary<string, object?>());
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -145,7 +145,7 @@ public sealed class AbmlEmissionIntegrationTests
         var action = new DomainAction("attack", new Dictionary<string, object?>());
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -186,7 +186,7 @@ public sealed class AbmlEmissionIntegrationTests
         var action = new DomainAction("move_to", new Dictionary<string, object?>());
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -220,7 +220,7 @@ public sealed class AbmlEmissionIntegrationTests
         var action = new DomainAction("interact", new Dictionary<string, object?>());
 
         // Act
-        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(ActionResult.Continue, result);
@@ -265,7 +265,7 @@ public sealed class AbmlEmissionIntegrationTests
         var action = new DomainAction("walk_to", new Dictionary<string, object?>());
 
         // Act
-        await handler.ExecuteAsync(action, context, CancellationToken.None);
+        await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(entityId, capturedEntityId);
@@ -309,7 +309,7 @@ public sealed class AbmlEmissionIntegrationTests
         var action = new DomainAction("walk_to", new Dictionary<string, object?>());
 
         // Act
-        await handler.ExecuteAsync(action, context, CancellationToken.None);
+        await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedArchetype);
@@ -351,8 +351,8 @@ public sealed class AbmlEmissionIntegrationTests
         var lookAction = new DomainAction("look_at", new Dictionary<string, object?>());
 
         // Act
-        await handler.ExecuteAsync(walkAction, context, CancellationToken.None);
-        await handler.ExecuteAsync(lookAction, context, CancellationToken.None);
+        await handler.ExecuteAsync(walkAction, context, TestContext.Current.CancellationToken);
+        await handler.ExecuteAsync(lookAction, context, TestContext.Current.CancellationToken);
 
         // Assert
         var emissions = scope.GetValue("_intent_emissions") as List<IntentEmission>;
@@ -388,7 +388,7 @@ public sealed class AbmlEmissionIntegrationTests
         var action = new DomainAction("sprint", new Dictionary<string, object?>());
 
         // Act
-        await handler.ExecuteAsync(action, context, CancellationToken.None);
+        await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         var storedEmissions = scope.GetValue("_intent_emissions") as List<IntentEmission>;
@@ -438,7 +438,7 @@ public sealed class AbmlEmissionIntegrationTests
         });
 
         // Act
-        await handler.ExecuteAsync(action, context, CancellationToken.None);
+        await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedParams);
@@ -471,7 +471,7 @@ public sealed class AbmlEmissionIntegrationTests
         var action = new DomainAction("walk_to", new Dictionary<string, object?>());
 
         // Act
-        await handler.ExecuteAsync(action, context, CancellationToken.None);
+        await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Contains(context.Logs, log =>
@@ -499,7 +499,7 @@ public sealed class AbmlEmissionIntegrationTests
         var action = new DomainAction("silent_action", new Dictionary<string, object?>());
 
         // Act
-        await handler.ExecuteAsync(action, context, CancellationToken.None);
+        await handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         // Assert - should not log "emit" level entry for empty emissions
         Assert.DoesNotContain(context.Logs, log => log.Level == "emit");

@@ -188,7 +188,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.CreateQuestDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateQuestDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -215,7 +215,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ReturnsAsync(new List<QuestDefinitionModel> { existingDefinition });
 
         // Act
-        var (status, response) = await service.CreateQuestDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateQuestDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -231,7 +231,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         request.Code = "";
 
         // Act
-        var (status, response) = await service.CreateQuestDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateQuestDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -260,7 +260,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             .ThrowsAsync(new ApiException("Conflict", 409));
 
         // Act
-        var (status, response) = await service.CreateQuestDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.CreateQuestDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -293,7 +293,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetQuestDefinitionAsync(
-            new GetQuestDefinitionRequest { DefinitionId = definitionId }, CancellationToken.None);
+            new GetQuestDefinitionRequest { DefinitionId = definitionId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -316,7 +316,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetQuestDefinitionAsync(
-            new GetQuestDefinitionRequest { DefinitionId = definitionId }, CancellationToken.None);
+            new GetQuestDefinitionRequest { DefinitionId = definitionId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -350,7 +350,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetQuestDefinitionAsync(
-            new GetQuestDefinitionRequest { DefinitionId = definitionId }, CancellationToken.None);
+            new GetQuestDefinitionRequest { DefinitionId = definitionId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -374,7 +374,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetQuestDefinitionAsync(
-            new GetQuestDefinitionRequest { Code = code }, CancellationToken.None);
+            new GetQuestDefinitionRequest { Code = code }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -390,7 +390,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Act
         var (status, response) = await service.GetQuestDefinitionAsync(
-            new GetQuestDefinitionRequest(), CancellationToken.None);
+            new GetQuestDefinitionRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -430,7 +430,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.UpdateQuestDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateQuestDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -456,7 +456,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.UpdateQuestDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.UpdateQuestDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -498,7 +498,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new DeprecateQuestDefinitionRequest { DefinitionId = definitionId };
 
         // Act
-        var (status, response) = await service.DeprecateQuestDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeprecateQuestDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -522,7 +522,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new DeprecateQuestDefinitionRequest { DefinitionId = definitionId };
 
         // Act
-        var (status, response) = await service.DeprecateQuestDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeprecateQuestDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -551,7 +551,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DeprecateQuestDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeprecateQuestDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
         Assert.Equal(StatusCodes.OK, status);
@@ -588,7 +588,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.DeprecateQuestDefinitionAsync(request, CancellationToken.None);
+        var (status, response) = await service.DeprecateQuestDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -619,7 +619,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new ListQuestDefinitionsRequest { Limit = 50, Offset = 0 };
 
         // Act
-        var (status, response) = await service.ListQuestDefinitionsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListQuestDefinitionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -644,7 +644,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new ListQuestDefinitionsRequest { Category = QuestCategory.Main };
 
         // Act
-        var (status, response) = await service.ListQuestDefinitionsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListQuestDefinitionsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -737,7 +737,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AcceptQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.AcceptQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -766,7 +766,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AcceptQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.AcceptQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -795,7 +795,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AcceptQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.AcceptQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -837,7 +837,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AcceptQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.AcceptQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -884,7 +884,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AcceptQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.AcceptQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -962,7 +962,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AbandonQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.AbandonQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -989,7 +989,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AbandonQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.AbandonQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1018,7 +1018,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AbandonQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.AbandonQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1057,7 +1057,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new GetQuestRequest { QuestInstanceId = instanceId };
 
         // Act
-        var (status, response) = await service.GetQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1080,7 +1080,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new GetQuestRequest { QuestInstanceId = instanceId };
 
         // Act
-        var (status, response) = await service.GetQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1159,7 +1159,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.GetQuestLogAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetQuestLogAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1235,7 +1235,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.GetQuestLogAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetQuestLogAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1297,7 +1297,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1362,7 +1362,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1391,7 +1391,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1421,7 +1421,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - BadRequest for client error (reporting progress on non-active quest)
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1456,7 +1456,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1505,7 +1505,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1571,7 +1571,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ForceCompleteObjectiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.ForceCompleteObjectiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1622,7 +1622,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.GetObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1656,7 +1656,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.GetObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1691,7 +1691,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var status = await service.HandleMilestoneCompletedAsync(callback, CancellationToken.None);
+        var status = await service.HandleMilestoneCompletedAsync(callback, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1761,7 +1761,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var status = await service.HandleQuestCompletedAsync(callback, CancellationToken.None);
+        var status = await service.HandleQuestCompletedAsync(callback, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2129,7 +2129,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2155,7 +2155,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2204,7 +2204,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2351,7 +2351,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ListQuestsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListQuestsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2382,7 +2382,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ListQuestsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListQuestsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2425,7 +2425,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ListQuestsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListQuestsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2469,7 +2469,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListAvailableQuestsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2517,7 +2517,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new ListAvailableQuestsRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListAvailableQuestsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2556,7 +2556,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new ListAvailableQuestsRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListAvailableQuestsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2602,7 +2602,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new ListAvailableQuestsRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListAvailableQuestsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2654,7 +2654,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new ListAvailableQuestsRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListAvailableQuestsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2713,7 +2713,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new ListAvailableQuestsRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.ListAvailableQuestsAsync(request, CancellationToken.None);
+        var (status, response) = await service.ListAvailableQuestsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2747,7 +2747,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AbandonQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.AbandonQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2828,7 +2828,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.AbandonQuestAsync(request, CancellationToken.None);
+        var (status, response) = await service.AbandonQuestAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2861,7 +2861,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ForceCompleteObjectiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.ForceCompleteObjectiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2893,7 +2893,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ForceCompleteObjectiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.ForceCompleteObjectiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2938,7 +2938,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ForceCompleteObjectiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.ForceCompleteObjectiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2969,7 +2969,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.GetObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3019,7 +3019,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3090,7 +3090,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3158,7 +3158,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var (status, response) = await service.ReportObjectiveProgressAsync(request, CancellationToken.None);
+        var (status, response) = await service.ReportObjectiveProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3190,7 +3190,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var status = await service.HandleMilestoneCompletedAsync(callback, CancellationToken.None);
+        var status = await service.HandleMilestoneCompletedAsync(callback, TestContext.Current.CancellationToken);
 
         // Assert - OK even when no quest found (contract may not be quest-related)
         Assert.Equal(StatusCodes.OK, status);
@@ -3219,7 +3219,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var status = await service.HandleQuestCompletedAsync(callback, CancellationToken.None);
+        var status = await service.HandleQuestCompletedAsync(callback, TestContext.Current.CancellationToken);
 
         // Assert - OK even when no quest found
         Assert.Equal(StatusCodes.OK, status);
@@ -3302,7 +3302,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         };
 
         // Act
-        var status = await service.HandleQuestCompletedAsync(callback, CancellationToken.None);
+        var status = await service.HandleQuestCompletedAsync(callback, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3341,7 +3341,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new GetQuestLogRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetQuestLogAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetQuestLogAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3383,7 +3383,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new GetQuestLogRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetQuestLogAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetQuestLogAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3495,7 +3495,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var request = new GetQuestLogRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetQuestLogAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetQuestLogAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

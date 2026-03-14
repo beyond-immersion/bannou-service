@@ -175,7 +175,7 @@ public class HoldExpirationTaskServiceTests
         {
             // Expected
         }
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
     }
 
     private void SetupLockSuccess()

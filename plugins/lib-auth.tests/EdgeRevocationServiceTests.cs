@@ -129,7 +129,7 @@ public class EdgeRevocationServiceTests
         var reason = "test-revocation";
 
         // Act
-        await _service.RevokeTokenAsync(jti, accountId, ttl, reason);
+        await _service.RevokeTokenAsync(jti, accountId, ttl, reason, TestContext.Current.CancellationToken);
 
         // Assert - verify token entry was saved
         _mockTokenStore.Verify(s => s.SaveAsync(
@@ -167,7 +167,7 @@ public class EdgeRevocationServiceTests
         var accountId = Guid.NewGuid();
 
         // Act
-        await service.RevokeTokenAsync(jti, accountId, TimeSpan.FromMinutes(60), "test");
+        await service.RevokeTokenAsync(jti, accountId, TimeSpan.FromMinutes(60), "test", TestContext.Current.CancellationToken);
 
         // Assert - nothing should be called
         _mockTokenStore.Verify(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<TokenRevocationEntry>(), It.IsAny<StateOptions>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -185,7 +185,7 @@ public class EdgeRevocationServiceTests
             .ReturnsAsync(false);
 
         // Act
-        await _service.RevokeTokenAsync(jti, accountId, TimeSpan.FromMinutes(60), "test");
+        await _service.RevokeTokenAsync(jti, accountId, TimeSpan.FromMinutes(60), "test", TestContext.Current.CancellationToken);
 
         // Assert - failed push should be recorded
         _mockFailedStore.Verify(s => s.SaveAsync(
@@ -208,7 +208,7 @@ public class EdgeRevocationServiceTests
         var reason = "account-revocation";
 
         // Act
-        await _service.RevokeAccountAsync(accountId, issuedBefore, reason);
+        await _service.RevokeAccountAsync(accountId, issuedBefore, reason, TestContext.Current.CancellationToken);
 
         // Assert - verify account entry was saved with TTL
         _mockAccountStore.Verify(s => s.SaveAsync(
@@ -245,7 +245,7 @@ public class EdgeRevocationServiceTests
         var accountId = Guid.NewGuid();
 
         // Act
-        await service.RevokeAccountAsync(accountId, DateTimeOffset.UtcNow, "test");
+        await service.RevokeAccountAsync(accountId, DateTimeOffset.UtcNow, "test", TestContext.Current.CancellationToken);
 
         // Assert - nothing should be called
         _mockAccountStore.Verify(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<AccountRevocationEntry>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -292,7 +292,7 @@ public class EdgeRevocationServiceTests
             .ReturnsAsync(accountEntry);
 
         // Act
-        var (tokens, accounts, failedCount, totalCount) = await _service.GetRevocationListAsync(true, true, 100);
+        var (tokens, accounts, failedCount, totalCount) = await _service.GetRevocationListAsync(true, true, 100, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(tokens);
@@ -320,7 +320,7 @@ public class EdgeRevocationServiceTests
         }
 
         // Act
-        var (tokens, _, _, totalCount) = await _service.GetRevocationListAsync(true, false, 2);
+        var (tokens, _, _, totalCount) = await _service.GetRevocationListAsync(true, false, 2, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, tokens.Count);
@@ -343,7 +343,7 @@ public class EdgeRevocationServiceTests
             .ReturnsAsync(false);
 
         // Act
-        await _service.RevokeAccountAsync(accountId, issuedBefore, "test-failure");
+        await _service.RevokeAccountAsync(accountId, issuedBefore, "test-failure", TestContext.Current.CancellationToken);
 
         // Assert - Failed push should be recorded
         _mockFailedStore.Verify(s => s.SaveAsync(
@@ -375,7 +375,7 @@ public class EdgeRevocationServiceTests
             });
 
         // Act - EdgeRevocationTimeoutSeconds is 5, so the provider will be cancelled
-        await _service.RevokeTokenAsync(jti, accountId, ttl, "timeout-test");
+        await _service.RevokeTokenAsync(jti, accountId, ttl, "timeout-test", TestContext.Current.CancellationToken);
 
         // Assert - Failed push should be recorded due to timeout
         _mockFailedStore.Verify(s => s.SaveAsync(
@@ -397,7 +397,7 @@ public class EdgeRevocationServiceTests
             .ThrowsAsync(new InvalidOperationException("Provider crashed"));
 
         // Act
-        await _service.RevokeAccountAsync(accountId, issuedBefore, "exception-test");
+        await _service.RevokeAccountAsync(accountId, issuedBefore, "exception-test", TestContext.Current.CancellationToken);
 
         // Assert - Failed push should be recorded
         _mockFailedStore.Verify(s => s.SaveAsync(
@@ -459,7 +459,7 @@ public class EdgeRevocationServiceTests
             .ReturnsAsync(1);
 
         // Act
-        await _service.RevokeTokenAsync(jti, accountId, ttl, "triggers-retry");
+        await _service.RevokeTokenAsync(jti, accountId, ttl, "triggers-retry", TestContext.Current.CancellationToken);
 
         // Assert - PushBatchAsync was called for retry
         _mockProvider.Verify(p => p.PushBatchAsync(
@@ -499,7 +499,7 @@ public class EdgeRevocationServiceTests
             .ReturnsAsync(failedEntry);
 
         // Act
-        await _service.RevokeTokenAsync(jti, accountId, ttl, "triggers-retry");
+        await _service.RevokeTokenAsync(jti, accountId, ttl, "triggers-retry", TestContext.Current.CancellationToken);
 
         // Assert - PushBatchAsync should NOT be called (entry was given up on)
         _mockProvider.Verify(p => p.PushBatchAsync(

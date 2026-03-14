@@ -129,7 +129,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.CreateContainerAsync(request);
+        var (status, response) = await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -160,7 +160,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        await service.CreateContainerAsync(request);
+        await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedModel);
@@ -186,7 +186,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        await service.CreateContainerAsync(request);
+        await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedModel);
@@ -208,7 +208,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        await service.CreateContainerAsync(request);
+        await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -247,7 +247,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         request.ParentContainerId = parentId;
 
         // Act
-        var (status, _) = await service.CreateContainerAsync(request);
+        var (status, _) = await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -273,7 +273,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         request.ParentContainerId = parentId;
 
         // Act
-        var (status, response) = await service.CreateContainerAsync(request);
+        var (status, response) = await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -293,7 +293,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         request.ParentContainerId = Guid.NewGuid();
 
         // Act
-        var (status, response) = await service.CreateContainerAsync(request);
+        var (status, response) = await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -309,7 +309,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         request.MaxSlots = -5;
 
         // Act
-        var (status, response) = await service.CreateContainerAsync(request);
+        var (status, response) = await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -325,7 +325,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         request.MaxSlots = 0;
 
         // Act
-        var (status, response) = await service.CreateContainerAsync(request);
+        var (status, response) = await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -341,7 +341,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         request.MaxWeight = -10.0;
 
         // Act
-        var (status, response) = await service.CreateContainerAsync(request);
+        var (status, response) = await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -357,7 +357,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         request.MaxVolume = -1.0;
 
         // Act
-        var (status, response) = await service.CreateContainerAsync(request);
+        var (status, response) = await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -373,7 +373,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         request.GridWidth = -2;
 
         // Act
-        var (status, response) = await service.CreateContainerAsync(request);
+        var (status, response) = await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -389,7 +389,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         request.GridHeight = -3;
 
         // Act
-        var (status, response) = await service.CreateContainerAsync(request);
+        var (status, response) = await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -415,7 +415,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        await service.CreateContainerAsync(request);
+        await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedModel);
@@ -441,7 +441,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        await service.CreateContainerAsync(request);
+        await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedModel);
@@ -475,7 +475,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new GetContainerRequest { ContainerId = containerId, IncludeContents = true };
 
         // Act
-        var (status, response) = await service.GetContainerAsync(request);
+        var (status, response) = await service.GetContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -496,7 +496,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new GetContainerRequest { ContainerId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.GetContainerAsync(request);
+        var (status, response) = await service.GetContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -540,7 +540,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new GetContainerRequest { ContainerId = containerId, IncludeContents = true };
 
         // Act
-        var (status, response) = await service.GetContainerAsync(request);
+        var (status, response) = await service.GetContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -582,7 +582,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.GetOrCreateContainerAsync(request);
+        var (status, response) = await service.GetOrCreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -618,7 +618,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.GetOrCreateContainerAsync(request);
+        var (status, response) = await service.GetOrCreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -643,7 +643,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.GetOrCreateContainerAsync(request);
+        var (status, response) = await service.GetOrCreateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -677,7 +677,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.UpdateContainerAsync(request);
+        var (status, response) = await service.UpdateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -698,7 +698,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new UpdateContainerRequest { ContainerId = Guid.NewGuid(), MaxSlots = 10 };
 
         // Act
-        var (status, response) = await service.UpdateContainerAsync(request);
+        var (status, response) = await service.UpdateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -723,7 +723,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new UpdateContainerRequest { ContainerId = containerId, MaxSlots = 30 };
 
         // Act
-        await service.UpdateContainerAsync(request);
+        await service.UpdateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -740,7 +740,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new UpdateContainerRequest { ContainerId = Guid.NewGuid(), MaxSlots = -1 };
 
         // Act
-        var (status, response) = await service.UpdateContainerAsync(request);
+        var (status, response) = await service.UpdateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -755,7 +755,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new UpdateContainerRequest { ContainerId = Guid.NewGuid(), MaxWeight = -5.0 };
 
         // Act
-        var (status, response) = await service.UpdateContainerAsync(request);
+        var (status, response) = await service.UpdateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -770,7 +770,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new UpdateContainerRequest { ContainerId = Guid.NewGuid(), MaxVolume = -1.0 };
 
         // Act
-        var (status, response) = await service.UpdateContainerAsync(request);
+        var (status, response) = await service.UpdateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -785,7 +785,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new UpdateContainerRequest { ContainerId = Guid.NewGuid(), GridWidth = 0 };
 
         // Act
-        var (status, response) = await service.UpdateContainerAsync(request);
+        var (status, response) = await service.UpdateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -828,7 +828,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.DeleteContainerAsync(request);
+        var (status, response) = await service.DeleteContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -865,7 +865,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.DeleteContainerAsync(request);
+        var (status, response) = await service.DeleteContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -911,7 +911,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.DeleteContainerAsync(request);
+        var (status, response) = await service.DeleteContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -934,7 +934,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new DeleteContainerRequest { ContainerId = Guid.NewGuid(), ItemHandling = ItemHandling.Error };
 
         // Act
-        var (status, _) = await service.DeleteContainerAsync(request);
+        var (status, _) = await service.DeleteContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -976,7 +976,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.ListContainersAsync(request);
+        var (status, response) = await service.ListContainersAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1018,7 +1018,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.ListContainersAsync(request);
+        var (status, response) = await service.ListContainersAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1056,7 +1056,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.ListContainersAsync(request);
+        var (status, response) = await service.ListContainersAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1097,7 +1097,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId, SlotIndex = 6 };
 
         // Act
-        var (status, response) = await service.AddItemToContainerAsync(request);
+        var (status, response) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1130,7 +1130,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        var (status, response) = await service.AddItemToContainerAsync(request);
+        var (status, response) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1167,7 +1167,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        var (status, response) = await service.AddItemToContainerAsync(request);
+        var (status, response) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1202,7 +1202,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        var (status, response) = await service.AddItemToContainerAsync(request);
+        var (status, response) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1237,7 +1237,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        var (status, response) = await service.AddItemToContainerAsync(request);
+        var (status, response) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1275,7 +1275,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        var (status, response) = await service.AddItemToContainerAsync(request);
+        var (status, response) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should succeed because comparison is case-insensitive
         Assert.Equal(StatusCodes.OK, status);
@@ -1310,7 +1310,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        var (status, response) = await service.AddItemToContainerAsync(request);
+        var (status, response) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should be rejected because comparison is case-insensitive
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1346,7 +1346,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        var (status, response) = await service.AddItemToContainerAsync(request);
+        var (status, response) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1365,7 +1365,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = Guid.NewGuid(), ContainerId = Guid.NewGuid() };
 
         // Act
-        var (status, _) = await service.AddItemToContainerAsync(request);
+        var (status, _) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1389,7 +1389,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = Guid.NewGuid(), ContainerId = containerId };
 
         // Act
-        var (status, _) = await service.AddItemToContainerAsync(request);
+        var (status, _) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1422,7 +1422,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId, SlotIndex = 2 };
 
         // Act
-        await service.AddItemToContainerAsync(request);
+        await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -1471,7 +1471,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        await service.AddItemToContainerAsync(request);
+        await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(savedContainer);
@@ -1508,7 +1508,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        await service.AddItemToContainerAsync(request);
+        await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -1549,7 +1549,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        await service.AddItemToContainerAsync(request);
+        await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - container full event should NOT be published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -1591,7 +1591,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        await service.AddItemToContainerAsync(request);
+        await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -1641,7 +1641,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new RemoveItemRequest { InstanceId = instanceId };
 
         // Act
-        var (status, response) = await service.RemoveItemFromContainerAsync(request);
+        var (status, response) = await service.RemoveItemFromContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1669,7 +1669,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new RemoveItemRequest { InstanceId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.RemoveItemFromContainerAsync(request);
+        var (status, response) = await service.RemoveItemFromContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1696,7 +1696,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new RemoveItemRequest { InstanceId = instanceId };
 
         // Act
-        var (status, response) = await service.RemoveItemFromContainerAsync(request);
+        var (status, response) = await service.RemoveItemFromContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1731,7 +1731,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new RemoveItemRequest { InstanceId = instanceId };
 
         // Act
-        var (status, response) = await service.RemoveItemFromContainerAsync(request);
+        var (status, response) = await service.RemoveItemFromContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1773,7 +1773,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new RemoveItemRequest { InstanceId = instanceId };
 
         // Act
-        await service.RemoveItemFromContainerAsync(request);
+        await service.RemoveItemFromContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - container saved with decremented values
         _mockContainerStore.Verify(s => s.SaveAsync(
@@ -1812,7 +1812,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MoveItemRequest { InstanceId = instanceId, TargetContainerId = containerId, TargetSlotIndex = 5, TargetSlotX = 3, TargetSlotY = 1 };
 
         // Act
-        var (status, response) = await service.MoveItemAsync(request);
+        var (status, response) = await service.MoveItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1885,7 +1885,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MoveItemRequest { InstanceId = instanceId, TargetContainerId = targetContainerId };
 
         // Act
-        var (status, response) = await service.MoveItemAsync(request);
+        var (status, response) = await service.MoveItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1914,7 +1914,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MoveItemRequest { InstanceId = Guid.NewGuid(), TargetContainerId = Guid.NewGuid() };
 
         // Act
-        var (status, response) = await service.MoveItemAsync(request);
+        var (status, response) = await service.MoveItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1943,7 +1943,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MoveItemRequest { InstanceId = instanceId, TargetContainerId = targetContainerId };
 
         // Act
-        var (status, response) = await service.MoveItemAsync(request);
+        var (status, response) = await service.MoveItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1980,7 +1980,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MoveItemRequest { InstanceId = instanceId, TargetContainerId = targetContainerId };
 
         // Act
-        var (status, response) = await service.MoveItemAsync(request);
+        var (status, response) = await service.MoveItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2022,7 +2022,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.TransferItemAsync(request);
+        var (status, response) = await service.TransferItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2059,7 +2059,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.TransferItemAsync(request);
+        var (status, response) = await service.TransferItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2112,7 +2112,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.TransferItemAsync(request);
+        var (status, response) = await service.TransferItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2170,7 +2170,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.TransferItemAsync(request);
+        var (status, response) = await service.TransferItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2202,7 +2202,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.TransferItemAsync(request);
+        var (status, response) = await service.TransferItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2250,7 +2250,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new SplitStackRequest { InstanceId = instanceId, Quantity = 3 };
 
         // Act
-        var (status, response) = await service.SplitStackAsync(request);
+        var (status, response) = await service.SplitStackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2294,7 +2294,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new SplitStackRequest { InstanceId = instanceId, Quantity = 8 };
 
         // Act
-        await service.SplitStackAsync(request);
+        await service.SplitStackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Verify ModifyItemInstance was called with negative QuantityDelta
         _mockItemClient.Verify(c => c.ModifyItemInstanceAsync(
@@ -2348,7 +2348,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new SplitStackRequest { InstanceId = instanceId, Quantity = 3 };
 
         // Act
-        var (status, response) = await service.SplitStackAsync(request);
+        var (status, response) = await service.SplitStackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, status);
@@ -2382,7 +2382,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new SplitStackRequest { InstanceId = instanceId, Quantity = 5 };
 
         // Act
-        var (status, _) = await service.SplitStackAsync(request);
+        var (status, _) = await service.SplitStackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2414,7 +2414,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new SplitStackRequest { InstanceId = instanceId, Quantity = 2 };
 
         // Act
-        var (status, _) = await service.SplitStackAsync(request);
+        var (status, _) = await service.SplitStackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2464,7 +2464,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
 
         // Act
-        var (status, response) = await service.MergeStacksAsync(request);
+        var (status, response) = await service.MergeStacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2514,7 +2514,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
 
         // Act
-        await service.MergeStacksAsync(request);
+        await service.MergeStacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Verify target update via ModifyItemInstance with positive QuantityDelta
         _mockItemClient.Verify(c => c.ModifyItemInstanceAsync(
@@ -2564,7 +2564,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
 
         // Act
-        await service.MergeStacksAsync(request);
+        await service.MergeStacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - source destroyed with "merged" reason
         _mockItemClient.Verify(c => c.DestroyItemInstanceAsync(
@@ -2603,7 +2603,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
 
         // Act
-        var (status, response) = await service.MergeStacksAsync(request);
+        var (status, response) = await service.MergeStacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2641,7 +2641,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
 
         // Act
-        var (status, response) = await service.MergeStacksAsync(request);
+        var (status, response) = await service.MergeStacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2680,7 +2680,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
 
         // Act
-        var (status, _) = await service.MergeStacksAsync(request);
+        var (status, _) = await service.MergeStacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2740,7 +2740,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.CountItemsAsync(request);
+        var (status, response) = await service.CountItemsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2769,7 +2769,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.CountItemsAsync(request);
+        var (status, response) = await service.CountItemsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2816,7 +2816,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.CountItemsAsync(request);
+        var (status, response) = await service.CountItemsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2866,7 +2866,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.HasItemsAsync(request);
+        var (status, response) = await service.HasItemsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2913,7 +2913,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.HasItemsAsync(request);
+        var (status, response) = await service.HasItemsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2979,7 +2979,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.QueryItemsAsync(request);
+        var (status, response) = await service.QueryItemsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3028,7 +3028,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.QueryItemsAsync(request);
+        var (status, response) = await service.QueryItemsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3077,7 +3077,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.QueryItemsAsync(request);
+        var (status, response) = await service.QueryItemsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3106,7 +3106,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.QueryItemsAsync(request);
+        var (status, response) = await service.QueryItemsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3157,7 +3157,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.FindSpaceAsync(request);
+        var (status, response) = await service.FindSpaceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3201,7 +3201,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.FindSpaceAsync(request);
+        var (status, response) = await service.FindSpaceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3256,7 +3256,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.FindSpaceAsync(request);
+        var (status, response) = await service.FindSpaceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3313,7 +3313,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.FindSpaceAsync(request);
+        var (status, response) = await service.FindSpaceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3342,7 +3342,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.FindSpaceAsync(request);
+        var (status, response) = await service.FindSpaceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -3403,7 +3403,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        var (status, response) = await service.AddItemToContainerAsync(request);
+        var (status, response) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3444,7 +3444,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new SplitStackRequest { InstanceId = instanceId, Quantity = 3 };
 
         // Act
-        var (status, response) = await service.SplitStackAsync(request);
+        var (status, response) = await service.SplitStackAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3473,7 +3473,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new UpdateContainerRequest { ContainerId = containerId, MaxSlots = 30 };
 
         // Act
-        var (status, response) = await service.UpdateContainerAsync(request);
+        var (status, response) = await service.UpdateContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3549,7 +3549,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
 
         // Act
-        await service.MergeStacksAsync(request);
+        await service.MergeStacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert: smaller GUID must be locked first regardless of source/target assignment
         Assert.Equal(2, lockOrder.Count);
@@ -3621,7 +3621,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
 
         // Act
-        var (status, response) = await service.MergeStacksAsync(request);
+        var (status, response) = await service.MergeStacksAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -3695,7 +3695,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.DeleteContainerAsync(request);
+        var (status, response) = await service.DeleteContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -3734,7 +3734,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.DeleteContainerAsync(request);
+        var (status, response) = await service.DeleteContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3777,7 +3777,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        await service.AddItemToContainerAsync(request);
+        await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - emits Grid constraint type, not Slots
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -3822,7 +3822,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        await service.AddItemToContainerAsync(request);
+        await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - emits Volume constraint type
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -3868,7 +3868,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        await service.AddItemToContainerAsync(request);
+        await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should emit Weight (not Slots) because slots still have room
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -3913,7 +3913,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new AddItemRequest { InstanceId = instanceId, ContainerId = containerId };
 
         // Act
-        var (status, response) = await service.AddItemToContainerAsync(request);
+        var (status, response) = await service.AddItemToContainerAsync(request, TestContext.Current.CancellationToken);
 
         // Assert: ForbiddenCategories takes precedence - item is rejected
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -3980,7 +3980,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.MoveItemAsync(request);
+        var (status, response) = await service.MoveItemAsync(request, TestContext.Current.CancellationToken);
 
         // Assert: returns the error status from the failed add operation
         Assert.Equal(StatusCodes.BadRequest, status);

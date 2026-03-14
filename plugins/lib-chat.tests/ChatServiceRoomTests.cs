@@ -38,7 +38,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
         {
             RoomTypeCode = "text",
             DisplayName = "My Room",
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -79,7 +79,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
         var (status, _) = await service.CreateRoomAsync(new CreateRoomRequest
         {
             RoomTypeCode = "nonexistent",
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -94,7 +94,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
         var (status, _) = await service.CreateRoomAsync(new CreateRoomRequest
         {
             RoomTypeCode = "old",
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -115,7 +115,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
         {
             RoomTypeCode = "text",
             ContractId = TestContractId,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -138,7 +138,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
         {
             RoomTypeCode = "text",
             ContractId = Guid.NewGuid(),
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -159,7 +159,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
             .ReturnsAsync(3L);
 
         var (status, response) = await service.GetRoomAsync(
-            new GetRoomRequest { RoomId = TestRoomId }, CancellationToken.None);
+            new GetRoomRequest { RoomId = TestRoomId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -186,7 +186,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
         SetupRoom(room);
 
         var (status, response) = await service.GetRoomAsync(
-            new GetRoomRequest { RoomId = TestRoomId }, CancellationToken.None);
+            new GetRoomRequest { RoomId = TestRoomId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -209,7 +209,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
             .ReturnsAsync((ChatRoomModel?)null);
 
         var (status, _) = await service.GetRoomAsync(
-            new GetRoomRequest { RoomId = Guid.NewGuid() }, CancellationToken.None);
+            new GetRoomRequest { RoomId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -230,7 +230,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
         SetupRoomQuery(rooms, 2);
 
         var (status, response) = await service.ListRoomsAsync(
-            new ListRoomsRequest { Page = 0, PageSize = 20 }, CancellationToken.None);
+            new ListRoomsRequest { Page = 0, PageSize = 20 }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -251,7 +251,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
             Status = ChatRoomStatus.Active,
             Page = 0,
             PageSize = 20,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         MockRoomStore.Verify(s => s.JsonQueryPagedAsync(
             It.Is<IReadOnlyList<QueryCondition>>(c =>
@@ -279,7 +279,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
             RoomId = TestRoomId,
             DisplayName = "Updated Name",
             MaxParticipants = 50,
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -305,7 +305,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
         SetupLockFailure();
 
         var (status, _) = await service.UpdateRoomAsync(
-            new UpdateRoomRequest { RoomId = TestRoomId }, CancellationToken.None);
+            new UpdateRoomRequest { RoomId = TestRoomId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -319,7 +319,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
             .ReturnsAsync((ChatRoomModel?)null);
 
         var (status, _) = await service.UpdateRoomAsync(
-            new UpdateRoomRequest { RoomId = Guid.NewGuid() }, CancellationToken.None);
+            new UpdateRoomRequest { RoomId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -336,7 +336,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
         SetupRoom(room);
 
         var (status, response) = await service.DeleteRoomAsync(
-            new DeleteRoomRequest { RoomId = TestRoomId }, CancellationToken.None);
+            new DeleteRoomRequest { RoomId = TestRoomId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -371,7 +371,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
         SetupParticipants(TestRoomId, participantA, participantB);
 
         var (status, _) = await service.DeleteRoomAsync(
-            new DeleteRoomRequest { RoomId = TestRoomId }, CancellationToken.None);
+            new DeleteRoomRequest { RoomId = TestRoomId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
 
@@ -396,7 +396,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
             .ReturnsAsync((ChatRoomModel?)null);
 
         var (status, _) = await service.DeleteRoomAsync(
-            new DeleteRoomRequest { RoomId = Guid.NewGuid() }, CancellationToken.None);
+            new DeleteRoomRequest { RoomId = Guid.NewGuid() }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -419,7 +419,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
             .ReturnsAsync(new ExecuteCompressResponse { ArchiveId = archiveId });
 
         var (status, response) = await service.ArchiveRoomAsync(
-            new ArchiveRoomRequest { RoomId = TestRoomId }, CancellationToken.None);
+            new ArchiveRoomRequest { RoomId = TestRoomId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -446,7 +446,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
         SetupRoom(room);
 
         var (status, response) = await service.ArchiveRoomAsync(
-            new ArchiveRoomRequest { RoomId = TestRoomId }, CancellationToken.None);
+            new ArchiveRoomRequest { RoomId = TestRoomId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -469,7 +469,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
             .ThrowsAsync(new ApiException("Resource error", 500));
 
         var (status, _) = await service.ArchiveRoomAsync(
-            new ArchiveRoomRequest { RoomId = TestRoomId }, CancellationToken.None);
+            new ArchiveRoomRequest { RoomId = TestRoomId }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.InternalServerError, status);
     }

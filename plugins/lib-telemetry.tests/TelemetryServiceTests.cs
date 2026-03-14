@@ -74,7 +74,7 @@ public class TelemetryServiceTests
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.HealthAsync(new TelemetryHealthRequest());
+        var (status, response) = await service.HealthAsync(new TelemetryHealthRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -98,7 +98,7 @@ public class TelemetryServiceTests
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.HealthAsync(new TelemetryHealthRequest());
+        var (status, response) = await service.HealthAsync(new TelemetryHealthRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -121,7 +121,7 @@ public class TelemetryServiceTests
         var service = CreateService();
 
         // Act
-        var (_, response) = await service.HealthAsync(new TelemetryHealthRequest());
+        var (_, response) = await service.HealthAsync(new TelemetryHealthRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(response);
@@ -141,7 +141,7 @@ public class TelemetryServiceTests
         var service = CreateService();
 
         // Act
-        var (_, response) = await service.HealthAsync(new TelemetryHealthRequest());
+        var (_, response) = await service.HealthAsync(new TelemetryHealthRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(response);
@@ -163,7 +163,7 @@ public class TelemetryServiceTests
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.StatusAsync(new TelemetryStatusRequest());
+        var (status, response) = await service.StatusAsync(new TelemetryStatusRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -183,7 +183,7 @@ public class TelemetryServiceTests
         var service = CreateService();
 
         // Act
-        var (_, response) = await service.StatusAsync(new TelemetryStatusRequest());
+        var (_, response) = await service.StatusAsync(new TelemetryStatusRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(response);
@@ -202,7 +202,7 @@ public class TelemetryServiceTests
         var service = CreateService();
 
         // Act
-        var (_, response) = await service.StatusAsync(new TelemetryStatusRequest());
+        var (_, response) = await service.StatusAsync(new TelemetryStatusRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(response);
@@ -227,7 +227,7 @@ public class TelemetryServiceTests
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.StatusAsync(new TelemetryStatusRequest());
+        var (status, response) = await service.StatusAsync(new TelemetryStatusRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

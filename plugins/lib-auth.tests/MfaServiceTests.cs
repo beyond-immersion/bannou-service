@@ -422,7 +422,7 @@ public class MfaServiceTests
             })
             .ReturnsAsync("etag");
 
-        var token = await _service.CreateMfaChallengeAsync(accountId, null, null, CancellationToken.None);
+        var token = await _service.CreateMfaChallengeAsync(accountId, null, null, TestContext.Current.CancellationToken);
 
         Assert.False(string.IsNullOrWhiteSpace(token));
         Assert.Equal($"mfa-challenge-{token}", capturedKey);
@@ -448,7 +448,7 @@ public class MfaServiceTests
             })
             .ReturnsAsync("etag");
 
-        await _service.CreateMfaChallengeAsync(accountId, null, null, CancellationToken.None);
+        await _service.CreateMfaChallengeAsync(accountId, null, null, TestContext.Current.CancellationToken);
 
         Assert.NotNull(capturedOptions);
         Assert.Equal(_configuration.MfaChallengeTtlMinutes * 60, capturedOptions.Ttl);
@@ -470,7 +470,7 @@ public class MfaServiceTests
         _mockChallengeStore.Setup(s => s.DeleteAsync(key, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var result = await _service.ConsumeMfaChallengeAsync(token, CancellationToken.None);
+        var result = await _service.ConsumeMfaChallengeAsync(token, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(accountId, result.Value.accountId);
@@ -492,7 +492,7 @@ public class MfaServiceTests
         _mockChallengeStore.Setup(s => s.DeleteAsync(key, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var result = await _service.ConsumeMfaChallengeAsync(token, CancellationToken.None);
+        var result = await _service.ConsumeMfaChallengeAsync(token, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -506,7 +506,7 @@ public class MfaServiceTests
         _mockChallengeStore.Setup(s => s.GetAsync(key, It.IsAny<CancellationToken>()))
             .ReturnsAsync((MfaChallengeData?)null);
 
-        var result = await _service.ConsumeMfaChallengeAsync(token, CancellationToken.None);
+        var result = await _service.ConsumeMfaChallengeAsync(token, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -536,7 +536,7 @@ public class MfaServiceTests
             })
             .ReturnsAsync("etag");
 
-        var token = await _service.CreateMfaSetupAsync(accountId, encryptedSecret, hashedCodes, CancellationToken.None);
+        var token = await _service.CreateMfaSetupAsync(accountId, encryptedSecret, hashedCodes, TestContext.Current.CancellationToken);
 
         Assert.False(string.IsNullOrWhiteSpace(token));
         Assert.Equal($"mfa-setup-{token}", capturedKey);
@@ -565,7 +565,7 @@ public class MfaServiceTests
         _mockSetupStore.Setup(s => s.DeleteAsync(key, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var result = await _service.ConsumeMfaSetupAsync(token, CancellationToken.None);
+        var result = await _service.ConsumeMfaSetupAsync(token, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(expectedData.AccountId, result.AccountId);
@@ -591,7 +591,7 @@ public class MfaServiceTests
         _mockSetupStore.Setup(s => s.DeleteAsync(key, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var result = await _service.ConsumeMfaSetupAsync(token, CancellationToken.None);
+        var result = await _service.ConsumeMfaSetupAsync(token, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -605,7 +605,7 @@ public class MfaServiceTests
         _mockSetupStore.Setup(s => s.GetAsync(key, It.IsAny<CancellationToken>()))
             .ReturnsAsync((MfaSetupData?)null);
 
-        var result = await _service.ConsumeMfaSetupAsync(token, CancellationToken.None);
+        var result = await _service.ConsumeMfaSetupAsync(token, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -629,7 +629,7 @@ public class MfaServiceTests
             .Callback<string, CancellationToken>((_, _) => deleteWasCalled = true)
             .ReturnsAsync(true);
 
-        var result = await _service.ConsumeMfaChallengeAsync(token, CancellationToken.None);
+        var result = await _service.ConsumeMfaChallengeAsync(token, TestContext.Current.CancellationToken);
 
         Assert.Null(result); // Expired, so null
         Assert.True(deleteWasCalled); // But delete was still called (prevents replay)

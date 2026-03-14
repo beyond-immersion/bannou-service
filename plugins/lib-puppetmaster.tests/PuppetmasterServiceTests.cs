@@ -97,7 +97,7 @@ public class PuppetmasterServiceTests
         // Act
         var (status, response) = await service.GetStatusAsync(
             new GetStatusRequest(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -114,7 +114,7 @@ public class PuppetmasterServiceTests
         // Act
         var (status, response) = await service.GetStatusAsync(
             new GetStatusRequest(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -131,7 +131,7 @@ public class PuppetmasterServiceTests
         // Act
         var (status, response) = await service.GetStatusAsync(
             new GetStatusRequest(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -147,7 +147,7 @@ public class PuppetmasterServiceTests
         // Act
         var (status, response) = await service.GetStatusAsync(
             new GetStatusRequest(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(response);
@@ -168,7 +168,7 @@ public class PuppetmasterServiceTests
         // Act
         var (status, response) = await service.InvalidateBehaviorsAsync(
             new InvalidateBehaviorsRequest { BehaviorRef = null },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -187,7 +187,7 @@ public class PuppetmasterServiceTests
         // Act
         var (status, response) = await service.InvalidateBehaviorsAsync(
             new InvalidateBehaviorsRequest { BehaviorRef = "" },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -207,7 +207,7 @@ public class PuppetmasterServiceTests
         // Act
         var (status, response) = await service.InvalidateBehaviorsAsync(
             new InvalidateBehaviorsRequest { BehaviorRef = behaviorRef },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -227,7 +227,7 @@ public class PuppetmasterServiceTests
         // Act
         var (status, response) = await service.InvalidateBehaviorsAsync(
             new InvalidateBehaviorsRequest { BehaviorRef = behaviorRef },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -256,7 +256,7 @@ public class PuppetmasterServiceTests
         // Act
         await service.InvalidateBehaviorsAsync(
             new InvalidateBehaviorsRequest { BehaviorRef = null },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(
@@ -284,7 +284,7 @@ public class PuppetmasterServiceTests
         // Act
         var (status, response) = await service.ListWatchersAsync(
             new ListWatchersRequest(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -300,7 +300,7 @@ public class PuppetmasterServiceTests
         // Act
         var (status, response) = await service.ListWatchersAsync(
             new ListWatchersRequest(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(response);
@@ -318,7 +318,7 @@ public class PuppetmasterServiceTests
         // Act
         var (status, response) = await service.ListWatchersAsync(
             new ListWatchersRequest { RealmId = realmId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(response);

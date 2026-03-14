@@ -122,7 +122,7 @@ public class DynamicBehaviorProviderTests
             .ReturnsAsync(expectedDoc);
 
         // Act
-        var result = await _provider.GetDocumentAsync(behaviorRef, CancellationToken.None);
+        var result = await _provider.GetDocumentAsync(behaviorRef, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Same(expectedDoc, result);
@@ -139,7 +139,7 @@ public class DynamicBehaviorProviderTests
             .ReturnsAsync((AbmlDocument?)null);
 
         // Act
-        var result = await _provider.GetDocumentAsync(behaviorRef, CancellationToken.None);
+        var result = await _provider.GetDocumentAsync(behaviorRef, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);

@@ -46,7 +46,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Logs.Count);
@@ -65,7 +65,7 @@ public class ScopeAndErrorTests
         var scope = new VariableScope();
         scope.SetValue("items", new List<string> { "a", "b" });
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", scope);
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", scope, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(3, result.Logs.Count);
@@ -100,7 +100,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -119,7 +119,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -134,7 +134,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Logs.Count);
@@ -154,7 +154,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -169,7 +169,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -200,7 +200,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -215,7 +215,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         // The error from failing flow propagates - but we can check the flow name
         // Since calling flow's on_error should trigger
@@ -232,7 +232,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.IsSuccess);
         Assert.Contains("not found", result.Error);
@@ -248,7 +248,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         // Default: error handled = success, but execution STOPS
         // The second action ("This should NOT run") does not execute
@@ -266,7 +266,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         // With _error_handled=true: error handled AND execution continues
         Assert.True(result.IsSuccess);
@@ -284,7 +284,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         // _error_handled=false means stop (same as default)
         Assert.True(result.IsSuccess);
@@ -315,7 +315,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -331,7 +331,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -347,7 +347,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.IsSuccess);
         Assert.Contains("not found", result.Error);
@@ -361,7 +361,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -400,7 +400,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         // Default: error handled = success, but execution STOPS
         Assert.True(result.IsSuccess);
@@ -420,7 +420,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         // With _error_handled=true: error handled AND execution continues
         Assert.True(result.IsSuccess);
@@ -441,7 +441,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -460,7 +460,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -484,7 +484,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -503,7 +503,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.IsSuccess);
         Assert.Contains("failed", result.Error);
@@ -518,7 +518,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -534,7 +534,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -553,7 +553,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -573,7 +573,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Logs.Count);
@@ -593,7 +593,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         // All 4 log messages should appear - both errors handled with continuation
         Assert.True(result.IsSuccess);
@@ -613,7 +613,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         // Error handled, cached data used, execution continued
         Assert.True(result.IsSuccess);
@@ -631,7 +631,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         // Flow continues after error handling
         Assert.True(result.IsSuccess);
@@ -649,7 +649,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         // Variables set in error handler are available after continuation
         Assert.True(result.IsSuccess);
@@ -667,7 +667,7 @@ public class ScopeAndErrorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         // String "yes" is not boolean true, so execution stops
         Assert.True(result.IsSuccess);

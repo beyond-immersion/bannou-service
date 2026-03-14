@@ -186,7 +186,7 @@ public class PermissionSessionActivityListenerTests
         var sessionId = Guid.NewGuid();
 
         // Act
-        await listener.OnHeartbeatAsync(sessionId, CancellationToken.None);
+        await listener.OnHeartbeatAsync(sessionId, TestContext.Current.CancellationToken);
 
         // Assert — no Redis EXPIRE operations should be attempted (GetRedisOperations is
         // called during constructor, which is expected — the test verifies runtime behavior)
@@ -206,7 +206,7 @@ public class PermissionSessionActivityListenerTests
         var sessionId = Guid.NewGuid();
 
         // Act
-        await listener.OnHeartbeatAsync(sessionId, CancellationToken.None);
+        await listener.OnHeartbeatAsync(sessionId, TestContext.Current.CancellationToken);
 
         // Assert
         _mockRedisOps.Verify(r => r.ExpireAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never());
@@ -231,7 +231,7 @@ public class PermissionSessionActivityListenerTests
         var expectedTtl = TimeSpan.FromSeconds(ttlSeconds);
 
         // Act
-        await listener.OnHeartbeatAsync(sessionId, CancellationToken.None);
+        await listener.OnHeartbeatAsync(sessionId, TestContext.Current.CancellationToken);
 
         // Assert — ExpireAsync called exactly twice with correct keys and TTL
         _mockRedisOps.Verify(r => r.ExpireAsync(expectedStatesKey, expectedTtl, It.IsAny<CancellationToken>()), Times.Once());
@@ -263,7 +263,7 @@ public class PermissionSessionActivityListenerTests
             .ReturnsAsync((Dictionary<string, string>?)null);
 
         // Act
-        await listener.OnConnectedAsync(sessionId, accountId, roles, authorizations, CancellationToken.None);
+        await listener.OnConnectedAsync(sessionId, accountId, roles, authorizations, TestContext.Current.CancellationToken);
 
         // Assert — the delegated method should save session states (role + authorizations)
         _mockDictStringStore.Verify(s => s.SaveAsync(
@@ -304,7 +304,7 @@ public class PermissionSessionActivityListenerTests
         var expectedTtl = TimeSpan.FromSeconds(ttlSeconds);
 
         // Act
-        await listener.OnReconnectedAsync(sessionId, CancellationToken.None);
+        await listener.OnReconnectedAsync(sessionId, TestContext.Current.CancellationToken);
 
         // Assert — TTL refresh on both keys
         _mockRedisOps.Verify(r => r.ExpireAsync(expectedStatesKey, expectedTtl, It.IsAny<CancellationToken>()), Times.Once());
@@ -336,7 +336,7 @@ public class PermissionSessionActivityListenerTests
         var expectedPermissionsKey = $"permission:session:{sessionIdStr}:permissions";
 
         // Act
-        await listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow, CancellationToken.None);
+        await listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow, TestContext.Current.CancellationToken);
 
         // Assert — TTL aligned to reconnection window, not default TTL
         _mockRedisOps.Verify(r => r.ExpireAsync(expectedStatesKey, reconnectionWindow, It.IsAny<CancellationToken>()), Times.Once());
@@ -358,7 +358,7 @@ public class PermissionSessionActivityListenerTests
             .ReturnsAsync(new List<string>());
 
         // Act
-        await listener.OnDisconnectedAsync(sessionId, reconnectable: false, reconnectionWindow: null, CancellationToken.None);
+        await listener.OnDisconnectedAsync(sessionId, reconnectable: false, reconnectionWindow: null, TestContext.Current.CancellationToken);
 
         // Assert — no TTL alignment calls (only HandleSessionDisconnectedAsync side effects)
         // AlignSessionTtlAsync calls GetRedisOperations + ExpireAsync,
@@ -386,7 +386,7 @@ public class PermissionSessionActivityListenerTests
             .ReturnsAsync(new List<string>());
 
         // Act
-        await listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow: null, CancellationToken.None);
+        await listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow: null, TestContext.Current.CancellationToken);
 
         // Assert — reconnectable but null window means no alignment
         _mockRedisOps.Verify(r => r.ExpireAsync(
@@ -427,7 +427,7 @@ public class PermissionSessionActivityListenerTests
             .ThrowsAsync(new InvalidOperationException("Redis connection lost during reconnection"));
 
         // Act — should NOT throw (exception caught internally by RecompileSessionPermissionsAsync)
-        await listener.OnReconnectedAsync(sessionId, CancellationToken.None);
+        await listener.OnReconnectedAsync(sessionId, TestContext.Current.CancellationToken);
 
         // Assert — error event should be published for the caught exception
         _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
@@ -466,7 +466,7 @@ public class PermissionSessionActivityListenerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => listener.OnReconnectedAsync(sessionId, CancellationToken.None));
+            () => listener.OnReconnectedAsync(sessionId, TestContext.Current.CancellationToken));
 
         // Verify no TTL refresh was attempted
         _mockRedisOps.Verify(r => r.ExpireAsync(
@@ -520,7 +520,7 @@ public class PermissionSessionActivityListenerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow, CancellationToken.None));
+            () => listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow, TestContext.Current.CancellationToken));
 
         // The permissions key EXPIRE with reconnectionWindow should never have been called
         // because the states key EXPIRE threw first
@@ -573,7 +573,7 @@ public class PermissionSessionActivityListenerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow, CancellationToken.None));
+            () => listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow, TestContext.Current.CancellationToken));
 
         // Verify the first key (states) was aligned before the failure
         Assert.Contains(statesKey, alignedKeys);
@@ -599,7 +599,7 @@ public class PermissionSessionActivityListenerTests
             .ReturnsAsync(new List<string>());
 
         // Act — should complete without throwing despite reconnectable + window
-        await listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow, CancellationToken.None);
+        await listener.OnDisconnectedAsync(sessionId, reconnectable: true, reconnectionWindow, TestContext.Current.CancellationToken);
 
         // Assert — no ExpireAsync calls attempted
         _mockRedisOps.Verify(r => r.ExpireAsync(

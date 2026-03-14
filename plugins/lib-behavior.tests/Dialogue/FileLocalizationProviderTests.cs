@@ -337,7 +337,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
         CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_key_updated"));
 
         // Act
-        await _provider.ReloadAsync();
+        await _provider.ReloadAsync(TestContext.Current.CancellationToken);
 
         // After reload, next access should see new value
         // Note: This depends on the source clearing its cache on reload

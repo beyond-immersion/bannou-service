@@ -14,7 +14,7 @@ if [ -n "$PLUGIN" ]; then
 
     if [ -f "$test_project" ]; then
         echo "🧪 Running tests in: $test_project"
-        dotnet test "$test_project" --verbosity minimal --logger "console;verbosity=minimal"
+        dotnet test --project "$test_project" --verbosity minimal
 
         if [ $? -eq 0 ]; then
             echo "✅ Unit testing completed for plugin: $PLUGIN"
@@ -42,7 +42,7 @@ else
     for test_project in "${test_projects[@]}"; do
         echo "🧪 Running tests in: $test_project"
 
-        if ! dotnet test "$test_project" --verbosity minimal --logger "console;verbosity=minimal"; then
+        if ! dotnet test --project "$test_project" --verbosity minimal; then
             echo "⚠️  Tests failed in $test_project"
             failed_projects+=("$test_project")
         fi

@@ -62,7 +62,7 @@ public class InMemoryMessageTapTests : IDisposable
         };
 
         // Act
-        var handle = await _messageTap.CreateTapAsync(sourceTopic, destination);
+        var handle = await _messageTap.CreateTapAsync(sourceTopic, destination, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(handle);
@@ -97,19 +97,19 @@ public class InMemoryMessageTapTests : IDisposable
                 receivedEnvelope = env;
                 receivedEvent.TrySetResult(true);
                 return Task.CompletedTask;
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
 
         var handle = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination
         {
             Exchange = destExchange,
             RoutingKey = destRoutingKey
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         var originalEnvelope = new GenericMessageEnvelope(sourceTopic, new { Test = "Value" });
-        await _messageBus.TryPublishAsync(sourceTopic, originalEnvelope);
+        await _messageBus.TryPublishAsync(sourceTopic, originalEnvelope, cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.WhenAny(receivedEvent.Task, Task.Delay(1000));
+        await Task.WhenAny(receivedEvent.Task, Task.Delay(1000, cancellationToken: TestContext.Current.CancellationToken));
 
         // Assert
         Assert.NotNull(receivedEnvelope);
@@ -139,20 +139,20 @@ public class InMemoryMessageTapTests : IDisposable
                 receivedEnvelope = env;
                 receivedEvent.TrySetResult(true);
                 return Task.CompletedTask;
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
 
         var handle = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination
         {
             Exchange = "dest",
             RoutingKey = "key"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         var payload = new TestPayload { Message = "Hello", Value = 42 };
         var originalEnvelope = new GenericMessageEnvelope(sourceTopic, payload);
-        await _messageBus.TryPublishAsync(sourceTopic, originalEnvelope);
+        await _messageBus.TryPublishAsync(sourceTopic, originalEnvelope, cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.WhenAny(receivedEvent.Task, Task.Delay(1000));
+        await Task.WhenAny(receivedEvent.Task, Task.Delay(1000, cancellationToken: TestContext.Current.CancellationToken));
 
         // Assert
         Assert.NotNull(receivedEnvelope);
@@ -182,17 +182,17 @@ public class InMemoryMessageTapTests : IDisposable
             {
                 Interlocked.Increment(ref receivedCount);
                 return Task.CompletedTask;
-            });
+            }, cancellationToken: TestContext.Current.CancellationToken);
 
         var handle = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination
         {
             Exchange = "test-dest",
             RoutingKey = "test-key"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Send first message
-        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { }));
-        await Task.Delay(100);
+        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { }), cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(100, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(1, receivedCount);
 
@@ -201,8 +201,8 @@ public class InMemoryMessageTapTests : IDisposable
         Assert.False(handle.IsActive);
 
         // Send second message
-        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { }));
-        await Task.Delay(100);
+        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { }), cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Still only 1
         Assert.Equal(1, receivedCount);
@@ -216,7 +216,7 @@ public class InMemoryMessageTapTests : IDisposable
         {
             Exchange = "dest",
             RoutingKey = "key"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Dispose multiple times
         await handle.DisposeAsync();
@@ -244,18 +244,18 @@ public class InMemoryMessageTapTests : IDisposable
 
         await _messageBus.SubscribeDynamicAsync<TappedMessageEnvelope>(
             destTopic1,
-            (env, ct) => { received1.Add(env); return Task.CompletedTask; });
+            (env, ct) => { received1.Add(env); return Task.CompletedTask; }, cancellationToken: TestContext.Current.CancellationToken);
 
         await _messageBus.SubscribeDynamicAsync<TappedMessageEnvelope>(
             destTopic2,
-            (env, ct) => { received2.Add(env); return Task.CompletedTask; });
+            (env, ct) => { received2.Add(env); return Task.CompletedTask; }, cancellationToken: TestContext.Current.CancellationToken);
 
-        var tap1 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "dest1", RoutingKey = "key" });
-        var tap2 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "dest2", RoutingKey = "key" });
+        var tap1 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "dest1", RoutingKey = "key" }, cancellationToken: TestContext.Current.CancellationToken);
+        var tap2 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "dest2", RoutingKey = "key" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Send first message (both receive)
-        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Round = 1 }));
-        await Task.Delay(100);
+        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Round = 1 }), cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(100, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Single(received1);
         Assert.Single(received2);
@@ -264,8 +264,8 @@ public class InMemoryMessageTapTests : IDisposable
         await tap1.DisposeAsync();
 
         // Send second message (only tap2 receives)
-        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Round = 2 }));
-        await Task.Delay(100);
+        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Round = 2 }), cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(received1);
@@ -287,23 +287,23 @@ public class InMemoryMessageTapTests : IDisposable
 
         await _messageBus.SubscribeDynamicAsync<TappedMessageEnvelope>(
             "session.client-abc",
-            (env, ct) => { received1.Add(env); return Task.CompletedTask; });
+            (env, ct) => { received1.Add(env); return Task.CompletedTask; }, cancellationToken: TestContext.Current.CancellationToken);
 
         await _messageBus.SubscribeDynamicAsync<TappedMessageEnvelope>(
             "session.client-def",
-            (env, ct) => { received2.Add(env); return Task.CompletedTask; });
+            (env, ct) => { received2.Add(env); return Task.CompletedTask; }, cancellationToken: TestContext.Current.CancellationToken);
 
         await _messageBus.SubscribeDynamicAsync<TappedMessageEnvelope>(
             "session.client-ghi",
-            (env, ct) => { received3.Add(env); return Task.CompletedTask; });
+            (env, ct) => { received3.Add(env); return Task.CompletedTask; }, cancellationToken: TestContext.Current.CancellationToken);
 
-        var tap1 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "session", RoutingKey = "client-abc" });
-        var tap2 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "session", RoutingKey = "client-def" });
-        var tap3 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "session", RoutingKey = "client-ghi" });
+        var tap1 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "session", RoutingKey = "client-abc" }, cancellationToken: TestContext.Current.CancellationToken);
+        var tap2 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "session", RoutingKey = "client-def" }, cancellationToken: TestContext.Current.CancellationToken);
+        var tap3 = await _messageTap.CreateTapAsync(sourceTopic, new TapDestination { Exchange = "session", RoutingKey = "client-ghi" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Send one message
-        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Event = "test" }));
-        await Task.Delay(100);
+        await _messageBus.TryPublishAsync(sourceTopic, new GenericMessageEnvelope(sourceTopic, new { Event = "test" }), cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - All three destinations receive
         Assert.Single(received1);
@@ -334,18 +334,18 @@ public class InMemoryMessageTapTests : IDisposable
 
         await _messageBus.SubscribeDynamicAsync<TappedMessageEnvelope>(
             destTopic,
-            (env, ct) => { receivedEnvelopes.Add(env); return Task.CompletedTask; });
+            (env, ct) => { receivedEnvelopes.Add(env); return Task.CompletedTask; }, cancellationToken: TestContext.Current.CancellationToken);
 
         var dest = new TapDestination { Exchange = "client-events", RoutingKey = "session-123" };
-        var tapA = await _messageTap.CreateTapAsync(sourceA, dest);
-        var tapB = await _messageTap.CreateTapAsync(sourceB, dest);
-        var tapC = await _messageTap.CreateTapAsync(sourceC, dest);
+        var tapA = await _messageTap.CreateTapAsync(sourceA, dest, cancellationToken: TestContext.Current.CancellationToken);
+        var tapB = await _messageTap.CreateTapAsync(sourceB, dest, cancellationToken: TestContext.Current.CancellationToken);
+        var tapC = await _messageTap.CreateTapAsync(sourceC, dest, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Send from each source
-        await _messageBus.TryPublishAsync(sourceA, new GenericMessageEnvelope(sourceA, new { Character = "A" }));
-        await _messageBus.TryPublishAsync(sourceB, new GenericMessageEnvelope(sourceB, new { Character = "B" }));
-        await _messageBus.TryPublishAsync(sourceC, new GenericMessageEnvelope(sourceC, new { Character = "C" }));
-        await Task.Delay(100);
+        await _messageBus.TryPublishAsync(sourceA, new GenericMessageEnvelope(sourceA, new { Character = "A" }), cancellationToken: TestContext.Current.CancellationToken);
+        await _messageBus.TryPublishAsync(sourceB, new GenericMessageEnvelope(sourceB, new { Character = "B" }), cancellationToken: TestContext.Current.CancellationToken);
+        await _messageBus.TryPublishAsync(sourceC, new GenericMessageEnvelope(sourceC, new { Character = "C" }), cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, receivedEnvelopes.Count);
@@ -389,7 +389,7 @@ public class InMemoryMessageTapTests : IDisposable
         var beforeCreate = DateTimeOffset.UtcNow;
 
         // Act
-        var handle = await _messageTap.CreateTapAsync(sourceTopic, destination);
+        var handle = await _messageTap.CreateTapAsync(sourceTopic, destination, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotEqual(Guid.Empty, handle.TapId);
@@ -410,8 +410,8 @@ public class InMemoryMessageTapTests : IDisposable
     public async Task DisposeAsync_CleansUpAllTaps()
     {
         // Arrange
-        var tap1 = await _messageTap.CreateTapAsync("source1", new TapDestination { Exchange = "dest", RoutingKey = "key1" });
-        var tap2 = await _messageTap.CreateTapAsync("source2", new TapDestination { Exchange = "dest", RoutingKey = "key2" });
+        var tap1 = await _messageTap.CreateTapAsync("source1", new TapDestination { Exchange = "dest", RoutingKey = "key1" }, cancellationToken: TestContext.Current.CancellationToken);
+        var tap2 = await _messageTap.CreateTapAsync("source2", new TapDestination { Exchange = "dest", RoutingKey = "key2" }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(tap1.IsActive);
         Assert.True(tap2.IsActive);

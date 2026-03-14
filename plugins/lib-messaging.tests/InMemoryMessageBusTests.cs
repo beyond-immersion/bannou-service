@@ -42,7 +42,7 @@ public class InMemoryMessageBusTests
         var eventData = new TestEvent { Message = "Hello" };
 
         // Act
-        var result = await _messageBus.TryPublishAsync(topic, eventData);
+        var result = await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -60,13 +60,13 @@ public class InMemoryMessageBusTests
         {
             receivedEvent = evt;
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        await _messageBus.TryPublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
 
         // Allow delivery to complete
-        await Task.Delay(50);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(receivedEvent);
@@ -85,19 +85,19 @@ public class InMemoryMessageBusTests
         {
             Interlocked.Increment(ref receivedCount);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         await _messageBus.SubscribeAsync<TestEvent>(topic, (evt, ct) =>
         {
             Interlocked.Increment(ref receivedCount);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        await _messageBus.TryPublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
 
         // Allow delivery to complete
-        await Task.Delay(50);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, receivedCount);
@@ -111,7 +111,7 @@ public class InMemoryMessageBusTests
         var eventData = new TestEvent { Message = "Hello" };
 
         // Act
-        var result = await _messageBus.TryPublishAsync(topic, eventData);
+        var result = await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -130,7 +130,7 @@ public class InMemoryMessageBusTests
         };
 
         // Act
-        var result = await _messageBus.TryPublishAsync(topic, eventData, options);
+        var result = await _messageBus.TryPublishAsync(topic, eventData, options, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -147,19 +147,19 @@ public class InMemoryMessageBusTests
         await _messageBus.SubscribeAsync<TestEvent>(topic, (evt, ct) =>
         {
             throw new InvalidOperationException("First subscriber fails");
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         await _messageBus.SubscribeAsync<TestEvent>(topic, (evt, ct) =>
         {
             secondSubscriberCalled = true;
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        await _messageBus.TryPublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
 
         // Allow delivery to complete
-        await Task.Delay(50);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(secondSubscriberCalled);
@@ -178,7 +178,7 @@ public class InMemoryMessageBusTests
         var contentType = "application/octet-stream";
 
         // Act
-        var result = await _messageBus.TryPublishRawAsync(topic, payload, contentType);
+        var result = await _messageBus.TryPublishRawAsync(topic, payload, contentType, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -193,7 +193,7 @@ public class InMemoryMessageBusTests
         var contentType = "application/octet-stream";
 
         // Act
-        var result = await _messageBus.TryPublishRawAsync(topic, payload, contentType);
+        var result = await _messageBus.TryPublishRawAsync(topic, payload, contentType, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -214,7 +214,7 @@ public class InMemoryMessageBusTests
 
         // Act
         var result = await _messageBus.TryPublishErrorAsync(
-            serviceId, operation, errorType, message);
+            serviceId, operation, errorType, message, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -238,7 +238,7 @@ public class InMemoryMessageBusTests
         // Act
         var result = await _messageBus.TryPublishErrorAsync(
             serviceId, operation, errorType, message,
-            dependency, endpoint, severity, details, stack, correlationId);
+            dependency, endpoint, severity, details, stack, correlationId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -256,7 +256,7 @@ public class InMemoryMessageBusTests
         var handler = new Func<TestEvent, CancellationToken, Task>((evt, ct) => Task.CompletedTask);
 
         // Act & Assert - should complete without exception
-        var exception = await Record.ExceptionAsync(() => _messageBus.SubscribeAsync(topic, handler));
+        var exception = await Record.ExceptionAsync(() => _messageBus.SubscribeAsync(topic, handler, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Null(exception);
     }
 
@@ -270,7 +270,7 @@ public class InMemoryMessageBusTests
 
         // Act & Assert - should complete without exception
         var exception = await Record.ExceptionAsync(() =>
-            _messageBus.SubscribeAsync(topic, handler, exchange: null, options: options));
+            _messageBus.SubscribeAsync(topic, handler, exchange: null, options: options, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Null(exception);
     }
 
@@ -286,7 +286,7 @@ public class InMemoryMessageBusTests
         var handler = new Func<TestEvent, CancellationToken, Task>((evt, ct) => Task.CompletedTask);
 
         // Act
-        var disposable = await _messageBus.SubscribeDynamicAsync(topic, handler);
+        var disposable = await _messageBus.SubscribeDynamicAsync(topic, handler, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(disposable);
@@ -304,13 +304,13 @@ public class InMemoryMessageBusTests
         {
             receivedEvent = evt;
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        await _messageBus.TryPublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
 
         // Allow delivery to complete
-        await Task.Delay(50);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(receivedEvent);
@@ -332,18 +332,18 @@ public class InMemoryMessageBusTests
         {
             Interlocked.Increment(ref receivedCount);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // First publish - should receive
-        await _messageBus.TryPublishAsync(topic, eventData);
-        await Task.Delay(50);
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Dispose
         await disposable.DisposeAsync();
 
         // Second publish - should NOT receive
-        await _messageBus.TryPublishAsync(topic, eventData);
-        await Task.Delay(50);
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, receivedCount);
@@ -358,7 +358,7 @@ public class InMemoryMessageBusTests
     {
         // Arrange
         var topic = "test.topic";
-        await _messageBus.SubscribeAsync<TestEvent>(topic, (evt, ct) => Task.CompletedTask);
+        await _messageBus.SubscribeAsync<TestEvent>(topic, (evt, ct) => Task.CompletedTask, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act & Assert - should complete without exception
         var exception = await Record.ExceptionAsync(() => _messageBus.UnsubscribeAsync(topic));
@@ -377,25 +377,25 @@ public class InMemoryMessageBusTests
         {
             Interlocked.Increment(ref receivedCount);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         await _messageBus.SubscribeAsync<TestEvent>(topic, (evt, ct) =>
         {
             Interlocked.Increment(ref receivedCount);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // First publish - should receive twice
-        await _messageBus.TryPublishAsync(topic, eventData);
-        await Task.Delay(50);
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(2, receivedCount);
 
         // Act - Unsubscribe
         await _messageBus.UnsubscribeAsync(topic);
 
         // Second publish - should NOT receive
-        await _messageBus.TryPublishAsync(topic, eventData);
-        await Task.Delay(50);
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, receivedCount);
@@ -429,13 +429,13 @@ public class InMemoryMessageBusTests
         {
             Interlocked.Increment(ref receivedCount);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        await _messageBus.TryPublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
 
         // Allow delivery to complete
-        await Task.Delay(50);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should not receive because types don't match
         Assert.Equal(0, receivedCount);
@@ -453,13 +453,13 @@ public class InMemoryMessageBusTests
         {
             Interlocked.Increment(ref receivedCount);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        await _messageBus.TryPublishAsync(topic, eventData);
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
 
         // Allow delivery to complete
-        await Task.Delay(50);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, receivedCount);
@@ -481,7 +481,7 @@ public class InMemoryMessageBusTests
         {
             Interlocked.Increment(ref receivedCount);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Publish from multiple tasks concurrently
         var tasks = Enumerable.Range(0, publishCount)
@@ -491,7 +491,7 @@ public class InMemoryMessageBusTests
         await Task.WhenAll(tasks);
 
         // Allow delivery to complete
-        await Task.Delay(200);
+        await Task.Delay(200, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - All messages should be delivered
         Assert.Equal(publishCount, receivedCount);
@@ -544,7 +544,7 @@ public class InMemoryMessageBusTests
     {
         // Arrange
         var topic = "test.topic";
-        var receivedCancellationToken = default(CancellationToken);
+        var receivedCancellationToken = TestContext.Current.CancellationToken;
         var eventData = new TestEvent { Message = "Hello" };
         using var cts = new CancellationTokenSource();
 
@@ -552,13 +552,13 @@ public class InMemoryMessageBusTests
         {
             receivedCancellationToken = ct;
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
         await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: cts.Token);
 
         // Allow delivery to complete
-        await Task.Delay(50);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - The handler receives the cancellation token
         Assert.Equal(cts.Token, receivedCancellationToken);
@@ -576,7 +576,7 @@ public class InMemoryMessageBusTests
         var handler = new Func<byte[], CancellationToken, Task>((bytes, ct) => Task.CompletedTask);
 
         // Act
-        var disposable = await _messageBus.SubscribeDynamicRawAsync(topic, handler);
+        var disposable = await _messageBus.SubscribeDynamicRawAsync(topic, handler, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(disposable);
@@ -596,13 +596,13 @@ public class InMemoryMessageBusTests
             receivedBytes = bytes;
             receivedEvent.TrySetResult(true);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         var eventData = new TestEvent { Message = "RawTest" };
 
         // Act
-        await _messageBus.TryPublishAsync(topic, eventData);
-        await Task.WhenAny(receivedEvent.Task, Task.Delay(1000));
+        await _messageBus.TryPublishAsync(topic, eventData, cancellationToken: TestContext.Current.CancellationToken);
+        await Task.WhenAny(receivedEvent.Task, Task.Delay(1000, cancellationToken: TestContext.Current.CancellationToken));
 
         // Assert - Should receive bytes containing the serialized message
         Assert.NotNull(receivedBytes);
@@ -625,19 +625,19 @@ public class InMemoryMessageBusTests
         {
             Interlocked.Increment(ref receivedCount);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // First publish - should receive
-        await _messageBus.TryPublishAsync(topic, new TestEvent { Message = "First" });
-        await Task.Delay(50);
+        await _messageBus.TryPublishAsync(topic, new TestEvent { Message = "First" }, cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(1, receivedCount);
 
         // Act - Dispose
         await disposable.DisposeAsync();
 
         // Second publish - should NOT receive
-        await _messageBus.TryPublishAsync(topic, new TestEvent { Message = "Second" });
-        await Task.Delay(50);
+        await _messageBus.TryPublishAsync(topic, new TestEvent { Message = "Second" }, cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, receivedCount);
@@ -660,11 +660,11 @@ public class InMemoryMessageBusTests
         await _messageBus.SubscribeAsync<TestEvent>(topic, (evt, ct) =>
         {
             throw new InvalidOperationException("Handler failure");
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _messageBus.TryPublishAsync(topic, new TestEvent { Message = "Test" });
-        await Task.Delay(50);
+        var result = await _messageBus.TryPublishAsync(topic, new TestEvent { Message = "Test" }, cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should still return true (delivery is fire-and-forget)
         Assert.True(result);
@@ -687,17 +687,17 @@ public class InMemoryMessageBusTests
         {
             Interlocked.Increment(ref receivedOnTopic1);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         await _messageBus.SubscribeAsync<TestEvent>(topic2, (evt, ct) =>
         {
             Interlocked.Increment(ref receivedOnTopic2);
             return Task.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Publish only to topic1
-        await _messageBus.TryPublishAsync(topic1, new TestEvent { Message = "OnlyTopic1" });
-        await Task.Delay(50);
+        await _messageBus.TryPublishAsync(topic1, new TestEvent { Message = "OnlyTopic1" }, cancellationToken: TestContext.Current.CancellationToken);
+        await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, receivedOnTopic1);

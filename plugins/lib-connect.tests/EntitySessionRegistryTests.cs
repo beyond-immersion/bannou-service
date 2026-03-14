@@ -101,7 +101,7 @@ public class EntitySessionRegistryTests
         var sessionId = Guid.NewGuid().ToString();
 
         // Act
-        await _registry.RegisterAsync(entityType, entityId, sessionId);
+        await _registry.RegisterAsync(entityType, entityId, sessionId, TestContext.Current.CancellationToken);
 
         // Assert - forward index: entity-sessions:{entityType}:{entityId} -> sessionId
         _mockCacheStore.Verify(s => s.AddToSetAsync(
@@ -128,8 +128,8 @@ public class EntitySessionRegistryTests
         var sessionId2 = Guid.NewGuid().ToString();
 
         // Act
-        await _registry.RegisterAsync(entityType, entityId, sessionId1);
-        await _registry.RegisterAsync(entityType, entityId, sessionId2);
+        await _registry.RegisterAsync(entityType, entityId, sessionId1, TestContext.Current.CancellationToken);
+        await _registry.RegisterAsync(entityType, entityId, sessionId2, TestContext.Current.CancellationToken);
 
         // Assert - both sessions added to forward index
         _mockCacheStore.Verify(s => s.AddToSetAsync(
@@ -154,7 +154,7 @@ public class EntitySessionRegistryTests
 
         // Act & Assert - should not throw
         var exception = await Record.ExceptionAsync(() =>
-            _registry.RegisterAsync("character", Guid.NewGuid(), Guid.NewGuid().ToString()));
+            _registry.RegisterAsync("character", Guid.NewGuid(), Guid.NewGuid().ToString(), TestContext.Current.CancellationToken));
         Assert.Null(exception);
 
         // Verify error event was published
@@ -185,7 +185,7 @@ public class EntitySessionRegistryTests
         var sessionId = Guid.NewGuid().ToString();
 
         // Act
-        await _registry.UnregisterAsync(entityType, entityId, sessionId);
+        await _registry.UnregisterAsync(entityType, entityId, sessionId, TestContext.Current.CancellationToken);
 
         // Assert - forward index removal
         _mockCacheStore.Verify(s => s.RemoveFromSetAsync(
@@ -213,7 +213,7 @@ public class EntitySessionRegistryTests
             .ReturnsAsync(0L);
 
         // Act
-        await _registry.UnregisterAsync(entityType, entityId, sessionId);
+        await _registry.UnregisterAsync(entityType, entityId, sessionId, TestContext.Current.CancellationToken);
 
         // Assert - empty forward set should be deleted
         _mockCacheStore.Verify(s => s.DeleteSetAsync(
@@ -234,7 +234,7 @@ public class EntitySessionRegistryTests
             .ReturnsAsync(2L);
 
         // Act
-        await _registry.UnregisterAsync(entityType, entityId, sessionId);
+        await _registry.UnregisterAsync(entityType, entityId, sessionId, TestContext.Current.CancellationToken);
 
         // Assert - forward set should NOT be deleted
         _mockCacheStore.Verify(s => s.DeleteSetAsync(
@@ -252,7 +252,7 @@ public class EntitySessionRegistryTests
 
         // Act & Assert - should not throw
         var exception = await Record.ExceptionAsync(() =>
-            _registry.UnregisterAsync("character", Guid.NewGuid(), Guid.NewGuid().ToString()));
+            _registry.UnregisterAsync("character", Guid.NewGuid(), Guid.NewGuid().ToString(), TestContext.Current.CancellationToken));
         Assert.Null(exception);
     }
 
@@ -269,7 +269,7 @@ public class EntitySessionRegistryTests
             .ReturnsAsync(new List<string>());
 
         // Act
-        var result = await _registry.GetSessionsForEntityAsync("character", Guid.NewGuid());
+        var result = await _registry.GetSessionsForEntityAsync("character", Guid.NewGuid(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -295,7 +295,7 @@ public class EntitySessionRegistryTests
             .ReturnsAsync(new SessionHeartbeat { SessionId = Guid.NewGuid() });
 
         // Act
-        var result = await _registry.GetSessionsForEntityAsync(entityType, entityId);
+        var result = await _registry.GetSessionsForEntityAsync(entityType, entityId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -325,7 +325,7 @@ public class EntitySessionRegistryTests
             .ReturnsAsync((SessionHeartbeat?)null);
 
         // Act
-        var result = await _registry.GetSessionsForEntityAsync(entityType, entityId);
+        var result = await _registry.GetSessionsForEntityAsync(entityType, entityId, TestContext.Current.CancellationToken);
 
         // Assert - only live session returned
         Assert.Single(result);
@@ -348,7 +348,7 @@ public class EntitySessionRegistryTests
             .ThrowsAsync(new InvalidOperationException("Store error"));
 
         // Act
-        var result = await _registry.GetSessionsForEntityAsync("character", Guid.NewGuid());
+        var result = await _registry.GetSessionsForEntityAsync("character", Guid.NewGuid(), TestContext.Current.CancellationToken);
 
         // Assert - graceful degradation
         Assert.NotNull(result);
@@ -370,7 +370,7 @@ public class EntitySessionRegistryTests
             .ReturnsAsync(new List<string>());
 
         // Act
-        await _registry.UnregisterSessionAsync(sessionId);
+        await _registry.UnregisterSessionAsync(sessionId, TestContext.Current.CancellationToken);
 
         // Assert - no forward index removals attempted
         _mockCacheStore.Verify(s => s.RemoveFromSetAsync(
@@ -401,7 +401,7 @@ public class EntitySessionRegistryTests
             .ReturnsAsync(1L);
 
         // Act
-        await _registry.UnregisterSessionAsync(sessionId);
+        await _registry.UnregisterSessionAsync(sessionId, TestContext.Current.CancellationToken);
 
         // Assert - session removed from each entity's forward index
         _mockCacheStore.Verify(s => s.RemoveFromSetAsync(
@@ -439,7 +439,7 @@ public class EntitySessionRegistryTests
             .ReturnsAsync(0L);
 
         // Act
-        await _registry.UnregisterSessionAsync(sessionId);
+        await _registry.UnregisterSessionAsync(sessionId, TestContext.Current.CancellationToken);
 
         // Assert - empty forward set deleted
         _mockCacheStore.Verify(s => s.DeleteSetAsync(
@@ -483,7 +483,7 @@ public class EntitySessionRegistryTests
             .ReturnsAsync(1L);
 
         // Act - should not throw
-        var exception = await Record.ExceptionAsync(() => _registry.UnregisterSessionAsync(sessionId));
+        var exception = await Record.ExceptionAsync(() => _registry.UnregisterSessionAsync(sessionId, TestContext.Current.CancellationToken));
         Assert.Null(exception);
 
         // Assert - both bindings attempted (best-effort), reverse key still deleted
@@ -508,7 +508,7 @@ public class EntitySessionRegistryTests
             .ThrowsAsync(new InvalidOperationException("Store error"));
 
         // Act & Assert - should not throw
-        var exception = await Record.ExceptionAsync(() => _registry.UnregisterSessionAsync(sessionId));
+        var exception = await Record.ExceptionAsync(() => _registry.UnregisterSessionAsync(sessionId, TestContext.Current.CancellationToken));
         Assert.Null(exception);
     }
 

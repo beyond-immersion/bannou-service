@@ -303,7 +303,7 @@ public class WebSocketConnectionManagerTests
         var message = CreateTestMessage();
 
         // Act
-        var result = await _manager.SendMessageAsync("non-existent", message);
+        var result = await _manager.SendMessageAsync("non-existent", message, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -319,7 +319,7 @@ public class WebSocketConnectionManagerTests
         var message = CreateTestMessage();
 
         // Act
-        var result = await _manager.SendMessageAsync(sessionId, message);
+        var result = await _manager.SendMessageAsync(sessionId, message, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -335,7 +335,7 @@ public class WebSocketConnectionManagerTests
         var message = CreateTestMessage();
 
         // Act
-        var result = await _manager.SendMessageAsync(sessionId, message);
+        var result = await _manager.SendMessageAsync(sessionId, message, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -360,7 +360,7 @@ public class WebSocketConnectionManagerTests
         var message = CreateTestMessage();
 
         // Act
-        var result = await _manager.SendMessageAsync(sessionId, message);
+        var result = await _manager.SendMessageAsync(sessionId, message, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -378,7 +378,7 @@ public class WebSocketConnectionManagerTests
         var message = CreateTestMessage();
 
         // Act & Assert - should complete without exception
-        var exception = await Record.ExceptionAsync(() => _manager.BroadcastMessageAsync(message));
+        var exception = await Record.ExceptionAsync(() => _manager.BroadcastMessageAsync(message, TestContext.Current.CancellationToken));
         Assert.Null(exception);
     }
 
@@ -397,7 +397,7 @@ public class WebSocketConnectionManagerTests
         var message = CreateTestMessage();
 
         // Act
-        await _manager.BroadcastMessageAsync(message);
+        await _manager.BroadcastMessageAsync(message, TestContext.Current.CancellationToken);
 
         // Assert - each WebSocket should receive the message
         mockWebSocket1.Verify(ws => ws.SendAsync(

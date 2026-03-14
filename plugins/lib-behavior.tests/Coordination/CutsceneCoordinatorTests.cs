@@ -44,7 +44,7 @@ public sealed class CutsceneCoordinatorTests : IDisposable
             "session1",
             "cinematic1",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(session);
@@ -60,7 +60,7 @@ public sealed class CutsceneCoordinatorTests : IDisposable
             "session1",
             "cinematic1",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(_coordinator.ActiveSessions);
@@ -74,7 +74,7 @@ public sealed class CutsceneCoordinatorTests : IDisposable
             "duplicate",
             "cinematic1",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -82,7 +82,7 @@ public sealed class CutsceneCoordinatorTests : IDisposable
                 "duplicate",
                 "cinematic2",
                 _participants,
-                CutsceneSessionOptions.Default));
+                CutsceneSessionOptions.Default, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public sealed class CutsceneCoordinatorTests : IDisposable
                 "session1",
                 "cinematic1",
                 new List<Guid>(),
-                CutsceneSessionOptions.Default));
+                CutsceneSessionOptions.Default, TestContext.Current.CancellationToken));
     }
 
     // =========================================================================
@@ -109,7 +109,7 @@ public sealed class CutsceneCoordinatorTests : IDisposable
             "session1",
             "cinematic1",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         // Act
         var session = _coordinator.GetSession("session1");
@@ -151,10 +151,10 @@ public sealed class CutsceneCoordinatorTests : IDisposable
             "session1",
             "cinematic1",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         // Act
-        await _coordinator.EndSessionAsync("session1");
+        await _coordinator.EndSessionAsync("session1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(_coordinator.ActiveSessions);
@@ -168,7 +168,7 @@ public sealed class CutsceneCoordinatorTests : IDisposable
         var initialCount = _coordinator.ActiveSessions.Count;
 
         // Act
-        await _coordinator.EndSessionAsync("nonexistent");
+        await _coordinator.EndSessionAsync("nonexistent", TestContext.Current.CancellationToken);
 
         // Assert - state unchanged, no exception
         Assert.Equal(initialCount, _coordinator.ActiveSessions.Count);
@@ -183,10 +183,10 @@ public sealed class CutsceneCoordinatorTests : IDisposable
             "session1",
             "cinematic1",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         // Act
-        await _coordinator.EndSessionAsync("session1");
+        await _coordinator.EndSessionAsync("session1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(
@@ -206,16 +206,16 @@ public sealed class CutsceneCoordinatorTests : IDisposable
             "session1",
             "cinematic1",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         await _coordinator.CreateSessionAsync(
             "session2",
             "cinematic2",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         // Complete session1
-        await session1.CompleteAsync();
+        await session1.CompleteAsync(TestContext.Current.CancellationToken);
 
         // Act
         var active = _coordinator.ActiveSessions;
@@ -233,10 +233,10 @@ public sealed class CutsceneCoordinatorTests : IDisposable
             "session1",
             "cinematic1",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         // Abort session
-        await session.AbortAsync("test");
+        await session.AbortAsync("test", TestContext.Current.CancellationToken);
 
         // Act
         var active = _coordinator.ActiveSessions;
@@ -260,19 +260,19 @@ public sealed class CutsceneCoordinatorTests : IDisposable
             "session1",
             "cinematic1",
             new List<Guid> { entity1 },
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         await _coordinator.CreateSessionAsync(
             "session2",
             "cinematic2",
             new List<Guid> { entity1, entity2 },
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         await _coordinator.CreateSessionAsync(
             "session3",
             "cinematic3",
             new List<Guid> { entity2 },
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         // Act
         var sessions = _coordinator.GetSessionsForEntity(entity1);
@@ -294,22 +294,22 @@ public sealed class CutsceneCoordinatorTests : IDisposable
             "session1",
             "cinematic1",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         var session2 = await _coordinator.CreateSessionAsync(
             "session2",
             "cinematic2",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         await _coordinator.CreateSessionAsync(
             "session3",
             "cinematic3",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
-        await session1.CompleteAsync();
-        await session2.AbortAsync("test");
+        await session1.CompleteAsync(TestContext.Current.CancellationToken);
+        await session2.AbortAsync("test", TestContext.Current.CancellationToken);
 
         // Act
         _coordinator.CleanupCompletedSessions();
@@ -332,7 +332,7 @@ public sealed class CutsceneCoordinatorTests : IDisposable
             "session1",
             "cinematic1",
             _participants,
-            CutsceneSessionOptions.Default);
+            CutsceneSessionOptions.Default, TestContext.Current.CancellationToken);
 
         // Act
         _coordinator.Dispose();
@@ -353,6 +353,6 @@ public sealed class CutsceneCoordinatorTests : IDisposable
                 "session1",
                 "cinematic1",
                 _participants,
-                CutsceneSessionOptions.Default));
+                CutsceneSessionOptions.Default, TestContext.Current.CancellationToken));
     }
 }

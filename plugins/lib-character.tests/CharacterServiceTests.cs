@@ -201,7 +201,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             });
 
         // Act
-        var (status, response) = await service.GetCharacterAsync(request);
+        var (status, response) = await service.GetCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -224,7 +224,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.GetCharacterAsync(request);
+        var (status, response) = await service.GetCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -243,7 +243,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ThrowsAsync(new Exception("State store unavailable"));
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.GetCharacterAsync(request));
+        await Assert.ThrowsAsync<Exception>(() => service.GetCharacterAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -302,7 +302,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.UpdateCharacterAsync(request);
+        var (status, response) = await service.UpdateCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -386,7 +386,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.UpdateCharacterAsync(request);
+        var (status, response) = await service.UpdateCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -412,7 +412,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.UpdateCharacterAsync(request);
+        var (status, response) = await service.UpdateCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -449,7 +449,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             });
 
         // Act
-        var (status, response) = await service.UpdateCharacterAsync(request);
+        var (status, response) = await service.UpdateCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -500,7 +500,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         SetupJsonQueryPagedAsync(new List<CharacterModel> { character }, totalCount: 1);
 
         // Act
-        var (status, response) = await service.ListCharactersAsync(request);
+        var (status, response) = await service.ListCharactersAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -524,7 +524,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         SetupJsonQueryPagedAsync(new List<CharacterModel>(), totalCount: 0);
 
         // Act
-        var (status, response) = await service.ListCharactersAsync(request);
+        var (status, response) = await service.ListCharactersAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -561,7 +561,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         SetupJsonQueryPagedAsync(new List<CharacterModel> { aliveCharacter }, totalCount: 1);
 
         // Act
-        var (status, response) = await service.ListCharactersAsync(request);
+        var (status, response) = await service.ListCharactersAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -610,7 +610,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         SetupJsonQueryPagedAsync(pageCharacters, totalCount: 5, offset: 2, limit: 2);
 
         // Act
-        var (status, response) = await service.ListCharactersAsync(request);
+        var (status, response) = await service.ListCharactersAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -654,7 +654,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         SetupJsonQueryPagedAsync(new List<CharacterModel> { character }, totalCount: 1);
 
         // Act
-        var (status, response) = await service.GetCharactersByRealmAsync(request);
+        var (status, response) = await service.GetCharactersByRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -693,7 +693,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         SetupJsonQueryPagedAsync(new List<CharacterModel> { targetCharacter }, totalCount: 1);
 
         // Act
-        var (status, response) = await service.GetCharactersByRealmAsync(request);
+        var (status, response) = await service.GetCharactersByRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -768,7 +768,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync("etag2");
 
         // Act
-        var (status, response) = await service.CheckCharacterReferencesAsync(request);
+        var (status, response) = await service.CheckCharacterReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -827,7 +827,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.CheckCharacterReferencesAsync(request);
+        var (status, response) = await service.CheckCharacterReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -884,7 +884,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.CheckCharacterReferencesAsync(request);
+        var (status, response) = await service.CheckCharacterReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Still succeeds with L2 data only (graceful degradation)
         Assert.Equal(StatusCodes.OK, status);
@@ -958,7 +958,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.CheckCharacterReferencesAsync(request);
+        var (status, response) = await service.CheckCharacterReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Total = 2 (L2 rel) + 3 (L4 from lib-resource) + 1 (contracts) = 6
         Assert.Equal(StatusCodes.OK, status);
@@ -983,7 +983,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.CheckCharacterReferencesAsync(request);
+        var (status, response) = await service.CheckCharacterReferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1063,7 +1063,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1092,7 +1092,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1130,7 +1130,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1169,7 +1169,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1213,7 +1213,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act & Assert - ApiException propagates to generated controller which returns 503
-        await Assert.ThrowsAsync<ApiException>(() => service.GetCompressDataAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<ApiException>(() => service.GetCompressDataAsync(request, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1231,7 +1231,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetCompressDataAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetCompressDataAsync(request, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1343,7 +1343,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1419,7 +1419,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.CreateCharacterAsync(request);
+        var (status, response) = await service.CreateCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -1476,7 +1476,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.CreateCharacterAsync(request);
+        var (status, response) = await service.CreateCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1511,7 +1511,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.CreateCharacterAsync(request);
+        var (status, response) = await service.CreateCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1542,7 +1542,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.CreateCharacterAsync(request);
+        var (status, response) = await service.CreateCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1582,7 +1582,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         };
 
         // Act
-        var (status, response) = await service.CreateCharacterAsync(request);
+        var (status, response) = await service.CreateCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1625,7 +1625,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.CreateCharacterAsync(request);
+        var (status, response) = await service.CreateCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1695,7 +1695,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync(true);
 
         // Act
-        var status = await service.DeleteCharacterAsync(request);
+        var status = await service.DeleteCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1731,7 +1731,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        var status = await service.DeleteCharacterAsync(request);
+        var status = await service.DeleteCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1788,7 +1788,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync("etag2");
 
         // Act
-        var status = await service.DeleteCharacterAsync(request);
+        var status = await service.DeleteCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1838,7 +1838,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             });
 
         // Act
-        var status = await service.DeleteCharacterAsync(request);
+        var status = await service.DeleteCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Deletion blocked
         Assert.Equal(StatusCodes.Conflict, status);
@@ -1873,7 +1873,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync("etag2");
 
         // Act
-        var status = await service.DeleteCharacterAsync(request);
+        var status = await service.DeleteCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Deletion proceeded (404 = no references, safe to delete)
         Assert.Equal(StatusCodes.OK, status);
@@ -1901,7 +1901,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ThrowsAsync(new ApiException("Service unavailable", 503, null, null, null));
 
         // Act
-        var status = await service.DeleteCharacterAsync(request);
+        var status = await service.DeleteCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Fail closed to protect referential integrity
         Assert.Equal(StatusCodes.ServiceUnavailable, status);
@@ -2027,7 +2027,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+        var (status, response) = await service.TransferCharacterToRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -2085,7 +2085,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync(new RealmExistsResponse { Exists = false, IsActive = false });
 
         // Act
-        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+        var (status, response) = await service.TransferCharacterToRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2110,7 +2110,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync(new RealmExistsResponse { Exists = true, IsActive = false });
 
         // Act
-        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+        var (status, response) = await service.TransferCharacterToRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2142,7 +2142,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         SetupCharacterExistsInRealm(characterId, realmId);
 
         // Act
-        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+        var (status, response) = await service.TransferCharacterToRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2174,7 +2174,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+        var (status, response) = await service.TransferCharacterToRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2214,7 +2214,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync(failedLock.Object);
 
         // Act
-        var (status, response) = await service.TransferCharacterToRealmAsync(request);
+        var (status, response) = await service.TransferCharacterToRealmAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2259,7 +2259,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             });
 
         // Act
-        var (status, response) = await service.GetEnrichedCharacterAsync(request);
+        var (status, response) = await service.GetEnrichedCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2358,7 +2358,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         SetupBulkStateAsync(characterDict);
 
         // Act
-        var (status, response) = await service.GetEnrichedCharacterAsync(request);
+        var (status, response) = await service.GetEnrichedCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2386,7 +2386,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.GetEnrichedCharacterAsync(request);
+        var (status, response) = await service.GetEnrichedCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2431,7 +2431,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
 
         // Act
-        var (status, response) = await service.GetEnrichedCharacterAsync(request);
+        var (status, response) = await service.GetEnrichedCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Graceful degradation: empty family tree, not error
         Assert.Equal(StatusCodes.OK, status);
@@ -2515,7 +2515,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.CompressCharacterAsync(request);
+        var (status, response) = await service.CompressCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -2576,7 +2576,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             });
 
         // Act
-        var (status, response) = await service.CompressCharacterAsync(request);
+        var (status, response) = await service.CompressCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2622,7 +2622,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             });
 
         // Act
-        var (status, response) = await service.CompressCharacterAsync(request);
+        var (status, response) = await service.CompressCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -2645,7 +2645,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync((string?)null);
 
         // Act
-        var (status, response) = await service.CompressCharacterAsync(request);
+        var (status, response) = await service.CompressCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -2678,7 +2678,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync(failedLock.Object);
 
         // Act
-        var (status, response) = await service.CompressCharacterAsync(request);
+        var (status, response) = await service.CompressCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2746,7 +2746,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await service.CompressCharacterAsync(request);
+        var (status, response) = await service.CompressCharacterAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

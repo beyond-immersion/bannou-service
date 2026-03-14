@@ -130,7 +130,7 @@ public class HeartbeatEmitterTests
 
         // Act - wait for multiple heartbeat cycles
         emitter.Start();
-        await Task.Delay(2500);
+        await Task.Delay(2500, TestContext.Current.CancellationToken);
         await emitter.StopAsync();
         await emitter.DisposeAsync();
 
@@ -168,7 +168,7 @@ public class HeartbeatEmitterTests
 
         // Act
         emitter.Start();
-        await Task.Delay(1500);
+        await Task.Delay(1500, TestContext.Current.CancellationToken);
         await emitter.StopAsync();
         await emitter.DisposeAsync();
 
@@ -211,7 +211,7 @@ public class HeartbeatEmitterTests
 
         // Act
         emitter.Start();
-        await Task.Delay(1500);
+        await Task.Delay(1500, TestContext.Current.CancellationToken);
         await emitter.StopAsync();
         await emitter.DisposeAsync();
 

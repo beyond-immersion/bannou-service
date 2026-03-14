@@ -171,7 +171,7 @@ public class TokenServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        await _service.StoreRefreshTokenAsync(accountId, refreshToken);
+        await _service.StoreRefreshTokenAsync(accountId, refreshToken, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - TTL is in seconds: 7 days = 604800 seconds
         _mockStringStore.Verify(s => s.SaveAsync(
@@ -198,7 +198,7 @@ public class TokenServiceTests
             .ReturnsAsync(expectedAccountId.ToString());
 
         // Act
-        var result = await _service.ValidateRefreshTokenAsync(refreshToken);
+        var result = await _service.ValidateRefreshTokenAsync(refreshToken, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(expectedAccountId, result);
@@ -215,7 +215,7 @@ public class TokenServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var result = await _service.ValidateRefreshTokenAsync(refreshToken);
+        var result = await _service.ValidateRefreshTokenAsync(refreshToken, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -232,7 +232,7 @@ public class TokenServiceTests
             .ThrowsAsync(new Exception("State store error"));
 
         // Act
-        var result = await _service.ValidateRefreshTokenAsync(refreshToken);
+        var result = await _service.ValidateRefreshTokenAsync(refreshToken, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -253,7 +253,7 @@ public class TokenServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.RemoveRefreshTokenAsync(refreshToken);
+        await _service.RemoveRefreshTokenAsync(refreshToken, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockStringStore.Verify(s => s.DeleteAsync(expectedKey, It.IsAny<CancellationToken>()), Times.Once);
@@ -270,7 +270,7 @@ public class TokenServiceTests
             .ThrowsAsync(new Exception("Delete failed"));
 
         // Act & Assert - Should not throw
-        await _service.RemoveRefreshTokenAsync(refreshToken);
+        await _service.RemoveRefreshTokenAsync(refreshToken, cancellationToken: TestContext.Current.CancellationToken);
     }
 
     #endregion
@@ -300,7 +300,7 @@ public class TokenServiceTests
 
         // Act & Assert - Empty JwtSecret throws InvalidOperationException (misconfigured service)
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            serviceWithEmptySecret.GenerateAccessTokenAsync(account));
+            serviceWithEmptySecret.GenerateAccessTokenAsync(account, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -316,7 +316,7 @@ public class TokenServiceTests
         var account = CreateTestAccount();
 
         // Act - should not throw (issuer validation is done at startup, not runtime)
-        var result = await _service.GenerateAccessTokenAsync(account);
+        var result = await _service.GenerateAccessTokenAsync(account, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result.accessToken);
@@ -340,7 +340,7 @@ public class TokenServiceTests
         var account = CreateTestAccount();
 
         // Act - should not throw (audience validation is done at startup, not runtime)
-        var result = await _service.GenerateAccessTokenAsync(account);
+        var result = await _service.GenerateAccessTokenAsync(account, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result.accessToken);
@@ -378,7 +378,7 @@ public class TokenServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var (token, sessionId) = await _service.GenerateAccessTokenAsync(account);
+        var (token, sessionId) = await _service.GenerateAccessTokenAsync(account, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(string.IsNullOrWhiteSpace(token));
@@ -419,7 +419,7 @@ public class TokenServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await _service.GenerateAccessTokenAsync(account);
+        await _service.GenerateAccessTokenAsync(account, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedSession);
@@ -438,7 +438,7 @@ public class TokenServiceTests
     public async Task ValidateTokenAsync_WithEmptyToken_ShouldReturnUnauthorized()
     {
         // Act
-        var (status, response) = await _service.ValidateTokenAsync("");
+        var (status, response) = await _service.ValidateTokenAsync("", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -452,7 +452,7 @@ public class TokenServiceTests
         var invalidToken = "not.a.valid.jwt.token";
 
         // Act
-        var (status, response) = await _service.ValidateTokenAsync(invalidToken);
+        var (status, response) = await _service.ValidateTokenAsync(invalidToken, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -490,7 +490,7 @@ public class TokenServiceTests
             It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var (jwt, _) = await _service.GenerateAccessTokenAsync(account);
+        var (jwt, _) = await _service.GenerateAccessTokenAsync(account, cancellationToken: TestContext.Current.CancellationToken);
 
         // Set up corrupted session data (null Roles via reflection to simulate Redis corruption)
         var corruptedSession = new SessionDataModel
@@ -532,7 +532,7 @@ public class TokenServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var (status, response) = await _service.ValidateTokenAsync(jwt);
+        var (status, response) = await _service.ValidateTokenAsync(jwt, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Corrupted session returns Unauthorized
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -568,7 +568,7 @@ public class TokenServiceTests
             It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var (jwt, _) = await _service.GenerateAccessTokenAsync(account);
+        var (jwt, _) = await _service.GenerateAccessTokenAsync(account, cancellationToken: TestContext.Current.CancellationToken);
 
         // Set up expired session
         var expiredSession = new SessionDataModel
@@ -589,7 +589,7 @@ public class TokenServiceTests
             .ReturnsAsync(expiredSession);
 
         // Act
-        var (status, response) = await _service.ValidateTokenAsync(jwt);
+        var (status, response) = await _service.ValidateTokenAsync(jwt, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Expired session returns Unauthorized
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -622,7 +622,7 @@ public class TokenServiceTests
             It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var (jwt, _) = await _service.GenerateAccessTokenAsync(account);
+        var (jwt, _) = await _service.GenerateAccessTokenAsync(account, cancellationToken: TestContext.Current.CancellationToken);
 
         // Set up valid session
         var sessionId = Guid.NewGuid();
@@ -662,7 +662,7 @@ public class TokenServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var (status, response) = await _service.ValidateTokenAsync(jwt);
+        var (status, response) = await _service.ValidateTokenAsync(jwt, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Returns OK with valid response
         Assert.Equal(StatusCodes.OK, status);

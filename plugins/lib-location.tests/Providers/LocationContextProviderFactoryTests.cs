@@ -23,7 +23,7 @@ public class LocationContextProviderFactoryTests
         var mockCache = new Mock<ILocationDataCache>();
         var factory = new LocationContextProviderFactory(mockCache.Object);
 
-        var provider = await factory.CreateAsync(null, Guid.NewGuid(), null, CancellationToken.None);
+        var provider = await factory.CreateAsync(null, Guid.NewGuid(), null, TestContext.Current.CancellationToken);
 
         Assert.Same(LocationContextProvider.Empty, provider);
         mockCache.Verify(
@@ -53,7 +53,7 @@ public class LocationContextProviderFactoryTests
 
         var factory = new LocationContextProviderFactory(mockCache.Object);
 
-        var provider = await factory.CreateAsync(characterId, realmId, locationId, CancellationToken.None);
+        var provider = await factory.CreateAsync(characterId, realmId, locationId, TestContext.Current.CancellationToken);
 
         Assert.NotNull(provider);
         Assert.Equal("location", provider.Name);
@@ -74,7 +74,7 @@ public class LocationContextProviderFactoryTests
 
         var factory = new LocationContextProviderFactory(mockCache.Object);
 
-        var provider = await factory.CreateAsync(characterId, realmId, null, CancellationToken.None);
+        var provider = await factory.CreateAsync(characterId, realmId, null, TestContext.Current.CancellationToken);
 
         Assert.NotNull(provider);
         Assert.Equal("location", provider.Name);

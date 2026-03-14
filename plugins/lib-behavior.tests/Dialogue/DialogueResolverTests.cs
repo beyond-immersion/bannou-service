@@ -41,7 +41,7 @@ public sealed class DialogueResolverTests
         var reference = DialogueReference.Inline("Hello, world!");
 
         // Act
-        var result = await _resolver.ResolveAsync(reference, _englishLocale, _nullContext);
+        var result = await _resolver.ResolveAsync(reference, _englishLocale, _nullContext, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Hello, world!", result.Text);
@@ -58,7 +58,7 @@ public sealed class DialogueResolverTests
             .ReturnsAsync((ExternalDialogueFile?)null);
 
         // Act
-        var result = await _resolver.ResolveAsync(reference, _englishLocale, _nullContext);
+        var result = await _resolver.ResolveAsync(reference, _englishLocale, _nullContext, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Default text", result.Text);
@@ -88,7 +88,7 @@ public sealed class DialogueResolverTests
             .ReturnsAsync(externalFile);
 
         // Act
-        var result = await _resolver.ResolveAsync(reference, _englishLocale, _nullContext);
+        var result = await _resolver.ResolveAsync(reference, _englishLocale, _nullContext, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Hello from localization!", result.Text);
@@ -117,7 +117,7 @@ public sealed class DialogueResolverTests
         var usLocale = LocalizationContext.ForLocale("en-US");
 
         // Act
-        var result = await _resolver.ResolveAsync(reference, usLocale, _nullContext);
+        var result = await _resolver.ResolveAsync(reference, usLocale, _nullContext, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("English text", result.Text);
@@ -143,7 +143,7 @@ public sealed class DialogueResolverTests
             .ReturnsAsync(externalFile);
 
         // Act
-        var result = await _resolver.ResolveAsync(reference, _englishLocale, _nullContext);
+        var result = await _resolver.ResolveAsync(reference, _englishLocale, _nullContext, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Default text", result.Text);
@@ -187,7 +187,7 @@ public sealed class DialogueResolverTests
         contextMock.Setup(c => c.EvaluateTemplate(It.IsAny<string>())).Returns<string>(s => s);
 
         // Act
-        var result = await _resolver.ResolveAsync(reference, _englishLocale, contextMock.Object);
+        var result = await _resolver.ResolveAsync(reference, _englishLocale, contextMock.Object, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("VIP special text!", result.Text);
@@ -228,7 +228,7 @@ public sealed class DialogueResolverTests
         contextMock.Setup(c => c.EvaluateTemplate(It.IsAny<string>())).Returns<string>(s => s);
 
         // Act
-        var result = await _resolver.ResolveAsync(reference, _englishLocale, contextMock.Object);
+        var result = await _resolver.ResolveAsync(reference, _englishLocale, contextMock.Object, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Normal text", result.Text);
@@ -270,7 +270,7 @@ public sealed class DialogueResolverTests
         contextMock.Setup(c => c.EvaluateTemplate(It.IsAny<string>())).Returns<string>(s => s);
 
         // Act
-        var result = await _resolver.ResolveAsync(reference, _englishLocale, contextMock.Object);
+        var result = await _resolver.ResolveAsync(reference, _englishLocale, contextMock.Object, TestContext.Current.CancellationToken);
 
         // Assert - Overrides are sorted by priority (highest first)
         Assert.Equal("High priority text", result.Text);
@@ -311,7 +311,7 @@ public sealed class DialogueResolverTests
         contextMock.Setup(c => c.EvaluateTemplate(It.IsAny<string>())).Returns<string>(s => s);
 
         // Act - English locale should NOT match Spanish-only override
-        var result = await _resolver.ResolveAsync(reference, _englishLocale, contextMock.Object);
+        var result = await _resolver.ResolveAsync(reference, _englishLocale, contextMock.Object, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("English default", result.Text);
@@ -333,7 +333,7 @@ public sealed class DialogueResolverTests
             .Returns("Hello, Alice!");
 
         // Act
-        var result = await _resolver.ResolveAsync(reference, _englishLocale, contextMock.Object);
+        var result = await _resolver.ResolveAsync(reference, _englishLocale, contextMock.Object, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Hello, Alice!", result.Text);
@@ -363,7 +363,7 @@ public sealed class DialogueResolverTests
         };
 
         // Act
-        var results = await _resolver.ResolveOptionsAsync(options, _englishLocale, _nullContext);
+        var results = await _resolver.ResolveOptionsAsync(options, _englishLocale, _nullContext, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, results.Count);
@@ -394,7 +394,7 @@ public sealed class DialogueResolverTests
         contextMock.Setup(c => c.EvaluateTemplate(It.IsAny<string>())).Returns<string>(s => s);
 
         // Act
-        var results = await _resolver.ResolveOptionsAsync(options, _englishLocale, contextMock.Object);
+        var results = await _resolver.ResolveOptionsAsync(options, _englishLocale, contextMock.Object, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(results);
@@ -417,7 +417,7 @@ public sealed class DialogueResolverTests
         };
 
         // Act
-        var result = await _resolver.ResolveAsync(reference, _englishLocale, _nullContext);
+        var result = await _resolver.ResolveAsync(reference, _englishLocale, _nullContext, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("merchant_01", result.Speaker);

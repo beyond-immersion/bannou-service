@@ -117,7 +117,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.IsLinkedAsync(accountId);
+        var result = await sync.IsLinkedAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -148,7 +148,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.IsLinkedAsync(accountId);
+        var result = await sync.IsLinkedAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -168,7 +168,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.IsLinkedAsync(accountId);
+        var result = await sync.IsLinkedAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -188,7 +188,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.IsLinkedAsync(accountId);
+        var result = await sync.IsLinkedAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -224,7 +224,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.GetExternalIdAsync(accountId);
+        var result = await sync.GetExternalIdAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(expectedSteamId, result);
@@ -255,7 +255,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.GetExternalIdAsync(accountId);
+        var result = await sync.GetExternalIdAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -286,7 +286,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.GetExternalIdAsync(accountId);
+        var result = await sync.GetExternalIdAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -306,7 +306,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.GetExternalIdAsync(accountId);
+        var result = await sync.GetExternalIdAsync(accountId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -411,7 +411,7 @@ public class SteamAchievementSyncTests : IDisposable
             _mockTelemetryProvider.Object);
 
         // Act
-        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
+        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT", TestContext.Current.CancellationToken);
 
         // Assert - defense-in-depth: returns failure when called without configuration
         Assert.False(result.Success);
@@ -436,7 +436,7 @@ public class SteamAchievementSyncTests : IDisposable
             _mockTelemetryProvider.Object);
 
         // Act
-        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
+        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT", TestContext.Current.CancellationToken);
 
         // Assert - defense-in-depth: returns failure when called without configuration
         Assert.False(result.Success);
@@ -455,7 +455,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
+        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.Success);
@@ -470,7 +470,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.UnlockAsync("76561198012345678", "INVALID_ACHIEVEMENT");
+        var result = await sync.UnlockAsync("76561198012345678", "INVALID_ACHIEVEMENT", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.Success);
@@ -485,7 +485,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
+        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.Success);
@@ -500,7 +500,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
+        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.Success);
@@ -515,7 +515,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
+        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.Success);
@@ -530,7 +530,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
+        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.Success);
@@ -545,7 +545,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
+        var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.Success);
@@ -564,7 +564,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        var result = await sync.SetProgressAsync("76561198012345678", "STAT_KILLS", 50, 100);
+        var result = await sync.SetProgressAsync("76561198012345678", "STAT_KILLS", 50, 100, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.Success);
@@ -589,7 +589,7 @@ public class SteamAchievementSyncTests : IDisposable
             _mockTelemetryProvider.Object);
 
         // Act
-        var result = await sync.SetProgressAsync("76561198012345678", "STAT_KILLS", 50, 100);
+        var result = await sync.SetProgressAsync("76561198012345678", "STAT_KILLS", 50, 100, TestContext.Current.CancellationToken);
 
         // Assert - defense-in-depth: returns failure when called without configuration
         Assert.False(result.Success);
@@ -632,7 +632,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
+        await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT", TestContext.Current.CancellationToken);
 
         // Assert - verify the mock was called
         Assert.NotNull(capturedMethod);
@@ -679,7 +679,7 @@ public class SteamAchievementSyncTests : IDisposable
         var sync = CreateSync();
 
         // Act
-        await sync.SetProgressAsync("76561198012345678", "STAT_KILLS", 75, 100);
+        await sync.SetProgressAsync("76561198012345678", "STAT_KILLS", 75, 100, TestContext.Current.CancellationToken);
 
         // Assert - verify the mock was called
         Assert.NotNull(capturedContent);

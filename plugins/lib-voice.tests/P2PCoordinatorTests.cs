@@ -60,7 +60,7 @@ public class P2PCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act
-        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 3, CancellationToken.None);
+        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 3, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -74,7 +74,7 @@ public class P2PCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act - at 6/6
-        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 6, CancellationToken.None);
+        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 6, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -88,7 +88,7 @@ public class P2PCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act
-        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 10, CancellationToken.None);
+        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 10, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -102,7 +102,7 @@ public class P2PCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act
-        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 0, CancellationToken.None);
+        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 0, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -117,7 +117,7 @@ public class P2PCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act - 2/2 = at capacity
-        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 2, CancellationToken.None);
+        var result = await coordinator.CanAcceptNewParticipantAsync(roomId, 2, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -135,7 +135,7 @@ public class P2PCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act - 5/6 = not exceeding
-        var result = await coordinator.ShouldUpgradeToScaledAsync(roomId, 5, CancellationToken.None);
+        var result = await coordinator.ShouldUpgradeToScaledAsync(roomId, 5, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -149,7 +149,7 @@ public class P2PCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act - 6/6 = at capacity but not exceeding (> not >=)
-        var result = await coordinator.ShouldUpgradeToScaledAsync(roomId, 6, CancellationToken.None);
+        var result = await coordinator.ShouldUpgradeToScaledAsync(roomId, 6, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -163,7 +163,7 @@ public class P2PCoordinatorTests
         var roomId = Guid.NewGuid();
 
         // Act - 7/6 = exceeding
-        var result = await coordinator.ShouldUpgradeToScaledAsync(roomId, 7, CancellationToken.None);
+        var result = await coordinator.ShouldUpgradeToScaledAsync(roomId, 7, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -200,7 +200,7 @@ public class P2PCoordinatorTests
             });
 
         // Act
-        var peers = await coordinator.GetMeshPeersForNewJoinAsync(roomId, joiningSessionId, CancellationToken.None);
+        var peers = await coordinator.GetMeshPeersForNewJoinAsync(roomId, joiningSessionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(peers);
@@ -219,7 +219,7 @@ public class P2PCoordinatorTests
             .ReturnsAsync(new List<ParticipantRegistration>());
 
         // Act
-        var peers = await coordinator.GetMeshPeersForNewJoinAsync(roomId, Guid.NewGuid(), CancellationToken.None);
+        var peers = await coordinator.GetMeshPeersForNewJoinAsync(roomId, Guid.NewGuid(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(peers);
@@ -246,7 +246,7 @@ public class P2PCoordinatorTests
             });
 
         // Act
-        var peers = await coordinator.GetMeshPeersForNewJoinAsync(roomId, joiningSessionId, CancellationToken.None);
+        var peers = await coordinator.GetMeshPeersForNewJoinAsync(roomId, joiningSessionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(peers);
@@ -274,7 +274,7 @@ public class P2PCoordinatorTests
             });
 
         // Act
-        var peers = await coordinator.GetMeshPeersForNewJoinAsync(roomId, joiningSessionId, CancellationToken.None);
+        var peers = await coordinator.GetMeshPeersForNewJoinAsync(roomId, joiningSessionId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, peers.Count);
@@ -316,7 +316,7 @@ public class P2PCoordinatorTests
 
         // Act
         var result = await coordinator.BuildP2PConnectionInfoAsync(
-            roomId, peers, VoiceCodec.Opus, stunServers, false, CancellationToken.None);
+            roomId, peers, VoiceCodec.Opus, stunServers, false, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(roomId, result.RoomId);
@@ -337,7 +337,7 @@ public class P2PCoordinatorTests
 
         // Act
         var result = await coordinator.BuildP2PConnectionInfoAsync(
-            roomId, new List<VoicePeer>(), VoiceCodec.G711, new List<string>(), true, CancellationToken.None);
+            roomId, new List<VoicePeer>(), VoiceCodec.G711, new List<string>(), true, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.TierUpgradePending);
@@ -353,7 +353,7 @@ public class P2PCoordinatorTests
 
         // Act
         var result = await coordinator.BuildP2PConnectionInfoAsync(
-            roomId, new List<VoicePeer>(), VoiceCodec.Opus, new List<string>(), false, CancellationToken.None);
+            roomId, new List<VoicePeer>(), VoiceCodec.Opus, new List<string>(), false, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result.Peers);

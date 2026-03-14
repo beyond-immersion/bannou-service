@@ -204,7 +204,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, _) = await service.UpdateAchievementProgressAsync(request, CancellationToken.None);
+        var (status, _) = await service.UpdateAchievementProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -240,7 +240,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, _) = await service.UpdateAchievementProgressAsync(request, CancellationToken.None);
+        var (status, _) = await service.UpdateAchievementProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -276,7 +276,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, _) = await service.UpdateAchievementProgressAsync(request, CancellationToken.None);
+        var (status, _) = await service.UpdateAchievementProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -314,7 +314,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, _) = await service.UnlockAchievementAsync(request, CancellationToken.None);
+        var (status, _) = await service.UnlockAchievementAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -363,7 +363,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, _) = await service.UnlockAchievementAsync(request, CancellationToken.None);
+        var (status, _) = await service.UnlockAchievementAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -417,7 +417,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, _) = await service.UnlockAchievementAsync(request, CancellationToken.None);
+        var (status, _) = await service.UnlockAchievementAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -442,7 +442,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, _) = await service.SyncPlatformAchievementsAsync(request, CancellationToken.None);
+        var (status, _) = await service.SyncPlatformAchievementsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -463,7 +463,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, response) = await service.SyncPlatformAchievementsAsync(request, CancellationToken.None);
+        var (status, response) = await service.SyncPlatformAchievementsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - when no provider is registered, service returns BadRequest
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -487,7 +487,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, _) = await service.GetPlatformSyncStatusAsync(request, CancellationToken.None);
+        var (status, _) = await service.GetPlatformSyncStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -514,7 +514,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, _) = await service.GetAchievementDefinitionAsync(request, CancellationToken.None);
+        var (status, _) = await service.GetAchievementDefinitionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -540,7 +540,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, _) = await service.UpdateAchievementProgressAsync(request, CancellationToken.None);
+        var (status, _) = await service.UpdateAchievementProgressAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -565,7 +565,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, _) = await service.UnlockAchievementAsync(request, CancellationToken.None);
+        var (status, _) = await service.UnlockAchievementAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -602,7 +602,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetPlatformSyncStatusAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetPlatformSyncStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -652,7 +652,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetPlatformSyncStatusAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetPlatformSyncStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -698,7 +698,7 @@ public class AchievementServiceTests
         };
 
         // Act
-        var (status, response) = await service.GetPlatformSyncStatusAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetPlatformSyncStatusAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

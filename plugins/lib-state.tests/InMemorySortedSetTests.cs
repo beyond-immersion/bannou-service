@@ -42,7 +42,7 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetAddAsync_WithNewMember_ReturnsTrue()
     {
         // Act
-        var result = await _store.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        var result = await _store.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -52,14 +52,14 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetAddAsync_WithExistingMember_ReturnsFalseAndUpdatesScore()
     {
         // Arrange
-        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.SortedSetAddAsync("leaderboard", "player1", 200.0);
+        var result = await _store.SortedSetAddAsync("leaderboard", "player1", 200.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result); // Already exists
-        var score = await _store.SortedSetScoreAsync("leaderboard", "player1");
+        var score = await _store.SortedSetScoreAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(200.0, score); // Score updated
     }
 
@@ -67,17 +67,17 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetAddAsync_WithTtl_SetsExpiration()
     {
         // Arrange
-        await _store.SortedSetAddAsync("expiring-leaderboard", "player1", 100.0, new StateOptions { Ttl = 1 });
+        await _store.SortedSetAddAsync("expiring-leaderboard", "player1", 100.0, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should exist immediately
-        var scoreBefore = await _store.SortedSetScoreAsync("expiring-leaderboard", "player1");
+        var scoreBefore = await _store.SortedSetScoreAsync("expiring-leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(scoreBefore);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Should be expired now
-        var scoreAfter = await _store.SortedSetScoreAsync("expiring-leaderboard", "player1");
+        var scoreAfter = await _store.SortedSetScoreAsync("expiring-leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Null(scoreAfter);
     }
 
@@ -97,7 +97,7 @@ public class InMemorySortedSetTests : IDisposable
         };
 
         // Act
-        var result = await _store.SortedSetAddBatchAsync("leaderboard", entries);
+        var result = await _store.SortedSetAddBatchAsync("leaderboard", entries, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result);
@@ -107,7 +107,7 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetAddBatchAsync_WithPartialExisting_ReturnsNewCount()
     {
         // Arrange
-        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         var entries = new[]
         {
@@ -117,13 +117,13 @@ public class InMemorySortedSetTests : IDisposable
         };
 
         // Act
-        var result = await _store.SortedSetAddBatchAsync("leaderboard", entries);
+        var result = await _store.SortedSetAddBatchAsync("leaderboard", entries, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result); // Only 2 new members
 
         // Verify player1's score was updated
-        var score = await _store.SortedSetScoreAsync("leaderboard", "player1");
+        var score = await _store.SortedSetScoreAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(150.0, score);
     }
 
@@ -131,7 +131,7 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetAddBatchAsync_WithEmptyEntries_ReturnsZero()
     {
         // Act
-        var result = await _store.SortedSetAddBatchAsync("leaderboard", Array.Empty<(string, double)>());
+        var result = await _store.SortedSetAddBatchAsync("leaderboard", Array.Empty<(string, double)>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, result);
@@ -145,14 +145,14 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetRemoveAsync_WithExistingMember_ReturnsTrue()
     {
         // Arrange
-        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.SortedSetRemoveAsync("leaderboard", "player1");
+        var result = await _store.SortedSetRemoveAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
-        var score = await _store.SortedSetScoreAsync("leaderboard", "player1");
+        var score = await _store.SortedSetScoreAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Null(score);
     }
 
@@ -160,10 +160,10 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetRemoveAsync_WithNonExistentMember_ReturnsFalse()
     {
         // Arrange
-        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.SortedSetRemoveAsync("leaderboard", "player2");
+        var result = await _store.SortedSetRemoveAsync("leaderboard", "player2", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -173,7 +173,7 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetRemoveAsync_WithNonExistentSet_ReturnsFalse()
     {
         // Act
-        var result = await _store.SortedSetRemoveAsync("nonexistent", "player1");
+        var result = await _store.SortedSetRemoveAsync("nonexistent", "player1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -187,10 +187,10 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetScoreAsync_WithExistingMember_ReturnsScore()
     {
         // Arrange
-        await _store.SortedSetAddAsync("leaderboard", "player1", 100.5);
+        await _store.SortedSetAddAsync("leaderboard", "player1", 100.5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var score = await _store.SortedSetScoreAsync("leaderboard", "player1");
+        var score = await _store.SortedSetScoreAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(100.5, score);
@@ -200,10 +200,10 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetScoreAsync_WithNonExistentMember_ReturnsNull()
     {
         // Arrange
-        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var score = await _store.SortedSetScoreAsync("leaderboard", "player2");
+        var score = await _store.SortedSetScoreAsync("leaderboard", "player2", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(score);
@@ -213,7 +213,7 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetScoreAsync_WithNonExistentSet_ReturnsNull()
     {
         // Act
-        var score = await _store.SortedSetScoreAsync("nonexistent", "player1");
+        var score = await _store.SortedSetScoreAsync("nonexistent", "player1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(score);
@@ -232,10 +232,10 @@ public class InMemorySortedSetTests : IDisposable
             ("player1", 100.0),
             ("player2", 200.0),
             ("player3", 150.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Descending (highest score = rank 0)
-        var rank = await _store.SortedSetRankAsync("leaderboard", "player2", descending: true);
+        var rank = await _store.SortedSetRankAsync("leaderboard", "player2", descending: true, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, rank); // player2 has highest score (200)
@@ -250,10 +250,10 @@ public class InMemorySortedSetTests : IDisposable
             ("player1", 100.0),
             ("player2", 200.0),
             ("player3", 150.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Ascending (lowest score = rank 0)
-        var rank = await _store.SortedSetRankAsync("leaderboard", "player1", descending: false);
+        var rank = await _store.SortedSetRankAsync("leaderboard", "player1", descending: false, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, rank); // player1 has lowest score (100)
@@ -263,10 +263,10 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetRankAsync_WithNonExistentMember_ReturnsNull()
     {
         // Arrange
-        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var rank = await _store.SortedSetRankAsync("leaderboard", "player2");
+        var rank = await _store.SortedSetRankAsync("leaderboard", "player2", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(rank);
@@ -281,12 +281,12 @@ public class InMemorySortedSetTests : IDisposable
             ("player1", 100.0),
             ("player2", 100.0),
             ("player3", 200.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var rank1 = await _store.SortedSetRankAsync("leaderboard", "player1", descending: true);
-        var rank2 = await _store.SortedSetRankAsync("leaderboard", "player2", descending: true);
-        var rank3 = await _store.SortedSetRankAsync("leaderboard", "player3", descending: true);
+        var rank1 = await _store.SortedSetRankAsync("leaderboard", "player1", descending: true, cancellationToken: TestContext.Current.CancellationToken);
+        var rank2 = await _store.SortedSetRankAsync("leaderboard", "player2", descending: true, cancellationToken: TestContext.Current.CancellationToken);
+        var rank3 = await _store.SortedSetRankAsync("leaderboard", "player3", descending: true, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, rank3); // Highest score
@@ -309,10 +309,10 @@ public class InMemorySortedSetTests : IDisposable
             ("player2", 200.0),
             ("player3", 150.0),
             ("player4", 50.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Get top 3 (descending)
-        var result = await _store.SortedSetRangeByRankAsync("leaderboard", 0, 2, descending: true);
+        var result = await _store.SortedSetRangeByRankAsync("leaderboard", 0, 2, descending: true, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -333,10 +333,10 @@ public class InMemorySortedSetTests : IDisposable
             ("player1", 100.0),
             ("player2", 200.0),
             ("player3", 150.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Get bottom 2 (ascending)
-        var result = await _store.SortedSetRangeByRankAsync("leaderboard", 0, 1, descending: false);
+        var result = await _store.SortedSetRangeByRankAsync("leaderboard", 0, 1, descending: false, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -350,7 +350,7 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetRangeByRankAsync_WithNonExistentSet_ReturnsEmpty()
     {
         // Act
-        var result = await _store.SortedSetRangeByRankAsync("nonexistent", 0, 9);
+        var result = await _store.SortedSetRangeByRankAsync("nonexistent", 0, 9, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -364,10 +364,10 @@ public class InMemorySortedSetTests : IDisposable
         {
             ("player1", 100.0),
             ("player2", 200.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Request more than available
-        var result = await _store.SortedSetRangeByRankAsync("leaderboard", 0, 99);
+        var result = await _store.SortedSetRangeByRankAsync("leaderboard", 0, 99, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -387,10 +387,10 @@ public class InMemorySortedSetTests : IDisposable
             ("player2", 200.0),
             ("player3", 150.0),
             ("player4", 250.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Get players with score 100-200 (inclusive)
-        var result = await _store.SortedSetRangeByScoreAsync("leaderboard", 100.0, 200.0);
+        var result = await _store.SortedSetRangeByScoreAsync("leaderboard", 100.0, 200.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -409,10 +409,10 @@ public class InMemorySortedSetTests : IDisposable
             ("player1", 100.0),
             ("player2", 200.0),
             ("player3", 150.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.SortedSetRangeByScoreAsync("leaderboard", 100.0, 200.0, descending: true);
+        var result = await _store.SortedSetRangeByScoreAsync("leaderboard", 100.0, 200.0, descending: true, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -431,10 +431,10 @@ public class InMemorySortedSetTests : IDisposable
             ("player2", 200.0),
             ("player3", 150.0),
             ("player4", 175.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Skip first, take 2
-        var result = await _store.SortedSetRangeByScoreAsync("leaderboard", 100.0, 200.0, offset: 1, count: 2);
+        var result = await _store.SortedSetRangeByScoreAsync("leaderboard", 100.0, 200.0, offset: 1, count: 2, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -450,10 +450,10 @@ public class InMemorySortedSetTests : IDisposable
         {
             ("player1", 100.0),
             ("player2", 200.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Score range with no matches
-        var result = await _store.SortedSetRangeByScoreAsync("leaderboard", 300.0, 400.0);
+        var result = await _store.SortedSetRangeByScoreAsync("leaderboard", 300.0, 400.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -472,10 +472,10 @@ public class InMemorySortedSetTests : IDisposable
             ("player1", 100.0),
             ("player2", 200.0),
             ("player3", 150.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var count = await _store.SortedSetCountAsync("leaderboard");
+        var count = await _store.SortedSetCountAsync("leaderboard", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, count);
@@ -485,7 +485,7 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetCountAsync_WithNonExistentSet_ReturnsZero()
     {
         // Act
-        var count = await _store.SortedSetCountAsync("nonexistent");
+        var count = await _store.SortedSetCountAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, count);
@@ -495,13 +495,13 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetCountAsync_WithExpiredSet_ReturnsZero()
     {
         // Arrange
-        await _store.SortedSetAddAsync("expiring", "player1", 100.0, new StateOptions { Ttl = 1 });
+        await _store.SortedSetAddAsync("expiring", "player1", 100.0, new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var count = await _store.SortedSetCountAsync("expiring");
+        var count = await _store.SortedSetCountAsync("expiring", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, count);
@@ -515,15 +515,15 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetIncrementAsync_WithExistingMember_IncrementsScore()
     {
         // Arrange
-        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var newScore = await _store.SortedSetIncrementAsync("leaderboard", "player1", 50.0);
+        var newScore = await _store.SortedSetIncrementAsync("leaderboard", "player1", 50.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(150.0, newScore);
 
-        var storedScore = await _store.SortedSetScoreAsync("leaderboard", "player1");
+        var storedScore = await _store.SortedSetScoreAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(150.0, storedScore);
     }
 
@@ -531,7 +531,7 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetIncrementAsync_WithNewMember_CreatesMemberWithIncrement()
     {
         // Act
-        var newScore = await _store.SortedSetIncrementAsync("leaderboard", "player1", 100.0);
+        var newScore = await _store.SortedSetIncrementAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(100.0, newScore);
@@ -541,10 +541,10 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetIncrementAsync_WithNegativeIncrement_DecrementsScore()
     {
         // Arrange
-        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        await _store.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var newScore = await _store.SortedSetIncrementAsync("leaderboard", "player1", -30.0);
+        var newScore = await _store.SortedSetIncrementAsync("leaderboard", "player1", -30.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(70.0, newScore);
@@ -562,15 +562,15 @@ public class InMemorySortedSetTests : IDisposable
         {
             ("player1", 100.0),
             ("player2", 200.0)
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.SortedSetDeleteAsync("leaderboard");
+        var result = await _store.SortedSetDeleteAsync("leaderboard", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
 
-        var count = await _store.SortedSetCountAsync("leaderboard");
+        var count = await _store.SortedSetCountAsync("leaderboard", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(0, count);
     }
 
@@ -578,7 +578,7 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetDeleteAsync_WithNonExistentSet_ReturnsFalse()
     {
         // Act
-        var result = await _store.SortedSetDeleteAsync("nonexistent");
+        var result = await _store.SortedSetDeleteAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -598,7 +598,7 @@ public class InMemorySortedSetTests : IDisposable
         await Task.WhenAll(tasks);
 
         // Assert
-        var count = await _store.SortedSetCountAsync("concurrent-leaderboard");
+        var count = await _store.SortedSetCountAsync("concurrent-leaderboard", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(100, count);
     }
 
@@ -606,7 +606,7 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetOperations_ConcurrentIncrements_AllApply()
     {
         // Arrange
-        await _store.SortedSetAddAsync("increment-test", "player1", 0.0);
+        await _store.SortedSetAddAsync("increment-test", "player1", 0.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - 100 concurrent increments of 1
         var tasks = Enumerable.Range(1, 100).Select(_ =>
@@ -615,7 +615,7 @@ public class InMemorySortedSetTests : IDisposable
         await Task.WhenAll(tasks);
 
         // Assert
-        var score = await _store.SortedSetScoreAsync("increment-test", "player1");
+        var score = await _store.SortedSetScoreAsync("increment-test", "player1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(100.0, score);
     }
 
@@ -628,14 +628,14 @@ public class InMemorySortedSetTests : IDisposable
         var store2 = new InMemoryStateStore<TestEntity>(sharedStoreName, null, _mockLogger.Object);
 
         // Act - Add via store1
-        await store1.SortedSetAddAsync("leaderboard", "player1", 100.0);
+        await store1.SortedSetAddAsync("leaderboard", "player1", 100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Retrieve via store2
-        var score = await store2.SortedSetScoreAsync("leaderboard", "player1");
+        var score = await store2.SortedSetScoreAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(100.0, score);
 
         // Cleanup
-        await store1.SortedSetDeleteAsync("leaderboard");
+        await store1.SortedSetDeleteAsync("leaderboard", cancellationToken: TestContext.Current.CancellationToken);
     }
 
     #endregion
@@ -646,10 +646,10 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetAddAsync_WithNegativeScore_Works()
     {
         // Act
-        await _store.SortedSetAddAsync("leaderboard", "player1", -100.0);
+        await _store.SortedSetAddAsync("leaderboard", "player1", -100.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var score = await _store.SortedSetScoreAsync("leaderboard", "player1");
+        var score = await _store.SortedSetScoreAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(-100.0, score);
     }
 
@@ -657,10 +657,10 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetAddAsync_WithVeryLargeScore_Works()
     {
         // Act
-        await _store.SortedSetAddAsync("leaderboard", "player1", double.MaxValue / 2);
+        await _store.SortedSetAddAsync("leaderboard", "player1", double.MaxValue / 2, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var score = await _store.SortedSetScoreAsync("leaderboard", "player1");
+        var score = await _store.SortedSetScoreAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(double.MaxValue / 2, score);
     }
 
@@ -668,10 +668,10 @@ public class InMemorySortedSetTests : IDisposable
     public async Task SortedSetAddAsync_WithZeroScore_Works()
     {
         // Act
-        await _store.SortedSetAddAsync("leaderboard", "player1", 0.0);
+        await _store.SortedSetAddAsync("leaderboard", "player1", 0.0, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var score = await _store.SortedSetScoreAsync("leaderboard", "player1");
+        var score = await _store.SortedSetScoreAsync("leaderboard", "player1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(0.0, score);
     }
 

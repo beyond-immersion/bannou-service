@@ -204,7 +204,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.RegisterServicePermissionsAsync(permissions);
+        var (statusCode, response) = await service.RegisterServicePermissionsAsync(permissions, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -251,7 +251,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.UpdateSessionRoleAsync(roleUpdate);
+        var (statusCode, response) = await service.UpdateSessionRoleAsync(roleUpdate, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -326,7 +326,7 @@ public class PermissionServiceTests
             SessionId = sessionId,
             NewRole = "developer",
             PreviousRole = "user"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -399,7 +399,7 @@ public class PermissionServiceTests
             SessionId = sessionId,
             NewRole = "user",
             PreviousRole = null
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert state required is respected and endpoint is present
         Assert.Equal(StatusCodes.OK, status);
@@ -475,7 +475,7 @@ public class PermissionServiceTests
             SessionId = sessionId,
             NewRole = "user",
             PreviousRole = null
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -551,7 +551,7 @@ public class PermissionServiceTests
             SessionId = sessionId,
             NewRole = "user",
             PreviousRole = null
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -634,7 +634,7 @@ public class PermissionServiceTests
             SessionId = sessionId,
             NewRole = "user",
             PreviousRole = null
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -691,7 +691,7 @@ public class PermissionServiceTests
         };
 
         // Act - UpdateSessionRoleAsync triggers RecompileSessionPermissionsAsync
-        var (statusCode, response) = await service.UpdateSessionRoleAsync(roleUpdate);
+        var (statusCode, response) = await service.UpdateSessionRoleAsync(roleUpdate, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -737,7 +737,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.GetCapabilitiesAsync(request);
+        var (statusCode, response) = await service.GetCapabilitiesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -766,7 +766,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.GetCapabilitiesAsync(request);
+        var (statusCode, response) = await service.GetCapabilitiesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -850,14 +850,14 @@ public class PermissionServiceTests
         {
             SessionId = adminSessionId,
             NewRole = "admin"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Act - Set user role
         await service.UpdateSessionRoleAsync(new SessionRoleUpdate
         {
             SessionId = userSessionId,
             NewRole = "user"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert - Admin should have orchestrator endpoints
         Assert.NotNull(savedAdminPermissions);
@@ -901,7 +901,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.ValidateApiAccessAsync(request);
+        var (statusCode, response) = await service.ValidateApiAccessAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -939,7 +939,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.ValidateApiAccessAsync(request);
+        var (statusCode, response) = await service.ValidateApiAccessAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -977,7 +977,7 @@ public class PermissionServiceTests
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(
-            sessionIdStr, accountId, roles: null, authorizations: null);
+            sessionIdStr, accountId, roles: null, authorizations: null, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1018,7 +1018,7 @@ public class PermissionServiceTests
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Act
-        var (statusCode, response) = await service.HandleSessionConnectedAsync(sessionId, accountId, roles: null, authorizations: null);
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(sessionId, accountId, roles: null, authorizations: null, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1057,7 +1057,7 @@ public class PermissionServiceTests
             .ReturnsAsync(new Dictionary<string, object>());
 
         // Act
-        var (statusCode, response) = await service.HandleSessionConnectedAsync(sessionId, accountId, roles: null, authorizations: null);
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(sessionId, accountId, roles: null, authorizations: null, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1110,7 +1110,7 @@ public class PermissionServiceTests
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(
-            sessionId, accountId, roles: roles, authorizations: null);
+            sessionId, accountId, roles: roles, authorizations: null, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1159,7 +1159,7 @@ public class PermissionServiceTests
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(
-            sessionId, accountId, roles: null, authorizations: null);
+            sessionId, accountId, roles: null, authorizations: null, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1207,7 +1207,7 @@ public class PermissionServiceTests
 
         // Act
         var (statusCode, response) = await service.HandleSessionConnectedAsync(
-            sessionId, accountId, roles: null, authorizations: authorizations);
+            sessionId, accountId, roles: null, authorizations: authorizations, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1230,7 +1230,7 @@ public class PermissionServiceTests
         var sessionId = Guid.NewGuid().ToString();
 
         // Act - reconnectable = true (just removes from connections, keeps state)
-        var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: true);
+        var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: true, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1252,7 +1252,7 @@ public class PermissionServiceTests
         var sessionId = Guid.NewGuid().ToString();
 
         // Act - reconnectable = true
-        var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: true);
+        var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: true, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1278,7 +1278,7 @@ public class PermissionServiceTests
             .ReturnsAsync(new Dictionary<string, string>());
 
         // Act - reconnectable = false (clears all state)
-        var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: false);
+        var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: false, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1369,7 +1369,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (statusCode, response) = await service.RegisterServicePermissionsAsync(permissions);
+        var (statusCode, response) = await service.RegisterServicePermissionsAsync(permissions, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -1434,7 +1434,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (status, response) = await service.UpdateSessionStateAsync(stateUpdate);
+        var (status, response) = await service.UpdateSessionStateAsync(stateUpdate, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1466,7 +1466,7 @@ public class PermissionServiceTests
         var request = new ClearSessionStateRequest { SessionId = sessionId };
 
         // Act
-        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.ClearSessionStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1505,7 +1505,7 @@ public class PermissionServiceTests
         var request = new ClearSessionStateRequest { SessionId = sessionId, ServiceId = null };
 
         // Act
-        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.ClearSessionStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1544,7 +1544,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.ClearSessionStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1587,7 +1587,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.ClearSessionStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1637,7 +1637,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.ClearSessionStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1678,7 +1678,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+        var (status, response) = await service.ClearSessionStateAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1710,7 +1710,7 @@ public class PermissionServiceTests
         var request = new SessionInfoRequest { SessionId = sessionId };
 
         // Act
-        var (status, response) = await service.GetSessionInfoAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetSessionInfoAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1751,7 +1751,7 @@ public class PermissionServiceTests
         var request = new SessionInfoRequest { SessionId = sessionId };
 
         // Act
-        var (status, response) = await service.GetSessionInfoAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetSessionInfoAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1788,7 +1788,7 @@ public class PermissionServiceTests
         var request = new SessionInfoRequest { SessionId = sessionId };
 
         // Act
-        var (status, response) = await service.GetSessionInfoAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetSessionInfoAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1824,7 +1824,7 @@ public class PermissionServiceTests
         var request = new SessionInfoRequest { SessionId = sessionId };
 
         // Act
-        var (status, response) = await service.GetSessionInfoAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetSessionInfoAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2139,7 +2139,7 @@ public class PermissionServiceTests
             .ReturnsAsync((HashSet<string>?)null);
 
         // First registration to get the stored hash
-        await service.RegisterServicePermissionsAsync(permissions);
+        await service.RegisterServicePermissionsAsync(permissions, TestContext.Current.CancellationToken);
 
         // Capture the hash that was stored
         string? storedHash = null;
@@ -2152,7 +2152,7 @@ public class PermissionServiceTests
             .Callback<string, string, StateOptions?, CancellationToken>((_, hash, _, _) => storedHash = hash)
             .ReturnsAsync("etag");
 
-        await service.RegisterServicePermissionsAsync(permissions);
+        await service.RegisterServicePermissionsAsync(permissions, TestContext.Current.CancellationToken);
 
         // Now set up the stored hash to match and service already registered
         _mockStringStore
@@ -2166,7 +2166,7 @@ public class PermissionServiceTests
         _mockHashSetStore.Invocations.Clear();
 
         // Act — second registration with same data should skip
-        var (status, response) = await service.RegisterServicePermissionsAsync(permissions);
+        var (status, response) = await service.RegisterServicePermissionsAsync(permissions, TestContext.Current.CancellationToken);
 
         // Assert — idempotent skip
         Assert.Equal(StatusCodes.OK, status);
@@ -2213,7 +2213,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (status, response) = await service.RegisterServicePermissionsAsync(permissions);
+        var (status, response) = await service.RegisterServicePermissionsAsync(permissions, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2275,7 +2275,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (status, response) = await service.UpdateSessionStateAsync(stateUpdate);
+        var (status, response) = await service.UpdateSessionStateAsync(stateUpdate, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2322,7 +2322,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (status, response) = await service.UpdateSessionRoleAsync(roleUpdate);
+        var (status, response) = await service.UpdateSessionRoleAsync(roleUpdate, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -2395,7 +2395,7 @@ public class PermissionServiceTests
             NewRole = "user"
         };
 
-        var (status, response) = await service.UpdateSessionRoleAsync(roleUpdate);
+        var (status, response) = await service.UpdateSessionRoleAsync(roleUpdate, TestContext.Current.CancellationToken);
 
         // Assert - Should still return OK (the role was saved before recompile)
         Assert.Equal(StatusCodes.OK, status);
@@ -2460,7 +2460,7 @@ public class PermissionServiceTests
 
         // Act - HandleSessionConnectedAsync triggers recompile with skipActiveConnectionsCheck=true
         var (status, _) = await service.HandleSessionConnectedAsync(
-            sessionIdStr, "account-001", roles: new List<string> { "user" }, authorizations: null);
+            sessionIdStr, "account-001", roles: new List<string> { "user" }, authorizations: null, TestContext.Current.CancellationToken);
 
         // Assert - Should still succeed (error is caught)
         Assert.Equal(StatusCodes.OK, status);
@@ -2525,7 +2525,7 @@ public class PermissionServiceTests
 
         // Act
         var (status, _) = await service.HandleSessionConnectedAsync(
-            sessionIdStr, "account-001", roles: new List<string> { "user" }, authorizations: null);
+            sessionIdStr, "account-001", roles: new List<string> { "user" }, authorizations: null, TestContext.Current.CancellationToken);
 
         // Assert — operation succeeds despite publish failure
         Assert.Equal(StatusCodes.OK, status);
@@ -2604,7 +2604,7 @@ public class PermissionServiceTests
         var request = new ListServicesRequest();
 
         // Act
-        var (status, response) = await service.GetRegisteredServicesAsync(request);
+        var (status, response) = await service.GetRegisteredServicesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2635,7 +2635,7 @@ public class PermissionServiceTests
         var request = new ListServicesRequest();
 
         // Act
-        var (status, response) = await service.GetRegisteredServicesAsync(request);
+        var (status, response) = await service.GetRegisteredServicesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2670,7 +2670,7 @@ public class PermissionServiceTests
         var request = new ListServicesRequest();
 
         // Act
-        var (status, response) = await service.GetRegisteredServicesAsync(request);
+        var (status, response) = await service.GetRegisteredServicesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2724,7 +2724,7 @@ public class PermissionServiceTests
         var unknownRoles = new List<string> { "moderator", "vip" };
 
         // Act
-        await service.HandleSessionConnectedAsync(sessionId, "acct-001", roles: unknownRoles, authorizations: null);
+        await service.HandleSessionConnectedAsync(sessionId, "acct-001", roles: unknownRoles, authorizations: null, TestContext.Current.CancellationToken);
 
         // Assert — should fall back to the first role ("moderator")
         Assert.NotNull(savedStates);
@@ -2810,9 +2810,9 @@ public class PermissionServiceTests
         };
 
         // Act
-        await service.RegisterServicePermissionsAsync(permissions1);
-        await service.RegisterServicePermissionsAsync(permissions2);
-        await service.RegisterServicePermissionsAsync(permissionsDifferent);
+        await service.RegisterServicePermissionsAsync(permissions1, TestContext.Current.CancellationToken);
+        await service.RegisterServicePermissionsAsync(permissions2, TestContext.Current.CancellationToken);
+        await service.RegisterServicePermissionsAsync(permissionsDifferent, TestContext.Current.CancellationToken);
 
         // Assert — same data should produce same hash, different data should differ
         Assert.Equal(3, capturedHashes.Count);
@@ -2859,7 +2859,7 @@ public class PermissionServiceTests
         };
 
         // Act
-        var (status, _) = await service.UpdateSessionStateAsync(stateUpdate);
+        var (status, _) = await service.UpdateSessionStateAsync(stateUpdate, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -2919,7 +2919,7 @@ public class PermissionServiceTests
 
         // Act
         var (status, _) = await service.HandleSessionConnectedAsync(
-            sessionId, "acct-001", roles: null, authorizations: authorizations);
+            sessionId, "acct-001", roles: null, authorizations: authorizations, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

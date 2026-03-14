@@ -173,7 +173,7 @@ scripts/generate-all-services.sh               # † Regenerate ALL services (sl
 # Unit Testing - SCOPED TESTS ONLY (same rule as scoped builds)
 # NEVER run `make test` (full suite) when only specific plugins were changed.
 # Test ONLY the affected test project:
-dotnet test plugins/lib-{service}.tests/lib-{service}.tests.csproj --no-restore
+dotnet test --project plugins/lib-{service}.tests/lib-{service}.tests.csproj --no-restore
 
 # Structural Testing — cross-cutting convention/schema/assembly validation
 make test-structural                          # All structural tests (non-informational)
@@ -217,7 +217,7 @@ Running events before models after adding a new `$ref` will produce duplicate ty
 **Claude's testing responsibilities**: WRITE all tests, but only RUN unit tests.
 
 **Three-tier architecture** (for reference - Claude does NOT run tiers 2-3):
-1. **Unit Tests**: Claude writes and runs these (`dotnet test plugins/lib-{service}.tests/...` — scoped to affected projects only)
+1. **Unit Tests**: Claude writes and runs these (`dotnet test --project plugins/lib-{service}.tests/...` — scoped to affected projects only)
 2. **HTTP Integration Tests**: Claude writes these but does NOT run them (user runs `make test-http`)
 3. **WebSocket Edge Tests**: Claude writes these but does NOT run them (user runs `make test-edge`)
 

@@ -152,7 +152,7 @@ public class RtpEngineClientTests : IDisposable
         // Note: IsHealthyAsync catches exceptions and returns false,
         // so we test with QueryAsync which propagates the exception
         await Assert.ThrowsAsync<ObjectDisposedException>(() =>
-            client.QueryAsync("test-call", CancellationToken.None));
+            client.QueryAsync("test-call", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class RtpEngineClientTests : IDisposable
         client.Dispose();
 
         // Act - IsHealthyAsync catches ObjectDisposedException and returns false
-        var result = await client.IsHealthyAsync(CancellationToken.None);
+        var result = await client.IsHealthyAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);

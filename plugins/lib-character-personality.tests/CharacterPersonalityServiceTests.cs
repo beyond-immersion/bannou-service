@@ -197,7 +197,7 @@ public class CharacterPersonalityServiceTests
         var request = new GetPersonalityRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetPersonalityAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetPersonalityAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -221,7 +221,7 @@ public class CharacterPersonalityServiceTests
         var request = new GetPersonalityRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetPersonalityAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetPersonalityAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -242,7 +242,7 @@ public class CharacterPersonalityServiceTests
         var request = new GetPersonalityRequest { CharacterId = characterId };
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.GetPersonalityAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.GetPersonalityAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -271,7 +271,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.SetPersonalityAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetPersonalityAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -318,7 +318,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.SetPersonalityAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetPersonalityAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -352,7 +352,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.SetPersonalityAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.SetPersonalityAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -374,7 +374,7 @@ public class CharacterPersonalityServiceTests
         var request = new DeletePersonalityRequest { CharacterId = characterId };
 
         // Act
-        var status = await service.DeletePersonalityAsync(request, CancellationToken.None);
+        var status = await service.DeletePersonalityAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -402,7 +402,7 @@ public class CharacterPersonalityServiceTests
         var request = new DeletePersonalityRequest { CharacterId = characterId };
 
         // Act
-        var status = await service.DeletePersonalityAsync(request, CancellationToken.None);
+        var status = await service.DeletePersonalityAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -437,7 +437,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.BatchGetPersonalitiesAsync(request, CancellationToken.None);
+        var (status, response) = await service.BatchGetPersonalitiesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -459,7 +459,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.BatchGetPersonalitiesAsync(request, CancellationToken.None);
+        var (status, response) = await service.BatchGetPersonalitiesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -482,7 +482,7 @@ public class CharacterPersonalityServiceTests
             .ReturnsAsync((PersonalityData?)null);
 
         // Act
-        var (status, response) = await service.BatchGetPersonalitiesAsync(request, CancellationToken.None);
+        var (status, response) = await service.BatchGetPersonalitiesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -512,7 +512,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.BatchGetPersonalitiesAsync(request, CancellationToken.None);
+        var (status, response) = await service.BatchGetPersonalitiesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -544,7 +544,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.RecordExperienceAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordExperienceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -574,7 +574,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.RecordExperienceAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordExperienceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -610,7 +610,7 @@ public class CharacterPersonalityServiceTests
                 Intensity = 1.0f // Max intensity for highest evolution chance
             };
 
-            var (status, response) = await service.RecordExperienceAsync(request, CancellationToken.None);
+            var (status, response) = await service.RecordExperienceAsync(request, TestContext.Current.CancellationToken);
 
             if (response?.PersonalityEvolved == true)
             {
@@ -664,7 +664,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.RecordExperienceAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordExperienceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - all experience types should complete without error
         Assert.Equal(StatusCodes.OK, status);
@@ -691,7 +691,7 @@ public class CharacterPersonalityServiceTests
         var request = new GetCombatPreferencesRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCombatPreferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -716,7 +716,7 @@ public class CharacterPersonalityServiceTests
         var request = new GetCombatPreferencesRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCombatPreferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -753,7 +753,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.SetCombatPreferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -794,7 +794,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.SetCombatPreferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -826,7 +826,7 @@ public class CharacterPersonalityServiceTests
         var request = new DeleteCombatPreferencesRequest { CharacterId = characterId };
 
         // Act
-        var status = await service.DeleteCombatPreferencesAsync(request, CancellationToken.None);
+        var status = await service.DeleteCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -854,7 +854,7 @@ public class CharacterPersonalityServiceTests
         var request = new DeleteCombatPreferencesRequest { CharacterId = characterId };
 
         // Act
-        var status = await service.DeleteCombatPreferencesAsync(request, CancellationToken.None);
+        var status = await service.DeleteCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -884,7 +884,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.EvolveCombatPreferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.EvolveCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -914,7 +914,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.EvolveCombatPreferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.EvolveCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -954,7 +954,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.EvolveCombatPreferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.EvolveCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - all combat experience types should complete without error
         Assert.Equal(StatusCodes.OK, status);
@@ -990,7 +990,7 @@ public class CharacterPersonalityServiceTests
                 Intensity = 1.0f
             };
 
-            var (status, response) = await service.EvolveCombatPreferencesAsync(request, CancellationToken.None);
+            var (status, response) = await service.EvolveCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
             if (response?.PreferencesEvolved == true)
             {
@@ -1095,7 +1095,7 @@ public class CharacterPersonalityServiceTests
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.GetPersonalityAsync(new GetPersonalityRequest { CharacterId = characterId }, CancellationToken.None);
+        var (status, response) = await service.GetPersonalityAsync(new GetPersonalityRequest { CharacterId = characterId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(response);
@@ -1139,7 +1139,7 @@ public class CharacterPersonalityServiceTests
         var service = CreateService();
 
         // Act
-        var (status, response) = await service.GetCombatPreferencesAsync(new GetCombatPreferencesRequest { CharacterId = characterId }, CancellationToken.None);
+        var (status, response) = await service.GetCombatPreferencesAsync(new GetCombatPreferencesRequest { CharacterId = characterId }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(response);
@@ -1179,7 +1179,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.SetPersonalityAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetPersonalityAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1209,7 +1209,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.RecordExperienceAsync(request, CancellationToken.None);
+        var (status, response) = await service.RecordExperienceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1245,7 +1245,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.SetCombatPreferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1290,7 +1290,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.SetPersonalityAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetPersonalityAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1323,7 +1323,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, _) = await service.SetPersonalityAsync(request, CancellationToken.None);
+        var (status, _) = await service.SetPersonalityAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1359,7 +1359,7 @@ public class CharacterPersonalityServiceTests
         var request = new DeletePersonalityRequest { CharacterId = characterId };
 
         // Act
-        var status = await service.DeletePersonalityAsync(request, CancellationToken.None);
+        var status = await service.DeletePersonalityAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1407,7 +1407,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.SetCombatPreferencesAsync(request, CancellationToken.None);
+        var (status, response) = await service.SetCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1445,7 +1445,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, _) = await service.SetCombatPreferencesAsync(request, CancellationToken.None);
+        var (status, _) = await service.SetCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1481,7 +1481,7 @@ public class CharacterPersonalityServiceTests
         var request = new DeleteCombatPreferencesRequest { CharacterId = characterId };
 
         // Act
-        var status = await service.DeleteCombatPreferencesAsync(request, CancellationToken.None);
+        var status = await service.DeleteCombatPreferencesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1515,7 +1515,7 @@ public class CharacterPersonalityServiceTests
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1545,7 +1545,7 @@ public class CharacterPersonalityServiceTests
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1574,7 +1574,7 @@ public class CharacterPersonalityServiceTests
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1602,7 +1602,7 @@ public class CharacterPersonalityServiceTests
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act
-        var (status, response) = await service.GetCompressDataAsync(request, CancellationToken.None);
+        var (status, response) = await service.GetCompressDataAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1623,7 +1623,7 @@ public class CharacterPersonalityServiceTests
         var request = new GetCompressDataRequest { CharacterId = characterId };
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.GetCompressDataAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.GetCompressDataAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -1684,7 +1684,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1746,7 +1746,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1783,7 +1783,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1808,7 +1808,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1859,7 +1859,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act & Assert - exceptions propagate to generated controller for error handling
-        await Assert.ThrowsAsync<Exception>(() => service.RestoreFromArchiveAsync(request, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1926,7 +1926,7 @@ public class CharacterPersonalityServiceTests
         };
 
         // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, CancellationToken.None);
+        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);

@@ -86,7 +86,7 @@ public sealed class SyncPointManagerTests : IDisposable
         _manager.RegisterSyncPoint("sync1");
 
         // Act
-        var status = await _manager.ReportReachedAsync("sync1", participant);
+        var status = await _manager.ReportReachedAsync("sync1", participant, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Contains(participant, status.ReachedParticipants);
@@ -103,7 +103,7 @@ public sealed class SyncPointManagerTests : IDisposable
         SyncPointStatus? lastStatus = null;
         foreach (var participant in _defaultParticipants)
         {
-            lastStatus = await _manager.ReportReachedAsync("sync1", participant);
+            lastStatus = await _manager.ReportReachedAsync("sync1", participant, TestContext.Current.CancellationToken);
         }
 
         // Assert
@@ -120,8 +120,8 @@ public sealed class SyncPointManagerTests : IDisposable
         _manager.RegisterSyncPoint("sync1");
 
         // Act
-        await _manager.ReportReachedAsync("sync1", participant);
-        var status = await _manager.ReportReachedAsync("sync1", participant);
+        await _manager.ReportReachedAsync("sync1", participant, TestContext.Current.CancellationToken);
+        var status = await _manager.ReportReachedAsync("sync1", participant, TestContext.Current.CancellationToken);
 
         // Assert - should still have only one reached
         Assert.Single(status.ReachedParticipants);
@@ -135,7 +135,7 @@ public sealed class SyncPointManagerTests : IDisposable
         _manager.RegisterSyncPoint("sync1");
 
         // Act
-        var status = await _manager.ReportReachedAsync("sync1", nonParticipant);
+        var status = await _manager.ReportReachedAsync("sync1", nonParticipant, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(status.ReachedParticipants);
@@ -148,7 +148,7 @@ public sealed class SyncPointManagerTests : IDisposable
         var participant = _defaultParticipants.First();
 
         // Act
-        var status = await _manager.ReportReachedAsync("unregistered", participant);
+        var status = await _manager.ReportReachedAsync("unregistered", participant, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Contains("unregistered", _manager.RegisteredSyncPoints);
@@ -166,11 +166,11 @@ public sealed class SyncPointManagerTests : IDisposable
         _manager.RegisterSyncPoint("sync1");
         foreach (var participant in _defaultParticipants)
         {
-            await _manager.ReportReachedAsync("sync1", participant);
+            await _manager.ReportReachedAsync("sync1", participant, TestContext.Current.CancellationToken);
         }
 
         // Act
-        var status = await _manager.WaitForAllAsync("sync1");
+        var status = await _manager.WaitForAllAsync("sync1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(status.IsComplete);
@@ -194,7 +194,7 @@ public sealed class SyncPointManagerTests : IDisposable
     {
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _manager.WaitForAllAsync("nonexistent"));
+            () => _manager.WaitForAllAsync("nonexistent", TestContext.Current.CancellationToken));
     }
 
     // =========================================================================
@@ -212,7 +212,7 @@ public sealed class SyncPointManagerTests : IDisposable
         // Act
         foreach (var participant in _defaultParticipants)
         {
-            await _manager.ReportReachedAsync("sync1", participant);
+            await _manager.ReportReachedAsync("sync1", participant, TestContext.Current.CancellationToken);
         }
 
         // Assert
@@ -232,7 +232,7 @@ public sealed class SyncPointManagerTests : IDisposable
         _manager.RegisterSyncPoint("sync1");
         foreach (var participant in _defaultParticipants)
         {
-            await _manager.ReportReachedAsync("sync1", participant);
+            await _manager.ReportReachedAsync("sync1", participant, TestContext.Current.CancellationToken);
         }
 
         // Act
@@ -252,8 +252,8 @@ public sealed class SyncPointManagerTests : IDisposable
         _manager.RegisterSyncPoint("sync1");
         _manager.RegisterSyncPoint("sync2");
         var participant = _defaultParticipants.First();
-        await _manager.ReportReachedAsync("sync1", participant);
-        await _manager.ReportReachedAsync("sync2", participant);
+        await _manager.ReportReachedAsync("sync1", participant, TestContext.Current.CancellationToken);
+        await _manager.ReportReachedAsync("sync2", participant, TestContext.Current.CancellationToken);
 
         // Act
         _manager.ResetAll();
@@ -284,10 +284,10 @@ public sealed class SyncPointManagerTests : IDisposable
         _manager.RegisterSyncPoint("waiting");
         _manager.RegisterSyncPoint("complete");
 
-        await _manager.ReportReachedAsync("waiting", _defaultParticipants.First());
+        await _manager.ReportReachedAsync("waiting", _defaultParticipants.First(), TestContext.Current.CancellationToken);
         foreach (var p in _defaultParticipants)
         {
-            await _manager.ReportReachedAsync("complete", p);
+            await _manager.ReportReachedAsync("complete", p, TestContext.Current.CancellationToken);
         }
 
         // Act
@@ -308,7 +308,7 @@ public sealed class SyncPointManagerTests : IDisposable
         // Arrange
         _manager.RegisterSyncPoint("sync1");
         var first = _defaultParticipants.First();
-        await _manager.ReportReachedAsync("sync1", first);
+        await _manager.ReportReachedAsync("sync1", first, TestContext.Current.CancellationToken);
 
         // Act
         var status = _manager.GetStatus("sync1");

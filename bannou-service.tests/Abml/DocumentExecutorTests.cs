@@ -30,7 +30,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -45,7 +45,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(3, result.Logs.Count);
@@ -62,7 +62,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "nonexistent");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "nonexistent", ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.IsSuccess);
         Assert.Contains("not found", result.Error);
@@ -80,7 +80,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -95,7 +95,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -110,7 +110,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -125,7 +125,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -144,7 +144,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -159,7 +159,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -174,7 +174,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -193,7 +193,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Contains("Count: 3", result.Logs[0].Message);
@@ -211,7 +211,7 @@ public class DocumentExecutorTests
         var scope = new VariableScope();
         scope.SetValue("items", new List<string> { "apple", "banana", "cherry" });
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", scope);
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", scope, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(3, result.Logs.Count);
@@ -228,7 +228,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -247,7 +247,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Logs.Count);
@@ -263,7 +263,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -278,7 +278,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(3, result.Logs.Count);
@@ -295,7 +295,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("done", result.Value);
@@ -311,7 +311,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -334,7 +334,7 @@ public class DocumentExecutorTests
         scope.SetValue("player_name", "Hero");
         scope.SetValue("player_level", 10);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", scope);
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", scope, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);
@@ -374,7 +374,7 @@ public class DocumentExecutorTests
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start");
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Logs.Count);
@@ -394,7 +394,7 @@ public class DocumentExecutorTests
         scope.SetValue("rows", new List<int> { 1, 2, 3 });
         scope.SetValue("cols", new List<int> { 1, 2, 3 });
 
-        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", scope);
+        var result = await _executor.ExecuteAsync(parseResult.Value!, "start", scope, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Logs);

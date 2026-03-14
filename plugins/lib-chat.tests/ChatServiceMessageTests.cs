@@ -51,7 +51,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             Content = new SendMessageContent { Text = "Hello world" },
         };
 
-        var (status, response) = await service.SendMessageAsync(request, CancellationToken.None);
+        var (status, response) = await service.SendMessageAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -117,7 +117,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             Content = new SendMessageContent { Text = "Ephemeral message" },
         };
 
-        var (status, _) = await service.SendMessageAsync(request, CancellationToken.None);
+        var (status, _) = await service.SendMessageAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
 
@@ -144,7 +144,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SendMessageAsync(
             new SendMessageRequest { RoomId = TestRoomId, Content = new SendMessageContent { Text = "test" } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Unauthorized, status);
     }
@@ -165,7 +165,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SendMessageAsync(
             new SendMessageRequest { RoomId = TestRoomId, Content = new SendMessageContent { Text = "test" } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -181,7 +181,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SendMessageAsync(
             new SendMessageRequest { RoomId = TestRoomId, Content = new SendMessageContent { Text = "test" } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Forbidden, status);
     }
@@ -197,7 +197,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SendMessageAsync(
             new SendMessageRequest { RoomId = TestRoomId, Content = new SendMessageContent { Text = "test" } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Forbidden, status);
     }
@@ -219,7 +219,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SendMessageAsync(
             new SendMessageRequest { RoomId = TestRoomId, Content = new SendMessageContent { Text = "test" } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Forbidden, status);
     }
@@ -241,7 +241,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SendMessageAsync(
             new SendMessageRequest { RoomId = TestRoomId, Content = new SendMessageContent { Text = "test" } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Forbidden, status);
     }
@@ -264,7 +264,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SendMessageAsync(
             new SendMessageRequest { RoomId = TestRoomId, Content = new SendMessageContent { Text = "test" } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Forbidden, status);
     }
@@ -298,7 +298,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SendMessageAsync(
             new SendMessageRequest { RoomId = TestRoomId, Content = new SendMessageContent { Text = "I'm back" } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
     }
@@ -330,7 +330,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SendMessageAsync(
             new SendMessageRequest { RoomId = TestRoomId, Content = new SendMessageContent { Text = "spam" } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -361,7 +361,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SendMessageAsync(
             new SendMessageRequest { RoomId = TestRoomId, Content = new SendMessageContent { Text = "too fast" } },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -395,7 +395,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             {
                 RoomId = TestRoomId,
                 Content = new SendMessageContent { Text = "wrong format" },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -434,7 +434,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
                     SentimentCategory = SentimentCategory.Excited,
                     SentimentIntensity = 0.8f,
                 },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -468,7 +468,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             {
                 RoomId = TestRoomId,
                 Content = new SendMessageContent { Text = "not an emoji" },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -502,7 +502,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             {
                 RoomId = TestRoomId,
                 Content = new SendMessageContent { Text = "This text is way too long for the validator" },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -535,7 +535,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             {
                 RoomId = TestRoomId,
                 Content = new SendMessageContent { }, // no text
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -567,7 +567,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             },
         };
 
-        var (status, response) = await service.SendMessageBatchAsync(request, CancellationToken.None);
+        var (status, response) = await service.SendMessageBatchAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -607,7 +607,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             },
         };
 
-        var (status, _) = await service.SendMessageBatchAsync(request, CancellationToken.None);
+        var (status, _) = await service.SendMessageBatchAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(StatusCodes.NotFound, status);
     }
 
@@ -627,7 +627,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             },
         };
 
-        var (status, _) = await service.SendMessageBatchAsync(request, CancellationToken.None);
+        var (status, _) = await service.SendMessageBatchAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(StatusCodes.Forbidden, status);
     }
 
@@ -656,7 +656,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             },
         };
 
-        var (status, response) = await service.SendMessageBatchAsync(request, CancellationToken.None);
+        var (status, response) = await service.SendMessageBatchAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -705,7 +705,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             },
         };
 
-        var (status, response) = await service.SendMessageBatchAsync(request, CancellationToken.None);
+        var (status, response) = await service.SendMessageBatchAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -738,7 +738,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, response) = await service.GetMessageHistoryAsync(
             new MessageHistoryRequest { RoomId = TestRoomId, Limit = 50 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -758,7 +758,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, response) = await service.GetMessageHistoryAsync(
             new MessageHistoryRequest { RoomId = TestRoomId, Limit = 50 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -788,7 +788,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.GetMessageHistoryAsync(
             new MessageHistoryRequest { RoomId = TestRoomId, Limit = 50 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -807,7 +807,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
         // Request with limit larger than config page size
         await service.GetMessageHistoryAsync(
             new MessageHistoryRequest { RoomId = TestRoomId, Limit = 999 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Verify the query was called with page size + 1 (for hasMore detection)
         MockMessageStore.Verify(s => s.JsonQueryPagedAsync(
@@ -843,7 +843,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, response) = await service.DeleteMessageAsync(
             new DeleteMessageRequest { RoomId = TestRoomId, MessageId = messageId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -873,7 +873,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.DeleteMessageAsync(
             new DeleteMessageRequest { RoomId = TestRoomId, MessageId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Unauthorized, status);
     }
@@ -890,7 +890,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.DeleteMessageAsync(
             new DeleteMessageRequest { RoomId = TestRoomId, MessageId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -932,7 +932,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, response) = await service.PinMessageAsync(
             new PinMessageRequest { RoomId = TestRoomId, MessageId = messageId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -957,7 +957,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, response) = await service.PinMessageAsync(
             new PinMessageRequest { RoomId = TestRoomId, MessageId = messageId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -990,7 +990,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.PinMessageAsync(
             new PinMessageRequest { RoomId = TestRoomId, MessageId = messageId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -1006,7 +1006,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.PinMessageAsync(
             new PinMessageRequest { RoomId = TestRoomId, MessageId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -1019,7 +1019,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.PinMessageAsync(
             new PinMessageRequest { RoomId = TestRoomId, MessageId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Conflict, status);
     }
@@ -1055,7 +1055,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, response) = await service.UnpinMessageAsync(
             new UnpinMessageRequest { RoomId = TestRoomId, MessageId = messageId },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1074,7 +1074,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.UnpinMessageAsync(
             new UnpinMessageRequest { RoomId = TestRoomId, MessageId = Guid.NewGuid() },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -1101,7 +1101,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, response) = await service.SearchMessagesAsync(
             new SearchMessagesRequest { RoomId = TestRoomId, Query = "Hello", Limit = 20 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1121,7 +1121,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SearchMessagesAsync(
             new SearchMessagesRequest { RoomId = TestRoomId, Query = "Hello", Limit = 20 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1140,7 +1140,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         var (status, _) = await service.SearchMessagesAsync(
             new SearchMessagesRequest { RoomId = TestRoomId, Query = "Hello", Limit = 20 },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
     }
@@ -1179,7 +1179,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             {
                 RoomId = TestRoomId,
                 Content = new SendMessageContent { Text = "Hello 123!" },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1214,7 +1214,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             {
                 RoomId = TestRoomId,
                 Content = new SendMessageContent { Text = "Hello world" },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -1253,7 +1253,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
                     SentimentCategory = SentimentCategory.Excited,
                     SentimentIntensity = 1.5f,
                 },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1291,7 +1291,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
                     SentimentCategory = SentimentCategory.Supportive,
                     SentimentIntensity = -0.5f,
                 },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1329,7 +1329,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
                     SentimentCategory = SentimentCategory.Supportive,
                     SentimentIntensity = null,
                 },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1367,7 +1367,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             {
                 RoomId = TestRoomId,
                 Content = new SendMessageContent { EmojiCode = "skull" },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1400,7 +1400,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             {
                 RoomId = TestRoomId,
                 Content = new SendMessageContent { Text = "not custom" },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1437,7 +1437,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
                 {
                     CustomPayload = "{\"data\": \"this is a very long custom payload that exceeds the limit\"}"
                 },
-            }, CancellationToken.None);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
     }
@@ -1483,7 +1483,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
             Content = new SendMessageContent { CustomPayload = customPayload },
         };
 
-        var (status, response) = await service.SendMessageAsync(request, CancellationToken.None);
+        var (status, response) = await service.SendMessageAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);

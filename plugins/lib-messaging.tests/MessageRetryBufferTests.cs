@@ -551,7 +551,7 @@ public class MessageRetryBufferTests : IAsyncDisposable
                 {
                     buffer.TryEnqueueForRetry("test.topic", payload, null, Guid.NewGuid());
                 }
-            }));
+            }, TestContext.Current.CancellationToken));
         }
 
         await Task.WhenAll(tasks);

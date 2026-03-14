@@ -64,7 +64,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        var result = await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(ActionResult.Continue, result);
         var filtered = GetScopeValue<IReadOnlyList<Perception>>(context, "filtered_perceptions");
@@ -81,7 +81,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        var result = await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(ActionResult.Continue, result);
         var filtered = GetScopeValue<IReadOnlyList<Perception>>(context, "filtered_perceptions");
@@ -102,7 +102,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        var result = await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        var result = await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         Assert.Equal(ActionResult.Continue, result);
         var filtered = GetScopeValue<IReadOnlyList<Perception>>(context, "filtered_perceptions");
@@ -134,7 +134,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var filtered = GetScopeValue<IReadOnlyList<Perception>>(context, "filtered_perceptions");
         Assert.NotNull(filtered);
@@ -163,7 +163,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var filtered = GetScopeValue<IReadOnlyList<Perception>>(context, "filtered_perceptions");
         Assert.NotNull(filtered);
@@ -189,7 +189,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var filtered = GetScopeValue<IReadOnlyList<Perception>>(context, "filtered_perceptions");
         Assert.NotNull(filtered);
@@ -215,7 +215,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var filtered = GetScopeValue<IReadOnlyList<Perception>>(context, "filtered_perceptions");
         Assert.NotNull(filtered);
@@ -244,7 +244,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var fastTrack = GetScopeValue<IReadOnlyList<Perception>>(context, "fast_track_perceptions");
         var filtered = GetScopeValue<IReadOnlyList<Perception>>(context, "filtered_perceptions");
@@ -272,7 +272,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var fastTrack = GetScopeValue<IReadOnlyList<Perception>>(context, "fast_track_perceptions");
         var filtered = GetScopeValue<IReadOnlyList<Perception>>(context, "filtered_perceptions");
@@ -299,7 +299,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var fastTrack = GetScopeValue<IReadOnlyList<Perception>>(context, "fast_track_perceptions");
 
@@ -327,7 +327,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var filtered = GetScopeValue<IReadOnlyList<Perception>>(context, "my_filtered");
         var fastTrack = GetScopeValue<IReadOnlyList<Perception>>(context, "my_fast_track");
@@ -357,7 +357,7 @@ public class FilterAttentionHandlerTests : CognitionHandlerTestBase
         });
         var context = CreateTestContext();
 
-        await _handler.ExecuteAsync(action, context, CancellationToken.None);
+        await _handler.ExecuteAsync(action, context, TestContext.Current.CancellationToken);
 
         var filtered = GetScopeValue<IReadOnlyList<Perception>>(context, "filtered_perceptions");
         Assert.NotNull(filtered);

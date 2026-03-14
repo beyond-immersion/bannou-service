@@ -114,14 +114,14 @@ public class ServiceNavigatorTests : IClassFixture<CollectionFixture>, IDisposab
             ServiceRequestContext.SessionId = "task1-session";
             Thread.Sleep(50); // Ensure overlap
             task1SessionId = ServiceRequestContext.SessionId ?? "";
-        });
+        }, TestContext.Current.CancellationToken);
 
         var task2 = Task.Run(() =>
         {
             ServiceRequestContext.SessionId = "task2-session";
             Thread.Sleep(50); // Ensure overlap
             task2SessionId = ServiceRequestContext.SessionId ?? "";
-        });
+        }, TestContext.Current.CancellationToken);
 
         await Task.WhenAll(task1, task2);
 
@@ -279,7 +279,7 @@ public class ServiceNavigatorTests : IClassFixture<CollectionFixture>, IDisposab
         using var client = new HttpClient(handler);
 
         // Act
-        await client.GetAsync("http://test.local/api/test");
+        await client.GetAsync("http://test.local/api/test", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(mockInnerHandler.LastRequest?.Headers.Contains(ServiceRequestContextMiddleware.SessionIdHeader));
@@ -301,7 +301,7 @@ public class ServiceNavigatorTests : IClassFixture<CollectionFixture>, IDisposab
         using var client = new HttpClient(handler);
 
         // Act
-        await client.GetAsync("http://test.local/api/test");
+        await client.GetAsync("http://test.local/api/test", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(mockInnerHandler.LastRequest?.Headers.Contains(ServiceRequestContextMiddleware.CorrelationIdHeader));
@@ -321,7 +321,7 @@ public class ServiceNavigatorTests : IClassFixture<CollectionFixture>, IDisposab
         using var client = new HttpClient(handler);
 
         // Act
-        await client.GetAsync("http://test.local/api/test");
+        await client.GetAsync("http://test.local/api/test", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(mockInnerHandler.LastRequest?.Headers.Contains(ServiceRequestContextMiddleware.SessionIdHeader));
@@ -344,7 +344,7 @@ public class ServiceNavigatorTests : IClassFixture<CollectionFixture>, IDisposab
         request.Headers.Add(ServiceRequestContextMiddleware.SessionIdHeader, "existing-session");
 
         // Act
-        await client.SendAsync(request);
+        await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - should keep existing header value
         var headerValue = mockInnerHandler.LastRequest?.Headers.GetValues(ServiceRequestContextMiddleware.SessionIdHeader).First();

@@ -112,7 +112,7 @@ public class SubscriptionExpirationServiceTests
 
         // Act & Assert - Should not throw
         await service.StartAsync(cts.Token);
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class SubscriptionExpirationServiceTests
         using var service = CreateService();
 
         // Act - call internal method directly via InternalsVisibleTo
-        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        await service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert - Should not throw
         _mockStateStoreFactory.Verify(f => f.GetStore<List<Guid>>(STATE_STORE), Times.Once);
@@ -142,7 +142,7 @@ public class SubscriptionExpirationServiceTests
 
         // Act & Assert - Required dependency missing should throw
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.CheckAndExpireSubscriptionsAsync(CancellationToken.None));
+            () => service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -172,7 +172,7 @@ public class SubscriptionExpirationServiceTests
 
         // Act & Assert - Required dependency missing should throw
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.CheckAndExpireSubscriptionsAsync(CancellationToken.None));
+            () => service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -185,7 +185,7 @@ public class SubscriptionExpirationServiceTests
         using var service = CreateService();
 
         // Act
-        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        await service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert - No events should be published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -233,7 +233,7 @@ public class SubscriptionExpirationServiceTests
         using var service = CreateService();
 
         // Act
-        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        await service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         _mockSubscriptionService.Verify(s => s.ExpireSubscriptionAsync(subscriptionId, It.IsAny<CancellationToken>()), Times.Once);
@@ -271,7 +271,7 @@ public class SubscriptionExpirationServiceTests
         using var service = CreateService();
 
         // Act
-        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        await service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert - ExpireSubscriptionAsync should NOT be called (already inactive)
         _mockSubscriptionService.Verify(s => s.ExpireSubscriptionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -302,7 +302,7 @@ public class SubscriptionExpirationServiceTests
         using var service = CreateService();
 
         // Act
-        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        await service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert - ExpireSubscriptionAsync should NOT be called
         _mockSubscriptionService.Verify(s => s.ExpireSubscriptionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -352,7 +352,7 @@ public class SubscriptionExpirationServiceTests
         using var service = CreateService();
 
         // Act
-        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        await service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert - Should have retried and succeeded
         _mockIndexStore.Verify(s => s.GetWithETagAsync("subscription-index", It.IsAny<CancellationToken>()),
@@ -383,7 +383,7 @@ public class SubscriptionExpirationServiceTests
         using var service = CreateService();
 
         // Act - Should not throw even after all retries fail
-        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        await service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert - All 3 retry attempts were made
         _mockIndexStore.Verify(s => s.GetWithETagAsync("subscription-index", It.IsAny<CancellationToken>()),
@@ -419,7 +419,7 @@ public class SubscriptionExpirationServiceTests
         using var service = CreateService();
 
         // Act
-        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        await service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert - No index cleanup needed (no IDs to remove)
         _mockIndexStore.Verify(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -448,7 +448,7 @@ public class SubscriptionExpirationServiceTests
         using var service = CreateService();
 
         // Act
-        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        await service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert - TrySaveAsync should never be called since index is empty
         _mockIndexStore.Verify(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<List<Guid>>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -490,7 +490,7 @@ public class SubscriptionExpirationServiceTests
         using var service = CreateService();
 
         // Act
-        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        await service.CheckAndExpireSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert - Should NOT expire, but should clean from index
         _mockSubscriptionService.Verify(s => s.ExpireSubscriptionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);

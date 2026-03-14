@@ -51,7 +51,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_basic"));
 
         // Act
-        var result = await _loader.LoadAsync("test");
+        var result = await _loader.LoadAsync("test", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -71,7 +71,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         File.WriteAllText(Path.Combine(nestedDir, "greet.yaml"), DialogueTestFixtures.Load("dialogue_nested"));
 
         // Act
-        var result = await _loader.LoadAsync("dialogue/merchant/greet");
+        var result = await _loader.LoadAsync("dialogue/merchant/greet", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -83,7 +83,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
     public async Task LoadAsync_WithNonexistentFile_ReturnsNull()
     {
         // Act
-        var result = await _loader.LoadAsync("nonexistent");
+        var result = await _loader.LoadAsync("nonexistent", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -100,7 +100,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_with_overrides"));
 
         // Act
-        var result = await _loader.LoadAsync("test");
+        var result = await _loader.LoadAsync("test", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -120,7 +120,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_locale_restricted"));
 
         // Act
-        var result = await _loader.LoadAsync("test");
+        var result = await _loader.LoadAsync("test", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -139,8 +139,8 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_original"));
 
         // Act - Load twice
-        var result1 = await _loader.LoadAsync("test");
-        var result2 = await _loader.LoadAsync("test");
+        var result1 = await _loader.LoadAsync("test", TestContext.Current.CancellationToken);
+        var result2 = await _loader.LoadAsync("test", TestContext.Current.CancellationToken);
 
         // Assert - Should return cached result
         Assert.Same(result1, result2);
@@ -153,13 +153,13 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_original"));
 
         // Load initial
-        var result1 = await _loader.LoadAsync("test");
+        var result1 = await _loader.LoadAsync("test", TestContext.Current.CancellationToken);
 
         // Update file
         CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_updated"));
 
         // Act - Reload
-        var result2 = await _loader.ReloadAsync("test");
+        var result2 = await _loader.ReloadAsync("test", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotSame(result1, result2);
@@ -175,8 +175,8 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         CreateFile("test2.yaml", DialogueTestFixtures.Load("dialogue_original"));
 
         // Load both
-        await _loader.LoadAsync("test1");
-        await _loader.LoadAsync("test2");
+        await _loader.LoadAsync("test1", TestContext.Current.CancellationToken);
+        await _loader.LoadAsync("test2", TestContext.Current.CancellationToken);
 
         // Act
         _loader.ClearCache();
@@ -205,7 +205,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         loader.RegisterDirectory(highPriorityDir, priority: 10);
 
         // Act
-        var result = await loader.LoadAsync("test");
+        var result = await loader.LoadAsync("test", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -241,7 +241,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         CreateFile("test.yml", DialogueTestFixtures.Load("dialogue_yml_extension"));
 
         // Act
-        var result = await _loader.LoadAsync("test");
+        var result = await _loader.LoadAsync("test", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -269,7 +269,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Arrange
         CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_en_es"));
 
-        var result = await _loader.LoadAsync("test");
+        var result = await _loader.LoadAsync("test", TestContext.Current.CancellationToken);
         Assert.NotNull(result);
 
         // Act - Try US English which should fall back to "en"
@@ -288,7 +288,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Arrange
         CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_de_only"));
 
-        var result = await _loader.LoadAsync("test");
+        var result = await _loader.LoadAsync("test", TestContext.Current.CancellationToken);
         Assert.NotNull(result);
 
         // Act - Try French which doesn't exist
@@ -314,7 +314,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         CreateFile("malformed.yaml", "localizations:\n  en: [unclosed bracket");
 
         // Act
-        var result = await _loader.LoadAsync("malformed");
+        var result = await _loader.LoadAsync("malformed", TestContext.Current.CancellationToken);
 
         // Assert - Should return null, not throw
         Assert.Null(result);
@@ -327,7 +327,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         CreateFile("empty.yaml", "");
 
         // Act
-        var result = await _loader.LoadAsync("empty");
+        var result = await _loader.LoadAsync("empty", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);

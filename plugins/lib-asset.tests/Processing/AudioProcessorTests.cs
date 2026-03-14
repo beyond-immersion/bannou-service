@@ -105,7 +105,7 @@ public class AudioProcessorTests
         var processor = CreateProcessor();
         var context = CreateContext(contentType: "video/mp4");
 
-        var result = await processor.ValidateAsync(context);
+        var result = await processor.ValidateAsync(context, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsValid);
         Assert.Equal(ProcessorError.UnsupportedContentType, result.ErrorCode);
@@ -117,7 +117,7 @@ public class AudioProcessorTests
         var processor = CreateProcessor();
         var context = CreateContext(sizeBytes: 600L * 1024 * 1024); // 600MB, exceeds 500MB limit
 
-        var result = await processor.ValidateAsync(context);
+        var result = await processor.ValidateAsync(context, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsValid);
         Assert.Equal(ProcessorError.FileTooLarge, result.ErrorCode);
@@ -129,7 +129,7 @@ public class AudioProcessorTests
         var processor = CreateProcessor();
         var context = CreateContext(contentType: "audio/mp3", sizeBytes: 10 * 1024 * 1024);
 
-        var result = await processor.ValidateAsync(context);
+        var result = await processor.ValidateAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(result.IsValid);
     }
@@ -140,7 +140,7 @@ public class AudioProcessorTests
         var processor = CreateProcessor();
         var context = CreateContext(contentType: "audio/wav", sizeBytes: 10 * 1024 * 1024);
 
-        var result = await processor.ValidateAsync(context);
+        var result = await processor.ValidateAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(result.IsValid);
         Assert.NotNull(result.Warnings);
@@ -191,7 +191,7 @@ public class AudioProcessorTests
                 It.IsAny<IDictionary<string, string>?>()))
             .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "processed/test.mp3", null, "etag", 512, DateTime.UtcNow));
 
-        var result = await processor.ProcessAsync(context);
+        var result = await processor.ProcessAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal($"processed/{assetId}/transcoded.mp3", result.ProcessedStorageKey);
@@ -233,7 +233,7 @@ public class AudioProcessorTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(FFmpegResult.Failed("FFmpeg crashed", 50));
 
-        var result = await processor.ProcessAsync(context);
+        var result = await processor.ProcessAsync(context, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal(ProcessorError.TranscodingFailed, result.ErrorCode);
@@ -253,7 +253,7 @@ public class AudioProcessorTests
             .Setup(s => s.GetObjectAsync("test-bucket", "temp/missing.wav", It.IsAny<string?>()))
             .ReturnsAsync((Stream?)null);
 
-        var result = await processor.ProcessAsync(context);
+        var result = await processor.ProcessAsync(context, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Equal(ProcessorError.SourceNotFound, result.ErrorCode);
@@ -310,7 +310,7 @@ public class AudioProcessorTests
                 It.IsAny<IDictionary<string, string>?>()))
             .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "processed/test.opus", null, "etag", 256, DateTime.UtcNow));
 
-        var result = await processor.ProcessAsync(context);
+        var result = await processor.ProcessAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
 
@@ -365,7 +365,7 @@ public class AudioProcessorTests
                 It.IsAny<IDictionary<string, string>?>()))
             .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "processed/test.aac", null, "etag", 384, DateTime.UtcNow));
 
-        var result = await processor.ProcessAsync(context);
+        var result = await processor.ProcessAsync(context, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
 

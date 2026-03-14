@@ -42,11 +42,11 @@ public class InMemoryHashTests : IDisposable
     public async Task HashSetAsync_WithNewField_ReturnsTrueAndSetsValue()
     {
         // Act
-        var result = await _store.HashSetAsync("user:123", "name", "Alice");
+        var result = await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
-        var value = await _store.HashGetAsync<string>("user:123", "name");
+        var value = await _store.HashGetAsync<string>("user:123", "name", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("Alice", value);
     }
 
@@ -54,14 +54,14 @@ public class InMemoryHashTests : IDisposable
     public async Task HashSetAsync_WithExistingField_ReturnsFalseAndUpdatesValue()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice");
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.HashSetAsync("user:123", "name", "Bob");
+        var result = await _store.HashSetAsync("user:123", "name", "Bob", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result); // Field already existed
-        var value = await _store.HashGetAsync<string>("user:123", "name");
+        var value = await _store.HashGetAsync<string>("user:123", "name", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("Bob", value);
     }
 
@@ -69,33 +69,33 @@ public class InMemoryHashTests : IDisposable
     public async Task HashSetAsync_WithDifferentTypes_Works()
     {
         // Act
-        await _store.HashSetAsync("user:123", "name", "Alice");
-        await _store.HashSetAsync("user:123", "age", 30);
-        await _store.HashSetAsync("user:123", "score", 99.5);
-        await _store.HashSetAsync("user:123", "active", true);
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
+        await _store.HashSetAsync("user:123", "age", 30, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.HashSetAsync("user:123", "score", 99.5, cancellationToken: TestContext.Current.CancellationToken);
+        await _store.HashSetAsync("user:123", "active", true, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal("Alice", await _store.HashGetAsync<string>("user:123", "name"));
-        Assert.Equal(30, await _store.HashGetAsync<int>("user:123", "age"));
-        Assert.Equal(99.5, await _store.HashGetAsync<double>("user:123", "score"));
-        Assert.True(await _store.HashGetAsync<bool>("user:123", "active"));
+        Assert.Equal("Alice", await _store.HashGetAsync<string>("user:123", "name", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Equal(30, await _store.HashGetAsync<int>("user:123", "age", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Equal(99.5, await _store.HashGetAsync<double>("user:123", "score", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.True(await _store.HashGetAsync<bool>("user:123", "active", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task HashSetAsync_WithTtl_SetsExpiration()
     {
         // Arrange
-        await _store.HashSetAsync("expiring:hash", "field", "value", new StateOptions { Ttl = 1 });
+        await _store.HashSetAsync("expiring:hash", "field", "value", new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should exist immediately
-        var valueBefore = await _store.HashGetAsync<string>("expiring:hash", "field");
+        var valueBefore = await _store.HashGetAsync<string>("expiring:hash", "field", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("value", valueBefore);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Should be expired now
-        var valueAfter = await _store.HashGetAsync<string>("expiring:hash", "field");
+        var valueAfter = await _store.HashGetAsync<string>("expiring:hash", "field", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Null(valueAfter);
     }
 
@@ -106,10 +106,10 @@ public class InMemoryHashTests : IDisposable
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
 
         // Act
-        await _store.HashSetAsync("objects", "entity1", entity);
+        await _store.HashSetAsync("objects", "entity1", entity, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await _store.HashGetAsync<TestEntity>("objects", "entity1");
+        var result = await _store.HashGetAsync<TestEntity>("objects", "entity1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal("1", result.Id);
         Assert.Equal("Test", result.Name);
@@ -132,20 +132,20 @@ public class InMemoryHashTests : IDisposable
         };
 
         // Act
-        await _store.HashSetManyAsync("user:123", fields);
+        await _store.HashSetManyAsync("user:123", fields, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal("Alice", await _store.HashGetAsync<string>("user:123", "name"));
-        Assert.Equal("alice@example.com", await _store.HashGetAsync<string>("user:123", "email"));
-        Assert.Equal("admin", await _store.HashGetAsync<string>("user:123", "role"));
+        Assert.Equal("Alice", await _store.HashGetAsync<string>("user:123", "name", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Equal("alice@example.com", await _store.HashGetAsync<string>("user:123", "email", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Equal("admin", await _store.HashGetAsync<string>("user:123", "role", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task HashSetManyAsync_WithExistingFields_UpdatesAll()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice");
-        await _store.HashSetAsync("user:123", "email", "old@example.com");
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
+        await _store.HashSetAsync("user:123", "email", "old@example.com", cancellationToken: TestContext.Current.CancellationToken);
 
         var updates = new Dictionary<string, string>
         {
@@ -154,21 +154,21 @@ public class InMemoryHashTests : IDisposable
         };
 
         // Act
-        await _store.HashSetManyAsync("user:123", updates);
+        await _store.HashSetManyAsync("user:123", updates, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal("Bob", await _store.HashGetAsync<string>("user:123", "name"));
-        Assert.Equal("new@example.com", await _store.HashGetAsync<string>("user:123", "email"));
+        Assert.Equal("Bob", await _store.HashGetAsync<string>("user:123", "name", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Equal("new@example.com", await _store.HashGetAsync<string>("user:123", "email", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task HashSetManyAsync_WithEmpty_DoesNothing()
     {
         // Act
-        await _store.HashSetManyAsync("user:123", new Dictionary<string, string>());
+        await _store.HashSetManyAsync("user:123", new Dictionary<string, string>(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var count = await _store.HashCountAsync("user:123");
+        var count = await _store.HashCountAsync("user:123", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(0, count);
     }
 
@@ -180,10 +180,10 @@ public class InMemoryHashTests : IDisposable
     public async Task HashGetAsync_WithExistingField_ReturnsValue()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice");
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.HashGetAsync<string>("user:123", "name");
+        var result = await _store.HashGetAsync<string>("user:123", "name", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("Alice", result);
@@ -193,10 +193,10 @@ public class InMemoryHashTests : IDisposable
     public async Task HashGetAsync_WithNonExistentField_ReturnsDefault()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice");
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.HashGetAsync<string>("user:123", "nonexistent");
+        var result = await _store.HashGetAsync<string>("user:123", "nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -206,7 +206,7 @@ public class InMemoryHashTests : IDisposable
     public async Task HashGetAsync_WithNonExistentHash_ReturnsDefault()
     {
         // Act
-        var result = await _store.HashGetAsync<string>("nonexistent", "field");
+        var result = await _store.HashGetAsync<string>("nonexistent", "field", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -216,11 +216,11 @@ public class InMemoryHashTests : IDisposable
     public async Task HashGetAsync_WithWrongType_ReturnsDefaultAndLogsError()
     {
         // Arrange - Store a string
-        await _store.HashSetAsync("user:123", "data", "not-an-int");
+        await _store.HashSetAsync("user:123", "data", "not-an-int", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Try to read as int returns default instead of throwing
         // (IMPLEMENTATION TENETS: Deserialize failures log error and return default)
-        var result = await _store.HashGetAsync<int>("user:123", "data");
+        var result = await _store.HashGetAsync<int>("user:123", "data", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(default, result);
@@ -242,12 +242,12 @@ public class InMemoryHashTests : IDisposable
     public async Task HashGetAllAsync_WithExistingHash_ReturnsAllFields()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice");
-        await _store.HashSetAsync("user:123", "email", "alice@example.com");
-        await _store.HashSetAsync("user:123", "role", "admin");
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
+        await _store.HashSetAsync("user:123", "email", "alice@example.com", cancellationToken: TestContext.Current.CancellationToken);
+        await _store.HashSetAsync("user:123", "role", "admin", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.HashGetAllAsync<string>("user:123");
+        var result = await _store.HashGetAllAsync<string>("user:123", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -260,7 +260,7 @@ public class InMemoryHashTests : IDisposable
     public async Task HashGetAllAsync_WithNonExistentHash_ReturnsEmpty()
     {
         // Act
-        var result = await _store.HashGetAllAsync<string>("nonexistent");
+        var result = await _store.HashGetAllAsync<string>("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -270,13 +270,13 @@ public class InMemoryHashTests : IDisposable
     public async Task HashGetAllAsync_WithExpiredHash_ReturnsEmpty()
     {
         // Arrange
-        await _store.HashSetAsync("expiring:hash", "field", "value", new StateOptions { Ttl = 1 });
+        await _store.HashSetAsync("expiring:hash", "field", "value", new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.HashGetAllAsync<string>("expiring:hash");
+        var result = await _store.HashGetAllAsync<string>("expiring:hash", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -290,26 +290,26 @@ public class InMemoryHashTests : IDisposable
     public async Task HashDeleteAsync_WithExistingField_ReturnsTrueAndDeletes()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice");
-        await _store.HashSetAsync("user:123", "email", "alice@example.com");
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
+        await _store.HashSetAsync("user:123", "email", "alice@example.com", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.HashDeleteAsync("user:123", "name");
+        var result = await _store.HashDeleteAsync("user:123", "name", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
-        Assert.Null(await _store.HashGetAsync<string>("user:123", "name"));
-        Assert.Equal("alice@example.com", await _store.HashGetAsync<string>("user:123", "email"));
+        Assert.Null(await _store.HashGetAsync<string>("user:123", "name", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Equal("alice@example.com", await _store.HashGetAsync<string>("user:123", "email", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task HashDeleteAsync_WithNonExistentField_ReturnsFalse()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice");
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.HashDeleteAsync("user:123", "nonexistent");
+        var result = await _store.HashDeleteAsync("user:123", "nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -319,7 +319,7 @@ public class InMemoryHashTests : IDisposable
     public async Task HashDeleteAsync_WithNonExistentHash_ReturnsFalse()
     {
         // Act
-        var result = await _store.HashDeleteAsync("nonexistent", "field");
+        var result = await _store.HashDeleteAsync("nonexistent", "field", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -333,10 +333,10 @@ public class InMemoryHashTests : IDisposable
     public async Task HashExistsAsync_WithExistingField_ReturnsTrue()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice");
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.HashExistsAsync("user:123", "name");
+        var result = await _store.HashExistsAsync("user:123", "name", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -346,10 +346,10 @@ public class InMemoryHashTests : IDisposable
     public async Task HashExistsAsync_WithNonExistentField_ReturnsFalse()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice");
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.HashExistsAsync("user:123", "nonexistent");
+        var result = await _store.HashExistsAsync("user:123", "nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -359,7 +359,7 @@ public class InMemoryHashTests : IDisposable
     public async Task HashExistsAsync_WithNonExistentHash_ReturnsFalse()
     {
         // Act
-        var result = await _store.HashExistsAsync("nonexistent", "field");
+        var result = await _store.HashExistsAsync("nonexistent", "field", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -373,7 +373,7 @@ public class InMemoryHashTests : IDisposable
     public async Task HashIncrementAsync_WithNewField_CreatesWithValue()
     {
         // Act
-        var result = await _store.HashIncrementAsync("counters", "views", 1);
+        var result = await _store.HashIncrementAsync("counters", "views", 1, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, result);
@@ -383,10 +383,10 @@ public class InMemoryHashTests : IDisposable
     public async Task HashIncrementAsync_WithExistingField_Increments()
     {
         // Arrange
-        await _store.HashIncrementAsync("counters", "views", 10);
+        await _store.HashIncrementAsync("counters", "views", 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.HashIncrementAsync("counters", "views", 5);
+        var result = await _store.HashIncrementAsync("counters", "views", 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(15, result);
@@ -396,10 +396,10 @@ public class InMemoryHashTests : IDisposable
     public async Task HashIncrementAsync_WithNegativeIncrement_Decrements()
     {
         // Arrange
-        await _store.HashIncrementAsync("counters", "views", 100);
+        await _store.HashIncrementAsync("counters", "views", 100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.HashIncrementAsync("counters", "views", -30);
+        var result = await _store.HashIncrementAsync("counters", "views", -30, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(70, result);
@@ -409,9 +409,9 @@ public class InMemoryHashTests : IDisposable
     public async Task HashIncrementAsync_WithDefaultIncrement_IncrementsByOne()
     {
         // Act
-        var result1 = await _store.HashIncrementAsync("counters", "views");
-        var result2 = await _store.HashIncrementAsync("counters", "views");
-        var result3 = await _store.HashIncrementAsync("counters", "views");
+        var result1 = await _store.HashIncrementAsync("counters", "views", cancellationToken: TestContext.Current.CancellationToken);
+        var result2 = await _store.HashIncrementAsync("counters", "views", cancellationToken: TestContext.Current.CancellationToken);
+        var result3 = await _store.HashIncrementAsync("counters", "views", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, result1);
@@ -423,11 +423,11 @@ public class InMemoryHashTests : IDisposable
     public async Task HashIncrementAsync_WithNonNumericField_DefaultsToZeroAndLogsError()
     {
         // Arrange - Store a non-numeric value
-        await _store.HashSetAsync("counters", "name", "Alice");
+        await _store.HashSetAsync("counters", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Increment on non-numeric field defaults to 0 and increments from there
         // (IMPLEMENTATION TENETS: Deserialize failures log error and default to 0)
-        var result = await _store.HashIncrementAsync("counters", "name", 5);
+        var result = await _store.HashIncrementAsync("counters", "name", 5, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(5, result); // 0 + 5 = 5
@@ -449,12 +449,12 @@ public class InMemoryHashTests : IDisposable
     public async Task HashCountAsync_WithExistingHash_ReturnsFieldCount()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice");
-        await _store.HashSetAsync("user:123", "email", "alice@example.com");
-        await _store.HashSetAsync("user:123", "role", "admin");
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
+        await _store.HashSetAsync("user:123", "email", "alice@example.com", cancellationToken: TestContext.Current.CancellationToken);
+        await _store.HashSetAsync("user:123", "role", "admin", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var count = await _store.HashCountAsync("user:123");
+        var count = await _store.HashCountAsync("user:123", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, count);
@@ -464,7 +464,7 @@ public class InMemoryHashTests : IDisposable
     public async Task HashCountAsync_WithNonExistentHash_ReturnsZero()
     {
         // Act
-        var count = await _store.HashCountAsync("nonexistent");
+        var count = await _store.HashCountAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, count);
@@ -474,13 +474,13 @@ public class InMemoryHashTests : IDisposable
     public async Task HashCountAsync_WithExpiredHash_ReturnsZero()
     {
         // Arrange
-        await _store.HashSetAsync("expiring:hash", "field", "value", new StateOptions { Ttl = 1 });
+        await _store.HashSetAsync("expiring:hash", "field", "value", new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for expiration
-        await Task.Delay(1100);
+        await Task.Delay(1100, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var count = await _store.HashCountAsync("expiring:hash");
+        var count = await _store.HashCountAsync("expiring:hash", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, count);
@@ -494,22 +494,22 @@ public class InMemoryHashTests : IDisposable
     public async Task DeleteHashAsync_WithExistingHash_ReturnsTrueAndDeletesAll()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice");
-        await _store.HashSetAsync("user:123", "email", "alice@example.com");
+        await _store.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
+        await _store.HashSetAsync("user:123", "email", "alice@example.com", cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _store.DeleteHashAsync("user:123");
+        var result = await _store.DeleteHashAsync("user:123", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
-        Assert.Equal(0, await _store.HashCountAsync("user:123"));
+        Assert.Equal(0, await _store.HashCountAsync("user:123", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task DeleteHashAsync_WithNonExistentHash_ReturnsFalse()
     {
         // Act
-        var result = await _store.DeleteHashAsync("nonexistent");
+        var result = await _store.DeleteHashAsync("nonexistent", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -523,20 +523,20 @@ public class InMemoryHashTests : IDisposable
     public async Task RefreshHashTtlAsync_WithExistingHash_RefreshesTtl()
     {
         // Arrange
-        await _store.HashSetAsync("user:123", "name", "Alice", new StateOptions { Ttl = 1 });
+        await _store.HashSetAsync("user:123", "name", "Alice", new StateOptions { Ttl = 1 }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act - Refresh with longer TTL before expiration
-        await Task.Delay(500);
-        var result = await _store.RefreshHashTtlAsync("user:123", 3);
+        await Task.Delay(500, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await _store.RefreshHashTtlAsync("user:123", 3, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
 
         // Wait past original TTL
-        await Task.Delay(700);
+        await Task.Delay(700, cancellationToken: TestContext.Current.CancellationToken);
 
         // Should still exist due to refreshed TTL
-        var value = await _store.HashGetAsync<string>("user:123", "name");
+        var value = await _store.HashGetAsync<string>("user:123", "name", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("Alice", value);
     }
 
@@ -544,7 +544,7 @@ public class InMemoryHashTests : IDisposable
     public async Task RefreshHashTtlAsync_WithNonExistentHash_ReturnsFalse()
     {
         // Act
-        var result = await _store.RefreshHashTtlAsync("nonexistent", 60);
+        var result = await _store.RefreshHashTtlAsync("nonexistent", 60, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -564,7 +564,7 @@ public class InMemoryHashTests : IDisposable
         await Task.WhenAll(tasks);
 
         // Assert
-        var count = await _store.HashCountAsync("concurrent:hash");
+        var count = await _store.HashCountAsync("concurrent:hash", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(100, count);
     }
 
@@ -578,7 +578,7 @@ public class InMemoryHashTests : IDisposable
         await Task.WhenAll(tasks);
 
         // Assert
-        var value = await _store.HashGetAsync<long>("concurrent:hash", "counter");
+        var value = await _store.HashGetAsync<long>("concurrent:hash", "counter", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(100, value);
     }
 
@@ -591,14 +591,14 @@ public class InMemoryHashTests : IDisposable
         var store2 = new InMemoryStateStore<TestEntity>(sharedStoreName, null, _mockLogger.Object);
 
         // Act - Set via store1
-        await store1.HashSetAsync("user:123", "name", "Alice");
+        await store1.HashSetAsync("user:123", "name", "Alice", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Read via store2
-        var value = await store2.HashGetAsync<string>("user:123", "name");
+        var value = await store2.HashGetAsync<string>("user:123", "name", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("Alice", value);
 
         // Cleanup
-        await store1.DeleteHashAsync("user:123");
+        await store1.DeleteHashAsync("user:123", cancellationToken: TestContext.Current.CancellationToken);
     }
 
     #endregion
@@ -609,10 +609,10 @@ public class InMemoryHashTests : IDisposable
     public async Task HashSetAsync_WithEmptyStringField_Works()
     {
         // Act
-        await _store.HashSetAsync("user:123", "", "empty-field-name");
+        await _store.HashSetAsync("user:123", "", "empty-field-name", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var value = await _store.HashGetAsync<string>("user:123", "");
+        var value = await _store.HashGetAsync<string>("user:123", "", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("empty-field-name", value);
     }
 
@@ -620,10 +620,10 @@ public class InMemoryHashTests : IDisposable
     public async Task HashSetAsync_WithNullValue_StoresNull()
     {
         // Act
-        await _store.HashSetAsync<string?>("user:123", "nullable", null);
+        await _store.HashSetAsync<string?>("user:123", "nullable", null, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var value = await _store.HashGetAsync<string?>("user:123", "nullable");
+        var value = await _store.HashGetAsync<string?>("user:123", "nullable", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Null(value);
     }
 
@@ -636,10 +636,10 @@ public class InMemoryHashTests : IDisposable
         var specialValue = "value with spaces\nand\nnewlines";
 
         // Act
-        await _store.HashSetAsync(specialKey, specialField, specialValue);
+        await _store.HashSetAsync(specialKey, specialField, specialValue, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var value = await _store.HashGetAsync<string>(specialKey, specialField);
+        var value = await _store.HashGetAsync<string>(specialKey, specialField, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(specialValue, value);
     }
 

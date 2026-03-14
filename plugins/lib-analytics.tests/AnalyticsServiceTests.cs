@@ -186,7 +186,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.UpdateSkillRatingAsync(request, CancellationToken.None);
+        var (status, _) = await service.UpdateSkillRatingAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -209,7 +209,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.UpdateSkillRatingAsync(request, CancellationToken.None);
+        var (status, _) = await service.UpdateSkillRatingAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -231,7 +231,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.QueryControllerHistoryAsync(request, CancellationToken.None);
+        var (status, _) = await service.QueryControllerHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -249,7 +249,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.QueryControllerHistoryAsync(request, CancellationToken.None);
+        var (status, _) = await service.QueryControllerHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -270,7 +270,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.QueryControllerHistoryAsync(request, CancellationToken.None);
+        var (status, _) = await service.QueryControllerHistoryAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -292,7 +292,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.QueryEntitySummariesAsync(request, CancellationToken.None);
+        var (status, _) = await service.QueryEntitySummariesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -310,7 +310,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.QueryEntitySummariesAsync(request, CancellationToken.None);
+        var (status, _) = await service.QueryEntitySummariesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -329,7 +329,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.QueryEntitySummariesAsync(request, CancellationToken.None);
+        var (status, _) = await service.QueryEntitySummariesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -348,7 +348,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.QueryEntitySummariesAsync(request, CancellationToken.None);
+        var (status, _) = await service.QueryEntitySummariesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -367,7 +367,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.QueryEntitySummariesAsync(request, CancellationToken.None);
+        var (status, _) = await service.QueryEntitySummariesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -392,7 +392,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.QueryEntitySummariesAsync(request, CancellationToken.None);
+        var (status, _) = await service.QueryEntitySummariesAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Should NOT be BadRequest (might be InternalServerError due to no state store mock, but not BadRequest)
         Assert.NotEqual(StatusCodes.BadRequest, status);
@@ -417,7 +417,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, _) = await service.IngestEventAsync(request, CancellationToken.None);
+        var (status, _) = await service.IngestEventAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Analytics requires Redis for buffered ingestion
         Assert.Equal(StatusCodes.InternalServerError, status);
@@ -444,7 +444,7 @@ public class AnalyticsServiceTests
         };
 
         // Act
-        var (status, response) = await service.IngestEventBatchAsync(request, CancellationToken.None);
+        var (status, response) = await service.IngestEventBatchAsync(request, TestContext.Current.CancellationToken);
 
         // Assert - Batch returns OK but reports rejections
         Assert.Equal(StatusCodes.OK, status);

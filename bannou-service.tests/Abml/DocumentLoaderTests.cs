@@ -31,7 +31,7 @@ public class DocumentLoaderTests
         var loader = new DocumentLoader(resolver, _parser);
 
         // Act
-        var loaded = await loader.LoadAsync(yaml, "test.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(yaml, "test.yml", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(loaded);
@@ -55,7 +55,7 @@ public class DocumentLoaderTests
         var loader = new DocumentLoader(resolver, _parser);
 
         // Act
-        var loaded = await loader.LoadAsync(mainDoc, "import_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "import_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(loaded);
@@ -82,7 +82,7 @@ public class DocumentLoaderTests
 
         // Act & Assert
         await Assert.ThrowsAsync<CircularImportException>(async () =>
-            await loader.LoadAsync(aDoc, "import_circular_a.yml", CancellationToken.None));
+            await loader.LoadAsync(aDoc, "import_circular_a.yml", ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public class DocumentLoaderTests
         var loader = new DocumentLoader(resolver, _parser);
 
         // Act
-        var loaded = await loader.LoadAsync(aDoc, "import_nested_a.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(aDoc, "import_nested_a.yml", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(loaded);
@@ -129,7 +129,7 @@ public class DocumentLoaderTests
 
         // Act & Assert
         await Assert.ThrowsAsync<DocumentLoadException>(async () =>
-            await loader.LoadAsync(mainDoc, "import_main.yml", CancellationToken.None));
+            await loader.LoadAsync(mainDoc, "import_main.yml", ct: TestContext.Current.CancellationToken));
     }
 
     // =========================================================================
@@ -184,7 +184,7 @@ public class DocumentLoaderTests
         resolver.Register("import_common.yml", commonDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "import_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "import_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
         var found = loaded.TryResolveFlow("common.greet", out var flow, out var resolvedDoc);
@@ -214,7 +214,7 @@ public class DocumentLoaderTests
         resolver.Register("import_nested_c.yml", cDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(aDoc, "import_nested_a.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(aDoc, "import_nested_a.yml", ct: TestContext.Current.CancellationToken);
 
         // Act - Resolve b.c.do_work (nested namespace)
         var found = loaded.TryResolveFlow("b.c.do_work", out var flow, out var resolvedDoc);
@@ -243,10 +243,10 @@ public class DocumentLoaderTests
         resolver.Register("import_common.yml", commonDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "import_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "import_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
@@ -274,10 +274,10 @@ public class DocumentLoaderTests
         resolver.Register("import_nested_c.yml", cDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(aDoc, "import_nested_a.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(aDoc, "import_nested_a.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert - Tests context-relative resolution:
         // A calls b.call_c, B calls c.do_work (relative to B's imports, not A's)
@@ -308,10 +308,10 @@ public class DocumentLoaderTests
         resolver.Register("import_nested_c.yml", cDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(aDoc, "import_nested_a.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(aDoc, "import_nested_a.yml", ct: TestContext.Current.CancellationToken);
 
         // Act - Start directly from the deeply nested flow
-        var result = await _executor.ExecuteAsync(loaded, "b.c.do_work");
+        var result = await _executor.ExecuteAsync(loaded, "b.c.do_work", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
@@ -333,10 +333,10 @@ public class DocumentLoaderTests
         resolver.Register("common.yml", commonDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.IsSuccess);
@@ -357,10 +357,10 @@ public class DocumentLoaderTests
         resolver.Register("import_common.yml", commonDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "import_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "import_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act - Start execution from an imported flow
-        var result = await _executor.ExecuteAsync(loaded, "common.farewell");
+        var result = await _executor.ExecuteAsync(loaded, "common.farewell", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
@@ -382,10 +382,10 @@ public class DocumentLoaderTests
         resolver.Register("import_goto_target.yml", targetDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "import_goto_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "import_goto_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert - goto transfers control, so "After goto" should NOT appear
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
@@ -413,10 +413,10 @@ public class DocumentLoaderTests
         resolver.Register("goto_context_b.yml", bDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "goto_context_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "goto_context_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert - A's goto to b.target should resolve relative to A's imports
         // Since goto is a tail call, "Back in main" won't appear - the goto takes over
@@ -445,10 +445,10 @@ public class DocumentLoaderTests
         resolver.Register("call_context_b.yml", bDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "call_context_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "call_context_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert - A's call to b.helper should resolve relative to A's imports
         // and control should return through the call stack
@@ -478,10 +478,10 @@ public class DocumentLoaderTests
 
         // Read the main document manually to bootstrap
         var mainPath = Path.Combine(fixturesPath, "import_main.yml");
-        var mainYaml = await File.ReadAllTextAsync(mainPath);
+        var mainYaml = await File.ReadAllTextAsync(mainPath, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var loaded = await loader.LoadAsync(mainYaml, "import_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainYaml, "import_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(loaded);
@@ -501,11 +501,11 @@ public class DocumentLoaderTests
         var loader = new DocumentLoader(resolver, _parser);
 
         var mainPath = Path.Combine(fixturesPath, "import_main.yml");
-        var mainYaml = await File.ReadAllTextAsync(mainPath);
-        var loaded = await loader.LoadAsync(mainYaml, "import_main.yml", CancellationToken.None);
+        var mainYaml = await File.ReadAllTextAsync(mainPath, cancellationToken: TestContext.Current.CancellationToken);
+        var loaded = await loader.LoadAsync(mainYaml, "import_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
@@ -526,13 +526,13 @@ public class DocumentLoaderTests
         var resolver = new FileSystemDocumentResolver(fixturesPath, _parser);
 
         // Act - Resolve from a "subdir/file.yml" perspective
-        var result = await resolver.ResolveAsync("import_common.yml", "some_dir/main.yml", CancellationToken.None);
+        var result = await resolver.ResolveAsync("import_common.yml", "some_dir/main.yml", ct: TestContext.Current.CancellationToken);
 
         // Assert - Should try to find "some_dir/import_common.yml" which doesn't exist
         Assert.Null(result);
 
         // Act - Resolve from root perspective
-        result = await resolver.ResolveAsync("import_common.yml", null, CancellationToken.None);
+        result = await resolver.ResolveAsync("import_common.yml", null, ct: TestContext.Current.CancellationToken);
 
         // Assert - Should find the file at root
         Assert.NotNull(result);
@@ -550,7 +550,7 @@ public class DocumentLoaderTests
         var resolver = new FileSystemDocumentResolver(fixturesPath, _parser);
 
         // Act - Try to escape the base path
-        var result = await resolver.ResolveAsync("../../some_file.yml", null, CancellationToken.None);
+        var result = await resolver.ResolveAsync("../../some_file.yml", null, ct: TestContext.Current.CancellationToken);
 
         // Assert - Should reject the path traversal attempt
         Assert.Null(result);
@@ -568,10 +568,10 @@ public class DocumentLoaderTests
         var loader = new DocumentLoader(resolver, _parser);
 
         var mainPath = Path.Combine(fixturesPath, "subdir", "nested_main.yml");
-        var mainYaml = await File.ReadAllTextAsync(mainPath);
+        var mainYaml = await File.ReadAllTextAsync(mainPath, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act
-        var loaded = await loader.LoadAsync(mainYaml, "subdir/nested_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainYaml, "subdir/nested_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(loaded);
@@ -592,11 +592,11 @@ public class DocumentLoaderTests
         var loader = new DocumentLoader(resolver, _parser);
 
         var mainPath = Path.Combine(fixturesPath, "subdir", "nested_main.yml");
-        var mainYaml = await File.ReadAllTextAsync(mainPath);
-        var loaded = await loader.LoadAsync(mainYaml, "subdir/nested_main.yml", CancellationToken.None);
+        var mainYaml = await File.ReadAllTextAsync(mainPath, cancellationToken: TestContext.Current.CancellationToken);
+        var loaded = await loader.LoadAsync(mainYaml, "subdir/nested_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
@@ -631,10 +631,10 @@ public class DocumentLoaderTests
         resolver.Register("scope_lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "scope_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "scope_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert - When lib modifies an existing variable (my_var), change propagates to caller
         // This is by design: SetValue finds existing variable in parent scope and updates it
@@ -664,10 +664,10 @@ public class DocumentLoaderTests
         resolver.Register("scope_isolated_lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "scope_isolated_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "scope_isolated_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert - NEW variables created in lib scope should NOT be visible to caller
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
@@ -691,10 +691,10 @@ public class DocumentLoaderTests
         resolver.Register("scope_read_lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "scope_read_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "scope_read_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert - lib CAN read from parent scope
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
@@ -716,10 +716,10 @@ public class DocumentLoaderTests
         resolver.Register("result_lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "result_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "result_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
@@ -746,10 +746,10 @@ public class DocumentLoaderTests
         resolver.Register("ctx_lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "ctx_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "ctx_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert - lib_config should NOT be accessible (resolves to null because not in scope)
         Assert.True(result.IsSuccess, $"Execution failed: {result.Error}");
@@ -772,10 +772,10 @@ public class DocumentLoaderTests
         resolver.Register("ctx_own_lib.yml", libDoc);
 
         var loader = new DocumentLoader(resolver, _parser);
-        var loaded = await loader.LoadAsync(mainDoc, "ctx_own_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "ctx_own_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await _executor.ExecuteAsync(loaded, "start");
+        var result = await _executor.ExecuteAsync(loaded, "start", ct: TestContext.Current.CancellationToken);
 
         // Assert - Context variables are intentionally only initialized from root document
         // in tree-walking execution. This is by design - see ABML.md Appendix C.1.
@@ -808,7 +808,7 @@ public class DocumentLoaderTests
         var loader = new DocumentLoader(resolver, _parser);
 
         // Act - Should not throw even though types.json isn't registered
-        var loaded = await loader.LoadAsync(mainDoc, "schema_import_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "schema_import_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(loaded);
@@ -832,7 +832,7 @@ public class DocumentLoaderTests
         var loader = new DocumentLoader(resolver, _parser);
 
         // Act
-        var loaded = await loader.LoadAsync(mainDoc, "empty_file_main.yml", CancellationToken.None);
+        var loaded = await loader.LoadAsync(mainDoc, "empty_file_main.yml", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(loaded);

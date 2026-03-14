@@ -33,7 +33,7 @@ public sealed class EntityResolverTests
             .Build();
 
         // Act
-        var result = await _resolver.ResolveAsync("hero", bindings);
+        var result = await _resolver.ResolveAsync("hero", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -56,9 +56,9 @@ public sealed class EntityResolverTests
             .Build();
 
         // Act
-        var hero = await _resolver.ResolveAsync("hero", bindings);
-        var villain = await _resolver.ResolveAsync("villain", bindings);
-        var ally = await _resolver.ResolveAsync("ally", bindings);
+        var hero = await _resolver.ResolveAsync("hero", bindings, ct: TestContext.Current.CancellationToken);
+        var villain = await _resolver.ResolveAsync("villain", bindings, ct: TestContext.Current.CancellationToken);
+        var ally = await _resolver.ResolveAsync("ally", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(heroId, hero?.EntityId);
@@ -76,9 +76,9 @@ public sealed class EntityResolverTests
             .Build();
 
         // Act - try different casings
-        var result1 = await _resolver.ResolveAsync("hero", bindings);
-        var result2 = await _resolver.ResolveAsync("HERO", bindings);
-        var result3 = await _resolver.ResolveAsync("Hero", bindings);
+        var result1 = await _resolver.ResolveAsync("hero", bindings, ct: TestContext.Current.CancellationToken);
+        var result2 = await _resolver.ResolveAsync("HERO", bindings, ct: TestContext.Current.CancellationToken);
+        var result3 = await _resolver.ResolveAsync("Hero", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert - all should resolve to same entity
         Assert.Equal(heroId, result1?.EntityId);
@@ -100,7 +100,7 @@ public sealed class EntityResolverTests
             .Build();
 
         // Act
-        var result = await _resolver.ResolveAsync("secret_door", bindings);
+        var result = await _resolver.ResolveAsync("secret_door", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -126,7 +126,7 @@ public sealed class EntityResolverTests
             .Build();
 
         // Act
-        var result = await _resolver.ResolveAsync("treasure", bindings);
+        var result = await _resolver.ResolveAsync("treasure", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -152,7 +152,7 @@ public sealed class EntityResolverTests
             .Build();
 
         // Act
-        var result = await _resolver.ResolveAsync("protagonist", bindings);
+        var result = await _resolver.ResolveAsync("protagonist", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -168,7 +168,7 @@ public sealed class EntityResolverTests
             .Build();
 
         // Act
-        var result = await _resolver.ResolveAsync("protagonist", bindings);
+        var result = await _resolver.ResolveAsync("protagonist", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -190,7 +190,7 @@ public sealed class EntityResolverTests
         };
 
         // Act
-        var result = await _resolver.ResolveAsync("self", bindings, context);
+        var result = await _resolver.ResolveAsync("self", bindings, context, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -209,7 +209,7 @@ public sealed class EntityResolverTests
         };
 
         // Act
-        var result = await _resolver.ResolveAsync("target", bindings, context);
+        var result = await _resolver.ResolveAsync("target", bindings, context, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -228,7 +228,7 @@ public sealed class EntityResolverTests
         };
 
         // Act
-        var result = await _resolver.ResolveAsync("player", bindings, context);
+        var result = await _resolver.ResolveAsync("player", bindings, context, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -248,7 +248,7 @@ public sealed class EntityResolverTests
         };
 
         // Act
-        var result = await _resolver.ResolveAsync("target", bindings, context);
+        var result = await _resolver.ResolveAsync("target", bindings, context, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -272,7 +272,7 @@ public sealed class EntityResolverTests
         };
 
         // Act
-        var result = await _resolver.ResolveAsync("target", bindings, context);
+        var result = await _resolver.ResolveAsync("target", bindings, context, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -297,7 +297,7 @@ public sealed class EntityResolverTests
         };
 
         // Act
-        var result = await _resolver.ResolveAsync("special_target", bindings);
+        var result = await _resolver.ResolveAsync("special_target", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -318,7 +318,7 @@ public sealed class EntityResolverTests
         };
 
         // Act
-        var result = await _resolver.ResolveAsync("special_target", bindings);
+        var result = await _resolver.ResolveAsync("special_target", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -339,7 +339,7 @@ public sealed class EntityResolverTests
         };
 
         // Act
-        var result = await _resolver.ResolveAsync("special_target", bindings);
+        var result = await _resolver.ResolveAsync("special_target", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -369,7 +369,7 @@ public sealed class EntityResolverTests
         };
 
         // Act
-        var result = await _resolver.ResolveAsync("target", bindings);
+        var result = await _resolver.ResolveAsync("target", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -390,7 +390,7 @@ public sealed class EntityResolverTests
             .Build();
 
         // Act
-        var result = await _resolver.ResolveAsync("hero", bindings);
+        var result = await _resolver.ResolveAsync("hero", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -410,7 +410,7 @@ public sealed class EntityResolverTests
             .Build();
 
         // Act
-        var result = await _resolver.ResolveAsync("unknown_character", bindings);
+        var result = await _resolver.ResolveAsync("unknown_character", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -423,7 +423,7 @@ public sealed class EntityResolverTests
         var bindings = CutsceneBindings.Empty;
 
         // Act
-        var result = await _resolver.ResolveAsync("hero", bindings);
+        var result = await _resolver.ResolveAsync("hero", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -436,7 +436,7 @@ public sealed class EntityResolverTests
         var bindings = CutsceneBindings.Empty;
 
         // Act
-        var result = await _resolver.ResolveAsync("self", bindings);
+        var result = await _resolver.ResolveAsync("self", bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -453,7 +453,7 @@ public sealed class EntityResolverTests
         };
 
         // Act
-        var result = await _resolver.ResolveAsync("self", bindings, context);
+        var result = await _resolver.ResolveAsync("self", bindings, context, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -467,7 +467,7 @@ public sealed class EntityResolverTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            () => _resolver.ResolveAsync("", bindings));
+            () => _resolver.ResolveAsync("", bindings, ct: TestContext.Current.CancellationToken));
     }
 
     // =========================================================================
@@ -491,7 +491,7 @@ public sealed class EntityResolverTests
         // Act
         var results = await _resolver.ResolveManyAsync(
             new[] { "hero", "villain", "door" },
-            bindings);
+            bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, results.Count);
@@ -512,7 +512,7 @@ public sealed class EntityResolverTests
         // Act
         var results = await _resolver.ResolveManyAsync(
             new[] { "hero", "missing1", "missing2" },
-            bindings);
+            bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(results);
@@ -532,7 +532,7 @@ public sealed class EntityResolverTests
         // Act
         var results = await _resolver.ResolveManyAsync(
             Array.Empty<string>(),
-            bindings);
+            bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(results);
@@ -550,7 +550,7 @@ public sealed class EntityResolverTests
         // Act - tests that empty and whitespace-only names are skipped
         var results = await _resolver.ResolveManyAsync(
             new[] { "hero", "", "  " },
-            bindings);
+            bindings, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(results);

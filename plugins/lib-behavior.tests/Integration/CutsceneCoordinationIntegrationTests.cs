@@ -75,17 +75,17 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         session.SyncPoints.RegisterSyncPoint("intro_complete");
 
         // Act - First participant reaches
-        var result1 = await session.ReportSyncReachedAsync("intro_complete", _participants[0]);
+        var result1 = await session.ReportSyncReachedAsync("intro_complete", _participants[0], TestContext.Current.CancellationToken);
         Assert.False(result1.AllReached);
         Assert.Single(result1.ReachedParticipants);
 
         // Second participant reaches
-        var result2 = await session.ReportSyncReachedAsync("intro_complete", _participants[1]);
+        var result2 = await session.ReportSyncReachedAsync("intro_complete", _participants[1], TestContext.Current.CancellationToken);
         Assert.False(result2.AllReached);
         Assert.Equal(2, result2.ReachedParticipants.Count);
 
         // Third participant reaches - now complete
-        var result3 = await session.ReportSyncReachedAsync("intro_complete", _participants[2]);
+        var result3 = await session.ReportSyncReachedAsync("intro_complete", _participants[2], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result3.AllReached);
@@ -100,8 +100,8 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         session.SyncPoints.RegisterSyncPoint("checkpoint");
 
         // Act - Only 2 of 3 participants reach
-        await session.ReportSyncReachedAsync("checkpoint", _participants[0]);
-        var result = await session.ReportSyncReachedAsync("checkpoint", _participants[1]);
+        await session.ReportSyncReachedAsync("checkpoint", _participants[0], TestContext.Current.CancellationToken);
+        var result = await session.ReportSyncReachedAsync("checkpoint", _participants[1], TestContext.Current.CancellationToken);
 
         // Assert - Not complete, still waiting for third
         Assert.False(result.AllReached);
@@ -128,13 +128,13 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         session.SyncPoints.RegisterSyncPoint("timed_sync");
 
         // Act - Only partial participants reach
-        await session.ReportSyncReachedAsync("timed_sync", _participants[0]);
+        await session.ReportSyncReachedAsync("timed_sync", _participants[0], TestContext.Current.CancellationToken);
 
         // Wait for timeout
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Report another reach - triggers timeout check
-        var result = await session.ReportSyncReachedAsync("timed_sync", _participants[1]);
+        var result = await session.ReportSyncReachedAsync("timed_sync", _participants[1], TestContext.Current.CancellationToken);
 
         // Assert - Should show timeout occurred
         Assert.True(result.TimedOut || result.AllReached);
@@ -162,13 +162,13 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
             PromptText = "Choose wisely"
         };
 
-        var window = await session.CreateInputWindowAsync(windowOptions);
+        var window = await session.CreateInputWindowAsync(windowOptions, TestContext.Current.CancellationToken);
 
         // Act - Submit input
         var result = await session.SubmitInputAsync(
             window.WindowId,
             _participants[0],
-            "option_b");
+            "option_b", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.Accepted);
@@ -207,10 +207,10 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         InputWindowResultEventArgs? receivedResult = null;
         session.InputWindowResult += (_, args) => receivedResult = args;
 
-        var window = await session.CreateInputWindowAsync(windowOptions);
+        var window = await session.CreateInputWindowAsync(windowOptions, TestContext.Current.CancellationToken);
 
         // Act - Wait for timeout
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Trigger a check by attempting another operation
         var checkResult = session.InputWindows.GetWindow(window.WindowId);
@@ -252,12 +252,12 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
             }
         };
 
-        var window1 = await session.CreateInputWindowAsync(window1Options);
-        var window2 = await session.CreateInputWindowAsync(window2Options);
+        var window1 = await session.CreateInputWindowAsync(window1Options, TestContext.Current.CancellationToken);
+        var window2 = await session.CreateInputWindowAsync(window2Options, TestContext.Current.CancellationToken);
 
         // Act - Each participant submits to their own window
-        var result1 = await session.SubmitInputAsync(window1.WindowId, _participants[0], "attack");
-        var result2 = await session.SubmitInputAsync(window2.WindowId, _participants[1], "support");
+        var result1 = await session.SubmitInputAsync(window1.WindowId, _participants[0], "attack", TestContext.Current.CancellationToken);
+        var result2 = await session.SubmitInputAsync(window2.WindowId, _participants[1], "support", TestContext.Current.CancellationToken);
 
         // Assert - Both accepted independently
         Assert.True(result1.Accepted);
@@ -278,14 +278,14 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
             PromptText = "Press Now!"
         };
 
-        var window = await session.CreateInputWindowAsync(windowOptions);
+        var window = await session.CreateInputWindowAsync(windowOptions, TestContext.Current.CancellationToken);
 
         // Act - Submit QTE input with timing data
         var qteInput = new { timing = 0.95f, button = "A" };
         var result = await session.SubmitInputAsync(
             window.WindowId,
             _participants[0],
-            qteInput);
+            qteInput, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.Accepted);
@@ -309,7 +309,7 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         }
 
         // Act - Abort session and return control
-        await session.AbortAsync("Player disconnected");
+        await session.AbortAsync("Player disconnected", TestContext.Current.CancellationToken);
         await _gateManager.ReturnCinematicControlAsync(_participants, ControlHandoff.Instant());
 
         // Assert - All gates back to Behavior
@@ -350,7 +350,7 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         }
 
         // Act - Complete session with state sync
-        await session.CompleteAsync();
+        await session.CompleteAsync(TestContext.Current.CancellationToken);
         await _gateManager.ReturnCinematicControlAsync(
             _participants,
             ControlHandoff.InstantWithState(finalState));
@@ -374,7 +374,7 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         await _gateManager.TakeCinematicControlAsync(_participants, session.CinematicId);
 
         // Act - Complete and return control
-        await session.CompleteAsync();
+        await session.CompleteAsync(TestContext.Current.CancellationToken);
         await _gateManager.ReturnCinematicControlAsync(_participants, ControlHandoff.Instant());
 
         // Assert
@@ -403,22 +403,22 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
 
         // Act - Progress through states
         // Active (initial) -> WaitingForSync
-        await session.ReportSyncReachedAsync("sync1", _participants[0]);
+        await session.ReportSyncReachedAsync("sync1", _participants[0], TestContext.Current.CancellationToken);
         // WaitingForSync -> Active (when all reach)
-        await session.ReportSyncReachedAsync("sync1", _participants[1]);
-        await session.ReportSyncReachedAsync("sync1", _participants[2]);
+        await session.ReportSyncReachedAsync("sync1", _participants[1], TestContext.Current.CancellationToken);
+        await session.ReportSyncReachedAsync("sync1", _participants[2], TestContext.Current.CancellationToken);
 
         // Active -> WaitingForInput
         var window = await session.CreateInputWindowAsync(new InputWindowOptions
         {
             TargetEntity = _participants[0]
-        });
+        }, TestContext.Current.CancellationToken);
 
         // WaitingForInput -> Active (when input received)
-        await session.SubmitInputAsync(window.WindowId, _participants[0], "input");
+        await session.SubmitInputAsync(window.WindowId, _participants[0], "input", TestContext.Current.CancellationToken);
 
         // Active -> Completed
-        await session.CompleteAsync();
+        await session.CompleteAsync(TestContext.Current.CancellationToken);
 
         // Assert - Verify state progression
         Assert.Contains(CutsceneSessionState.Active, stateHistory);
@@ -462,9 +462,9 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         session2.SyncPoints.RegisterSyncPoint("sync_b");
 
         // Progress session1
-        await session1.ReportSyncReachedAsync("sync_a", session1Participants[0]);
-        await session1.ReportSyncReachedAsync("sync_a", session1Participants[1]);
-        await session1.CompleteAsync();
+        await session1.ReportSyncReachedAsync("sync_a", session1Participants[0], TestContext.Current.CancellationToken);
+        await session1.ReportSyncReachedAsync("sync_a", session1Participants[1], TestContext.Current.CancellationToken);
+        await session1.CompleteAsync(TestContext.Current.CancellationToken);
 
         // Session2 still active
         Assert.Equal(CutsceneSessionState.Completed, session1.State);
@@ -494,16 +494,16 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
             "session1",
             "cleanup_cinematic",
             _participants.Take(2).ToList(),
-            CutsceneSessionOptions.Multiplayer);
+            CutsceneSessionOptions.Multiplayer, TestContext.Current.CancellationToken);
 
         using var session2 = await coordinator.CreateSessionAsync(
             "session2",
             "active_cinematic",
             _participants.Skip(1).ToList(),
-            CutsceneSessionOptions.Multiplayer);
+            CutsceneSessionOptions.Multiplayer, TestContext.Current.CancellationToken);
 
         // Complete session1
-        await session1.CompleteAsync();
+        await session1.CompleteAsync(TestContext.Current.CancellationToken);
 
         // Act - Cleanup
         coordinator.CleanupCompletedSessions();
@@ -538,7 +538,7 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         session.SyncPoints.RegisterSyncPoint("intro");
         foreach (var p in _participants)
         {
-            await session.ReportSyncReachedAsync("intro", p);
+            await session.ReportSyncReachedAsync("intro", p, TestContext.Current.CancellationToken);
         }
 
         // Phase 3: Input collection
@@ -551,18 +551,18 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
                 new() { Value = "spare", Label = "Spare" },
                 new() { Value = "eliminate", Label = "Eliminate" }
             }
-        });
-        await session.SubmitInputAsync(window.WindowId, _participants[0], "spare");
+        }, TestContext.Current.CancellationToken);
+        await session.SubmitInputAsync(window.WindowId, _participants[0], "spare", TestContext.Current.CancellationToken);
 
         // Phase 4: Another sync point
         session.SyncPoints.RegisterSyncPoint("decision_made");
         foreach (var p in _participants)
         {
-            await session.ReportSyncReachedAsync("decision_made", p);
+            await session.ReportSyncReachedAsync("decision_made", p, TestContext.Current.CancellationToken);
         }
 
         // Phase 5: Complete and handoff
-        await session.CompleteAsync();
+        await session.CompleteAsync(TestContext.Current.CancellationToken);
 
         var finalState = new EntityState
         {

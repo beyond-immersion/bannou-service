@@ -145,7 +145,7 @@ public class SeedDecayWorkerServiceTests
         catch (OperationCanceledException) { }
         finally
         {
-            await worker.StopAsync(CancellationToken.None);
+            await worker.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 

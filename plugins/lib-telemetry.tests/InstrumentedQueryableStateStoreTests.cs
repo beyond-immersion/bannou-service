@@ -52,7 +52,7 @@ public class InstrumentedQueryableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.QueryAsync(predicate);
+        var result = await _sut.QueryAsync(predicate, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -74,7 +74,7 @@ public class InstrumentedQueryableStateStoreTests
             .ReturnsAsync(new List<TestEntity>());
 
         // Act
-        await _sut.QueryAsync(x => x.Id == "1");
+        await _sut.QueryAsync(x => x.Id == "1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -107,7 +107,7 @@ public class InstrumentedQueryableStateStoreTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _sut.QueryAsync(x => x.Id == "1"));
+            () => _sut.QueryAsync(x => x.Id == "1", cancellationToken: TestContext.Current.CancellationToken));
         Assert.Same(expectedException, exception);
 
         _telemetryMock.Verify(
@@ -145,7 +145,7 @@ public class InstrumentedQueryableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.QueryPagedAsync(null, 1, 10);
+        var result = await _sut.QueryPagedAsync(null, 1, 10, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(1, result.TotalCount);
@@ -168,7 +168,7 @@ public class InstrumentedQueryableStateStoreTests
             .ReturnsAsync(42);
 
         // Act
-        var result = await _sut.CountAsync();
+        var result = await _sut.CountAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(42, result);
@@ -189,7 +189,7 @@ public class InstrumentedQueryableStateStoreTests
             .ReturnsAsync(0);
 
         // Act
-        await _sut.CountAsync();
+        await _sut.CountAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _telemetryMock.Verify(
@@ -218,7 +218,7 @@ public class InstrumentedQueryableStateStoreTests
             .ReturnsAsync(expected);
 
         // Act
-        var result = await _sut.GetAsync("key1");
+        var result = await _sut.GetAsync("key1", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Same(expected, result);

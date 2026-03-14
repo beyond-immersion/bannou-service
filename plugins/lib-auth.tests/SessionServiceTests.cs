@@ -93,7 +93,7 @@ public class SessionServiceTests
             .ReturnsAsync(expectedSession);
 
         // Act
-        var result = await _service.GetSessionAsync(sessionKey);
+        var result = await _service.GetSessionAsync(sessionKey, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -111,7 +111,7 @@ public class SessionServiceTests
             .ReturnsAsync((SessionDataModel?)null);
 
         // Act
-        var result = await _service.GetSessionAsync(sessionKey);
+        var result = await _service.GetSessionAsync(sessionKey, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -136,7 +136,7 @@ public class SessionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        await _service.SaveSessionAsync(sessionKey, sessionData);
+        await _service.SaveSessionAsync(sessionKey, sessionData, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockSessionStore.Verify(s => s.SaveAsync(
@@ -162,7 +162,7 @@ public class SessionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        await _service.SaveSessionAsync(sessionKey, sessionData, ttlSeconds);
+        await _service.SaveSessionAsync(sessionKey, sessionData, ttlSeconds, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockSessionStore.Verify(s => s.SaveAsync(
@@ -186,7 +186,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.DeleteSessionAsync(sessionKey);
+        await _service.DeleteSessionAsync(sessionKey, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockSessionStore.Verify(s => s.DeleteAsync($"session:{sessionKey}", It.IsAny<CancellationToken>()), Times.Once);
@@ -212,7 +212,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.AddSessionToAccountIndexAsync(accountId, sessionKey);
+        await _service.AddSessionToAccountIndexAsync(accountId, sessionKey, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Atomic SADD called with correct key, value, and TTL
         _mockCacheableStringStore.Verify(s => s.AddToSetAsync(
@@ -239,7 +239,7 @@ public class SessionServiceTests
             .ReturnsAsync(false);
 
         // Act
-        await _service.AddSessionToAccountIndexAsync(accountId, sessionKey);
+        await _service.AddSessionToAccountIndexAsync(accountId, sessionKey, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - AddToSetAsync is still called (set handles deduplication atomically)
         _mockCacheableStringStore.Verify(s => s.AddToSetAsync(
@@ -268,7 +268,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.RemoveSessionFromAccountIndexAsync(accountId, sessionKeyToRemove);
+        await _service.RemoveSessionFromAccountIndexAsync(accountId, sessionKeyToRemove, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Atomic SREM called with correct key and value
         _mockCacheableStringStore.Verify(s => s.RemoveFromSetAsync(
@@ -292,7 +292,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.RemoveSessionFromAccountIndexAsync(accountId, sessionKeyToRemove);
+        await _service.RemoveSessionFromAccountIndexAsync(accountId, sessionKeyToRemove, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Only RemoveFromSetAsync is called; Redis handles empty set cleanup
         _mockCacheableStringStore.Verify(s => s.RemoveFromSetAsync(
@@ -322,7 +322,7 @@ public class SessionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        await _service.AddSessionIdReverseIndexAsync(sessionId, sessionKey, ttlSeconds);
+        await _service.AddSessionIdReverseIndexAsync(sessionId, sessionKey, ttlSeconds, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockStringStore.Verify(s => s.SaveAsync(
@@ -347,7 +347,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.RemoveSessionIdReverseIndexAsync(sessionId);
+        await _service.RemoveSessionIdReverseIndexAsync(sessionId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockStringStore.Verify(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()), Times.Once);
@@ -369,7 +369,7 @@ public class SessionServiceTests
             .ReturnsAsync(expectedSessionKey);
 
         // Act
-        var result = await _service.FindSessionKeyBySessionIdAsync(sessionId);
+        var result = await _service.FindSessionKeyBySessionIdAsync(sessionId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(expectedSessionKey, result);
@@ -386,7 +386,7 @@ public class SessionServiceTests
             .ReturnsAsync((string?)null);
 
         // Act
-        var result = await _service.FindSessionKeyBySessionIdAsync(sessionId);
+        var result = await _service.FindSessionKeyBySessionIdAsync(sessionId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -408,7 +408,7 @@ public class SessionServiceTests
             .ReturnsAsync(expectedKeys);
 
         // Act
-        var result = await _service.GetSessionKeysForAccountAsync(accountId);
+        var result = await _service.GetSessionKeysForAccountAsync(accountId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -428,7 +428,7 @@ public class SessionServiceTests
             .ReturnsAsync(new List<string>());
 
         // Act
-        var result = await _service.GetSessionKeysForAccountAsync(accountId);
+        var result = await _service.GetSessionKeysForAccountAsync(accountId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -449,7 +449,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.DeleteAccountSessionsIndexAsync(accountId);
+        await _service.DeleteAccountSessionsIndexAsync(accountId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockCacheableStringStore.Verify(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()), Times.Once);
@@ -470,7 +470,7 @@ public class SessionServiceTests
             .ReturnsAsync(new List<string>());
 
         // Act & Assert - Should not throw
-        await _service.InvalidateAllSessionsForAccountAsync(accountId);
+        await _service.InvalidateAllSessionsForAccountAsync(accountId, cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -502,7 +502,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.InvalidateAllSessionsForAccountAsync(accountId);
+        await _service.InvalidateAllSessionsForAccountAsync(accountId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Should delete both sessions
         _mockSessionStore.Verify(s => s.DeleteAsync($"session:{sessionKey1}", It.IsAny<CancellationToken>()), Times.Once);
@@ -543,7 +543,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.PublishSessionInvalidatedEventAsync(accountId, sessionIds, reason);
+        await _service.PublishSessionInvalidatedEventAsync(accountId, sessionIds, reason, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -577,7 +577,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.PublishSessionUpdatedEventAsync(accountId, sessionId, roles, authorizations, reason);
+        await _service.PublishSessionUpdatedEventAsync(accountId, sessionId, roles, authorizations, reason, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -630,7 +630,7 @@ public class SessionServiceTests
 
         // Act & Assert - Should re-throw (not mask the error)
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _service.GetAccountSessionsAsync(accountId));
+            _service.GetAccountSessionsAsync(accountId, cancellationToken: TestContext.Current.CancellationToken));
 
         // Assert - Error event was published before re-throw
         Assert.Equal("auth", capturedServiceName);
@@ -679,7 +679,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act - Should NOT throw (catch swallows, publishes error, does not re-throw)
-        await _service.AddSessionToAccountIndexAsync(accountId, sessionKey);
+        await _service.AddSessionToAccountIndexAsync(accountId, sessionKey, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Error event was published
         Assert.Equal("auth", capturedServiceName);
@@ -744,7 +744,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.InvalidateAllSessionsForAccountAsync(accountId);
+        await _service.InvalidateAllSessionsForAccountAsync(accountId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Edge revocation was called with correct JTI and account ID
         Assert.Equal("test-jti-for-revocation", capturedJti);
@@ -788,7 +788,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        await _service.InvalidateAllSessionsForAccountAsync(accountId);
+        await _service.InvalidateAllSessionsForAccountAsync(accountId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - RevokeTokenAsync should NOT have been called
         _mockEdgeRevocationService.Verify(e => e.RevokeTokenAsync(
@@ -821,7 +821,7 @@ public class SessionServiceTests
             .ReturnsAsync(new List<string>());
 
         // Act
-        var result = await _service.GetAccountSessionsAsync(accountId);
+        var result = await _service.GetAccountSessionsAsync(accountId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -844,7 +844,7 @@ public class SessionServiceTests
             .ReturnsAsync(sessionData);
 
         // Act
-        var result = await _service.GetAccountSessionsAsync(accountId);
+        var result = await _service.GetAccountSessionsAsync(accountId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -875,7 +875,7 @@ public class SessionServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _service.GetAccountSessionsAsync(accountId);
+        var result = await _service.GetAccountSessionsAsync(accountId, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Expired sessions should be filtered out
         Assert.Empty(result);

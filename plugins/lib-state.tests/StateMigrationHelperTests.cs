@@ -74,11 +74,11 @@ public class StateMigrationHelperTests : IAsyncDisposable
         {
             ["test-store"] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "test" }
         });
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var helper = CreateHelper(factory);
 
         // Act
-        var (status, response) = await helper.AnalyzeStoreAsync("test-store", MigrationBackend.Redis, CancellationToken.None);
+        var (status, response) = await helper.AnalyzeStoreAsync("test-store", MigrationBackend.Redis, TestContext.Current.CancellationToken);
 
         // Assert — Memory backend is not a migration source
         Assert.Equal(StatusCodes.OK, status);
@@ -95,14 +95,14 @@ public class StateMigrationHelperTests : IAsyncDisposable
         {
             ["test-store"] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "test" }
         });
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var helper = CreateHelper(factory);
 
         // Act — InMemory mode reports as Memory, not MySQL, so the migration backend conversion
         // will return null for Memory. Let's test with a store that maps to a migration backend.
         // Since InMemory mode overrides all backends to Memory, migration source detection works differently.
         // We test the logical path: factory reports Memory for all stores in InMemory mode.
-        var (status, response) = await helper.AnalyzeStoreAsync("test-store", MigrationBackend.Redis, CancellationToken.None);
+        var (status, response) = await helper.AnalyzeStoreAsync("test-store", MigrationBackend.Redis, TestContext.Current.CancellationToken);
 
         // Assert — Memory backend returns null from ToMigrationBackend, so canMigrate is false
         // This is expected: InMemory mode doesn't support real migration (there's no Redis/MySQL)
@@ -114,10 +114,10 @@ public class StateMigrationHelperTests : IAsyncDisposable
     public async Task DryRun_StoreNotFound_Returns404()
     {
         var factory = CreateFactory(new Dictionary<string, StoreConfiguration>());
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var helper = CreateHelper(factory);
 
-        var (status, response) = await helper.AnalyzeStoreAsync("nonexistent", MigrationBackend.Redis, CancellationToken.None);
+        var (status, response) = await helper.AnalyzeStoreAsync("nonexistent", MigrationBackend.Redis, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.Null(response);
@@ -130,10 +130,10 @@ public class StateMigrationHelperTests : IAsyncDisposable
         {
             ["search-store"] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "search", EnableSearch = true }
         });
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var helper = CreateHelper(factory);
 
-        var (status, response) = await helper.AnalyzeStoreAsync("search-store", MigrationBackend.Mysql, CancellationToken.None);
+        var (status, response) = await helper.AnalyzeStoreAsync("search-store", MigrationBackend.Mysql, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -147,10 +147,10 @@ public class StateMigrationHelperTests : IAsyncDisposable
         {
             ["test-store"] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "test" }
         });
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var helper = CreateHelper(factory);
 
-        var (status, response) = await helper.AnalyzeStoreAsync("test-store", MigrationBackend.Mysql, CancellationToken.None);
+        var (status, response) = await helper.AnalyzeStoreAsync("test-store", MigrationBackend.Mysql, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -166,12 +166,12 @@ public class StateMigrationHelperTests : IAsyncDisposable
         {
             ["test-store"] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "test" }
         });
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var helper = CreateHelper(factory);
 
         // InMemory mode: all stores report as Memory backend, which maps to null MigrationBackend.
         // Execute will return 400 because the source can't be mapped to a migration backend.
-        var (status, response) = await helper.ExecuteMigrationAsync("test-store", MigrationBackend.Redis, CancellationToken.None);
+        var (status, response) = await helper.ExecuteMigrationAsync("test-store", MigrationBackend.Redis, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
@@ -186,10 +186,10 @@ public class StateMigrationHelperTests : IAsyncDisposable
     public async Task Execute_StoreNotFound_Returns404()
     {
         var factory = CreateFactory(new Dictionary<string, StoreConfiguration>());
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var helper = CreateHelper(factory);
 
-        var (status, response) = await helper.ExecuteMigrationAsync("nonexistent", MigrationBackend.Redis, CancellationToken.None);
+        var (status, response) = await helper.ExecuteMigrationAsync("nonexistent", MigrationBackend.Redis, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.Null(response);
@@ -201,10 +201,10 @@ public class StateMigrationHelperTests : IAsyncDisposable
     public async Task Verify_StoreNotFound_Returns404()
     {
         var factory = CreateFactory(new Dictionary<string, StoreConfiguration>());
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var helper = CreateHelper(factory);
 
-        var (status, response) = await helper.VerifyMigrationAsync("nonexistent", MigrationBackend.Redis, CancellationToken.None);
+        var (status, response) = await helper.VerifyMigrationAsync("nonexistent", MigrationBackend.Redis, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.Null(response);
@@ -219,10 +219,10 @@ public class StateMigrationHelperTests : IAsyncDisposable
         {
             ["test-store"] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "test" }
         });
-        await factory.InitializeAsync();
+        await factory.InitializeAsync(TestContext.Current.CancellationToken);
         var helper = CreateHelper(factory);
 
-        var (status, response) = await helper.VerifyMigrationAsync("test-store", MigrationBackend.Redis, CancellationToken.None);
+        var (status, response) = await helper.VerifyMigrationAsync("test-store", MigrationBackend.Redis, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -261,7 +261,7 @@ public class StateMigrationHelperTests : IAsyncDisposable
 
         // Act
         var request = new MigrateDryRunRequest { StoreName = "test-store", DestinationBackend = MigrationBackend.Mysql };
-        var (status, response) = await service.MigrateDryRunAsync(request, CancellationToken.None);
+        var (status, response) = await service.MigrateDryRunAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -295,7 +295,7 @@ public class StateMigrationHelperTests : IAsyncDisposable
             mockHelper.Object);
 
         var request = new MigrateExecuteRequest { StoreName = "test-store", DestinationBackend = MigrationBackend.Redis };
-        var (status, response) = await service.MigrateExecuteAsync(request, CancellationToken.None);
+        var (status, response) = await service.MigrateExecuteAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
@@ -328,7 +328,7 @@ public class StateMigrationHelperTests : IAsyncDisposable
             mockHelper.Object);
 
         var request = new MigrateVerifyRequest { StoreName = "test-store", DestinationBackend = MigrationBackend.Mysql };
-        var (status, response) = await service.MigrateVerifyAsync(request, CancellationToken.None);
+        var (status, response) = await service.MigrateVerifyAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);

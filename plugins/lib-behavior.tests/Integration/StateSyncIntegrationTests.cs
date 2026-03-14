@@ -68,7 +68,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
         var handoff = ControlHandoff.InstantWithState(finalState);
 
         // Act - Sync state as if cinematic completed
-        await _stateSync.SyncStateAsync(entityId, finalState, handoff, CancellationToken.None);
+        await _stateSync.SyncStateAsync(entityId, finalState, handoff, TestContext.Current.CancellationToken);
 
         // Assert - Registry contains the synced state
         Assert.True(_stateRegistry.HasState(entityId));
@@ -96,9 +96,9 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
         var handoff = ControlHandoff.Instant();
 
         // Act - Sync all three entities
-        await _stateSync.SyncStateAsync(entity1, state1, handoff, CancellationToken.None);
-        await _stateSync.SyncStateAsync(entity2, state2, handoff, CancellationToken.None);
-        await _stateSync.SyncStateAsync(entity3, state3, handoff, CancellationToken.None);
+        await _stateSync.SyncStateAsync(entity1, state1, handoff, TestContext.Current.CancellationToken);
+        await _stateSync.SyncStateAsync(entity2, state2, handoff, TestContext.Current.CancellationToken);
+        await _stateSync.SyncStateAsync(entity3, state3, handoff, TestContext.Current.CancellationToken);
 
         // Assert - All three tracked independently
         Assert.Equal(3, _stateRegistry.Count);
@@ -128,7 +128,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
         _stateRegistry.StateUpdated += (_, args) => receivedArgs = args;
 
         // Act
-        await _stateSync.SyncStateAsync(entityId, state, handoff, CancellationToken.None);
+        await _stateSync.SyncStateAsync(entityId, state, handoff, TestContext.Current.CancellationToken);
 
         // Assert - Event raised with "cinematic" source
         Assert.NotNull(receivedArgs);
@@ -151,9 +151,9 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
         _stateRegistry.StateUpdated += (_, args) => capturedPreviousState = args.PreviousState;
 
         // Act - First sync
-        await _stateSync.SyncStateAsync(entityId, firstState, handoff, CancellationToken.None);
+        await _stateSync.SyncStateAsync(entityId, firstState, handoff, TestContext.Current.CancellationToken);
         // Second sync
-        await _stateSync.SyncStateAsync(entityId, secondState, handoff, CancellationToken.None);
+        await _stateSync.SyncStateAsync(entityId, secondState, handoff, TestContext.Current.CancellationToken);
 
         // Assert - Second event captured first state as previous
         Assert.NotNull(capturedPreviousState);
@@ -190,13 +190,13 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
             "test-cinematic",
             new[] { entityId },
             null,
-            ControlHandoff.InstantWithState(finalState));
+            ControlHandoff.InstantWithState(finalState), TestContext.Current.CancellationToken);
 
         // Set final state for entity
         controller.SetEntityFinalState(entityId, finalState);
 
         // Act - Complete the cinematic
-        await controller.CompleteAsync(ControlHandoff.Instant());
+        await controller.CompleteAsync(ControlHandoff.Instant(), TestContext.Current.CancellationToken);
 
         // Assert - State was synced to registry
         Assert.True(_stateRegistry.HasState(entityId));
@@ -220,7 +220,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
             "group-cinematic",
             entities,
             null,
-            ControlHandoff.Instant());
+            ControlHandoff.Instant(), TestContext.Current.CancellationToken);
 
         // Set different final states for each entity
         controller.SetEntityFinalState(entities[0], new EntityState
@@ -240,7 +240,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
         });
 
         // Act - Complete
-        await controller.CompleteAsync(ControlHandoff.Instant());
+        await controller.CompleteAsync(ControlHandoff.Instant(), TestContext.Current.CancellationToken);
 
         // Assert - All three synced independently
         Assert.Equal(3, _stateRegistry.Count);
@@ -266,7 +266,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
             "abort-cinematic",
             new[] { entityId },
             null,
-            ControlHandoff.Instant());
+            ControlHandoff.Instant(), TestContext.Current.CancellationToken);
 
         controller.SetEntityFinalState(entityId, new EntityState
         {
@@ -274,7 +274,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
         });
 
         // Act - Abort instead of complete
-        await controller.AbortAsync();
+        await controller.AbortAsync(TestContext.Current.CancellationToken);
 
         // Assert - State was NOT synced (abort doesn't sync)
         Assert.False(_stateRegistry.HasState(entityId));
@@ -292,7 +292,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
             "nosync-cinematic",
             new[] { entityId },
             null,
-            new ControlHandoff(HandoffStyle.Instant, null, SyncState: false));
+            new ControlHandoff(HandoffStyle.Instant, null, SyncState: false), TestContext.Current.CancellationToken);
 
         controller.SetEntityFinalState(entityId, new EntityState
         {
@@ -300,7 +300,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
         });
 
         // Act - Complete with SyncState=false handoff
-        await controller.CompleteAsync(new ControlHandoff(HandoffStyle.Instant, null, SyncState: false));
+        await controller.CompleteAsync(new ControlHandoff(HandoffStyle.Instant, null, SyncState: false), TestContext.Current.CancellationToken);
 
         // Assert - State was NOT synced because SyncState=false
         Assert.False(_stateRegistry.HasState(entityId));
@@ -326,7 +326,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
             "full-flow-cinematic",
             new[] { entityId },
             null,
-            ControlHandoff.Instant());
+            ControlHandoff.Instant(), TestContext.Current.CancellationToken);
 
         // During cinematic, entity state changes
         var cinematicFinalState = new EntityState
@@ -346,7 +346,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
         controller.SetEntityFinalState(entityId, cinematicFinalState);
 
         // Act - Complete cinematic with state sync
-        await controller.CompleteAsync(ControlHandoff.InstantWithState(cinematicFinalState));
+        await controller.CompleteAsync(ControlHandoff.InstantWithState(cinematicFinalState), TestContext.Current.CancellationToken);
 
         // Assert - Behavior system can now read the post-cinematic state
         var behaviorReadState = _stateRegistry.GetState(entityId);
@@ -380,26 +380,26 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
         var controller2 = CreateRunner(CreateMockInterpreter());
 
         // First cinematic
-        await controller1.StartAsync("cinematic-1", new[] { entityId }, null, ControlHandoff.Instant());
+        await controller1.StartAsync("cinematic-1", new[] { entityId }, null, ControlHandoff.Instant(), TestContext.Current.CancellationToken);
         controller1.SetEntityFinalState(entityId, new EntityState
         {
             Position = new Vector3(100, 0, 100),
             Stance = "first"
         });
-        await controller1.CompleteAsync();
+        await controller1.CompleteAsync(ct: TestContext.Current.CancellationToken);
 
         // Verify first state
         Assert.Equal(new Vector3(100, 0, 100), _stateRegistry.GetState(entityId)?.Position);
         Assert.Equal("first", _stateRegistry.GetState(entityId)?.Stance);
 
         // Second cinematic overwrites
-        await controller2.StartAsync("cinematic-2", new[] { entityId }, null, ControlHandoff.Instant());
+        await controller2.StartAsync("cinematic-2", new[] { entityId }, null, ControlHandoff.Instant(), TestContext.Current.CancellationToken);
         controller2.SetEntityFinalState(entityId, new EntityState
         {
             Position = new Vector3(999, 0, 999),
             Stance = "second"
         });
-        await controller2.CompleteAsync();
+        await controller2.CompleteAsync(ct: TestContext.Current.CancellationToken);
 
         // Assert - Second cinematic's state is now current
         Assert.Equal(new Vector3(999, 0, 999), _stateRegistry.GetState(entityId)?.Position);
@@ -423,11 +423,11 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
             Stance = "relaxed"
         };
 
-        await controller.StartAsync("blend-cinematic", new[] { entityId }, null, ControlHandoff.Instant());
+        await controller.StartAsync("blend-cinematic", new[] { entityId }, null, ControlHandoff.Instant(), TestContext.Current.CancellationToken);
         controller.SetEntityFinalState(entityId, finalState);
 
         // Act - Complete with blend handoff (1 second blend, with state for sync)
-        await controller.CompleteAsync(ControlHandoff.Blend(TimeSpan.FromSeconds(1), finalState));
+        await controller.CompleteAsync(ControlHandoff.Blend(TimeSpan.FromSeconds(1), finalState), TestContext.Current.CancellationToken);
 
         // Assert - State is synced immediately (blend is client-side visual only)
         Assert.True(_stateRegistry.HasState(entityId));
@@ -451,7 +451,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
             knownEntity,
             new EntityState { Health = 0.5f },
             ControlHandoff.Instant(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Act
         var knownState = _stateRegistry.GetStateOrEmpty(knownEntity);
@@ -479,7 +479,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
                 entityId,
                 new EntityState { Health = 1.0f },
                 handoff,
-                CancellationToken.None);
+                TestContext.Current.CancellationToken);
         }
 
         // Act
@@ -506,7 +506,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
                 entityId,
                 new EntityState { Health = 1.0f },
                 handoff,
-                CancellationToken.None);
+                TestContext.Current.CancellationToken);
         }
 
         Assert.Equal(2, _stateRegistry.Count);

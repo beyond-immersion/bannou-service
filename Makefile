@@ -521,7 +521,7 @@ test-unit:
 # SDK unit testing (separate from server tests)
 test-sdks: ## Run all SDK tests
 	@echo "🧪 Running SDK tests..."
-	dotnet test sdks/bannou-sdks.sln
+	dotnet test --project sdks/bannou-sdks.sln
 	@echo "✅ SDK tests completed"
 
 # Structural tests — cross-cutting convention/schema/assembly validation

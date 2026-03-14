@@ -116,7 +116,7 @@ public class MessagingServiceTests : IDisposable
             .ReturnsAsync(true);
 
         // Act
-        var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
+        var (statusCode, response) = await _service.PublishEventAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -154,7 +154,7 @@ public class MessagingServiceTests : IDisposable
             .ReturnsAsync(true);
 
         // Act
-        var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
+        var (statusCode, response) = await _service.PublishEventAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -186,7 +186,7 @@ public class MessagingServiceTests : IDisposable
 
         // Act & Assert - exception propagates to generated controller catch-all boundary
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _service.PublishEventAsync(request, CancellationToken.None));
+            () => _service.PublishEventAsync(request, TestContext.Current.CancellationToken));
         Assert.Equal("RabbitMQ connection failed", ex.Message);
     }
 
@@ -213,7 +213,7 @@ public class MessagingServiceTests : IDisposable
             .ReturnsAsync(true);
 
         // Act
-        var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
+        var (statusCode, response) = await _service.PublishEventAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -246,7 +246,7 @@ public class MessagingServiceTests : IDisposable
             .ReturnsAsync(true);
 
         // Act
-        var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
+        var (statusCode, response) = await _service.PublishEventAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -279,7 +279,7 @@ public class MessagingServiceTests : IDisposable
             .ReturnsAsync(mockHandle.Object);
 
         // Act
-        var (statusCode, response) = await _service.CreateSubscriptionAsync(request, CancellationToken.None);
+        var (statusCode, response) = await _service.CreateSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -308,7 +308,7 @@ public class MessagingServiceTests : IDisposable
 
         // Act & Assert - exception propagates to generated controller catch-all boundary
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _service.CreateSubscriptionAsync(request, CancellationToken.None));
+            () => _service.CreateSubscriptionAsync(request, TestContext.Current.CancellationToken));
         Assert.Equal("Cannot create subscription", ex.Message);
     }
 
@@ -338,8 +338,8 @@ public class MessagingServiceTests : IDisposable
             .ReturnsAsync(mockHandle.Object);
 
         // Act
-        var (_, response1) = await _service.CreateSubscriptionAsync(request1, CancellationToken.None);
-        var (_, response2) = await _service.CreateSubscriptionAsync(request2, CancellationToken.None);
+        var (_, response1) = await _service.CreateSubscriptionAsync(request1, TestContext.Current.CancellationToken);
+        var (_, response2) = await _service.CreateSubscriptionAsync(request2, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(response1);
@@ -376,7 +376,7 @@ public class MessagingServiceTests : IDisposable
             .Setup(x => x.CreateClient(It.IsAny<string>()))
             .Returns(CreateTrackedHttpClient);
 
-        var (_, createResponse) = await _service.CreateSubscriptionAsync(createRequest, CancellationToken.None);
+        var (_, createResponse) = await _service.CreateSubscriptionAsync(createRequest, TestContext.Current.CancellationToken);
         Assert.NotNull(createResponse);
 
         var removeRequest = new RemoveSubscriptionRequest
@@ -385,7 +385,7 @@ public class MessagingServiceTests : IDisposable
         };
 
         // Act
-        var statusCode = await _service.RemoveSubscriptionAsync(removeRequest, CancellationToken.None);
+        var statusCode = await _service.RemoveSubscriptionAsync(removeRequest, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -404,7 +404,7 @@ public class MessagingServiceTests : IDisposable
         };
 
         // Act
-        var statusCode = await _service.RemoveSubscriptionAsync(request, CancellationToken.None);
+        var statusCode = await _service.RemoveSubscriptionAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
@@ -434,7 +434,7 @@ public class MessagingServiceTests : IDisposable
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockHandle.Object);
 
-        var (_, createResponse) = await _service.CreateSubscriptionAsync(createRequest, CancellationToken.None);
+        var (_, createResponse) = await _service.CreateSubscriptionAsync(createRequest, TestContext.Current.CancellationToken);
         Assert.NotNull(createResponse);
 
         var removeRequest = new RemoveSubscriptionRequest
@@ -444,7 +444,7 @@ public class MessagingServiceTests : IDisposable
 
         // Act & Assert - exception propagates to generated controller catch-all boundary
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _service.RemoveSubscriptionAsync(removeRequest, CancellationToken.None));
+            () => _service.RemoveSubscriptionAsync(removeRequest, TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -458,7 +458,7 @@ public class MessagingServiceTests : IDisposable
         var request = new ListTopicsRequest();
 
         // Act
-        var (statusCode, response) = await _service.ListTopicsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await _service.ListTopicsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -484,18 +484,18 @@ public class MessagingServiceTests : IDisposable
         {
             Topic = "topic1",
             CallbackUrl = new Uri("http://localhost/callback1")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         await _service.CreateSubscriptionAsync(new CreateSubscriptionRequest
         {
             Topic = "topic2",
             CallbackUrl = new Uri("http://localhost/callback2")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         var request = new ListTopicsRequest();
 
         // Act
-        var (statusCode, response) = await _service.ListTopicsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await _service.ListTopicsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -523,24 +523,24 @@ public class MessagingServiceTests : IDisposable
         {
             Topic = "auth.user.created",
             CallbackUrl = new Uri("http://localhost/callback1")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         await _service.CreateSubscriptionAsync(new CreateSubscriptionRequest
         {
             Topic = "auth.session.expired",
             CallbackUrl = new Uri("http://localhost/callback2")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         await _service.CreateSubscriptionAsync(new CreateSubscriptionRequest
         {
             Topic = "account.deleted",
             CallbackUrl = new Uri("http://localhost/callback3")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         var request = new ListTopicsRequest { ExchangeFilter = "auth" };
 
         // Act
-        var (statusCode, response) = await _service.ListTopicsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await _service.ListTopicsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -567,18 +567,18 @@ public class MessagingServiceTests : IDisposable
         {
             Topic = "same.topic",
             CallbackUrl = new Uri("http://localhost/callback1")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         await _service.CreateSubscriptionAsync(new CreateSubscriptionRequest
         {
             Topic = "same.topic",
             CallbackUrl = new Uri("http://localhost/callback2")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         var request = new ListTopicsRequest();
 
         // Act
-        var (statusCode, response) = await _service.ListTopicsAsync(request, CancellationToken.None);
+        var (statusCode, response) = await _service.ListTopicsAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -606,10 +606,10 @@ public class MessagingServiceTests : IDisposable
         {
             Topic = "test.topic",
             CallbackUrl = new Uri("http://localhost/callback")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Act
-        var (statusCode, response) = await _service.ListTopicsAsync(new ListTopicsRequest(), CancellationToken.None);
+        var (statusCode, response) = await _service.ListTopicsAsync(new ListTopicsRequest(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -642,13 +642,13 @@ public class MessagingServiceTests : IDisposable
         {
             Topic = "topic1",
             CallbackUrl = new Uri("http://localhost/callback1")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         await _service.CreateSubscriptionAsync(new CreateSubscriptionRequest
         {
             Topic = "topic2",
             CallbackUrl = new Uri("http://localhost/callback2")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Act
         await _service.DisposeAsync();
@@ -693,13 +693,13 @@ public class MessagingServiceTests : IDisposable
         {
             Topic = "topic1",
             CallbackUrl = new Uri("http://localhost/callback1")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         await _service.CreateSubscriptionAsync(new CreateSubscriptionRequest
         {
             Topic = "topic2",
             CallbackUrl = new Uri("http://localhost/callback2")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Act
         var exception = await Record.ExceptionAsync(() => _service.DisposeAsync().AsTask());
@@ -720,7 +720,7 @@ public class MessagingServiceTests : IDisposable
         // Arrange - mock returns empty list (default setup)
 
         // Act
-        var recovered = await _service.RecoverExternalSubscriptionsAsync(CancellationToken.None);
+        var recovered = await _service.RecoverExternalSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, recovered);
@@ -755,7 +755,7 @@ public class MessagingServiceTests : IDisposable
             .ReturnsAsync(mockHandle.Object);
 
         // Act
-        var recovered = await _service.RecoverExternalSubscriptionsAsync(CancellationToken.None);
+        var recovered = await _service.RecoverExternalSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, recovered);
@@ -795,7 +795,7 @@ public class MessagingServiceTests : IDisposable
             .ThrowsAsync(new InvalidOperationException("Cannot subscribe"));
 
         // Act
-        var recovered = await _service.RecoverExternalSubscriptionsAsync(CancellationToken.None);
+        var recovered = await _service.RecoverExternalSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(0, recovered);
@@ -831,7 +831,7 @@ public class MessagingServiceTests : IDisposable
             .ReturnsAsync(mockHandle.Object);
 
         // Create a subscription first so it's in activeSubscriptions
-        var (_, createResponse) = await _service.CreateSubscriptionAsync(createRequest, CancellationToken.None);
+        var (_, createResponse) = await _service.CreateSubscriptionAsync(createRequest, TestContext.Current.CancellationToken);
         Assert.NotNull(createResponse);
 
         // Now set up recovery to return a sub with the same ID that was just created
@@ -844,7 +844,7 @@ public class MessagingServiceTests : IDisposable
             .ReturnsAsync(new List<ExternalSubscriptionData> { persistedSub });
 
         // Act
-        var recovered = await _service.RecoverExternalSubscriptionsAsync(CancellationToken.None);
+        var recovered = await _service.RecoverExternalSubscriptionsAsync(TestContext.Current.CancellationToken);
 
         // Assert - should skip the already-active subscription (0 newly recovered)
         Assert.Equal(0, recovered);
@@ -872,10 +872,10 @@ public class MessagingServiceTests : IDisposable
         {
             Topic = "test.topic",
             CallbackUrl = new Uri("http://localhost:8080/callback")
-        }, CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
 
         // Act
-        await _service.RefreshSubscriptionTtlAsync(CancellationToken.None);
+        await _service.RefreshSubscriptionTtlAsync(TestContext.Current.CancellationToken);
 
         // Assert
         _mockSubscriptionStore.Verify(
@@ -890,7 +890,7 @@ public class MessagingServiceTests : IDisposable
     public async Task RefreshSubscriptionTtlAsync_WithNoSubscriptions_DoesNotCallStore()
     {
         // Act
-        await _service.RefreshSubscriptionTtlAsync(CancellationToken.None);
+        await _service.RefreshSubscriptionTtlAsync(TestContext.Current.CancellationToken);
 
         // Assert - no store call when no active subscriptions
         _mockSubscriptionStore.Verify(
