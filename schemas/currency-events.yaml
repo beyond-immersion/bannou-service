@@ -102,6 +102,7 @@ x-lifecycle:
   topic_prefix: currency
   CurrencyDefinition:
     deprecation: true
+    instanceEntity: CurrencyWallet
     model:
       definitionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the currency definition" }
       code: { type: string, required: true, description: "Unique currency code" }

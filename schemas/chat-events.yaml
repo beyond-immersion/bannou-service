@@ -123,6 +123,7 @@ x-lifecycle:
     sensitive: [metadata]
   ChatRoomType:
     deprecation: true
+    instanceEntity: ChatRoom
     model:
       code: { type: string, primary: true, required: true, description: "Unique room type code within game service scope" }
       displayName: { type: string, required: true, description: "Human-readable room type name" }
