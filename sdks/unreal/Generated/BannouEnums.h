@@ -756,7 +756,6 @@ enum class EEntityType : uint8
     Session UMETA(DisplayName = "Session"),
     Deity UMETA(DisplayName = "Deity"),
     Dungeon UMETA(DisplayName = "Dungeon"),
-    Custom UMETA(DisplayName = "Custom"),
     Other UMETA(DisplayName = "Other"),
 };
 

@@ -17670,7 +17670,6 @@ export interface components {
       | 'Session'
       | 'Deity'
       | 'Dungeon'
-      | 'Custom'
       | 'Other';
     /** @description Metadata for an unlocked entry instance tracking usage and discovery state */
     EntryMetadata: {

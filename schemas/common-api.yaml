@@ -48,7 +48,6 @@ components:
         - Session
         - Deity
         - Dungeon
-        - Custom
         - Other
 
     ServiceHealthStatus:

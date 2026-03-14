@@ -548,7 +548,6 @@ components:
       - Session
       - Deity
       - Dungeon
-      - Custom
       - Other
     EventCategory:
       type: string

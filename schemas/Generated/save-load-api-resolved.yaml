@@ -2352,7 +2352,6 @@ components:
       - Session
       - Deity
       - Dungeon
-      - Custom
       - Other
 
 x-inlined-types:

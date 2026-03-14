@@ -24910,7 +24910,6 @@ components:
       - Session
       - Deity
       - Dungeon
-      - Custom
       - Other
     EntryMetadata:
       type: object

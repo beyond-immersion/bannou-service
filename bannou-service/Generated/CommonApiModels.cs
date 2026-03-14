@@ -89,11 +89,8 @@ public enum EntityType
     [System.Runtime.Serialization.EnumMember(Value = @"Dungeon")]
     Dungeon = 15,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
-    Custom = 16,
-
     [System.Runtime.Serialization.EnumMember(Value = @"Other")]
-    Other = 17,
+    Other = 16,
 
 }
 #pragma warning restore CS1591

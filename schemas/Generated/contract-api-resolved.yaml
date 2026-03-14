@@ -3208,7 +3208,6 @@ components:
       - Session
       - Deity
       - Dungeon
-      - Custom
       - Other
 
 x-service-registration:
