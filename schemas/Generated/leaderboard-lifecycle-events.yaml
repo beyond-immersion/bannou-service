@@ -191,3 +191,146 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    LeaderboardEntryCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to leaderboard.entry.created when a leaderboardentry is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entryId
+      - gameServiceId
+      - leaderboardId
+      - entityId
+      - entityType
+      - score
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: leaderboard.entry.created
+          description: 'Event type identifier: leaderboard.entry.created'
+        entryId: &id008
+          type: string
+          format: uuid
+          description: "Unique identifier for this leaderboard entry"
+        gameServiceId: &id009
+          type: string
+          format: uuid
+          description: "ID of the owning game service"
+        leaderboardId: &id010
+          type: string
+          description: "Leaderboard this entry belongs to"
+        entityId: &id011
+          type: string
+          format: uuid
+          description: "ID of the ranked entity"
+        entityType: &id012
+          $ref: ../common-api.yaml#/components/schemas/EntityType
+          description: "Type of the ranked entity"
+        score: &id013
+          type: number
+          format: double
+          description: "Current score value"
+        seasonNumber: &id014
+          type: integer
+          nullable: true
+          description: "Season number if this entry is in a seasonal leaderboard"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was last updated (set to createdAt on creation)
+    LeaderboardEntryUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to leaderboard.entry.updated when a leaderboardentry is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entryId
+      - gameServiceId
+      - leaderboardId
+      - entityId
+      - entityType
+      - score
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: leaderboard.entry.updated
+          description: 'Event type identifier: leaderboard.entry.updated'
+        entryId: *id008
+        gameServiceId: *id009
+        leaderboardId: *id010
+        entityId: *id011
+        entityType: *id012
+        score: *id013
+        seasonNumber: *id014
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    LeaderboardEntryDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to leaderboard.entry.deleted when a leaderboardentry is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entryId
+      - gameServiceId
+      - leaderboardId
+      - entityId
+      - entityType
+      - score
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: leaderboard.entry.deleted
+          description: 'Event type identifier: leaderboard.entry.deleted'
+        entryId: *id008
+        gameServiceId: *id009
+        leaderboardId: *id010
+        entityId: *id011
+        entityType: *id012
+        score: *id013
+        seasonNumber: *id014
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

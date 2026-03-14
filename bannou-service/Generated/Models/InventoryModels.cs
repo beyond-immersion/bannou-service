@@ -301,11 +301,11 @@ public partial class CreateContainerRequest
     public double SelfWeight { get; set; } = 0D;
 
     /// <summary>
-    /// How weight propagates to parent
+    /// How weight propagates to parent (null uses config default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("weightContribution")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WeightContribution WeightContribution { get; set; } = default!;
+    public WeightContribution? WeightContribution { get; set; } = default!;
 
     /// <summary>
     /// Slots used in slot-based parent

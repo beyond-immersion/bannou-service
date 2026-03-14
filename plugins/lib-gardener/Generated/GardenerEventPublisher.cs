@@ -41,6 +41,27 @@ public static class GardenerEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(GardenerPublishedTopics.ScenarioTemplateDeleted, eventData, cancellationToken);
 
+    /// <summary>Published when a new scenario instance is created.</summary>
+    public static Task<bool> PublishScenarioInstanceCreatedAsync(
+        this IMessageBus messageBus,
+        ScenarioInstanceCreatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(GardenerPublishedTopics.ScenarioInstanceCreated, eventData, cancellationToken);
+
+    /// <summary>Published when a scenario instance is updated (status changes, chain depth).</summary>
+    public static Task<bool> PublishScenarioInstanceUpdatedAsync(
+        this IMessageBus messageBus,
+        ScenarioInstanceUpdatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(GardenerPublishedTopics.ScenarioInstanceUpdated, eventData, cancellationToken);
+
+    /// <summary>Unused Category B infrastructure — scenario instances are cleaned up via lifecycle worker. Publisher method exists in generated code but is never called.</summary>
+    public static Task<bool> PublishScenarioInstanceDeletedAsync(
+        this IMessageBus messageBus,
+        ScenarioInstanceDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(GardenerPublishedTopics.ScenarioInstanceDeleted, eventData, cancellationToken);
+
     /// <summary>Published when a player enters the garden.</summary>
     public static Task<bool> PublishGardenerGardenEnteredAsync(
         this IMessageBus messageBus,

@@ -99,46 +99,46 @@ paths:
         : \"number\",\n                    \"format\": \"double\",\n                    \"default\": 0,\n                \
         \    \"minimum\": 0,\n                    \"description\": \"Empty container weight\"\n                },\n      \
         \          \"weightContribution\": {\n                    \"$ref\": \"#/$defs/WeightContribution\",\n            \
-        \        \"description\": \"How weight propagates to parent\"\n                },\n                \"slotCost\": {\n\
-        \                    \"type\": \"integer\",\n                    \"default\": 1,\n                    \"minimum\"\
-        : 0,\n                    \"description\": \"Slots used in slot-based parent\"\n                },\n             \
-        \   \"parentGridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"minimum\": 1,\n                    \"description\": \"Width footprint in grid-based parent\"\
-        \n                },\n                \"parentGridHeight\": {\n                    \"type\": \"integer\",\n      \
-        \              \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"Height
-        footprint in grid-based parent\"\n                },\n                \"parentVolume\": {\n                    \"\
-        type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n      \
-        \              \"minimum\": 0,\n                    \"description\": \"Volume footprint in volumetric parent\"\n \
-        \               },\n                \"allowedCategories\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"type\": \"string\"\n                    },\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Allowed item categories (null allows all)\"\n    \
-        \            },\n                \"forbiddenCategories\": {\n                    \"type\": \"array\",\n          \
-        \          \"items\": {\n                        \"type\": \"string\"\n                    },\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Forbidden item categories\"\n                },\n \
-        \               \"allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
-        \                       \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Required item tags for placement\"\n                },\n                \"realmId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Realm this container belongs to (null for account-level)\"\
-        \n                },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Container tags for filtering\"\n                },\n             \
-        \   \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Game-specific container data. Client-only
-        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n\
-        \        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Type of entity that owns this container. Intentionally separate from common-api EntityType because the valid set includes
-        non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types. Services mapping EntityType to ContainerOwnerType
-        should use MapByNameOrDefault with fallback to Other.\\n\",\n            \"enum\": [\n                \"Character\"\
-        ,\n                \"Account\",\n                \"Location\",\n                \"Vehicle\",\n                \"Guild\"\
-        ,\n                \"Escrow\",\n                \"Mail\",\n                \"Other\"\n            ]\n        },\n\
-        \        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n            \"description\": \"Container
-        capacity constraint type\",\n            \"enum\": [\n                \"SlotOnly\",\n                \"WeightOnly\"\
-        ,\n                \"SlotAndWeight\",\n                \"Grid\",\n                \"Volumetric\",\n              \
-        \  \"Unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How container weight propagates to parent\",\n            \"enum\": [\n          \
-        \      \"None\",\n                \"SelfOnly\",\n                \"SelfPlusContents\"\n            ]\n        }\n\
-        \    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"How weight propagates to parent (null uses config
+        default)\"\n                },\n                \"slotCost\": {\n                    \"type\": \"integer\",\n    \
+        \                \"default\": 1,\n                    \"minimum\": 0,\n                    \"description\": \"Slots
+        used in slot-based parent\"\n                },\n                \"parentGridWidth\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                   \
+        \ \"description\": \"Width footprint in grid-based parent\"\n                },\n                \"parentGridHeight\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Height footprint in grid-based parent\"\n                },\n       \
+        \         \"parentVolume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Volume footprint in volumetric parent\"\n                },\n                \"allowedCategories\": {\n      \
+        \              \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Allowed
+        item categories (null allows all)\"\n                },\n                \"forbiddenCategories\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n  \
+        \                  },\n                    \"nullable\": true,\n                    \"description\": \"Forbidden item
+        categories\"\n                },\n                \"allowedTags\": {\n                    \"type\": \"array\",\n \
+        \                   \"items\": {\n                        \"type\": \"string\"\n                    },\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Required item tags for placement\"\n     \
+        \           },\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Realm this container
+        belongs to (null for account-level)\"\n                },\n                \"tags\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        \ },\n                    \"nullable\": true,\n                    \"description\": \"Container tags for filtering\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity that owns this container. Intentionally separate from common-api
+        EntityType because the valid set includes non-entity functional roles (Escrow, Mail, Vehicle) alongside entity types.
+        Services mapping EntityType to ContainerOwnerType should use MapByNameOrDefault with fallback to Other.\\n\",\n  \
+        \          \"enum\": [\n                \"Character\",\n                \"Account\",\n                \"Location\"\
+        ,\n                \"Vehicle\",\n                \"Guild\",\n                \"Escrow\",\n                \"Mail\"\
+        ,\n                \"Other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
+        \             \"SlotOnly\",\n                \"WeightOnly\",\n                \"SlotAndWeight\",\n               \
+        \ \"Grid\",\n                \"Volumetric\",\n                \"Unlimited\"\n            ]\n        },\n        \"\
+        WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight propagates
+        to parent\",\n            \"enum\": [\n                \"None\",\n                \"SelfOnly\",\n                \"\
+        SelfPlusContents\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
         ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
@@ -1594,7 +1594,8 @@ components:
           description: Empty container weight
         weightContribution:
           $ref: '#/components/schemas/WeightContribution'
-          description: How weight propagates to parent
+          nullable: true
+          description: How weight propagates to parent (null uses config default)
         slotCost:
           type: integer
           default: 1

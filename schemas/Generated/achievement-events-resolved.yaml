@@ -32,13 +32,31 @@ info:
     event: LeaderboardRankChangedEvent
     handler: HandleRankChanged
   x-event-publications:
-    # Achievement definition lifecycle events
+    # Achievement definition lifecycle events (auto-generated from x-lifecycle)
   - topic: achievement.definition.created
     event: AchievementDefinitionCreatedEvent
     description: Published when a new achievement definition is created
   - topic: achievement.definition.updated
     event: AchievementDefinitionUpdatedEvent
-    description: Published when an achievement definition is updated
+    description: Published when an achievement definition is updated (including deprecation via changedFields)
+  - topic: achievement.definition.deleted
+    event: AchievementDefinitionDeletedEvent
+    description: "Unused Category B infrastructure — definitions are never deleted directly. Publisher method exists in generated
+      code but is called only by clean-deprecated sweep."
+
+    # Achievement progress record lifecycle events (auto-generated from x-lifecycle)
+  - topic: achievement.progress-record.created
+    event: AchievementProgressRecordCreatedEvent
+    description: Published when a new achievement progress record is created for an entity
+  - topic: achievement.progress-record.updated
+    event: AchievementProgressRecordUpdatedEvent
+    description: Published when an achievement progress record is updated for an entity
+  - topic: achievement.progress-record.deleted
+    event: AchievementProgressRecordDeletedEvent
+    description: "Unused Category B infrastructure — progress records are deleted only during character cleanup. Publisher
+      method exists in generated code for clean-deprecated instance tracking."
+
+    # Custom events (non-lifecycle)
     # Published when an achievement is unlocked
   - topic: achievement.progress.unlocked
     event: AchievementUnlockedEvent
@@ -51,17 +69,14 @@ info:
   - topic: achievement.platform.synced
     event: AchievementPlatformSyncedEvent
     description: Published when achievement is synced to external platform
-    # Lifecycle event — definition deletion during clean-deprecated sweep
-  - topic: achievement.definition.deleted
-    event: AchievementDefinitionDeletedEvent
-    description: Published when an achievement definition is permanently deleted
 
 # Lifecycle events auto-generated from this definition.
-# Achievement uses a single entity (AchievementDefinition) with topic_prefix for Pattern C namespacing.
+# Achievement uses topic_prefix for Pattern C namespacing (achievement.definition.*, achievement.progress-record.*).
 x-lifecycle:
   topic_prefix: achievement
   AchievementDefinition:
     deprecation: true
+    instanceEntity: AchievementProgressRecord
     model:
       gameServiceId: {type: string, format: uuid, required: true, description: "ID of the owning game service"}
       achievementId: {type: string, primary: true, required: true, description: "Unique achievement identifier within game
@@ -94,6 +109,21 @@ x-lifecycle:
       earnedCount: {type: integer, format: int64, required: true, description: "How many entities have earned this"}
       metadata: {type: object, additionalProperties: true, nullable: true, description: "Client-only metadata. No Bannou plugin
           reads specific keys from this field by convention."}
+    sensitive: []
+
+  AchievementProgressRecord:
+    model:
+      gameServiceId: {type: string, format: uuid, required: true, description: "ID of the owning game service"}
+      achievementId: {type: string, required: true, description: "Achievement definition identifier"}
+      entityId: {type: string, format: uuid, primary: true, required: true, description: "ID of the entity tracking progress"}
+      entityType: {$ref: '../common-api.yaml#/components/schemas/EntityType', required: true, description: "Type of entity
+          tracking progress"}
+      currentProgress: {type: integer, required: true, description: "Current progress toward the achievement target"}
+      targetProgress: {type: integer, nullable: true, description: "Target progress value for progressive achievements"}
+      isUnlocked: {type: boolean, required: true, description: "Whether the achievement has been unlocked"}
+      unlockedAt: {type: string, format: date-time, nullable: true, description: "When the achievement was unlocked, null
+          if not unlocked"}
+      points: {type: integer, required: true, description: "Point value earned from this achievement"}
     sensitive: []
 
 paths: {}  # Events don't have HTTP paths

@@ -154,12 +154,8 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
             }
         }
 
-        // Resolve weight contribution: use config default if not specified (enum default is None)
-        var weightContribution = body.WeightContribution;
-        if (weightContribution == WeightContribution.None)
-        {
-            weightContribution = _defaultWeightContribution;
-        }
+        // Resolve weight contribution: use config default if not specified (null = use default per IMPLEMENTATION TENETS)
+        var weightContribution = body.WeightContribution ?? _defaultWeightContribution;
 
         var model = new ContainerModel
         {

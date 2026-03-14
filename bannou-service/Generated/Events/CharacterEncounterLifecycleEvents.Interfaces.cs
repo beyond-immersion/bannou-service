@@ -16,3 +16,7 @@ namespace BeyondImmersion.BannouService.Events;
 public partial class EncounterTypeCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
 public partial class EncounterTypeUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
 public partial class EncounterTypeDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
+
+public partial class EncounterRecordCreatedEvent : ILifecycleCreatedEvent { }
+public partial class EncounterRecordUpdatedEvent : ILifecycleUpdatedEvent { }
+public partial class EncounterRecordDeletedEvent : ILifecycleDeletedEvent { }

@@ -16,3 +16,7 @@ namespace BeyondImmersion.BannouService.Events;
 public partial class AchievementDefinitionCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
 public partial class AchievementDefinitionUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
 public partial class AchievementDefinitionDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
+
+public partial class AchievementProgressRecordCreatedEvent : ILifecycleCreatedEvent { }
+public partial class AchievementProgressRecordUpdatedEvent : ILifecycleUpdatedEvent { }
+public partial class AchievementProgressRecordDeletedEvent : ILifecycleDeletedEvent { }

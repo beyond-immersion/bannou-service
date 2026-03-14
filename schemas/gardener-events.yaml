@@ -66,6 +66,16 @@ info:
     - topic: gardener.scenario-template.deleted
       event: ScenarioTemplateDeletedEvent
       description: "Unused Category B infrastructure — scenario templates are never deleted, only deprecated. Retained for schema completeness."
+    # Scenario instance lifecycle events (auto-generated from x-lifecycle)
+    - topic: gardener.scenario-instance.created
+      event: ScenarioInstanceCreatedEvent
+      description: Published when a new scenario instance is created
+    - topic: gardener.scenario-instance.updated
+      event: ScenarioInstanceUpdatedEvent
+      description: Published when a scenario instance is updated (status changes, chain depth)
+    - topic: gardener.scenario-instance.deleted
+      event: ScenarioInstanceDeletedEvent
+      description: "Unused Category B infrastructure — scenario instances are cleaned up via lifecycle worker. Publisher method exists in generated code but is never called."
     # Custom events - Garden
     - topic: gardener.garden.entered
       event: GardenerGardenEnteredEvent
@@ -114,6 +124,7 @@ x-lifecycle:
   ScenarioTemplate:
     topic_prefix: gardener
     deprecation: true
+    instanceEntity: ScenarioInstance
     model:
       scenarioTemplateId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the scenario template" }
       code: { type: string, required: true, description: "Unique template code for reference" }
@@ -123,6 +134,20 @@ x-lifecycle:
       connectivityMode: { $ref: 'gardener-api.yaml#/components/schemas/ConnectivityMode', required: true, description: "World connectivity mode" }
       status: { $ref: 'gardener-api.yaml#/components/schemas/TemplateStatus', required: true, description: "Current lifecycle status" }
     sensitive: [content]
+
+  ScenarioInstance:
+    topic_prefix: gardener
+    model:
+      scenarioInstanceId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for this scenario instance" }
+      scenarioTemplateId: { type: string, format: uuid, required: true, description: "Scenario template this instance was created from" }
+      gameSessionId: { type: string, format: uuid, required: true, description: "Backing game session ID for this scenario" }
+      webSocketSessionId: { type: string, format: uuid, required: true, description: "WebSocket session ID of the primary player" }
+      seedId: { type: string, format: uuid, required: true, description: "Active seed for the entering player" }
+      status: { $ref: 'gardener-api.yaml#/components/schemas/ScenarioStatus', required: true, description: "Current scenario lifecycle status" }
+      chainDepth: { type: integer, required: true, description: "Current chain depth for sequential scenario chaining" }
+      startedAt: { type: string, format: date-time, required: true, description: "When the scenario instance was started" }
+      completedAt: { type: string, format: date-time, nullable: true, description: "When the scenario instance was completed or abandoned" }
+    sensitive: []
 
 paths: {}  # Events don't have HTTP paths
 

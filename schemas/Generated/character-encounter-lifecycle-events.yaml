@@ -189,3 +189,153 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    EncounterRecordCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-encounter.encounter-record.created when a encounterrecord is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - encounterId
+      - encounterTypeCode
+      - outcome
+      - realmId
+      - participantIds
+      - encounterTimestamp
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: character-encounter.encounter-record.created
+          description: 'Event type identifier: character-encounter.encounter-record.created'
+        encounterId: &id008
+          type: string
+          format: uuid
+          description: "Unique identifier for the encounter record"
+        encounterTypeCode: &id009
+          type: string
+          description: "Type code of the encounter (e.g., COMBAT, TRADE, DIALOGUE)"
+        outcome: &id010
+          $ref: ../character-encounter-api.yaml#/components/schemas/EncounterOutcome
+          description: "Outcome of the encounter"
+        realmId: &id011
+          type: string
+          format: uuid
+          description: "Realm where the encounter occurred"
+        locationId: &id012
+          type: string
+          format: uuid
+          nullable: true
+          description: "Specific location of the encounter within the realm"
+        participantIds: &id013
+          type: array
+          items: {type: string, format: uuid}
+          description: "Character IDs involved in the encounter"
+        context: &id014
+          type: string
+          nullable: true
+          description: "Context description of the encounter"
+        encounterTimestamp: &id015
+          type: string
+          format: date-time
+          description: "In-game time when the encounter occurred"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter record was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter record was last updated (set to createdAt on creation)
+    EncounterRecordUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-encounter.encounter-record.updated when a encounterrecord is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - encounterId
+      - encounterTypeCode
+      - outcome
+      - realmId
+      - participantIds
+      - encounterTimestamp
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: character-encounter.encounter-record.updated
+          description: 'Event type identifier: character-encounter.encounter-record.updated'
+        encounterId: *id008
+        encounterTypeCode: *id009
+        outcome: *id010
+        realmId: *id011
+        locationId: *id012
+        participantIds: *id013
+        context: *id014
+        encounterTimestamp: *id015
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter record was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter record was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    EncounterRecordDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-encounter.encounter-record.deleted when a encounterrecord is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - encounterId
+      - encounterTypeCode
+      - outcome
+      - realmId
+      - participantIds
+      - encounterTimestamp
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: character-encounter.encounter-record.deleted
+          description: 'Event type identifier: character-encounter.encounter-record.deleted'
+        encounterId: *id008
+        encounterTypeCode: *id009
+        outcome: *id010
+        realmId: *id011
+        locationId: *id012
+        participantIds: *id013
+        context: *id014
+        encounterTimestamp: *id015
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter record was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter record was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

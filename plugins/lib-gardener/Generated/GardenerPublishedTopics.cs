@@ -26,6 +26,15 @@ public static class GardenerPublishedTopics
     /// <summary>Unused Category B infrastructure — scenario templates are never deleted, only deprecated. Retained for schema completeness.</summary>
     public const string ScenarioTemplateDeleted = "gardener.scenario-template.deleted";
 
+    /// <summary>Published when a new scenario instance is created.</summary>
+    public const string ScenarioInstanceCreated = "gardener.scenario-instance.created";
+
+    /// <summary>Published when a scenario instance is updated (status changes, chain depth).</summary>
+    public const string ScenarioInstanceUpdated = "gardener.scenario-instance.updated";
+
+    /// <summary>Unused Category B infrastructure — scenario instances are cleaned up via lifecycle worker. Publisher method exists in generated code but is never called.</summary>
+    public const string ScenarioInstanceDeleted = "gardener.scenario-instance.deleted";
+
     /// <summary>Published when a player enters the garden.</summary>
     public const string GardenerGardenEntered = "gardener.garden.entered";
 

@@ -33,6 +33,18 @@ info:
     - topic: leaderboard.definition.deleted
       event: LeaderboardDefinitionDeletedEvent
       description: Unused Category B infrastructure (leaderboard definitions are never deleted)
+
+    # Entry lifecycle events (auto-generated from x-lifecycle)
+    - topic: leaderboard.entry.created
+      event: LeaderboardEntryCreatedEvent
+      description: Published when a new entry is added to a leaderboard
+    - topic: leaderboard.entry.updated
+      event: LeaderboardEntryUpdatedEvent
+      description: Published when a leaderboard entry is updated (score change)
+    - topic: leaderboard.entry.deleted
+      event: LeaderboardEntryDeletedEvent
+      description: "Unused Category B infrastructure — entry deletion enables clean-deprecated sweep instance count tracking"
+
     # Published when an entity's rank changes
     - topic: leaderboard.rank.changed
       event: LeaderboardRankChangedEvent
@@ -50,6 +62,7 @@ x-lifecycle:
   topic_prefix: leaderboard
   LeaderboardDefinition:
     deprecation: true
+    instanceEntity: LeaderboardEntry
     model:
       gameServiceId: { type: string, format: uuid, required: true, description: "ID of the owning game service" }
       leaderboardId: { type: string, primary: true, required: true, description: "Unique identifier for this leaderboard" }
@@ -58,6 +71,17 @@ x-lifecycle:
       updateMode: { $ref: 'leaderboard-api.yaml#/components/schemas/UpdateMode', required: true, description: "Score update mode" }
       isSeasonal: { type: boolean, required: true, description: "Whether the leaderboard is seasonal" }
       isPublic: { type: boolean, required: true, description: "Whether the leaderboard is publicly visible" }
+    sensitive: []
+
+  LeaderboardEntry:
+    model:
+      entryId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for this leaderboard entry" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "ID of the owning game service" }
+      leaderboardId: { type: string, required: true, description: "Leaderboard this entry belongs to" }
+      entityId: { type: string, format: uuid, required: true, description: "ID of the ranked entity" }
+      entityType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Type of the ranked entity" }
+      score: { type: number, format: double, required: true, description: "Current score value" }
+      seasonNumber: { type: integer, nullable: true, description: "Season number if this entry is in a seasonal leaderboard" }
     sensitive: []
 
 paths: {}  # Events don't have HTTP paths

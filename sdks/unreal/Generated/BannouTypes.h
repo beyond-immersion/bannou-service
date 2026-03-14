@@ -8536,7 +8536,7 @@ struct FCreateContainerRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<double> SelfWeight;
 
-    /** How weight propagates to parent */
+    /** How weight propagates to parent (null uses config default) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FWeightContribution> WeightContribution;
 

@@ -77,6 +77,12 @@ Designs a distributed knowledge puzzle system where NPC characters autonomously 
 
 Designs the death and plot armor system as a behavioral constraint enforced by god-actors through ABML, not by any service or SDK. Plot armor is a continuous float tracked via the Status service that prevents character death while above zero; god-actors deplete it based on danger intensity, god personality, and narrative position. When plot armor reaches zero, deaths become possible and trigger a multi-phase post-death gameplay sequence (Last Stand, divine judgment, underworld entry) that feeds the content flywheel. No new services are required -- the system composes entirely from existing primitives (Status, Actor, Divine, Cinematic, Character-Encounter, Contract).
 
+### Deployment Modes: From Embedded Single-Player to Hyper-Scaled Multi-Node {#deployment-modes}
+
+**Type**: Design | **Status**: Active | **Last Updated**: 2026-03-14 | **North Stars**: #1, #3, #4 | [Full Document](planning/DEPLOYMENT-MODES.md)
+
+Catalogs the four deployment modes that a game built on Bannou can target (embedded single-player, non-dedicated player-hosted, dedicated single-node, hyper-scaled multi-node) and maps each to existing architecture, infrastructure backend selection, and identified gaps. All four modes use the same binary and codebase; the deployment mode is a configuration choice. Three modes work today or require only mechanical implementation; distributed world simulation for the non-dedicated and hyper-scaled modes represents the primary architectural gap requiring new design work in Actor regional affinity, Location partitioning, and node-aware mesh routing.
+
 ### Developer Streams: Directed Multi-Feed Streaming via Divine Actor Orchestration {#developer-streams}
 
 **Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-10 | **North Stars**: #4, #5 | [Full Document](planning/DEVELOPER-STREAMS.md)
@@ -205,7 +211,7 @@ Records the results of a full cross-service architectural audit comparing VISION
 
 ## Summary
 
-- **Documents in catalog**: 31
+- **Documents in catalog**: 32
 
 ---
 

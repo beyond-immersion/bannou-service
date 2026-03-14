@@ -120,7 +120,8 @@ public partial class InventoryController
                 },
                 "weightContribution": {
                     "$ref": "#/$defs/WeightContribution",
-                    "description": "How weight propagates to parent"
+                    "nullable": true,
+                    "description": "How weight propagates to parent (null uses config default)"
                 },
                 "slotCost": {
                     "type": "integer",

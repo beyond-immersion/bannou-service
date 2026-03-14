@@ -10,23 +10,23 @@ need deprecation marker interfaces, and the current state of Category B complian
 ## Summary
 
 - **Total deprecatable entities**: 20
-- **With `instanceEntity` declared**: 8
-- **Missing `instanceEntity`**: 12
+- **With `instanceEntity` declared**: 12
+- **Missing `instanceEntity`**: 8
 
 ## All Deprecatable Entities
 
 | Service | Entity | `instanceEntity` | Status |
 |---------|--------|-------------------|--------|
-| Achievement | `AchievementDefinition` | — | Missing |
-| Character Encounter | `EncounterType` | — | Missing |
+| Achievement | `AchievementDefinition` | `AchievementProgressRecord` | OK |
+| Character Encounter | `EncounterType` | `EncounterRecord` | OK |
 | Chat | `ChatRoomType` | `ChatRoom` | OK |
 | Collection | `CollectionEntryTemplate` | `Collection` | OK |
 | Contract | `ContractTemplate` | `ContractInstance` | OK |
 | Currency | `CurrencyDefinition` | `CurrencyWallet` | OK |
 | Faction | `Faction` | — | Missing |
-| Gardener | `ScenarioTemplate` | — | Missing |
+| Gardener | `ScenarioTemplate` | `ScenarioInstance` | OK |
 | Item | `ItemTemplate` | `ItemInstance` | OK |
-| Leaderboard | `LeaderboardDefinition` | — | Missing |
+| Leaderboard | `LeaderboardDefinition` | `LeaderboardEntry` | OK |
 | License | `LicenseBoardTemplate` | `LicenseBoard` | OK |
 | Location | `Location` | — | Missing |
 | Quest | `QuestDefinition` | `QuestInstance` | OK |
@@ -45,7 +45,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `achievement`
 - **Schema**: `schemas/achievement-events.yaml`
 - **Topic prefix**: `achievement`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `AchievementProgressRecord`
 - **Model fields**: `gameServiceId`, `achievementId`, `displayName`, `description`, `hiddenDescription`, `category`, `achievementType`, `entityTypes`, `progressTarget`, `points`, `iconUrl`, `platforms`, `platformMappings`, `prerequisites`, `scoreType`, `milestoneType`, `milestoneValue`, `milestoneName`, `leaderboardId`, `rankThreshold`, `isActive`, `earnedCount`, `metadata`
 
 ### Character Encounter: EncounterType
@@ -53,7 +53,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `character-encounter`
 - **Schema**: `schemas/character-encounter-events.yaml`
 - **Topic prefix**: `character-encounter`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `EncounterRecord`
 - **Model fields**: `typeId`, `code`, `name`, `description`, `isBuiltIn`, `sortOrder`, `isActive`
 
 ### Chat: ChatRoomType
@@ -101,7 +101,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `gardener`
 - **Schema**: `schemas/gardener-events.yaml`
 - **Topic prefix**: `*(none — Pattern A)*`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `ScenarioInstance`
 - **Model fields**: `scenarioTemplateId`, `code`, `displayName`, `description`, `category`, `connectivityMode`, `status`
 
 ### Item: ItemTemplate
@@ -117,7 +117,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `leaderboard`
 - **Schema**: `schemas/leaderboard-events.yaml`
 - **Topic prefix**: `leaderboard`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `LeaderboardEntry`
 - **Model fields**: `gameServiceId`, `leaderboardId`, `displayName`, `sortOrder`, `updateMode`, `isSeasonal`, `isPublic`
 
 ### License: LicenseBoardTemplate

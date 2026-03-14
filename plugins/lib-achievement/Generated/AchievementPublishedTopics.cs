@@ -20,8 +20,20 @@ public static class AchievementPublishedTopics
     /// <summary>Published when a new achievement definition is created.</summary>
     public const string AchievementDefinitionCreated = "achievement.definition.created";
 
-    /// <summary>Published when an achievement definition is updated.</summary>
+    /// <summary>Published when an achievement definition is updated (including deprecation via changedFields).</summary>
     public const string AchievementDefinitionUpdated = "achievement.definition.updated";
+
+    /// <summary>Unused Category B infrastructure — definitions are never deleted directly. Publisher method exists in generated code but is called only by clean-deprecated sweep.</summary>
+    public const string AchievementDefinitionDeleted = "achievement.definition.deleted";
+
+    /// <summary>Published when a new achievement progress record is created for an entity.</summary>
+    public const string AchievementProgressRecordCreated = "achievement.progress-record.created";
+
+    /// <summary>Published when an achievement progress record is updated for an entity.</summary>
+    public const string AchievementProgressRecordUpdated = "achievement.progress-record.updated";
+
+    /// <summary>Unused Category B infrastructure — progress records are deleted only during character cleanup. Publisher method exists in generated code for clean-deprecated instance tracking.</summary>
+    public const string AchievementProgressRecordDeleted = "achievement.progress-record.deleted";
 
     /// <summary>Published when an entity unlocks an achievement.</summary>
     public const string AchievementUnlocked = "achievement.progress.unlocked";
@@ -31,7 +43,4 @@ public static class AchievementPublishedTopics
 
     /// <summary>Published when achievement is synced to external platform.</summary>
     public const string AchievementPlatformSynced = "achievement.platform.synced";
-
-    /// <summary>Published when an achievement definition is permanently deleted.</summary>
-    public const string AchievementDefinitionDeleted = "achievement.definition.deleted";
 }

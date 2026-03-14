@@ -191,3 +191,165 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    ScenarioInstanceCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-instance.created when a scenarioinstance is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioInstanceId
+      - scenarioTemplateId
+      - gameSessionId
+      - webSocketSessionId
+      - seedId
+      - status
+      - chainDepth
+      - startedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: scenario-instance.created
+          description: 'Event type identifier: scenario-instance.created'
+        scenarioInstanceId: &id008
+          type: string
+          format: uuid
+          description: "Unique identifier for this scenario instance"
+        scenarioTemplateId: &id009
+          type: string
+          format: uuid
+          description: "Scenario template this instance was created from"
+        gameSessionId: &id010
+          type: string
+          format: uuid
+          description: "Backing game session ID for this scenario"
+        webSocketSessionId: &id011
+          type: string
+          format: uuid
+          description: "WebSocket session ID of the primary player"
+        seedId: &id012
+          type: string
+          format: uuid
+          description: "Active seed for the entering player"
+        status: &id013
+          $ref: ../gardener-api.yaml#/components/schemas/ScenarioStatus
+          description: "Current scenario lifecycle status"
+        chainDepth: &id014
+          type: integer
+          description: "Current chain depth for sequential scenario chaining"
+        startedAt: &id015
+          type: string
+          format: date-time
+          description: "When the scenario instance was started"
+        completedAt: &id016
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the scenario instance was completed or abandoned"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was last updated (set to createdAt on creation)
+    ScenarioInstanceUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-instance.updated when a scenarioinstance is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioInstanceId
+      - scenarioTemplateId
+      - gameSessionId
+      - webSocketSessionId
+      - seedId
+      - status
+      - chainDepth
+      - startedAt
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: scenario-instance.updated
+          description: 'Event type identifier: scenario-instance.updated'
+        scenarioInstanceId: *id008
+        scenarioTemplateId: *id009
+        gameSessionId: *id010
+        webSocketSessionId: *id011
+        seedId: *id012
+        status: *id013
+        chainDepth: *id014
+        startedAt: *id015
+        completedAt: *id016
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ScenarioInstanceDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-instance.deleted when a scenarioinstance is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioInstanceId
+      - scenarioTemplateId
+      - gameSessionId
+      - webSocketSessionId
+      - seedId
+      - status
+      - chainDepth
+      - startedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: scenario-instance.deleted
+          description: 'Event type identifier: scenario-instance.deleted'
+        scenarioInstanceId: *id008
+        scenarioTemplateId: *id009
+        gameSessionId: *id010
+        webSocketSessionId: *id011
+        seedId: *id012
+        status: *id013
+        chainDepth: *id014
+        startedAt: *id015
+        completedAt: *id016
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

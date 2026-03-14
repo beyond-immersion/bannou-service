@@ -16,3 +16,7 @@ namespace BeyondImmersion.BannouService.Events;
 public partial class LeaderboardDefinitionCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
 public partial class LeaderboardDefinitionUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
 public partial class LeaderboardDefinitionDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
+
+public partial class LeaderboardEntryCreatedEvent : ILifecycleCreatedEvent { }
+public partial class LeaderboardEntryUpdatedEvent : ILifecycleUpdatedEvent { }
+public partial class LeaderboardEntryDeletedEvent : ILifecycleDeletedEvent { }

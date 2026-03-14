@@ -16,3 +16,7 @@ namespace BeyondImmersion.BannouService.Events;
 public partial class ScenarioTemplateCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
 public partial class ScenarioTemplateUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
 public partial class ScenarioTemplateDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
+
+public partial class ScenarioInstanceCreatedEvent : ILifecycleCreatedEvent { }
+public partial class ScenarioInstanceUpdatedEvent : ILifecycleUpdatedEvent { }
+public partial class ScenarioInstanceDeletedEvent : ILifecycleDeletedEvent { }

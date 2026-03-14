@@ -297,6 +297,162 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    AchievementProgressRecordCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to achievement.progress-record.created when a achievementprogressrecord is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - achievementId
+      - entityId
+      - entityType
+      - currentProgress
+      - isUnlocked
+      - points
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: achievement.progress-record.created
+          description: 'Event type identifier: achievement.progress-record.created'
+        gameServiceId: &id024
+          type: string
+          format: uuid
+          description: "ID of the owning game service"
+        achievementId: &id025
+          type: string
+          description: "Achievement definition identifier"
+        entityId: &id026
+          type: string
+          format: uuid
+          description: "ID of the entity tracking progress"
+        entityType: &id027
+          $ref: ../common-api.yaml#/components/schemas/EntityType
+          description: "Type of entity tracking progress"
+        currentProgress: &id028
+          type: integer
+          description: "Current progress toward the achievement target"
+        targetProgress: &id029
+          type: integer
+          nullable: true
+          description: "Target progress value for progressive achievements"
+        isUnlocked: &id030
+          type: boolean
+          description: "Whether the achievement has been unlocked"
+        unlockedAt: &id031
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the achievement was unlocked, null if not unlocked"
+        points: &id032
+          type: integer
+          description: "Point value earned from this achievement"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the achievement progress record was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the achievement progress record was last updated (set to createdAt on creation)
+    AchievementProgressRecordUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to achievement.progress-record.updated when a achievementprogressrecord is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - achievementId
+      - entityId
+      - entityType
+      - currentProgress
+      - isUnlocked
+      - points
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: achievement.progress-record.updated
+          description: 'Event type identifier: achievement.progress-record.updated'
+        gameServiceId: *id024
+        achievementId: *id025
+        entityId: *id026
+        entityType: *id027
+        currentProgress: *id028
+        targetProgress: *id029
+        isUnlocked: *id030
+        unlockedAt: *id031
+        points: *id032
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the achievement progress record was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the achievement progress record was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    AchievementProgressRecordDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to achievement.progress-record.deleted when a achievementprogressrecord is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - achievementId
+      - entityId
+      - entityType
+      - currentProgress
+      - isUnlocked
+      - points
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: achievement.progress-record.deleted
+          description: 'Event type identifier: achievement.progress-record.deleted'
+        gameServiceId: *id024
+        achievementId: *id025
+        entityId: *id026
+        entityType: *id027
+        currentProgress: *id028
+        targetProgress: *id029
+        isUnlocked: *id030
+        unlockedAt: *id031
+        points: *id032
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the achievement progress record was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the achievement progress record was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     Platform:
       type: string
       description: External platform for achievement sync

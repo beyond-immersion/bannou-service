@@ -26,6 +26,15 @@ public static class LeaderboardPublishedTopics
     /// <summary>Unused Category B infrastructure (leaderboard definitions are never deleted).</summary>
     public const string LeaderboardDefinitionDeleted = "leaderboard.definition.deleted";
 
+    /// <summary>Published when a new entry is added to a leaderboard.</summary>
+    public const string LeaderboardEntryCreated = "leaderboard.entry.created";
+
+    /// <summary>Published when a leaderboard entry is updated (score change).</summary>
+    public const string LeaderboardEntryUpdated = "leaderboard.entry.updated";
+
+    /// <summary>Unused Category B infrastructure — entry deletion enables clean-deprecated sweep instance count tracking.</summary>
+    public const string LeaderboardEntryDeleted = "leaderboard.entry.deleted";
+
     /// <summary>Published when an entity's rank changes on a leaderboard.</summary>
     public const string LeaderboardRankChanged = "leaderboard.rank.changed";
 

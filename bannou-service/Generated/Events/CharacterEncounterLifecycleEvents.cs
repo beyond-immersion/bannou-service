@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.CharacterEncounter;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -335,6 +336,302 @@ public partial class EncounterTypeDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to character-encounter.encounter-record.created when a encounterrecord is created
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EncounterRecordCreatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: character-encounter.encounter-record.created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "character-encounter.encounter-record.created";
+
+    /// <summary>
+    /// Unique identifier for the encounter record
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EncounterId { get; set; } = default!;
+
+    /// <summary>
+    /// Type code of the encounter (e.g., COMBAT, TRADE, DIALOGUE)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterTypeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Outcome of the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("outcome")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EncounterOutcome Outcome { get; set; } = default!;
+
+    /// <summary>
+    /// Realm where the encounter occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Specific location of the encounter within the realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    public System.Guid? LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Character IDs involved in the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participantIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> ParticipantIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+    /// <summary>
+    /// Context description of the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("context")]
+    public string? Context { get; set; } = default!;
+
+    /// <summary>
+    /// In-game time when the encounter occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterTimestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset EncounterTimestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the encounter record was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the encounter record was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to character-encounter.encounter-record.updated when a encounterrecord is updated
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EncounterRecordUpdatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: character-encounter.encounter-record.updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "character-encounter.encounter-record.updated";
+
+    /// <summary>
+    /// Unique identifier for the encounter record
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EncounterId { get; set; } = default!;
+
+    /// <summary>
+    /// Type code of the encounter (e.g., COMBAT, TRADE, DIALOGUE)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterTypeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Outcome of the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("outcome")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EncounterOutcome Outcome { get; set; } = default!;
+
+    /// <summary>
+    /// Realm where the encounter occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Specific location of the encounter within the realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    public System.Guid? LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Character IDs involved in the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participantIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> ParticipantIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+    /// <summary>
+    /// Context description of the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("context")]
+    public string? Context { get; set; } = default!;
+
+    /// <summary>
+    /// In-game time when the encounter occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterTimestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset EncounterTimestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the encounter record was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the encounter record was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// List of field names that were modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Published to character-encounter.encounter-record.deleted when a encounterrecord is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EncounterRecordDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: character-encounter.encounter-record.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "character-encounter.encounter-record.deleted";
+
+    /// <summary>
+    /// Unique identifier for the encounter record
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EncounterId { get; set; } = default!;
+
+    /// <summary>
+    /// Type code of the encounter (e.g., COMBAT, TRADE, DIALOGUE)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterTypeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Outcome of the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("outcome")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EncounterOutcome Outcome { get; set; } = default!;
+
+    /// <summary>
+    /// Realm where the encounter occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Specific location of the encounter within the realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    public System.Guid? LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Character IDs involved in the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participantIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> ParticipantIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+    /// <summary>
+    /// Context description of the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("context")]
+    public string? Context { get; set; } = default!;
+
+    /// <summary>
+    /// In-game time when the encounter occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterTimestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset EncounterTimestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the encounter record was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the encounter record was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

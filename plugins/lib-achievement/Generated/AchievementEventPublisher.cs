@@ -27,12 +27,40 @@ public static class AchievementEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(AchievementPublishedTopics.AchievementDefinitionCreated, eventData, cancellationToken);
 
-    /// <summary>Published when an achievement definition is updated.</summary>
+    /// <summary>Published when an achievement definition is updated (including deprecation via changedFields).</summary>
     public static Task<bool> PublishAchievementDefinitionUpdatedAsync(
         this IMessageBus messageBus,
         AchievementDefinitionUpdatedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(AchievementPublishedTopics.AchievementDefinitionUpdated, eventData, cancellationToken);
+
+    /// <summary>Unused Category B infrastructure — definitions are never deleted directly. Publisher method exists in generated code but is called only by clean-deprecated sweep.</summary>
+    public static Task<bool> PublishAchievementDefinitionDeletedAsync(
+        this IMessageBus messageBus,
+        AchievementDefinitionDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(AchievementPublishedTopics.AchievementDefinitionDeleted, eventData, cancellationToken);
+
+    /// <summary>Published when a new achievement progress record is created for an entity.</summary>
+    public static Task<bool> PublishAchievementProgressRecordCreatedAsync(
+        this IMessageBus messageBus,
+        AchievementProgressRecordCreatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(AchievementPublishedTopics.AchievementProgressRecordCreated, eventData, cancellationToken);
+
+    /// <summary>Published when an achievement progress record is updated for an entity.</summary>
+    public static Task<bool> PublishAchievementProgressRecordUpdatedAsync(
+        this IMessageBus messageBus,
+        AchievementProgressRecordUpdatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(AchievementPublishedTopics.AchievementProgressRecordUpdated, eventData, cancellationToken);
+
+    /// <summary>Unused Category B infrastructure — progress records are deleted only during character cleanup. Publisher method exists in generated code for clean-deprecated instance tracking.</summary>
+    public static Task<bool> PublishAchievementProgressRecordDeletedAsync(
+        this IMessageBus messageBus,
+        AchievementProgressRecordDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(AchievementPublishedTopics.AchievementProgressRecordDeleted, eventData, cancellationToken);
 
     /// <summary>Published when an entity unlocks an achievement.</summary>
     public static Task<bool> PublishAchievementUnlockedAsync(
@@ -54,11 +82,4 @@ public static class AchievementEventPublisher
         AchievementPlatformSyncedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(AchievementPublishedTopics.AchievementPlatformSynced, eventData, cancellationToken);
-
-    /// <summary>Published when an achievement definition is permanently deleted.</summary>
-    public static Task<bool> PublishAchievementDefinitionDeletedAsync(
-        this IMessageBus messageBus,
-        AchievementDefinitionDeletedEvent eventData,
-        CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(AchievementPublishedTopics.AchievementDefinitionDeleted, eventData, cancellationToken);
 }

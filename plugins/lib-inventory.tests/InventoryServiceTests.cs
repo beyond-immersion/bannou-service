@@ -397,13 +397,13 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
     }
 
     [Fact]
-    public async Task CreateContainerAsync_DefaultWeightContribution_AppliedWhenNone()
+    public async Task CreateContainerAsync_DefaultWeightContribution_AppliedWhenNull()
     {
-        // Arrange
+        // Arrange — null means "use config default" per IMPLEMENTATION TENETS (No Sentinel Values)
         Configuration.DefaultWeightContribution = WeightContribution.SelfOnly;
         var service = CreateService();
         var request = CreateValidContainerRequest();
-        request.WeightContribution = WeightContribution.None;
+        request.WeightContribution = null;
 
         ContainerModel? savedModel = null;
         _mockContainerStore
@@ -420,6 +420,32 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         // Assert
         Assert.NotNull(savedModel);
         Assert.Equal(WeightContribution.SelfOnly, savedModel.WeightContribution);
+    }
+
+    [Fact]
+    public async Task CreateContainerAsync_ExplicitWeightContributionNone_NotOverridden()
+    {
+        // Arrange — None is a real value meaning "no weight propagation", not a sentinel
+        Configuration.DefaultWeightContribution = WeightContribution.SelfPlusContents;
+        var service = CreateService();
+        var request = CreateValidContainerRequest();
+        request.WeightContribution = WeightContribution.None;
+
+        ContainerModel? savedModel = null;
+        _mockContainerStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ContainerModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ContainerModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        await service.CreateContainerAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert — None should be preserved, not replaced with config default
+        Assert.NotNull(savedModel);
+        Assert.Equal(WeightContribution.None, savedModel.WeightContribution);
     }
 
     [Fact]

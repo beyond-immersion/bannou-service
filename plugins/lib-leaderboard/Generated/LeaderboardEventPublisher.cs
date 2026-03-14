@@ -41,6 +41,27 @@ public static class LeaderboardEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(LeaderboardPublishedTopics.LeaderboardDefinitionDeleted, eventData, cancellationToken);
 
+    /// <summary>Published when a new entry is added to a leaderboard.</summary>
+    public static Task<bool> PublishLeaderboardEntryCreatedAsync(
+        this IMessageBus messageBus,
+        LeaderboardEntryCreatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(LeaderboardPublishedTopics.LeaderboardEntryCreated, eventData, cancellationToken);
+
+    /// <summary>Published when a leaderboard entry is updated (score change).</summary>
+    public static Task<bool> PublishLeaderboardEntryUpdatedAsync(
+        this IMessageBus messageBus,
+        LeaderboardEntryUpdatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(LeaderboardPublishedTopics.LeaderboardEntryUpdated, eventData, cancellationToken);
+
+    /// <summary>Unused Category B infrastructure — entry deletion enables clean-deprecated sweep instance count tracking.</summary>
+    public static Task<bool> PublishLeaderboardEntryDeletedAsync(
+        this IMessageBus messageBus,
+        LeaderboardEntryDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(LeaderboardPublishedTopics.LeaderboardEntryDeleted, eventData, cancellationToken);
+
     /// <summary>Published when an entity's rank changes on a leaderboard.</summary>
     public static Task<bool> PublishLeaderboardRankChangedAsync(
         this IMessageBus messageBus,

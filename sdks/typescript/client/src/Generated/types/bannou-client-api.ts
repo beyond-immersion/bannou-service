@@ -15463,7 +15463,7 @@ export interface components {
        * @default 0
        */
       selfWeight: number;
-      /** @description How weight propagates to parent */
+      /** @description How weight propagates to parent (null uses config default) */
       weightContribution?: components['schemas']['WeightContribution'];
       /**
        * @description Slots used in slot-based parent
