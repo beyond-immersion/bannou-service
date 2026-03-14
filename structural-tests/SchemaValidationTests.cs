@@ -1,7 +1,7 @@
-using System.Reflection;
-using System.Text.RegularExpressions;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.StructuralTests;

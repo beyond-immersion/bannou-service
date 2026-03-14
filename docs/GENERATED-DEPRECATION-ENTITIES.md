@@ -10,8 +10,8 @@ need deprecation marker interfaces, and the current state of Category B complian
 ## Summary
 
 - **Total deprecatable entities**: 20
-- **With `instanceEntity` declared**: 5
-- **Missing `instanceEntity`**: 15
+- **With `instanceEntity` declared**: 8
+- **Missing `instanceEntity`**: 12
 
 ## All Deprecatable Entities
 
@@ -19,10 +19,10 @@ need deprecation marker interfaces, and the current state of Category B complian
 |---------|--------|-------------------|--------|
 | Achievement | `AchievementDefinition` | — | Missing |
 | Character Encounter | `EncounterType` | — | Missing |
-| Chat | `ChatRoomType` | — | Missing |
+| Chat | `ChatRoomType` | `ChatRoom` | OK |
 | Collection | `CollectionEntryTemplate` | `Collection` | OK |
-| Contract | `ContractTemplate` | — | Missing |
-| Currency | `CurrencyDefinition` | — | Missing |
+| Contract | `ContractTemplate` | `ContractInstance` | OK |
+| Currency | `CurrencyDefinition` | `CurrencyWallet` | OK |
 | Faction | `Faction` | — | Missing |
 | Gardener | `ScenarioTemplate` | — | Missing |
 | Item | `ItemTemplate` | `ItemInstance` | OK |
@@ -61,7 +61,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `chat`
 - **Schema**: `schemas/chat-events.yaml`
 - **Topic prefix**: `chat`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `ChatRoom`
 - **Model fields**: `code`, `displayName`, `gameServiceId`, `messageFormat`, `persistenceMode`, `allowAnonymousSenders`, `status`
 
 ### Collection: CollectionEntryTemplate
@@ -77,7 +77,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `contract`
 - **Schema**: `schemas/contract-events.yaml`
 - **Topic prefix**: `contract`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `ContractInstance`
 - **Model fields**: `templateId`, `code`, `name`, `description`, `realmId`, `minParties`, `maxParties`, `defaultEnforcementMode`, `transferable`, `isActive`
 
 ### Currency: CurrencyDefinition
@@ -85,7 +85,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `currency`
 - **Schema**: `schemas/currency-events.yaml`
 - **Topic prefix**: `currency`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `CurrencyWallet`
 - **Model fields**: `definitionId`, `code`, `name`, `scope`, `precision`, `isActive`, `modifiedAt`
 
 ### Faction: Faction

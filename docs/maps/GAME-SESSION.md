@@ -15,7 +15,7 @@
 | State Stores | game-session-statestore (MySQL) |
 | Events Published | 7 (`game-session.created`, `game-session.updated`, `game-session.deleted`, `game-session.player-joined`, `game-session.player-left`, `game-session.cancelled`, `game-session.action.performed`) |
 | Events Consumed | 4 |
-| Client Events | 8 pushed (`SessionChatReceived`, `SessionCancelled`, `ShortcutPublished`, `PlayerJoined`, `PlayerLeft`, `PlayerKicked`, `SessionStateChanged` on join/leave/kick) |
+| Client Events | 8 pushed (`ShortcutPublished`, `ShortcutRevoked`, `PlayerJoined`, `PlayerLeft`, `PlayerKicked`, `SessionStateChanged`, `SessionChatReceived`, `SessionCancelled`) |
 | Background Services | 2 |
 
 ---
@@ -102,19 +102,19 @@
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| ListGameSessions | POST /sessions/list | admin | - | - |
-| CreateGameSession | POST /sessions/create | [] | session, session-list | game-session.created |
-| GetGameSession | POST /sessions/get | user, state:in_game | - | - |
-| JoinGameSession | POST /sessions/join | [] | session | game-session.player-joined, game-session.updated |
-| LeaveGameSession | POST /sessions/leave | user, state:in_game | session | game-session.player-left, game-session.updated |
-| KickPlayer | POST /sessions/kick | admin | session | game-session.player-left, game-session.updated |
-| SendChatMessage | POST /sessions/chat | user, state:in_game | - | - (client events only) |
-| PerformGameAction | POST /sessions/actions | user, state:in_game | - | game-session.action.performed |
-| JoinGameSessionById | POST /sessions/join-session | [] | session | game-session.player-joined, game-session.updated |
-| LeaveGameSessionById | POST /sessions/leave-session | user, state:in_game | session | game-session.player-left, game-session.updated |
-| PublishJoinShortcut | POST /sessions/publish-join-shortcut | [] | - | - (client events only) |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| ListGameSessions | POST /sessions/list | generated | admin | - | - |
+| CreateGameSession | POST /sessions/create | generated | [] | session, session-list | game-session.created |
+| GetGameSession | POST /sessions/get | generated | user, state:in_game | - | - |
+| JoinGameSession | POST /sessions/join | generated | [] | session | game-session.player-joined, game-session.updated |
+| LeaveGameSession | POST /sessions/leave | generated | user, state:in_game | session | game-session.player-left, game-session.updated |
+| KickPlayer | POST /sessions/kick | generated | admin | session | game-session.player-left, game-session.updated |
+| SendChatMessage | POST /sessions/chat | generated | user, state:in_game | - | - (client events only) |
+| PerformGameAction | POST /sessions/actions | generated | user, state:in_game | - | game-session.action.performed |
+| JoinGameSessionById | POST /sessions/join-session | generated | [] | session | game-session.player-joined, game-session.updated |
+| LeaveGameSessionById | POST /sessions/leave-session | generated | user, state:in_game | session | game-session.player-left, game-session.updated |
+| PublishJoinShortcut | POST /sessions/publish-join-shortcut | generated | [] | - | - (client events only) |
 
 ---
 
@@ -127,11 +127,14 @@ POST /sessions/list | Roles: [admin]
 READ session-list:session-list -> sessionIds (default empty list)
 FOREACH sessionId in sessionIds
   READ session:session:{sessionId} -> model
-  // skip null (log warning) and Finished status
+  // skip null (log warning)
+  IF body.GameType has value AND model.GameType != body.GameType -> skip
+  IF body.Status has value
+    // filter by exact status match
+  ELSE
+    // skip Finished status by default
 RETURN (200, GameSessionListResponse { Sessions, TotalCount })
 ```
-
-// Note: body.GameType and body.Status filters exist in schema but are not applied in code.
 
 ---
 
@@ -144,16 +147,14 @@ POST /sessions/create | Roles: []
 IF sessionType == Matchmade AND body.ExpectedPlayers has entries
   // Generate ReservationModel per expected player
   // Each reservation: crypto-random 32-byte base64 token, ExpiresAt from TTL
-WRITE session:session:{sessionId} <- GameSessionModel from request
 LOCK GameSessionLock:session-list                    -> 409 if fails
+  WRITE session:session:{sessionId} <- GameSessionModel from request
   READ session-list:session-list -> sessionIds
   // Add sessionId to list
   WRITE session-list:session-list <- updated list
 PUBLISH game-session.created { sessionId, gameType, sessionName, status, maxPlayers, currentPlayers, isPrivate, owner, createdAt, sessionType, gameSettings, reservationExpiresAt }
 RETURN (200, GameSessionResponse)
 ```
-
-// Note: Session is saved BEFORE session-list lock. If lock fails, session record is orphaned.
 
 ---
 
@@ -225,7 +226,7 @@ LOCK GameSessionLock:session:{sessionId}             -> 409 if fails
   READ session:session:{sessionId} -> model          -> 404 if null
   // Find target player by targetAccountId           -> 404 if not found
   // Remove player from model.Players
-  // Status: Full->Active only (does NOT set Finished when 0 players)
+  // Status: Full->Active if was full; any->Finished if 0 players
   CALL IPermissionClient.ClearSessionStateAsync { SessionId = player.SessionId, ServiceId }
     // Failure tolerated: log error event, continue
   WRITE session:session:{sessionId} <- updated model
@@ -237,16 +238,17 @@ IF previousStatus != model.Status
 RETURN (200)
 ```
 
-// Bug: Does not set Finished when last player is kicked. Does not clear in_game permission state.
-
 ---
 
 ### SendChatMessage
 POST /sessions/chat | Roles: [user, state:in_game]
 
 ```
+// Resolve caller via ServiceRequestContext.SessionId (X-Bannou-Session-Id header)
+                                                     -> 403 if no session ID
 READ lobby:lobby:{gameType}                          -> 404 if null
 READ session:session:{lobbyId} -> model              -> 404 if null
+// Find caller in model.Players by SessionId         -> 403 if not a member
 // Build SessionChatReceivedClientEvent
 IF messageType == Whisper AND targetPlayerId has value
   // Find target player in model.Players
@@ -258,19 +260,18 @@ ELSE
 RETURN (200)
 ```
 
-// Bug: Does not validate sender is a session member. Non-members can send messages.
-
 ---
 
 ### PerformGameAction
 POST /sessions/actions | Roles: [user, state:in_game]
 
 ```
+// Resolve caller via ServiceRequestContext.SessionId -> 403 if no session ID
 READ lobby:lobby:{gameType}                          -> 404 if null
 READ session:session:{lobbyId} -> model              -> 404 if null
 IF model.Status == Finished                          -> 400
-IF accountId not in model.Players                    -> 403
-PUBLISH game-session.action.performed { sessionId, accountId, actionId, actionType, targetId }
+// Find caller in model.Players by SessionId         -> 403 if not a member
+PUBLISH game-session.action.performed { sessionId, webSocketSessionId, actionId, actionType, targetId }
 RETURN (200, GameActionResponse { ActionId })
 ```
 
@@ -441,3 +442,9 @@ FOREACH connected session
   ELSE
     PUSH ShortcutRevokedEvent to session             // unconditional of autoLobbyEnabled
 ```
+
+---
+
+## Non-Standard Implementation Patterns
+
+No non-standard patterns.
