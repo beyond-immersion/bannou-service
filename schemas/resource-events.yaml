@@ -25,6 +25,13 @@ info:
     - topic: resource.grace-period.started
       event: ResourceGracePeriodStartedEvent
       description: Published when a resource's refcount reaches zero and grace period begins
+    # Migration events
+    - topic: resource.migrated
+      event: ResourceMigratedEvent
+      description: Published when a resource migration completes successfully
+    - topic: resource.migrate.callback-failed
+      event: ResourceMigrateCallbackFailedEvent
+      description: Published when a migration callback fails during resource migration
     # Compression events
     - topic: resource.compressed
       event: ResourceCompressedEvent
@@ -126,6 +133,109 @@ components:
           type: string
           format: date-time
           description: When the grace period ends and cleanup becomes eligible
+
+    # =========================================================================
+    # Migration Events
+    # =========================================================================
+
+    ResourceMigratedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a resource migration completes successfully.
+        All registered migrate callbacks were invoked to reassign dependents
+        from the source resource to the target resource.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - resourceType
+      - sourceResourceId
+      - targetResourceId
+      - callbackCount
+      properties:
+        eventName:
+          type: string
+          default: resource.migrated
+          description: 'Event type identifier: resource.migrated'
+        resourceType:
+          type: string
+          description: Type of resource migrated (opaque identifier)
+        sourceResourceId:
+          type: string
+          format: uuid
+          description: ID of the source resource whose dependents were migrated
+        targetResourceId:
+          type: string
+          format: uuid
+          description: ID of the target resource dependents were migrated to
+        callbackCount:
+          type: integer
+          description: Number of migration callbacks that were executed
+        succeededSourceTypes:
+          type: array
+          items:
+            type: string
+          description: Source types whose migration callbacks succeeded
+        failedSourceTypes:
+          type: array
+          items:
+            type: string
+          description: Source types whose migration callbacks failed (empty on full success)
+
+    ResourceMigrateCallbackFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a migration callback fails during resource migration.
+        Used for monitoring and alerting on migration failures.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - resourceType
+      - sourceResourceId
+      - targetResourceId
+      - sourceType
+      - serviceName
+      - endpoint
+      - statusCode
+      properties:
+        eventName:
+          type: string
+          default: resource.migrate.callback-failed
+          description: 'Event type identifier: resource.migrate.callback-failed'
+        resourceType:
+          type: string
+          description: Type of resource being migrated (opaque identifier)
+        sourceResourceId:
+          type: string
+          format: uuid
+          description: ID of the source resource
+        targetResourceId:
+          type: string
+          format: uuid
+          description: ID of the target resource
+        sourceType:
+          type: string
+          description: Type of entity whose migration failed (opaque identifier)
+        serviceName:
+          type: string
+          description: Service whose callback failed
+        endpoint:
+          type: string
+          description: Endpoint that failed
+        statusCode:
+          type: integer
+          description: HTTP status code returned (0 if connection failed)
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details
 
     # =========================================================================
     # Compression Events

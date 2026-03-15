@@ -257,4 +257,40 @@ public sealed class SpeciesProxy
         return _client.InvokeAsync<SeedSpeciesRequest, SeedSpeciesResponse>(
             "/species/seed", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Remove all species from a realm
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CleanupByRealmResponse on success.</returns>
+    public Task<ApiResponse<CleanupByRealmResponse>> CleanupByRealmAsync(
+        CleanupByRealmRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CleanupByRealmRequest, CleanupByRealmResponse>(
+            "/species/cleanup-by-realm", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Migrate all species realm associations from one realm to another
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing MigrateByRealmResponse on success.</returns>
+    public Task<ApiResponse<MigrateByRealmResponse>> MigrateByRealmAsync(
+        MigrateByRealmRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<MigrateByRealmRequest, MigrateByRealmResponse>(
+            "/species/migrate-by-realm", request, channel, timeout, cancellationToken);
+    }
 }

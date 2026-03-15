@@ -12,7 +12,7 @@
 
 ## Overview
 
-The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing, and pushes `subscription.status_changed` client events to connected players via WebSocket account-session routing. Includes a background expiration worker that periodically deactivates expired subscriptions. Internal-only, serves as the canonical source for subscription state.
+The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing, and pushes `subscription.status-changed` client events to connected players via WebSocket account-session routing. Includes a background expiration worker that periodically deactivates expired subscriptions. Serves as the canonical source for subscription state. Most mutating endpoints are service-to-service (admin/internal), but account listing, subscription get, and cancel are user-facing.
 
 Client events are routed via `IEntitySessionRegistry.PublishToEntitySessionsAsync("account", accountId, ...)` to all WebSocket sessions for the affected account. This is especially important for background expiration (the player didn't initiate the state change) and admin renewals.
 
@@ -116,7 +116,13 @@ None identified.
 
 ### Bugs (Fix Immediately)
 
-None identified.
+1. **Missing account deletion cleanup handler (Foundation Tenets — T28 Account Deletion Cleanup Obligation)**: Subscription stores data with account ownership (`accountId` is a direct ownership key) but does not subscribe to `account.deleted` and clean up subscriptions for deleted accounts. Per Foundation Tenets, every service with account-owned data MUST implement `HandleAccountDeletedAsync` in `*ServiceEvents.cs`. This is not a design question — the pattern is unambiguous. Reference implementation: `lib-collection/CollectionServiceEvents.cs`. See [#566](https://github.com/beyond-immersion/bannou-service/issues/566).
+<!-- AUDIT:TODO:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/566 -->
+
+2. **Missing lib-resource registration for GameService references (Foundation Tenets — T28 Resource-Managed Cleanup)**: Subscription records reference `serviceId` (a GameService entity at L2), but no `x-references` declaration exists in the schema and no cleanup endpoint is implemented. Per Foundation Tenets, dependent data cleanup for non-account entities MUST use lib-resource — declare `x-references` in the API schema, implement a `delete-by-service` cleanup endpoint, and register via generated `RegisterResourceCleanupCallbacksAsync()`. See [#567](https://github.com/beyond-immersion/bannou-service/issues/567).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/567 -->
+
+3. **CancelSubscription accepts accountId from user-facing WebSocket (Foundation Tenets — T32 Account Identity Boundary)**: The `CancelSubscription` endpoint has `x-permissions: [role: user]` (user-facing via WebSocket) but accepts `accountId` in the request body for ownership verification. Per Foundation Tenets Rule 1, client-facing endpoints MUST NOT accept `accountId` in request bodies. The correct pattern is server-injected `accountId` via the shortcut system (Rule 2), consistent with how GameSession handles join/leave.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -148,10 +154,6 @@ None identified.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/517 -->
 2. **No subscription deletion endpoint**: There is no endpoint to permanently delete subscription records. The indexes grow indefinitely with cancelled/expired entries. This may be intentional (audit trail) but should be documented as a design decision.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/518 -->
-3. **Account deletion does not cascade to subscriptions**: When an account is deleted, subscription records persist as orphans. Per's Account Deletion Cleanup Obligation, Subscription MUST subscribe to `account.deleted` and clean up all subscriptions for the deleted account. This is the established pattern — accounts are the one entity where event-based cleanup is mandatory because lib-resource cannot track account references (privacy constraint). **Not yet implemented** — see [#566](https://github.com/beyond-immersion/bannou-service/issues/566). Reference implementation: `lib-collection/CollectionServiceEvents.cs`.
-<!-- AUDIT:TODO:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/566 -->
-4. **GameService deletion does not cascade to subscriptions**: When a GameService is deleted, subscription records referencing that `serviceId` persist as orphans. No lib-resource reference registration exists. This is a standard case — Subscription should register references with lib-resource and implement `ISeededResourceProvider` for cleanup callbacks.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/567 -->
 
 ---
 

@@ -441,6 +441,41 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationBaseArchive>> GetLocationCompressData(GetLocationCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+
+    /// <summary>
+    /// Delete all locations in a realm
+    /// </summary>
+
+    /// <remarks>
+    /// Called by lib-resource during realm deletion cleanup.
+    /// <br/>Deletes all locations belonging to the specified realm (children first).
+    /// <br/>Publishes location.deleted events for each removed location.
+    /// </remarks>
+
+
+
+    /// <returns>Locations cleaned up</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealm(CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Migrate all locations from one realm to another
+    /// </summary>
+
+    /// <remarks>
+    /// Called by lib-resource during realm merge migration.
+    /// <br/>Transfers all locations from the source realm to the target realm
+    /// <br/>using root-first tree traversal to preserve hierarchy.
+    /// <br/>Updates lib-resource references for each successfully migrated location.
+    /// </remarks>
+
+
+
+    /// <returns>Migration results</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MigrateByRealmResponse>> MigrateByRealm(MigrateByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1728,6 +1763,107 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:location/get-compress-data",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Delete all locations in a realm
+    /// </summary>
+    /// <remarks>
+    /// Called by lib-resource during realm deletion cleanup.
+    /// <br/>Deletes all locations belonging to the specified realm (children first).
+    /// <br/>Publishes location.deleted events for each removed location.
+    /// </remarks>
+    /// <returns>Locations cleaned up</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("location/cleanup-by-realm")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.CleanupByRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/cleanup-by-realm");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CleanupByRealmAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/cleanup-by-realm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:location/cleanup-by-realm");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "location",
+                "CleanupByRealm",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:location/cleanup-by-realm",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Migrate all locations from one realm to another
+    /// </summary>
+    /// <remarks>
+    /// Called by lib-resource during realm merge migration.
+    /// <br/>Transfers all locations from the source realm to the target realm
+    /// <br/>using root-first tree traversal to preserve hierarchy.
+    /// <br/>Updates lib-resource references for each successfully migrated location.
+    /// </remarks>
+    /// <returns>Migration results</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("location/migrate-by-realm")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MigrateByRealmResponse>> MigrateByRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MigrateByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.MigrateByRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/migrate-by-realm");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.MigrateByRealmAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/migrate-by-realm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:location/migrate-by-realm");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "location",
+                "MigrateByRealm",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:location/migrate-by-realm",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

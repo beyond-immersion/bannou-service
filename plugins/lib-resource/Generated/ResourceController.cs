@@ -164,6 +164,74 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
 
 
     /// <summary>
+    /// Define a migrate callback for a resource type
+    /// </summary>
+
+    /// <remarks>
+    /// Services call this at startup to register their migration endpoints.
+    /// <br/>When a resource merge triggers migration, these callbacks are invoked
+    /// <br/>to reassign dependent entities from the source resource to the target.
+    /// <br/>
+    /// <br/>Migrate callbacks complement cleanup callbacks for RESTRICT references:
+    /// <br/>- RESTRICT blocks deletion while references exist
+    /// <br/>- Migrate moves references to a different parent (unblocking RESTRICT)
+    /// <br/>- After migration, cleanup handles any remaining CASCADE/DETACH references
+    /// <br/>
+    /// <br/>Payload templates use {{sourceResourceId}} and {{targetResourceId}} placeholders.
+    /// </remarks>
+
+
+
+    /// <returns>Migrate callback defined</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DefineMigrateCallbackResponse>> DefineMigrateCallback(DefineMigrateCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Execute migration for a resource
+    /// </summary>
+
+    /// <remarks>
+    /// Reassigns all dependent references from sourceResourceId to targetResourceId
+    /// <br/>by invoking registered migrate callbacks. Used by Category A merge operations
+    /// <br/>to move RESTRICT-policy dependents before deletion.
+    /// <br/>
+    /// <br/>Flow:
+    /// <br/>1. Get all migrate callbacks for resourceType
+    /// <br/>2. If dryRun, return preview without executing
+    /// <br/>3. Acquire distributed lock on source resource
+    /// <br/>4. Execute each callback to migrate dependent entities
+    /// <br/>5. Each callback is responsible for:
+    /// <br/>   a. Moving its entities from source to target parent
+    /// <br/>   b. Unregistering references from source resource
+    /// <br/>   c. Registering references to target resource
+    /// <br/>6. Return migration results per callback
+    /// </remarks>
+
+
+
+    /// <returns>Migration executed or rejected</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteMigrateResponse>> ExecuteMigrate(ExecuteMigrateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// List registered migrate callbacks
+    /// </summary>
+
+    /// <remarks>
+    /// Returns all migrate callbacks registered for a resource type.
+    /// <br/>Useful for debugging and admin inspection of migration chains.
+    /// </remarks>
+
+
+
+    /// <returns>List of registered migrate callbacks</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListMigrateCallbacksResponse>> ListMigrateCallbacks(ListMigrateCallbacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
     /// Register compression callback for a resource type
     /// </summary>
 
@@ -790,6 +858,173 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:resource/cleanup/remove",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Define a migrate callback for a resource type
+    /// </summary>
+    /// <remarks>
+    /// Services call this at startup to register their migration endpoints.
+    /// <br/>When a resource merge triggers migration, these callbacks are invoked
+    /// <br/>to reassign dependent entities from the source resource to the target.
+    /// <br/>
+    /// <br/>Migrate callbacks complement cleanup callbacks for RESTRICT references:
+    /// <br/>- RESTRICT blocks deletion while references exist
+    /// <br/>- Migrate moves references to a different parent (unblocking RESTRICT)
+    /// <br/>- After migration, cleanup handles any remaining CASCADE/DETACH references
+    /// <br/>
+    /// <br/>Payload templates use {{sourceResourceId}} and {{targetResourceId}} placeholders.
+    /// </remarks>
+    /// <returns>Migrate callback defined</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/migrate/define")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DefineMigrateCallbackResponse>> DefineMigrateCallback([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DefineMigrateCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.DefineMigrateCallback",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/migrate/define");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DefineMigrateCallbackAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/migrate/define");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:resource/migrate/define");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "resource",
+                "DefineMigrateCallback",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:resource/migrate/define",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Execute migration for a resource
+    /// </summary>
+    /// <remarks>
+    /// Reassigns all dependent references from sourceResourceId to targetResourceId
+    /// <br/>by invoking registered migrate callbacks. Used by Category A merge operations
+    /// <br/>to move RESTRICT-policy dependents before deletion.
+    /// <br/>
+    /// <br/>Flow:
+    /// <br/>1. Get all migrate callbacks for resourceType
+    /// <br/>2. If dryRun, return preview without executing
+    /// <br/>3. Acquire distributed lock on source resource
+    /// <br/>4. Execute each callback to migrate dependent entities
+    /// <br/>5. Each callback is responsible for:
+    /// <br/>   a. Moving its entities from source to target parent
+    /// <br/>   b. Unregistering references from source resource
+    /// <br/>   c. Registering references to target resource
+    /// <br/>6. Return migration results per callback
+    /// </remarks>
+    /// <returns>Migration executed or rejected</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/migrate/execute")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteMigrateResponse>> ExecuteMigrate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExecuteMigrateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.ExecuteMigrate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/migrate/execute");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ExecuteMigrateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/migrate/execute");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:resource/migrate/execute");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "resource",
+                "ExecuteMigrate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:resource/migrate/execute",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// List registered migrate callbacks
+    /// </summary>
+    /// <remarks>
+    /// Returns all migrate callbacks registered for a resource type.
+    /// <br/>Useful for debugging and admin inspection of migration chains.
+    /// </remarks>
+    /// <returns>List of registered migrate callbacks</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/migrate/list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListMigrateCallbacksResponse>> ListMigrateCallbacks([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListMigrateCallbacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.ListMigrateCallbacks",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/migrate/list");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListMigrateCallbacksAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/migrate/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:resource/migrate/list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "resource",
+                "ListMigrateCallbacks",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:resource/migrate/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

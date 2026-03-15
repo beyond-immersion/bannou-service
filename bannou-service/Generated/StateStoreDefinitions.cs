@@ -396,6 +396,8 @@ public static class StateStoreDefinitions
     public const string ResourceCompress = "resource-compress";
     /// <summary>Grace period timestamps for resources with zero references</summary>
     public const string ResourceGrace = "resource-grace";
+    /// <summary>Migration callback definitions for reassigning dependent references</summary>
+    public const string ResourceMigrate = "resource-migrate";
     /// <summary>Reference counts and source tracking per resource</summary>
     public const string ResourceRefcounts = "resource-refcounts";
     /// <summary>Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)</summary>
@@ -674,6 +676,7 @@ public static class StateStoreDefinitions
             [ResourceCleanup] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:cleanup" },
             [ResourceCompress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:compress" },
             [ResourceGrace] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:grace" },
+            [ResourceMigrate] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:migrate" },
             [ResourceRefcounts] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:ref" },
             [ResourceSnapshots] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:snapshot" },
             [SaveLoadCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:cache" },
@@ -881,6 +884,7 @@ public static class StateStoreDefinitions
             [ResourceCleanup] = new StoreMetadata("Resource", "Cleanup callback definitions per resource type", "redis", false),
             [ResourceCompress] = new StoreMetadata("Resource", "Compression callback definitions and callback index sets", "redis", false),
             [ResourceGrace] = new StoreMetadata("Resource", "Grace period timestamps for resources with zero references", "redis", false),
+            [ResourceMigrate] = new StoreMetadata("Resource", "Migration callback definitions for reassigning dependent references", "redis", false),
             [ResourceRefcounts] = new StoreMetadata("Resource", "Reference counts and source tracking per resource", "redis", false),
             [ResourceSnapshots] = new StoreMetadata("Resource", "Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)", "redis", false),
             [SaveLoadCache] = new StoreMetadata("SaveLoad", "Recently accessed save data cache", "redis", false),

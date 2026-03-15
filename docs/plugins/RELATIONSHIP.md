@@ -43,7 +43,6 @@ The `${relationship.*}` ABML variable namespace is implemented via `Relationship
 |-----------|---------------|
 | lib-divine | Follower bonds between deities and characters, deity-to-deity rivalries |
 | lib-character-lifecycle | Marriage/spouse bonds, parent-child bonds during procreation |
-| lib-asset | Tag hierarchy integration for smart bundling ([#117](https://github.com/beyond-immersion/bannou-service/issues/117)) |
 
 No external services subscribe to relationship events. The service self-subscribes to its own lifecycle events for cache invalidation (see Quirk #6).
 
@@ -242,7 +241,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-*No bugs identified.*
+1. **Soft-delete pattern for ended relationships violates Foundation Tenets (Deletion Finality)**: The overview describes "soft-deletion with recreate capability" — `EndRelationship` sets `EndedAt` while retaining the record indefinitely, and publishes `relationship.deleted`. This is the exact soft-delete anti-pattern prohibited by Foundation Tenets: "Soft-delete patterns (setting a `DeletedAt`/`IsDeleted` flag while retaining the record indefinitely) are forbidden." The only exception is Account with a time-limited retention worker; no such worker exists for relationships. Instance data (which explicitly includes "relationships" per Implementation Tenets § Deprecation Lifecycle) requires immediate hard delete. The cascade cleanup endpoint (`CleanupByEntity`) also "ends" rather than hard-deletes, compounding the issue. Fix: hard-delete relationship records when ended, and preserve historical relationship data through an appropriate mechanism (e.g., character-history backstory entries, resource compression callbacks) rather than retaining soft-deleted records in the primary store.
 
 ### Intentional Quirks (Documented Behavior)
 

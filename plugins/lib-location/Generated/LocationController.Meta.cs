@@ -5932,4 +5932,226 @@ public partial class LocationController
             _GetLocationCompressData_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for CleanupByRealm
+
+    private static readonly string _CleanupByRealm_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByRealmRequest",
+    "$defs": {
+        "CleanupByRealmRequest": {
+            "description": "Request to delete all locations in a realm (called by lib-resource cleanup)",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "realmId"
+            ],
+            "properties": {
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the realm whose locations should be deleted"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByRealm_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByRealmResponse",
+    "$defs": {
+        "CleanupByRealmResponse": {
+            "description": "Result of realm location cleanup",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "deleted",
+                "failed"
+            ],
+            "properties": {
+                "deleted": {
+                    "type": "integer",
+                    "description": "Number of locations successfully deleted"
+                },
+                "failed": {
+                    "type": "integer",
+                    "description": "Number of locations that failed to delete"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByRealm_Info = """
+{
+    "summary": "Delete all locations in a realm",
+    "description": "Called by lib-resource during realm deletion cleanup.\nDeletes all locations belonging to the specified realm (children first).\nPublishes location.deleted events for each removed location.\n",
+    "tags": [
+        "Location Resource Cleanup"
+    ],
+    "deprecated": false,
+    "operationId": "cleanupByRealm"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanupByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/cleanup-by-realm/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByRealm_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/cleanup-by-realm",
+            _CleanupByRealm_Info));
+
+    /// <summary>Returns request schema for CleanupByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/cleanup-by-realm/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByRealm_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/cleanup-by-realm",
+            "request-schema",
+            _CleanupByRealm_RequestSchema));
+
+    /// <summary>Returns response schema for CleanupByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/cleanup-by-realm/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByRealm_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/cleanup-by-realm",
+            "response-schema",
+            _CleanupByRealm_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanupByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/cleanup-by-realm/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByRealm_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/cleanup-by-realm",
+            _CleanupByRealm_Info,
+            _CleanupByRealm_RequestSchema,
+            _CleanupByRealm_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for MigrateByRealm
+
+    private static readonly string _MigrateByRealm_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MigrateByRealmRequest",
+    "$defs": {
+        "MigrateByRealmRequest": {
+            "description": "Request to migrate all locations from one realm to another (called by lib-resource migrate)",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sourceRealmId",
+                "targetRealmId"
+            ],
+            "properties": {
+                "sourceRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the realm to migrate locations from"
+                },
+                "targetRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the realm to migrate locations to"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MigrateByRealm_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MigrateByRealmResponse",
+    "$defs": {
+        "MigrateByRealmResponse": {
+            "description": "Result of realm location migration",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "migrated",
+                "failed"
+            ],
+            "properties": {
+                "migrated": {
+                    "type": "integer",
+                    "description": "Number of locations successfully migrated"
+                },
+                "failed": {
+                    "type": "integer",
+                    "description": "Number of locations that failed to migrate"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MigrateByRealm_Info = """
+{
+    "summary": "Migrate all locations from one realm to another",
+    "description": "Called by lib-resource during realm merge migration.\nTransfers all locations from the source realm to the target realm\nusing root-first tree traversal to preserve hierarchy.\nUpdates lib-resource references for each successfully migrated location.\n",
+    "tags": [
+        "Location Resource Migration"
+    ],
+    "deprecated": false,
+    "operationId": "migrateByRealm"
+}
+""";
+
+    /// <summary>Returns endpoint information for MigrateByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/migrate-by-realm/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateByRealm_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/migrate-by-realm",
+            _MigrateByRealm_Info));
+
+    /// <summary>Returns request schema for MigrateByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/migrate-by-realm/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateByRealm_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/migrate-by-realm",
+            "request-schema",
+            _MigrateByRealm_RequestSchema));
+
+    /// <summary>Returns response schema for MigrateByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/migrate-by-realm/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateByRealm_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/migrate-by-realm",
+            "response-schema",
+            _MigrateByRealm_ResponseSchema));
+
+    /// <summary>Returns full schema for MigrateByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/migrate-by-realm/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateByRealm_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/migrate-by-realm",
+            _MigrateByRealm_Info,
+            _MigrateByRealm_RequestSchema,
+            _MigrateByRealm_ResponseSchema));
+
+    #endregion
 }

@@ -230,6 +230,42 @@ public interface ISpeciesController : BeyondImmersion.BannouService.Controllers.
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedSpeciesResponse>> SeedSpecies(SeedSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+
+    /// <summary>
+    /// Remove all species from a realm
+    /// </summary>
+
+    /// <remarks>
+    /// Called by lib-resource during realm deletion cleanup.
+    /// <br/>Removes the realm association from all species associated with it.
+    /// <br/>Species that belong to multiple realms retain their other associations.
+    /// <br/>Species that belong only to the deleted realm become realm-orphans.
+    /// </remarks>
+
+
+
+    /// <returns>Species cleaned up</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealm(CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Migrate all species realm associations from one realm to another
+    /// </summary>
+
+    /// <remarks>
+    /// Called by lib-resource during realm merge migration.
+    /// <br/>For each species associated with the source realm, adds the target realm
+    /// <br/>association and removes the source realm association.
+    /// <br/>Updates lib-resource references for each successfully migrated species.
+    /// </remarks>
+
+
+
+    /// <returns>Migration results</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MigrateByRealmResponse>> MigrateByRealm(MigrateByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -910,6 +946,108 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:species/seed",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Remove all species from a realm
+    /// </summary>
+    /// <remarks>
+    /// Called by lib-resource during realm deletion cleanup.
+    /// <br/>Removes the realm association from all species associated with it.
+    /// <br/>Species that belong to multiple realms retain their other associations.
+    /// <br/>Species that belong only to the deleted realm become realm-orphans.
+    /// </remarks>
+    /// <returns>Species cleaned up</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("species/cleanup-by-realm")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.CleanupByRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/cleanup-by-realm");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CleanupByRealmAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SpeciesController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:species/cleanup-by-realm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SpeciesController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:species/cleanup-by-realm");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "species",
+                "CleanupByRealm",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:species/cleanup-by-realm",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Migrate all species realm associations from one realm to another
+    /// </summary>
+    /// <remarks>
+    /// Called by lib-resource during realm merge migration.
+    /// <br/>For each species associated with the source realm, adds the target realm
+    /// <br/>association and removes the source realm association.
+    /// <br/>Updates lib-resource references for each successfully migrated species.
+    /// </remarks>
+    /// <returns>Migration results</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("species/migrate-by-realm")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MigrateByRealmResponse>> MigrateByRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MigrateByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.MigrateByRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/migrate-by-realm");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.MigrateByRealmAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SpeciesController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:species/migrate-by-realm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SpeciesController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:species/migrate-by-realm");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "species",
+                "MigrateByRealm",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:species/migrate-by-realm",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

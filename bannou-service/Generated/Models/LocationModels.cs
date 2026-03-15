@@ -1462,6 +1462,90 @@ public partial class ClearEntityPositionResponse
 }
 
 /// <summary>
+/// Request to delete all locations in a realm (called by lib-resource cleanup)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByRealmRequest
+{
+
+    /// <summary>
+    /// ID of the realm whose locations should be deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of realm location cleanup
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByRealmResponse
+{
+
+    /// <summary>
+    /// Number of locations successfully deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deleted")]
+    public int Deleted { get; set; } = default!;
+
+    /// <summary>
+    /// Number of locations that failed to delete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failed")]
+    public int Failed { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to migrate all locations from one realm to another (called by lib-resource migrate)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MigrateByRealmRequest
+{
+
+    /// <summary>
+    /// ID of the realm to migrate locations from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceRealmId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the realm to migrate locations to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetRealmId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of realm location migration
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MigrateByRealmResponse
+{
+
+    /// <summary>
+    /// Number of locations successfully migrated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("migrated")]
+    public int Migrated { get; set; } = default!;
+
+    /// <summary>
+    /// Number of locations that failed to migrate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failed")]
+    public int Failed { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to get location base data for compression archive
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

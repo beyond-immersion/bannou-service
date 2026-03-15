@@ -2399,4 +2399,226 @@ public partial class SpeciesController
             _SeedSpecies_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for CleanupByRealm
+
+    private static readonly string _CleanupByRealm_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByRealmRequest",
+    "$defs": {
+        "CleanupByRealmRequest": {
+            "description": "Request to remove all species from a realm (called by lib-resource cleanup)",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "realmId"
+            ],
+            "properties": {
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the realm whose species associations should be removed"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByRealm_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByRealmResponse",
+    "$defs": {
+        "CleanupByRealmResponse": {
+            "description": "Result of realm species cleanup",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "cleaned",
+                "failed"
+            ],
+            "properties": {
+                "cleaned": {
+                    "type": "integer",
+                    "description": "Number of species successfully disassociated from realm"
+                },
+                "failed": {
+                    "type": "integer",
+                    "description": "Number of species that failed to disassociate"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByRealm_Info = """
+{
+    "summary": "Remove all species from a realm",
+    "description": "Called by lib-resource during realm deletion cleanup.\nRemoves the realm association from all species associated with it.\nSpecies that belong to multiple realms retain their other associations.\nSpecies that belong only to the deleted realm become realm-orphans.\n",
+    "tags": [
+        "Species Resource Cleanup"
+    ],
+    "deprecated": false,
+    "operationId": "cleanupByRealm"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanupByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/species/cleanup-by-realm/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByRealm_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Species",
+            "POST",
+            "/species/cleanup-by-realm",
+            _CleanupByRealm_Info));
+
+    /// <summary>Returns request schema for CleanupByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/species/cleanup-by-realm/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByRealm_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Species",
+            "POST",
+            "/species/cleanup-by-realm",
+            "request-schema",
+            _CleanupByRealm_RequestSchema));
+
+    /// <summary>Returns response schema for CleanupByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/species/cleanup-by-realm/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByRealm_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Species",
+            "POST",
+            "/species/cleanup-by-realm",
+            "response-schema",
+            _CleanupByRealm_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanupByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/species/cleanup-by-realm/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByRealm_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Species",
+            "POST",
+            "/species/cleanup-by-realm",
+            _CleanupByRealm_Info,
+            _CleanupByRealm_RequestSchema,
+            _CleanupByRealm_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for MigrateByRealm
+
+    private static readonly string _MigrateByRealm_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MigrateByRealmRequest",
+    "$defs": {
+        "MigrateByRealmRequest": {
+            "description": "Request to migrate all species from one realm to another (called by lib-resource migrate)",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sourceRealmId",
+                "targetRealmId"
+            ],
+            "properties": {
+                "sourceRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the realm to migrate species from"
+                },
+                "targetRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the realm to migrate species to"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MigrateByRealm_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MigrateByRealmResponse",
+    "$defs": {
+        "MigrateByRealmResponse": {
+            "description": "Result of realm species migration",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "migrated",
+                "failed"
+            ],
+            "properties": {
+                "migrated": {
+                    "type": "integer",
+                    "description": "Number of species successfully migrated"
+                },
+                "failed": {
+                    "type": "integer",
+                    "description": "Number of species that failed to migrate"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MigrateByRealm_Info = """
+{
+    "summary": "Migrate all species realm associations from one realm to another",
+    "description": "Called by lib-resource during realm merge migration.\nFor each species associated with the source realm, adds the target realm\nassociation and removes the source realm association.\nUpdates lib-resource references for each successfully migrated species.\n",
+    "tags": [
+        "Species Resource Migration"
+    ],
+    "deprecated": false,
+    "operationId": "migrateByRealm"
+}
+""";
+
+    /// <summary>Returns endpoint information for MigrateByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/species/migrate-by-realm/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateByRealm_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Species",
+            "POST",
+            "/species/migrate-by-realm",
+            _MigrateByRealm_Info));
+
+    /// <summary>Returns request schema for MigrateByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/species/migrate-by-realm/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateByRealm_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Species",
+            "POST",
+            "/species/migrate-by-realm",
+            "request-schema",
+            _MigrateByRealm_RequestSchema));
+
+    /// <summary>Returns response schema for MigrateByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/species/migrate-by-realm/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateByRealm_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Species",
+            "POST",
+            "/species/migrate-by-realm",
+            "response-schema",
+            _MigrateByRealm_ResponseSchema));
+
+    /// <summary>Returns full schema for MigrateByRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/species/migrate-by-realm/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MigrateByRealm_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Species",
+            "POST",
+            "/species/migrate-by-realm",
+            _MigrateByRealm_Info,
+            _MigrateByRealm_RequestSchema,
+            _MigrateByRealm_ResponseSchema));
+
+    #endregion
 }

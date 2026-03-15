@@ -155,6 +155,7 @@ This document lists all state store components used in Bannou.
 | `resource-cleanup` | Redis | Resource | Cleanup callback definitions per resource type |
 | `resource-compress` | Redis | Resource | Compression callback definitions and callback index sets |
 | `resource-grace` | Redis | Resource | Grace period timestamps for resources with zero references |
+| `resource-migrate` | Redis | Resource | Migration callback definitions for reassigning dependent references |
 | `resource-refcounts` | Redis | Resource | Reference counts and source tracking per resource |
 | `resource-snapshots` | Redis | Resource | Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption) |
 | `save-load-cache` | Redis | SaveLoad | Recently accessed save data cache |
@@ -205,7 +206,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 195 stores (123 Redis, 72 MySQL)
+**Total**: 196 stores (124 Redis, 72 MySQL)
 
 ## Naming Conventions
 

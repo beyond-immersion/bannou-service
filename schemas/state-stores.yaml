@@ -853,6 +853,12 @@ x-state-stores:
     service: Resource
     purpose: Grace period timestamps for resources with zero references
 
+  resource-migrate:
+    backend: redis
+    prefix: "resource:migrate"
+    service: Resource
+    purpose: Migration callback definitions for reassigning dependent references
+
   resource-compress:
     backend: redis
     prefix: "resource:compress"

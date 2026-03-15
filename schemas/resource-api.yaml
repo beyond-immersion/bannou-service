@@ -235,6 +235,102 @@ paths:
                 $ref: '#/components/schemas/RemoveCleanupCallbackResponse'
 
   # ===========================================================================
+  # Migration Management (3 endpoints)
+  # ===========================================================================
+
+  /resource/migrate/define:
+    post:
+      operationId: defineMigrateCallback
+      tags:
+      - Migration Management
+      summary: Define a migrate callback for a resource type
+      description: |
+        Services call this at startup to register their migration endpoints.
+        When a resource merge triggers migration, these callbacks are invoked
+        to reassign dependent entities from the source resource to the target.
+
+        Migrate callbacks complement cleanup callbacks for RESTRICT references:
+        - RESTRICT blocks deletion while references exist
+        - Migrate moves references to a different parent (unblocking RESTRICT)
+        - After migration, cleanup handles any remaining CASCADE/DETACH references
+
+        Payload templates use {{sourceResourceId}} and {{targetResourceId}} placeholders.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefineMigrateCallbackRequest'
+      responses:
+        '200':
+          description: Migrate callback defined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefineMigrateCallbackResponse'
+
+  /resource/migrate/execute:
+    post:
+      operationId: executeMigrate
+      tags:
+      - Migration Management
+      summary: Execute migration for a resource
+      description: |
+        Reassigns all dependent references from sourceResourceId to targetResourceId
+        by invoking registered migrate callbacks. Used by Category A merge operations
+        to move RESTRICT-policy dependents before deletion.
+
+        Flow:
+        1. Get all migrate callbacks for resourceType
+        2. If dryRun, return preview without executing
+        3. Acquire distributed lock on source resource
+        4. Execute each callback to migrate dependent entities
+        5. Each callback is responsible for:
+           a. Moving its entities from source to target parent
+           b. Unregistering references from source resource
+           c. Registering references to target resource
+        6. Return migration results per callback
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteMigrateRequest'
+      responses:
+        '200':
+          description: Migration executed or rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteMigrateResponse'
+
+  /resource/migrate/list:
+    post:
+      operationId: listMigrateCallbacks
+      tags:
+      - Migration Management
+      summary: List registered migrate callbacks
+      description: |
+        Returns all migrate callbacks registered for a resource type.
+        Useful for debugging and admin inspection of migration chains.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListMigrateCallbacksRequest'
+      responses:
+        '200':
+          description: List of registered migrate callbacks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMigrateCallbacksResponse'
+
+  # ===========================================================================
   # Compression Management (5 endpoints)
   # ===========================================================================
 
@@ -1042,6 +1138,229 @@ components:
           format: date-time
           nullable: true
           description: When callback was removed (null if wasn't registered)
+
+    # =========================================================================
+    # Migration Management Models
+    # =========================================================================
+
+    DefineMigrateCallbackRequest:
+      type: object
+      additionalProperties: false
+      description: Request to define a migrate callback for a resource type
+      required:
+      - resourceType
+      - sourceType
+      - migrateEndpoint
+      - migratePayloadTemplate
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this migration handles (opaque identifier)
+        sourceType:
+          type: string
+          description: Type of entity that will be migrated (opaque identifier)
+        serviceName:
+          type: string
+          nullable: true
+          description: Target service name for callback invocation via lib-mesh (defaults to sourceType if not specified)
+        migrateEndpoint:
+          type: string
+          description: Endpoint path for migration (e.g., /character/transfer-realm)
+        migratePayloadTemplate:
+          type: string
+          description: JSON template with {{sourceResourceId}} and {{targetResourceId}} placeholders
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of migration action
+
+    DefineMigrateCallbackResponse:
+      type: object
+      additionalProperties: false
+      description: Response after defining a migrate callback
+      required:
+      - resourceType
+      - sourceType
+      - registered
+      properties:
+        resourceType:
+          type: string
+          description: Resource type for callback (opaque identifier)
+        sourceType:
+          type: string
+          description: Source type for callback (opaque identifier)
+        registered:
+          type: boolean
+          description: True if callback was registered (or updated)
+        previouslyDefined:
+          type: boolean
+          description: True if this callback was already defined (updated)
+
+    ExecuteMigrateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to execute migration for a resource
+      required:
+      - resourceType
+      - sourceResourceId
+      - targetResourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource being migrated (opaque identifier)
+        sourceResourceId:
+          type: string
+          format: uuid
+          description: ID of the source resource whose dependents should be migrated
+        targetResourceId:
+          type: string
+          format: uuid
+          description: ID of the target resource to migrate dependents to
+        dryRun:
+          type: boolean
+          nullable: true
+          description: |
+            If true, returns what callbacks WOULD execute without actually
+            executing them. Defaults to false.
+
+    ExecuteMigrateResponse:
+      type: object
+      additionalProperties: false
+      description: Response after attempting to execute migration
+      required:
+      - resourceType
+      - sourceResourceId
+      - targetResourceId
+      - success
+      - dryRun
+      - callbackResults
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource migrated
+        sourceResourceId:
+          type: string
+          format: uuid
+          description: ID of the source resource
+        targetResourceId:
+          type: string
+          format: uuid
+          description: ID of the target resource
+        success:
+          type: boolean
+          description: True if all migration callbacks completed successfully
+        abortReason:
+          type: string
+          nullable: true
+          description: Why migration was aborted (lock failure, callback failure, etc.)
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/MigrateCallbackResult'
+          description: Results of each migration callback
+        migrationDurationMs:
+          type: integer
+          description: Total migration execution time in milliseconds
+        dryRun:
+          type: boolean
+          description: True if this was a preview (no callbacks were actually executed)
+
+    MigrateCallbackResult:
+      type: object
+      additionalProperties: false
+      description: Result of executing a single migration callback
+      required:
+      - sourceType
+      - serviceName
+      - endpoint
+      - success
+      properties:
+        sourceType:
+          type: string
+          description: Source type that was migrated (opaque identifier)
+        serviceName:
+          type: string
+          description: Service that was called
+        endpoint:
+          type: string
+          description: Endpoint that was called
+        success:
+          type: boolean
+          description: Whether callback succeeded
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code from callback
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if callback failed
+        durationMs:
+          type: integer
+          description: Callback execution time in milliseconds
+
+    ListMigrateCallbacksRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list registered migrate callbacks
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all if not specified)
+        sourceType:
+          type: string
+          nullable: true
+          description: Filter by source type (requires resourceType)
+
+    ListMigrateCallbacksResponse:
+      type: object
+      additionalProperties: false
+      description: List of registered migrate callbacks
+      required:
+      - callbacks
+      - totalCount
+      properties:
+        callbacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/MigrateCallbackSummary'
+          description: Registered callbacks matching filter
+        totalCount:
+          type: integer
+          description: Total number of callbacks returned
+
+    MigrateCallbackSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a registered migrate callback
+      required:
+      - resourceType
+      - sourceType
+      - serviceName
+      - migrateEndpoint
+      - registeredAt
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this callback handles
+        sourceType:
+          type: string
+          description: Type of entity that will be migrated
+        serviceName:
+          type: string
+          description: Target service for callback invocation
+        migrateEndpoint:
+          type: string
+          description: Endpoint path called during migration
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this callback was registered
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
 
     # =========================================================================
     # Compression Management Models

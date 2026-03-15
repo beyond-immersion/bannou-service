@@ -16,6 +16,18 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ownerType` | A (Entity Reference) | `EntityType` enum | All valid values are first-class Bannou entities (accounts, actors, realms, characters, relationships). Recently migrated to shared EntityType enum. |
+| `seedTypeCode` | B (Content Code) | Opaque string | Game-configurable seed type identifier. New types registered via API without schema changes (e.g., `guardian`, `dungeon_core`, `combat_archetype`). |
+| `growthPhase` | B (Content Code) | Opaque string | Phase labels defined per seed type in `GrowthPhases` configuration. Extensible per type without schema changes (e.g., `nascent`, `stirring`, `awakened`, `ancient`). Falls back to `"initial"` if no phases defined. |
+| `status` | C (System State) | `SeedStatus` enum | Finite lifecycle states: `active`, `dormant`, `archived`. System-owned transitions. |
+| `direction` (SeedPhaseChangedEvent) | C (System State) | `PhaseChangeDirection` enum | Binary system state: `progressed` or `regressed`. Determined by growth vs decay mechanics. |
+
+---
+
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -28,18 +40,6 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | lib-divine (L4, planned) | Will create deity domain power seeds, contribute growth via `ISeedClient`, and tie divinity generation to domain seed depth. Currently fully stubbed. |
 | lib-agency (L4, planned) | Will read guardian spirit seed capability depths to compute UX fidelity manifests (progressive agency). Pre-implementation, no schema exists yet. |
 | Dungeon plugin (planned, L4) | Will create `dungeon_core` and `dungeon_master` seeds for actor/character entities |
-
----
-
-## Type Field Classification
-
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `ownerType` | A (Entity Reference) | `EntityType` enum | All valid values are first-class Bannou entities (accounts, actors, realms, characters, relationships). Recently migrated to shared EntityType enum. |
-| `seedTypeCode` | B (Content Code) | Opaque string | Game-configurable seed type identifier. New types registered via API without schema changes (e.g., `guardian`, `dungeon_core`, `combat_archetype`). |
-| `growthPhase` | B (Content Code) | Opaque string | Phase labels defined per seed type in `GrowthPhases` configuration. Extensible per type without schema changes (e.g., `nascent`, `stirring`, `awakened`, `ancient`). Falls back to `"initial"` if no phases defined. |
-| `status` | C (System State) | `SeedStatus` enum | Finite lifecycle states: `active`, `dormant`, `archived`. System-owned transitions. |
-| `direction` (SeedPhaseChangedEvent) | C (System State) | `PhaseChangeDirection` enum | Binary system state: `progressed` or `regressed`. Determined by growth vs decay mechanics. |
 
 ---
 
@@ -124,9 +124,6 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 - **Bond dissolution endpoint**: No endpoint exists to dissolve or break a bond. The `BondPermanent` flag on seed type definitions implies some bonds should be dissolvable, but no dissolution flow is implemented. Would need to handle clearing `BondId` on participant seeds, emitting a dissolution event, and respecting the permanence flag.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/362 -->
 
-- **SeedType deprecation reclassification to Category B** ([#645](https://github.com/beyond-immersion/bannou-service/issues/645)): SeedType is currently Category A (`IDeprecateAndMergeEntity`) but should be Category B (`ICleanDeprecatedEntity`). Seed type merge is fundamentally impractical due to incompatible growth domains, phase definitions, capability rules, bond constraints, and per-owner limits (see #374 for detail). No service stores SeedType GUIDs (all use `seedTypeCode` strings). The natural lifecycle is: deprecate → existing seeds age out → clean-deprecated sweep removes the type when zero instances remain. Requires removing `undeprecate`/`delete` endpoints, adding `clean-deprecated` endpoint, adding `instanceEntity: Seed` to x-lifecycle, switching marker interface, and adding reverse index for instance count checks. Supersedes #374.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-14:https://github.com/beyond-immersion/bannou-service/issues/645 -->
-
 - **Cross-seed-type growth transfer matrix** ([#354](https://github.com/beyond-immersion/bannou-service/issues/354)): When an entity holds seeds of different types (e.g., `guardian` + `dungeon_master`), experience in one role could partially feed growth in the other via configurable `SeedGrowthTransferRule` mappings with domain-to-domain multipliers. Distinct from same-type cross-pollination (`SameOwnerGrowthMultiplier`, already implemented). Not blocking initial implementation -- add when gameplay testing validates which cross-type relationships feel right.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/354 -->
 
@@ -142,7 +139,11 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 ### Bugs (Fix Immediately)
 
-*(No current bugs.)*
+1. **SeedType deprecation is wrong category (Foundation Tenets — T31)**: SeedType is currently implemented as Category A (`IDeprecateAndMergeEntity`) but T31's decision tree classifies it as Category B (`ICleanDeprecatedEntity`) — seed instances persist with the type's code, and merge is fundamentally impractical due to incompatible growth domains, phase definitions, capability rules, and bond constraints. The current implementation has: `undeprecate` endpoint (forbidden for Category B), per-entity `delete` endpoint (forbidden for Category B), missing `clean-deprecated` sweep endpoint (required for Category B), missing `instanceEntity` in `x-lifecycle`, and wrong marker interface. See [#645](https://github.com/beyond-immersion/bannou-service/issues/645) for the reclassification plan. Supersedes [#374](https://github.com/beyond-immersion/bannou-service/issues/374) (merge — impractical).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-14:https://github.com/beyond-immersion/bannou-service/issues/645 -->
+
+2. **Seed archive is a soft-delete pattern (Foundation Tenets — T28)**: `ArchiveSeedAsync` sets `Status = Archived` but retains the seed record, growth data, capability cache, and bond data indefinitely. This is a soft-delete pattern — T28 explicitly forbids retaining records with a status flag for non-Account entities. Seeds are instance entities (not definitions), so the correct pattern is immediate hard delete. The `seed.deleted` lifecycle event is declared via `x-lifecycle` but is never published because no hard-delete path exists. Fix requires: adding a hard-delete endpoint (or repurposing archive to hard-delete), cleaning up associated growth/capability/bond data on deletion, and publishing the `seed.deleted` event. Growth data preservation for narrative purposes should use lib-resource compression callbacks before deletion, not indefinite retention. See [#366](https://github.com/beyond-immersion/bannou-service/issues/366) for the design discussion (which also covers bond dissolution dependency).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/366 -->
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -164,9 +165,6 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 ### Design Considerations (Requires Planning)
 
-- **No cleanup of associated data on archive**: `ArchiveSeedAsync` sets the seed's status to `Archived` but does not clean up growth data (`growth:{seedId}`), capability cache (`cap:{seedId}`), or bond data (`bond:{bondId}`). Archived seeds retain all associated state indefinitely. A cleanup strategy is needed -- either immediate deletion, a background retention worker, or integration with lib-resource for compression.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/366 -->
-
 - **Decay worker uses real-time, should use game-time**: The decay background worker (`SeedDecayWorkerService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a world with a 24:1 game-time ratio, decay applied per real-time cycle is 24x slower than intended per game-day. Guardian spirits, dungeon cores, faction seeds, and all other seed types evolve in the simulated world's time. When Worldstate (L2) is implemented, the decay worker must call `GetElapsedGameTime` to compute game-days elapsed since last decay cycle, then apply `GrowthDecayRatePerDay` against game-days rather than real-days. The `DecayWorkerIntervalSeconds` config remains the real-time check frequency; the decay amount per cycle is computed from game-time elapsed. See [#545](https://github.com/beyond-immersion/bannou-service/issues/545) for the broader cross-service migration plan (covers both Currency autogain and Seed decay).
 <!-- AUDIT:BLOCKED:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/545 -->
 
@@ -178,10 +176,9 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 ## Work Tracking
 
 - [#362](https://github.com/beyond-immersion/bannou-service/issues/362) - Bond dissolution endpoint design (triaged: cancel + dissolve flows, permanent bonds unbreakable)
-- [#366](https://github.com/beyond-immersion/bannou-service/issues/366) - Archived seed data cleanup strategy (depends on #362 for bond dissolution during archive)
+- [#366](https://github.com/beyond-immersion/bannou-service/issues/366) - Seed archive soft-delete → hard-delete migration (elevated to Bug: T28 violation; depends on #362 for bond dissolution)
+- [#645](https://github.com/beyond-immersion/bannou-service/issues/645) - Reclassify SeedType deprecation from Category A to Category B (elevated to Bug: T31 violation; supersedes #374)
 - [#354](https://github.com/beyond-immersion/bannou-service/issues/354) - Cross-seed-type growth transfer matrix (creative game design decisions needed, not blocking)
-- [#374](https://github.com/beyond-immersion/bannou-service/issues/374) - Seed type merge endpoint (superseded by #645 -- merge is impractical, reclassify to Category B instead)
-- [#645](https://github.com/beyond-immersion/bannou-service/issues/645) - Reclassify SeedType deprecation from Category A (merge) to Category B (clean-deprecated)
 - [#437](https://github.com/beyond-immersion/bannou-service/issues/437) - Seed owner type promotion / re-parenting for dungeon Pattern A (depends on #436 household split)
 - [#497](https://github.com/beyond-immersion/bannou-service/issues/497) - Client events for guardian spirit progression via Entity Session Registry (depends on #426)
 - [#545](https://github.com/beyond-immersion/bannou-service/issues/545) - Currency/Seed background workers game-time migration via Worldstate (blocked by Worldstate; includes RealmId design for realm association)

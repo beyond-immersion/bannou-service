@@ -1441,6 +1441,154 @@ public partial class LocationService : ILocationService, IDeprecateAndMergeEntit
         return (StatusCodes.OK, MapToResponse(model));
     }
 
+    /// <inheritdoc />
+    public async Task<(StatusCodes, CleanupByRealmResponse?)> CleanupByRealmAsync(
+        CleanupByRealmRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.location", "LocationService.CleanupByRealm");
+
+        _logger.LogInformation("Starting realm cleanup for realm {RealmId}", body.RealmId);
+
+        var realmIndexKey = BuildRealmIndexKey(body.RealmId);
+        var locationIds = await _guidListStore.GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
+
+        if (locationIds.Count == 0)
+        {
+            _logger.LogDebug("No locations found in realm {RealmId} for cleanup", body.RealmId);
+            return (StatusCodes.OK, new CleanupByRealmResponse { Deleted = 0, Failed = 0 });
+        }
+
+        // Load all locations to sort by depth (deepest first to avoid parent constraint issues)
+        var allLocations = await LoadLocationsByIdsAsync(locationIds, cancellationToken);
+        var sortedByDepthDesc = allLocations.OrderByDescending(l => l.Depth).ToList();
+
+        var deleted = 0;
+        var failed = 0;
+
+        foreach (var model in sortedByDepthDesc)
+        {
+            try
+            {
+                var locationKey = BuildLocationKey(model.LocationId);
+
+                // Force delete — realm cleanup bypasses deprecation requirement per FOUNDATION TENETS (resource cleanup)
+                await _locationStore.DeleteAsync(locationKey, cancellationToken);
+
+                // Clean up code index
+                var codeIndexKey = BuildCodeIndexKey(model.RealmId, model.Code);
+                await _codeIndexStore.DeleteAsync(codeIndexKey, cancellationToken);
+
+                // Remove from parent index (if has parent)
+                if (model.ParentLocationId.HasValue)
+                {
+                    await RemoveFromParentIndexAsync(model.RealmId, model.ParentLocationId.Value, model.LocationId, cancellationToken);
+                }
+
+                // Invalidate cache
+                await InvalidateLocationCacheAsync(locationKey, cancellationToken);
+
+                // Publish deletion event
+                await PublishLocationDeletedEventAsync(model, cancellationToken);
+
+                deleted++;
+            }
+            catch (Exception ex)
+            {
+                failed++;
+                _logger.LogWarning(ex,
+                    "Failed to delete location {LocationId} during realm {RealmId} cleanup",
+                    model.LocationId, body.RealmId);
+            }
+        }
+
+        // Clean up realm-level indexes (realm index, root locations index)
+        try
+        {
+            await _guidListStore.DeleteAsync(realmIndexKey, cancellationToken);
+
+            var rootKey = BuildRootLocationsKey(body.RealmId);
+            await _guidListStore.DeleteAsync(rootKey, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to clean up realm indexes for realm {RealmId}", body.RealmId);
+        }
+
+        _logger.LogInformation(
+            "Realm cleanup complete for realm {RealmId}: {Deleted} deleted, {Failed} failed",
+            body.RealmId, deleted, failed);
+
+        return (StatusCodes.OK, new CleanupByRealmResponse { Deleted = deleted, Failed = failed });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, MigrateByRealmResponse?)> MigrateByRealmAsync(
+        MigrateByRealmRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.location", "LocationService.MigrateByRealm");
+
+        _logger.LogInformation("Starting realm migration from {SourceRealmId} to {TargetRealmId}",
+            body.SourceRealmId, body.TargetRealmId);
+
+        var realmIndexKey = BuildRealmIndexKey(body.SourceRealmId);
+        var locationIds = await _guidListStore.GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
+
+        if (locationIds.Count == 0)
+        {
+            _logger.LogDebug("No locations found in source realm {SourceRealmId} for migration", body.SourceRealmId);
+            return (StatusCodes.OK, new MigrateByRealmResponse { Migrated = 0, Failed = 0 });
+        }
+
+        // Load all locations to sort by depth (root-first for proper tree traversal)
+        var allLocations = await LoadLocationsByIdsAsync(locationIds, cancellationToken);
+        var sortedByDepthAsc = allLocations.OrderBy(l => l.Depth).ToList();
+
+        var migrated = 0;
+        var failed = 0;
+
+        foreach (var model in sortedByDepthAsc)
+        {
+            try
+            {
+                var (status, _) = await TransferLocationToRealmAsync(
+                    new TransferLocationToRealmRequest
+                    {
+                        LocationId = model.LocationId,
+                        TargetRealmId = body.TargetRealmId
+                    }, cancellationToken);
+
+                if (status == StatusCodes.OK)
+                {
+                    migrated++;
+                }
+                else
+                {
+                    failed++;
+                    _logger.LogWarning(
+                        "Failed to migrate location {LocationId} from realm {SourceRealmId} to {TargetRealmId}: status {Status}",
+                        model.LocationId, body.SourceRealmId, body.TargetRealmId, status);
+                }
+            }
+            catch (Exception ex)
+            {
+                failed++;
+                _logger.LogWarning(ex,
+                    "Failed to migrate location {LocationId} from realm {SourceRealmId} to {TargetRealmId}",
+                    model.LocationId, body.SourceRealmId, body.TargetRealmId);
+            }
+        }
+
+        _logger.LogInformation(
+            "Realm migration complete from {SourceRealmId} to {TargetRealmId}: {Migrated} migrated, {Failed} failed",
+            body.SourceRealmId, body.TargetRealmId, migrated, failed);
+
+        return (StatusCodes.OK, new MigrateByRealmResponse { Migrated = migrated, Failed = failed });
+    }
+
     #endregion
 
     #region Entity Presence Operations

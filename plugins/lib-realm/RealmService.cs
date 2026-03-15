@@ -1,13 +1,11 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -31,9 +29,7 @@ public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IResourceClient _resourceClient;
-    private readonly ISpeciesClient _speciesClient;
     private readonly ILocationClient _locationClient;
-    private readonly ICharacterClient _characterClient;
     private readonly IWorldstateClient _worldstateClient;
 
     private const string REALM_KEY_PREFIX = "realm:";
@@ -49,9 +45,7 @@ public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
         IDistributedLockProvider lockProvider,
         ITelemetryProvider telemetryProvider,
         IResourceClient resourceClient,
-        ISpeciesClient speciesClient,
         ILocationClient locationClient,
-        ICharacterClient characterClient,
         IWorldstateClient worldstateClient)
     {
         _realmStore = stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm);
@@ -63,9 +57,7 @@ public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
         _lockProvider = lockProvider;
         _telemetryProvider = telemetryProvider;
         _resourceClient = resourceClient;
-        _speciesClient = speciesClient;
         _locationClient = locationClient;
-        _characterClient = characterClient;
         _worldstateClient = worldstateClient;
 
         // Register event handlers via partial class (RealmServiceEvents.cs)
@@ -771,35 +763,49 @@ public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
                 body.TargetRealmId, targetRealm.Code);
         }
 
-        var pageSize = _configuration.MergePageSize;
+        // Delegate migration to lib-resource — it calls registered migrate callbacks
+        // (species, location, character each registered their own migrate-by-realm endpoints)
+        ExecuteMigrateResponse migrateResult;
+        try
+        {
+            var (migrateStatus, migrateResponse) = await _resourceClient.ExecuteMigrateAsync(
+                new ExecuteMigrateRequest
+                {
+                    ResourceType = "realm",
+                    SourceResourceId = body.SourceRealmId,
+                    TargetResourceId = body.TargetRealmId
+                }, cancellationToken);
 
-        // Phase A: Migrate species (add to target realm, remove from source)
-        var (speciesMigrated, speciesFailed) = await MigrateSpeciesAsync(
-            body.SourceRealmId, body.TargetRealmId, pageSize, cancellationToken);
+            if (migrateStatus != StatusCodes.OK || migrateResponse == null)
+            {
+                _logger.LogWarning("Resource migrate returned {Status} for realm merge {Source} -> {Target}",
+                    migrateStatus, body.SourceRealmId, body.TargetRealmId);
+                return (migrateStatus, null);
+            }
 
-        // Phase B: Migrate locations (root-first tree moves)
-        var (locationsMigrated, locationsFailed) = await MigrateLocationsAsync(
-            body.SourceRealmId, body.TargetRealmId, pageSize, cancellationToken);
+            migrateResult = migrateResponse;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Resource service unavailable during realm merge {Source} -> {Target}",
+                body.SourceRealmId, body.TargetRealmId);
+            return (StatusCodes.ServiceUnavailable, null);
+        }
 
-        // Phase C: Migrate characters
-        var (charactersMigrated, charactersFailed) = await MigrateCharactersAsync(
-            body.SourceRealmId, body.TargetRealmId, pageSize, cancellationToken);
-
-        var totalFailed = speciesFailed + locationsFailed + charactersFailed;
+        var totalMigrated = migrateResult.CallbackResults.Where(r => r.Success).Count();
+        var totalFailed = migrateResult.CallbackResults.Where(r => !r.Success).Count();
 
         // Publish realm.merged event
         await PublishRealmMergedEventAsync(
             sourceRealm, targetRealm,
-            speciesMigrated, speciesFailed,
-            locationsMigrated, locationsFailed,
-            charactersMigrated, charactersFailed,
+            totalMigrated, totalFailed,
             cancellationToken);
 
-        // Optional: delete source realm if requested and zero failures
+        // Optional: delete source realm if requested and migration fully succeeded
         var sourceDeleted = false;
-        if (body.DeleteAfterMerge && totalFailed == 0)
+        if (body.DeleteAfterMerge && migrateResult.Success)
         {
-            var deleteStatus = await DeleteRealmAsync(
+            var (deleteStatus, _) = await DeleteRealmAsync(
                 new DeleteRealmRequest { RealmId = body.SourceRealmId }, cancellationToken);
 
             sourceDeleted = deleteStatus == StatusCodes.OK;
@@ -810,357 +816,30 @@ public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
                     body.SourceRealmId, deleteStatus);
             }
         }
-        else if (body.DeleteAfterMerge && totalFailed > 0)
+        else if (body.DeleteAfterMerge && !migrateResult.Success)
         {
             _logger.LogWarning(
-                "Skipping post-merge deletion of source realm {SourceRealmId} due to {FailedCount} migration failures",
-                body.SourceRealmId, totalFailed);
+                "Skipping post-merge deletion of source realm {SourceRealmId} due to migration failures: {Reason}",
+                body.SourceRealmId, migrateResult.AbortReason);
         }
 
         _logger.LogInformation(
             "Realm merge complete: source {SourceRealmId} into target {TargetRealmId} - " +
-            "species {SpeciesMigrated}/{SpeciesFailed}, locations {LocationsMigrated}/{LocationsFailed}, " +
-            "characters {CharactersMigrated}/{CharactersFailed}, deleted: {Deleted}",
+            "callbacks succeeded: {Succeeded}, failed: {Failed}, deleted: {Deleted}",
             body.SourceRealmId, body.TargetRealmId,
-            speciesMigrated, speciesFailed,
-            locationsMigrated, locationsFailed,
-            charactersMigrated, charactersFailed,
-            sourceDeleted);
+            totalMigrated, totalFailed, sourceDeleted);
 
         return (StatusCodes.OK, new MergeRealmsResponse
         {
-            SpeciesMigrated = speciesMigrated,
-            SpeciesFailed = speciesFailed,
-            LocationsMigrated = locationsMigrated,
-            LocationsFailed = locationsFailed,
-            CharactersMigrated = charactersMigrated,
-            CharactersFailed = charactersFailed,
+            TotalMigrated = totalMigrated,
+            TotalFailed = totalFailed,
             SourceDeleted = sourceDeleted
         });
     }
 
-    /// <summary>
-    /// Migrates species from source realm to target realm.
-    /// For each species: add to target realm, then remove from source realm.
-    /// Preserves species availability in target (idempotent add).
-    /// Always re-queries page 1 since successfully migrated species leave the source list.
-    /// </summary>
-    private async Task<(int migrated, int failed)> MigrateSpeciesAsync(
-        Guid sourceRealmId, Guid targetRealmId, int pageSize, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.MigrateSpeciesAsync");
-        var migrated = 0;
-        var failed = 0;
-        var failedSpeciesIds = new HashSet<Guid>();
-
-        while (true)
-        {
-            SpeciesListResponse listResponse;
-            try
-            {
-                listResponse = await _speciesClient.ListSpeciesByRealmAsync(
-                    new ListSpeciesByRealmRequest
-                    {
-                        RealmId = sourceRealmId,
-                        Page = 1,
-                        PageSize = pageSize
-                    }, cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogWarning(ex, "Species service unavailable during merge for realm {SourceRealmId}", sourceRealmId);
-                break;
-            }
-
-            if (listResponse.Species.Count == 0)
-            {
-                break;
-            }
-
-            var pageProgress = false;
-
-            foreach (var species in listResponse.Species)
-            {
-                // Skip species that already failed (avoid re-trying in a loop)
-                if (failedSpeciesIds.Contains(species.SpeciesId))
-                {
-                    continue;
-                }
-
-                try
-                {
-                    // Add to target realm (idempotent - no-op if already present)
-                    await _speciesClient.AddSpeciesToRealmAsync(
-                        new AddSpeciesToRealmRequest
-                        {
-                            SpeciesId = species.SpeciesId,
-                            RealmId = targetRealmId
-                        }, cancellationToken);
-
-                    // Remove from source realm
-                    await _speciesClient.RemoveSpeciesFromRealmAsync(
-                        new RemoveSpeciesFromRealmRequest
-                        {
-                            SpeciesId = species.SpeciesId,
-                            RealmId = sourceRealmId
-                        }, cancellationToken);
-
-                    migrated++;
-                    pageProgress = true;
-                }
-                catch (Exception ex)
-                {
-                    failed++;
-                    failedSpeciesIds.Add(species.SpeciesId);
-                    _logger.LogWarning(ex,
-                        "Failed to migrate species {SpeciesId} ({Code}) from realm {Source} to {Target}",
-                        species.SpeciesId, species.Code, sourceRealmId, targetRealmId);
-                }
-            }
-
-            // If no progress was made this iteration, all remaining are failed - stop
-            if (!pageProgress)
-            {
-                break;
-            }
-        }
-
-        _logger.LogInformation("Species migration: {Migrated} migrated, {Failed} failed", migrated, failed);
-        return (migrated, failed);
-    }
-
-    /// <summary>
-    /// Migrates locations from source realm to target realm using root-first tree moves.
-    /// For each root location: collects descendants while still in source realm, then transfers
-    /// root first, then descendants in depth order (shallowest first) to preserve hierarchy.
-    /// </summary>
-    private async Task<(int migrated, int failed)> MigrateLocationsAsync(
-        Guid sourceRealmId, Guid targetRealmId, int pageSize, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.MigrateLocationsAsync");
-        var migrated = 0;
-        var failed = 0;
-
-        // Step 1: Get all root locations from source realm (paginated)
-        var rootLocations = new List<LocationResponse>();
-        var page = 1;
-        bool hasMore;
-
-        do
-        {
-            LocationListResponse listResponse;
-            try
-            {
-                listResponse = await _locationClient.ListRootLocationsAsync(
-                    new ListRootLocationsRequest
-                    {
-                        RealmId = sourceRealmId,
-                        IncludeDeprecated = true,
-                        Page = page,
-                        PageSize = pageSize
-                    }, cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogWarning(ex, "Location service unavailable during merge for realm {SourceRealmId}", sourceRealmId);
-                break;
-            }
-
-            rootLocations.AddRange(listResponse.Locations);
-            hasMore = listResponse.HasNextPage;
-            page++;
-        }
-        while (hasMore);
-
-        // Step 2: For each root, collect descendants BEFORE transferring (parent index
-        // depends on source realm), then transfer root + descendants in depth order
-        foreach (var rootLocation in rootLocations)
-        {
-            try
-            {
-                // Collect all descendants while tree is intact in source realm
-                var descendants = new List<LocationResponse>();
-                var descPage = 1;
-                bool descHasMore;
-
-                do
-                {
-                    var descResponse = await _locationClient.GetLocationDescendantsAsync(
-                        new GetLocationDescendantsRequest
-                        {
-                            LocationId = rootLocation.LocationId,
-                            IncludeDeprecated = true,
-                            Page = descPage,
-                            PageSize = pageSize
-                        }, cancellationToken);
-
-                    descendants.AddRange(descResponse.Locations);
-                    descHasMore = descResponse.HasNextPage;
-                    descPage++;
-                }
-                while (descHasMore);
-
-                // Sort descendants by depth (shallowest first) so parents are
-                // always in target realm before their children are re-parented
-                descendants.Sort((a, b) => a.Depth.CompareTo(b.Depth));
-
-                // Transfer root location to target realm (becomes root there, depth 0)
-                await _locationClient.TransferLocationToRealmAsync(
-                    new TransferLocationToRealmRequest
-                    {
-                        LocationId = rootLocation.LocationId,
-                        TargetRealmId = targetRealmId
-                    }, cancellationToken);
-
-                migrated++;
-
-                // Transfer each descendant in depth order, then re-parent
-                foreach (var descendant in descendants)
-                {
-                    try
-                    {
-                        // Transfer to target realm (becomes root, parent cleared)
-                        await _locationClient.TransferLocationToRealmAsync(
-                            new TransferLocationToRealmRequest
-                            {
-                                LocationId = descendant.LocationId,
-                                TargetRealmId = targetRealmId
-                            }, cancellationToken);
-
-                        // Re-parent under its original parent (now in target realm)
-                        if (descendant.ParentLocationId.HasValue)
-                        {
-                            await _locationClient.SetLocationParentAsync(
-                                new SetLocationParentRequest
-                                {
-                                    LocationId = descendant.LocationId,
-                                    ParentLocationId = descendant.ParentLocationId.Value
-                                }, cancellationToken);
-                        }
-
-                        migrated++;
-                    }
-                    catch (Exception ex)
-                    {
-                        failed++;
-                        _logger.LogWarning(ex,
-                            "Failed to migrate descendant location {LocationId} ({Code}) from realm {Source} to {Target}",
-                            descendant.LocationId, descendant.Code, sourceRealmId, targetRealmId);
-
-                        // If this descendant's parent was already transferred to target realm,
-                        // detach the parent reference to avoid cross-realm parent pointers
-                        if (descendant.ParentLocationId.HasValue)
-                        {
-                            try
-                            {
-                                await _locationClient.RemoveLocationParentAsync(
-                                    new RemoveLocationParentRequest
-                                    {
-                                        LocationId = descendant.LocationId
-                                    }, cancellationToken);
-                            }
-                            catch (Exception detachEx)
-                            {
-                                _logger.LogWarning(detachEx,
-                                    "Failed to detach parent for orphaned location {LocationId} after migration failure",
-                                    descendant.LocationId);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                failed++;
-                _logger.LogWarning(ex,
-                    "Failed to migrate root location tree {LocationId} ({Code}) from realm {Source} to {Target}",
-                    rootLocation.LocationId, rootLocation.Code, sourceRealmId, targetRealmId);
-            }
-        }
-
-        _logger.LogInformation("Location migration: {Migrated} migrated, {Failed} failed", migrated, failed);
-        return (migrated, failed);
-    }
-
-    /// <summary>
-    /// Migrates characters from source realm to target realm.
-    /// Always re-queries page 1 since successfully transferred characters leave the source list.
-    /// Tracks failed character IDs to avoid infinite retry loops.
-    /// </summary>
-    private async Task<(int migrated, int failed)> MigrateCharactersAsync(
-        Guid sourceRealmId, Guid targetRealmId, int pageSize, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.MigrateCharactersAsync");
-        var migrated = 0;
-        var failed = 0;
-        var failedCharacterIds = new HashSet<Guid>();
-
-        while (true)
-        {
-            CharacterListResponse listResponse;
-            try
-            {
-                listResponse = await _characterClient.GetCharactersByRealmAsync(
-                    new GetCharactersByRealmRequest
-                    {
-                        RealmId = sourceRealmId,
-                        Page = 1,
-                        PageSize = pageSize
-                    }, cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogWarning(ex, "Character service unavailable during merge for realm {SourceRealmId}", sourceRealmId);
-                break;
-            }
-
-            if (listResponse.Characters.Count == 0)
-            {
-                break;
-            }
-
-            var pageProgress = false;
-
-            foreach (var character in listResponse.Characters)
-            {
-                // Skip characters that already failed (avoid re-trying in a loop)
-                if (failedCharacterIds.Contains(character.CharacterId))
-                {
-                    continue;
-                }
-
-                try
-                {
-                    await _characterClient.TransferCharacterToRealmAsync(
-                        new TransferCharacterToRealmRequest
-                        {
-                            CharacterId = character.CharacterId,
-                            TargetRealmId = targetRealmId
-                        }, cancellationToken);
-
-                    migrated++;
-                    pageProgress = true;
-                }
-                catch (Exception ex)
-                {
-                    failed++;
-                    failedCharacterIds.Add(character.CharacterId);
-                    _logger.LogWarning(ex,
-                        "Failed to migrate character {CharacterId} from realm {Source} to {Target}",
-                        character.CharacterId, sourceRealmId, targetRealmId);
-                }
-            }
-
-            // If no progress was made this iteration, all remaining are failed - stop
-            if (!pageProgress)
-            {
-                break;
-            }
-        }
-
-        _logger.LogInformation("Character migration: {Migrated} migrated, {Failed} failed", migrated, failed);
-        return (migrated, failed);
-    }
+    // Migration of species, locations, and characters is now handled by lib-resource
+    // via registered migrate callbacks. Each service (species, location, character) owns
+    // its own migration logic through /service/migrate-by-realm endpoints.
 
     #endregion
 
@@ -1543,12 +1222,8 @@ public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
     private async Task PublishRealmMergedEventAsync(
         RealmModel sourceRealm,
         RealmModel targetRealm,
-        int speciesMigrated,
-        int speciesFailed,
-        int locationsMigrated,
-        int locationsFailed,
-        int charactersMigrated,
-        int charactersFailed,
+        int totalMigrated,
+        int totalFailed,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.PublishRealmMergedEventAsync");
@@ -1560,12 +1235,8 @@ public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
             SourceRealmCode = sourceRealm.Code,
             TargetRealmId = targetRealm.RealmId,
             TargetRealmCode = targetRealm.Code,
-            SpeciesMigrated = speciesMigrated,
-            SpeciesFailed = speciesFailed,
-            LocationsMigrated = locationsMigrated,
-            LocationsFailed = locationsFailed,
-            CharactersMigrated = charactersMigrated,
-            CharactersFailed = charactersFailed
+            TotalMigrated = totalMigrated,
+            TotalFailed = totalFailed
         };
 
         await _messageBus.PublishRealmMergedAsync(eventModel, cancellationToken);

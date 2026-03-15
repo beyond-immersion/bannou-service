@@ -145,6 +145,147 @@ public partial class ResourceGracePeriodStartedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published when a resource migration completes successfully.
+/// <br/>All registered migrate callbacks were invoked to reassign dependents
+/// <br/>from the source resource to the target resource.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceMigratedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: resource.migrated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.migrated";
+
+    /// <summary>
+    /// Type of resource migrated (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the source resource whose dependents were migrated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the target resource dependents were migrated to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of migration callbacks that were executed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("callbackCount")]
+    public int CallbackCount { get; set; } = default!;
+
+    /// <summary>
+    /// Source types whose migration callbacks succeeded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("succeededSourceTypes")]
+    public System.Collections.Generic.ICollection<string> SucceededSourceTypes { get; set; } = default!;
+
+    /// <summary>
+    /// Source types whose migration callbacks failed (empty on full success)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedSourceTypes")]
+    public System.Collections.Generic.ICollection<string> FailedSourceTypes { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a migration callback fails during resource migration.
+/// <br/>Used for monitoring and alerting on migration failures.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceMigrateCallbackFailedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: resource.migrate.callback-failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.migrate.callback-failed";
+
+    /// <summary>
+    /// Type of resource being migrated (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the source resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the target resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity whose migration failed (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service whose callback failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint that failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Endpoint { get; set; } = default!;
+
+    /// <summary>
+    /// HTTP status code returned (0 if connection failed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
+    public int StatusCode { get; set; } = default!;
+
+    /// <summary>
+    /// Error details
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published when compression completes successfully.
 /// <br/>Services can subscribe to perform post-compression actions.
 /// <br/>

@@ -57,17 +57,16 @@ components:
         - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
-      description: Published when a deprecated realm is merged into another realm
+      description: |
+        Published when a deprecated realm is merged into another realm.
+        Migration is delegated to lib-resource which calls registered migrate callbacks
+        (species, location, character each own their own migration logic).
       required:
         - eventName
         - sourceRealmId
         - targetRealmId
-        - speciesMigrated
-        - speciesFailed
-        - locationsMigrated
-        - locationsFailed
-        - charactersMigrated
-        - charactersFailed
+        - totalMigrated
+        - totalFailed
       properties:
         eventName:
           type: string
@@ -89,21 +88,9 @@ components:
           type: string
           nullable: true
           description: Code of the target realm
-        speciesMigrated:
+        totalMigrated:
           type: integer
-          description: Number of species successfully migrated to the target realm
-        speciesFailed:
+          description: Number of migrate callbacks that completed successfully
+        totalFailed:
           type: integer
-          description: Number of species that failed to migrate
-        locationsMigrated:
-          type: integer
-          description: Number of locations successfully transferred to the target realm
-        locationsFailed:
-          type: integer
-          description: Number of locations that failed to transfer
-        charactersMigrated:
-          type: integer
-          description: Number of characters successfully transferred to the target realm
-        charactersFailed:
-          type: integer
-          description: Number of characters that failed to transfer
+          description: Number of migrate callbacks that failed

@@ -719,6 +719,179 @@ public partial class SpeciesService : ISpeciesService, IDeprecateAndMergeEntity
         return (StatusCodes.OK, MapToResponse(model));
     }
 
+    /// <summary>
+    /// Removes all species associations from a realm. Called by lib-resource cleanup when a realm is deleted.
+    /// Species themselves are NOT deleted — only the realm association is removed (species may belong to other realms).
+    /// </summary>
+    public async Task<(StatusCodes, CleanupByRealmResponse?)> CleanupByRealmAsync(
+        CleanupByRealmRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Cleaning up species associations for realm: {RealmId}", body.RealmId);
+
+        var realmIndexKey = BuildRealmIndexKey(body.RealmId);
+        var speciesIds = await _idListStore.GetAsync(realmIndexKey, cancellationToken: cancellationToken);
+
+        if (speciesIds == null || speciesIds.Count == 0)
+        {
+            _logger.LogDebug("No species associated with realm {RealmId}, nothing to clean up", body.RealmId);
+            return (StatusCodes.OK, new CleanupByRealmResponse { Cleaned = 0, Failed = 0 });
+        }
+
+        var cleaned = 0;
+        var failed = 0;
+
+        // Per-item error isolation per IMPLEMENTATION TENETS
+        foreach (var speciesId in speciesIds.ToList())
+        {
+            try
+            {
+                var speciesKey = BuildSpeciesKey(speciesId);
+                var model = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
+
+                if (model == null)
+                {
+                    // Species no longer exists — index is stale, count as cleaned
+                    cleaned++;
+                    continue;
+                }
+
+                if (!model.RealmIds.Contains(body.RealmId))
+                {
+                    // Already not associated — count as cleaned (idempotent)
+                    cleaned++;
+                    continue;
+                }
+
+                model.RealmIds.Remove(body.RealmId);
+                model.UpdatedAt = DateTimeOffset.UtcNow;
+
+                await _speciesStore.SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+                await PublishSpeciesUpdatedEventAsync(model, new[] { "realmIds" }, cancellationToken);
+
+                cleaned++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to remove realm association for species {SpeciesId} from realm {RealmId}",
+                    speciesId, body.RealmId);
+                failed++;
+            }
+        }
+
+        // Clear the realm index since all associations have been processed
+        if (failed == 0)
+        {
+            await _idListStore.DeleteAsync(realmIndexKey, cancellationToken);
+        }
+
+        _logger.LogInformation("Realm species cleanup complete for {RealmId}: cleaned {Cleaned}, failed {Failed}",
+            body.RealmId, cleaned, failed);
+
+        return (StatusCodes.OK, new CleanupByRealmResponse { Cleaned = cleaned, Failed = failed });
+    }
+
+    /// <summary>
+    /// Migrates all species associations from one realm to another.
+    /// For each species in the source realm: adds to target realm, removes from source realm.
+    /// Species may already exist in the target realm (idempotent add).
+    /// </summary>
+    public async Task<(StatusCodes, MigrateByRealmResponse?)> MigrateByRealmAsync(
+        MigrateByRealmRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Migrating species from realm {SourceRealmId} to realm {TargetRealmId}",
+            body.SourceRealmId, body.TargetRealmId);
+
+        if (body.SourceRealmId == body.TargetRealmId)
+        {
+            _logger.LogDebug("Source and target realm are the same: {RealmId}", body.SourceRealmId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Validate target realm exists and is active
+        var (targetExists, targetIsActive) = await ValidateRealmAsync(body.TargetRealmId, cancellationToken);
+        if (!targetExists)
+        {
+            _logger.LogDebug("Target realm not found: {RealmId}", body.TargetRealmId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (!targetIsActive)
+        {
+            _logger.LogDebug("Cannot migrate species to deprecated realm: {RealmId}", body.TargetRealmId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var sourceRealmIndexKey = BuildRealmIndexKey(body.SourceRealmId);
+        var speciesIds = await _idListStore.GetAsync(sourceRealmIndexKey, cancellationToken: cancellationToken);
+
+        if (speciesIds == null || speciesIds.Count == 0)
+        {
+            _logger.LogDebug("No species associated with source realm {RealmId}, nothing to migrate", body.SourceRealmId);
+            return (StatusCodes.OK, new MigrateByRealmResponse { Migrated = 0, Failed = 0 });
+        }
+
+        var migrated = 0;
+        var failed = 0;
+
+        // Per-item error isolation per IMPLEMENTATION TENETS
+        foreach (var speciesId in speciesIds.ToList())
+        {
+            try
+            {
+                var speciesKey = BuildSpeciesKey(speciesId);
+                var model = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
+
+                if (model == null)
+                {
+                    // Species no longer exists — stale index entry, count as migrated (nothing to do)
+                    migrated++;
+                    continue;
+                }
+
+                var changed = false;
+
+                // Add to target realm if not already present
+                if (!model.RealmIds.Contains(body.TargetRealmId))
+                {
+                    model.RealmIds.Add(body.TargetRealmId);
+                    changed = true;
+                }
+
+                // Remove from source realm
+                if (model.RealmIds.Remove(body.SourceRealmId))
+                {
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    model.UpdatedAt = DateTimeOffset.UtcNow;
+                    await _speciesStore.SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+                    await PublishSpeciesUpdatedEventAsync(model, new[] { "realmIds" }, cancellationToken);
+                }
+
+                // Update realm indexes
+                await AddToRealmIndexAsync(speciesId, body.TargetRealmId, cancellationToken);
+                await RemoveFromRealmIndexAsync(speciesId, body.SourceRealmId, cancellationToken);
+
+                migrated++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to migrate species {SpeciesId} from realm {SourceRealmId} to realm {TargetRealmId}",
+                    speciesId, body.SourceRealmId, body.TargetRealmId);
+                failed++;
+            }
+        }
+
+        _logger.LogInformation("Realm species migration complete from {SourceRealmId} to {TargetRealmId}: migrated {Migrated}, failed {Failed}",
+            body.SourceRealmId, body.TargetRealmId, migrated, failed);
+
+        return (StatusCodes.OK, new MigrateByRealmResponse { Migrated = migrated, Failed = failed });
+    }
+
     #endregion
 
     #region Seed Operation

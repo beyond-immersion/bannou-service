@@ -315,3 +315,45 @@ internal class ResourceSnapshotModel
     /// </summary>
     public DateTimeOffset ExpiresAt { get; set; }
 }
+
+/// <summary>
+/// Definition of a migration callback for reassigning dependent references
+/// from one resource to another.
+/// </summary>
+internal class MigrateCallbackDefinition
+{
+    /// <summary>
+    /// Type of resource this migration handles (opaque identifier).
+    /// </summary>
+    public string ResourceType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Type of entity that will be migrated (opaque identifier).
+    /// </summary>
+    public string SourceType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Target service name for callback invocation.
+    /// </summary>
+    public string ServiceName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Endpoint path for migration callback invocation.
+    /// </summary>
+    public string MigrateEndpoint { get; set; } = string.Empty;
+
+    /// <summary>
+    /// JSON template with {{sourceResourceId}} and {{targetResourceId}} placeholders.
+    /// </summary>
+    public string MigratePayloadTemplate { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Human-readable description.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// When this callback was registered.
+    /// </summary>
+    public DateTimeOffset RegisteredAt { get; set; }
+}

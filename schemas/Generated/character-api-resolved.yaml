@@ -32,6 +32,17 @@ info:
     gracePeriodSeconds: 2592000              # 30 days (matches CleanupGracePeriodDays config default)
     cleanupPolicy: ALL_REQUIRED              # Abort deletion if any cleanup callback fails
   # Compression callback for resource archival (see SCHEMA-RULES.md "x-compression-callback")
+  x-references:
+  - target: realm
+    sourceType: character
+    field: realmId
+    onDelete: restrict
+    cleanup:
+      endpoint: /character/cleanup-by-realm
+      payloadTemplate: '{"realmId": "{{resourceId}}"}'
+    migrate:
+      endpoint: /character/migrate-by-realm
+      payloadTemplate: '{"sourceRealmId": "{{sourceResourceId}}", "targetRealmId": "{{targetResourceId}}"}'
   x-compression-callback:
     resourceType: character
     sourceType: character-base
@@ -363,6 +374,58 @@ paths:
           description: Character is not dead (cannot compress alive characters)
         '404':
           description: Character not found
+
+  /character/cleanup-by-realm:
+    post:
+      summary: Delete all characters in a realm
+      operationId: cleanupByRealm
+      tags:
+      - Character Resource Cleanup
+      description: |
+        Called by lib-resource during realm deletion cleanup.
+        Deletes all characters belonging to the specified realm.
+        Publishes character.deleted events for each removed character.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByRealmRequest'
+      responses:
+        '200':
+          description: Characters cleaned up
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByRealmResponse'
+
+  /character/migrate-by-realm:
+    post:
+      summary: Migrate all characters from one realm to another
+      operationId: migrateByRealm
+      tags:
+      - Character Resource Migration
+      description: |
+        Called by lib-resource during realm merge migration.
+        Transfers all characters from the source realm to the target realm.
+        Each character is individually transferred using the existing transfer-realm
+        logic with per-item error isolation. Updates lib-resource references for
+        each successfully migrated character.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MigrateByRealmRequest'
+      responses:
+        '200':
+          description: Migration results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigrateByRealmResponse'
 
 components:
   schemas:
@@ -956,6 +1019,69 @@ components:
           format: date-time
           nullable: true
           description: When refCount first reached zero (null if refCount > 0)
+
+    # =========================================================================
+    # Resource Cleanup & Migration Models
+    # =========================================================================
+
+    CleanupByRealmRequest:
+      description: Request to delete all characters in a realm (called by lib-resource cleanup)
+      type: object
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm whose characters should be deleted
+
+    CleanupByRealmResponse:
+      description: Result of realm character cleanup
+      type: object
+      additionalProperties: false
+      required:
+      - deleted
+      - failed
+      properties:
+        deleted:
+          type: integer
+          description: Number of characters successfully deleted
+        failed:
+          type: integer
+          description: Number of characters that failed to delete
+
+    MigrateByRealmRequest:
+      description: Request to migrate all characters from one realm to another (called by lib-resource migrate)
+      type: object
+      additionalProperties: false
+      required:
+      - sourceRealmId
+      - targetRealmId
+      properties:
+        sourceRealmId:
+          type: string
+          format: uuid
+          description: ID of the realm to migrate characters from
+        targetRealmId:
+          type: string
+          format: uuid
+          description: ID of the realm to migrate characters to
+
+    MigrateByRealmResponse:
+      description: Result of realm character migration
+      type: object
+      additionalProperties: false
+      required:
+      - migrated
+      - failed
+      properties:
+        migrated:
+          type: integer
+          description: Number of characters successfully migrated
+        failed:
+          type: integer
+          description: Number of characters that failed to migrate
 
     # =========================================================================
     # Compression Models (Resource Service Integration)

@@ -695,6 +695,22 @@ public class PluginLoader
     /// This enables incremental migration: as manual registrations are removed from Plugin.cs,
     /// auto-registration automatically takes over.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// CAUTION: This method does NOT deduplicate by interface type alone — it checks the
+    /// exact (interface, implementation) pair. If two implementations declare the same
+    /// InterfaceType in their [BannouHelperService] attribute, BOTH get registered. .NET DI
+    /// returns the last registration for GetRequiredService, but Assembly.GetTypes() ordering
+    /// is non-deterministic, so which implementation "wins" is undefined. Worse, if one
+    /// implementation has mode-specific dependencies (e.g., IChannelManager only in RabbitMQ
+    /// mode), resolving the interface in other modes will throw.
+    /// </para>
+    /// <para>
+    /// For backend-conditional helpers (e.g., InMemoryMessageTap vs RabbitMQMessageTap),
+    /// omit InterfaceType from the attribute and register explicitly in Plugin.ConfigureServices
+    /// within the correct mode branch.
+    /// </para>
+    /// </remarks>
     private void RegisterHelperServiceTypes(IServiceCollection services)
     {
         var autoRegistered = 0;

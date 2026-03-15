@@ -70,6 +70,21 @@ public partial interface IResourceService : IBannouService
         Task<(StatusCodes, RemoveCleanupCallbackResponse?)> RemoveCleanupCallbackAsync(RemoveCleanupCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DefineMigrateCallback operation
+        /// </summary>
+        Task<(StatusCodes, DefineMigrateCallbackResponse?)> DefineMigrateCallbackAsync(DefineMigrateCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ExecuteMigrate operation
+        /// </summary>
+        Task<(StatusCodes, ExecuteMigrateResponse?)> ExecuteMigrateAsync(ExecuteMigrateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ListMigrateCallbacks operation
+        /// </summary>
+        Task<(StatusCodes, ListMigrateCallbacksResponse?)> ListMigrateCallbacksAsync(ListMigrateCallbacksRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// DefineCompressCallback operation
         /// </summary>
         Task<(StatusCodes, DefineCompressCallbackResponse?)> DefineCompressCallbackAsync(DefineCompressCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));

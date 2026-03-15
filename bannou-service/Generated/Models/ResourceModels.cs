@@ -874,6 +874,358 @@ public partial class RemoveCleanupCallbackResponse
 }
 
 /// <summary>
+/// Request to define a migrate callback for a resource type
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DefineMigrateCallbackRequest
+{
+
+    /// <summary>
+    /// Type of resource this migration handles (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity that will be migrated (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Target service name for callback invocation via lib-mesh (defaults to sourceType if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    public string? ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint path for migration (e.g., /character/transfer-realm)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("migrateEndpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MigrateEndpoint { get; set; } = default!;
+
+    /// <summary>
+    /// JSON template with {{sourceResourceId}} and {{targetResourceId}} placeholders
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("migratePayloadTemplate")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MigratePayloadTemplate { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description of migration action
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response after defining a migrate callback
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DefineMigrateCallbackResponse
+{
+
+    /// <summary>
+    /// Resource type for callback (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Source type for callback (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// True if callback was registered (or updated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("registered")]
+    public bool Registered { get; set; } = default!;
+
+    /// <summary>
+    /// True if this callback was already defined (updated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previouslyDefined")]
+    public bool PreviouslyDefined { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to execute migration for a resource
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ExecuteMigrateRequest
+{
+
+    /// <summary>
+    /// Type of resource being migrated (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the source resource whose dependents should be migrated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the target resource to migrate dependents to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// If true, returns what callbacks WOULD execute without actually
+    /// <br/>executing them. Defaults to false.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool? DryRun { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response after attempting to execute migration
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ExecuteMigrateResponse
+{
+
+    /// <summary>
+    /// Type of resource migrated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the source resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the target resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// True if all migration callbacks completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Why migration was aborted (lock failure, callback failure, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("abortReason")]
+    public string? AbortReason { get; set; } = default!;
+
+    /// <summary>
+    /// Results of each migration callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("callbackResults")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<MigrateCallbackResult> CallbackResults { get; set; } = new System.Collections.ObjectModel.Collection<MigrateCallbackResult>();
+
+    /// <summary>
+    /// Total migration execution time in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("migrationDurationMs")]
+    public int MigrationDurationMs { get; set; } = default!;
+
+    /// <summary>
+    /// True if this was a preview (no callbacks were actually executed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of executing a single migration callback
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MigrateCallbackResult
+{
+
+    /// <summary>
+    /// Source type that was migrated (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service that was called
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint that was called
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Endpoint { get; set; } = default!;
+
+    /// <summary>
+    /// Whether callback succeeded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// HTTP status code from callback
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
+    public int? StatusCode { get; set; } = default!;
+
+    /// <summary>
+    /// Error message if callback failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
+
+    /// <summary>
+    /// Callback execution time in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
+    public int DurationMs { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to list registered migrate callbacks
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListMigrateCallbacksRequest
+{
+
+    /// <summary>
+    /// Filter by resource type (list all if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    public string? ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by source type (requires resourceType)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    public string? SourceType { get; set; } = default!;
+
+}
+
+/// <summary>
+/// List of registered migrate callbacks
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListMigrateCallbacksResponse
+{
+
+    /// <summary>
+    /// Registered callbacks matching filter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("callbacks")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<MigrateCallbackSummary> Callbacks { get; set; } = new System.Collections.ObjectModel.Collection<MigrateCallbackSummary>();
+
+    /// <summary>
+    /// Total number of callbacks returned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    public int TotalCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Summary of a registered migrate callback
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MigrateCallbackSummary
+{
+
+    /// <summary>
+    /// Type of resource this callback handles
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity that will be migrated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Target service for callback invocation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint path called during migration
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("migrateEndpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MigrateEndpoint { get; set; } = default!;
+
+    /// <summary>
+    /// When this callback was registered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset RegisteredAt { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to register a compression callback
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

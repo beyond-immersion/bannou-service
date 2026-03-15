@@ -67,6 +67,16 @@ public partial class ResourceService : IResourceService
     private readonly ICacheableStateStore<string> _compressCacheStore;
 
     /// <summary>
+    /// State store for migration callback definitions.
+    /// </summary>
+    private readonly IStateStore<MigrateCallbackDefinition> _migrateStore;
+
+    /// <summary>
+    /// Cacheable store for migration callback index operations (set-based source type tracking).
+    /// </summary>
+    private readonly ICacheableStateStore<string> _migrateIndexStore;
+
+    /// <summary>
     /// Initializes a new instance of the ResourceService.
     /// </summary>
     public ResourceService(
@@ -105,6 +115,10 @@ public partial class ResourceService : IResourceService
             StateStoreDefinitions.ResourceCleanup);
         _compressCacheStore = stateStoreFactory.GetCacheableStore<string>(
             StateStoreDefinitions.ResourceCompress);
+        _migrateStore = stateStoreFactory.GetStore<MigrateCallbackDefinition>(
+            StateStoreDefinitions.ResourceMigrate);
+        _migrateIndexStore = stateStoreFactory.GetCacheableStore<string>(
+            StateStoreDefinitions.ResourceMigrate);
 
         // Register event handlers via partial class (ResourceServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -1470,6 +1484,293 @@ public partial class ResourceService : IResourceService
         });
     }
 
+    // =========================================================================
+    // Migration Management
+    // =========================================================================
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, DefineMigrateCallbackResponse?)> DefineMigrateCallbackAsync(
+        DefineMigrateCallbackRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var callbackKey = BuildMigrateKey(body.ResourceType, body.SourceType);
+
+        // Check if already defined
+        var existing = await _migrateStore.GetAsync(callbackKey, cancellationToken);
+        var previouslyDefined = existing != null;
+
+        // ServiceName defaults to SourceType when not specified
+        var serviceName = body.ServiceName ?? body.SourceType;
+
+        var callback = new MigrateCallbackDefinition
+        {
+            ResourceType = body.ResourceType,
+            SourceType = body.SourceType,
+            ServiceName = serviceName,
+            MigrateEndpoint = body.MigrateEndpoint,
+            MigratePayloadTemplate = body.MigratePayloadTemplate,
+            Description = body.Description,
+            RegisteredAt = DateTimeOffset.UtcNow
+        };
+
+        await _migrateStore.SaveAsync(callbackKey, callback, cancellationToken: cancellationToken);
+
+        // Maintain the callback index for this resource type
+        await MaintainMigrateCallbackIndexAsync(body.ResourceType, body.SourceType, cancellationToken);
+
+        _logger.LogInformation(
+            "Migration callback {Action} for {ResourceType}/{SourceType}: {ServiceName}{Endpoint}",
+            previouslyDefined ? "updated" : "registered",
+            body.ResourceType, body.SourceType, serviceName, body.MigrateEndpoint);
+
+        return (StatusCodes.OK, new DefineMigrateCallbackResponse
+        {
+            ResourceType = body.ResourceType,
+            SourceType = body.SourceType,
+            Registered = true,
+            PreviouslyDefined = previouslyDefined
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ExecuteMigrateResponse?)> ExecuteMigrateAsync(
+        ExecuteMigrateRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        // Get all migration callbacks for this resource type
+        var callbacks = await GetMigrateCallbacksAsync(body.ResourceType, cancellationToken);
+
+        if (callbacks.Count == 0)
+        {
+            stopwatch.Stop();
+            _logger.LogWarning(
+                "No migration callbacks registered for resource type {ResourceType}",
+                body.ResourceType);
+
+            return (StatusCodes.OK, new ExecuteMigrateResponse
+            {
+                ResourceType = body.ResourceType,
+                SourceResourceId = body.SourceResourceId,
+                TargetResourceId = body.TargetResourceId,
+                Success = false,
+                DryRun = body.DryRun == true,
+                AbortReason = "No migration callbacks registered for this resource type",
+                CallbackResults = new List<MigrateCallbackResult>(),
+                MigrationDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        // Handle dry run - return preview without executing
+        if (body.DryRun == true)
+        {
+            stopwatch.Stop();
+            return (StatusCodes.OK, new ExecuteMigrateResponse
+            {
+                ResourceType = body.ResourceType,
+                SourceResourceId = body.SourceResourceId,
+                TargetResourceId = body.TargetResourceId,
+                Success = true,
+                DryRun = true,
+                CallbackResults = callbacks.Select(c => new MigrateCallbackResult
+                {
+                    SourceType = c.SourceType,
+                    ServiceName = c.ServiceName,
+                    Endpoint = c.MigrateEndpoint,
+                    Success = true, // Hypothetical - not actually executed
+                    DurationMs = 0
+                }).ToList(),
+                MigrationDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        // Acquire distributed lock on the source resource
+        var lockOwner = Guid.NewGuid().ToString();
+        await using var lockResponse = await _lockProvider.LockAsync(
+            storeName: StateStoreDefinitions.ResourceMigrate,
+            resourceId: $"migrate:{body.ResourceType}:{body.SourceResourceId}",
+            lockOwner: lockOwner,
+            expiryInSeconds: _configuration.CleanupLockExpirySeconds,
+            cancellationToken: cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            stopwatch.Stop();
+            _logger.LogWarning(
+                "Failed to acquire migration lock for {ResourceType}:{SourceResourceId}",
+                body.ResourceType, body.SourceResourceId);
+
+            return (StatusCodes.OK, new ExecuteMigrateResponse
+            {
+                ResourceType = body.ResourceType,
+                SourceResourceId = body.SourceResourceId,
+                TargetResourceId = body.TargetResourceId,
+                Success = false,
+                DryRun = false,
+                AbortReason = "Failed to acquire migration lock (another migration in progress?)",
+                CallbackResults = new List<MigrateCallbackResult>(),
+                MigrationDurationMs = (int)stopwatch.ElapsedMilliseconds
+            });
+        }
+
+        // Build context for payload template substitution
+        var context = new Dictionary<string, object?>
+        {
+            ["sourceResourceId"] = body.SourceResourceId.ToString(),
+            ["targetResourceId"] = body.TargetResourceId.ToString()
+        };
+
+        var apiDefinitions = callbacks.Select(c => new PreboundApiDefinition
+        {
+            ServiceName = c.ServiceName,
+            Endpoint = c.MigrateEndpoint,
+            PayloadTemplate = c.MigratePayloadTemplate,
+            Description = c.Description
+        }).ToList();
+
+        // Apply configured timeout for migration callbacks
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.CleanupCallbackTimeoutSeconds));
+
+        var results = await _navigator.ExecutePreboundApiBatchAsync(
+            apiDefinitions,
+            context,
+            BatchExecutionMode.Parallel,
+            timeoutCts.Token);
+
+        var callbackResults = new List<MigrateCallbackResult>();
+
+        for (var i = 0; i < results.Count; i++)
+        {
+            var result = results[i];
+            var callback = callbacks[i];
+
+            var callbackResult = new MigrateCallbackResult
+            {
+                SourceType = callback.SourceType,
+                ServiceName = callback.ServiceName,
+                Endpoint = callback.MigrateEndpoint,
+                Success = result.IsSuccess,
+                StatusCode = result.Result.StatusCode,
+                ErrorMessage = result.IsSuccess ? null : (result.SubstitutionError ?? result.Result.ErrorMessage),
+                DurationMs = (int)result.Result.Duration.TotalMilliseconds
+            };
+
+            callbackResults.Add(callbackResult);
+
+            if (!result.IsSuccess)
+            {
+                _logger.LogWarning(
+                    "Migration callback failed: {ServiceName}{Endpoint} returned {StatusCode} for {ResourceType}:{SourceResourceId} -> {TargetResourceId}",
+                    callback.ServiceName, callback.MigrateEndpoint, result.Result.StatusCode,
+                    body.ResourceType, body.SourceResourceId, body.TargetResourceId);
+
+                // Publish failure event for monitoring
+                await _messageBus.PublishResourceMigrateCallbackFailedAsync(
+                    new ResourceMigrateCallbackFailedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        ResourceType = body.ResourceType,
+                        SourceResourceId = body.SourceResourceId,
+                        TargetResourceId = body.TargetResourceId,
+                        SourceType = callback.SourceType,
+                        ServiceName = callback.ServiceName,
+                        Endpoint = callback.MigrateEndpoint,
+                        StatusCode = result.Result.StatusCode,
+                        ErrorMessage = callbackResult.ErrorMessage
+                    },
+                    cancellationToken);
+            }
+        }
+
+        var succeeded = callbackResults.Where(r => r.Success).Select(r => r.SourceType).ToList();
+        var failed = callbackResults.Where(r => !r.Success).Select(r => r.SourceType).ToList();
+        var allSucceeded = failed.Count == 0;
+
+        if (allSucceeded)
+        {
+            // Publish migrated event on success
+            await _messageBus.PublishResourceMigratedAsync(
+                new ResourceMigratedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    ResourceType = body.ResourceType,
+                    SourceResourceId = body.SourceResourceId,
+                    TargetResourceId = body.TargetResourceId,
+                    CallbackCount = callbacks.Count,
+                    SucceededSourceTypes = succeeded,
+                    FailedSourceTypes = failed
+                },
+                cancellationToken);
+        }
+
+        stopwatch.Stop();
+        _logger.LogInformation(
+            "Migration {Status} for {ResourceType}:{SourceResourceId} -> {TargetResourceId} with {CallbackCount} callback(s) in {DurationMs}ms",
+            allSucceeded ? "completed" : "partially failed",
+            body.ResourceType, body.SourceResourceId, body.TargetResourceId,
+            callbacks.Count, stopwatch.ElapsedMilliseconds);
+
+        return (StatusCodes.OK, new ExecuteMigrateResponse
+        {
+            ResourceType = body.ResourceType,
+            SourceResourceId = body.SourceResourceId,
+            TargetResourceId = body.TargetResourceId,
+            Success = allSucceeded,
+            DryRun = false,
+            AbortReason = allSucceeded ? null : $"{failed.Count} migration callback(s) failed",
+            CallbackResults = callbackResults,
+            MigrationDurationMs = (int)stopwatch.ElapsedMilliseconds
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListMigrateCallbacksResponse?)> ListMigrateCallbacksAsync(
+        ListMigrateCallbacksRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var callbacks = new List<MigrateCallbackSummary>();
+
+        if (!string.IsNullOrEmpty(body.ResourceType))
+        {
+            // Get callbacks for specific resource type
+            var resourceCallbacks = await GetMigrateCallbacksAsync(body.ResourceType, cancellationToken);
+
+            // Optional filter by source type
+            if (!string.IsNullOrEmpty(body.SourceType))
+            {
+                resourceCallbacks = resourceCallbacks
+                    .Where(c => c.SourceType == body.SourceType)
+                    .ToList();
+            }
+
+            callbacks.AddRange(resourceCallbacks.Select(MapToMigrateSummary));
+        }
+        else
+        {
+            // List all callbacks - use master resource type index
+            var resourceTypes = await _migrateIndexStore.GetSetAsync<string>(
+                MasterMigrateResourceTypeIndexKey, cancellationToken);
+
+            foreach (var resourceType in resourceTypes)
+            {
+                var resourceCallbacks = await GetMigrateCallbacksAsync(resourceType, cancellationToken);
+                callbacks.AddRange(resourceCallbacks.Select(MapToMigrateSummary));
+            }
+        }
+
+        _logger.LogDebug("Listed {Count} migration callbacks", callbacks.Count);
+
+        return (StatusCodes.OK, new ListMigrateCallbacksResponse
+        {
+            Callbacks = callbacks,
+            TotalCount = callbacks.Count
+        });
+    }
+
     /// <inheritdoc />
     public async Task<(StatusCodes, GetArchiveResponse?)> GetArchiveAsync(
         GetArchiveRequest body,
@@ -1555,6 +1856,9 @@ public partial class ResourceService : IResourceService
     private const string COMPRESS_KEY_PREFIX = "compress-callback:";
     private const string COMPRESS_INDEX_KEY_PREFIX = "compress-callback-index:";
     private const string ARCHIVE_KEY_PREFIX = "archive:";
+    private const string MIGRATE_KEY_PREFIX = "callback:";
+    private const string MIGRATE_INDEX_KEY_PREFIX = "callback-index:";
+    private const string MasterMigrateResourceTypeIndexKey = "callback-resource-types";
 
     // =========================================================================
     // Internal Helpers
@@ -1697,6 +2001,75 @@ public partial class ResourceService : IResourceService
         // Add to master resource type index
         await _compressCacheStore.AddToSetAsync(MasterCompressResourceTypeIndexKey, resourceType, cancellationToken: cancellationToken);
     }
+
+    // =========================================================================
+    // Migration Management Helpers
+    // =========================================================================
+
+    /// <summary>
+    /// Builds the Redis key for a migration callback definition.
+    /// </summary>
+    internal static string BuildMigrateKey(string resourceType, string sourceType)
+        => $"{MIGRATE_KEY_PREFIX}{resourceType}:{sourceType}";
+
+    /// <summary>
+    /// Gets all migration callbacks for a resource type.
+    /// </summary>
+    private async Task<List<MigrateCallbackDefinition>> GetMigrateCallbacksAsync(
+        string resourceType,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.resource", "ResourceService.GetMigrateCallbacksAsync");
+
+        var indexKey = $"{MIGRATE_INDEX_KEY_PREFIX}{resourceType}";
+        var sourceTypes = await _migrateIndexStore.GetSetAsync<string>(indexKey, cancellationToken);
+
+        var callbacks = new List<MigrateCallbackDefinition>();
+        foreach (var sourceType in sourceTypes)
+        {
+            var callback = await _migrateStore.GetAsync(BuildMigrateKey(resourceType, sourceType), cancellationToken);
+            if (callback != null)
+            {
+                callbacks.Add(callback);
+            }
+        }
+
+        return callbacks;
+    }
+
+    /// <summary>
+    /// Maintains the migration callback index when defining callbacks.
+    /// </summary>
+    private async Task MaintainMigrateCallbackIndexAsync(
+        string resourceType,
+        string sourceType,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.resource", "ResourceService.MaintainMigrateCallbackIndexAsync");
+
+        // Add to per-resource-type index
+        var indexKey = $"{MIGRATE_INDEX_KEY_PREFIX}{resourceType}";
+        await _migrateIndexStore.AddToSetAsync(indexKey, sourceType, cancellationToken: cancellationToken);
+
+        // Add to master resource type index
+        await _migrateIndexStore.AddToSetAsync(MasterMigrateResourceTypeIndexKey, resourceType, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Maps a MigrateCallbackDefinition to a MigrateCallbackSummary for API responses.
+    /// </summary>
+    private static MigrateCallbackSummary MapToMigrateSummary(MigrateCallbackDefinition callback)
+        => new()
+        {
+            ResourceType = callback.ResourceType,
+            SourceType = callback.SourceType,
+            ServiceName = callback.ServiceName,
+            MigrateEndpoint = callback.MigrateEndpoint,
+            RegisteredAt = callback.RegisteredAt,
+            Description = callback.Description
+        };
 
     /// <summary>
     /// Maps a CompressCallbackDefinition to a CompressCallbackSummary for API responses.

@@ -1272,6 +1272,501 @@ public partial class ResourceController
 
     #endregion
 
+    #region Meta Endpoints for DefineMigrateCallback
+
+    private static readonly string _DefineMigrateCallback_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DefineMigrateCallbackRequest",
+    "$defs": {
+        "DefineMigrateCallbackRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to define a migrate callback for a resource type",
+            "required": [
+                "resourceType",
+                "sourceType",
+                "migrateEndpoint",
+                "migratePayloadTemplate"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource this migration handles (opaque identifier)"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "description": "Type of entity that will be migrated (opaque identifier)"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Target service name for callback invocation via lib-mesh (defaults to sourceType if not specified)"
+                },
+                "migrateEndpoint": {
+                    "type": "string",
+                    "description": "Endpoint path for migration (e.g., /character/transfer-realm)"
+                },
+                "migratePayloadTemplate": {
+                    "type": "string",
+                    "description": "JSON template with {{sourceResourceId}} and {{targetResourceId}} placeholders"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of migration action"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DefineMigrateCallback_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DefineMigrateCallbackResponse",
+    "$defs": {
+        "DefineMigrateCallbackResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after defining a migrate callback",
+            "required": [
+                "resourceType",
+                "sourceType",
+                "registered"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Resource type for callback (opaque identifier)"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "description": "Source type for callback (opaque identifier)"
+                },
+                "registered": {
+                    "type": "boolean",
+                    "description": "True if callback was registered (or updated)"
+                },
+                "previouslyDefined": {
+                    "type": "boolean",
+                    "description": "True if this callback was already defined (updated)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DefineMigrateCallback_Info = """
+{
+    "summary": "Define a migrate callback for a resource type",
+    "description": "Services call this at startup to register their migration endpoints.\nWhen a resource merge triggers migration, these callbacks are invoked\nto reassign dependent entities from the source resource to the target.\n\nMigrate callbacks complement cleanup callbacks for RESTRICT references:\n- RESTRICT blocks deletion while references exist\ n- Migrate moves references to a different parent (unblocking RESTRICT)\n- After migration, cleanup handles any remaining CASCADE/DETACH references\n\nPayload templates use {{sourceResourceId}} and {{targetResourceId}} placeholders.\n",
+    "tags": [
+        "Migration Management"
+    ],
+    "deprecated": false,
+    "operationId": "defineMigrateCallback"
+}
+""";
+
+    /// <summary>Returns endpoint information for DefineMigrateCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/define/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DefineMigrateCallback_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/define",
+            _DefineMigrateCallback_Info));
+
+    /// <summary>Returns request schema for DefineMigrateCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/define/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DefineMigrateCallback_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/define",
+            "request-schema",
+            _DefineMigrateCallback_RequestSchema));
+
+    /// <summary>Returns response schema for DefineMigrateCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/define/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DefineMigrateCallback_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/define",
+            "response-schema",
+            _DefineMigrateCallback_ResponseSchema));
+
+    /// <summary>Returns full schema for DefineMigrateCallback</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/define/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DefineMigrateCallback_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/define",
+            _DefineMigrateCallback_Info,
+            _DefineMigrateCallback_RequestSchema,
+            _DefineMigrateCallback_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ExecuteMigrate
+
+    private static readonly string _ExecuteMigrate_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ExecuteMigrateRequest",
+    "$defs": {
+        "ExecuteMigrateRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to execute migration for a resource",
+            "required": [
+                "resourceType",
+                "sourceResourceId",
+                "targetResourceId"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource being migrated (opaque identifier)"
+                },
+                "sourceResourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the source resource whose dependents should be migrated"
+                },
+                "targetResourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the target resource to migrate dependents to"
+                },
+                "dryRun": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "If true, returns what callbacks WOULD execute without actually\nexecuting them. Defaults to false.\n"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ExecuteMigrate_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ExecuteMigrateResponse",
+    "$defs": {
+        "ExecuteMigrateResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after attempting to execute migration",
+            "required": [
+                "resourceType",
+                "sourceResourceId",
+                "targetResourceId",
+                "success",
+                "dryRun",
+                "callbackResults"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource migrated"
+                },
+                "sourceResourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the source resource"
+                },
+                "targetResourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the target resource"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "True if all migration callbacks completed successfully"
+                },
+                "abortReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why migration was aborted (lock failure, callback failure, etc.)"
+                },
+                "callbackResults": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/MigrateCallbackResult"
+                    },
+                    "description": "Results of each migration callback"
+                },
+                "migrationDurationMs": {
+                    "type": "integer",
+                    "description": "Total migration execution time in milliseconds"
+                },
+                "dryRun": {
+                    "type": "boolean",
+                    "description": "True if this was a preview (no callbacks were actually executed)"
+                }
+            }
+        },
+        "MigrateCallbackResult": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of executing a single migration callback",
+            "required": [
+                "sourceType",
+                "serviceName",
+                "endpoint",
+                "success"
+            ],
+            "properties": {
+                "sourceType": {
+                    "type": "string",
+                    "description": "Source type that was migrated (opaque identifier)"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "description": "Service that was called"
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "Endpoint that was called"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether callback succeeded"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "HTTP status code from callback"
+                },
+                "errorMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error message if callback failed"
+                },
+                "durationMs": {
+                    "type": "integer",
+                    "description": "Callback execution time in milliseconds"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ExecuteMigrate_Info = """
+{
+    "summary": "Execute migration for a resource",
+    "description": "Reassigns all dependent references from sourceResourceId to targetResourceId\nby invoking registered migrate callbacks. Used by Category A merge operations\nto move RESTRICT-policy dependents before deletion.\n\nFlow:\n1. Get all migrate callbacks for resourceType\n2. If dryRun, return preview without executing\n3. Acquire distributed lock on source resource\n4. Execute each callback to migrate dependent entities\n5. Each callback is responsible for:\n   a. Moving its entities from source to target parent\n   b. Unregistering references from source resource\n   c. Registering references to target resource\n6. Return migration results per callback\n",
+    "tags": [
+        "Migration Management"
+    ],
+    "deprecated": false,
+    "operationId": "executeMigrate"
+}
+""";
+
+    /// <summary>Returns endpoint information for ExecuteMigrate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/execute/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteMigrate_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/execute",
+            _ExecuteMigrate_Info));
+
+    /// <summary>Returns request schema for ExecuteMigrate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/execute/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteMigrate_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/execute",
+            "request-schema",
+            _ExecuteMigrate_RequestSchema));
+
+    /// <summary>Returns response schema for ExecuteMigrate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/execute/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteMigrate_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/execute",
+            "response-schema",
+            _ExecuteMigrate_ResponseSchema));
+
+    /// <summary>Returns full schema for ExecuteMigrate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/execute/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ExecuteMigrate_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/execute",
+            _ExecuteMigrate_Info,
+            _ExecuteMigrate_RequestSchema,
+            _ExecuteMigrate_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListMigrateCallbacks
+
+    private static readonly string _ListMigrateCallbacks_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListMigrateCallbacksRequest",
+    "$defs": {
+        "ListMigrateCallbacksRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list registered migrate callbacks",
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by resource type (list all if not specified)"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by source type (requires resourceType)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListMigrateCallbacks_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListMigrateCallbacksResponse",
+    "$defs": {
+        "ListMigrateCallbacksResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "List of registered migrate callbacks",
+            "required": [
+                "callbacks",
+                "totalCount"
+            ],
+            "properties": {
+                "callbacks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/MigrateCallbackSummary"
+                    },
+                    "description": "Registered callbacks matching filter"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of callbacks returned"
+                }
+            }
+        },
+        "MigrateCallbackSummary": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Summary of a registered migrate callback",
+            "required": [
+                "resourceType",
+                "sourceType",
+                "serviceName",
+                "migrateEndpoint",
+                "registeredAt"
+            ],
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource this callback handles"
+                },
+                "sourceType": {
+                    "type": "string",
+                    "description": "Type of entity that will be migrated"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "description": "Target service for callback invocation"
+                },
+                "migrateEndpoint": {
+                    "type": "string",
+                    "description": "Endpoint path called during migration"
+                },
+                "registeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this callback was registered"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListMigrateCallbacks_Info = """
+{
+    "summary": "List registered migrate callbacks",
+    "description": "Returns all migrate callbacks registered for a resource type.\nUseful for debugging and admin inspection of migration chains.\n",
+    "tags": [
+        "Migration Management"
+    ],
+    "deprecated": false,
+    "operationId": "listMigrateCallbacks"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListMigrateCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListMigrateCallbacks_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/list",
+            _ListMigrateCallbacks_Info));
+
+    /// <summary>Returns request schema for ListMigrateCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListMigrateCallbacks_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/list",
+            "request-schema",
+            _ListMigrateCallbacks_RequestSchema));
+
+    /// <summary>Returns response schema for ListMigrateCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListMigrateCallbacks_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/list",
+            "response-schema",
+            _ListMigrateCallbacks_ResponseSchema));
+
+    /// <summary>Returns full schema for ListMigrateCallbacks</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/migrate/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListMigrateCallbacks_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/migrate/list",
+            _ListMigrateCallbacks_Info,
+            _ListMigrateCallbacks_RequestSchema,
+            _ListMigrateCallbacks_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for DefineCompressCallback
 
     private static readonly string _DefineCompressCallback_RequestSchema = """

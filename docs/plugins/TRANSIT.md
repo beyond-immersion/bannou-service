@@ -371,9 +371,6 @@ Three client events are defined in `schemas/transit-client-events.yaml` (see [im
 3. **Mount bonding**: Integration with Relationship (L2) for character-mount relationships. A well-bonded mount has higher effective speed and lower fatigue. Bond strength grows with travel distance. Follows the existing Relationship entity-to-entity model.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/533 -->
 
-4. ~~**Transit fares**~~: **Resolved** -- see Resolved Design Decision #9. Transit remains a pure movement primitive; fares are owned by Trade (L4).
-<!-- AUDIT:RESOLVED:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/535 -->
-
 
 ---
 
@@ -394,6 +391,10 @@ None currently known.
 4. **Discovery is per-entity, not per-account**: Connection discovery (`transit-discovery` store) is tracked per entity, meaning each character on an account discovers connections independently. There is no account-level discovery sharing. This is consistent with Transit being a game-primitive — account-level features would be an L4 concern.
 
 5. **Mid-journey seasonal closure**: When a season changes and a connection closes for the new season, the Seasonal Connection Worker publishes warnings but does NOT interrupt travelers already in transit on that connection. The game/Actor layer decides how to handle entities caught by seasonal closure (e.g., the actor might choose to press on, turn back, or wait). This is consistent with the declarative lifecycle pattern — Transit does not autonomously alter journey state.
+
+### Design Considerations (Requires Planning)
+
+None currently identified.
 
 ---
 
@@ -640,18 +641,6 @@ Transit declares `x-references` in its API schema for lib-resource cleanup coord
 - **Location deletion (CASCADE)**: When a location is deleted, Resource calls Transit's cleanup callback. Transit closes all connections referencing the deleted location (`status: closed`, `reason: "location_deleted"`) and interrupts active journeys passing through it.
 - **Character deletion (CASCADE)**: Transit's cleanup callback clears discovery data for the deleted entity from the `transit-discovery` store and abandons any active journeys for that entity.
 - Transit does NOT subscribe to `location.deleted` or `character.deleted` events for cleanup -- this is handled exclusively through the Resource cleanup callback pattern per FOUNDATION TENETS (Resource-Managed Cleanup).
-
----
-
-## Background Services
-
-### Seasonal Connection Worker
-
-Subscribes to Worldstate season-change events. When a season boundary occurs, scans all connections with `seasonalAvailability` restrictions and updates their status accordingly. Connections closing for the season transition to `seasonal_closed`; connections opening transition to `open`. Also checks for active journeys on newly-closed connections and publishes warnings (but does NOT interrupt them -- the game decides how to handle travelers caught by seasonal closure). Publishes `transit.connection.status-changed` for each connection that changes. Runs periodic checks every `SeasonalConnectionCheckIntervalSeconds`.
-
-### Journey Archival Worker
-
-Scans Redis for completed/abandoned journeys older than `JourneyArchiveAfterGameHours` and moves them to MySQL archive. Frees Redis memory while preserving historical travel data for analytics and NPC memory. Also enforces `JourneyArchiveRetentionDays`: deletes archived journeys older than the retention threshold from MySQL. When set to 0, archives are retained indefinitely. Runs every `JourneyArchivalWorkerIntervalSeconds` (default 300 = every 5 minutes real-time).
 
 ---
 

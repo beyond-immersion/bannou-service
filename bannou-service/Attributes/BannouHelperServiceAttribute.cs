@@ -31,8 +31,25 @@ public class BannouHelperServiceAttribute : Attribute
 
     /// <summary>
     /// The interface type for DI registration (e.g., typeof(ITokenService)).
-    /// If null, the concrete class type is used for registration.
+    /// If null, the concrete class type is used for registration and PluginLoader
+    /// skips auto-registration for this type (requires manual registration in Plugin.cs).
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>WARNING — Multiple implementations of the same interface:</b> When two or more
+    /// helper services specify the same <c>InterfaceType</c>, PluginLoader auto-registers
+    /// ALL of them. .NET DI resolves <c>GetRequiredService&lt;T&gt;()</c> to the last
+    /// registration, but which is "last" depends on <c>Assembly.GetTypes()</c> ordering
+    /// (non-deterministic). Worse, if one implementation has dependencies that only exist
+    /// in certain modes (e.g., <c>IChannelManager</c> only in RabbitMQ mode), resolving
+    /// the interface in other modes will throw at runtime.
+    /// </para>
+    /// <para>
+    /// For backend-conditional services (e.g., InMemoryMessageTap vs RabbitMQMessageTap),
+    /// omit <c>InterfaceType</c> from BOTH attributes and register the correct implementation
+    /// explicitly in each branch of <c>Plugin.ConfigureServices</c>.
+    /// </para>
+    /// </remarks>
     public Type? InterfaceType { get; }
 
     /// <summary>

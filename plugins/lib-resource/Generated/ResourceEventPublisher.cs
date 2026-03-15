@@ -34,6 +34,20 @@ public static class ResourceEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceGracePeriodStarted, eventData, cancellationToken);
 
+    /// <summary>Published when a resource migration completes successfully.</summary>
+    public static Task<bool> PublishResourceMigratedAsync(
+        this IMessageBus messageBus,
+        ResourceMigratedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceMigrated, eventData, cancellationToken);
+
+    /// <summary>Published when a migration callback fails during resource migration.</summary>
+    public static Task<bool> PublishResourceMigrateCallbackFailedAsync(
+        this IMessageBus messageBus,
+        ResourceMigrateCallbackFailedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceMigrateCallbackFailed, eventData, cancellationToken);
+
     /// <summary>Published when a resource is successfully compressed.</summary>
     public static Task<bool> PublishResourceCompressedAsync(
         this IMessageBus messageBus,

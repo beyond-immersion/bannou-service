@@ -44,7 +44,7 @@ Every mode uses the same services. Only the infrastructure backends change:
 | **State (persistence)** | InMemory + SQLite | InMemory + SQLite | Redis + MySQL | Redis cluster + MySQL cluster |
 | **Messaging** | DirectDispatch | DirectDispatch | RabbitMQ | RabbitMQ cluster |
 | **Mesh routing** | Direct DI dispatch | Local omnipotent | Local omnipotent | Distributed (Orchestrator topology) |
-| **Connect** | Not loaded | Single instance | Single instance | N instances, broadcast mesh |
+| **Connect** | Not loaded | Single instance (+ relay for NAT traversal) | Single instance | N instances, broadcast mesh |
 | **Telemetry** | NullTelemetryProvider | Optional | Full OpenTelemetry | Full OpenTelemetry |
 | **Orchestrator** | Not loaded | Not loaded | Optional | Required |
 
@@ -148,7 +148,7 @@ Remote Player
 - All service calls route via HTTP to localhost (~0.5-2ms overhead). In-process mesh routing (Approach B in SELF-HOSTED-DEPLOYMENT.md) would eliminate this, but it's irrelevant for most game types.
 - Windows firewall prompts when starting a local HTTP server. Mitigations: loopback binding, installer firewall registration, future Unix domain socket support.
 
-**What doesn't work: Distributed world simulation** -- see [dedicated section below](#the-hard-problem-distributed-world-simulation).
+**What doesn't work: Distributed world simulation** -- see [dedicated section below](#the-hard-problem-distributed-world-simulation). For the peer delegation topology (star/host-authority), NAT relay via Connect, and event propagation model, see [Distributed Sidecar Topology](#distributed-sidecar-topology-peer-delegation-via-connect).
 
 ---
 
@@ -407,6 +407,103 @@ Each phase works independently. A game studio can ship with Phase 0 and upgrade 
 
 ---
 
+## Distributed Sidecar Topology: Peer Delegation via Connect
+
+### Network Topology: Star (Host-Authority)
+
+Three topologies were evaluated for 2-8 player distributed sidecar:
+
+| Topology | Description | Verdict |
+|----------|-------------|---------|
+| **Chain** | Each node connects upstream/downstream, events propagate linearly | Rejected. Latency scales linearly with chain length. Any middle node dropping breaks the chain. Ordering is a nightmare. |
+| **Full mesh** | Every node connects to every other (N-1 connections each) | Rejected for game state. No natural authority for conflict resolution — two players grabbing the same item simultaneously requires consensus (vector clocks, Raft). Appropriate for voice (lib-voice already does this with WebRTC), not for state mutations. |
+| **Star (host-authority)** | One node is authoritative. All peers connect to it. Host serializes mutations, resolves conflicts, broadcasts results. | **Selected.** This is what Mode 2 already is. The "distributed" extension means the host can delegate computation to peers while staying authoritative for state. |
+
+The star topology means:
+- Host's Connect instance maintains one WebSocket connection to each peer's sidecar
+- Every event/message from a peer goes to the host
+- Host fans out to all other peers as needed
+- Host resolves all conflicts (same item grabbed by two players → host decides)
+- Peers contribute CPU (Actor pool workers, region simulation), not decisions
+
+This is the natural extension of Mode 2's existing architecture. The host is already the BannouServer that all clients connect to. Adding peer delegation means some peers also run Bannou services (Actor, environment simulation) alongside their game client, and the host's mesh routes work to them.
+
+### Peer Transport: Connect WebSocket Protocol
+
+Each sidecar peer is a full Bannou node with its own Connect instance. Sidecar-to-sidecar connections use the existing binary WebSocket protocol (already extracted into an SDK). This means:
+
+- Each peer registers with mesh as its own appId (e.g., `bannou-peer-{sessionId}`)
+- Mesh routing table populates from peer connections, not from Orchestrator/Redis
+- Cross-node service calls use the same generated clients, same mesh pipeline — transport is Connect WebSocket relay instead of HTTP-to-localhost
+- The host node maintains the peer registry: when a peer connects, their appId and capability set is broadcast to all other peers
+
+Discovery is lightweight: the host assigns peer roles at join time (e.g., "you simulate Region East"). No Orchestrator involvement — Orchestrator manages container deployments (Docker/Portainer/K8s), which is irrelevant for peer-to-peer game sessions.
+
+### NAT Relay: Connect Relay Mode
+
+**Problem**: For internet play across NATs, the host needs to be reachable. LAN play is trivial. Port-forwarding has bad UX. UPnP is unreliable.
+
+**Solution**: A minimal cloud-hosted Connect instance acting as a relay. Not a separate TURN server or new plugin — Connect itself in relay mode.
+
+```
+Cloud (minimal footprint):
+  Connect relay instance (forwards WebSocket frames only)
+      ↕ WebSocket          ↕ WebSocket          ↕ WebSocket
+  Host sidecar          Peer 1               Peer 2
+  (authority)           (delegated)          (delegated)
+  Full Bannou stack     Actor workers        Actor workers
+```
+
+The relay Connect doesn't run game services. Its configuration:
+
+```bash
+BANNOU_SERVICES_ENABLED=false
+CONNECT_SERVICE_ENABLED=true
+STATE_USE_SQLITE=true              # L0 state: InMemory + SQLite (unused but present)
+MESSAGING_USE_DIRECT_DISPATCH=true # L0 messaging: local-only (unused but present)
+```
+
+**Why not a separate lib-relay plugin?** A relay plugin would need to reimplement or duplicate Connect's WebSocket connection management, binary protocol handling, session lifecycle, and multi-node broadcast — which is the hard part of Connect. The binary protocol SDK helps with framing, but the connection lifecycle is the expensive code. Splitting relay from Connect creates shared ownership of the most latency-sensitive path in the system.
+
+**Why accept idle L0 plugins?** L0 infrastructure on a relay node costs nearly nothing:
+- lib-state: InMemory backend — a few empty `ConcurrentDictionary` instances. Zero I/O.
+- lib-messaging: DirectDispatch — no broker, no connections. Idle.
+- lib-mesh: Local omnipotent routing — a static routing table pointing at itself.
+- lib-telemetry: NullTelemetryProvider (default when disabled).
+
+Total overhead is approximately 5MB of empty in-memory structures. On a cloud relay instance that does nothing but forward WebSocket frames, this is noise. The hierarchy isn't violated — L0 plugins aren't optional, they're just idle. Same as a dedicated Actor pool node that has lib-state registered but never writes character data.
+
+Connect already has relay capability: `CONNECT_MULTINODE_BROADCAST_MODE=Both` relays between Connect instances in cloud multi-node mode. The relay use case is the same code path with sidecar peers instead of other cloud Connect instances.
+
+**When relay is NOT needed**: LAN play. Games where the host can be reached directly (port-forwarded, public IP). Only internet play across restrictive NATs requires the relay — and even then it's a single Connect instance, not a full Bannou deployment.
+
+### Event Propagation Model
+
+Each sidecar node uses DirectDispatch for local event delivery within its own process. Cross-node event propagation follows the star topology:
+
+1. Peer produces an event (e.g., Actor completes an action)
+2. DirectDispatch delivers to local IEventConsumer handlers
+3. Peer sends the event to the host via its Connect WebSocket
+4. Host receives, processes (may update authoritative state), fans out to other peers
+5. Each receiving peer's DirectDispatch delivers to their local handlers
+
+State synchronization follows events, not state replication. Each node is authoritative for its own assigned entities. When Node A's character does something that Node B needs to know about, the event propagates through the host and Node B updates its own local view. This avoids distributed consensus (CRDTs, Raft) entirely — the host serializes all mutations.
+
+### Relationship to Existing Phased Approach
+
+The distributed sidecar topology is orthogonal to the Phase 0-3 progression described in [The Hard Problem](#the-hard-problem-distributed-world-simulation):
+
+| Phase | Cloud Multi-Node | Distributed Sidecar |
+|-------|-----------------|-------------------|
+| **0 (centralized)** | Single server, all state centralized | Host runs everything, peers are pure clients (Mode 2 today) |
+| **1 (Actor affinity)** | Actor pool nodes with location affinity | Host delegates Actor simulation to peers by region |
+| **2 (realm partitioning)** | Different realms on different cloud nodes | Different realms on different peer machines |
+| **3 (region partitioning)** | Regions within a realm on different nodes | Regions within a realm on different peers |
+
+The mechanism is the same (mesh routing with location/realm context). The transport differs (cloud uses HTTP/RabbitMQ between servers; sidecar uses Connect WebSocket between peers). The authority model differs (cloud can use distributed state backends for shared authority; sidecar uses host-authority star topology).
+
+---
+
 ## Identified Gaps
 
 ### Gap 1: Embedded Mode Client Generation Template
@@ -472,7 +569,25 @@ Mesh routing currently resolves `service name -> app-id -> endpoint`. For distri
 
 Location service becomes shard-aware: different subtrees of the location hierarchy are authoritative on different nodes. Requires mapping location subtree roots to nodes and routing Location queries accordingly. Character region-crossing triggers state migration.
 
-### Gap 8: Orchestrator Blue-Green Deployment
+### Gap 8: Connect Relay Mode for NAT Traversal
+
+**Affects**: Mode 2 (Non-Dedicated, internet play across NATs)
+**Severity**: Required for non-LAN distributed sidecar
+**Reference**: See § "Distributed Sidecar Topology" above
+**Effort**: Medium
+
+Connect needs a minimal relay configuration where it forwards WebSocket frames between peers without running game services. The multi-node broadcast capability (`CONNECT_MULTINODE_BROADCAST_MODE=Both`) is the starting point — it already relays between Connect instances. The relay use case is the same code path with sidecar peers instead of cloud nodes. L0 plugins run with InMemory/DirectDispatch backends (idle, ~5MB overhead). No new plugin needed.
+
+### Gap 9: Mesh Peer Discovery for Distributed Sidecar
+
+**Affects**: Mode 2 (Non-Dedicated, distributed)
+**Severity**: Required for peer delegation
+**Reference**: See § "Distributed Sidecar Topology" above
+**Effort**: Medium
+
+When a sidecar peer connects to the host, mesh needs to learn the peer's appId and route service calls to it. Currently mesh populates routing from Orchestrator (Redis-backed) or static omnipotent routing. Distributed sidecar needs a lightweight peer registry: host assigns roles, peers register capabilities, mesh routes accordingly. No Orchestrator involvement.
+
+### Gap 10: Orchestrator Blue-Green Deployment
 
 **Affects**: Mode 4 (Hyper-Scaled)
 **Severity**: Required for zero-downtime deployments at scale
@@ -515,7 +630,19 @@ Concurrent access to Workshop materialization (e.g., two players querying the sa
 
 Actor pool distribution should prefer location affinity over pure capacity-based distribution. This naturally groups actors with their game servers and minimizes the number of maintained WebSocket connections while maximizing transport performance. The ActorConnectionManager design (#409) is the implementation vehicle.
 
-### D6: Distributed World Simulation Is a Phased Investment
+### D6: Distributed Sidecar Uses Star Topology (Host-Authority)
+
+**Status**: Decided
+
+Full mesh requires consensus for conflict resolution (wrong layer of complexity for 2-8 players). Chain topology has unacceptable latency and fragility. Star topology with host-authority matches Mode 2's existing architecture: host runs BannouServer, serializes mutations, resolves conflicts. The "distributed" part delegates computation (Actor brains, region simulation) to peers, not authority. Peers contribute CPU via the same Actor pool pattern used in cloud mode.
+
+### D7: NAT Relay Is Connect in Minimal Configuration, Not a New Plugin
+
+**Status**: Decided
+
+A relay plugin would duplicate Connect's WebSocket connection management and binary protocol handling — the most complex and latency-sensitive code in the system. Idle L0 plugins on a relay node cost ~5MB of empty in-memory structures, which is negligible for a cloud relay instance that only forwards frames. Connect already has relay capability via multi-node broadcast mode. The relay use case is the same code path.
+
+### D8: Distributed World Simulation Is a Phased Investment
 
 **Status**: Proposed
 

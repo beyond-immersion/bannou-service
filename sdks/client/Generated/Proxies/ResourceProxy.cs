@@ -171,6 +171,60 @@ public sealed class ResourceProxy
     }
 
     /// <summary>
+    /// Define a migrate callback for a resource type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing DefineMigrateCallbackResponse on success.</returns>
+    public Task<ApiResponse<DefineMigrateCallbackResponse>> DefineMigrateCallbackAsync(
+        DefineMigrateCallbackRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DefineMigrateCallbackRequest, DefineMigrateCallbackResponse>(
+            "/resource/migrate/define", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Execute migration for a resource
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ExecuteMigrateResponse on success.</returns>
+    public Task<ApiResponse<ExecuteMigrateResponse>> ExecuteMigrateAsync(
+        ExecuteMigrateRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ExecuteMigrateRequest, ExecuteMigrateResponse>(
+            "/resource/migrate/execute", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// List registered migrate callbacks
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ListMigrateCallbacksResponse on success.</returns>
+    public Task<ApiResponse<ListMigrateCallbacksResponse>> ListMigrateCallbacksAsync(
+        ListMigrateCallbacksRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ListMigrateCallbacksRequest, ListMigrateCallbacksResponse>(
+            "/resource/migrate/list", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Register compression callback for a resource type
     /// </summary>
     /// <param name="request">The request payload.</param>

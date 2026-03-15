@@ -678,6 +678,86 @@ public partial class MergeDeprecatedResponse
 }
 
 /// <summary>
+/// Base request for batch operations that operate on a list of entity IDs.
+/// <br/>Services with batch endpoints compose this via allOf to add operation-specific
+/// <br/>fields (e.g., reason, options). maxItems enforced at 100 to bound per-request cost.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchOperationRequest
+{
+
+    /// <summary>
+    /// Entity IDs to operate on
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ids")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
+    public System.Collections.Generic.ICollection<System.Guid> Ids { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+}
+
+/// <summary>
+/// Standard response for batch operations. Reports succeeded/failed counts
+/// <br/>with optional per-entity failure details. Services may compose via allOf
+/// <br/>to add operation-specific result fields.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchOperationResponse
+{
+
+    /// <summary>
+    /// Number of successfully processed entities
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("succeeded")]
+    public int Succeeded { get; set; } = default!;
+
+    /// <summary>
+    /// Number of entities that failed processing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failed")]
+    public int Failed { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of entities in the request
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalRequested")]
+    public int TotalRequested { get; set; } = default!;
+
+    /// <summary>
+    /// Details of individual failures (null if all succeeded)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failures")]
+    public System.Collections.Generic.ICollection<BatchFailureEntry>? Failures { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Details of a single entity failure within a batch operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchFailureEntry
+{
+
+    /// <summary>
+    /// ID of the entity that failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable failure reason
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Reason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Type of capability update — full capabilities or delta changes
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation

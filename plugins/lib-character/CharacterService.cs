@@ -535,6 +535,166 @@ public partial class CharacterService : ICharacterService
         return (StatusCodes.OK, response);
     }
 
+    /// <summary>
+    /// Deletes all characters in a realm. Called by lib-resource during realm cleanup.
+    /// Iterates through all characters in the realm index and deletes each individually,
+    /// reusing the existing delete flow (reference cleanup, events, index removal).
+    /// Per-item error isolation ensures one failure does not block other deletions.
+    /// </summary>
+    public async Task<(StatusCodes, CleanupByRealmResponse?)> CleanupByRealmAsync(
+        CleanupByRealmRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.CleanupByRealmAsync");
+
+        _logger.LogInformation("Starting realm cleanup for realm: {RealmId}", body.RealmId);
+
+        var deleted = 0;
+        var failed = 0;
+
+        // Load all character IDs from the realm index
+        var realmIndexKey = BuildRealmIndexKey(body.RealmId.ToString());
+        var characterIds = await _realmIndexStore.GetAsync(realmIndexKey, cancellationToken);
+
+        if (characterIds == null || characterIds.Count == 0)
+        {
+            _logger.LogInformation("No characters found in realm {RealmId} for cleanup", body.RealmId);
+            return (StatusCodes.OK, new CleanupByRealmResponse { Deleted = 0, Failed = 0 });
+        }
+
+        _logger.LogInformation("Found {Count} character(s) in realm {RealmId} for cleanup", characterIds.Count, body.RealmId);
+
+        // Snapshot the list to avoid mutation during iteration
+        var characterIdSnapshot = characterIds.ToList();
+
+        foreach (var characterId in characterIdSnapshot)
+        {
+            try
+            {
+                if (!Guid.TryParse(characterId, out var parsedId))
+                {
+                    _logger.LogWarning("Skipping invalid character ID during realm cleanup: {CharacterId} in realm {RealmId}",
+                        characterId, body.RealmId);
+                    failed++;
+                    continue;
+                }
+
+                var result = await DeleteCharacterAsync(
+                    new DeleteCharacterRequest { CharacterId = parsedId },
+                    cancellationToken);
+
+                if (result == StatusCodes.OK)
+                {
+                    deleted++;
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Failed to delete character {CharacterId} during realm cleanup (status: {StatusCode})",
+                        characterId, result);
+                    failed++;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Exception deleting character {CharacterId} during realm {RealmId} cleanup",
+                    characterId, body.RealmId);
+                failed++;
+            }
+        }
+
+        _logger.LogInformation(
+            "Realm cleanup completed for realm {RealmId}: {Deleted} deleted, {Failed} failed",
+            body.RealmId, deleted, failed);
+
+        return (StatusCodes.OK, new CleanupByRealmResponse { Deleted = deleted, Failed = failed });
+    }
+
+    /// <summary>
+    /// Migrates all characters from one realm to another. Called by lib-resource during realm merge.
+    /// Iterates through all characters in the source realm and transfers each individually,
+    /// reusing the existing transfer flow (index updates, events, client events).
+    /// Per-item error isolation ensures one failure does not block other migrations.
+    /// </summary>
+    public async Task<(StatusCodes, MigrateByRealmResponse?)> MigrateByRealmAsync(
+        MigrateByRealmRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.MigrateByRealmAsync");
+
+        _logger.LogInformation("Starting realm migration from {SourceRealmId} to {TargetRealmId}",
+            body.SourceRealmId, body.TargetRealmId);
+
+        var migrated = 0;
+        var failed = 0;
+
+        // Load all character IDs from the source realm index
+        var realmIndexKey = BuildRealmIndexKey(body.SourceRealmId.ToString());
+        var characterIds = await _realmIndexStore.GetAsync(realmIndexKey, cancellationToken);
+
+        if (characterIds == null || characterIds.Count == 0)
+        {
+            _logger.LogInformation("No characters found in source realm {SourceRealmId} for migration",
+                body.SourceRealmId);
+            return (StatusCodes.OK, new MigrateByRealmResponse { Migrated = 0, Failed = 0 });
+        }
+
+        _logger.LogInformation("Found {Count} character(s) in realm {SourceRealmId} for migration",
+            characterIds.Count, body.SourceRealmId);
+
+        // Snapshot the list to avoid mutation during iteration (transfers modify the index)
+        var characterIdSnapshot = characterIds.ToList();
+
+        foreach (var characterId in characterIdSnapshot)
+        {
+            try
+            {
+                if (!Guid.TryParse(characterId, out var parsedId))
+                {
+                    _logger.LogWarning(
+                        "Skipping invalid character ID during realm migration: {CharacterId} in realm {SourceRealmId}",
+                        characterId, body.SourceRealmId);
+                    failed++;
+                    continue;
+                }
+
+                var (status, _) = await TransferCharacterToRealmAsync(
+                    new TransferCharacterToRealmRequest
+                    {
+                        CharacterId = parsedId,
+                        TargetRealmId = body.TargetRealmId
+                    },
+                    cancellationToken);
+
+                if (status == StatusCodes.OK)
+                {
+                    migrated++;
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Failed to migrate character {CharacterId} from realm {SourceRealmId} to {TargetRealmId} (status: {StatusCode})",
+                        characterId, body.SourceRealmId, body.TargetRealmId, status);
+                    failed++;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Exception migrating character {CharacterId} from realm {SourceRealmId} to {TargetRealmId}",
+                    characterId, body.SourceRealmId, body.TargetRealmId);
+                failed++;
+            }
+        }
+
+        _logger.LogInformation(
+            "Realm migration completed from {SourceRealmId} to {TargetRealmId}: {Migrated} migrated, {Failed} failed",
+            body.SourceRealmId, body.TargetRealmId, migrated, failed);
+
+        return (StatusCodes.OK, new MigrateByRealmResponse { Migrated = migrated, Failed = failed });
+    }
+
     #endregion
 
     #region Enriched Character & Compression Operations

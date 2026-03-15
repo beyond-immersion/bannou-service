@@ -23,6 +23,12 @@ public static class ResourcePublishedTopics
     /// <summary>Published when a resource's refcount reaches zero and grace period begins.</summary>
     public const string ResourceGracePeriodStarted = "resource.grace-period.started";
 
+    /// <summary>Published when a resource migration completes successfully.</summary>
+    public const string ResourceMigrated = "resource.migrated";
+
+    /// <summary>Published when a migration callback fails during resource migration.</summary>
+    public const string ResourceMigrateCallbackFailed = "resource.migrate.callback-failed";
+
     /// <summary>Published when a resource is successfully compressed.</summary>
     public const string ResourceCompressed = "resource.compressed";
 

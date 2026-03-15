@@ -422,7 +422,7 @@ info:
 - `target`: Resource type (must match `resourceType` in the foundational service's `x-resource-lifecycle`)
 - `sourceType`: This service's entity type (opaque string)
 - `field`: Field name holding the reference (informational)
-- `onDelete`: `cascade` (delete dependents), `restrict` (block deletion, not yet supported), `detach` (nullify, not yet supported)
+- `onDelete`: `cascade` (delete dependents), `restrict` (block deletion if references exist), `detach` (nullify reference on deletion)
 - `cleanup.endpoint`: Service endpoint called during cleanup
 - `cleanup.payloadTemplate`: JSON template with `{{resourceId}}` placeholder
 

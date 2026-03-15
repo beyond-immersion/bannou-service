@@ -4,7 +4,7 @@
 > **Schema**: schemas/species-api.yaml
 > **Version**: 2.0.0
 > **Layer**: GameFoundation
-> **State Stores**: species (MySQL), species-lock (Redis)
+> **State Stores**: species-statestore (MySQL), species-lock (Redis)
 > **Implementation Map**: [docs/maps/SPECIES.md](../maps/SPECIES.md)
 > **Short**: Realm-scoped species definitions with trait modifiers and deprecation lifecycle
 
@@ -33,12 +33,12 @@ Species has no Category A (entity reference) fields -- species are referenced by
 | lib-character | Uses `ISpeciesClient` for species validation during character creation |
 | lib-realm | Uses `ISpeciesClient` for species-realm migration during realm merge (list by realm, add/remove from realm) |
 | lib-transit | Uses `ISpeciesClient.GetSpeciesAsync` for species lookup during journey speed calculations |
-| lib-ethology | Uses `ISpeciesClient` for archetype validation; subscribes to `species.deprecated`/`species.deleted` events for cleanup. Provides the `${nature.*}` variable namespace to Actor (L2) via `NatureProviderFactory`, exposing species-level behavioral baselines built on species code lookups |
+| lib-ethology | Uses `ISpeciesClient` for archetype validation; subscribes to `species.updated` (for deprecation changes via changedFields) and `species.deleted` events for cleanup. Provides the `${nature.*}` variable namespace to Actor (L2) via `NatureProviderFactory`, exposing species-level behavioral baselines built on species code lookups |
 | lib-character-lifecycle | Uses `ISpeciesClient` for lifecycle template resolution — species determines longevity ranges, stage boundaries, fertility windows, and heritable trait definitions (not yet implemented) |
 
 ### Architectural Role in the NPC Intelligence Stack
 
-Species provides the biological identity that higher-layer services build on. Ethology (L4) uses species codes to define behavioral archetypes — structured behavioral baselines exposed as the `${nature.*}` variable namespace to the Actor behavior system. Character-Lifecycle (L4) uses species data to determine lifecycle templates (aging stages, fertility, longevity, heritable traits). Species itself is deliberately game-agnostic: `traitModifiers` and `metadata` are untyped `object?` fields that no Bannou plugin reads by convention (per). Higher-layer services that need structured species data own it in their own state stores — Ethology owns behavioral archetypes, Character-Lifecycle owns lifecycle templates.
+Species provides the biological identity that higher-layer services build on. Ethology (L4) uses species codes to define behavioral archetypes — structured behavioral baselines exposed as the `${nature.*}` variable namespace to the Actor behavior system. Character-Lifecycle (L4) uses species data to determine lifecycle templates (aging stages, fertility, longevity, heritable traits). Species itself is deliberately game-agnostic: `traitModifiers` and `metadata` are untyped `object?` fields that no Bannou plugin reads by convention (per Foundation Tenets). Higher-layer services that need structured species data own it in their own state stores — Ethology owns behavioral archetypes, Character-Lifecycle owns lifecycle templates.
 
 ---
 
@@ -144,7 +144,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-*(none)*
+1. **`SpeciesMergedEvent` missing failed entity IDs**: The merged event includes `MergedCharacterCount` (successful migrations) but not individual failed entity IDs. Implementation Tenets (T31 merge requirement #8) explicitly requires: "Publish `*.merged` event with source ID, target ID, migrated count, **and failed IDs**." The `SpeciesMergedEvent` schema and publish call must be updated to include `failedEntityIds`. Failed IDs are currently returned only in the API response.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -152,13 +152,11 @@ State Store Layout
 
 2. **Realm validation asymmetry**: `CreateSpecies` and `AddSpeciesToRealm` validate realm is active (not deprecated). `RemoveSpeciesFromRealm` doesn't validate realm status at all (only checks species membership). `ListSpeciesByRealm` validates realm exists but allows deprecated realms.
 
-3. **Merge published event doesn't include failed entity IDs**: `SpeciesMergedEvent` includes `MergedCharacterCount` (successful migrations) but not individual failed entity IDs. Downstream consumers only know successful migration count, not which characters failed. Failed entity IDs are returned in the API response only.
+3. **All-species list loaded in full**: `ListSpecies` and `ListSpeciesByRealm` load all matching species IDs via `GetBulkAsync` then filter and paginate in-memory. Acceptable because species are admin-created definitions (typically <100 per deployment). If a game had thousands of species, this would need migration to `IJsonQueryableStateStore<T>.JsonQueryPagedAsync()` for server-side filtering.
 
-4. **All-species list loaded in full**: `ListSpecies` and `ListSpeciesByRealm` load all matching species IDs via `GetBulkAsync` then filter and paginate in-memory. Acceptable because species are admin-created definitions (typically <100 per deployment). If a game had thousands of species, this would need migration to `IJsonQueryableStateStore<T>.JsonQueryPagedAsync()` for server-side filtering.
+4. **Seed operation not transactional**: Each species in the seed batch is created independently. A partial failure leaves some species created and others not. This is the universal Bannou seed pattern — lib-state doesn't expose cross-key transactions, cross-service calls make transactions infeasible, and idempotent recovery via `updateExisting` flag is the intended approach. Re-run the seed to recover from partial failures.
 
-5. **Seed operation not transactional**: Each species in the seed batch is created independently. A partial failure leaves some species created and others not. This is the universal Bannou seed pattern — lib-state doesn't expose cross-key transactions, cross-service calls make transactions infeasible, and idempotent recovery via `updateExisting` flag is the intended approach. Re-run the seed to recover from partial failures.
-
-6. **TraitModifiers and Metadata are client-only untyped objects**: Both `traitModifiers` and `metadata` are `type: object, additionalProperties: true` in the schema and `object?` in the internal model. No schema validation on structure. This is intentional: Species is L2 GameFoundation and must be game-agnostic. Different games define different trait systems (e.g., strength/dexterity vs magic affinity axes). No Bannou plugin reads specific keys from these fields by convention. If a higher-layer service needs species trait data, it owns that data in its own state store.
+5. **TraitModifiers and Metadata are client-only untyped objects**: Both `traitModifiers` and `metadata` are `type: object, additionalProperties: true` in the schema and `object?` in the internal model. No schema validation on structure. This is intentional: Species is L2 GameFoundation and must be game-agnostic. Different games define different trait systems (e.g., strength/dexterity vs magic affinity axes). No Bannou plugin reads specific keys from these fields by convention. If a higher-layer service needs species trait data, it owns that data in its own state store.
 
 ### Design Considerations
 

@@ -53,12 +53,14 @@ except ImportError:
 
 class ReferenceInfo(NamedTuple):
     """Information about a resource reference declaration."""
-    target: str           # e.g., 'character'
-    source_type: str      # e.g., 'actor'
-    field: str            # e.g., 'characterId'
-    on_delete: str        # e.g., 'cascade'
-    cleanup_endpoint: str # e.g., '/actor/cleanup-by-character'
-    payload_template: str # e.g., '{"characterId": "{{resourceId}}"}'
+    target: str                    # e.g., 'character'
+    source_type: str               # e.g., 'actor'
+    field: str                     # e.g., 'characterId'
+    on_delete: str                 # e.g., 'cascade', 'restrict', 'detach'
+    cleanup_endpoint: str          # e.g., '/actor/cleanup-by-character'
+    payload_template: str          # e.g., '{"characterId": "{{resourceId}}"}'
+    migrate_endpoint: str          # e.g., '/character/transfer-realm' (optional)
+    migrate_payload_template: str  # e.g., '{"sourceRealmId": ...}' (optional)
 
 
 class ResourceLifecycleInfo(NamedTuple):
@@ -108,6 +110,7 @@ def extract_references(schema: Dict[str, Any]) -> List[ReferenceInfo]:
     references = []
     for ref in x_refs:
         cleanup = ref.get('cleanup', {})
+        migrate = ref.get('migrate', {})
         references.append(ReferenceInfo(
             target=ref.get('target', ''),
             source_type=ref.get('sourceType', ''),
@@ -115,6 +118,8 @@ def extract_references(schema: Dict[str, Any]) -> List[ReferenceInfo]:
             on_delete=ref.get('onDelete', 'cascade'),
             cleanup_endpoint=cleanup.get('endpoint', ''),
             payload_template=cleanup.get('payloadTemplate', ''),
+            migrate_endpoint=migrate.get('endpoint', ''),
+            migrate_payload_template=migrate.get('payloadTemplate', ''),
         ))
 
     return references
@@ -303,6 +308,63 @@ def generate_reference_tracking_code(
             lines.append(f"                    CallbackEndpoint = \"{ref.cleanup_endpoint}\",")
             lines.append(f"                    PayloadTemplate = \"{escaped_template}\",")
             lines.append(f"                    Description = \"Cleanup {ref.source_type} entities referencing deleted {ref.target}\"")
+            lines.append("                },")
+            lines.append("                cancellationToken);")
+            lines.append("        }")
+            lines.append("        catch (ApiException)")
+            lines.append("        {")
+            lines.append("            allSucceeded = false;")
+            lines.append("        }")
+
+        lines.append("")
+        lines.append("        return allSucceeded;")
+        lines.append("    }")
+
+    # Check if any references have migrate endpoints
+    has_migrate = any(ref.migrate_endpoint for ref in references)
+
+    if has_migrate:
+        # Generate migrate callback registration method
+        lines.append("")
+        lines.append("    // ═══════════════════════════════════════════════════════════════════════════")
+        lines.append("    // Migrate Callback Registration")
+        lines.append("    // ═══════════════════════════════════════════════════════════════════════════")
+        lines.append("")
+        lines.append("    /// <summary>")
+        lines.append("    /// Registers migrate callbacks with lib-resource for all RESTRICT resource references.")
+        lines.append("    /// Migrate callbacks are invoked during resource merge to reassign dependent entities")
+        lines.append("    /// from the source resource to the target resource.")
+        lines.append("    /// Call this during service startup alongside RegisterResourceCleanupCallbacksAsync.")
+        lines.append("    /// </summary>")
+        lines.append("    /// <param name=\"resourceClient\">The resource service client.</param>")
+        lines.append("    /// <param name=\"cancellationToken\">Cancellation token.</param>")
+        lines.append("    /// <returns>True if all callbacks were registered successfully.</returns>")
+        lines.append("    public static async Task<bool> RegisterResourceMigrateCallbacksAsync(")
+        lines.append("        IResourceClient resourceClient,")
+        lines.append("        CancellationToken cancellationToken = default)")
+        lines.append("    {")
+        lines.append("        var allSucceeded = true;")
+
+        for ref in references:
+            if not ref.migrate_endpoint:
+                continue
+
+            # Escape the payload template for C# string literal
+            escaped_template = ref.migrate_payload_template.replace('\\', '\\\\').replace('"', '\\"')
+
+            lines.append("")
+            lines.append(f"        // Register migrate callback for {ref.target} references ({ref.source_type})")
+            lines.append("        try")
+            lines.append("        {")
+            lines.append("            await resourceClient.DefineMigrateCallbackAsync(")
+            lines.append("                new DefineMigrateCallbackRequest")
+            lines.append("                {")
+            lines.append(f"                    ResourceType = \"{ref.target}\",")
+            lines.append(f"                    SourceType = \"{ref.source_type}\",")
+            lines.append(f"                    ServiceName = \"{service_name}\",")
+            lines.append(f"                    MigrateEndpoint = \"{ref.migrate_endpoint}\",")
+            lines.append(f"                    MigratePayloadTemplate = \"{escaped_template}\",")
+            lines.append(f"                    Description = \"Migrate {ref.source_type} entities from source {ref.target} to target {ref.target}\"")
             lines.append("                },")
             lines.append("                cancellationToken);")
             lines.append("        }")
