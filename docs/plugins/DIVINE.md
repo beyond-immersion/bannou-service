@@ -516,6 +516,9 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 
 ## Work Tracking
 
+### Active
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#655](https://github.com/beyond-immersion/bannou-service/issues/655).
+
 **L4 audit completed (2026-03-06)**:
 - Schema: Custom events converted to flat structure (inline eventId/timestamp), `topic_prefix: divine` added for Pattern C lifecycle topics (`divine.deity.created/updated/deleted`)
 - Code: Constructor rebuilt with all 9 hard dependencies, constructor-cached state stores, IEventConsumer wired, internal data models defined (5 models with proper C# types), event handler async/telemetry compliant, structured logging on all stubs

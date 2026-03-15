@@ -522,3 +522,7 @@ Actor State Model
 ## Work Tracking
 
 Active AUDIT markers exist across Stubs (#1, #2), Potential Extensions (#1-#14), Bugs (#1, #2), and Design Considerations (#1). All are `NEEDS_DESIGN` with linked GitHub issues.
+
+### Active
+
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#657](https://github.com/beyond-immersion/bannou-service/issues/657).

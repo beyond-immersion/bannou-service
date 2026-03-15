@@ -269,3 +269,7 @@ None.
 - **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for DeleteAll (blocked on lib-resource batch unregister endpoint; O(N) API calls for N participations)
 - ~~**2026-02-06**: [#311](https://github.com/beyond-immersion/bannou-service/issues/311) - AddBackstoryElement event does not distinguish element added vs updated~~ **Closed**: Existing upsert semantics are sufficient; event consumers don't need the distinction
 - ~~**2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas~~ **Resolved**: Metadata is client-only opaque data; descriptions updated to clarify no plugin reads specific keys
+
+### Active
+
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#647](https://github.com/beyond-immersion/bannou-service/issues/647).

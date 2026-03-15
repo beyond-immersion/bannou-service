@@ -15,10 +15,10 @@
 | Layer | L2 GameFoundation |
 | Endpoints | 17 |
 | State Stores | item-template-store (MySQL), item-template-cache (Redis), item-instance-store (MySQL), item-instance-cache (Redis), item-lock (Redis) |
-| Events Published | 12 (item.template.created, item.template.updated, item.template.deleted, item.instance.created, item.instance.modified, item.instance.destroyed, item.instance.bound, item.instance.unbound, item.used, item.use-failed, item.use-step-completed, item.use-step-failed) |
+| Events Published | 12 (item.template.created, item.template.updated, item.template.deleted, item.instance.batch-created, item.instance.batch-modified, item.instance.batch-destroyed, item.instance.bound, item.instance.unbound, item.used, item.use-failed, item.use-step-completed, item.use-step-failed) |
 | Events Consumed | 0 |
 | Client Events | 0 |
-| Background Services | 0 |
+| Background Services | 1 (EventBatcherWorker) |
 
 ---
 
@@ -68,7 +68,7 @@
 |------------|-------|------|-------|
 | lib-state (IStateStoreFactory) | L0 | Hard | 5 state stores for templates, instances, cache, locks |
 | lib-state (IDistributedLockProvider) | L0 | Hard | Locks for container changes and UseItemStep |
-| lib-messaging (IMessageBus) | L0 | Hard | Publishing all 11 event topics |
+| lib-messaging (IMessageBus) | L0 | Hard | Publishing all 12 event topics |
 | lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation for async helpers |
 | lib-contract (IContractClient) | L1 | Hard | Contract creation, milestone completion, contract queries for item use flows |
 
@@ -86,9 +86,9 @@
 | `item.template.created` | `ItemTemplateCreatedEvent` | Template created |
 | `item.template.updated` | `ItemTemplateUpdatedEvent` | Template fields changed (changedFields populated) or deprecated (changedFields for deprecation fields) |
 | `item.template.deleted` | `ItemTemplateDeletedEvent` | Template permanently deleted by clean-deprecated sweep |
-| `item.instance.created` | `ItemInstanceCreatedEvent` | Instance created from template |
-| `item.instance.modified` | `ItemInstanceModifiedEvent` | Instance durability/stats/name/container/quantity changed, or quantity decremented on use |
-| `item.instance.destroyed` | `ItemInstanceDestroyedEvent` | Instance permanently deleted or consumed (last unit) |
+| `item.instance.batch-created` | `ItemInstanceBatchCreatedEvent` | Batch of instance creations (accumulated by ItemInstanceEventBatcher, flushed by EventBatcherWorker) |
+| `item.instance.batch-modified` | `ItemInstanceBatchModifiedEvent` | Batch of instance modifications (accumulated, deduped by instanceId per window) |
+| `item.instance.batch-destroyed` | `ItemInstanceBatchDestroyedEvent` | Batch of instance destructions (accumulated, flushed on interval or max batch size) |
 | `item.instance.bound` | `ItemInstanceBoundEvent` | Instance bound to character |
 | `item.instance.unbound` | `ItemInstanceUnboundEvent` | Instance binding removed |
 | `item.used` | `ItemUsedEvent` | Batched use successes (deduped by templateId+userId within window) |
@@ -109,36 +109,37 @@ This plugin does not consume external events.
 | Service | Role |
 |---------|------|
 | `ILogger<ItemService>` | Structured logging |
-| `ItemServiceConfiguration` | All 17 config properties (defaults cached at construction) |
+| `ItemServiceConfiguration` | All 18 config properties (defaults cached at construction) |
 | `IStateStoreFactory` | State store access (7 stores, constructor-cached as `_templateStore`, `_templateStringStore`, `_templateCacheStore`, `_instanceStore`, `_instanceStringStore`, `_instanceQueryableStore`, `_instanceCacheStore`) |
 | `IMessageBus` | Event publishing |
 | `IDistributedLockProvider` | Distributed locks for container changes and UseItemStep |
 | `ITelemetryProvider` | Span instrumentation |
 | `IContractClient` | Contract creation and milestone completion for item use flows |
+| `ItemInstanceEventBatcher` | Singleton batcher for instance lifecycle batch events (created/modified/destroyed) |
 
 ---
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| CreateItemTemplate | POST /item/template/create | developer | template, code-index, game-index, all-index, cache | item.template.created |
-| GetItemTemplate | POST /item/template/get | user | - | - |
-| ListItemTemplates | POST /item/template/list | user | - | - |
-| UpdateItemTemplate | POST /item/template/update | developer | template, cache | item.template.updated |
-| DeprecateItemTemplate | POST /item/template/deprecate | admin | template, cache | item.template.updated |
-| CreateItemInstance | POST /item/instance/create | developer | instance, container-index, template-index, cache | item.instance.created |
-| GetItemInstance | POST /item/instance/get | user | - | - |
-| ModifyItemInstance | POST /item/instance/modify | developer | instance, container-index, cache | item.instance.modified |
-| BindItemInstance | POST /item/instance/bind | developer | instance, cache | item.instance.bound |
-| UnbindItemInstance | POST /item/instance/unbind | admin | instance, cache | item.instance.unbound |
-| DestroyItemInstance | POST /item/instance/destroy | developer | instance, container-index, template-index, cache | item.instance.destroyed |
-| UseItem | POST /item/use | user | instance, container-index, template-index, cache | item.used, item.use-failed, item.instance.modified, item.instance.destroyed |
-| UseItemStep | POST /item/use-step | user | instance, container-index, template-index, cache | item.use-step-completed, item.use-step-failed, item.instance.modified, item.instance.destroyed |
-| ListItemsByContainer | POST /item/instance/list-by-container | user | - | - |
-| ListItemsByTemplate | POST /item/instance/list-by-template | admin | - | - |
-| BatchGetItemInstances | POST /item/instance/batch-get | user | - | - |
-| CleanDeprecatedItemTemplates | POST /item/template/clean-deprecated | admin | template, code-index, game-index, all-index, cache, reverse-index | item.template.deleted |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| CreateItemTemplate | POST /item/template/create | generated | developer | template, code-index, game-index, all-index, cache | item.template.created |
+| GetItemTemplate | POST /item/template/get | generated | user | - | - |
+| ListItemTemplates | POST /item/template/list | generated | user | - | - |
+| UpdateItemTemplate | POST /item/template/update | generated | developer | template, cache | item.template.updated |
+| DeprecateItemTemplate | POST /item/template/deprecate | generated | admin | template, cache | item.template.updated |
+| CreateItemInstance | POST /item/instance/create | generated | developer | instance, container-index, template-index, cache | item.instance.batch-created (deferred) |
+| GetItemInstance | POST /item/instance/get | generated | user | - | - |
+| ModifyItemInstance | POST /item/instance/modify | generated | developer | instance, container-index, cache | item.instance.batch-modified (deferred) |
+| BindItemInstance | POST /item/instance/bind | generated | developer | instance, cache | item.instance.bound |
+| UnbindItemInstance | POST /item/instance/unbind | generated | admin | instance, cache | item.instance.unbound |
+| DestroyItemInstance | POST /item/instance/destroy | generated | developer | instance, container-index, template-index, cache | item.instance.batch-destroyed (deferred) |
+| UseItem | POST /item/use | generated | user | instance, container-index, template-index, cache | item.used, item.use-failed, item.instance.batch-modified (deferred), item.instance.batch-destroyed (deferred) |
+| UseItemStep | POST /item/use-step | generated | user | instance, container-index, template-index, cache | item.use-step-completed, item.use-step-failed, item.instance.batch-modified (deferred), item.instance.batch-destroyed (deferred) |
+| ListItemsByContainer | POST /item/instance/list-by-container | generated | user | - | - |
+| ListItemsByTemplate | POST /item/instance/list-by-template | generated | admin | - | - |
+| BatchGetItemInstances | POST /item/instance/batch-get | generated | user | - | - |
+| CleanDeprecatedItemTemplates | POST /item/template/clean-deprecated | generated | admin | template, code-index, game-index, all-index, cache, reverse-index | item.template.deleted |
 
 ---
 
@@ -234,7 +235,7 @@ WRITE instance-cache:"inst:{instanceId}" <- model (with TTL)
 // AddToListAsync with optimistic concurrency retries
 ETAG-WRITE instance-store:"inst-container:{containerId}" <- append instanceId
 ETAG-WRITE instance-store:"inst-template:{templateId}" <- append instanceId
-PUBLISH item.instance.created { instanceId, templateId, containerId, realmId, quantity, ... }
+// Instance event deferred to batch (published by EventBatcherWorker as item.instance.batch-created)
 RETURN (200, ItemInstanceResponse)
 ```
 
@@ -270,7 +271,7 @@ IF container cleared or changed
 IF container changed to new
   ETAG-WRITE instance-store:"inst-container:{newContainerId}" <- append instanceId
 DELETE instance-cache:"inst:{instanceId}"
-PUBLISH item.instance.modified { instanceId, templateId, containerId, realmId, quantity, ... }
+// Instance event deferred to batch (published by EventBatcherWorker as item.instance.batch-modified)
 RETURN (200, ItemInstanceResponse)
 ```
 
@@ -283,9 +284,9 @@ IF instance.BoundToId is set AND config.BindingAllowAdminOverride == false  -> 4
 // Set BoundToId = characterId, BoundAt = now
 WRITE instance-store:"inst:{instanceId}" <- updated model
 DELETE instance-cache:"inst:{instanceId}"
-// Event enrichment: load template for code (fallback: "missing:{templateId}" if template not found)
+// Event enrichment: load template for code (null if template not found)
 READ template via cache read-through
-PUBLISH item.instance.bound { instanceId, templateId, templateCode, realmId, characterId, bindType }
+PUBLISH item.instance.bound { instanceId, templateId, templateCode (nullable), realmId, characterId, bindType }
 RETURN (200, ItemInstanceResponse)
 ```
 
@@ -299,8 +300,9 @@ IF instance.BoundToId is null                                -> 400 (not bound)
 // Set BoundToId = null, BoundAt = null
 WRITE instance-store:"inst:{instanceId}" <- updated model
 DELETE instance-cache:"inst:{instanceId}"
-READ template via cache read-through  // for event enrichment
-PUBLISH item.instance.unbound { instanceId, templateId, templateCode, realmId, previousCharacterId, reason }
+// Event enrichment: load template for code (null if template not found)
+READ template via cache read-through
+PUBLISH item.instance.unbound { instanceId, templateId, templateCode (nullable), realmId, previousCharacterId, reason }
 RETURN (200, ItemInstanceResponse)
 ```
 
@@ -317,7 +319,7 @@ IF instance.ContainerId is set
 ETAG-WRITE instance-store:"inst-template:{templateId}" <- remove instanceId
 DELETE instance-store:"inst:{instanceId}"
 DELETE instance-cache:"inst:{instanceId}"
-PUBLISH item.instance.destroyed { instanceId, templateId, containerId, realmId, quantity, ... }
+// Instance event deferred to batch (published by EventBatcherWorker as item.instance.batch-destroyed)
 // TODO: dispatch to IItemInstanceDestructionListener implementations (GH #490)
 RETURN (200, DestroyItemInstanceResponse { templateId })
 ```
@@ -360,11 +362,11 @@ IF template.ItemUseBehavior != Disabled
     ETAG-WRITE instance-store:"inst-template:{templateId}" <- remove instanceId
     DELETE instance-store:"inst:{instanceId}"
     DELETE instance-cache:"inst:{instanceId}"
-    PUBLISH item.instance.destroyed { ... }
+    // Deferred to batch: item.instance.batch-destroyed
   ELSE
     WRITE instance-store:"inst:{instanceId}" <- Quantity -= 1
     DELETE instance-cache:"inst:{instanceId}"
-    PUBLISH item.instance.modified { ... }
+    // Deferred to batch: item.instance.batch-modified
 
 // RecordUseSuccessAsync: add to success batch
 PUBLISH item.used { batchId, uses, totalCount }  // batched, deduped by templateId+userId
@@ -492,4 +494,25 @@ RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 
 ## Background Services
 
-No background services.
+### EventBatcherWorker
+**Interval**: config.InstanceEventBatchIntervalSeconds (default 5s)
+**Startup delay**: config.InstanceEventBatchStartupDelaySeconds (default 10s)
+**Purpose**: Flushes accumulated instance lifecycle batch events
+
+```
+// Registered in ItemServicePlugin.ConfigureServices as AddHostedService
+// Flushes ItemInstanceEventBatcher's three internal batchers on interval
+FOREACH batcher in ItemInstanceEventBatcher.AllFlushables
+  IF batcher has accumulated entries
+    PUBLISH item.instance.batch-created { records[] }   // or batch-modified / batch-destroyed
+```
+
+**Dual batching architecture:**
+- **Instance lifecycle events** (created/modified/destroyed): Accumulated by `ItemInstanceEventBatcher` (singleton), flushed by this worker on a timer. Max batch size: config.InstanceEventBatchMaxSize (default 500).
+- **Item use events** (used/use-failed): Accumulated by static `ConcurrentDictionary` state in ItemService, flushed inline during endpoint processing when the deduplication window (config.UseEventDeduplicationWindowSeconds, default 60s) expires or batch reaches config.UseEventBatchMaxSize (default 100). No background worker — request-driven only.
+
+---
+
+## Non-Standard Implementation Patterns
+
+No non-standard patterns (no manual routes, no controller-only endpoints, no custom lifecycle overrides).

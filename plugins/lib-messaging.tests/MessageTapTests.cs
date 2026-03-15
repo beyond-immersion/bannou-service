@@ -29,7 +29,7 @@ public class InMemoryMessageTapTests : IDisposable
     {
         _loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
         _messageBus = new InMemoryMessageBus(_loggerFactory.CreateLogger<InMemoryMessageBus>());
-        _messageTap = new InMemoryMessageTap(_messageBus, _loggerFactory.CreateLogger<InMemoryMessageTap>());
+        _messageTap = new InMemoryMessageTap(_messageBus, _messageBus, _loggerFactory.CreateLogger<InMemoryMessageTap>());
     }
 
     public void Dispose()

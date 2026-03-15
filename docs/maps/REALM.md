@@ -63,7 +63,7 @@ No DI Provider/Listener interfaces implemented or consumed.
 |-------|-----------|---------|
 | `realm.created` | `RealmCreatedEvent` | CreateRealm, SeedRealms (new realm path) |
 | `realm.updated` | `RealmUpdatedEvent` | UpdateRealm, DeprecateRealm, UndeprecateRealm, SeedRealms (update path) — includes `changedFields` |
-| `realm.deleted` | `RealmDeletedEvent` | DeleteRealm |
+| `realm.deleted` | `RealmDeletedEvent` | DeleteRealm, MergeRealms (deleteAfterMerge path) |
 | `realm.merged` | `RealmMergedEvent` | MergeRealms — includes per-entity-type migration counts |
 
 ---
@@ -95,28 +95,28 @@ This plugin does not consume external events.
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| GetRealm | POST /realm/get | user | - | - |
-| GetRealmByCode | POST /realm/get-by-code | user | - | - |
-| ListRealms | POST /realm/list | user | - | - |
-| RealmExists | POST /realm/exists | user | - | - |
-| RealmsExistBatch | POST /realm/exists-batch | user | - | - |
-| CreateRealm | POST /realm/create | admin | realm, code-index, all-realms | realm.created |
-| UpdateRealm | POST /realm/update | admin | realm | realm.updated |
-| DeleteRealm | POST /realm/delete | admin | realm, code-index, all-realms | realm.deleted |
-| DeprecateRealm | POST /realm/deprecate | admin | realm | realm.updated |
-| UndeprecateRealm | POST /realm/undeprecate | admin | realm | realm.updated |
-| MergeRealms | POST /realm/merge | admin | (delegates to L2 clients) | realm.merged |
-| SeedRealms | POST /realm/seed | admin | realm, code-index, all-realms | realm.created, realm.updated |
-| GetLocationCompressContext | POST /realm/get-location-compress-context | developer | - | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| GetRealm | POST /realm/get | generated | [] | - | - |
+| GetRealmByCode | POST /realm/get-by-code | generated | [] | - | - |
+| ListRealms | POST /realm/list | generated | [] | - | - |
+| RealmExists | POST /realm/exists | generated | [] | - | - |
+| RealmsExistBatch | POST /realm/exists-batch | generated | [] | - | - |
+| CreateRealm | POST /realm/create | generated | [] | realm, code-index, all-realms | realm.created |
+| UpdateRealm | POST /realm/update | generated | [] | realm | realm.updated |
+| DeleteRealm | POST /realm/delete | generated | [] | realm, code-index, all-realms | realm.deleted |
+| DeprecateRealm | POST /realm/deprecate | generated | [] | realm | realm.updated |
+| UndeprecateRealm | POST /realm/undeprecate | generated | [] | realm | realm.updated |
+| MergeRealms | POST /realm/merge | generated | [] | (delegates to L2 clients) | realm.merged, realm.deleted |
+| SeedRealms | POST /realm/seed | generated | [] | realm, code-index, all-realms | realm.created, realm.updated |
+| GetLocationCompressContext | POST /realm/get-location-compress-context | generated | [] | - | - |
 
 ---
 
 ## Methods
 
 ### GetRealm
-POST /realm/get | Roles: [user]
+POST /realm/get | Roles: []
 
 ```
 READ realm:{realmId} -> 404 if null
@@ -126,7 +126,7 @@ RETURN (200, RealmResponse)
 ---
 
 ### GetRealmByCode
-POST /realm/get-by-code | Roles: [user]
+POST /realm/get-by-code | Roles: []
 
 ```
 READ code-index:{CODE_UPPERCASE} -> 404 if null or invalid GUID
@@ -137,7 +137,7 @@ RETURN (200, RealmResponse)
 ---
 
 ### ListRealms
-POST /realm/list | Roles: [user]
+POST /realm/list | Roles: []
 
 ```
 READ all-realms -> empty list if null
@@ -152,7 +152,7 @@ RETURN (200, RealmListResponse)
 ---
 
 ### RealmExists
-POST /realm/exists | Roles: [user]
+POST /realm/exists | Roles: []
 
 ```
 READ realm:{realmId}
@@ -164,7 +164,7 @@ RETURN (200, RealmExistsResponse { isActive: model.IsActive && !model.IsDeprecat
 ---
 
 ### RealmsExistBatch
-POST /realm/exists-batch | Roles: [user]
+POST /realm/exists-batch | Roles: []
 
 ```
 IF realmIds is empty
@@ -178,7 +178,7 @@ RETURN (200, RealmsExistBatchResponse { results, allExist, allActive, invalidRea
 ---
 
 ### CreateRealm
-POST /realm/create | Roles: [admin]
+POST /realm/create | Roles: []
 
 ```
 READ code-index:{CODE_UPPERCASE} -> 409 if already exists
@@ -197,7 +197,7 @@ RETURN (200, RealmResponse)
 ---
 
 ### UpdateRealm
-POST /realm/update | Roles: [admin]
+POST /realm/update | Roles: []
 
 ```
 // Retry loop up to OptimisticRetryAttempts
@@ -214,7 +214,7 @@ RETURN (200, RealmResponse)
 ---
 
 ### DeleteRealm
-POST /realm/delete | Roles: [admin]
+POST /realm/delete | Roles: []
 
 ```
 READ realm:{realmId} -> 404 if null
@@ -237,7 +237,7 @@ RETURN (200)
 ---
 
 ### DeprecateRealm
-POST /realm/deprecate | Roles: [admin]
+POST /realm/deprecate | Roles: []
 
 ```
 // Retry loop up to OptimisticRetryAttempts
@@ -254,7 +254,7 @@ RETURN (200, RealmResponse)
 ---
 
 ### UndeprecateRealm
-POST /realm/undeprecate | Roles: [admin]
+POST /realm/undeprecate | Roles: []
 
 ```
 // Retry loop up to OptimisticRetryAttempts
@@ -271,7 +271,7 @@ RETURN (200, RealmResponse)
 ---
 
 ### MergeRealms
-POST /realm/merge | Roles: [admin]
+POST /realm/merge | Roles: []
 
 ```
 IF sourceRealmId == targetRealmId -> 400
@@ -317,7 +317,7 @@ RETURN (200, MergeRealmsResponse { per-type migrated/failed counts, sourceDelete
 ---
 
 ### SeedRealms
-POST /realm/seed | Roles: [admin]
+POST /realm/seed | Roles: []
 
 ```
 FOREACH seedRealm in body.Realms
@@ -346,7 +346,7 @@ RETURN (200, SeedRealmsResponse { created, updated, skipped, errors })
 ---
 
 ### GetLocationCompressContext
-POST /realm/get-location-compress-context | Roles: [developer]
+POST /realm/get-location-compress-context | Roles: []
 
 ```
 CALL ILocationClient.GetLocationAsync(locationId) -> 404 if ApiException(404)
@@ -359,3 +359,19 @@ RETURN (200, RealmLocationArchiveContext { realmId, realmName, realmCode, realmD
 ## Background Services
 
 No background services.
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### OnRunningAsync
+
+```
+// Compression callback registration for location archives
+CALL IResourceTemplateRegistry.Register(RealmContextTemplate)
+  // Registers template for ABML compile-time path validation (realm-context namespace)
+CALL RealmCompressionCallbacks.RegisterAsync(IResourceClient)
+  // Registers with lib-resource: resourceType=location, sourceType=realm-context,
+  // endpoint=/realm/get-location-compress-context, priority=5
+  // ApiException swallowed (logged as warning); other exceptions propagate
+```

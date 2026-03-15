@@ -292,6 +292,86 @@ await _messageBus.TryPublishErrorAsync(
 
 Instance identity (`serviceId`, `appId`) is injected internally from `IMeshInstanceIdentifier` — never provide it manually. Never construct `ServiceErrorEvent` directly.
 
+### Batch Lifecycle Event Helpers
+
+**Files**: `bannou-service/Services/EventBatcher.cs`, `DeduplicatingEventBatcher.cs`, `IFlushable.cs`, `EventBatcherWorker.cs`
+
+Two shared helpers for high-frequency lifecycle event accumulation. Services feed all operations (individual and batch endpoints) into the batcher; the batcher owns publishing on a configurable interval. Per-node in-memory accumulation — each node publishes its own batches independently.
+
+**Mode 1 — Accumulating** (`EventBatcher<TEntry>`): Every entry is preserved (append-all). Use for events where each operation is unique: instance created/destroyed, currency credit/debit, encounter recorded, journey waypoint, blessing granted. Backed by `ConcurrentBag<T>` with `Interlocked.Exchange` atomic swap.
+
+**Mode 2 — Deduplicating** (`DeduplicatingEventBatcher<TKey, TEntry>`): Same key overwrites (last-write-wins). Use for events where the same entity may be updated multiple times in a window and only the latest state matters: instance modified, personality evolved, relationship updated. Backed by `ConcurrentDictionary<TKey, TEntry>` with `Interlocked.Exchange`.
+
+Both implement `IFlushable` and guarantee **chronological entry ordering** on flush (sorted by timestamp before invoking the callback).
+
+```csharp
+// Mode 1: accumulating (e.g., item instance created — each is unique)
+var createdBatcher = new EventBatcher<ItemInstanceBatchEntry>(
+    async (entries, windowStart, ct) => { /* publish batch event */ },
+    entry => entry.CreatedAt,   // timestamp selector for sorting
+    logger);
+
+createdBatcher.Add(entry);              // single entry (synchronous, non-blocking)
+createdBatcher.AddRange(entries);       // batch endpoint support
+
+// Mode 2: deduplicating (e.g., item instance modified — latest state wins)
+var modifiedBatcher = new DeduplicatingEventBatcher<Guid, ItemInstanceBatchModifiedEntry>(
+    async (entries, windowStart, ct) => { /* publish batch event */ },
+    entry => entry.CreatedAt,
+    logger);
+
+modifiedBatcher.Add(instanceId, entry); // last-write-wins within window
+```
+
+**`EventBatcherWorker`**: Canonical `BackgroundService` that flushes one or more `IFlushable` batchers per cycle. A single worker can flush multiple batchers — e.g., Item's worker flushes created (Mode 1), modified (Mode 2), and destroyed (Mode 1) batchers in one cycle.
+
+```csharp
+// Plugin registration (ItemServicePlugin.cs)
+services.AddSingleton<ItemInstanceEventBatcher>();
+services.AddSingleton<IHostedService>(sp =>
+{
+    var batcher = sp.GetRequiredService<ItemInstanceEventBatcher>();
+    var config = sp.GetRequiredService<ItemServiceConfiguration>();
+    return new EventBatcherWorker(
+        batcher.AllFlushables,  // IFlushable[] — all batchers for this service
+        sp, logger, telemetryProvider,
+        config.InstanceEventBatchIntervalSeconds,
+        config.InstanceEventBatchStartupDelaySeconds,
+        "item", "InstanceEventBatcher");
+});
+```
+
+**x-lifecycle `batch: true`**: Entities with this flag in their `x-lifecycle` definition generate ONLY batch event schemas (no individual lifecycle events). The generator produces `*BatchEntry`, `*BatchModifiedEntry`, `*BatchDestroyedEntry` (entry models) and `*BatchCreatedEvent`, `*BatchModifiedEvent`, `*BatchDestroyedEvent` (batch event wrappers). Lifecycle interfaces (`ILifecycleCreatedEvent`, etc.) are applied to the entry models.
+
+```yaml
+x-lifecycle:
+  ItemInstance:
+    batch: true    # generates batch events only — no individual lifecycle events
+    model:
+      instanceId: { type: string, format: uuid, primary: true, ... }
+```
+
+**When to use `batch: true`**: Any x-lifecycle instance entity in a service that declares `x-references` targeting character-scale entities. These are structurally high-frequency at 100K NPC scale, externally-created, and cleaned up via lib-resource or DI listeners (not event subscription). See planning doc `docs/planning/BATCH-LIFECYCLE-EVENTS.md` for the complete x-references heuristic and candidate list.
+
+**Configuration pattern**: Each service defines its own batch interval and max size in its configuration schema:
+
+```yaml
+instanceEventBatchIntervalSeconds:
+  type: integer
+  default: 5       # 5s for services with potential functional consumers
+                   # 60s for pure observability (e.g., permission)
+instanceEventBatchStartupDelaySeconds:
+  type: integer
+  default: 10
+instanceEventBatchMaxSize:
+  type: integer
+  default: 500
+```
+
+**Reference implementations**: `lib-item/Services/ItemInstanceEventBatcher.cs` (three batchers, one worker), `lib-permission/RegistrationEventBatcher.cs` (single deduplicating batcher).
+
+**Structural test**: `BatchLifecycleEntities_HaveBatchEventPublications` validates that `batch: true` entities have batch publications and no individual lifecycle publications.
+
 ---
 
 ## 3. Background Worker Helpers
@@ -1267,6 +1347,11 @@ Reference implementations: `lib-item` (`inst-template:{templateId}`), `lib-curre
 | Implement clean-deprecated sweep | `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` | `Helpers/DeprecationCleanupHelper.cs` |
 | O(1) instance check for clean-deprecated | Reverse index (template→instance list) | § 15 (reverse index pattern) |
 | Implement Category A merge endpoint | `MergeDeprecatedRequest`/`MergeDeprecatedResponse` | `common-api.yaml` shared models |
+| Batch high-frequency lifecycle events (append-all) | `EventBatcher<TEntry>` | `Services/EventBatcher.cs` |
+| Batch high-frequency lifecycle events (dedup) | `DeduplicatingEventBatcher<TKey, TEntry>` | `Services/DeduplicatingEventBatcher.cs` |
+| Flush multiple batchers per cycle | `EventBatcherWorker` + `IFlushable` | `Services/EventBatcherWorker.cs` |
+| Validate batch lifecycle publications | `BatchLifecycleEntities_HaveBatchEventPublications` | `structural-tests/` |
+| Batch endpoint request/response models | `BatchOperationRequest`/`BatchOperationResponse` | `common-api.yaml` shared models |
 
 ---
 

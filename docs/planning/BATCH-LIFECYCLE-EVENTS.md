@@ -3,7 +3,7 @@
 > **Type**: Implementation Plan
 > **Status**: Active
 > **Created**: 2026-03-13
-> **Last Updated**: 2026-03-13
+> **Last Updated**: 2026-03-15
 > **North Stars**: #1
 > **Related Plugins**: Item, Permission, Affix, Character-Encounter, Character-History, Character-Personality, Transit, Status, Currency, Quest, Achievement, Collection, Divine, Relationship, Actor, Leaderboard, License
 
@@ -685,9 +685,26 @@ All 16 services with `x-references`, assessed for batch lifecycle candidacy:
 
 ## Related Issues
 
+**Existing**:
 - [#559](https://github.com/beyond-immersion/bannou-service/issues/559) — Item: Batch instance destruction (batch endpoint design)
 - [#484](https://github.com/beyond-immersion/bannou-service/issues/484) — Inventory: item event consumption for counter sync (open design question — if event subscription is chosen, batch events would be the consumed format)
 - [#490](https://github.com/beyond-immersion/bannou-service/issues/490) — Affix: full implementation (future consumer of this pattern)
+
+**Created by this plan** (batch lifecycle migration per service):
+- [#646](https://github.com/beyond-immersion/bannou-service/issues/646) — Character-Encounter: Switch Encounter lifecycle to batch: true
+- [#647](https://github.com/beyond-immersion/bannou-service/issues/647) — Character-History: Switch Participation lifecycle to batch: true
+- [#648](https://github.com/beyond-immersion/bannou-service/issues/648) — Character-Personality: Switch Personality/CombatPreferences lifecycle to batch: true
+- [#649](https://github.com/beyond-immersion/bannou-service/issues/649) — Transit: Switch Journey/Discovery lifecycle to batch: true
+- [#650](https://github.com/beyond-immersion/bannou-service/issues/650) — Status: Switch StatusInstance lifecycle to batch: true
+- [#651](https://github.com/beyond-immersion/bannou-service/issues/651) — Currency: Batch high-frequency credit/debit events
+- [#652](https://github.com/beyond-immersion/bannou-service/issues/652) — Quest: Switch QuestInstance/Objective lifecycle to batch: true
+- [#653](https://github.com/beyond-immersion/bannou-service/issues/653) — Achievement: Switch Progress lifecycle to batch: true
+- [#654](https://github.com/beyond-immersion/bannou-service/issues/654) — Collection: Switch CollectionInstance/Entry lifecycle to batch: true
+- [#655](https://github.com/beyond-immersion/bannou-service/issues/655) — Divine: Switch Blessing lifecycle to batch: true
+- [#656](https://github.com/beyond-immersion/bannou-service/issues/656) — Relationship: Switch Relationship lifecycle to batch: true
+- [#657](https://github.com/beyond-immersion/bannou-service/issues/657) — Actor: Switch ActorInstance lifecycle to batch: true
+- [#658](https://github.com/beyond-immersion/bannou-service/issues/658) — Leaderboard: Batch high-frequency entry/rank events
+- [#659](https://github.com/beyond-immersion/bannou-service/issues/659) — License: Switch Board lifecycle to batch: true
 
 ## Verification
 

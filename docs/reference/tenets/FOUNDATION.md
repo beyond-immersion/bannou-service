@@ -298,6 +298,16 @@ These interfaces enable generic processing of lifecycle events (e.g., audit logg
 
 **changedFields convention**: All `*.updated` events — whether lifecycle-generated or custom — MUST include a `changedFields` property containing camelCase property names of the fields that changed. This enables consumers to filter reactions to only the fields they care about. Lifecycle-generated events get this automatically; custom updated events must add it manually.
 
+### Batch Lifecycle Events (x-lifecycle batch: true)
+
+Entities with `batch: true` in their `x-lifecycle` definition generate ONLY batch event types — no individual lifecycle events. The generator produces `*BatchCreatedEvent`, `*BatchModifiedEvent`, `*BatchDestroyedEvent` (wrappers with entry arrays + batch metadata) and `*BatchEntry`, `*BatchModifiedEntry`, `*BatchDestroyedEntry` (entry models carrying the lifecycle data). Lifecycle interfaces are applied to entry models, not batch wrappers.
+
+Services feed all operations into an `EventBatcher` (Mode 1: accumulating, append-all) or `DeduplicatingEventBatcher` (Mode 2: last-write-wins) from `bannou-service/Services/`. The batcher flushes periodically via `EventBatcherWorker`. No inline event publishing from service methods.
+
+**When to use**: Instance entities in services declaring `x-references` targeting character-scale entities. At 100K NPC scale, these are high-frequency, externally-created, and cleaned up via lib-resource or DI listeners — their lifecycle events are informational (analytics/observability), not functional. See [Helpers § Batch Lifecycle Event Helpers](../HELPERS-AND-COMMON-PATTERNS.md#batch-lifecycle-event-helpers) for the full API and implementation pattern.
+
+**T5 compliance**: `batch: true` entities still satisfy "all meaningful state changes MUST publish events" — the events are published in batches rather than individually. Every state change is represented as an entry in the batch event. No state change is silently dropped.
+
 ### Full-State Events Pattern
 
 For atomically consistent state across instances, include complete state + monotonic version. Consumers use version-check-and-replace: reject if `version <= _currentVersion`, otherwise replace all state and update version.

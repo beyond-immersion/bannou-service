@@ -420,6 +420,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Batch item destruction** (2026-03-04): No batch destroy endpoint for high-frequency scenarios. Tracked via [#559](https://github.com/beyond-immersion/bannou-service/issues/559). See Potential Extensions #6.
 
 ### Completed
+- **Batch lifecycle events for ItemInstance** (2026-03-15): Switched ItemInstance x-lifecycle to `batch: true`. Individual lifecycle events replaced with `ItemInstanceBatchCreatedEvent`, `BatchModifiedEvent`, `BatchDestroyedEvent`. Uses shared `EventBatcher<T>`/`DeduplicatingEventBatcher<K,T>` helpers. See `docs/planning/BATCH-LIFECYCLE-EVENTS.md`.
 
 ### Related (Cross-Service)
 - **[#153](https://github.com/beyond-immersion/bannou-service/issues/153)**: Escrow Asset Transfer Integration Broken - Affects lib-escrow's ability to use `IItemClient` for item-backed exchanges.

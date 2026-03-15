@@ -302,6 +302,10 @@ State Store Layout
 - [#544](https://github.com/beyond-immersion/bannou-service/issues/544): Game-time auto-population for `startedAt`/`endedAt` fields — cross-cutting with Character Encounter. Key open question: relationships are cross-realm (no single clock applies), so game-time may not be applicable here
 - [#564](https://github.com/beyond-immersion/bannou-service/issues/564): Expand `x-references` cleanup to cover Organization and Faction entity types (when those plugins are implemented)
 
+### Active
+
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#656](https://github.com/beyond-immersion/bannou-service/issues/656).
+
 ### Completed
 
 *No completed items.*

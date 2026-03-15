@@ -56,7 +56,7 @@ Every infrastructure layer has a working embedded backend. No code changes neede
 | Infrastructure | Server Backend | Embedded Backend | Status |
 |---------------|---------------|-----------------|--------|
 | **lib-state** (persistence) | Redis + MySQL | InMemory + SQLite | Works today (`UseSqlite=true`) |
-| **lib-messaging** (pub/sub) | RabbitMQ | InMemoryMessageBus | Works today |
+| **lib-messaging** (pub/sub) | RabbitMQ | DirectDispatchMessageBus | Works today (`UseDirectDispatch=true`) |
 | **lib-state** (distributed locks) | Redis SETNX | ConcurrentDictionary fallback | Works today (single-process safe) |
 | **lib-state** (sorted sets) | Redis sorted sets | InMemory sorted set impl | Full feature parity |
 | **lib-state** (LINQ queries) | MySQL via EF Core | SQLite via EF Core | Full feature parity |
@@ -69,7 +69,7 @@ StateStoreFactoryConfiguration:
   SqliteDataPath = "./data"  // Persistent storage location
 
 MessagingServiceConfiguration:
-  UseInMemory = true         // RabbitMQ → in-process pub/sub
+  UseDirectDispatch = true   // RabbitMQ → direct IEventConsumer dispatch (zero overhead)
 
 MeshServiceConfiguration:
   UseLocalRouting = true     // No Redis endpoint registry

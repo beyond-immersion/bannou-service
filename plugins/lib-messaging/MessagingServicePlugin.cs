@@ -43,6 +43,8 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             services.AddSingleton<DirectDispatchMessageBus>();
             services.AddSingleton<IMessageBus>(sp => sp.GetRequiredService<DirectDispatchMessageBus>());
             services.AddSingleton<IMessageSubscriber>(sp => sp.GetRequiredService<DirectDispatchMessageBus>());
+            // IMessageTap uses in-process forwarding via IMessageBus/IMessageSubscriber interfaces
+            services.AddSingleton<IMessageTap, InMemoryMessageTap>();
 
             Logger?.LogDebug("Direct dispatch messaging configured");
             return;
@@ -58,6 +60,8 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             services.AddSingleton<InMemoryMessageBus>();
             services.AddSingleton<IMessageBus>(sp => sp.GetRequiredService<InMemoryMessageBus>());
             services.AddSingleton<IMessageSubscriber>(sp => sp.GetRequiredService<InMemoryMessageBus>());
+            // IMessageTap uses in-process forwarding via IMessageBus/IMessageSubscriber interfaces
+            services.AddSingleton<IMessageTap, InMemoryMessageTap>();
 
             Logger?.LogDebug("In-memory messaging configured");
             return;
@@ -114,6 +118,9 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
 
             return new RabbitMQMessageSubscriber(channelManager, logger, msgConfig, telemetryProvider, messageBus);
         });
+
+        // IMessageTap uses real RabbitMQ exchange bindings for cross-process tap forwarding
+        services.AddSingleton<IMessageTap, RabbitMQMessageTap>();
 
         // Register NativeEventConsumerBackend as IHostedService
         // This bridges RabbitMQ subscriptions to existing IEventConsumer fan-out

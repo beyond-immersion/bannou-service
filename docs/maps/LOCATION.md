@@ -131,40 +131,40 @@ Routed via `IEntitySessionRegistry.PublishToEntitySessionsAsync("location", loca
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| GetLocation | POST /location/get | user | - | - |
-| GetLocationByCode | POST /location/get-by-code | user | - | - |
-| ListLocations | POST /location/list | user | - | - |
-| ListLocationsByRealm | POST /location/list-by-realm | user | - | - |
-| ListLocationsByParent | POST /location/list-by-parent | user | - | - |
-| ListRootLocations | POST /location/list-root | user | - | - |
-| GetLocationAncestors | POST /location/get-ancestors | user | - | - |
-| GetLocationDescendants | POST /location/get-descendants | user | - | - |
-| ValidateTerritory | POST /location/validate-territory | user | - | - |
-| LocationExists | POST /location/exists | user | - | - |
-| QueryLocationsByPosition | POST /location/query/by-position | user | - | - |
-| CreateLocation | POST /location/create | admin | location, code-index, realm-index, parent-index/root-locations, cache | location.created |
-| UpdateLocation | POST /location/update | admin | location, cache | location.updated |
-| SetLocationParent | POST /location/set-parent | admin | location, parent-index, root-locations, cache, descendants | location.updated |
-| RemoveLocationParent | POST /location/remove-parent | admin | location, parent-index, root-locations, cache, descendants | location.updated |
-| DeleteLocation | POST /location/delete | admin | location, code-index, realm-index, parent-index/root-locations, cache | location.deleted |
-| DeprecateLocation | POST /location/deprecate | admin | location, cache | location.updated |
-| UndeprecateLocation | POST /location/undeprecate | admin | location, cache | location.updated |
-| TransferLocationToRealm | POST /location/transfer-realm | admin | location, code-index, realm-index, parent-index/root-locations, cache | location.updated |
-| SeedLocations | POST /location/seed | admin | (delegates to CreateLocation, SetLocationParent) | location.created, location.updated |
-| ReportEntityPosition | POST /location/report-entity-position | developer | entity-presence, entity-set, entity-index | location.entity-arrived, location.entity-departed |
-| GetEntityLocation | POST /location/get-entity-location | user | - | - |
-| ListEntitiesAtLocation | POST /location/list-entities-at-location | user | - | - |
-| ClearEntityPosition | POST /location/clear-entity-position | developer | entity-presence, entity-set | location.entity-departed |
-| GetLocationCompressData | POST /location/get-compress-data | developer | - | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| GetLocation | POST /location/get | generated | [] | - | - |
+| GetLocationByCode | POST /location/get-by-code | generated | [] | - | - |
+| ListLocations | POST /location/list | generated | [] | - | - |
+| ListLocationsByRealm | POST /location/list-by-realm | generated | [] | - | - |
+| ListLocationsByParent | POST /location/list-by-parent | generated | [] | - | - |
+| ListRootLocations | POST /location/list-root | generated | [] | - | - |
+| GetLocationAncestors | POST /location/get-ancestors | generated | [] | - | - |
+| GetLocationDescendants | POST /location/get-descendants | generated | [] | - | - |
+| ValidateTerritory | POST /location/validate-territory | generated | [] | - | - |
+| LocationExists | POST /location/exists | generated | [] | - | - |
+| QueryLocationsByPosition | POST /location/query/by-position | generated | [] | - | - |
+| CreateLocation | POST /location/create | generated | developer | location, code-index, realm-index, parent-index/root-locations, cache | location.created |
+| UpdateLocation | POST /location/update | generated | developer | location, cache | location.updated |
+| SetLocationParent | POST /location/set-parent | generated | developer | location, parent-index, root-locations, cache, descendants | location.updated |
+| RemoveLocationParent | POST /location/remove-parent | generated | developer | location, parent-index, root-locations, cache, descendants | location.updated |
+| DeleteLocation | POST /location/delete | generated | developer | location, code-index, realm-index, parent-index/root-locations, cache | location.deleted |
+| DeprecateLocation | POST /location/deprecate | generated | developer | location, cache | location.updated |
+| UndeprecateLocation | POST /location/undeprecate | generated | developer | location, cache | location.updated |
+| TransferLocationToRealm | POST /location/transfer-realm | generated | developer | location, code-index, realm-index, parent-index/root-locations, cache | location.updated |
+| SeedLocations | POST /location/seed | generated | developer | (delegates to CreateLocation, SetLocationParent) | location.created, location.updated |
+| ReportEntityPosition | POST /location/report-entity-position | generated | [] | entity-presence, entity-set, entity-index | location.entity-arrived, location.entity-departed |
+| GetEntityLocation | POST /location/get-entity-location | generated | [] | - | - |
+| ListEntitiesAtLocation | POST /location/list-entities-at-location | generated | [] | - | - |
+| ClearEntityPosition | POST /location/clear-entity-position | generated | [] | entity-presence, entity-set | location.entity-departed |
+| GetLocationCompressData | POST /location/get-compress-data | generated | [] | - | - |
 
 ---
 
 ## Methods
 
 ### GetLocation
-POST /location/get | Roles: [user]
+POST /location/get | Roles: []
 
 ```
 READ cache:location:{locationId}
@@ -175,7 +175,7 @@ RETURN (200, LocationResponse)
 ```
 
 ### GetLocationByCode
-POST /location/get-by-code | Roles: [user]
+POST /location/get-by-code | Roles: []
 
 ```
 READ store:code-index:{realmId}:{CODE_UPPER} -> 404 if null/empty
@@ -189,7 +189,7 @@ RETURN (200, LocationResponse)
 ```
 
 ### ListLocations
-POST /location/list | Roles: [user]
+POST /location/list | Roles: []
 
 ```
 READ store:realm-index:{realmId} // null → empty list
@@ -201,7 +201,7 @@ RETURN (200, LocationListResponse)
 ```
 
 ### ListLocationsByRealm
-POST /location/list-by-realm | Roles: [user]
+POST /location/list-by-realm | Roles: []
 
 ```
 READ store:realm-index:{realmId} // null → empty list
@@ -214,7 +214,7 @@ RETURN (200, LocationListResponse)
 ```
 
 ### ListLocationsByParent
-POST /location/list-by-parent | Roles: [user]
+POST /location/list-by-parent | Roles: []
 
 ```
 READ store:location:{parentLocationId} -> 404 if null
@@ -228,7 +228,7 @@ RETURN (200, LocationListResponse)
 ```
 
 ### ListRootLocations
-POST /location/list-root | Roles: [user]
+POST /location/list-root | Roles: []
 
 ```
 READ store:root-locations:{realmId} // null → empty list
@@ -241,7 +241,7 @@ RETURN (200, LocationListResponse)
 ```
 
 ### GetLocationAncestors
-POST /location/get-ancestors | Roles: [user]
+POST /location/get-ancestors | Roles: []
 
 ```
 READ store:location:{locationId} -> 404 if null
@@ -257,7 +257,7 @@ RETURN (200, LocationListResponse from ancestors)
 ```
 
 ### GetLocationDescendants
-POST /location/get-descendants | Roles: [user]
+POST /location/get-descendants | Roles: []
 
 ```
 READ store:location:{locationId} -> 404 if null
@@ -276,7 +276,7 @@ RETURN (200, LocationListResponse)
 // FOREACH childId: READ store:location:{childId}, recurse if depth < maxDepth
 
 ### ValidateTerritory
-POST /location/validate-territory | Roles: [user]
+POST /location/validate-territory | Roles: []
 
 ```
 READ store:location:{locationId} -> 404 if null
@@ -301,17 +301,18 @@ RETURN (200, ValidateTerritoryResponse { isValid, violationReason?, matchedTerri
 ```
 
 ### LocationExists
-POST /location/exists | Roles: [user]
+POST /location/exists | Roles: []
 
 ```
 READ store:location:{locationId}
-IF null -> 404
-RETURN (200, LocationExistsResponse { isActive: !model.IsDeprecated, realmId: model.RealmId })
-// 200 = exists, 404 = not found. No `exists` boolean needed.
+IF null
+  RETURN (200, LocationExistsResponse { exists: false, isActive: false, realmId: null })
+RETURN (200, LocationExistsResponse { exists: true, isActive: !model.IsDeprecated, realmId: model.RealmId })
+// Always returns 200. Callers use the `exists` field to determine presence.
 ```
 
 ### QueryLocationsByPosition
-POST /location/query/by-position | Roles: [user]
+POST /location/query/by-position | Roles: []
 
 ```
 READ store:realm-index:{realmId} // null → empty list
@@ -329,7 +330,7 @@ RETURN (200, LocationListResponse)
 ```
 
 ### CreateLocation
-POST /location/create | Roles: [admin]
+POST /location/create | Roles: [developer]
 
 ```
 CALL _realmClient.RealmExistsAsync(realmId) -> 400 if not found/inactive
@@ -359,7 +360,7 @@ RETURN (200, LocationResponse)
 ```
 
 ### UpdateLocation
-POST /location/update | Roles: [admin]
+POST /location/update | Roles: [developer]
 
 ```
 READ store:location:{locationId} -> 404 if null
@@ -375,7 +376,7 @@ RETURN (200, LocationResponse)
 ```
 
 ### SetLocationParent
-POST /location/set-parent | Roles: [admin]
+POST /location/set-parent | Roles: [developer]
 
 ```
 READ store:location:{locationId} -> 404 if null
@@ -406,7 +407,7 @@ RETURN (200, LocationResponse)
 ```
 
 ### RemoveLocationParent
-POST /location/remove-parent | Roles: [admin]
+POST /location/remove-parent | Roles: [developer]
 
 ```
 READ store:location:{locationId} -> 404 if null
@@ -429,7 +430,7 @@ RETURN (200, LocationResponse)
 ```
 
 ### DeleteLocation
-POST /location/delete | Roles: [admin]
+POST /location/delete | Roles: [developer]
 
 ```
 READ store:location:{locationId} -> 404 if null
@@ -457,7 +458,7 @@ RETURN 200
 ```
 
 ### DeprecateLocation
-POST /location/deprecate | Roles: [admin]
+POST /location/deprecate | Roles: [developer]
 
 ```
 READ store:location:{locationId} -> 404 if null
@@ -473,7 +474,7 @@ RETURN (200, LocationResponse)
 ```
 
 ### UndeprecateLocation
-POST /location/undeprecate | Roles: [admin]
+POST /location/undeprecate | Roles: [developer]
 
 ```
 READ store:location:{locationId} -> 404 if null
@@ -489,7 +490,7 @@ RETURN (200, LocationResponse)
 ```
 
 ### TransferLocationToRealm
-POST /location/transfer-realm | Roles: [admin]
+POST /location/transfer-realm | Roles: [developer]
 
 ```
 READ store:location:{locationId} -> 404 if null
@@ -523,7 +524,7 @@ RETURN (200, LocationResponse)
 ```
 
 ### SeedLocations
-POST /location/seed | Roles: [admin]
+POST /location/seed | Roles: [developer]
 
 ```
 // Build realm code → ID map
@@ -566,7 +567,7 @@ RETURN (200, SeedLocationsResponse { created, updated, skipped, errors })
 ```
 
 ### ReportEntityPosition
-POST /location/report-entity-position | Roles: [developer]
+POST /location/report-entity-position | Roles: []
 
 ```
 READ cache:location:{locationId} -> 404 if null (via GetLocationWithCacheAsync)
@@ -593,7 +594,7 @@ ELSE
 ```
 
 ### GetEntityLocation
-POST /location/get-entity-location | Roles: [user]
+POST /location/get-entity-location | Roles: []
 
 ```
 READ presence:entity-location:{entityType}:{entityId}
@@ -603,7 +604,7 @@ RETURN (200, GetEntityLocationResponse { locationId, realmId, reportedAt, report
 ```
 
 ### ListEntitiesAtLocation
-POST /location/list-entities-at-location | Roles: [user]
+POST /location/list-entities-at-location | Roles: []
 
 ```
 READ set:location-entities:{locationId} -> all members
@@ -617,7 +618,7 @@ RETURN (200, ListEntitiesAtLocationResponse { entities, totalCount, locationId }
 ```
 
 ### ClearEntityPosition
-POST /location/clear-entity-position | Roles: [developer]
+POST /location/clear-entity-position | Roles: []
 
 ```
 READ presence:entity-location:{entityType}:{entityId}
@@ -631,7 +632,7 @@ RETURN (200, ClearEntityPositionResponse { previousLocationId: existing.Location
 ```
 
 ### GetLocationCompressData
-POST /location/get-compress-data | Roles: [developer]
+POST /location/get-compress-data | Roles: []
 
 ```
 READ cache:location:{locationId} -> 404 if null (via GetLocationWithCacheAsync)
@@ -677,3 +678,26 @@ LOOP (while not cancelled)
  WRITE set:location-entities:__index__ <- remove emptyLocationId
  WAIT cleanup interval
 ```
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### OnRunningAsync
+
+```
+// Territory constraint clause type registration (idempotent — 409 swallowed)
+CALL IContractClient.RegisterClauseTypeAsync({
+  TypeCode: "territory_constraint",
+  Category: Validation,
+  ValidationHandler: { Service: "location", Endpoint: "/location/validate-territory" }
+})
+
+// Resource template registration for ABML compile-time path validation
+CALL IResourceTemplateRegistry.Register(LocationBaseTemplate)
+
+// Compression callback registration with lib-resource (generated code)
+CALL LocationCompressionCallbacks.RegisterAsync(IResourceClient)
+```
+
+Contract clause registration is idempotent (409 Conflict is swallowed with LogDebug). Compression callback failure is non-fatal (logged as Warning). Both use `GetRequiredService` for scoped resolution — L1 services are guaranteed present when L2 `OnRunningAsync` fires.

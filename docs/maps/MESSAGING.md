@@ -83,14 +83,14 @@ This plugin does not consume external events.
 
 ### Registered Infrastructure (provided to all plugins)
 
-| Interface | Implementation (RabbitMQ) | Implementation (InMemory) |
-|-----------|---------------------------|---------------------------|
-| `IMessageBus` | `RabbitMQMessageBus` | `InMemoryMessageBus` |
-| `IMessageSubscriber` | `RabbitMQMessageSubscriber` | `InMemoryMessageBus` |
-| `IMessageTap` | `RabbitMQMessageTap` | `InMemoryMessageTap` |
-| `IChannelManager` | `RabbitMQConnectionManager` | — |
-| `IRetryBuffer` | `MessageRetryBuffer` | — |
-| `IUnhandledExceptionHandler` | `MessagingUnhandledExceptionHandler` | `MessagingUnhandledExceptionHandler` |
+| Interface | Implementation (RabbitMQ) | Implementation (InMemory) | Implementation (DirectDispatch) |
+|-----------|---------------------------|---------------------------|-------------------------------|
+| `IMessageBus` | `RabbitMQMessageBus` | `InMemoryMessageBus` | `DirectDispatchMessageBus` |
+| `IMessageSubscriber` | `RabbitMQMessageSubscriber` | `InMemoryMessageBus` | `DirectDispatchMessageBus` |
+| `IMessageTap` | `RabbitMQMessageTap` | `InMemoryMessageTap` | — |
+| `IChannelManager` | `RabbitMQConnectionManager` | — | — |
+| `IRetryBuffer` | `MessageRetryBuffer` | — | — |
+| `IUnhandledExceptionHandler` | `MessagingUnhandledExceptionHandler` | `MessagingUnhandledExceptionHandler` | `MessagingUnhandledExceptionHandler` |
 
 ---
 
@@ -300,7 +300,15 @@ RecordCounter("bannou.messaging.retry_attempts", deferredCount, status=deferred)
 The plugin's `ConfigureServices` contains significant branching logic that determines the entire infrastructure backend:
 
 ```
-IF config.UseInMemory
+IF config.UseDirectDispatch
+  // Embedded/sidecar mode — zero-overhead dispatch to IEventConsumer
+  REGISTER DirectDispatchMessageBus as IMessageBus + IMessageSubscriber (Singleton)
+    // Constructor: IEventConsumer, IServiceProvider, ILogger, MessagingServiceConfiguration
+    // TryPublishAsync → fire-and-forget → create scope → IEventConsumer.DispatchAsync + direct subscribers
+    // SkipUnhandledTopics: skip scope creation when no handlers registered for topic
+  // NativeEventConsumerBackend is NOT registered — no bridge needed
+  // No background services, no retry buffer, no dead letter processing — return early
+ELSE IF config.UseInMemory
   // Testing/minimal infrastructure mode
   REGISTER InMemoryMessageBus as IMessageBus + IMessageSubscriber (Singleton)
   REGISTER InMemoryMessageTap as IMessageTap (Singleton)
@@ -325,4 +333,4 @@ ELSE
   // for MessagingSubscriptionRecoveryService to access internal recovery methods
 ```
 
-This branching means in-memory mode has no background services, no retry buffer, no dead letter processing, and no subscription recovery. The `IMessageBus`/`IMessageSubscriber` interface contract is preserved but the reliability guarantees differ significantly.
+This branching means in-memory and direct dispatch modes have no background services, no retry buffer, no dead letter processing, and no subscription recovery. DirectDispatch additionally eliminates NativeEventConsumerBackend (the bridge layer) — `TryPublishAsync` dispatches directly to `IEventConsumer.DispatchAsync`. The `IMessageBus`/`IMessageSubscriber` interface contract is preserved across all three backends but the reliability guarantees and overhead differ significantly.

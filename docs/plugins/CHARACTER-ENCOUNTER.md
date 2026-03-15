@@ -435,3 +435,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Issue #379 - Migrate cleanup from character.deleted event to lib-resource**: Removed redundant `character.deleted` event subscription (2026-02-11). Cleanup now exclusively via lib-resource cleanup callbacks registered at startup. Removed `IEventConsumer` dependency and `CharacterEncounterServiceEvents.cs`.
 - **Design #4 - Lazy decay write amplification**: Moved to Intentional Quirks (#7) (2026-03-08). Write amplification is inherent to lazy evaluation mode; `MemoryDecayMode=scheduled` already exists as the alternative via `MemoryDecaySchedulerService`.
 - **Stub #1 - CleanDeprecatedEncounterTypesAsync not implemented**: Documentation updated (2026-03-11). Method was already fully implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` with `ICleanDeprecatedEntity` marker interface. Deep dive stub section was stale.
+
+### Active
+
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#646](https://github.com/beyond-immersion/bannou-service/issues/646).

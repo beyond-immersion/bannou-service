@@ -953,6 +953,114 @@ public class SchemaValidationTests
     }
 
     /// <summary>
+    /// Informational test: surfaces x-lifecycle instance entities in services with
+    /// x-references targeting character that do NOT use batch: true. These are
+    /// structurally high-frequency at 100K NPC scale and should consider batching.
+    /// </summary>
+    [Fact]
+    public void XReferencesServices_WithLifecycleInstances_ShouldConsiderBatchEvents()
+    {
+        SkipUnless.InformationalTest(
+            "Surfaces x-lifecycle instance entities that should consider batch: true");
+
+        var schemasDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "schemas");
+        var suggestions = new List<string>();
+
+        // Build set of services that declare x-references targeting character-scale entities
+        var characterTargetingServices = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var characterTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { "character", "account", "location", "realm" };
+
+        foreach (var apiFile in Directory.EnumerateFiles(schemasDir, "*-api.yaml"))
+        {
+            var lines = File.ReadAllLines(apiFile);
+            var inXReferences = false;
+            var hasCharacterTarget = false;
+
+            foreach (var line in lines)
+            {
+                var trimmed = line.TrimStart();
+                if (trimmed.StartsWith("x-references:", StringComparison.Ordinal))
+                {
+                    inXReferences = true;
+                    continue;
+                }
+
+                if (inXReferences)
+                {
+                    // Exit x-references block at next top-level key
+                    if (!line.StartsWith(" ", StringComparison.Ordinal) &&
+                        !line.StartsWith("-", StringComparison.Ordinal) &&
+                        trimmed.Length > 0 && !trimmed.StartsWith("#", StringComparison.Ordinal))
+                    {
+                        inXReferences = false;
+                        continue;
+                    }
+
+                    // Handle both "target: X" and "- target: X" YAML list item format
+                    var targetLine = trimmed.StartsWith("- ", StringComparison.Ordinal)
+                        ? trimmed[2..] : trimmed;
+                    if (targetLine.StartsWith("target:", StringComparison.Ordinal))
+                    {
+                        var target = targetLine["target:".Length..].Trim();
+                        if (characterTargets.Contains(target))
+                            hasCharacterTarget = true;
+                    }
+                }
+            }
+
+            if (hasCharacterTarget)
+            {
+                var serviceName = Path.GetFileNameWithoutExtension(apiFile)
+                    .Replace("-api", "", StringComparison.Ordinal);
+                characterTargetingServices.Add(serviceName);
+            }
+        }
+
+        // Check each service's lifecycle entities for missing batch: true
+        foreach (var eventsFile in SchemaParser.GetEventSchemaFiles())
+        {
+            var fileName = Path.GetFileNameWithoutExtension(eventsFile);
+            var serviceName = fileName.EndsWith("-events", StringComparison.Ordinal)
+                ? fileName[..^"-events".Length]
+                : fileName;
+
+            if (!characterTargetingServices.Contains(serviceName))
+                continue;
+
+            foreach (var entity in SchemaParser.GetLifecycleEntities(eventsFile))
+            {
+                if (entity.IsBatch)
+                    continue; // already batched
+
+                // Skip definition/template entities — only flag instance entities.
+                // Definition entities are identified by: having deprecation, or having
+                // instanceEntity (they're a Category B template naming their instance),
+                // or being referenced as another entity's instanceEntity.
+                if (entity.HasDeprecation)
+                    continue;
+                if (entity.InstanceEntity != null)
+                    continue;
+
+                suggestions.Add(
+                    $"{serviceName}: {entity.EntityName} — service has x-references targeting " +
+                    $"character-scale entities; consider batch: true for NPC-scale event volume");
+            }
+        }
+
+        // This test surfaces suggestions, not failures — but uses Assert.True so the
+        // suggestions appear in the test output when BANNOU_RUN_INFORMATIONAL_TESTS=true
+        if (suggestions.Count > 0)
+        {
+            Assert.Fail(
+                $"Found {suggestions.Count} x-lifecycle instance entity/entities in x-references " +
+                $"services without batch: true. At 100K NPC scale these are high-frequency event " +
+                $"publishers. Consider adding batch: true to their x-lifecycle definition:\n" +
+                string.Join("\n", suggestions.Select(s => $"  - {s}")));
+        }
+    }
+
+    /// <summary>
     /// Ensures all plugin assemblies are loaded for marker interface reflection.
     /// Mirrors the pattern from StructuralTests.EnsureAssembliesLoaded().
     /// </summary>

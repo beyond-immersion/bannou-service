@@ -330,6 +330,10 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 See AUDIT markers in Potential Extensions and Design Considerations sections for items awaiting design decisions.
 
+### Active
+
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#648](https://github.com/beyond-immersion/bannou-service/issues/648).
+
 ### Completed
 
 - **2026-02-06**: Cache TTL now configurable via `CacheTtlMinutes` (Design Considerations #4)

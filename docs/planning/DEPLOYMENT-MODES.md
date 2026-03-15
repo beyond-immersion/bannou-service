@@ -42,7 +42,7 @@ Every mode uses the same services. Only the infrastructure backends change:
 | Component | Embedded | Non-Dedicated | Dedicated | Hyper-Scaled |
 |-----------|----------|---------------|-----------|-------------|
 | **State (persistence)** | InMemory + SQLite | InMemory + SQLite | Redis + MySQL | Redis cluster + MySQL cluster |
-| **Messaging** | InMemory | InMemory | RabbitMQ | RabbitMQ cluster |
+| **Messaging** | DirectDispatch | DirectDispatch | RabbitMQ | RabbitMQ cluster |
 | **Mesh routing** | Direct DI dispatch | Local omnipotent | Local omnipotent | Distributed (Orchestrator topology) |
 | **Connect** | Not loaded | Single instance | Single instance | N instances, broadcast mesh |
 | **Telemetry** | NullTelemetryProvider | Optional | Full OpenTelemetry | Full OpenTelemetry |
@@ -53,13 +53,13 @@ Configuration toggles:
 ```bash
 # Embedded
 STATE_USE_SQLITE=true          # MySQL stores -> SQLite, Redis stores -> InMemory
-MESSAGING_USE_INMEMORY=true    # RabbitMQ -> InMemory pub/sub
+MESSAGING_USE_DIRECT_DISPATCH=true  # RabbitMQ -> DirectDispatch (zero-overhead IEventConsumer dispatch)
 # Mesh: direct DI dispatch (no HTTP, planned)
 # Connect: not loaded
 
 # Non-Dedicated (sidecar)
 STATE_USE_SQLITE=true
-MESSAGING_USE_INMEMORY=true    # Sufficient for small player counts
+MESSAGING_USE_DIRECT_DISPATCH=true  # Zero-overhead event dispatch (single-node)
 BANNOU_HTTP_WEB_HOST_PORT=5012
 
 # Dedicated Single-Node
@@ -485,11 +485,11 @@ Atomic topology switchover for distributed deployments. Not required for any oth
 
 ## Decisions
 
-### D1: InMemory Messaging Is Sufficient for Non-Dedicated Mode
+### D1: DirectDispatch Messaging for Embedded and Non-Dedicated Modes
 
-**Status**: Decided
+**Status**: Decided (implemented)
 
-InMemory messaging has a mature retry/buffer mechanism. For 2-8 player non-dedicated hosting, this is sufficient. Bundling RabbitMQ with a game client is too heavy for the non-dedicated model.
+`DirectDispatchMessageBus` (`MESSAGING_USE_DIRECT_DISPATCH=true`) is the recommended messaging backend for both embedded and non-dedicated deployments. It dispatches `TryPublishAsync` directly to `IEventConsumer.DispatchAsync`, eliminating the NativeEventConsumerBackend bridge layer that InMemoryMessageBus still carries. Zero serialization, zero intermediate subscription registry. For 2-8 player non-dedicated hosting and single-player embedded mode, this is optimal. Bundling RabbitMQ with a game client is too heavy for these models. InMemoryMessageBus remains available (`MESSAGING_USE_INMEMORY=true`) for testing and backward compatibility. See [DIRECT-DISPATCH-EVENTS.md](DIRECT-DISPATCH-EVENTS.md) for full design.
 
 ### D2: Anti-Piracy Is a Game-Side Concern
 

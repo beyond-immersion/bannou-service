@@ -90,10 +90,10 @@ All three L0 infrastructure dependencies are eliminable:
 | Infrastructure | Cloud Mode | Self-Hosted Mode | Status |
 |---------------|-----------|-----------------|--------|
 | **State (L0)** | Redis + MySQL | `STATE_USE_INMEMORY=true` or `STATE_USE_SQLITE=true` | InMemory: exists. SQLite: implemented. |
-| **Messaging (L0)** | RabbitMQ | `InMemoryMessageBus` (local pub/sub) | Exists |
+| **Messaging (L0)** | RabbitMQ | `DirectDispatchMessageBus` (`UseDirectDispatch=true`) or `InMemoryMessageBus` | DirectDispatch: implemented. InMemory: exists. |
 | **Mesh (L0)** | YARP + Redis service discovery | Default "bannou" omnipotent routing (all services co-located) | Exists |
 
-With `BANNOU_HEARTBEAT_ENABLED=false`, no Orchestrator connectivity is required. The default mesh routing sends all inter-service calls to the local process. The InMemoryMessageBus delivers events to local subscribers. The only gap is durable persistence, which #442 (SQLite) addresses.
+With `BANNOU_HEARTBEAT_ENABLED=false`, no Orchestrator connectivity is required. The default mesh routing sends all inter-service calls to the local process. `DirectDispatchMessageBus` (`MESSAGING_USE_DIRECT_DISPATCH=true`) delivers events directly to IEventConsumer handlers with zero overhead — no intermediate bridge, no serialization. `InMemoryMessageBus` (`MESSAGING_USE_INMEMORY=true`) remains available as a fallback. The only gap was durable persistence, which #442 (SQLite) addresses.
 
 ### Selective Plugin Loading
 
@@ -151,7 +151,7 @@ The WebSocket gateway (Connect service) provides persistent connections with bin
 │                                                      │
 │  ┌─────────────┐  ┌──────────────┐  ┌────────────┐  │
 │  │ L0: State   │  │ L0: Messaging│  │ L0: Mesh   │  │
-│  │ (SQLite)    │  │ (InMemory)   │  │ (Local)    │  │
+│  │ (SQLite)    │  │(DirectDispatch)│ │ (Local)    │  │
 │  └─────────────┘  └──────────────┘  └────────────┘  │
 │                                                      │
 │  ┌─────────────┐  ┌──────────────┐  ┌────────────┐  │

@@ -326,6 +326,12 @@ No design considerations at this time.
 
 ## Work Tracking
 
+### Active
+
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#659](https://github.com/beyond-immersion/bannou-service/issues/659).
+
+### Pending Issues
+
 | Issue | Status | Summary |
 |-------|--------|---------|
 | [#356](https://github.com/beyond-immersion/bannou-service/issues/356) | Open (needs game design) | Board reset/respec — refund %, partial vs full, cooldown |

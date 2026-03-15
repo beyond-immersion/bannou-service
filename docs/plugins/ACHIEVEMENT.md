@@ -144,6 +144,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 (All previously completed items verified and cleaned up on 2026-03-12)
 
 ### Active
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#653](https://github.com/beyond-immersion/bannou-service/issues/653).
 - [#581](https://github.com/beyond-immersion/bannou-service/issues/581) — TotalEligibleEntities automation for rarity calculation
 - [#582](https://github.com/beyond-immersion/bannou-service/issues/582) — Event handler N+1 definition loading — add caching layer
 - [#583](https://github.com/beyond-immersion/bannou-service/issues/583) — Platform sync permanent failure retry queue

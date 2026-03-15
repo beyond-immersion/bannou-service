@@ -280,6 +280,10 @@ Season Lifecycle
 
 ## Work Tracking
 
+### Active
+
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#658](https://github.com/beyond-immersion/bannou-service/issues/658).
+
 ### Completed
 
 - **2026-01-31**: Fixed `archivePrevious` request parameter being ignored in `CreateSeasonAsync` - now uses per-request flag instead of global configuration. Removed orphaned `AutoArchiveOnSeasonEnd` configuration property (per-request control is sufficient).

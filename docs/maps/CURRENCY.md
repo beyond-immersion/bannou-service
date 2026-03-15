@@ -96,7 +96,7 @@
 |------------|-------|------|-------|
 | lib-state (`IStateStoreFactory`) | L0 | Hard | All 9 state stores |
 | lib-state (`IDistributedLockProvider`) | L0 | Hard | Balance, hold, wallet, index, autogain locks |
-| lib-messaging (`IMessageBus`) | L0 | Hard | Publishing 18 event topics |
+| lib-messaging (`IMessageBus`) | L0 | Hard | Publishing 21 event topics |
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation |
 | lib-connect (`IEntitySessionRegistry`) | L1 | Hard | Client events to wallet owner WebSocket sessions |
 
@@ -138,7 +138,7 @@
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `account.deleted` | `HandleAccountDeletedAsync` | CASCADE: Find all account-owned wallets via `_walletQueryStore.QueryAsync`, delete balances/holds/transactions/indexes/caches per wallet |
+| `account.deleted` | `HandleAccountDeletedAsync` | CASCADE: Find all account-owned wallets via `_walletQueryStore.QueryAsync`, delete balances/holds/transactions/indexes/caches per wallet. Publishes `currency.balance.deleted` for each deleted balance. |
 | `currency.credited` | `HandleCurrencyCreditedAsync` | Invalidate `ICurrencyDataCache` for `evt.OwnerId` |
 | `currency.debited` | `HandleCurrencyDebitedAsync` | Invalidate `ICurrencyDataCache` for `evt.OwnerId` |
 | `currency.transferred` | `HandleCurrencyTransferredAsync` | Invalidate `ICurrencyDataCache` for both `SourceOwnerId` and `TargetOwnerId` |
@@ -186,7 +186,7 @@
 | BatchGetBalances | POST /currency/balance/batch-get | user | bal (autogain only) | currency.autogain.calculated |
 | CreditCurrency | POST /currency/credit | [] | bal, tx, idempotency | currency.credited, currency.earn-cap.reached, currency.wallet-cap.reached, currency.balance.created OR currency.balance.updated |
 | DebitCurrency | POST /currency/debit | [] | bal, tx, idempotency | currency.debited, currency.balance.updated |
-| TransferCurrency | POST /currency/transfer | [] | bal (x2), tx, idempotency | currency.transferred, currency.wallet-cap.reached |
+| TransferCurrency | POST /currency/transfer | [] | bal (x2), tx, idempotency | currency.transferred, currency.wallet-cap.reached, currency.balance.created OR currency.balance.updated (both sides) |
 | BatchCreditCurrency | POST /currency/batch-credit | [] | bal, tx, idempotency | currency.credited |
 | BatchDebitCurrency | POST /currency/batch-debit | [] | bal, tx, idempotency | currency.debited |
 | CalculateConversion | POST /currency/convert/calculate | user | - | - |
@@ -205,7 +205,7 @@
 | CaptureHold | POST /currency/hold/capture | [] | hold, bal, tx, hold-wallet, idempotency | currency.hold.captured, currency.debited |
 | ReleaseHold | POST /currency/hold/release | [] | hold, hold-wallet | currency.hold.released |
 | GetHold | POST /currency/hold/get | [] | - | - |
-| CleanDeprecatedCurrencyDefinitions | POST /currency/definition/clean-deprecated | admin | def, def-code, all-defs | *(unimplemented)* |
+| CleanDeprecatedCurrencyDefinitions | POST /currency/definition/clean-deprecated | admin | def, def-code, all-defs | currency.definition.deleted, currency.balance.deleted *(unimplemented)* |
 | CurrencyExpirationTaskService.ProcessExpirationCycleAsync | background | - | bal, tx | currency.expired |
 | HoldExpirationTaskService.ProcessHoldExpirationCycleAsync | background | - | hold, hold-wallet | currency.hold.expired |
 
@@ -751,7 +751,9 @@ POST /currency/definition/clean-deprecated | Roles: [admin]
 ```
 // UNIMPLEMENTED — throws NotImplementedException
 // Should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
-// Sweeps deprecated currency definitions with zero remaining wallets
+// Sweeps deprecated currency definitions with zero remaining balances
+// hasInstancesAsync: check bal-currency:{currencyDefId} reverse index (not wallet existence)
+// deleteAndPublishAsync: remove definition + indexes, publish currency.definition.deleted + currency.balance.deleted per balance
 // Uses shared CleanDeprecatedRequest (gracePeriodDays, dryRun)
 // Returns shared CleanDeprecatedResponse (cleaned, remaining, errors, cleanedIds)
 ```

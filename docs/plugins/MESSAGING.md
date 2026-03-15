@@ -6,13 +6,13 @@
 > **Layer**: Infrastructure
 > **State Store**: messaging-external-subs (Redis, app-id keyed with TTL)
 > **Implementation Map**: [docs/maps/MESSAGING.md](../maps/MESSAGING.md)
-> **Short**: RabbitMQ pub/sub infrastructure (IMessageBus/IMessageSubscriber) with in-memory testing mode
+> **Short**: RabbitMQ pub/sub infrastructure (IMessageBus/IMessageSubscriber) with in-memory testing mode and direct dispatch for embedded/sidecar
 
 ---
 
 ## Overview
 
-The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrastructure for Bannou. Operates in a dual role: as the `IMessageBus`/`IMessageSubscriber` infrastructure library used by all services for event publishing and subscription, and as an HTTP API providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, and aggressive retry buffering with crash-fast philosophy for unrecoverable failures.
+The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrastructure for Bannou. Operates in a dual role: as the `IMessageBus`/`IMessageSubscriber` infrastructure library used by all services for event publishing and subscription, and as an HTTP API providing dynamic subscription management with HTTP callback delivery. Three messaging backends: RabbitMQ (cloud, with channel pooling and aggressive retry buffering), InMemoryMessageBus (testing), and DirectDispatchMessageBus (embedded/sidecar, zero-overhead dispatch directly to IEventConsumer).
 
 ## Event Publishing Reliability Model
 
@@ -52,11 +52,18 @@ All services depend on messaging infrastructure. The HTTP API (`IMessagingClient
 
 ## Configuration
 
+### Backend Selection
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `UseDirectDispatch` | `MESSAGING_USE_DIRECT_DISPATCH` | `false` | Zero-overhead dispatch directly to IEventConsumer (embedded/sidecar). Takes precedence over `UseInMemory`. |
+| `UseInMemory` | `MESSAGING_USE_INMEMORY` | `false` | In-memory bus for testing (no RabbitMQ) |
+| `SkipUnhandledTopics` | `MESSAGING_SKIP_UNHANDLED_TOPICS` | `false` | Skip scope creation for topics with no handlers (DirectDispatch optimization) |
+
 ### Connection Settings
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `UseInMemory` | `MESSAGING_USE_INMEMORY` | `false` | Use in-memory bus for testing |
 | `RabbitMQHost` | `MESSAGING_RABBITMQ_HOST` | `"rabbitmq"` | RabbitMQ server hostname |
 | `RabbitMQPort` | `MESSAGING_RABBITMQ_PORT` | `5672` | RabbitMQ AMQP port |
 | `RabbitMQUsername` | `MESSAGING_RABBITMQ_USERNAME` | `"guest"` | Connection credentials |
@@ -151,46 +158,37 @@ These settings apply to the **MessageRetryBuffer** (publish failures). After `Re
 ## Visual Aid
 
 ```
-Messaging Architecture
-========================
+Messaging Architecture — Three Backends
+==========================================
 
- ┌──────────────────────┐
- │ RabbitMQ Broker │
- │ │
- │ Exchange: "bannou" │
- │ DLX: "bannou-dlx" │
- └──────────┬───────────┘
- │
- ┌──────────────────────────┼──────────────────────────┐
- │ │ │
- ┌─────────▼─────────┐ ┌──────────▼──────────┐ ┌─────────▼─────────┐
- │ RabbitMQMessageBus │ │RabbitMQMessageSubscriber│ │ MessageRetryBuffer │
- │ (IMessageBus) │ │ (IMessageSubscriber) │ │ │
- │ │ │ │ │ Buffers failed │
- │ TryPublishAsync() │ │ Static subscriptions │ │ publishes │
- │ TryPublishRawAsync()│ │ Dynamic subscriptions │ │ Crash-fast if │
- │ TryPublishErrorAsync│ │ Raw subscriptions │ │ buffer exceeds │
- └─────────────────────┘ └──────────┬─────────────┘ │ limits │
- ▲ │ └───────┬────────────┘
- │ ▼ │ (on exhaustion)
- │ ┌───────────────────────┐ ▼
- │ │NativeEventConsumerBackend│ ┌──────────────────────┐
- │ │ (IHostedService) │ │DeadLetterConsumer │
- │ │ │ │Service (IHostedService)│
- │ │ Bridges RabbitMQ to │ │ │
- │ │ IEventConsumer fan-out │ │ Reads DLX queue │
- │ │ (per-plugin handlers) │ │ Logs + error events │
- │ └─────────────────────────┘ │ Acks after processing│
- │ └──────────────────────┘
- ┌─────────┴─────────┐ ┌──────────────────────┐
- │ RabbitMQConnection │ │ RabbitMQMessageTap │
- │ Manager │ │ (IMessageTap) │
- │ │ │ │
- │ Single connection │ │ Creates taps that │
- │ Channel pool (100) │ │ forward events from │
- │ Max 1000 channels │ │ source to destination │
- │ Auto-recovery │ │ │
- └────────────────────┘ └───────────────────────┘
+ Backend Selection (MessagingServicePlugin.ConfigureServices):
+   UseDirectDispatch=true → DirectDispatchMessageBus (embedded/sidecar)
+   UseInMemory=true       → InMemoryMessageBus (testing)
+   (default)              → RabbitMQMessageBus + RabbitMQMessageSubscriber
+
+ ┌─────────────────────────────────────────────────────────┐
+ │                    IEventConsumer (Singleton)            │
+ │  ConcurrentDictionary<topic, handlers>                  │
+ │  DispatchAsync() — per-plugin fan-out with isolation    │
+ └──────────────────────┬──────────────────────────────────┘
+                        │
+       ┌────────────────┼───────────────────┐
+       │                │                    │
+ ┌─────▼──────────┐ ┌──▼──────────┐ ┌──────▼──────────────┐
+ │ RabbitMQ Mode  │ │ InMemory    │ │ DirectDispatch Mode │
+ │                │ │ Mode        │ │                     │
+ │ Broker → queue │ │ ImmutableList│ │ TryPublishAsync →   │
+ │ NativeBackend  │ │ NativeBackend│ │  IEventConsumer     │
+ │  bridges to    │ │  bridges to │ │  .DispatchAsync()   │
+ │  IEventConsumer│ │  IEventConsumer│ │  (direct, no bridge)│
+ │                │ │             │ │                     │
+ │ + RetryBuffer  │ │             │ │ + _directSubscribers│
+ │ + DeadLetter   │ │             │ │   for Connect, etc. │
+ │ + ChannelPool  │ │             │ │                     │
+ │ + Batching     │ │             │ │ No NativeBackend    │
+ └────────────────┘ └─────────────┘ │ No EventSubRegistry │
+                                    │ No serialization    │
+                                    └─────────────────────┘
 ```
 
 ---
@@ -240,6 +238,8 @@ No bugs identified.
 9. **Dead letter consumer uses IChannelManager directly**: `DeadLetterConsumerService` bypasses `IMessageSubscriber` and creates its own consumer channel via `IChannelManager.CreateConsumerChannelAsync()`. This is necessary because `SubscribeDynamicRawAsync` only passes raw bytes to the handler — dead letter processing requires access to `BasicProperties.Headers` for metadata extraction (`x-original-topic`, `x-retry-count`, `x-death`, etc.). Uses a durable shared queue (`bannou-dlx-consumer`) so accumulated dead letters are consumed even after restarts, with RabbitMQ competing consumers for multi-instance safety.
 
 10. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `ImmutableList<Func<object, ...>>` for lock-free concurrent access but are not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch). `InMemoryMessageTap` works in-process only and simulates exchanges by combining exchange+routing key as destination topic.
+
+11. **DirectDispatch mode**: `DirectDispatchMessageBus` eliminates the NativeEventConsumerBackend bridge and dispatches `TryPublishAsync` directly to `IEventConsumer.DispatchAsync`. Objects are passed by reference — zero serialization. Fire-and-forget semantics match InMemoryMessageBus (scope created inside the dispatched task). Connect per-session subscriptions (`SubscribeDynamicAsync`/`SubscribeDynamicRawAsync`) use a separate `_directSubscriptions` registry with the same ImmutableList pattern. `SubscribeDynamicRawAsync` serializes to JSON bytes via BannouJson (same as InMemory — required for Connect binary protocol forwarding). `SkipUnhandledTopics` configuration skips scope creation for topics with no IEventConsumer handlers (resource-constrained embedded optimization). Takes precedence over `UseInMemory` in backend selection.
 
 11. **Tap auto-creates destination exchanges**: `RabbitMQMessageTap.CreateTapAsync()` has a `CreateExchangeIfNotExists` flag on `TapDestination` (default `true`) that creates the destination exchange if it doesn't exist. This follows the "exchanges as implicit infrastructure" pattern (similar to RabbitMQ's own queue auto-creation) but could mask typos in exchange names — a mistyped exchange will be silently created rather than erroring.
 

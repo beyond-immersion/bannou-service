@@ -553,6 +553,10 @@ This section tracks active development work on items from the quirks/bugs lists 
 - [#478](https://github.com/beyond-immersion/bannou-service/issues/478) - Universal value anchoring for dynamic exchange rates. Needs design on coexistence vs replacement of `ExchangeRateToBase`, modifier ownership (L2 vs L4), value change triggers, and relationship to location-scoped exchange rates.
 - [#556](https://github.com/beyond-immersion/bannou-service/issues/556) - Non-account entity deletion (characters, guilds) does not trigger wallet cleanup. Account deletion path complete (2026-03-08). Character/guild paths need lib-resource `x-references` integration design (balance disposition, frozen wallet handling).
 
+### Active
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#651](https://github.com/beyond-immersion/bannou-service/issues/651).
+
 ### Completed
 
+- **2026-03-15**: Added CurrencyBalance as x-lifecycle entity with `instanceEntity: CurrencyBalance` on CurrencyDefinition. Wired up lifecycle event publishing: `currency.balance.created` (first credit), `currency.balance.updated` (credit/debit/transfer), `currency.balance.deleted` (account deletion cleanup). Resolves instance entity design gap.
 - **2026-03-14**: Maintenance pass — removed 7 confirmed FIXED/IMPLEMENTED strikethrough items (currency expiration, hold expiration, client events, EarnCapResetTime fix, account deletion cleanup). Added Bug for missing Category B instance creation guard. Removed superseded #433 reference (replaced by #545). Reclassified account deletion Design Consideration to focus on remaining character/guild paths.

@@ -10,34 +10,41 @@ using System.Collections.Concurrent;
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
 /// <summary>
-/// In-memory implementation of IMessageTap for testing and minimal infrastructure scenarios.
-/// Works with <see cref="InMemoryMessageBus"/> to provide local tap functionality.
+/// In-process implementation of IMessageTap for non-RabbitMQ messaging backends.
+/// Works with any IMessageBus/IMessageSubscriber implementation (InMemoryMessageBus,
+/// DirectDispatchMessageBus) to provide local tap functionality.
 /// </summary>
 /// <remarks>
 /// <para>
-/// This implementation subscribes to topics on the in-memory bus and forwards
+/// This implementation subscribes to topics on the message bus and forwards
 /// messages by publishing tapped envelopes to the destination topic.
 /// </para>
 /// <para>
-/// Since InMemoryMessageBus doesn't have real exchanges, the destination
+/// Since in-process backends don't have real exchanges, the destination
 /// exchange/routing is simulated by publishing to a combined topic.
 /// </para>
 /// </remarks>
-[BannouHelperService("in-memory-message-tap", typeof(IMessagingService), typeof(IMessageTap), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("in-memory-message-tap", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
 public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
 {
-    private readonly InMemoryMessageBus _messageBus;
+    private readonly IMessageBus _messageBus;
+    private readonly IMessageSubscriber _messageSubscriber;
     private readonly ILogger<InMemoryMessageTap> _logger;
     private readonly ConcurrentDictionary<Guid, TapHandleImpl> _activeTaps = new();
 
     /// <summary>
     /// Creates a new InMemoryMessageTap instance.
     /// </summary>
+    /// <param name="messageBus">Message bus for publishing forwarded events.</param>
+    /// <param name="messageSubscriber">Message subscriber for creating source topic subscriptions.</param>
+    /// <param name="logger">Logger for this service.</param>
     public InMemoryMessageTap(
-        InMemoryMessageBus messageBus,
+        IMessageBus messageBus,
+        IMessageSubscriber messageSubscriber,
         ILogger<InMemoryMessageTap> logger)
     {
         _messageBus = messageBus;
+        _messageSubscriber = messageSubscriber;
         _logger = logger;
         _logger.LogWarning("InMemoryMessageTap initialized - taps will only work in-process");
     }
@@ -67,7 +74,7 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
         IAsyncDisposable? subscription = null;
         try
         {
-            subscription = await _messageBus.SubscribeDynamicAsync<IBannouEvent>(
+            subscription = await _messageSubscriber.SubscribeDynamicAsync<IBannouEvent>(
                 sourceTopic,
                 async (bannouEvent, ct) =>
                 {

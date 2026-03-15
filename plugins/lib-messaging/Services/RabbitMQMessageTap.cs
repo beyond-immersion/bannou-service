@@ -30,7 +30,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// without type-based routing. This allows tapping arbitrary message types.
 /// </para>
 /// </remarks>
-[BannouHelperService("rabbit-m-q-message-tap", typeof(IMessagingService), typeof(IMessageTap), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("rabbit-m-q-message-tap", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
 public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
 {
     private readonly IChannelManager _channelManager;

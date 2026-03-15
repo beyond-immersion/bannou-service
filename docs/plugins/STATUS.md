@@ -499,6 +499,7 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 - [#282](https://github.com/beyond-immersion/bannou-service/issues/282) - Status service design (stacking model, five modes)
 - [#407](https://github.com/beyond-immersion/bannou-service/issues/407) - **BLOCKING**: Item Decay/Expiration System (required for proactive TTL-based status expiration; lazy expiration during cache rebuild is the interim workaround)
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#650](https://github.com/beyond-immersion/bannou-service/issues/650).
 
 ### Completed
 

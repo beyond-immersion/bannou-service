@@ -699,6 +699,10 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 ## Work Tracking
 
+### Active
+
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#649](https://github.com/beyond-immersion/bannou-service/issues/649).
+
 ### Completed
 
 (No completed items — processed entries cleared during maintenance 2026-03-05.)

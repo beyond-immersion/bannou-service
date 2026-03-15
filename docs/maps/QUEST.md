@@ -13,9 +13,9 @@
 |-------|-------|
 | Plugin | lib-quest |
 | Layer | L2 GameFoundation |
-| Endpoints | 18 |
+| Endpoints | 20 |
 | State Stores | quest-definition-statestore (MySQL), quest-instance-statestore (MySQL), quest-objective-progress (Redis), quest-definition-cache (Redis), quest-character-index (Redis), quest-cooldown (Redis) |
-| Events Published | 8 (quest.accepted, quest.objective.progressed, quest.completed, quest.failed, quest.abandoned, quest.instance.created, quest.instance.updated, quest.instance.deleted) |
+| Events Published | 11 (quest.accepted, quest.objective.progressed, quest.completed, quest.failed, quest.abandoned, quest.definition.created, quest.definition.updated, quest.definition.deleted, quest.instance.created, quest.instance.updated, quest.instance.deleted) |
 | Events Consumed | 7 (3 contract, 4 self-subscription) |
 | Client Events | 0 |
 | Background Services | 0 |
@@ -90,13 +90,16 @@
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
+| `quest.definition.created` | `QuestDefinitionCreatedEvent` | (generated but not currently published -- structural test allows; no lifecycle created event from CreateQuestDefinition) |
+| `quest.definition.updated` | `QuestDefinitionUpdatedEvent` | UpdateQuestDefinition, DeprecateQuestDefinition |
+| `quest.definition.deleted` | `QuestDefinitionDeletedEvent` | CleanDeprecatedQuestDefinitions |
 | `quest.accepted` | `QuestAcceptedEvent` | AcceptQuest |
 | `quest.objective.progressed` | `QuestObjectiveProgressedEvent` | ReportObjectiveProgress, HandleContractMilestoneCompletedAsync (event handler) |
 | `quest.completed` | `QuestCompletedEvent` | CompleteQuestAsync helper (via HandleQuestCompleted endpoint, HandleContractFulfilledAsync event handler) |
 | `quest.failed` | `QuestFailedEvent` | FailOrAbandonQuestAsync helper (via HandleContractTerminatedAsync when reason lacks "abandoned"/"player") |
 | `quest.abandoned` | `QuestAbandonedEvent` | AbandonQuest, FailOrAbandonQuestAsync helper (via HandleContractTerminatedAsync when reason contains "abandoned"/"player") |
 | `quest.instance.created` | `QuestInstanceCreatedEvent` | AcceptQuest -- lifecycle event published after instance creation |
-| `quest.instance.updated` | `QuestInstanceUpdatedEvent` | Status transitions (completed, failed, abandoned) -- lifecycle event with `changedFields` |
+| `quest.instance.updated` | `QuestInstanceUpdatedEvent` | Status transitions (completed, failed, abandoned), DeleteByCharacter partial cleanup -- lifecycle event with `changedFields` |
 | `quest.instance.deleted` | `QuestInstanceDeletedEvent` | DeleteInstanceRecordAsync -- published when an instance is fully deleted (e.g., sole-questor cleanup) |
 
 ---
@@ -174,27 +177,28 @@ IF null or not Active -> return
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| CreateQuestDefinition | POST /quest/definition/create | developer | definition | - |
-| GetQuestDefinition | POST /quest/definition/get | user | cache (read-through) | - |
-| ListQuestDefinitions | POST /quest/definition/list | user | - | - |
-| UpdateQuestDefinition | POST /quest/definition/update | developer | definition, cache | - |
-| DeprecateQuestDefinition | POST /quest/definition/deprecate | developer | definition, cache | quest.definition.updated |
-| AcceptQuest | POST /quest/accept | user | instance, progress, index, resource-ref, reverse-index | quest.accepted, quest.instance.created |
-| AbandonQuest | POST /quest/abandon | user | instance, index | quest.abandoned |
-| GetQuest | POST /quest/get | user | - | - |
-| ListQuests | POST /quest/list | user | - | - |
-| ListAvailableQuests | POST /quest/list-available | user | - | - |
-| GetQuestLog | POST /quest/log | user | - | - |
-| ReportObjectiveProgress | POST /quest/objective/progress | user | progress | quest.objective.progressed |
-| ForceCompleteObjective | POST /quest/objective/complete | admin | progress | - |
-| GetObjectiveProgress | POST /quest/objective/get | user | - | - |
-| HandleMilestoneCompleted | POST /quest/internal/milestone-completed | [] | - | - |
-| HandleQuestCompleted | POST /quest/internal/quest-completed | [] | instance, index, cooldown | quest.completed |
-| GetCompressData | POST /quest/get-compress-data | developer | - | - |
-| DeleteByCharacter | POST /quest/delete-by-character | [] | instance, progress, cooldown, index, resource-ref, reverse-index | quest.abandoned, quest.instance.updated, quest.instance.deleted (per instance) |
-| CleanDeprecatedQuestDefinitions | POST /quest/definition/clean-deprecated | admin | definition, cache, reverse-index | quest.definition.deleted |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| CreateQuestDefinition | POST /quest/definition/create | generated | developer | definition | - |
+| GetQuestDefinition | POST /quest/definition/get | generated | user | cache (read-through) | - |
+| ListQuestDefinitions | POST /quest/definition/list | generated | user | - | - |
+| UpdateQuestDefinition | POST /quest/definition/update | generated | developer | definition, cache | - |
+| DeprecateQuestDefinition | POST /quest/definition/deprecate | generated | developer | definition, cache | quest.definition.updated |
+| CleanDeprecatedQuestDefinitions | POST /quest/definition/clean-deprecated | generated | admin | definition, cache, reverse-index | quest.definition.deleted |
+| AcceptQuest | POST /quest/accept | generated | user | instance, progress, index, resource-ref, reverse-index | quest.accepted, quest.instance.created |
+| AbandonQuest | POST /quest/abandon | generated | user | instance, index | quest.abandoned, quest.instance.updated |
+| DeleteQuestInstance | POST /quest/instance/delete | generated | admin | instance, progress, index, reverse-index | quest.instance.deleted |
+| GetQuest | POST /quest/get | generated | user | - | - |
+| ListQuests | POST /quest/list | generated | user | - | - |
+| ListAvailableQuests | POST /quest/list-available | generated | user | - | - |
+| GetQuestLog | POST /quest/log | generated | user | - | - |
+| ReportObjectiveProgress | POST /quest/objective/progress | generated | user | progress | quest.objective.progressed |
+| ForceCompleteObjective | POST /quest/objective/complete | generated | admin | progress | - |
+| GetObjectiveProgress | POST /quest/objective/get | generated | user | - | - |
+| HandleMilestoneCompleted | POST /quest/internal/milestone-completed | generated | [] | - | - |
+| HandleQuestCompleted | POST /quest/internal/quest-completed | generated | [] | instance, index, cooldown | quest.completed, quest.instance.updated |
+| GetCompressData | POST /quest/get-compress-data | generated | [] | - | - |
+| DeleteByCharacter | POST /quest/delete-by-character | generated | [] | instance, progress, cooldown, index, resource-ref, reverse-index | quest.abandoned, quest.instance.updated, quest.instance.deleted (per instance) |
 
 ---
 
@@ -254,6 +258,7 @@ RETURN (200, ListQuestDefinitionsResponse { definitions, total })
 POST /quest/definition/update | Roles: [developer]
 
 ```
+// UpdateWithRetryAsync (pure mutation overload)
 READ _definitionStore:"def:{definitionId}" [with ETag] -> 404 if null
 // Update mutable fields only: Name, Description, Category, Difficulty, Tags
 // Structural fields (objectives, rewards, prerequisites) are immutable
@@ -267,9 +272,9 @@ RETURN (200, QuestDefinitionResponse)
 POST /quest/definition/deprecate | Roles: [developer]
 
 ```
+// UpdateWithRetryAsync (validate-then-mutate overload)
 READ _definitionStore:"def:{definitionId}" [with ETag] -> 404 if null
-IF already deprecated
- RETURN (200, QuestDefinitionResponse) // idempotent
+IF already deprecated -> RETURN (200, QuestDefinitionResponse) // idempotent (SkipWith OK)
 // Set IsDeprecated = true, DeprecatedAt = UtcNow, DeprecationReason = body.reason
 ETAG-WRITE _definitionStore:"def:{definitionId}"
  -> retry up to MaxConcurrencyRetries -> 409 if exhausted
@@ -363,6 +368,23 @@ ETAG-WRITE _characterIndex:"char:{questorCharacterId}"
 
 CALL IContractClient.TerminateContractInstanceAsync(...) // best-effort
 PUBLISH "quest.abandoned" { questInstanceId, questCode, abandoningCharacterId }
+PUBLISH quest.instance.updated { changedFields: ["status", "completedAt"] }
+RETURN (200, QuestInstanceResponse)
+```
+
+### DeleteQuestInstance
+POST /quest/instance/delete | Roles: [admin]
+
+```
+READ _instanceStore:"inst:{questInstanceId}" -> 404 if null
+-> 409 if Status == Active // must abandon first
+
+// DeleteInstanceRecordAsync helper:
+//   Deletes objective progress, character index entries,
+//   reverse index entry, instance record,
+//   publishes quest.instance.deleted lifecycle event
+CALL DeleteInstanceRecordAsync(instance)
+
 RETURN (200, QuestInstanceResponse)
 ```
 
@@ -531,11 +553,12 @@ IF definition.Repeatable
  (TTL: definition.CooldownSeconds)
 
 PUBLISH "quest.completed" { questInstanceId, definitionId, questCode, questorCharacterIds, gameServiceId }
+PUBLISH quest.instance.updated { changedFields: ["status", "completedAt"] }
 RETURN (200)
 ```
 
 ### GetCompressData
-POST /quest/get-compress-data | Roles: [developer]
+POST /quest/get-compress-data | Roles: []
 
 ```
 // Called by lib-resource during character compression/archival
@@ -645,3 +668,20 @@ RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ## Background Services
 
 No background services.
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### OnRunningAsync
+
+```
+// Plugin startup: registers with lib-resource for character lifecycle management
+CALL QuestCompressionCallbacks.RegisterAsync(IResourceClient)  // compression callback for archival
+CALL QuestService.RegisterResourceCleanupCallbacksAsync(IResourceClient)  // cleanup callback for deletion
+
+// Register event templates for ABML emit_event action (soft access)
+IF IEventTemplateRegistry available
+  CALL QuestEventTemplates.RegisterAll(registry)
+// Graceful degradation if IEventTemplateRegistry absent (L4 optional)
+```

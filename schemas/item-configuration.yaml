@@ -102,7 +102,7 @@ x-service-configuration:
       description: System party ID for item use contracts (null uses deterministic UUID from game ID)
 
     systemPartyType:
-      $ref: 'item-api.yaml#/components/schemas/EntityType'
+      $ref: 'common-api.yaml#/components/schemas/EntityType'
       env: ITEM_SYSTEM_PARTY_TYPE
       default: "system"
       description: Entity type for the system party in item use contracts

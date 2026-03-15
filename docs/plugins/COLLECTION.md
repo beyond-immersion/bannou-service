@@ -136,4 +136,5 @@ No known bugs at this time.
 
 ## Work Tracking
 
-*No active work items.*
+### Active
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#654](https://github.com/beyond-immersion/bannou-service/issues/654).

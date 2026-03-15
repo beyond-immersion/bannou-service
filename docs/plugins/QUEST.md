@@ -179,20 +179,16 @@ No known bugs at this time.
 1. **Objective progress durability** ([#562](https://github.com/beyond-immersion/bannou-service/issues/562)): Redis-only progress storage with 5-minute TTL (`ProgressCacheTtlSeconds`) causes silent data loss for long-running quests (daily, weekly, exploration). Contract milestones are binary (complete/not complete) and cannot store partial progress, so progress counts and entity deduplication data (`TrackedEntityIds`) have no durable backing. If no progress is reported for longer than the TTL, partial progress is silently lost. This is a first-class scaling concern — the current default TTL is appropriate for rapid combat quests but inadequate for any quest type with intermittent progress updates.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/562 -->
 
-2. **Prerequisite architecture (RESOLVED in #320)**: Quest uses a two-tier prerequisite system:
- - **Built-in (L2)**: `quest_completed`, `currency`, `item` - Quest calls L2 service clients directly with hard dependencies
- - **Dynamic (via IPrerequisiteProviderFactory)**: `character_level`, `reputation`, `skill`, `magic`, `achievement`, `status_effect`, etc. - L4 (or future L2) services implement `IPrerequisiteProviderFactory`, Quest discovers via `IEnumerable<IPrerequisiteProviderFactory>` DI collection injection, graceful degradation if provider missing
- - See `docs/planning/QUEST-PLUGIN-ARCHITECTURE.md` and `docs/reference/SERVICE-HIERARCHY.md` for full pattern
+2. ~~**Prerequisite architecture**~~: **FIXED** (2026-02-07, [#320](https://github.com/beyond-immersion/bannou-service/issues/320)) - Quest uses a two-tier prerequisite system: built-in (L2) types (`quest_completed`, `currency`, `item`) via direct service client calls, and dynamic types via `IPrerequisiteProviderFactory` DI collection for L4 extensibility. See `docs/reference/SERVICE-HIERARCHY.md` for the full pattern.
 
-3. **Reward execution (RESOLVED in #320)**: Rewards execute via Contract prebound APIs:
- - Quest builds prebound API definitions from `RewardDefinitionModel` at definition creation
- - APIs attached to final milestone's `onComplete` array
- - Quest sets `TemplateValues` with resolved wallet/container IDs at quest acceptance (Quest is L2, can call Currency/Inventory directly)
- - Contract executes prebound APIs on milestone completion - Quest never calls Currency/Inventory for reward distribution
+3. ~~**Reward execution**~~: **FIXED** (2026-02-07, [#320](https://github.com/beyond-immersion/bannou-service/issues/320)) - Rewards execute via Contract prebound APIs. Quest builds prebound API definitions from `RewardDefinitionModel` at definition creation, attaches to final milestone's `onComplete` array, and resolves `TemplateValues` (wallet/container IDs) at quest acceptance. Contract handles reward distribution on milestone completion.
 
 ---
 
 ## Work Tracking
+
+### Active
+- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#652](https://github.com/beyond-immersion/bannou-service/issues/652).
 
 ### Open Issues
 - [#496](https://github.com/beyond-immersion/bannou-service/issues/496): Client events for real-time objective tracking (unblocked — #426 implemented)
@@ -203,4 +199,5 @@ No known bugs at this time.
 - [#563](https://github.com/beyond-immersion/bannou-service/issues/563): Contract typed termination reason enum (Contract-side, benefits Quest)
 
 ### Completed
+- [#320](https://github.com/beyond-immersion/bannou-service/issues/320): Move Quest to L2, implement prerequisites via provider factory, rewards via prebound APIs (2026-02-07)
 - [#561](https://github.com/beyond-immersion/bannou-service/issues/561): character deletion cleanup via lib-resource (2026-03-08)

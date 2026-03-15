@@ -1,9 +1,9 @@
 # Direct Dispatch Events: Zero-Overhead Event Delivery for Embedded and Sidecar Modes
 
 > **Type**: Design
-> **Status**: Active
+> **Status**: Implemented
 > **Created**: 2026-03-14
-> **Last Updated**: 2026-03-14
+> **Last Updated**: 2026-03-15
 > **North Stars**: #3, #4
 > **Related Plugins**: Messaging, Connect
 > **Prerequisites**: [DEPLOYMENT-MODES.md](DEPLOYMENT-MODES.md), [BANNOU-EMBEDDED.md](BANNOU-EMBEDDED.md)

@@ -127,6 +127,9 @@ None currently tracked.
 1. **Delete flow O(N) reference unregistration**: When Character is deleted, cleanup callbacks fire on 4 L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor). Each entity deletion in those services publishes an individual `resource.reference.unregistered` event. For characters with rich data (hundreds of encounters, many history entries), this creates O(N) message bus traffic. A batch unregistration endpoint in lib-resource would reduce this to a single operation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/351 -->
 
+2. **No realm deletion reference tracking via lib-resource** ([#591](https://github.com/beyond-immersion/bannou-service/issues/591)): Character stores `realmId` on every character but does not register RESTRICT references with lib-resource when creating or transferring characters. This means realm deletion cannot be blocked by the existence of characters in that realm. The intended workflow (deprecate → merge → delete) migrates characters before deletion, but the lib-resource safety net is missing. Species (#369) and Location (#590) have the same gap. Adding `x-references` with `target: realm` and `onDelete: restrict` would complete the realm deletion safety chain documented in REALM.md.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-15:https://github.com/beyond-immersion/bannou-service/issues/591 -->
+
 
 ---
 
