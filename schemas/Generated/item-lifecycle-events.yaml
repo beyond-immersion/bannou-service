@@ -266,16 +266,11 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
-    ItemInstanceCreatedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+    ItemInstanceBatchEntry:
       type: object
+      description: Single item instance creation record within a batch event
       additionalProperties: false
-      description: Published to item.instance.created when a iteminstance is created
-      required:
-      - eventName
-      - eventId
-      - timestamp
+      required: &id036
       - instanceId
       - templateId
       - realmId
@@ -284,10 +279,6 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventName:
-          type: string
-          default: item.instance.created
-          description: 'Event type identifier: item.instance.created'
         instanceId: &id018
           type: string
           format: uuid
@@ -356,24 +347,19 @@ components:
           format: date-time
           nullable: true
           description: "When the instance was last modified"
-        createdAt:
+        createdAt: &id034
           type: string
           format: date-time
           description: Timestamp when the item instance was created
-        updatedAt:
+        updatedAt: &id035
           type: string
           format: date-time
-          description: Timestamp when the item instance was last updated (set to createdAt on creation)
-    ItemInstanceUpdatedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+          description: Timestamp when the item instance was last updated
+    ItemInstanceBatchModifiedEntry:
       type: object
+      description: Single item instance modification record within a batch event
       additionalProperties: false
-      description: Published to item.instance.updated when a iteminstance is updated
       required:
-      - eventName
-      - eventId
-      - timestamp
       - instanceId
       - templateId
       - realmId
@@ -383,10 +369,6 @@ components:
       - updatedAt
       - changedFields
       properties:
-        eventName:
-          type: string
-          default: item.instance.updated
-          description: 'Event type identifier: item.instance.updated'
         instanceId: *id018
         templateId: *id019
         containerId: *id020
@@ -403,41 +385,19 @@ components:
         originType: *id031
         originId: *id032
         modifiedAt: *id033
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the item instance was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the item instance was last updated (set to createdAt on creation)
+        createdAt: *id034
+        updatedAt: *id035
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
-    ItemInstanceDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+    ItemInstanceBatchDestroyedEntry:
       type: object
+      description: Single item instance destruction record within a batch event
       additionalProperties: false
-      description: Published to item.instance.deleted when a iteminstance is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - instanceId
-      - templateId
-      - realmId
-      - quantity
-      - originType
-      - createdAt
-      - updatedAt
+      required: *id036
       properties:
-        eventName:
-          type: string
-          default: item.instance.deleted
-          description: 'Event type identifier: item.instance.deleted'
         instanceId: *id018
         templateId: *id019
         containerId: *id020
@@ -454,15 +414,99 @@ components:
         originType: *id031
         originId: *id032
         modifiedAt: *id033
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the item instance was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the item instance was last updated (set to createdAt on creation)
+        createdAt: *id034
+        updatedAt: *id035
         deletedReason:
           type: string
           nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+          description: Optional reason for destruction
+    ItemInstanceBatchCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated item instance created records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: item.instance.batch-created
+          description: 'Event type identifier: item.instance.batch-created'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemInstanceBatchEntry'
+          description: Individual created records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started
+    ItemInstanceBatchModifiedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated item instance modified records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: item.instance.batch-modified
+          description: 'Event type identifier: item.instance.batch-modified'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemInstanceBatchModifiedEntry'
+          description: Individual modified records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started
+    ItemInstanceBatchDestroyedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated item instance destroyed records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: item.instance.batch-destroyed
+          description: 'Event type identifier: item.instance.batch-destroyed'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemInstanceBatchDestroyedEntry'
+          description: Individual destroyed records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started

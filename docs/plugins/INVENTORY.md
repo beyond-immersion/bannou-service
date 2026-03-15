@@ -226,14 +226,13 @@ Stack Operations
 
 ### Bugs (Fix Immediately)
 
-1. **Missing `account.deleted` cleanup handler**: Inventory supports `ContainerOwnerType.Account` — containers can be owned by accounts. Per Foundation Tenets (Account Deletion Cleanup Obligation), every service with account-owned data MUST subscribe to `account.deleted` and clean up all account-owned data. Inventory does not implement `HandleAccountDeletedAsync` in `InventoryServiceEvents.cs`. This is not a design question — the tenet prescribes the exact fix: subscribe via `IEventConsumer`, implement cleanup of all account-owned containers (including destroying/detaching contained items), and publish `inventory.container.deleted` lifecycle events for each removed container. Reference implementation: `lib-collection/CollectionServiceEvents.cs`. See [#593](https://github.com/beyond-immersion/bannou-service/issues/593).
-<!-- AUDIT:TODO:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/593 -->
+1. ~~**Missing `account.deleted` cleanup handler**~~: **FIXED** (2026-03-15) - Implemented `HandleAccountDeletedAsync` and `CleanupContainersForAccountAsync` in `InventoryServiceEvents.cs`. Service subscribes to `account.deleted` via `IEventConsumer`, iterates all account-owned containers (via owner index), calls `DeleteContainerAsync` with `ItemHandling.Destroy` for each, and cleans up the owner index. Per-container failures logged at Warning with per-item error isolation. Service implements `IAccountDeletionCleanupRequired` marker interface. Schema declares subscription in `x-event-subscriptions`. Cross-service issue [#593](https://github.com/beyond-immersion/bannou-service/issues/593) remains open for other affected services.
 
 2. ~~**`WeightContribution.None` used as sentinel for "unspecified"**~~: **FIXED** (2026-03-14) - Made `weightContribution` nullable in `CreateContainerRequest` schema. `null` means "use config default", `None` now correctly means "no weight propagation". Updated test to verify both null-defaults-to-config and explicit-None-preserved behaviors.
 
-3. **Container deletion orphans items without compensation or self-healing**: When deleting with `ItemHandling.Destroy`, individual item destruction failures are logged but the container is deleted anyway. This orphans items (their `containerId` references a deleted container). Per Implementation Tenets (Multi-Service Call Compensation), acknowledging orphaned state without a resolution mechanism is forbidden. Either: (a) rollback container deletion when item destruction fails, or (b) document and implement a specific self-healing mechanism (e.g., an orphan item reconciliation worker that periodically checks for items with invalid container references).
+3. ~~**Container deletion orphans items without compensation or self-healing**~~: **FIXED** (2026-03-14) - DeleteContainer now tracks item destruction failures and aborts the deletion (returns ServiceUnavailable) if any items fail to destroy. This prevents orphaning items whose containerId would reference a deleted container. The container and all its indexes are preserved, allowing retry.
 
-4. **MergeStacks source destruction failure orphans zero-quantity items**: When stacks are fully merged, failure to destroy the source item is logged as a warning but the merge proceeds. The source item may remain with zero quantity in lib-item — a ghost record. Per Implementation Tenets (Multi-Service Call Compensation), this orphaned state requires either compensation (undo the quantity transfer to target) or a documented self-healing mechanism (e.g., orphan reconciliation worker that purges zero-quantity items).
+4. ~~**MergeStacks source destruction failure orphans zero-quantity items**~~: **FIXED** (2026-03-15) - MergeStacks now compensates (reverts target quantity increase) when source destruction or reduction fails, then returns InternalServerError. Both full merge (destroy fails) and partial merge (reduce fails) paths have compensation. If compensation itself fails, logs at Error with source/target/quantity for manual investigation.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -295,9 +294,8 @@ Stack Operations
 - **[#483](https://github.com/beyond-immersion/bannou-service/issues/483)**: Batch item operations and serial deletion optimization
 - **[#484](https://github.com/beyond-immersion/bannou-service/issues/484)**: Item event consumption for container counter synchronization
 - **[#485](https://github.com/beyond-immersion/bannou-service/issues/485)**: N+1 query pattern — batch item listing across containers
-- **[#593](https://github.com/beyond-immersion/bannou-service/issues/593)**: Account deletion cleanup handler for account-owned containers
-
 ### Completed
+- **2026-03-15**: Inventory portion of [#593](https://github.com/beyond-immersion/bannou-service/issues/593) confirmed implemented — `HandleAccountDeletedAsync` + `CleanupContainersForAccountAsync` in `InventoryServiceEvents.cs`, `IAccountDeletionCleanupRequired` marker, `x-event-subscriptions` declared. Issue remains open for other affected L2 services (subscription, game-session, character, currency).
 - **2026-02-25**: Reclassified "Category constraints are client-side only" from Design Considerations to Intentional Quirks (#13) — intentional architectural boundary (Inventory is placement layer, Item is data layer, no circular dependency)
 - **2026-02-24**: L3 hardening pass - NRT fix, filler removal from 7 responses, metadata disclaimers, event schema additionalProperties, x-lifecycle model completion, validation keywords, sentinel fix, telemetry spans, 24 new tests (93 total)
 - **2026-02-24**: Closed #310 (silent failure patterns) - IItemClient now constructor-injected (hard dependency)

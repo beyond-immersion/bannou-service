@@ -117,8 +117,29 @@ public partial class CurrencyService : IBannouService
                         foreach (var defId in currencyDefIds)
                         {
                             var balKey = $"{BALANCE_PREFIX}{wallet.WalletId}:{defId}";
+                            var balanceForEvent = await _balanceStore.GetAsync(balKey, cancellationToken);
                             await _balanceStore.DeleteAsync(balKey, cancellationToken);
                             await _balanceCacheStore.DeleteAsync(balKey, cancellationToken);
+
+                            // Publish balance lifecycle deleted event
+                            if (balanceForEvent != null && Guid.TryParse(defId, out var parsedDefId))
+                            {
+                                var def = await _definitionStore.GetAsync($"{DEF_PREFIX}{defId}", cancellationToken);
+                                await _messageBus.PublishCurrencyBalanceDeletedAsync(new CurrencyBalanceDeletedEvent
+                                {
+                                    EventId = Guid.NewGuid(),
+                                    Timestamp = DateTimeOffset.UtcNow,
+                                    WalletId = wallet.WalletId,
+                                    CurrencyDefinitionId = parsedDefId,
+                                    CurrencyCode = def?.Code ?? "",
+                                    OwnerId = wallet.OwnerId,
+                                    OwnerType = wallet.OwnerType,
+                                    Amount = balanceForEvent.Amount,
+                                    CreatedAt = balanceForEvent.CreatedAt,
+                                    UpdatedAt = balanceForEvent.LastModifiedAt,
+                                    DeletedReason = "Account deleted"
+                                }, cancellationToken);
+                            }
 
                             // Remove wallet from the currency's reverse index
                             await RemoveFromListAsync(

@@ -96,7 +96,7 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 | `CleanupServiceStartupDelaySeconds` | `GAME_SESSION_CLEANUP_SERVICE_STARTUP_DELAY_SECONDS` | `10` | Delay before cleanup service starts |
 | `StartupServiceDelaySeconds` | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | `2` | Delay before subscription cache warmup |
 | `SubscriberSessionRetryMaxAttempts` | `GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS` | `3` | Max retries for ETag-based optimistic concurrency |
-| `SupportedGameServices` | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `generic` | Game service stub names for horizontal scaling partitioning (should be typed array in config schema, not comma-delimited string) |
+| `SupportedGameServices` | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | `["generic"]` | Game service stub names (string array) for horizontal scaling partitioning |
 | `GenericLobbiesEnabled` | `GAME_SESSION_GENERIC_LOBBIES_ENABLED` | `false` | Auto-publish generic shortcuts without subscription (see Generic Lobbies) |
 | `LockTimeoutSeconds` | `GAME_SESSION_LOCK_TIMEOUT_SECONDS` | `60` | Timeout in seconds for distributed session locks |
 
@@ -207,7 +207,7 @@ Subscription Cache Architecture
 
 ## Horizontal Scaling by Game
 
-The `SupportedGameServices` configuration enables **per-game horizontal scaling** by partitioning which game-session instances handle which games. Currently implemented as a comma-delimited string (violation — should be a typed array in the configuration schema). Filters which `subscription.updated` events the instance processes.
+The `SupportedGameServices` configuration (a typed string array) enables **per-game horizontal scaling** by partitioning which game-session instances handle which games. Filters which `subscription.updated` events the instance processes.
 
 ### How It Works
 
@@ -317,11 +317,7 @@ User connects → session.connected event
 
 ### Bugs (Fix Immediately)
 
-1. **SupportedGameServices is a comma-delimited string parsed at runtime**: The `SupportedGameServices` configuration property is a comma-delimited string that is split and parsed at runtime. Per Implementation Tenets (Configuration-First), comma-delimited strings for structured configuration bypass compile-time type safety and schema validation. Should be a typed array in the configuration schema with individual entries or `$ref` items.
-
-2. **ListGameSessions does not apply GameType/Status filters**: The schema defines `GameType` and `Status` filter parameters on the list request, but the implementation ignores them, returning all non-finished sessions. This is dead schema (the properties exist but have no effect).
-
-3. **CreateGameSession orphans session record on session-list lock failure**: The session record is written to the state store BEFORE acquiring the session-list lock. If the lock acquisition fails (returns 409), the session record persists as an orphan — unreachable via listing, never cleaned up. The write should be inside the lock, or the session record should be deleted as compensation on lock failure.
+*(none)*
 
 ### Intentional Quirks
 
@@ -356,4 +352,7 @@ User connects → session.connected event
 - **Join validates subscriber session but Leave does not** — Moved from Design Considerations to Intentional Quirk #6 (2026-03-08). Behavior is correct: authorization verified at join time; leave always succeeds regardless of subscription status.
 - **CleanupPlayerModel property name mismatch** — Fixed and verified (2026-03-08). `WebSocketSessionId` renamed to `SessionId`. Comment documents the alignment requirement.
 - **KickPlayer Finished transition / permission clearing / SendChatMessage validation** — Code verified fixed (2026-03-14). Map bug notes outdated; map update needed. KickPlayer now transitions to Finished on 0 players and clears permission state. SendChatMessage now validates sender membership via server-side session ID.
+- **SupportedGameServices comma-delimited string** — Fixed (2026-03-14). Schema changed from `type: string` to `type: array` with `items: {type: string}`. Removed `.Split()` from service and startup service.
+- **ListGameSessions dead GameType/Status filters** — Fixed (2026-03-14). Filtering logic added for both parameters; default "skip Finished" behavior preserved when no status filter specified. Unit tests added.
+- **CreateGameSession orphaned session on lock failure** — Fixed (2026-03-14). Lock acquisition moved before session save so lock failure leaves no orphaned state.
 

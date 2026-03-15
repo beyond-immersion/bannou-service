@@ -22,6 +22,26 @@ x-service-configuration:
       env: MESSAGING_USE_INMEMORY
       default: false
 
+    # Direct Dispatch Mode (for embedded/sidecar deployments)
+    UseDirectDispatch:
+      type: boolean
+      description: >
+        When true, events are dispatched directly to IEventConsumer handlers
+        without going through the pub/sub subscription layer. Zero serialization,
+        zero transport overhead. Intended for embedded and sidecar deployments
+        where all services run in-process. Takes precedence over UseInMemory.
+      env: MESSAGING_USE_DIRECT_DISPATCH
+      default: false
+    SkipUnhandledTopics:
+      type: boolean
+      description: >
+        When true, TryPublishAsync skips scope creation for topics with no
+        registered IEventConsumer handlers. Saves allocation cost but assumes
+        no external or future subscribers exist for unhandled topics. Only
+        enable when the subscriber set is known and complete.
+      env: MESSAGING_SKIP_UNHANDLED_TOPICS
+      default: false
+
     # RabbitMQ Connection Settings
     RabbitMQHost:
       type: string

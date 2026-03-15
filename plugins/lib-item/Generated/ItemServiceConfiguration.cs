@@ -158,6 +158,27 @@ public class ItemServiceConfiguration : BaseServiceConfiguration
     public string OnUseFailedMilestoneCode { get; set; } = "handle_failure";
 
     /// <summary>
+    /// Interval in seconds between instance lifecycle batch event flushes
+    /// Environment variable: ITEM_INSTANCE_EVENT_BATCH_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
+    public int InstanceEventBatchIntervalSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Startup delay in seconds before instance lifecycle batch event publishing begins
+    /// Environment variable: ITEM_INSTANCE_EVENT_BATCH_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
+    public int InstanceEventBatchStartupDelaySeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum entries per batch event before forced flush
+    /// Environment variable: ITEM_INSTANCE_EVENT_BATCH_MAX_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 10000)]
+    public int InstanceEventBatchMaxSize { get; set; } = 500;
+
+    /// <summary>
     /// Distributed lock timeout in seconds for UseItemStep operations (prevents race conditions)
     /// Environment variable: ITEM_USE_STEP_LOCK_TIMEOUT_SECONDS
     /// </summary>

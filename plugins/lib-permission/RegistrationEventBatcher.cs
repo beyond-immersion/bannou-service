@@ -3,7 +3,6 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Permission;
 
@@ -13,10 +12,15 @@ namespace BeyondImmersion.BannouService.Permission;
 /// </summary>
 /// <remarks>
 /// <para>
+/// Uses <see cref="DeduplicatingEventBatcher{TKey,TEntry}"/> (Mode 2 — last-write-wins)
+/// because the same service can re-register multiple times and only the latest
+/// registration state matters within a batch window.
+/// </para>
+/// <para>
 /// <b>IMPLEMENTATION TENETS - Multi-Instance Safety:</b>
-/// The ConcurrentDictionary accumulator is in-memory per-node. Each node publishes
-/// its own batch independently. Analytics aggregates per-node data. This is by-design
-/// for observability — registration events are fire-and-forget with no functional dependency.
+/// The accumulator is in-memory per-node. Each node publishes its own batch
+/// independently. Analytics aggregates per-node data. This is by-design for
+/// observability — registration events are fire-and-forget with no functional dependency.
 /// </para>
 /// <para>
 /// <b>FOUNDATION TENETS - Background Service Pattern:</b>
@@ -26,13 +30,11 @@ namespace BeyondImmersion.BannouService.Permission;
 /// </remarks>
 public class RegistrationEventBatcher : BackgroundService
 {
+    private readonly DeduplicatingEventBatcher<string, PermissionRegistrationEntry> _batcher;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<RegistrationEventBatcher> _logger;
     private readonly PermissionServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
-
-    private ConcurrentDictionary<string, PermissionRegistrationEntry> _pendingRegistrations = new();
-    private DateTimeOffset _windowStartedAt = DateTimeOffset.UtcNow;
 
     /// <summary>
     /// Initializes the registration event batcher with required dependencies.
@@ -51,6 +53,11 @@ public class RegistrationEventBatcher : BackgroundService
         _logger = logger;
         _configuration = configuration;
         _telemetryProvider = telemetryProvider;
+
+        _batcher = new DeduplicatingEventBatcher<string, PermissionRegistrationEntry>(
+            FlushRegistrationsAsync,
+            entry => entry.RegisteredAt,
+            logger);
     }
 
     /// <summary>
@@ -61,12 +68,12 @@ public class RegistrationEventBatcher : BackgroundService
     /// <param name="version">The service version at registration time.</param>
     internal void Add(string serviceId, string? version)
     {
-        _pendingRegistrations[serviceId] = new PermissionRegistrationEntry
+        _batcher.Add(serviceId, new PermissionRegistrationEntry
         {
             ServiceId = serviceId,
             Version = version,
             RegisteredAt = DateTimeOffset.UtcNow
-        };
+        });
     }
 
     /// <summary>
@@ -93,7 +100,7 @@ public class RegistrationEventBatcher : BackgroundService
             {
                 using var activity = _telemetryProvider.StartActivity(
                     "bannou.permission", "RegistrationEventBatcher.ProcessCycle");
-                await FlushAsync(stoppingToken);
+                await _batcher.FlushAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -116,7 +123,7 @@ public class RegistrationEventBatcher : BackgroundService
         }
 
         // Best-effort final flush on shutdown
-        try { await FlushAsync(CancellationToken.None); }
+        try { await _batcher.FlushAsync(CancellationToken.None); }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "{Worker} final flush failed", nameof(RegistrationEventBatcher));
@@ -126,23 +133,14 @@ public class RegistrationEventBatcher : BackgroundService
     }
 
     /// <summary>
-    /// Atomically swaps the pending registrations dictionary with a fresh one,
-    /// then publishes all accumulated entries as a single bulk event.
+    /// Flush callback invoked by the batcher. Constructs the bulk event and publishes
+    /// via the generated publisher method.
     /// </summary>
-    private async Task FlushAsync(CancellationToken ct)
+    private async Task FlushRegistrationsAsync(
+        List<PermissionRegistrationEntry> entries,
+        DateTimeOffset windowStart,
+        CancellationToken ct)
     {
-        if (_pendingRegistrations.IsEmpty) return;
-
-        var snapshot = Interlocked.Exchange(
-            ref _pendingRegistrations,
-            new ConcurrentDictionary<string, PermissionRegistrationEntry>());
-
-        if (snapshot.IsEmpty) return;
-
-        var entries = snapshot.Values.ToList();
-        var windowStart = _windowStartedAt;
-        _windowStartedAt = DateTimeOffset.UtcNow;
-
         using var scope = _serviceProvider.CreateScope();
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 

@@ -62,6 +62,15 @@ public static class CurrencyPublishedTopics
     /// <summary>Published when a wallet is permanently closed.</summary>
     public const string CurrencyWalletClosed = "currency.wallet.closed";
 
+    /// <summary>Published when a new balance record is created for a wallet-currency pair (first credit of a currency to a wallet).</summary>
+    public const string CurrencyBalanceCreated = "currency.balance.created";
+
+    /// <summary>Published when a balance record is updated (credit, debit, autogain, etc.).</summary>
+    public const string CurrencyBalanceUpdated = "currency.balance.updated";
+
+    /// <summary>Published by the clean-deprecated sweep when a balance record is permanently removed.</summary>
+    public const string CurrencyBalanceDeleted = "currency.balance.deleted";
+
     /// <summary>Published when an authorization hold is created.</summary>
     public const string CurrencyHoldCreated = "currency.hold.created";
 

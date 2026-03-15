@@ -217,6 +217,12 @@ GameSession is to players what Inventory is to items: a **container primitive**.
 
 Player experience orchestration service (L4 GameFeatures) and the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. A "garden" is an abstract conceptual space (lobby, in-game, housing, void/discovery) that a player inhabits, with Gardener managing their gameplay context, entity associations, and event routing. Provides the APIs and infrastructure that divine actors (running via Puppetmaster on the L2 Actor runtime) use to manipulate player experiences -- behavior-agnostic, providing primitives not policy. Currently implements the void/discovery garden type only; the broader garden concept (multiple types, garden-to-garden transitions) is the architectural target. Internal-only, never internet-facing.
 
+## Genesis {#genesis}
+
+**Deep Dive**: [docs/plugins/GENESIS.md](plugins/GENESIS.md)
+
+Template-driven entity awakening lifecycle service (L2 GameFoundation) for managing entities that progressively grow from inert objects into autonomous agents with personalities, memories, and the full cognitive stack. Encapsulates the Actor-Bound Entity pattern (previously a documentation pattern across VISION.md and ACTOR-BOUND-ENTITIES.md) as reusable infrastructure: a single `CreateEntity` call provisions the seed, currency wallets, inventories, and resource registrations from a template definition, then manages the Dormant → EventBrain → CharacterBrain cognitive progression automatically as currency accumulates. Seed growth is driven entirely by currency transactions via template-defined growth mappings — the seed is an internal implementation detail never exposed to callers. Domain-specific plugins (lib-dungeon, lib-divine) sit on top for their ceremony; simple entity types (treasure chests, living weapons, haunted buildings, sentient ships) need no additional plugin. Game-agnostic: entity types, growth domains, currencies, behaviors, and awakening configurations are all template-defined seed data. Internal-only, never internet-facing.
+
 ## Hearsay {#hearsay}
 
 **Deep Dive**: [docs/plugins/HEARSAY.md](plugins/HEARSAY.md)
@@ -491,7 +497,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 
 ## Summary
 
-- **Total services**: 76
+- **Total services**: 77
 - **Total endpoints**: 942
 
 ---

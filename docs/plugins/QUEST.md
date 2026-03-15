@@ -82,6 +82,28 @@ Key: objectives ←→ milestones (1:1 mapping)
 
 ---
 
+## Stubs & Unimplemented Features
+
+None. All schema-defined endpoints are implemented.
+
+---
+
+## Potential Extensions
+
+1. **Dynamic objectives** ([#503](https://github.com/beyond-immersion/bannou-service/issues/503)): Objectives that change based on game state or player choices. Contract milestones are structurally immutable by design (trust guarantee). The existing `CUSTOM` ObjectiveType with external progress reporting via `ReportObjectiveProgressAsync` likely covers most "dynamic" use cases — game code determines what counts as progress based on current state. See #503 comments for architectural guidance.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/503 -->
+
+2. **Party quest acceptance flow** ([#506](https://github.com/beyond-immersion/bannou-service/issues/506)): The data model supports multi-character instances (`QuestorCharacterIds` list, configurable `MaxQuestors`) and progress is already per-instance (shared), but no API exists to add additional characters to an existing quest instance — `AcceptQuestAsync` always creates a new instance with a single questor. Requires designing party formation model, contract party management, per-objective-type progress semantics, and reward distribution.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/506 -->
+
+3. **Localization support**: Quest names and descriptions are single-language. Could add localization key support for multi-language games.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/508 -->
+
+4. **Client events for real-time objective tracking** ([#496](https://github.com/beyond-immersion/bannou-service/issues/496)): Push `QuestObjectiveProgressed` and `QuestStatusChanged` (consolidated lifecycle event with status discriminator for accepted/completed/failed/abandoned) client events via `IClientEventPublisher` using the Entity Session Registry (#426, now implemented). Sessions resolved via `character → session` bindings for all questor characters. Published from Quest's event handlers that process Contract state transitions. **Unblocked** — infrastructure dependency (#426) is closed.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/496 -->
+
+---
+
 ## Variable Provider Integration (Actor Service)
 
 Quest (L2) integrates with the Actor service (L2) via the Variable Provider Factory pattern. Since both services are L2, Actor could call `IQuestClient` directly, but the provider pattern is still used for consistency with L4 data sources (personality, encounters) and to support efficient batch loading with caching:
@@ -125,33 +147,6 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 
 ---
 
-## Stubs & Unimplemented Features
-
-None. All schema-defined endpoints are implemented.
-
----
-
-## Potential Extensions
-
-1. **Dynamic objectives** ([#503](https://github.com/beyond-immersion/bannou-service/issues/503)): Objectives that change based on game state or player choices. Contract milestones are structurally immutable by design (trust guarantee). The existing `CUSTOM` ObjectiveType with external progress reporting via `ReportObjectiveProgressAsync` likely covers most "dynamic" use cases — game code determines what counts as progress based on current state. See #503 comments for architectural guidance.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/503 -->
-
-2. **Party quest acceptance flow** ([#506](https://github.com/beyond-immersion/bannou-service/issues/506)): The data model supports multi-character instances (`QuestorCharacterIds` list, configurable `MaxQuestors`) and progress is already per-instance (shared), but no API exists to add additional characters to an existing quest instance — `AcceptQuestAsync` always creates a new instance with a single questor. Requires designing party formation model, contract party management, per-objective-type progress semantics, and reward distribution.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/506 -->
-
-3. **Localization support**: Quest names and descriptions are single-language. Could add localization key support for multi-language games.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/508 -->
-
-4. **Client events for real-time objective tracking** ([#496](https://github.com/beyond-immersion/bannou-service/issues/496)): Push `QuestObjectiveProgressed` and `QuestStatusChanged` (consolidated lifecycle event with status discriminator for accepted/completed/failed/abandoned) client events via `IClientEventPublisher` using the Entity Session Registry (#426, now implemented). Sessions resolved via `character → session` bindings for all questor characters. Published from Quest's event handlers that process Contract state transitions. **Unblocked** — infrastructure dependency (#426) is closed.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/496 -->
-
-5. ~~**character deletion cleanup**~~: **FIXED** (2026-03-08, enhanced 2026-03-13) - Added `x-references` to quest-api.yaml declaring character dependency with CASCADE policy. Generated reference tracking code. `AcceptQuestAsync` now registers character references; `DeleteByCharacterAsync` handles sole-questor vs multi-questor cleanup: sole questor instances are abandoned and fully deleted (via `DeleteInstanceRecordAsync`), multi-questor instances have the character removed from `QuestorCharacterIds` without destroying the quest for remaining questors. Cleanup callbacks registered on startup via `QuestServicePlugin`. `DeleteInstanceRecordAsync` publishes `quest.instance.deleted` lifecycle event and maintains the definition→instance reverse index.
-
-6. **Objective progress durability** ([#562](https://github.com/beyond-immersion/bannou-service/issues/562)): Redis-only progress storage with 5-minute TTL causes silent data loss for long-running quests. Contract milestones are binary and cannot store partial progress. Needs either durable storage or TTL aligned to quest deadline.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/562 -->
-
----
-
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
@@ -179,14 +174,17 @@ No known bugs at this time.
 
 9. **Clean-deprecated now implemented**: `CleanDeprecatedQuestDefinitionsAsync` uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` with the reverse index for instance checking. Publishes `quest.definition.deleted` lifecycle event for each cleaned definition. Defensive cleanup of reverse index entry on each definition deletion.
 
-### Design Considerations (Resolved)
+### Design Considerations (Requires Planning)
 
-1. **Prerequisite architecture (RESOLVED in #320)**: Quest uses a two-tier prerequisite system:
+1. **Objective progress durability** ([#562](https://github.com/beyond-immersion/bannou-service/issues/562)): Redis-only progress storage with 5-minute TTL (`ProgressCacheTtlSeconds`) causes silent data loss for long-running quests (daily, weekly, exploration). Contract milestones are binary (complete/not complete) and cannot store partial progress, so progress counts and entity deduplication data (`TrackedEntityIds`) have no durable backing. If no progress is reported for longer than the TTL, partial progress is silently lost. This is a first-class scaling concern — the current default TTL is appropriate for rapid combat quests but inadequate for any quest type with intermittent progress updates.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/562 -->
+
+2. **Prerequisite architecture (RESOLVED in #320)**: Quest uses a two-tier prerequisite system:
  - **Built-in (L2)**: `quest_completed`, `currency`, `item` - Quest calls L2 service clients directly with hard dependencies
  - **Dynamic (via IPrerequisiteProviderFactory)**: `character_level`, `reputation`, `skill`, `magic`, `achievement`, `status_effect`, etc. - L4 (or future L2) services implement `IPrerequisiteProviderFactory`, Quest discovers via `IEnumerable<IPrerequisiteProviderFactory>` DI collection injection, graceful degradation if provider missing
  - See `docs/planning/QUEST-PLUGIN-ARCHITECTURE.md` and `docs/reference/SERVICE-HIERARCHY.md` for full pattern
 
-2. **Reward execution (RESOLVED in #320)**: Rewards execute via Contract prebound APIs:
+3. **Reward execution (RESOLVED in #320)**: Rewards execute via Contract prebound APIs:
  - Quest builds prebound API definitions from `RewardDefinitionModel` at definition creation
  - APIs attached to final milestone's `onComplete` array
  - Quest sets `TemplateValues` with resolved wallet/container IDs at quest acceptance (Quest is L2, can call Currency/Inventory directly)

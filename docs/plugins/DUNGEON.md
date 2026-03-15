@@ -16,9 +16,9 @@ Dungeon lifecycle orchestration service (L4 GameFeatures) for living dungeon ent
 
 ## Why Not lib-divine? (Architectural Rationale)
 
-Dungeon cores and divine actors share the same structural pattern. Both are event brain actors launched via Puppetmaster, backed by seeds, with currency economies and bonded relationships. The question arises: should dungeon cores simply be a *type* of deity in lib-divine?
+Dungeon cores and divine actors share the same structural pattern. Both follow the Actor-Bound Entity lifecycle — progressive growth via currency-driven seed accumulation, actor spawning at Stirring phase, character binding at Awakened phase. The question arises: should dungeon cores simply be a *type* of deity in lib-divine?
 
-**The answer is no -- same pattern, different ceremony.**
+**The answer is no -- same lifecycle, different ceremony.**
 
 | Concern | lib-divine Ceremony | lib-dungeon Ceremony |
 |---------|---------------------|----------------------|
@@ -32,35 +32,29 @@ Dungeon cores and divine actors share the same structural pattern. Both are even
 
 lib-divine's APIs (blessings, follower management, attention slots, divinity generation) don't map to dungeon mechanics. Dungeon-specific APIs (spawn monster, activate trap, seal passage, shift layout, manifest memory) have no analogue in the divine service. Forcing both into one service would bloat lib-divine with dungeon mechanics or require the dungeon to shoehorn its operations into blessing/follower semantics.
 
-**What they share is infrastructure, not API surface**:
-- Both launch actors via Puppetmaster (event brain type)
-- Both use dynamic character binding to transition from event brain to character brain as they develop (gods bind to divine system realm characters, dungeons bind to dungeon system realm characters)
-- Both use Seed for progressive growth
-- Both use Currency for their economy
-- Both use Gardener for tending conceptual spaces
-- Both influence characters indirectly through the character's Actor
-
-This shared infrastructure is already factored into L0/L1/L2 services. lib-divine and lib-dungeon are both L4 orchestration layers that compose these primitives differently. The dynamic character binding pattern (start as event brain, create character profile, bind at runtime) is the same in both services -- the dungeon cognitive progression mirrors the divine actor lifecycle.
+**What they share is lib-genesis (L2), not API surface**. The shared Actor-Bound Entity lifecycle — seed creation, currency wallet provisioning, actor spawning at Stirring, character creation and binding at Awakened — is handled by [lib-genesis](GENESIS.md). Both lib-divine and lib-dungeon create genesis entities from their respective templates ("deity_domain", "dungeon_core") and subscribe to `genesis.entity.phase-changed` events for domain-specific post-transition work. Genesis handles the common lifecycle; the L4 plugins add their domain-specific ceremony on top.
 
 ---
 
-## Dungeon Cognitive Progression (via Dynamic Character Binding)
+## Dungeon Cognitive Progression (via lib-genesis)
 
-The dynamic character binding feature (Actor's `BindCharacterAsync` API) enables dungeons to progress through three distinct cognitive stages as their `dungeon_core` seed grows. Each stage represents a qualitative leap in the dungeon's decision-making capability, not just a quantitative increase in available actions.
+Dungeons progress through three cognitive stages as mana accumulates in their currency wallet. The lifecycle — seed growth, actor spawning, character creation, and actor binding — is managed by [lib-genesis](GENESIS.md) via the "dungeon_core" genesis template. Dungeon subscribes to `genesis.entity.phase-changed` events and performs domain-specific work at each transition.
 
 ### Stage 1: Dormant Seed (No Actor)
 
 **Seed Phase**: Dormant (MinTotalGrowth: 0.0)
 
-The dungeon exists only as a `dungeon_core` seed and a MySQL record. No actor is running. The dungeon is purely reactive -- intrusions trigger pre-scripted responses defined by the seed's growth phase, but there is no autonomous decision-making. Growth accumulates passively (ambient mana from leyline proximity, deaths within the dungeon's domain reported by other systems).
+The dungeon exists as a genesis entity record and a `DungeonCoreModel`. No actor is running. The dungeon is purely reactive — intrusions trigger pre-scripted responses, but there is no autonomous decision-making. Growth accumulates passively as mana credits the dungeon's wallet (via Currency autogain from leyline proximity, or manual credits from deaths within the domain). Genesis converts mana credits to seed growth via the template's growth mappings.
 
-This is the cheapest state for the system: no actor runtime resources consumed, no perception subscriptions, no behavior loop ticks. A world can have thousands of dormant dungeon seeds scattered across its geography, waiting to awaken.
+This is the cheapest state for the system: no actor runtime resources consumed, no perception subscriptions, no behavior loop ticks. A world can have thousands of dormant dungeon entities scattered across its geography, waiting to awaken.
 
 ### Stage 2: Event Brain Actor (No Character)
 
-**Seed Phase**: Stirring (MinTotalGrowth: 10.0) or triggered by first significant event
+**Seed Phase**: Stirring (MinTotalGrowth: 10.0)
 
-When the dungeon_core seed reaches the Stirring phase (or a significant event triggers activation), the dungeon service starts an actor via Puppetmaster. The actor runs as an **event brain** -- no character binding, operating with the `creature_base` cognition template. The dungeon can:
+When mana accumulation drives the seed past the Stirring threshold, **Genesis automatically spawns an Actor** with the pre-compiled ABML behavior referenced in the template. The actor runs as an **event brain** — no character binding, operating with the `creature_base` cognition template. Genesis publishes `genesis.entity.phase-changed`; Dungeon subscribes and performs domain-specific setup: registering spatial domain perception subscriptions, initializing the volatile inhabitant store, and configuring the domain boundary in Mapping.
+
+The dungeon can now:
 
 - Perceive domain events (intrusions, deaths, combat)
 - Make autonomous decisions via ABML behavior documents
@@ -68,19 +62,13 @@ When the dungeon_core seed reaches the Stirring phase (or a significant event tr
 - Communicate with bonded masters (if any)
 - Capture memories from significant events
 
-The ABML behavior document can already reference `${personality.*}`, `${encounters.*}`, etc. -- these expressions simply resolve to null because there is no character to provide them. The behavior falls through to instinct-driven default paths. The dungeon has preferences (from its personality type stored in seed metadata) but not a rich inner life.
+The ABML behavior document can already reference `${personality.*}`, `${encounters.*}`, etc. — these expressions simply resolve to null because there is no character to provide them. The behavior falls through to instinct-driven default paths. The dungeon has preferences (from its personality type stored in seed metadata) but not a rich inner life.
 
 ### Stage 3: Character Brain Actor (Full Cognitive Stack)
 
 **Seed Phase**: Awakened (MinTotalGrowth: 50.0)
 
-When the dungeon_core seed reaches the Awakened phase, the dungeon has accumulated enough complexity to warrant a full character identity. The dungeon service:
-
-1. Creates a **Character record** in a dungeon system realm (`isSystemType: true`, analogous to the divine system realm for gods -- see [DIVINE.md: God Characters in System Realms](DIVINE.md#god-characters-in-system-realms))
-2. Creates a dungeon species in that realm (e.g., "dungeon core", "aberrant nexus", "living labyrinth")
-3. Calls `/actor/bind-character` to bind the running actor to the new character -- **no actor relaunch needed**
-4. The character's personality traits are seeded from the dungeon's personality type
-5. Variable providers activate on the next behavior tick
+When the seed reaches the Awakened threshold, **Genesis automatically creates a Character** in the DUNGEON_CORES system realm (configured in the template's `awakening` section), seeds personality traits, and calls `Actor.BindCharacter` — no actor relaunch needed. Genesis publishes `genesis.entity.phase-changed` with the `characterId`; Dungeon subscribes and performs domain-specific setup: storing the `characterId` on `DungeonCoreModel`, ensuring the dungeon species exists in the system realm, and configuring environment per existing floors.
 
 After binding, the dungeon has the full L2/L4 character entity stack:
 
@@ -109,33 +97,38 @@ The ABML behavior document is the same one used in Stage 2 -- no swap needed. Th
 ### Stage Transition Flow
 
 ```
-Dungeon core created
+Dungeon created
  │
- ├── dungeon_core seed: Dormant (growth: 0.0)
- │ No actor running. Passive growth only.
+ ├── Genesis.CreateEntity(template: "dungeon_core", ...)
+ │   → Genesis provisions: seed, mana wallet, trap/memory inventories
+ │   Dungeon stores genesisEntityId on DungeonCoreModel
+ │   Dormant (growth: 0.0). Mana accumulates via Currency autogain.
  │
- │ [Seed reaches Stirring phase (growth ≥ 10.0)]
+ │ [Mana credits → Genesis growth mapping → seed reaches Stirring (≥ 10.0)]
  │
- ├── dungeon.phase-changed event triggers actor spawn
- │ Actor runs as EVENT BRAIN (no character)
- │ creature_base cognition template
- │ ${personality.*} = null, instinct-driven behavior
+ ├── Genesis spawns Actor, publishes genesis.entity.phase-changed
+ │   Dungeon handler:
+ │     1. Register spatial domain perception subscriptions
+ │     2. Initialize volatile inhabitant store
+ │     3. Register domain boundary in Mapping
+ │   Actor runs as EVENT BRAIN (creature_base cognition template)
+ │   ${personality.*} = null, instinct-driven behavior
  │
- │ [Seed reaches Awakened phase (growth ≥ 50.0)]
+ │ [Mana credits → Genesis growth mapping → seed reaches Awakened (≥ 50.0)]
  │
- ├── dungeon.phase-changed handler:
- │ 1. Create Character in dungeon system realm
- │ 2. Seed personality traits from dungeon personality type
- │ 3. POST /actor/bind-character (actorId, dungeonCharacterId)
- │ 4. Actor transitions to CHARACTER BRAIN
- │ 5. ${personality.*}, ${encounters.*} etc. activate
- │ 6. Store characterId on DungeonCoreModel
+ ├── Genesis creates Character, binds Actor, publishes phase-changed
+ │   Dungeon handler:
+ │     1. Store characterId from genesis event on DungeonCoreModel
+ │     2. Ensure dungeon species exists in system realm
+ │     3. Configure environment per existing floors
+ │   Actor transitions to CHARACTER BRAIN
+ │   ${personality.*}, ${encounters.*} etc. activate
  │
- │ [Seed reaches Ancient phase (growth ≥ 200.0)]
+ │ [Continued mana → seed reaches Ancient (≥ 200.0)]
  │
  └── Full cognitive depth: memories, grudges, personality evolution
- Memory manifestation, event coordination, master synergy
- The dungeon is now a living entity with a rich inner life
+     Memory manifestation, event coordination, master synergy
+     The dungeon is now a living entity with a rich inner life
 ```
 
 ### System Realm for Dungeon Characters
@@ -460,12 +453,12 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | lib-state (`IStateStoreFactory`) | Dungeon core records (MySQL), bond records (MySQL), inhabitant state (Redis), memory records (MySQL), dungeon cache (Redis), distributed locks (Redis) |
 | lib-state (`IDistributedLockProvider`) | Distributed locks for dungeon mutations, bond formation, spawn operations |
 | lib-messaging (`IMessageBus`) | Publishing dungeon lifecycle events, memory events, bond events, inhabitant events |
-| lib-messaging (`IEventConsumer`) | Registering handlers for domain-scoped combat, death, intrusion, and seed phase events |
-| lib-seed (`ISeedClient`) | `dungeon_core` and `dungeon_master` seed type registration, growth recording, capability manifest queries (L2) |
-| lib-currency (`ICurrencyClient`) | Mana wallet creation, credit/debit for spawn costs and trap charges (L2) |
-| lib-contract (`IContractClient`) | Dungeon-master bond management -- creation, milestone tracking, termination (L1) |
+| lib-messaging (`IEventConsumer`) | Registering handlers for genesis phase-changed events, domain-scoped combat, death, intrusion events |
+| lib-genesis (`IGenesisClient`) | Entity creation from "dungeon_core" template (provisions seed, mana wallet, inventories), entity lifecycle queries, capability checks. Genesis handles actor spawning at Stirring and character creation/binding at Awakened — Dungeon subscribes to `genesis.entity.phase-changed` for domain-specific post-transition work. (L2) |
+| lib-currency (`ICurrencyClient`) | Mana credit/debit for spawn costs and trap charges. Wallet creation is handled by Genesis at entity creation time. (L2) |
+| lib-contract (`IContractClient`) | Dungeon-master bond management — creation, milestone tracking, termination (L1) |
 | lib-actor (`IActorClient`) | Injecting perceptions into the bonded master's character Actor for indirect influence (L2) |
-| lib-character (`ICharacterClient`) | Validating character existence for willing bond formation; creating dungeon character in system realm at Awakened phase for dynamic binding (L2) |
+| lib-character (`ICharacterClient`) | Validating character existence for willing bond formation (L2). Character creation in system realm at Awakened phase is handled by Genesis. |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence for dungeon scoping (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1) |
 | lib-item (`IItemClient`) | Memory item creation (data crystals, memory fragments), loot generation (L2) |
@@ -588,8 +581,7 @@ Dungeon is a multi-entity service. Lifecycle events for the primary entity (dung
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `seed.phase.changed` | `HandleSeedPhaseChangedAsync` | Acquires `core:{dungeonId}` distributed lock for mutation safety. For `dungeon_core` seeds: update cached phase, publish `dungeon.phase-changed`, re-evaluate available actions. **At Stirring phase**: start dungeon core actor via Puppetmaster (event brain, no character). **At Awakened phase**: create Character in dungeon system realm, call `/actor/bind-character` to transition running actor to character brain mode with full variable providers, store characterId on DungeonCoreModel. For `dungeon_master` seeds: advance bond contract milestones. **Note**: `ISeedEvolutionListener` also fires for seed events; the DI listener updates cached manifests (fast local path), while the event subscription is the distributed guarantee. Handlers must be idempotent — check `characterId` on DungeonCoreModel before creating duplicate characters at Awakened phase (lock + idempotency check prevents race in multi-node deployments). |
-| `seed.capability.updated` | `HandleSeedCapabilityUpdatedAsync` | Invalidate cached capability manifests for affected dungeon or master |
+| `genesis.entity.phase-changed` | `HandleGenesisPhaseChangedAsync` | Filters to "dungeon_core" template entities. **At Stirring**: Genesis has already spawned the actor (actorId in event payload). Dungeon registers domain-scoped perception subscriptions, initializes volatile inhabitant store, registers spatial domain boundary in Mapping. Publishes `dungeon.phase-changed`. **At Awakened**: Genesis has already created character and bound actor (characterId in event payload). Dungeon stores characterId on DungeonCoreModel, ensures dungeon species exists in system realm, configures environment per floors. Publishes `dungeon.phase-changed`. For `dungeon_master` seeds: advance bond contract milestones. Invalidates cached capability manifests. |
 | `contract.terminated` | `HandleContractTerminatedAsync` | Clean up bond record when dungeon-master contract ends; archive master seed if configured |
 
 ### Resource Cleanup

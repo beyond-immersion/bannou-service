@@ -31,16 +31,16 @@ info:
       event: ItemTemplateDeletedEvent
       description: "Unused Category B infrastructure — templates are never deleted. Publisher method exists in generated code but is never called."
 
-    # Instance lifecycle events (auto-generated from x-lifecycle)
-    - topic: item.instance.created
-      event: ItemInstanceCreatedEvent
-      description: Published when a new item instance is created
-    - topic: item.instance.modified
-      event: ItemInstanceModifiedEvent
-      description: Published when an item instance is modified (durability, stats, etc.)
-    - topic: item.instance.destroyed
-      event: ItemInstanceDestroyedEvent
-      description: Published when an item instance is destroyed
+    # Instance batch lifecycle events (auto-generated from x-lifecycle with batch: true)
+    - topic: item.instance.batch-created
+      event: ItemInstanceBatchCreatedEvent
+      description: Batch event containing accumulated item instance creations
+    - topic: item.instance.batch-modified
+      event: ItemInstanceBatchModifiedEvent
+      description: Batch event containing accumulated item instance modifications
+    - topic: item.instance.batch-destroyed
+      event: ItemInstanceBatchDestroyedEvent
+      description: Batch event containing accumulated item instance destructions
 
     # Binding events (non-lifecycle)
     - topic: item.instance.bound
@@ -99,6 +99,7 @@ x-lifecycle:
     sensitive: []
 
   ItemInstance:
+    batch: true
     model:
       instanceId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for this item instance" }
       templateId: { type: string, format: uuid, required: true, description: "Reference to the item template" }
@@ -123,118 +124,12 @@ paths: {}
 components:
   schemas:
     # =========================================================================
-    # Custom Lifecycle Events (non-standard lifecycle states)
+    # NOTE: ItemInstanceModifiedEvent and ItemInstanceDestroyedEvent were previously
+    # defined here as custom lifecycle events. They have been replaced by batch
+    # lifecycle events (ItemInstanceBatchCreatedEvent, BatchModifiedEvent,
+    # BatchDestroyedEvent) auto-generated from x-lifecycle with batch: true.
+    # The batch entry and event models are in Generated/item-lifecycle-events.yaml.
     # =========================================================================
-
-    ItemInstanceModifiedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-      type: object
-      description: Event published when an item instance is modified (durability, stats, name changes)
-      additionalProperties: false
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - instanceId
-      - templateId
-      - realmId
-      - quantity
-      - originType
-      - createdAt
-      properties:
-        eventName:
-          type: string
-          default: item.instance.modified
-          description: 'Event type identifier: item.instance.modified'
-        instanceId:
-          type: string
-          format: uuid
-          description: Modified item instance ID
-        templateId:
-          type: string
-          format: uuid
-          description: Item template reference
-        containerId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Container holding this item. Null when item has been removed from all containers.
-        realmId:
-          type: string
-          format: uuid
-          description: Realm this instance exists in
-        quantity:
-          type: number
-          format: double
-          description: Current quantity
-        originType:
-          $ref: 'item-api.yaml#/components/schemas/ItemOriginType'
-          description: How this instance was created
-        createdAt:
-          type: string
-          format: date-time
-          description: When the instance was created
-        modifiedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the instance was modified
-
-    ItemInstanceDestroyedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-      type: object
-      description: Event published when an item instance is permanently destroyed
-      additionalProperties: false
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - instanceId
-      - templateId
-      - realmId
-      - quantity
-      - originType
-      - createdAt
-      properties:
-        eventName:
-          type: string
-          default: item.instance.destroyed
-          description: 'Event type identifier: item.instance.destroyed'
-        instanceId:
-          type: string
-          format: uuid
-          description: Destroyed item instance ID
-        templateId:
-          type: string
-          format: uuid
-          description: Item template reference
-        containerId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Container that held this item. Null if item was not in a container at destruction.
-        realmId:
-          type: string
-          format: uuid
-          description: Realm this instance existed in
-        quantity:
-          type: number
-          format: double
-          description: Quantity at time of destruction
-        originType:
-          $ref: 'item-api.yaml#/components/schemas/ItemOriginType'
-          description: How this instance was created
-        createdAt:
-          type: string
-          format: date-time
-          description: When the instance was created
-        modifiedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the instance was last modified
 
     # =========================================================================
     # Binding Events (non-lifecycle)
@@ -252,7 +147,6 @@ components:
       - timestamp
       - instanceId
       - templateId
-      - templateCode
       - realmId
       - characterId
       - bindType
@@ -271,7 +165,8 @@ components:
           description: Item template ID
         templateCode:
           type: string
-          description: Item template code for debugging
+          nullable: true
+          description: Item template code for debugging, null if template not found (data inconsistency)
         realmId:
           type: string
           format: uuid
@@ -296,7 +191,6 @@ components:
       - timestamp
       - instanceId
       - templateId
-      - templateCode
       - realmId
       - previousCharacterId
       - reason
@@ -315,7 +209,8 @@ components:
           description: Item template ID
         templateCode:
           type: string
-          description: Item template code for debugging
+          nullable: true
+          description: Item template code for debugging, null if template not found (data inconsistency)
         realmId:
           type: string
           format: uuid

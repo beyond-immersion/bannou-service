@@ -26,162 +26,25 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Item;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
 using System = global::System;
-
-/// <summary>
-/// Event published when an item instance is modified (durability, stats, name changes)
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ItemInstanceModifiedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: item.instance.modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item.instance.modified";
-
-    /// <summary>
-    /// Modified item instance ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid InstanceId { get; set; } = default!;
-
-    /// <summary>
-    /// Item template reference
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Container holding this item. Null when item has been removed from all containers.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    public System.Guid? ContainerId { get; set; } = default!;
-
-    /// <summary>
-    /// Realm this instance exists in
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Current quantity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("quantity")]
-    public double Quantity { get; set; } = default!;
-
-    /// <summary>
-    /// How this instance was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("originType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemOriginType OriginType { get; set; } = default!;
-
-    /// <summary>
-    /// When the instance was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// When the instance was modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Event published when an item instance is permanently destroyed
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ItemInstanceDestroyedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: item.instance.destroyed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item.instance.destroyed";
-
-    /// <summary>
-    /// Destroyed item instance ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid InstanceId { get; set; } = default!;
-
-    /// <summary>
-    /// Item template reference
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Container that held this item. Null if item was not in a container at destruction.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    public System.Guid? ContainerId { get; set; } = default!;
-
-    /// <summary>
-    /// Realm this instance existed in
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Quantity at time of destruction
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("quantity")]
-    public double Quantity { get; set; } = default!;
-
-    /// <summary>
-    /// How this instance was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("originType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemOriginType OriginType { get; set; } = default!;
-
-    /// <summary>
-    /// When the instance was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// When the instance was last modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
-
-}
 
 /// <summary>
 /// Event published when an item is bound to a character (soulbound)
@@ -215,12 +78,10 @@ public partial class ItemInstanceBoundEvent : BaseServiceEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Item template code for debugging
+    /// Item template code for debugging, null if template not found (data inconsistency)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
+    public string? TemplateCode { get; set; } = default!;
 
     /// <summary>
     /// Realm where binding occurred
@@ -281,12 +142,10 @@ public partial class ItemInstanceUnboundEvent : BaseServiceEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Item template code for debugging
+    /// Item template code for debugging, null if template not found (data inconsistency)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
+    public string? TemplateCode { get; set; } = default!;
 
     /// <summary>
     /// Realm where unbinding occurred

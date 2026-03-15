@@ -21,7 +21,9 @@ This document incorporates and expands `docs/planning/DUNGEON-EXTENSIONS-NOTES.m
 
 Bannou's actor system, seed growth, and dynamic character binding combine to enable a powerful pattern: **entities that begin as inert objects and progressively grow into autonomous agents with personalities, memories, and the full cognitive stack**. This document unifies two implementations of this pattern -- **dungeon cores** and **living weapons** -- and demonstrates that they are structurally identical at the infrastructure level, differing only in domain-specific ceremony.
 
-The critical insight: **living weapons require zero new Bannou services**. They compose entirely from existing primitives (Item, Seed, Collection, Actor, Character, Relationship). The game engine/SDK drives growth events; the infrastructure handles everything else. This is the strongest possible validation of Bannou's composability thesis.
+**This pattern is reified as [lib-genesis](../plugins/GENESIS.md)** (L2 GameFoundation), a template-driven entity awakening lifecycle service. Genesis encapsulates the common infrastructure — seed creation, currency wallet provisioning, actor spawning at Stirring, character creation and binding at Awakened — behind a single `CreateEntity` call. Growth is driven entirely by currency wallet credits via template-defined growth mappings; the seed is an internal implementation detail. Domain-specific plugins (lib-dungeon, lib-divine) sit on top for their ceremony; simple entity types (living weapons, treasure chests, haunted buildings) need no domain-specific plugin — they are genesis templates with game-engine-side interaction.
+
+The critical insight remains: **living weapons require no domain-specific plugin**. They compose entirely from Genesis + existing L2 primitives (Item, Collection, Actor, Character, Relationship). The game engine credits a wallet; Genesis handles everything else. This validates the composability thesis — Genesis provides the lifecycle infrastructure, and the domain-specific "ceremony" is the only thing that varies.
 
 ### The Unified Pattern
 
@@ -54,54 +56,57 @@ This progression is identical for dungeon cores, living weapons, and any future 
 
 ### What Every Actor-Bound Entity Needs
 
-| Primitive | Service | Role |
-|-----------|---------|------|
-| **Identity** | Domain-specific (lib-dungeon, or no plugin for weapons) | What the entity IS -- its type, name, scoping |
-| **Growth** | lib-seed | Progressive capability accumulation across named domains |
-| **Knowledge** | lib-collection | Permanent experience records ("I have seen X") |
-| **Behavior** | lib-actor + lib-behavior | Autonomous decision-making via ABML |
-| **Character** | lib-character (system realm) | Full entity identity once sentient |
-| **Personality** | lib-character-personality | Quantified traits on bipolar axes |
-| **Memory** | lib-character-encounter | Memories of interactions with others |
-| **History** | lib-character-history | Backstory and significant events |
-| **Bond** | lib-relationship or lib-contract | Connection to a partner entity |
-| **Economy** | lib-currency (optional) | Resource management if applicable |
-| **Physical Form** | lib-item, lib-mapping, lib-scene (varies) | How the entity exists in the world |
+All common lifecycle infrastructure is handled by [lib-genesis](../plugins/GENESIS.md) via a single template-driven `CreateEntity` call. Genesis provisions the seed, wallets, inventories, and manages the cognitive progression (actor spawning, character creation, binding) automatically as currency accumulates.
+
+| Primitive | Service | Role | Genesis-Managed? |
+|-----------|---------|------|-----------------|
+| **Lifecycle** | lib-genesis | Template-driven entity creation, currency-driven growth, cognitive progression | Yes — core function |
+| **Growth** | lib-seed (internal to Genesis) | Progressive capability accumulation across named domains | Yes — seed is encapsulated, never exposed |
+| **Economy** | lib-currency (wallets created by Genesis) | Resource management; credits drive growth via template mappings | Yes — wallets provisioned at creation |
+| **Storage** | lib-inventory (containers created by Genesis) | Entity-owned containers (loot, memories, traps) | Yes — containers provisioned at creation |
+| **Behavior** | lib-actor (spawned by Genesis) | Autonomous decision-making via ABML | Yes — actor spawned at Stirring phase |
+| **Character** | lib-character (created by Genesis) | Full entity identity in system realm once sentient | Yes — character created at Awakened phase |
+| **Knowledge** | lib-collection | Permanent experience records ("I have seen X") | No — game engine or domain plugin grants |
+| **Personality** | lib-character-personality | Quantified traits on bipolar axes | No — activates automatically after character binding |
+| **Memory** | lib-character-encounter | Memories of interactions with others | No — accumulates via Actor perception pipeline |
+| **History** | lib-character-history | Backstory and significant events | No — accumulates via game events |
+| **Bond** | lib-relationship (simple) or lib-contract (complex) | Connection to a partner entity | Simple bonds via Genesis; complex bonds via domain plugin |
+| **Physical Form** | lib-item, lib-mapping, lib-scene (varies) | How the entity exists in the world | No — created by domain plugin or game engine, linked via `BindPhysicalForm` |
 
 ### The Three Cognitive Stages
 
-All actor-bound entities progress through the same three stages. The stages are defined by seed growth phases, and the transitions use existing infrastructure with zero new service code.
+All actor-bound entities progress through the same three stages, managed automatically by [lib-genesis](../plugins/GENESIS.md). Transitions are driven by currency wallet credits flowing through template-defined growth mappings to the internal seed. Genesis handles all infrastructure orchestration; domain plugins (if any) react to `genesis.entity.phase-changed` events for domain-specific work.
 
 #### Stage 1: Dormant (No Actor)
 
-The entity exists only as a seed and its physical form (a dungeon location, an item instance). No actor is running. Responses to stimuli are pre-scripted or handled by Workshop (automated production). Growth accumulates passively from game events.
+The entity exists as a genesis entity record and its physical form (a dungeon location, an item instance). No actor is running. Responses to stimuli are pre-scripted or handled by Workshop (automated production). Growth accumulates passively as currency credits the entity's wallet — Genesis converts credits to seed growth via the template's growth mappings.
 
-**System cost**: Near zero. No actor runtime resources. A world can have thousands of dormant seeds.
+**System cost**: Near zero. No actor runtime resources. A world can have thousands of dormant genesis entities.
 
-**Growth driver**: Game-engine-specific events reported via existing APIs (Collection grants, Seed growth recording).
+**Growth driver**: Currency wallet credits — autogain (passive), manual credits from game engine or other services (active). Genesis applies growth mappings automatically via `ICurrencyTransactionListener`.
 
 #### Stage 2: Event Brain Actor (No Character)
 
-When the seed reaches the Stirring phase, an actor is spawned via Puppetmaster as an event brain (no character binding). The entity can now perceive, decide, and act autonomously via ABML behavior documents, but without the rich cognitive data that comes from having a character identity.
+When currency accumulation drives the seed past the Stirring threshold, **Genesis automatically spawns an Actor** (L2) with the pre-compiled ABML behavior referenced in the template. The entity can now perceive, decide, and act autonomously, but without the rich cognitive data that comes from having a character identity.
 
-ABML expressions like `${personality.*}` resolve to null -- the behavior falls through to instinct-driven default paths. The entity has preferences (from seed metadata) but not a rich inner life.
+ABML expressions like `${personality.*}` resolve to null -- the behavior falls through to instinct-driven default paths. The entity has preferences (from `${genesis.*}` variables) but not a rich inner life.
 
-**Trigger**: `ISeedEvolutionListener` fires in the owning plugin (or any registered listener) when the seed reaches the Stirring phase. The listener grants a Collection entry (`has_behavior`), which can trigger actor spawn via `ICollectionUnlockListener` or direct Puppetmaster API call.
+**Trigger**: `ISeedEvolutionListener` fires in Genesis when the seed crosses the phase threshold. Genesis spawns the actor directly via Actor (L2) — Puppetmaster (L4) is not required. Pre-compiled ABML bytecode is loaded as seed data.
 
-**Variable providers active**: `${seed.*}` (growth domains, capabilities), domain-specific volatile state.
+**Variable providers active**: `${genesis.*}` (template, phase, wallet balances, capabilities), domain-specific providers if registered.
 
 #### Stage 3: Character Brain Actor (Full Cognitive Stack)
 
-When the seed reaches the Awakened phase, the entity has accumulated enough complexity to warrant a full character identity. The owning system:
+When the seed reaches the Awakened threshold, **Genesis automatically**:
 
-1. Creates a **Character record** in a system realm (`isSystemType: true`)
-2. Seeds personality traits from the entity's type/configuration
-3. Calls `/actor/bind-character` to bind the running actor to the new character -- **no actor relaunch needed**
+1. Creates a **Character record** in the template-specified system realm (`isSystemType: true`)
+2. Seeds personality traits from the template's `initialPersonalityTraits`
+3. Calls `Actor.BindCharacter` to bind the running actor to the new character -- **no actor relaunch needed**
 4. Variable providers activate on the next behavior tick
 
 After binding, the entity has the full L2/L4 character entity stack -- personality traits, encounter memories, backstory, quest data, obligation awareness, and worldstate context. The ABML behavior document is the same one used in Stage 2; the difference is that expressions like `${personality.patience}` now return real values instead of null.
 
-**This is the same pattern used by Divine actors** (gods bind to divine system realm characters) and is enabled by Actor's `BindCharacterAsync` API (implemented 2026-02-16).
+**This pattern is used by all genesis entity types** — Divine actors (gods binding to PANTHEON characters), dungeon cores (binding to DUNGEON_CORES characters), living weapons (binding to SENTIENT_ARMS characters), and any future entity type defined via a genesis template.
 
 ### System Realms: Conceptual Namespaces for Non-Physical Entities
 
@@ -486,7 +491,7 @@ The wielder's ABML behavior decides how much to trust the weapon's input -- base
 
 | Aspect | Divine Actor | Dungeon Core | Living Weapon |
 |--------|-------------|-------------|---------------|
-| **Plugin** | lib-divine (L4) | lib-dungeon (L4) | None (composed from primitives) |
+| **Plugin** | lib-divine (L4) on lib-genesis (L2) | lib-dungeon (L4) on lib-genesis (L2) | lib-genesis (L2) only (no domain plugin) |
 | **Physical form** | Immaterial observer | Spatial domain (rooms, floors) | Item instance |
 | **System realm** | PANTHEON | DUNGEON_CORES | SENTIENT_ARMS |
 | **Seed type** | `deity_domain` | `dungeon_core` | `sentient_weapon` |
@@ -561,12 +566,13 @@ Until then, the game engine + ABML behaviors are sufficient orchestrators.
 
 | Suggestion | Why Not |
 |------------|---------|
-| lib-living-weapon plugin | No domain-specific operations requiring server-side orchestration |
-| New variable provider interface | Standard `IVariableProviderFactory` works |
-| New event types | Standard seed/collection/actor events cover everything |
-| New state stores | Weapon data lives in Item (physical), Seed (growth), Character (identity) |
-| New bond mechanism | Relationship type `weapon_wielder` + item equip state |
+| lib-living-weapon plugin | No domain-specific operations requiring server-side orchestration. Genesis template + game-engine wallet credits handle the entire lifecycle. |
+| Custom variable provider | `${genesis.*}` provider covers entity state (wallet balances, phase, capabilities). Standard `${personality.*}` etc. activate after awakening. |
+| Custom event types | `genesis.entity.phase-changed` + standard collection/actor events cover everything |
+| Custom state stores | Weapon data lives in Genesis (lifecycle), Item (physical), Character (identity) |
+| New bond mechanism | Genesis bond endpoint for simple Relationship bonds (`weapon_wielder` type) + item equip state |
 | Weapon-specific cognition template | `creature_base` (same as dungeon) or game-specific template via config |
+| Direct Seed API access | Seed is encapsulated by Genesis. Growth is driven by crediting the "experience" wallet. |
 
 ---
 

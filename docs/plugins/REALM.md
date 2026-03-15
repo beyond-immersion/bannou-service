@@ -124,7 +124,7 @@ None identified.
 
 1. **VOID realm is a convention, not enforced**: The API schema documents a "VOID realm" concept as a sink for entities whose realm should be removed. This is **intentionally not enforced** in realm service code — it's a seeding convention parallel to Species (VOID species) and RelationshipType (VOID type). The VOID realm should be seeded via `/realm/seed` with `isSystemType: true`. Enforcement of VOID semantics (e.g., preventing new character creation in VOID realm) belongs to consuming services (Character, Location, Species), not the realm registry itself.
 
-2. **Exists endpoint never returns 404**: Always returns `StatusCodes.OK` with `exists: true/false` and `isActive: true/false`. Callers must check both flags to determine usability. This avoids 404 semantics for a "check" operation.
+2. **Exists endpoint returns 404 for missing realms**: Returns `StatusCodes.OK` with `isActive` (computed) when the realm exists, or `404` when it does not. Callers use 404 to detect non-existence and check `isActive` to determine usability (active and non-deprecated).
 
 3. **IsActive in Exists response is computed**: Returns `IsActive = model.IsActive && !model.IsDeprecated`. A realm with `IsActive=true` and `IsDeprecated=true` will return `IsActive=false` in the Exists response. The two properties are conflated.
 

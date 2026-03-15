@@ -26,6 +26,21 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Item;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -577,19 +592,11 @@ public partial class ItemTemplateDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to item.instance.created when a iteminstance is created
+/// Single item instance creation record within a batch event
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ItemInstanceCreatedEvent : BaseServiceEvent
+public partial class ItemInstanceBatchEntry
 {
-
-    /// <summary>
-    /// Event type identifier: item.instance.created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item.instance.created";
 
     /// <summary>
     /// Unique identifier for this item instance
@@ -705,7 +712,7 @@ public partial class ItemInstanceCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the item instance was last updated (set to createdAt on creation)
+    /// Timestamp when the item instance was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -715,19 +722,11 @@ public partial class ItemInstanceCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to item.instance.updated when a iteminstance is updated
+/// Single item instance modification record within a batch event
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
+public partial class ItemInstanceBatchModifiedEntry
 {
-
-    /// <summary>
-    /// Event type identifier: item.instance.updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item.instance.updated";
 
     /// <summary>
     /// Unique identifier for this item instance
@@ -843,7 +842,7 @@ public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the item instance was last updated (set to createdAt on creation)
+    /// Timestamp when the item instance was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -861,19 +860,11 @@ public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to item.instance.deleted when a iteminstance is deleted
+/// Single item instance destruction record within a batch event
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ItemInstanceDeletedEvent : BaseServiceEvent
+public partial class ItemInstanceBatchDestroyedEntry
 {
-
-    /// <summary>
-    /// Event type identifier: item.instance.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item.instance.deleted";
 
     /// <summary>
     /// Unique identifier for this item instance
@@ -989,7 +980,7 @@ public partial class ItemInstanceDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the item instance was last updated (set to createdAt on creation)
+    /// Timestamp when the item instance was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -997,10 +988,127 @@ public partial class ItemInstanceDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// Optional reason for destruction
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Batch event containing accumulated item instance created records
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemInstanceBatchCreatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: item.instance.batch-created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "item.instance.batch-created";
+
+    /// <summary>
+    /// Individual created records in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ItemInstanceBatchEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<ItemInstanceBatchEntry>();
+
+    /// <summary>
+    /// Number of entries in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("count")]
+    public int Count { get; set; } = default!;
+
+    /// <summary>
+    /// When the accumulation window started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Batch event containing accumulated item instance modified records
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemInstanceBatchModifiedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: item.instance.batch-modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "item.instance.batch-modified";
+
+    /// <summary>
+    /// Individual modified records in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ItemInstanceBatchModifiedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<ItemInstanceBatchModifiedEntry>();
+
+    /// <summary>
+    /// Number of entries in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("count")]
+    public int Count { get; set; } = default!;
+
+    /// <summary>
+    /// When the accumulation window started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Batch event containing accumulated item instance destroyed records
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemInstanceBatchDestroyedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: item.instance.batch-destroyed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "item.instance.batch-destroyed";
+
+    /// <summary>
+    /// Individual destroyed records in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ItemInstanceBatchDestroyedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<ItemInstanceBatchDestroyedEntry>();
+
+    /// <summary>
+    /// Number of entries in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("count")]
+    public int Count { get; set; } = default!;
+
+    /// <summary>
+    /// When the accumulation window started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
 
 }
 

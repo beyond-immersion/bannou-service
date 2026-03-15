@@ -14,7 +14,7 @@
 | Endpoints | 16 |
 | State Stores | inventory-container-store (MySQL), inventory-container-cache (Redis), inventory-lock (Redis) |
 | Events Published | 10 (inventory.container.created, .updated, .deleted, .full, inventory.item.placed, .removed, .moved, .transferred, .split, .stacked) |
-| Events Consumed | 5 (self-subscriptions for cache invalidation) |
+| Events Consumed | 6 (account.deleted for cleanup + 5 self-subscriptions for cache invalidation) |
 | Client Events | 3 (inventory.item_changed, inventory.container_full, inventory.item_transferred) |
 | Background Services | 0 |
 
@@ -78,10 +78,11 @@ Used by `IDistributedLockProvider` for container modification locks. Key pattern
 
 ## Events Consumed
 
-Self-subscriptions only — no external event consumption. Five of the plugin's own events are subscribed to for `IInventoryDataCache` invalidation (multi-node in-process cache requires RabbitMQ fan-out).
+One external subscription (`account.deleted` for Account Deletion Cleanup Obligation) plus five self-subscriptions for `IInventoryDataCache` invalidation (multi-node in-process cache requires RabbitMQ fan-out).
 
 | Topic | Handler | Action |
 |-------|---------|--------|
+| `account.deleted` | `HandleAccountDeletedAsync` | Delete all account-owned containers (Destroy items), clean up owner index |
 | `inventory.item.placed` | `HandleItemPlacedAsync` | Invalidate cache for evt.OwnerId |
 | `inventory.item.removed` | `HandleItemRemovedAsync` | Invalidate cache for evt.OwnerId |
 | `inventory.item.transferred` | `HandleItemTransferredAsync` | Invalidate cache for evt.SourceOwnerId and evt.TargetOwnerId |
@@ -111,24 +112,24 @@ Note: `inventory.item.moved`, `inventory.item.split`, and `inventory.item.stacke
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| CreateContainer | POST /inventory/container/create | developer | container, owner-index, type-index | inventory.container.created |
-| GetContainer | POST /inventory/container/get | user | cache (populate) | - |
-| GetOrCreateContainer | POST /inventory/container/get-or-create | developer | container, indexes (if created) | inventory.container.created (if created) |
-| ListContainers | POST /inventory/container/list | user | - | - |
-| UpdateContainer | POST /inventory/container/update | developer | container | inventory.container.updated |
-| DeleteContainer | POST /inventory/container/delete | admin | container, owner-index, type-index, cache | inventory.container.deleted |
-| AddItemToContainer | POST /inventory/add | [] | container | inventory.item.placed, inventory.container.full |
-| RemoveItemFromContainer | POST /inventory/remove | [] | container | inventory.item.removed |
-| MoveItem | POST /inventory/move | user | container (cross-container) | inventory.item.moved (+.removed, .placed if cross-container) |
-| TransferItem | POST /inventory/transfer | [] | container (via delegates) | inventory.item.transferred (+split, move events) |
-| SplitStack | POST /inventory/split | user | container | inventory.item.split |
-| MergeStacks | POST /inventory/merge | user | container | inventory.item.stacked |
-| QueryItems | POST /inventory/query | user | - | - |
-| CountItems | POST /inventory/count | user | - | - |
-| HasItems | POST /inventory/has | user | - | - |
-| FindSpace | POST /inventory/find-space | user | - | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| CreateContainer | POST /inventory/container/create | generated | developer | container, owner-index, type-index | inventory.container.created |
+| GetContainer | POST /inventory/container/get | generated | user | cache (populate) | - |
+| GetOrCreateContainer | POST /inventory/container/get-or-create | generated | developer | container, indexes (if created) | inventory.container.created (if created) |
+| ListContainers | POST /inventory/container/list | generated | user | - | - |
+| UpdateContainer | POST /inventory/container/update | generated | developer | container | inventory.container.updated |
+| DeleteContainer | POST /inventory/container/delete | generated | admin | container, owner-index, type-index, cache | inventory.container.deleted |
+| AddItemToContainer | POST /inventory/add | generated | [] | container | inventory.item.placed, inventory.container.full |
+| RemoveItemFromContainer | POST /inventory/remove | generated | [] | container | inventory.item.removed |
+| MoveItem | POST /inventory/move | generated | user | container (cross-container) | inventory.item.moved (+.removed, .placed if cross-container) |
+| TransferItem | POST /inventory/transfer | generated | [] | container (via delegates) | inventory.item.transferred (+split, move events) |
+| SplitStack | POST /inventory/split | generated | user | container | inventory.item.split |
+| MergeStacks | POST /inventory/merge | generated | user | container | inventory.item.stacked |
+| QueryItems | POST /inventory/query | generated | user | - | - |
+| CountItems | POST /inventory/count | generated | user | - | - |
+| HasItems | POST /inventory/has | generated | user | - | - |
+| FindSpace | POST /inventory/find-space | generated | user | - | - |
 
 ---
 
@@ -489,7 +490,11 @@ ELSE
   IF full merge (no overflow)
     // Step 2: Destroy source
     CALL IItemClient.DestroyItemInstanceAsync(sourceInstanceId, Consumed)
-    // Failure logged as warning, non-fatal
+    IF destruction fails (ApiException)
+      // Compensate: revert target quantity increase to prevent duplication
+      CALL IItemClient.ModifyItemInstanceAsync(targetInstanceId, quantityDelta: -quantityToAdd)
+      // Compensation failure logged as error (critical: items may be duplicated)
+      RETURN (500, null)
 
     // Decrement source container UsedSlots
     READ containerCache/containerStore:cont:{sourceContainerId}
@@ -500,7 +505,11 @@ ELSE
   ELSE
     // Partial merge: reduce source quantity
     CALL IItemClient.ModifyItemInstanceAsync(sourceInstanceId, quantityDelta: -quantityToAdd)
-    // Failure logged as warning, non-fatal
+    IF reduction fails (ApiException)
+      // Compensate: revert target quantity increase to prevent duplication
+      CALL IItemClient.ModifyItemInstanceAsync(targetInstanceId, quantityDelta: -quantityToAdd)
+      // Compensation failure logged as error (critical: items may be duplicated)
+      RETURN (500, null)
 
   PUBLISH inventory.item.stacked { sourceInstanceId, targetInstanceId, templateId, containerId (target), quantityAdded, newTotalQuantity }
   PUSH inventory.item_changed { changeType: Stacked, containerId (target), instanceId (target), templateId, quantity (combined) }
@@ -599,3 +608,9 @@ RETURN (200, FindSpaceResponse { hasSpace, candidates })
 ## Background Services
 
 No background services.
+
+---
+
+## Non-Standard Implementation Patterns
+
+No non-standard patterns.

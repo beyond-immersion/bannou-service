@@ -58,6 +58,18 @@ public class MessagingServiceConfiguration : BaseServiceConfiguration
     public bool UseInMemory { get; set; } = false;
 
     /// <summary>
+    /// When true, events are dispatched directly to IEventConsumer handlers without going through the pub/sub subscription layer. Zero serialization, zero transport overhead. Intended for embedded and sidecar deployments where all services run in-process. Takes precedence over UseInMemory.
+    /// Environment variable: MESSAGING_USE_DIRECT_DISPATCH
+    /// </summary>
+    public bool UseDirectDispatch { get; set; } = false;
+
+    /// <summary>
+    /// When true, TryPublishAsync skips scope creation for topics with no registered IEventConsumer handlers. Saves allocation cost but assumes no external or future subscribers exist for unhandled topics. Only enable when the subscriber set is known and complete.
+    /// Environment variable: MESSAGING_SKIP_UNHANDLED_TOPICS
+    /// </summary>
+    public bool SkipUnhandledTopics { get; set; } = false;
+
+    /// <summary>
     /// RabbitMQ server hostname
     /// Environment variable: MESSAGING_RABBITMQ_HOST
     /// </summary>
@@ -94,7 +106,7 @@ public class MessagingServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: MESSAGING_DEFAULT_EXCHANGE
     /// </summary>
     [ConfigStringLength(MinLength = 1)]
-    public string DefaultExchange { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string DefaultExchange { get; set; } = "bannou";
 
     /// <summary>
     /// Enable RabbitMQ publisher confirms for reliability. When enabled, BasicPublishAsync waits for broker confirmation (RabbitMQ.Client 7.x pattern).

@@ -125,6 +125,27 @@ public static class CurrencyEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(CurrencyPublishedTopics.CurrencyWalletClosed, eventData, cancellationToken);
 
+    /// <summary>Published when a new balance record is created for a wallet-currency pair (first credit of a currency to a wallet).</summary>
+    public static Task<bool> PublishCurrencyBalanceCreatedAsync(
+        this IMessageBus messageBus,
+        CurrencyBalanceCreatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(CurrencyPublishedTopics.CurrencyBalanceCreated, eventData, cancellationToken);
+
+    /// <summary>Published when a balance record is updated (credit, debit, autogain, etc.).</summary>
+    public static Task<bool> PublishCurrencyBalanceUpdatedAsync(
+        this IMessageBus messageBus,
+        CurrencyBalanceUpdatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(CurrencyPublishedTopics.CurrencyBalanceUpdated, eventData, cancellationToken);
+
+    /// <summary>Published by the clean-deprecated sweep when a balance record is permanently removed.</summary>
+    public static Task<bool> PublishCurrencyBalanceDeletedAsync(
+        this IMessageBus messageBus,
+        CurrencyBalanceDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(CurrencyPublishedTopics.CurrencyBalanceDeleted, eventData, cancellationToken);
+
     /// <summary>Published when an authorization hold is created.</summary>
     public static Task<bool> PublishCurrencyHoldCreatedAsync(
         this IMessageBus messageBus,

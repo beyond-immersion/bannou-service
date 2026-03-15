@@ -83,6 +83,16 @@ info:
       event: CurrencyWalletClosedEvent
       description: Published when a wallet is permanently closed
 
+    - topic: currency.balance.created
+      event: CurrencyBalanceCreatedEvent
+      description: Published when a new balance record is created for a wallet-currency pair (first credit of a currency to a wallet)
+    - topic: currency.balance.updated
+      event: CurrencyBalanceUpdatedEvent
+      description: Published when a balance record is updated (credit, debit, autogain, etc.)
+    - topic: currency.balance.deleted
+      event: CurrencyBalanceDeletedEvent
+      description: Published by the clean-deprecated sweep when a balance record is permanently removed
+
     # Authorization hold events
     - topic: currency.hold.created
       event: CurrencyHoldCreatedEvent
@@ -102,7 +112,7 @@ x-lifecycle:
   topic_prefix: currency
   CurrencyDefinition:
     deprecation: true
-    instanceEntity: CurrencyWallet
+    instanceEntity: CurrencyBalance
     model:
       definitionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the currency definition" }
       code: { type: string, required: true, description: "Unique currency code" }
@@ -120,6 +130,16 @@ x-lifecycle:
       ownerType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Owner entity type" }
       realmId: { type: string, format: uuid, nullable: true, description: "Realm ID for realm-scoped wallets" }
       status: { $ref: 'currency-api.yaml#/components/schemas/WalletStatus', required: true, description: "Wallet status" }
+
+  CurrencyBalance:
+    model:
+      walletId: { type: string, format: uuid, primary: true, required: true, description: "Wallet containing this balance" }
+      currencyDefinitionId: { type: string, format: uuid, required: true, description: "Currency definition this balance belongs to" }
+      currencyCode: { type: string, required: true, description: "Currency code" }
+      ownerId: { type: string, format: uuid, required: true, description: "Wallet owner entity ID" }
+      ownerType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Wallet owner entity type" }
+      amount: { type: number, format: double, required: true, description: "Current balance amount" }
+    sensitive: []
 
 paths: {}
 

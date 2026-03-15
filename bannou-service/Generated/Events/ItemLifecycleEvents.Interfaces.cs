@@ -17,6 +17,6 @@ public partial class ItemTemplateCreatedEvent : ILifecycleCreatedEvent, IDepreca
 public partial class ItemTemplateUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
 public partial class ItemTemplateDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
 
-public partial class ItemInstanceCreatedEvent : ILifecycleCreatedEvent { }
-public partial class ItemInstanceUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class ItemInstanceDeletedEvent : ILifecycleDeletedEvent { }
+public partial class ItemInstanceBatchEntry : ILifecycleCreatedEvent { }
+public partial class ItemInstanceBatchModifiedEntry : ILifecycleUpdatedEvent { }
+public partial class ItemInstanceBatchDestroyedEntry : ILifecycleDeletedEvent { }

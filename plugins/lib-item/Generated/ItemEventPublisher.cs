@@ -41,26 +41,26 @@ public static class ItemEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(ItemPublishedTopics.ItemTemplateDeleted, eventData, cancellationToken);
 
-    /// <summary>Published when a new item instance is created.</summary>
-    public static Task<bool> PublishItemInstanceCreatedAsync(
+    /// <summary>Batch event containing accumulated item instance creations.</summary>
+    public static Task<bool> PublishItemInstanceBatchCreatedAsync(
         this IMessageBus messageBus,
-        ItemInstanceCreatedEvent eventData,
+        ItemInstanceBatchCreatedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(ItemPublishedTopics.ItemInstanceCreated, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(ItemPublishedTopics.ItemInstanceBatchCreated, eventData, cancellationToken);
 
-    /// <summary>Published when an item instance is modified (durability, stats, etc.).</summary>
-    public static Task<bool> PublishItemInstanceModifiedAsync(
+    /// <summary>Batch event containing accumulated item instance modifications.</summary>
+    public static Task<bool> PublishItemInstanceBatchModifiedAsync(
         this IMessageBus messageBus,
-        ItemInstanceModifiedEvent eventData,
+        ItemInstanceBatchModifiedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(ItemPublishedTopics.ItemInstanceModified, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(ItemPublishedTopics.ItemInstanceBatchModified, eventData, cancellationToken);
 
-    /// <summary>Published when an item instance is destroyed.</summary>
-    public static Task<bool> PublishItemInstanceDestroyedAsync(
+    /// <summary>Batch event containing accumulated item instance destructions.</summary>
+    public static Task<bool> PublishItemInstanceBatchDestroyedAsync(
         this IMessageBus messageBus,
-        ItemInstanceDestroyedEvent eventData,
+        ItemInstanceBatchDestroyedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(ItemPublishedTopics.ItemInstanceDestroyed, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(ItemPublishedTopics.ItemInstanceBatchDestroyed, eventData, cancellationToken);
 
     /// <summary>Published when an item is bound to a character (soulbound).</summary>
     public static Task<bool> PublishItemInstanceBoundAsync(

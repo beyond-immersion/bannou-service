@@ -33,6 +33,21 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         _cachedConfig = tempProvider.GetRequiredService<MessagingServiceConfiguration>();
         var config = _cachedConfig;
 
+        // Check for direct dispatch mode (takes precedence over in-memory)
+        if (config?.UseDirectDispatch == true)
+        {
+            Logger?.LogWarning(
+                "Messaging using DIRECT DISPATCH mode. Events dispatched directly to IEventConsumer (zero transport overhead, single-node only)");
+
+            // Register direct dispatch implementation (no NativeEventConsumerBackend needed)
+            services.AddSingleton<DirectDispatchMessageBus>();
+            services.AddSingleton<IMessageBus>(sp => sp.GetRequiredService<DirectDispatchMessageBus>());
+            services.AddSingleton<IMessageSubscriber>(sp => sp.GetRequiredService<DirectDispatchMessageBus>());
+
+            Logger?.LogDebug("Direct dispatch messaging configured");
+            return;
+        }
+
         // Check for in-memory mode
         if (config?.UseInMemory == true)
         {

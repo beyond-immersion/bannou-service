@@ -141,6 +141,174 @@ def read_lifecycle_definitions(events_file: Path) -> Tuple[Dict[str, Any], str]:
     return schema['x-lifecycle'], title
 
 
+def generate_batch_events(
+    entity: str,
+    entity_lower: str,
+    topic_base: str,
+    model_props: dict,
+    model_required_fields: list,
+    has_deprecation: bool,
+    resource_mapping: dict
+) -> Dict[str, Any]:
+    """
+    Generate BatchCreated, BatchModified, BatchDestroyed event schemas for a batch entity.
+
+    Instead of individual per-entity events, batch entities produce aggregate events
+    containing arrays of entry records. Each batch event inherits from BaseServiceEvent
+    and wraps an entries array plus batch metadata (count, windowStartedAt).
+
+    Entry models contain the same fields as individual lifecycle events would, including
+    createdAt/updatedAt (and deprecation fields if applicable). BatchModified entries
+    include changedFields; BatchDestroyed entries include deletedReason.
+
+    Args:
+        entity: Entity name in PascalCase (e.g., "ItemInstance")
+        entity_lower: Human-readable lower case name (e.g., "item instance")
+        topic_base: Topic prefix (e.g., "item.instance")
+        model_props: Filtered model properties (sensitive fields excluded)
+        model_required_fields: Required field names from the model
+        has_deprecation: Whether deprecation fields should be injected
+        resource_mapping: Optional resource mapping config for x-resource-mapping
+    """
+
+    # --- Entry model properties (shared by all three entry types) ---
+    base_entry_props = {
+        **model_props,
+        'createdAt': {
+            'type': 'string',
+            'format': 'date-time',
+            'description': f'Timestamp when the {entity_lower} was created'
+        },
+        'updatedAt': {
+            'type': 'string',
+            'format': 'date-time',
+            'description': f'Timestamp when the {entity_lower} was last updated'
+        },
+    }
+
+    base_entry_required = model_required_fields.copy() + ['createdAt', 'updatedAt']
+
+    if has_deprecation:
+        base_entry_props['isDeprecated'] = {
+            'type': 'boolean',
+            'description': f'Whether this {entity_lower} is deprecated'
+        }
+        base_entry_props['deprecatedAt'] = {
+            'type': 'string',
+            'format': 'date-time',
+            'nullable': True,
+            'description': f'When the {entity_lower} was deprecated (null if not deprecated)'
+        }
+        base_entry_props['deprecationReason'] = {
+            'type': 'string',
+            'nullable': True,
+            'maxLength': 500,
+            'description': f'Reason for deprecation (null if not deprecated)'
+        }
+        base_entry_required.append('isDeprecated')
+
+    # --- Entry schemas ---
+    created_entry = {
+        'type': 'object',
+        'description': f'Single {entity_lower} creation record within a batch event',
+        'additionalProperties': False,
+        'required': base_entry_required,
+        'properties': {**base_entry_props}
+    }
+
+    modified_entry_props = {
+        **base_entry_props,
+        'changedFields': {
+            'type': 'array',
+            'items': {'type': 'string'},
+            'description': 'List of field names that were modified'
+        }
+    }
+    modified_entry = {
+        'type': 'object',
+        'description': f'Single {entity_lower} modification record within a batch event',
+        'additionalProperties': False,
+        'required': base_entry_required + ['changedFields'],
+        'properties': modified_entry_props
+    }
+
+    destroyed_entry_props = {
+        **base_entry_props,
+        'deletedReason': {
+            'type': 'string',
+            'nullable': True,
+            'description': 'Optional reason for destruction'
+        }
+    }
+    destroyed_entry = {
+        'type': 'object',
+        'description': f'Single {entity_lower} destruction record within a batch event',
+        'additionalProperties': False,
+        'required': base_entry_required,
+        'properties': destroyed_entry_props
+    }
+
+    # --- Batch event schemas ---
+    def build_batch_event(action: str, entry_ref: str, is_deletion: bool = False) -> dict:
+        """Build a batch event schema that wraps an entries array."""
+        topic = f'{topic_base}.batch-{action}'
+
+        event_schema = {
+            'allOf': [
+                {'$ref': '../common-events.yaml#/components/schemas/BaseServiceEvent'}
+            ],
+            'type': 'object',
+            'additionalProperties': False,
+            'description': f'Batch event containing accumulated {entity_lower} {action} records',
+            'required': ['eventName', 'eventId', 'timestamp', 'entries', 'count', 'windowStartedAt'],
+            'properties': {
+                'eventName': {
+                    'type': 'string',
+                    'default': topic,
+                    'description': f'Event type identifier: {topic}'
+                },
+                'entries': {
+                    'type': 'array',
+                    'items': {'$ref': f'#/components/schemas/{entry_ref}'},
+                    'description': f'Individual {action} records in this batch'
+                },
+                'count': {
+                    'type': 'integer',
+                    'description': 'Number of entries in this batch'
+                },
+                'windowStartedAt': {
+                    'type': 'string',
+                    'format': 'date-time',
+                    'description': 'When the accumulation window started'
+                }
+            }
+        }
+
+        if resource_mapping is not None:
+            resource_type = resource_mapping.get('resource_type', topic_base)
+            resource_id_field = resource_mapping.get('resource_id_field', 'entries')
+            source_type = resource_mapping.get('source_type', topic_base)
+            event_schema['x-resource-mapping'] = {
+                'resource_type': resource_type,
+                'resource_id_field': resource_id_field,
+                'source_type': source_type,
+                'is_deletion': is_deletion
+            }
+
+        return event_schema
+
+    return {
+        # Entry models
+        f'{entity}BatchEntry': created_entry,
+        f'{entity}BatchModifiedEntry': modified_entry,
+        f'{entity}BatchDestroyedEntry': destroyed_entry,
+        # Batch event wrappers
+        f'{entity}BatchCreatedEvent': build_batch_event('created', f'{entity}BatchEntry'),
+        f'{entity}BatchModifiedEvent': build_batch_event('modified', f'{entity}BatchModifiedEntry'),
+        f'{entity}BatchDestroyedEvent': build_batch_event('destroyed', f'{entity}BatchDestroyedEntry', is_deletion=True),
+    }
+
+
 def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict[str, Any]:
     """
     Generate Created, Updated, Deleted event schemas for an entity.
@@ -317,6 +485,13 @@ def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict
 
         return event_schema
 
+    # Check if this entity uses batch mode
+    is_batch = config.get('batch', False)
+
+    if is_batch:
+        return generate_batch_events(entity, entity_lower, topic_base, model_props,
+                                     model_required_fields, has_deprecation, resource_mapping)
+
     # CreatedEvent
     created = build_event('created')
 
@@ -356,7 +531,7 @@ def generate_lifecycle_events_file(
     service_title: str,
     lifecycle_defs: Dict[str, Any],
     output_path: Path
-) -> Tuple[List[str], set]:
+) -> Tuple[List[str], set, set]:
     """
     Generate a complete lifecycle events schema file.
 
@@ -367,7 +542,7 @@ def generate_lifecycle_events_file(
         output_path: Path to write the generated file
 
     Returns:
-        Tuple of (list of entity names, set of deprecatable entity names)
+        Tuple of (list of entity names, set of deprecatable entity names, set of batch entity names)
     """
     # Extract topic_prefix configuration (not an entity definition)
     topic_prefix = None
@@ -378,6 +553,7 @@ def generate_lifecycle_events_file(
     all_schemas = {}
     generated_entities = []
     deprecatable_entities = set()
+    batch_entities = set()
 
     for entity_name, config in lifecycle_defs.items():
         # Skip configuration keys that aren't entity definitions
@@ -388,6 +564,8 @@ def generate_lifecycle_events_file(
         generated_entities.append(entity_name)
         if config.get('deprecation', False):
             deprecatable_entities.add(entity_name)
+        if config.get('batch', False):
+            batch_entities.add(entity_name)
 
     # Build the complete OpenAPI document
     doc = {
@@ -414,7 +592,7 @@ def generate_lifecycle_events_file(
     with open(output_path, 'w') as f:
         yaml.dump(doc, f)
 
-    return generated_entities, deprecatable_entities
+    return generated_entities, deprecatable_entities, batch_entities
 
 
 def to_pascal_case(service_name: str) -> str:
@@ -426,11 +604,16 @@ def generate_lifecycle_interfaces_file(
     service_name: str,
     entities: List[str],
     deprecatable_entities: set,
+    batch_entities: set,
     output_path: Path
 ) -> None:
     """
     Generate a companion C# file that declares partial classes with lifecycle
     event interface implementations.
+
+    For standard entities: interfaces go on the event classes (CreatedEvent, etc.).
+    For batch entities: interfaces go on the entry models (BatchEntry, etc.),
+    NOT on the batch event wrappers.
 
     The NSwag-generated partial classes already have the required properties
     (CreatedAt, UpdatedAt, ChangedFields, DeletedReason, and optionally
@@ -442,6 +625,7 @@ def generate_lifecycle_interfaces_file(
         service_name: Service name in kebab-case (e.g., "game-session")
         entities: List of entity names in PascalCase (e.g., ["GameSession"])
         deprecatable_entities: Set of entity names that have deprecation: true
+        batch_entities: Set of entity names that have batch: true
         output_path: Path to write the generated C# file
     """
     lines = [
@@ -464,9 +648,17 @@ def generate_lifecycle_interfaces_file(
 
     for entity in entities:
         deprecation_suffix = ', IDeprecatableEntity' if entity in deprecatable_entities else ''
-        lines.append(f'public partial class {entity}CreatedEvent : ILifecycleCreatedEvent{deprecation_suffix} {{ }}')
-        lines.append(f'public partial class {entity}UpdatedEvent : ILifecycleUpdatedEvent{deprecation_suffix} {{ }}')
-        lines.append(f'public partial class {entity}DeletedEvent : ILifecycleDeletedEvent{deprecation_suffix} {{ }}')
+
+        if entity in batch_entities:
+            # Batch entities: interfaces on entry models, not on batch event wrappers
+            lines.append(f'public partial class {entity}BatchEntry : ILifecycleCreatedEvent{deprecation_suffix} {{ }}')
+            lines.append(f'public partial class {entity}BatchModifiedEntry : ILifecycleUpdatedEvent{deprecation_suffix} {{ }}')
+            lines.append(f'public partial class {entity}BatchDestroyedEntry : ILifecycleDeletedEvent{deprecation_suffix} {{ }}')
+        else:
+            # Standard entities: interfaces on event classes
+            lines.append(f'public partial class {entity}CreatedEvent : ILifecycleCreatedEvent{deprecation_suffix} {{ }}')
+            lines.append(f'public partial class {entity}UpdatedEvent : ILifecycleUpdatedEvent{deprecation_suffix} {{ }}')
+            lines.append(f'public partial class {entity}DeletedEvent : ILifecycleDeletedEvent{deprecation_suffix} {{ }}')
         lines.append('')
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -525,7 +717,7 @@ def main():
             service_pascal = to_pascal_case(service_name)
             output_file = generated_dir / f'{service_name}-lifecycle-events.yaml'
 
-            entities, deprecatable = generate_lifecycle_events_file(
+            entities, deprecatable, batch = generate_lifecycle_events_file(
                 service_name,
                 service_title,
                 lifecycle_defs,
@@ -534,7 +726,7 @@ def main():
 
             # Generate companion C# file with interface implementations
             cs_output_file = cs_generated_dir / f'{service_pascal}LifecycleEvents.Interfaces.cs'
-            generate_lifecycle_interfaces_file(service_name, entities, deprecatable, cs_output_file)
+            generate_lifecycle_interfaces_file(service_name, entities, deprecatable, batch, cs_output_file)
 
             generated_files.append((output_file.name, entities))
             print(f"  Generated/{output_file.name}: Generated events for {', '.join(entities)}")

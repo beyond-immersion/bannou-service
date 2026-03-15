@@ -28,6 +28,7 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<ItemService> _logger;
     private readonly ItemServiceConfiguration _configuration;
+    private readonly ItemInstanceEventBatcher _instanceEventBatcher;
 
     /// <summary>Persistent store for item template models (MySQL-backed).</summary>
     private readonly IStateStore<ItemTemplateModel> _templateStore;
@@ -114,6 +115,7 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
     /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Service configuration.</param>
+    /// <param name="instanceEventBatcher">Batcher for item instance lifecycle events.</param>
     public ItemService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -121,12 +123,14 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
         IContractClient contractClient,
         ITelemetryProvider telemetryProvider,
         ILogger<ItemService> logger,
-        ItemServiceConfiguration configuration)
+        ItemServiceConfiguration configuration,
+        ItemInstanceEventBatcher instanceEventBatcher)
     {
         _messageBus = messageBus;
         _lockProvider = lockProvider;
         _contractClient = contractClient;
         _telemetryProvider = telemetryProvider;
+        _instanceEventBatcher = instanceEventBatcher;
         _logger = logger;
         _configuration = configuration;
 
@@ -553,10 +557,8 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
         // Populate instance cache
         await PopulateInstanceCacheAsync(instanceId.ToString(), model, cancellationToken);
 
-        await _messageBus.PublishItemInstanceCreatedAsync(new ItemInstanceCreatedEvent
+        _instanceEventBatcher.AddCreated(new ItemInstanceBatchEntry
         {
-            EventId = Guid.NewGuid(),
-            Timestamp = now,
             InstanceId = instanceId,
             TemplateId = body.TemplateId,
             ContainerId = body.ContainerId,
@@ -574,7 +576,7 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
             OriginId = model.OriginId,
             CreatedAt = now,
             ModifiedAt = model.ModifiedAt
-        }, cancellationToken);
+        });
 
         _logger.LogDebug("Created item instance {InstanceId}", instanceId);
         return (StatusCodes.OK, MapInstanceToResponse(model));
@@ -737,10 +739,8 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
         // Invalidate cache after write
         await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
 
-        await _messageBus.PublishItemInstanceModifiedAsync(new ItemInstanceModifiedEvent
+        _instanceEventBatcher.AddModified(body.InstanceId, new ItemInstanceBatchModifiedEntry
         {
-            EventId = Guid.NewGuid(),
-            Timestamp = now,
             InstanceId = body.InstanceId,
             TemplateId = model.TemplateId,
             ContainerId = model.ContainerId,
@@ -749,7 +749,7 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
             OriginType = model.OriginType,
             CreatedAt = model.CreatedAt,
             ModifiedAt = now
-        }, cancellationToken);
+        });
 
         _logger.LogDebug("Modified item instance {InstanceId}", body.InstanceId);
         return (StatusCodes.OK, MapInstanceToResponse(model));
@@ -797,15 +797,13 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
                 model.TemplateId, body.InstanceId);
         }
 
-        var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
-
         await _messageBus.PublishItemInstanceBoundAsync(new ItemInstanceBoundEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
             InstanceId = body.InstanceId,
             TemplateId = model.TemplateId,
-            TemplateCode = templateCode,
+            TemplateCode = template?.Code,
             RealmId = model.RealmId,
             CharacterId = body.CharacterId,
             BindType = body.BindType
@@ -855,15 +853,13 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
                 model.TemplateId, body.InstanceId);
         }
 
-        var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
-
         await _messageBus.PublishItemInstanceUnboundAsync(new ItemInstanceUnboundEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
             InstanceId = body.InstanceId,
             TemplateId = model.TemplateId,
-            TemplateCode = templateCode,
+            TemplateCode = template?.Code,
             RealmId = model.RealmId,
             PreviousCharacterId = previousCharacterId,
             Reason = body.Reason
@@ -909,10 +905,8 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
         // Invalidate cache after delete
         await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
 
-        await _messageBus.PublishItemInstanceDestroyedAsync(new ItemInstanceDestroyedEvent
+        _instanceEventBatcher.AddDestroyed(new ItemInstanceBatchDestroyedEntry
         {
-            EventId = Guid.NewGuid(),
-            Timestamp = now,
             InstanceId = body.InstanceId,
             TemplateId = model.TemplateId,
             ContainerId = model.ContainerId,
@@ -921,7 +915,7 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
             OriginType = model.OriginType,
             CreatedAt = model.CreatedAt,
             ModifiedAt = now
-        }, cancellationToken);
+        });
 
         _logger.LogDebug("Destroyed item instance {InstanceId} reason={Reason}", body.InstanceId, body.Reason);
         return (StatusCodes.OK, new DestroyItemInstanceResponse
@@ -1812,11 +1806,9 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
             await _instanceStore.DeleteAsync($"{INST_PREFIX}{instanceId}", cancellationToken);
             await InvalidateInstanceCacheAsync(instanceId.ToString(), cancellationToken);
 
-            // Publish destroy event
-            await _messageBus.PublishItemInstanceDestroyedAsync(new ItemInstanceDestroyedEvent
+            // Record destroy for batch event
+            _instanceEventBatcher.AddDestroyed(new ItemInstanceBatchDestroyedEntry
             {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
                 InstanceId = instanceId,
                 TemplateId = instance.TemplateId,
                 ContainerId = instance.ContainerId,
@@ -1825,7 +1817,7 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
                 OriginType = instance.OriginType,
                 CreatedAt = instance.CreatedAt,
                 ModifiedAt = DateTimeOffset.UtcNow
-            }, cancellationToken);
+            });
 
             return (true, null);
         }
@@ -1837,11 +1829,9 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
             await _instanceStore.SaveAsync($"{INST_PREFIX}{instanceId}", instance, cancellationToken: cancellationToken);
             await InvalidateInstanceCacheAsync(instanceId.ToString(), cancellationToken);
 
-            // Publish modify event
-            await _messageBus.PublishItemInstanceModifiedAsync(new ItemInstanceModifiedEvent
+            // Record modification for batch event
+            _instanceEventBatcher.AddModified(instanceId, new ItemInstanceBatchModifiedEntry
             {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
                 InstanceId = instanceId,
                 TemplateId = instance.TemplateId,
                 ContainerId = instance.ContainerId,
@@ -1850,7 +1840,7 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
                 OriginType = instance.OriginType,
                 CreatedAt = instance.CreatedAt,
                 ModifiedAt = instance.ModifiedAt
-            }, cancellationToken);
+            });
 
             return (true, instance.Quantity);
         }

@@ -392,6 +392,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Currency | L2 | Multi-currency economy (wallets, transfers, exchange rates, holds, escrow integration) | 35 |
 | Game Service | L2 | Registry of available games/applications with stub-name lookup | 5 |
 | Game Session | L2 | Multiplayer session containers (lobby/matchmade) with reservation tokens and shortcut publishing | 11 |
+| Genesis | L2 | Template-driven entity awakening lifecycle — seed, economy, storage, and cognitive progression for entities that grow from inert objects into autonomous agents | — |
 | Inventory | L2 | Container and item placement with constraint models (slot/weight/grid/volumetric/unlimited) | 16 |
 | Item | L2 | Dual-model items -- templates (definitions) and instances (occurrences) with quantity models and binding | 17 |
 | Location | L2 | Hierarchical location tree within realms (cities, regions, buildings, rooms) with depth tracking | 25 |
@@ -452,7 +453,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**76 services, 942 endpoints**
+**77 services, 942 endpoints**
 
 For full per-service details: `docs/GENERATED-*-SERVICE-DETAILS.md`
 

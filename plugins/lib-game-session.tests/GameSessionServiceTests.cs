@@ -443,6 +443,113 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Equal("Active", response.Sessions.First().SessionName);
     }
 
+    [Fact]
+    public async Task ListGameSessionsAsync_WithGameTypeFilter_ReturnsOnlyMatchingSessions()
+    {
+        // Arrange
+        var service = CreateService();
+        var matchingId = Guid.NewGuid();
+        var nonMatchingId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { matchingId.ToString(), nonMatchingId.ToString() });
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + matchingId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GameSessionModel
+            {
+                SessionId = matchingId,
+                SessionName = "Matching",
+                GameType = "arcadia",
+                Status = SessionStatus.Active,
+                Players = new List<GamePlayer>(),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + nonMatchingId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GameSessionModel
+            {
+                SessionId = nonMatchingId,
+                SessionName = "NonMatching",
+                GameType = "fantasia",
+                Status = SessionStatus.Active,
+                Players = new List<GamePlayer>(),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new ListGameSessionsRequest { GameType = "arcadia" };
+
+        // Act
+        var (status, response) = await service.ListGameSessionsAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Sessions);
+        Assert.Equal("Matching", response.Sessions.First().SessionName);
+    }
+
+    [Fact]
+    public async Task ListGameSessionsAsync_WithStatusFilter_ReturnsOnlyMatchingStatus()
+    {
+        // Arrange
+        var service = CreateService();
+        var waitingId = Guid.NewGuid();
+        var activeId = Guid.NewGuid();
+        var finishedId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { waitingId.ToString(), activeId.ToString(), finishedId.ToString() });
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + waitingId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GameSessionModel
+            {
+                SessionId = waitingId,
+                SessionName = "Waiting",
+                Status = SessionStatus.Waiting,
+                Players = new List<GamePlayer>(),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + activeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GameSessionModel
+            {
+                SessionId = activeId,
+                SessionName = "Active",
+                Status = SessionStatus.Active,
+                Players = new List<GamePlayer>(),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(SESSION_KEY_PREFIX + finishedId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GameSessionModel
+            {
+                SessionId = finishedId,
+                SessionName = "Finished",
+                Status = SessionStatus.Finished,
+                Players = new List<GamePlayer>(),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Request Finished specifically — overrides the default "skip Finished" behavior
+        var request = new ListGameSessionsRequest { Status = SessionStatus.Finished };
+
+        // Act
+        var (status, response) = await service.ListGameSessionsAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Sessions);
+        Assert.Equal("Finished", response.Sessions.First().SessionName);
+    }
+
     #endregion
 
     #region JoinGameSession Tests

@@ -2712,6 +2712,121 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         Assert.Equal(StatusCodes.BadRequest, status);
     }
 
+    [Fact]
+    public async Task MergeStacksAsync_FullMerge_DestroyFails_CompensatesTargetQuantity()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var containerId = Guid.NewGuid();
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == sourceId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = sourceId, TemplateId = templateId, ContainerId = containerId, Quantity = 5 });
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == targetId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, ContainerId = containerId, Quantity = 3 });
+
+        var template = CreateTestTemplate(templateId);
+        template.MaxStackSize = 99;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Target modify succeeds (quantity increase)
+        _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.Is<ModifyItemInstanceRequest>(r => r.QuantityDelta > 0), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 8 });
+
+        // Source destroy fails
+        _mockItemClient
+            .Setup(c => c.DestroyItemInstanceAsync(It.IsAny<DestroyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Service unavailable", 503));
+
+        // Compensation (target quantity revert) succeeds
+        _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.Is<ModifyItemInstanceRequest>(r => r.QuantityDelta < 0), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 3 });
+
+        var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
+
+        // Act
+        var (status, response) = await service.MergeStacksAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert - returns error, not success
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+
+        // Assert - compensation was attempted (revert target quantity by -5)
+        _mockItemClient.Verify(c => c.ModifyItemInstanceAsync(
+            It.Is<ModifyItemInstanceRequest>(r =>
+                r.InstanceId == targetId &&
+                r.QuantityDelta == -5),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task MergeStacksAsync_PartialMerge_SourceReductionFails_CompensatesTargetQuantity()
+    {
+        // Arrange
+        var service = CreateService();
+        var sourceId = Guid.NewGuid();
+        var targetId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var containerId = Guid.NewGuid();
+
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == sourceId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = sourceId, TemplateId = templateId, ContainerId = containerId, Quantity = 15 });
+        _mockItemClient
+            .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == targetId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, ContainerId = containerId, Quantity = 18 });
+
+        var template = CreateTestTemplate(templateId);
+        template.MaxStackSize = 20;
+        _mockItemClient
+            .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Target modify succeeds (quantity increase by 2: maxStack 20 - target 18 = 2)
+        var modifyCallCount = 0;
+        _mockItemClient
+            .Setup(c => c.ModifyItemInstanceAsync(It.IsAny<ModifyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .Returns<ModifyItemInstanceRequest, CancellationToken>((req, _) =>
+            {
+                modifyCallCount++;
+                if (modifyCallCount == 1)
+                {
+                    // First call: target quantity increase succeeds
+                    return Task.FromResult(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 20 });
+                }
+                else if (modifyCallCount == 2)
+                {
+                    // Second call: source quantity reduction fails
+                    throw new ApiException("Service unavailable", 503);
+                }
+                else
+                {
+                    // Third call: compensation (target quantity revert)
+                    return Task.FromResult(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 18 });
+                }
+            });
+
+        var request = new MergeStacksRequest { SourceInstanceId = sourceId, TargetInstanceId = targetId };
+
+        // Act
+        var (status, response) = await service.MergeStacksAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert - returns error, not success
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+
+        // Assert - three modify calls: increase target, reduce source (failed), compensate target
+        Assert.Equal(3, modifyCallCount);
+    }
+
     #endregion
 
     #region CountItems Tests

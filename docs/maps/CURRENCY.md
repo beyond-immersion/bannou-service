@@ -13,7 +13,7 @@
 | Layer | L2 GameFoundation |
 | Endpoints | 34 |
 | State Stores | currency-definitions (MySQL), currency-wallets (MySQL), currency-balances (MySQL), currency-transactions (MySQL), currency-holds (MySQL), currency-balance-cache (Redis), currency-holds-cache (Redis), currency-idempotency (Redis), currency-lock (Redis) |
-| Events Published | 18 (currency.credited, currency.debited, currency.transferred, currency.autogain.calculated, currency.earn-cap.reached, currency.wallet-cap.reached, currency.expired, currency.exchange-rate.updated, currency.definition.created, currency.definition.updated, currency.wallet.created, currency.wallet.frozen, currency.wallet.unfrozen, currency.wallet.closed, currency.hold.created, currency.hold.captured, currency.hold.released, currency.hold.expired) |
+| Events Published | 21 (currency.credited, currency.debited, currency.transferred, currency.autogain.calculated, currency.earn-cap.reached, currency.wallet-cap.reached, currency.expired, currency.exchange-rate.updated, currency.definition.created, currency.definition.updated, currency.wallet.created, currency.wallet.frozen, currency.wallet.unfrozen, currency.wallet.closed, currency.balance.created, currency.balance.updated, currency.balance.deleted, currency.hold.created, currency.hold.captured, currency.hold.released, currency.hold.expired) |
 | Events Consumed | 4 (1 external: account.deleted; 3 self-subscription for cache invalidation) |
 | Client Events | 3 (currency.balance.changed, currency.wallet.frozen, currency.wallet.unfrozen) |
 | Background Services | 3 (CurrencyAutogainTaskService, CurrencyExpirationTaskService, HoldExpirationTaskService) |
@@ -128,6 +128,9 @@
 | `currency.hold.released` | `CurrencyHoldReleasedEvent` | ReleaseHold |
 | `currency.expired` | `CurrencyExpiredEvent` | CurrencyExpirationTaskService |
 | `currency.hold.expired` | `CurrencyHoldExpiredEvent` | HoldExpirationTaskService |
+| `currency.balance.created` | `CurrencyBalanceCreatedEvent` | CreditCurrency (first-ever credit of a currency to a wallet), TransferCurrency (if target has no prior balance) |
+| `currency.balance.updated` | `CurrencyBalanceUpdatedEvent` | CreditCurrency (existing balance), DebitCurrency, TransferCurrency (both sides if existing) |
+| `currency.balance.deleted` | `CurrencyBalanceDeletedEvent` | HandleAccountDeletedAsync (account deletion cleanup), CleanDeprecatedCurrencyDefinitions (future) |
 
 ---
 
@@ -181,8 +184,8 @@
 | CloseWallet | POST /currency/wallet/close | admin | wallet, bal, tx | currency.wallet.closed, currency.credited |
 | GetBalance | POST /currency/balance/get | user | bal (autogain only) | currency.autogain.calculated |
 | BatchGetBalances | POST /currency/balance/batch-get | user | bal (autogain only) | currency.autogain.calculated |
-| CreditCurrency | POST /currency/credit | [] | bal, tx, idempotency | currency.credited, currency.earn-cap.reached, currency.wallet-cap.reached |
-| DebitCurrency | POST /currency/debit | [] | bal, tx, idempotency | currency.debited |
+| CreditCurrency | POST /currency/credit | [] | bal, tx, idempotency | currency.credited, currency.earn-cap.reached, currency.wallet-cap.reached, currency.balance.created OR currency.balance.updated |
+| DebitCurrency | POST /currency/debit | [] | bal, tx, idempotency | currency.debited, currency.balance.updated |
 | TransferCurrency | POST /currency/transfer | [] | bal (x2), tx, idempotency | currency.transferred, currency.wallet-cap.reached |
 | BatchCreditCurrency | POST /currency/batch-credit | [] | bal, tx, idempotency | currency.credited |
 | BatchDebitCurrency | POST /currency/batch-debit | [] | bal, tx, idempotency | currency.debited |

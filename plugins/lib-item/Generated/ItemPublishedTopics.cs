@@ -26,14 +26,14 @@ public static class ItemPublishedTopics
     /// <summary>Unused Category B infrastructure — templates are never deleted. Publisher method exists in generated code but is never called.</summary>
     public const string ItemTemplateDeleted = "item.template.deleted";
 
-    /// <summary>Published when a new item instance is created.</summary>
-    public const string ItemInstanceCreated = "item.instance.created";
+    /// <summary>Batch event containing accumulated item instance creations.</summary>
+    public const string ItemInstanceBatchCreated = "item.instance.batch-created";
 
-    /// <summary>Published when an item instance is modified (durability, stats, etc.).</summary>
-    public const string ItemInstanceModified = "item.instance.modified";
+    /// <summary>Batch event containing accumulated item instance modifications.</summary>
+    public const string ItemInstanceBatchModified = "item.instance.batch-modified";
 
-    /// <summary>Published when an item instance is destroyed.</summary>
-    public const string ItemInstanceDestroyed = "item.instance.destroyed";
+    /// <summary>Batch event containing accumulated item instance destructions.</summary>
+    public const string ItemInstanceBatchDestroyed = "item.instance.batch-destroyed";
 
     /// <summary>Published when an item is bound to a character (soulbound).</summary>
     public const string ItemInstanceBound = "item.instance.bound";

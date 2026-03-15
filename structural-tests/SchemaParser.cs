@@ -100,6 +100,7 @@ internal static class SchemaParser
             var entityName = key;
             var modelFields = new List<string>();
             var hasDeprecation = false;
+            var isBatch = false;
             string? instanceEntity = null;
 
             // Check deprecation flag
@@ -107,6 +108,13 @@ internal static class SchemaParser
             {
                 hasDeprecation = deprecationNode is YamlScalarNode scalar &&
                                 string.Equals(scalar.Value, "true", StringComparison.OrdinalIgnoreCase);
+            }
+
+            // Check batch flag
+            if (entityMapping.Children.TryGetValue(new YamlScalarNode("batch"), out var batchNode))
+            {
+                isBatch = batchNode is YamlScalarNode batchScalar &&
+                         string.Equals(batchScalar.Value, "true", StringComparison.OrdinalIgnoreCase);
             }
 
             // Check instanceEntity (Category B: names the lifecycle entity representing instances)
@@ -127,7 +135,7 @@ internal static class SchemaParser
                 }
             }
 
-            yield return new LifecycleEntity(entityName, modelFields, hasDeprecation, instanceEntity);
+            yield return new LifecycleEntity(entityName, modelFields, hasDeprecation, instanceEntity, isBatch);
         }
     }
 
@@ -138,9 +146,11 @@ internal static class SchemaParser
     /// <param name="ModelFields">Field names defined in the model block</param>
     /// <param name="HasDeprecation">Whether deprecation: true is set</param>
     /// <param name="InstanceEntity">Name of the lifecycle entity representing instances of this template (Category B only)</param>
+    /// <param name="IsBatch">Whether batch: true is set (generates batch events instead of individual lifecycle events)</param>
     internal sealed record LifecycleEntity(
         string EntityName,
         List<string> ModelFields,
         bool HasDeprecation,
-        string? InstanceEntity);
+        string? InstanceEntity,
+        bool IsBatch = false);
 }

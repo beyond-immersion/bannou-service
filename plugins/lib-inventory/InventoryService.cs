@@ -523,6 +523,7 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
                     return (StatusCodes.BadRequest, null);
 
                 case ItemHandling.Destroy:
+                    var failedDestructions = new List<Guid>();
                     foreach (var item in items)
                     {
                         try
@@ -536,8 +537,19 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
                         }
                         catch (ApiException ex)
                         {
-                            _logger.LogWarning(ex, "Failed to destroy item {InstanceId}", item.InstanceId);
+                            _logger.LogWarning(ex, "Failed to destroy item {InstanceId} during container deletion", item.InstanceId);
+                            failedDestructions.Add(item.InstanceId);
                         }
+                    }
+
+                    // Abort container deletion if any items failed to destroy
+                    // to prevent orphaning items (per IMPLEMENTATION TENETS - multi-service call compensation)
+                    if (failedDestructions.Count > 0)
+                    {
+                        _logger.LogError(
+                            "Aborting container {ContainerId} deletion: {FailedCount} of {TotalCount} items failed to destroy",
+                            body.ContainerId, failedDestructions.Count, itemCount);
+                        return (StatusCodes.ServiceUnavailable, null);
                     }
                     break;
 
@@ -1619,7 +1631,24 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
                 }
                 catch (ApiException ex)
                 {
-                    _logger.LogWarning(ex, "Failed to reduce source quantity during partial merge: {StatusCode}", ex.StatusCode);
+                    // Compensate: revert target quantity increase to prevent item duplication
+                    // (per IMPLEMENTATION TENETS — multi-service call compensation)
+                    _logger.LogWarning(ex, "Failed to reduce source quantity during partial merge, compensating target: {StatusCode}", ex.StatusCode);
+                    try
+                    {
+                        await _itemClient.ModifyItemInstanceAsync(
+                            new ModifyItemInstanceRequest
+                            {
+                                InstanceId = body.TargetInstanceId,
+                                QuantityDelta = -quantityToAdd
+                            }, cancellationToken);
+                    }
+                    catch (ApiException compensationEx)
+                    {
+                        _logger.LogError(compensationEx, "Failed to compensate target quantity after source reduction failure — items may be duplicated. Source {SourceId}, Target {TargetId}, Quantity {Quantity}",
+                            body.SourceInstanceId, body.TargetInstanceId, quantityToAdd);
+                    }
+                    return (StatusCodes.InternalServerError, null);
                 }
             }
             else
@@ -1636,7 +1665,24 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
                 }
                 catch (ApiException ex)
                 {
-                    _logger.LogWarning(ex, "Failed to destroy source item during merge: {StatusCode}", ex.StatusCode);
+                    // Compensate: revert target quantity increase to prevent item duplication
+                    // (per IMPLEMENTATION TENETS — multi-service call compensation)
+                    _logger.LogWarning(ex, "Failed to destroy source item during merge, compensating target: {StatusCode}", ex.StatusCode);
+                    try
+                    {
+                        await _itemClient.ModifyItemInstanceAsync(
+                            new ModifyItemInstanceRequest
+                            {
+                                InstanceId = body.TargetInstanceId,
+                                QuantityDelta = -quantityToAdd
+                            }, cancellationToken);
+                    }
+                    catch (ApiException compensationEx)
+                    {
+                        _logger.LogError(compensationEx, "Failed to compensate target quantity after source destruction failure — items may be duplicated. Source {SourceId}, Target {TargetId}, Quantity {Quantity}",
+                            body.SourceInstanceId, body.TargetInstanceId, quantityToAdd);
+                    }
+                    return (StatusCodes.InternalServerError, null);
                 }
 
                 // Update container slot count since source is gone (lock already held)

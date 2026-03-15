@@ -873,6 +873,86 @@ public class SchemaValidationTests
     }
 
     /// <summary>
+    /// Validates that batch lifecycle entities have batch event publications
+    /// (batch-created, batch-modified, batch-destroyed) and do NOT have individual
+    /// lifecycle publications (created, updated, deleted) in x-event-publications.
+    /// </summary>
+    [Fact]
+    public void BatchLifecycleEntities_HaveBatchEventPublications()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetEventSchemaFiles())
+        {
+            var fileName = Path.GetFileNameWithoutExtension(file);
+            var entities = SchemaParser.GetLifecycleEntities(file).ToList();
+            var batchEntities = entities.Where(e => e.IsBatch).ToList();
+
+            if (batchEntities.Count == 0)
+                continue;
+
+            // Read the file to check x-event-publications
+            var lines = File.ReadAllLines(file);
+
+            foreach (var entity in batchEntities)
+            {
+                // Convert PascalCase to kebab-case for topic matching
+                var entityKebab = System.Text.RegularExpressions.Regex.Replace(
+                    entity.EntityName, "([a-z0-9])([A-Z])", "$1-$2").ToLowerInvariant();
+                entityKebab = System.Text.RegularExpressions.Regex.Replace(
+                    entityKebab, "([A-Z])([A-Z][a-z])", "$1-$2").ToLowerInvariant();
+
+                // Check for batch publications
+                var hasBatchCreated = lines.Any(l => l.Contains($"{entityKebab}.batch-created", StringComparison.OrdinalIgnoreCase)
+                    || l.Contains($"Batch{entity.EntityName}Created", StringComparison.Ordinal)
+                    || l.Contains($"{entity.EntityName}BatchCreated", StringComparison.Ordinal));
+                var hasBatchModified = lines.Any(l => l.Contains($"{entityKebab}.batch-modified", StringComparison.OrdinalIgnoreCase)
+                    || l.Contains($"Batch{entity.EntityName}Modified", StringComparison.Ordinal)
+                    || l.Contains($"{entity.EntityName}BatchModified", StringComparison.Ordinal));
+                var hasBatchDestroyed = lines.Any(l => l.Contains($"{entityKebab}.batch-destroyed", StringComparison.OrdinalIgnoreCase)
+                    || l.Contains($"Batch{entity.EntityName}Destroyed", StringComparison.Ordinal)
+                    || l.Contains($"{entity.EntityName}BatchDestroyed", StringComparison.Ordinal));
+
+                if (!hasBatchCreated)
+                    violations.Add($"{fileName}.yaml: {entity.EntityName} has batch: true but no batch-created publication");
+                if (!hasBatchModified)
+                    violations.Add($"{fileName}.yaml: {entity.EntityName} has batch: true but no batch-modified publication");
+                if (!hasBatchDestroyed)
+                    violations.Add($"{fileName}.yaml: {entity.EntityName} has batch: true but no batch-destroyed publication");
+
+                // Check that individual lifecycle publications do NOT exist
+                // Look for topic patterns like "entity.created" without "batch-" prefix
+                var hasIndividualCreated = lines.Any(l =>
+                    l.Contains($"topic: ", StringComparison.Ordinal) &&
+                    l.Contains($"{entityKebab}.created", StringComparison.OrdinalIgnoreCase) &&
+                    !l.Contains("batch-", StringComparison.OrdinalIgnoreCase));
+                var hasIndividualUpdated = lines.Any(l =>
+                    l.Contains($"topic: ", StringComparison.Ordinal) &&
+                    l.Contains($"{entityKebab}.updated", StringComparison.OrdinalIgnoreCase) &&
+                    !l.Contains("batch-", StringComparison.OrdinalIgnoreCase));
+                var hasIndividualDeleted = lines.Any(l =>
+                    l.Contains($"topic: ", StringComparison.Ordinal) &&
+                    l.Contains($"{entityKebab}.deleted", StringComparison.OrdinalIgnoreCase) &&
+                    !l.Contains("batch-", StringComparison.OrdinalIgnoreCase));
+
+                if (hasIndividualCreated)
+                    violations.Add($"{fileName}.yaml: {entity.EntityName} has batch: true but still declares individual .created publication");
+                if (hasIndividualUpdated)
+                    violations.Add($"{fileName}.yaml: {entity.EntityName} has batch: true but still declares individual .updated publication");
+                if (hasIndividualDeleted)
+                    violations.Add($"{fileName}.yaml: {entity.EntityName} has batch: true but still declares individual .deleted publication");
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} batch lifecycle violation(s). Entities with batch: true " +
+            $"must have batch event publications (batch-created, batch-modified, batch-destroyed) " +
+            $"and must NOT have individual lifecycle publications:\n" +
+            string.Join("\n", violations.Select(v => $"  - {v}")));
+    }
+
+    /// <summary>
     /// Ensures all plugin assemblies are loaded for marker interface reflection.
     /// Mirrors the pattern from StructuralTests.EnsureAssembliesLoaded().
     /// </summary>

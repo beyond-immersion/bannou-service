@@ -164,11 +164,11 @@ None identified.
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
 None currently identified.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
 1. **Realm validation only at creation and transfer**: `CreateLocation` and `TransferLocationToRealm` validate realm existence via `IRealmClient`. Subsequent operations (update, set-parent) do not re-validate the realm.
 
@@ -184,7 +184,7 @@ None currently identified.
 
 7. **Contract clause registration is in OnRunningAsync**: During plugin startup, Location registers the `territory_constraint` clause type with Contract via `OnRunningAsync()` rather than in the constructor. Registration is in `OnRunningAsync` because it requires making an API call (not just storing a reference), and `OnRunningAsync` is the appropriate lifecycle phase for startup API calls. Layer-based plugin loading ensures L1 Contract is already registered when L2 Location's `OnRunningAsync` fires. Uses `GetRequiredService` and fail-fast per FOUNDATION TENETS.
 
-### Design Considerations
+### Design Considerations (Requires Planning)
 
 1. **Location-bound contracts** ([#274](https://github.com/beyond-immersion/bannou-service/issues/274)): Adding `boundContractIds` to the location model would enable territory-bound agreements with inheritance semantics (child locations inherit parent's effective contracts). This would allow querying "what contracts apply at this location?" by walking the ancestor chain, enabling game-layer territory rule enforcement without Contract (L1) depending on Location (L2). Design questions: should contracts be directly bound to locations or mediated by a separate binding table? What are the inheritance semantics (simple merge vs priority/override)? Is this a Location concern (L2) or a game rules concern (L4)?
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/274 -->
@@ -192,7 +192,7 @@ None currently identified.
 2. **Ground containers** ([#164](https://github.com/beyond-immersion/bannou-service/issues/164), [#274](https://github.com/beyond-immersion/bannou-service/issues/274)): Location-owned "ground" containers for items dropped or lost in the game world. Would add a `groundContainerId` and `groundContainerCreationPolicy` (on-demand, explicit, inherit-parent, disabled) to the location model. Cross-cutting with lib-inventory — Inventory provides the container/item mechanics, Location provides the spatial anchor. Design questions: on-demand creation vs explicit seeding, TTL/capacity/cleanup policies per location type, hierarchy-aware drop behavior (walking up the tree to find nearest location with ground container).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/164 -->
 
-3. **LocationExistsResponse realm enrichment** ([#424](https://github.com/beyond-immersion/bannou-service/issues/424)): Faction's `ClaimTerritoryAsync` currently validates location existence via `LocationExistsAsync` but cannot enforce same-realm validation because `LocationExistsResponse` only returns `exists` and `isActive` — no `realmId`. Adding `realmId` to `LocationExistsResponse` would enable all consumers to perform realm-scoped validation without needing the heavier `GetLocationAsync` call. Pending design decision on #424.
+3. **LocationExistsResponse realm enrichment** ([#424](https://github.com/beyond-immersion/bannou-service/issues/424)): `LocationExistsResponse` now includes a nullable `realmId` field (added to schema), resolving the original concern that Faction's `ClaimTerritoryAsync` could not enforce same-realm validation without the heavier `GetLocationAsync` call. Issue #424 remains open — may have residual scope beyond the `realmId` addition.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/424 -->
 
 ---

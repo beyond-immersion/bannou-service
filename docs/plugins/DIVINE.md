@@ -17,7 +17,7 @@ Pantheon management service (L4 GameFeatures) for deity entities, divinity econo
 
 **Divine actors are both puppetmasters and gardeners**: A god tending a physical realm region (spawning encounters, adjusting NPC moods, orchestrating narrative opportunities) and a god tending a player's conceptual garden space (spawning POIs, managing scenario selection, guiding discovery) are the same operation from different perspectives -- two sides of the same coin. The divine actor launched via Puppetmaster as a regional watcher also serves as the gardener behavior actor for player experience orchestration via Gardener's APIs. Whether the "space" being tended is a physical location in the game world or an abstract conceptual space (a void garden, a lobby, player housing) is a behavioral distinction encoded in the god's ABML behavior document, not a structural difference in the actor type. This means: (1) the same god (e.g., Moira/Fate) that creates emergent content in the physical world also curates which experiences reach players through their gardens, directly connecting the content flywheel to the player experience; (2) any conceptual space can potentially become a physical space and vice versa, because the transition is just the god shifting focus between garden types; (3) lib-gardener provides the tools (garden instances, POIs, scenarios, entity associations), lib-puppetmaster provides the actor lifecycle, and lib-divine provides the identity and economy of the entity doing the tending.
 
-**Dynamic character binding enables progressive divine identity**: A deity's actor can start immediately on creation as an event brain (monitoring realm events, making basic decisions), and later bind to its divine system realm character via `/actor/bind-character` once the character profile is provisioned. The ABML behavior document supports both states -- before binding, `${personality.*}` expressions resolve to null and the god uses default decision paths; after binding, the god reasons with its full personality, history, and encounter memory. This means deity creation doesn't need to block on character provisioning, and the god can begin its duties immediately.
+**Dynamic character binding via lib-genesis**: Deity entities are created as genesis entities using the "deity_domain" template. [lib-genesis](GENESIS.md) (L2) handles the full Actor-Bound Entity lifecycle — seed creation, divinity wallet provisioning, actor spawning at Stirring phase, character creation and binding at Awakened phase. Divine subscribes to `genesis.entity.phase-changed` for divine-specific post-transition work (attention slot initialization, follower management setup, divinity economy activation). The ABML behavior document supports both pre- and post-binding states — before binding, `${personality.*}` expressions resolve to null and the god uses default decision paths; after binding, the god reasons with its full personality, history, and encounter memory. This means deity creation doesn't need to block on character provisioning, and the god can begin its duties immediately.
 
 **Zero Arcadia-specific content**: lib-divine is a generic pantheon management service. Arcadia's 18 Old Gods are configured through behaviors and templates at deployment time, not baked into lib-divine.
 
@@ -170,14 +170,12 @@ The **Underworld** is particularly relevant to the content flywheel. VISION.md d
 
 Almost nothing in the codebase. The changes are:
 
-1. **Seed the divine system realm** via `/realm/seed` with `isSystemType: true` -- configuration, not code
-2. **Register a divine species** in that realm -- seed data, not code
-3. **Divine implementation**: When creating a deity, also create a Character in the divine realm; store `characterId` on `DeityModel` -- part of planned implementation (currently stubbed)
-4. **God-actor character binding**: Two options, both enabled by dynamic character binding:
- - **Option A (character-first)**: Create divine Character before spawning actor; spawn with `characterId` already set. Simpler but requires character to exist at spawn time.
- - **Option B (bind-later)**: Spawn actor as event brain first, create divine Character during deity setup, then call `/actor/bind-character` to bind at runtime. More flexible -- the actor can start doing basic work (monitoring event streams) before its divine character exists. The ABML behavior document handles both states naturally (null-safe `${personality.*}` expressions fall through to defaults until binding activates providers).
-5. **Avatar behaviors**: Author ABML behavior documents for manifestation lifecycle -- pure content authoring
-6. **Seed data**: A `divine_manifestation` relationship type, a `divine` species, divine personality trait profiles -- all registered on startup
+1. **Register "deity_domain" genesis template** — seed data defining the deity seed type, divinity wallet with growth mappings, system realm code (PANTHEON), and phase-specific ABML behavior references. Genesis handles the full lifecycle from this template.
+2. **Seed the divine system realm** via `/realm/seed` with `isSystemType: true` — configuration, not code
+3. **Register a divine species** in that realm — seed data, not code
+4. **Divine implementation**: Create deity → create genesis entity → store `genesisEntityId` on `DeityModel`. Subscribe to `genesis.entity.phase-changed` for divine-specific post-transition work (attention slot initialization, follower management, divinity economy activation). Genesis handles actor spawning, character creation, and binding automatically as divinity accumulates.
+5. **Avatar behaviors**: Author ABML behavior documents for manifestation lifecycle — pure content authoring
+6. **Seed data**: A `divine_manifestation` relationship type, a `divine` species, divine personality trait profiles — all registered on startup
 
 Some services that list characters may want to exclude system realms by default. Character's `listByRealm` already filters by realm, so queries against physical realms naturally exclude gods without code changes.
 
@@ -191,12 +189,13 @@ Some services that list characters may want to exclude system realms by default.
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Deity records (MySQL), blessing records (MySQL), attention slots (Redis), divinity event queue (Redis), distributed locks (Redis) |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events (deity created/updated/deleted), blessing events, divinity events, follower events, deity status events |
+| lib-messaging (`IEventConsumer`) | Subscribing to `genesis.entity.phase-changed` for deity lifecycle transitions, `analytics.score.updated` for divinity generation |
 | `IDistributedLockProvider` | Concurrent modification safety for deity mutations, blessing grants/revocations |
-| lib-currency (`ICurrencyClient`) | Divinity wallet creation, credit, debit, balance queries, transaction history (L2) |
+| lib-genesis (`IGenesisClient`) | Entity creation from "deity_domain" template (provisions seed, divinity wallet). Genesis handles actor spawning at Stirring and character creation/binding at Awakened — Divine subscribes to `genesis.entity.phase-changed` for divine-specific post-transition work. (L2) |
+| lib-currency (`ICurrencyClient`) | Divinity credit, debit, balance queries, transaction history. Wallet creation is handled by Genesis at entity creation time. (L2) |
 | lib-relationship (`IRelationshipClient`) | Follower bonds (deity-character), rivalry bonds (deity-deity) (L2) |
-| lib-character (`ICharacterClient`) | Validate character existence for follower registration (L2) |
+| lib-character (`ICharacterClient`) | Validate character existence for follower registration (L2). Character creation in system realm at Awakened phase is handled by Genesis. |
 | lib-game-service (`IGameServiceClient`) | Validate game service existence for deity scoping (L2) |
-| lib-seed (`ISeedClient`) | Deity domain power seed creation and growth tracking (L2) |
 | lib-collection (`ICollectionClient`) | Permanent blessing grants for Greater/Supreme tiers (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
@@ -337,11 +336,11 @@ Character and game-service deletion cleanup is handled via `x-references` cleanu
 | `IStateStoreFactory` | State store access (creates 5 stores) |
 | `IMessageBus` | Event publishing |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
-| `ICurrencyClient` | Divinity wallet management (L2 hard) |
+| `IGenesisClient` | Deity entity creation from "deity_domain" template, lifecycle queries, capability checks (L2 hard) |
+| `ICurrencyClient` | Divinity credit/debit/balance operations (L2 hard). Wallet creation handled by Genesis. |
 | `IRelationshipClient` | Follower/rivalry bond management (L2 hard) |
-| `ICharacterClient` | Character existence validation (L2 hard) |
+| `ICharacterClient` | Character existence validation for follower registration (L2 hard). Character creation handled by Genesis. |
 | `IGameServiceClient` | Game service existence validation (L2 hard) |
-| `ISeedClient` | Deity domain power seed management (L2 hard) |
 | `ICollectionClient` | Permanent blessing grants (L2 hard) |
 | `IServiceProvider` | Runtime resolution of soft L4 dependencies |
 
@@ -362,7 +361,7 @@ Both workers acquire distributed locks before processing to ensure multi-instanc
 
 All endpoints are service-to-service (`x-permissions: []`).
 
-- **Create** (`/divine/deity/create`): Validates game service existence, code uniqueness per game service. Provisions divinity currency wallet via `ICurrencyClient`, domain power seed via `ISeedClient`, and optionally starts a deity watcher actor via `IPuppetmasterClient` (soft). Saves under both ID and code lookup keys.
+- **Create** (`/divine/deity/create`): Validates game service existence, code uniqueness per game service. Creates genesis entity via `IGenesisClient` from "deity_domain" template (provisions seed, divinity wallet, and inventories). Stores `genesisEntityId` on `DeityModel`. Saves under both ID and code lookup keys. Actor spawning and character binding happen automatically as divinity accumulates — Genesis handles the lifecycle, Divine reacts via `genesis.entity.phase-changed` subscription.
 - **Get** (`/divine/deity/get`): Load from MySQL by deityId. 404 if not found.
 - **GetByCode** (`/divine/deity/get-by-code`): JSON query by gameServiceId + code. 404 if not found.
 - **List** (`/divine/deity/list`): Paged JSON query with required gameServiceId filter, optional domainCode and status filters.

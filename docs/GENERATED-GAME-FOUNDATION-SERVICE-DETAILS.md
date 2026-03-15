@@ -45,6 +45,12 @@ Multiplayer session container primitive (L2 GameFoundation) with subscription-dr
 
 GameSession is to players what Inventory is to items: a **container primitive**. It owns who is in what multiplayer context, with distributed locking, reservation tokens, and permission state management. Higher-layer services (Gardener, Matchmaking) create and manage these containers for their own purposes.
 
+## Genesis {#genesis}
+
+**Deep Dive**: [docs/plugins/GENESIS.md](plugins/GENESIS.md)
+
+Template-driven entity awakening lifecycle service (L2 GameFoundation) for managing entities that progressively grow from inert objects into autonomous agents with personalities, memories, and the full cognitive stack. Encapsulates the Actor-Bound Entity pattern (previously a documentation pattern across VISION.md and ACTOR-BOUND-ENTITIES.md) as reusable infrastructure: a single `CreateEntity` call provisions the seed, currency wallets, inventories, and resource registrations from a template definition, then manages the Dormant → EventBrain → CharacterBrain cognitive progression automatically as currency accumulates. Seed growth is driven entirely by currency transactions via template-defined growth mappings — the seed is an internal implementation detail never exposed to callers. Domain-specific plugins (lib-dungeon, lib-divine) sit on top for their ceremony; simple entity types (treasure chests, living weapons, haunted buildings, sentient ships) need no additional plugin. Game-agnostic: entity types, growth domains, currencies, behaviors, and awakening configurations are all template-defined seed data. Internal-only, never internet-facing.
+
 ## Inventory {#inventory}
 
 **Version**: 1.0.0 | **Schema**: `schemas/inventory-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/INVENTORY.md](plugins/INVENTORY.md) | **Map**: [docs/maps/INVENTORY.md](maps/INVENTORY.md)
@@ -131,7 +137,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 
 ## Summary
 
-- **Services in layer**: 17
+- **Services in layer**: 18
 - **Endpoints in layer**: 310
 
 ---

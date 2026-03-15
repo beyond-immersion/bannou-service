@@ -431,6 +431,73 @@ components:
             format: uuid
           nullable: true
 
+    # =========================================================================
+    # Batch Operation Models (shared across services with batch endpoints)
+    # =========================================================================
+
+    BatchOperationRequest:
+      type: object
+      description: |
+        Base request for batch operations that operate on a list of entity IDs.
+        Services with batch endpoints compose this via allOf to add operation-specific
+        fields (e.g., reason, options). maxItems enforced at 100 to bound per-request cost.
+      additionalProperties: false
+      required:
+        - ids
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Entity IDs to operate on
+          maxItems: 100
+          minItems: 1
+
+    BatchOperationResponse:
+      type: object
+      description: |
+        Standard response for batch operations. Reports succeeded/failed counts
+        with optional per-entity failure details. Services may compose via allOf
+        to add operation-specific result fields.
+      additionalProperties: false
+      required:
+        - succeeded
+        - failed
+        - totalRequested
+      properties:
+        succeeded:
+          type: integer
+          description: Number of successfully processed entities
+        failed:
+          type: integer
+          description: Number of entities that failed processing
+        totalRequested:
+          type: integer
+          description: Total number of entities in the request
+        failures:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/BatchFailureEntry'
+          description: Details of individual failures (null if all succeeded)
+
+    BatchFailureEntry:
+      type: object
+      description: Details of a single entity failure within a batch operation
+      additionalProperties: false
+      required:
+        - entityId
+        - reason
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity that failed
+        reason:
+          type: string
+          description: Human-readable failure reason
+
     CapabilityUpdateType:
       type: string
       enum:

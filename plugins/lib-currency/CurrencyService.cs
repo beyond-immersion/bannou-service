@@ -693,7 +693,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         var definition = await GetDefinitionByIdAsync(body.CurrencyDefinitionId, cancellationToken);
         if (definition is null) return (StatusCodes.NotFound, null);
 
-        var balance = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken, earnCapResetTime: definition.EarnCapResetTime);
+        var (balance, _) = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken, earnCapResetTime: definition.EarnCapResetTime);
 
         // Apply lazy autogain if enabled
         if (definition.AutogainEnabled)
@@ -727,7 +727,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         var results = new List<BatchBalanceResult>();
         foreach (var query in body.Queries)
         {
-            var balance = await GetOrCreateBalanceAsync(query.WalletId, query.CurrencyDefinitionId, cancellationToken);
+            var (balance, _) = await GetOrCreateBalanceAsync(query.WalletId, query.CurrencyDefinitionId, cancellationToken);
             var definition = await GetDefinitionByIdAsync(query.CurrencyDefinitionId, cancellationToken);
 
             if (definition is not null && definition.AutogainEnabled)
@@ -782,7 +782,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             return (StatusCodes.Conflict, null);
         }
 
-        var balance = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken, earnCapResetTime: definition.EarnCapResetTime);
+        var (balance, isNewBalance) = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken, earnCapResetTime: definition.EarnCapResetTime);
         ResetEarnCapsIfNeeded(balance, definition.EarnCapResetTime);
 
         var creditAmount = body.Amount;
@@ -900,6 +900,9 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             TransactionType = body.TransactionType
         }, cancellationToken);
 
+        // Publish balance lifecycle event (created for first-ever balance, updated for existing)
+        await PublishBalanceLifecycleEventAsync(balance, wallet, definition, isNewBalance, cancellationToken);
+
         return (StatusCodes.OK, new CreditCurrencyResponse
         {
             Transaction = MapTransactionToRecord(transaction),
@@ -938,7 +941,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             return (StatusCodes.Conflict, null);
         }
 
-        var balance = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken);
+        var (balance, _) = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken);
 
         // Check sufficient funds (accounting for active holds)
         var allowNegative = IsNegativeAllowed(definition, body.AllowNegative);
@@ -993,6 +996,9 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             TransactionType = body.TransactionType
         }, cancellationToken);
 
+        // Publish balance lifecycle updated event
+        await PublishBalanceLifecycleEventAsync(balance, wallet, definition, false, cancellationToken);
+
         return (StatusCodes.OK, new DebitCurrencyResponse
         {
             Transaction = MapTransactionToRecord(transaction),
@@ -1044,14 +1050,14 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             return (StatusCodes.Conflict, null);
         }
 
-        var sourceBalance = await GetOrCreateBalanceAsync(body.SourceWalletId, body.CurrencyDefinitionId, cancellationToken);
+        var (sourceBalance, _) = await GetOrCreateBalanceAsync(body.SourceWalletId, body.CurrencyDefinitionId, cancellationToken);
         var sourceHeldAmount = await GetTotalHeldAmountAsync(body.SourceWalletId, body.CurrencyDefinitionId, cancellationToken);
         if (sourceBalance.Amount - sourceHeldAmount < body.Amount)
         {
             return (StatusCodes.BadRequest, null);
         }
 
-        var targetBalance = await GetOrCreateBalanceAsync(body.TargetWalletId, body.CurrencyDefinitionId, cancellationToken);
+        var (targetBalance, isNewTargetBalance) = await GetOrCreateBalanceAsync(body.TargetWalletId, body.CurrencyDefinitionId, cancellationToken);
 
         var sourceBalanceBefore = sourceBalance.Amount;
         var targetBalanceBefore = targetBalance.Amount;
@@ -1137,6 +1143,10 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             NewBalance = targetBalance.Amount,
             TransactionType = body.TransactionType
         }, cancellationToken);
+
+        // Publish balance lifecycle events for both sides of the transfer
+        await PublishBalanceLifecycleEventAsync(sourceBalance, sourceWallet, definition, false, cancellationToken);
+        await PublishBalanceLifecycleEventAsync(targetBalance, targetWallet, definition, isNewTargetBalance, cancellationToken);
 
         return (StatusCodes.OK, new TransferCurrencyResponse
         {
@@ -1346,7 +1356,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         if (toDef.PerWalletCap is not null &&
             (toDef.CapOverflowBehavior ?? CapOverflowBehavior.Reject) == CapOverflowBehavior.Reject)
         {
-            var targetBalance = await GetOrCreateBalanceAsync(
+            var (targetBalance, _) = await GetOrCreateBalanceAsync(
                 body.WalletId, body.ToCurrencyId, cancellationToken);
             if (targetBalance.Amount + toAmount > toDef.PerWalletCap.Value)
             {
@@ -1752,7 +1762,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             return (StatusCodes.Conflict, null);
         }
 
-        var balance = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken);
+        var (balance, _) = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken);
         var currentHeld = await GetTotalHeldAmountAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken);
         var effectiveBalance = balance.Amount - currentHeld;
 
@@ -2073,7 +2083,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         return null;
     }
 
-    private async Task<BalanceModel> GetOrCreateBalanceAsync(Guid walletId, Guid currencyDefId, CancellationToken ct, string? earnCapResetTime = null)
+    private async Task<(BalanceModel Balance, bool IsNew)> GetOrCreateBalanceAsync(Guid walletId, Guid currencyDefId, CancellationToken ct, string? earnCapResetTime = null)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.GetOrCreateBalanceAsync");
         var key = $"{BALANCE_PREFIX}{walletId}:{currencyDefId}";
@@ -2081,7 +2091,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         // Check Redis cache first (per IMPLEMENTATION TENETS - use defined cache stores)
         var cached = await TryGetBalanceFromCacheAsync(key, ct);
         if (cached != null)
-            return cached;
+            return (cached, false);
 
         // Cache miss - read from MySQL
         var balance = await _balanceStore.GetAsync(key, ct);
@@ -2090,12 +2100,12 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         {
             // Populate cache for future reads
             await UpdateBalanceCacheAsync(key, balance, ct);
-            return balance;
+            return (balance, false);
         }
 
         // Create new balance (don't cache until saved)
         var resetTime = ParseResetTime(earnCapResetTime);
-        return new BalanceModel
+        return (new BalanceModel
         {
             WalletId = walletId,
             CurrencyDefinitionId = currencyDefId,
@@ -2106,7 +2116,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             WeeklyResetAt = GetNextWeeklyReset(resetTime),
             CreatedAt = DateTimeOffset.UtcNow,
             LastModifiedAt = DateTimeOffset.UtcNow
-        };
+        }, true);
     }
 
     private async Task SaveBalanceAsync(BalanceModel balance, CancellationToken ct)
@@ -2123,6 +2133,50 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
 
         // Maintain currency-balance reverse index for autogain task processing
         await AddToListAsync(_balanceStringStore, $"{BALANCE_CURRENCY_INDEX}{balance.CurrencyDefinitionId}", balance.WalletId.ToString(), ct);
+    }
+
+    /// <summary>
+    /// Publishes a balance lifecycle event (created or updated) after a balance mutation.
+    /// </summary>
+    private async Task PublishBalanceLifecycleEventAsync(
+        BalanceModel balance, WalletModel wallet, CurrencyDefinitionModel definition,
+        bool isNew, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.PublishBalanceLifecycleEventAsync");
+
+        if (isNew)
+        {
+            await _messageBus.PublishCurrencyBalanceCreatedAsync(new CurrencyBalanceCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                WalletId = balance.WalletId,
+                CurrencyDefinitionId = balance.CurrencyDefinitionId,
+                CurrencyCode = definition.Code,
+                OwnerId = wallet.OwnerId,
+                OwnerType = wallet.OwnerType,
+                Amount = balance.Amount,
+                CreatedAt = balance.CreatedAt,
+                UpdatedAt = balance.LastModifiedAt
+            }, ct);
+        }
+        else
+        {
+            await _messageBus.PublishCurrencyBalanceUpdatedAsync(new CurrencyBalanceUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                WalletId = balance.WalletId,
+                CurrencyDefinitionId = balance.CurrencyDefinitionId,
+                CurrencyCode = definition.Code,
+                OwnerId = wallet.OwnerId,
+                OwnerType = wallet.OwnerType,
+                Amount = balance.Amount,
+                CreatedAt = balance.CreatedAt,
+                UpdatedAt = balance.LastModifiedAt,
+                ChangedFields = new List<string> { "amount" }
+            }, ct);
+        }
     }
 
     private async Task<List<BalanceModel>> GetAllBalancesForWalletAsync(Guid walletId, CancellationToken ct)
@@ -2207,7 +2261,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             return balance; // Skip, will be applied on next access
 
         // Re-read balance under lock to get authoritative state
-        balance = await GetOrCreateBalanceAsync(
+        (balance, _) = await GetOrCreateBalanceAsync(
             balance.WalletId, balance.CurrencyDefinitionId, ct);
 
         now = DateTimeOffset.UtcNow;

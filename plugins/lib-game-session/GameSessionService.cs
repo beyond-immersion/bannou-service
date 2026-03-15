@@ -314,7 +314,7 @@ public partial class GameSessionService : IGameSessionService
 
         // Save to state store (inside lock so no orphan if list update fails)
         await _sessionStore
-            .SaveAsync(SESSION_KEY_PREFIX + session.SessionId, session, SessionTtlOptions, cancellationToken);
+            .SaveAsync(BuildSessionKey(session.SessionId), session, SessionTtlOptions, cancellationToken);
 
         // Add to session list (read-modify-write under lock)
         var sessionIds = await _sessionListStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();

@@ -37,6 +37,7 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 | lib-license | Hard dependency via `ICurrencyClient` for cost verification on license board operations |
 | lib-actor (planned) | `${currency.*}` variable provider via `IVariableProviderFactory` for NPC economic awareness in ABML behavior expressions ([#147](https://github.com/beyond-immersion/bannou-service/issues/147), in progress) |
 | lib-actor (planned) | ABML economic action handlers (`economy_credit`, `economy_debit`, `economy_transfer`) calling `ICurrencyClient` for NPC economic actions ([#428](https://github.com/beyond-immersion/bannou-service/issues/428)) |
+| lib-genesis (L2) | Implements `ICurrencyTransactionListener` to convert wallet credits into Seed growth via template-defined growth mappings, driving the entity awakening lifecycle. Genesis is the primary consumer of the listener interface — it monitors all wallet mutations and filters to genesis-managed wallets via a reverse index. |
 
 ---
 
@@ -116,6 +117,9 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 | `currency.hold.captured` | `CurrencyHoldCapturedEvent` | Hold captured (funds debited) |
 | `currency.hold.released` | `CurrencyHoldReleasedEvent` | Hold released (funds available again) |
 | `currency.hold.expired` | `CurrencyHoldExpiredEvent` | Hold auto-released by the hold expiration background worker when ExpiresAt is passed |
+| `currency.balance.created` | `CurrencyBalanceCreatedEvent` | First-ever credit of a currency to a wallet creates a new balance record |
+| `currency.balance.updated` | `CurrencyBalanceUpdatedEvent` | Balance record modified (credit, debit, transfer) |
+| `currency.balance.deleted` | `CurrencyBalanceDeletedEvent` | Balance record permanently removed (account deletion cleanup, clean-deprecated sweep) |
 
 ### Consumed Events
 
@@ -181,6 +185,7 @@ Client events are published via `IEntitySessionRegistry.PublishToEntitySessionsA
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEntitySessionRegistry` | Singleton | Client event publishing to wallet owner WebSocket sessions |
 | `ICurrencyDataCache` | Singleton | In-memory cache for ABML variable provider |
+| `IEnumerable<ICurrencyTransactionListener>` | Singleton | DI-discovered listeners notified after wallet credit/debit mutations. Interface defined in `bannou-service/Providers/ICurrencyTransactionListener.cs`. Dispatched after successful balance changes (credit, debit, transfer, autogain, escrow operations). Listeners must write to distributed state only (per SERVICE-HIERARCHY DI Listener safety rules). Primary consumer: lib-genesis (converts currency transactions into Seed growth via template-defined mappings). |
 | `CurrencyAutogainTaskService` | Hosted (Singleton) | Background worker for proactive autogain |
 | `CurrencyExpirationTaskService` | Hosted (Singleton) | Background worker that scans and expires balances with elapsed expiration policies |
 | `HoldExpirationTaskService` | Hosted (Singleton) | Background worker that auto-releases authorization holds past their ExpiresAt timestamp |
@@ -490,7 +495,7 @@ Escrow Integration Flow
 
 ### Bugs (Fix Immediately)
 
-1. **Missing Category B instance creation guard on balance/hold operations**: Per IMPLEMENTATION TENETS (Category B checklist B9/B15), all services with Category B entities MUST check deprecation status before creating new instances and reject with `BadRequest` if deprecated. Wallets are currency-agnostic containers (no `currencyDefinitionId` at creation time), so the guard belongs in `CreditCurrencyAsync`, `CreateHoldAsync`, and `ExecuteConversionAsync` — the first points where a specific `currencyDefinitionId` is bound to a balance or hold. None of these methods check `IsDeprecated` on the currency definition. The only code paths that reference `IsDeprecated` are `ListCurrencyDefinitions` (filter), `DeprecateCurrencyDefinition` (idempotency), and `CleanDeprecatedCurrencyDefinitions` (sweep). The Deprecation Lifecycle section below notes this as intentional, but the tenet does not define an exception for service-to-service callers. If Escrow or other L2 services genuinely need to operate on deprecated currencies, that exception must be added to the tenet.
+1. **Missing Category B instance creation guard on new balance creation**: Per IMPLEMENTATION TENETS (Category B checklist B9/B15), services MUST check deprecation status before creating new instances and reject with `BadRequest` if deprecated. The "instance" of a CurrencyDefinition is a CurrencyBalance record (per-wallet-per-currency), not the wallet itself — wallets are currency-agnostic containers created without a `currencyDefinitionId`. The guard belongs in `CreditCurrencyAsync` at the point where a *new* balance record would be created (first-ever credit of currency X to wallet Y). Crediting an *existing* balance is instance modification, not creation — the tenet does not require blocking modifications to existing instances. Similarly, `CreateHoldAsync` on an existing balance and `ExecuteConversionAsync` between existing balances are modifications, not new instance creation. None of the code paths currently check `IsDeprecated` before creating new balance records. The only code paths that reference `IsDeprecated` are `ListCurrencyDefinitions` (filter), `DeprecateCurrencyDefinition` (idempotency), and `CleanDeprecatedCurrencyDefinitions` (sweep).
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -510,11 +515,12 @@ Escrow Integration Flow
 
 ### Deprecation Lifecycle (Category B)
 
-Currency definitions are **Category B entities** — wallets and balances reference definitions by ID, and existing balances must continue to function after a definition is deprecated. Per:
+Currency definitions are **Category B entities** — balance records reference definitions by ID, and existing balances must continue to function after a definition is deprecated. The "instance" of a CurrencyDefinition is the CurrencyBalance record (per-wallet-per-currency binding), not the CurrencyWallet — wallets are currency-agnostic containers that hold balances of many currencies simultaneously.
 
 - **Deprecation is one-way**: Once deprecated, a currency definition cannot be undeprecated. No undeprecate endpoint exists.
-- **No delete endpoint**: Currency definitions persist forever. Only deprecation is supported.
-- **Missing instance creation guard** (see Bugs #2): No deprecation check exists in `CreditCurrencyAsync`, `CreateHoldAsync`, or `ExecuteConversionAsync` — balances and holds can be created against deprecated currency definitions. Only discovery is affected (filtered from list results). This is a violation of IMPLEMENTATION TENETS (Category B B9/B15) — operations that bind a `currencyDefinitionId` to new data must reject with `BadRequest` when the definition is deprecated. If an exception is warranted for service-to-service callers (e.g., Escrow), it must be added to the tenet.
+- **No delete endpoint**: Currency definitions persist forever. Deletion is via the clean-deprecated sweep only (when zero balances remain for this currency across all wallets).
+- **Instance creation guard scope** (see Bugs #1): The tenet-required guard (B9/B15) applies only to *new instance creation* — specifically, the first-ever credit of a deprecated currency to a wallet (which creates a new CurrencyBalance record). Modifications to *existing* balances (additional credits, debits, holds, conversions) are not instance creation and are not blocked by the tenet. A game design decision about whether to also restrict operations on existing balances of deprecated currencies (e.g., allow debits but block credits to drain the currency) is a separate concern from tenet compliance.
+- **Instance entity**: The schema declares `instanceEntity: CurrencyBalance` — the per-wallet-per-currency balance record is the true "instance" of a currency definition. CurrencyBalance is an x-lifecycle entity with full lifecycle events (`currency.balance.created`, `currency.balance.updated`, `currency.balance.deleted`). The clean-deprecated sweep's `hasInstancesAsync` delegate should check the `bal-currency:{currencyDefId}` reverse index (which wallets have a balance of this currency).
 - **Storage model**: Currency definitions use triple-field deprecation: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?).
 - **Idempotent deprecation**: Deprecating an already-deprecated definition returns `OK` (not `Conflict`).
 - **List filtering**: `ListCurrencyDefinitions` includes `includeDeprecated` parameter (default: `false`).

@@ -175,6 +175,20 @@ scripts/generate-all-services.sh               # † Regenerate ALL services (sl
 # Test ONLY the affected test project:
 dotnet test --project plugins/lib-{service}.tests/lib-{service}.tests.csproj --no-restore
 
+# ⚠️ MANDATORY: dotnet test is a HEAVY COMMAND (>10 seconds). ALWAYS redirect to file:
+dotnet test --project plugins/lib-{service}.tests/lib-{service}.tests.csproj --no-restore > /tmp/test-output.txt 2>&1
+# Then read the file with the Read tool. NEVER pipe to tail/head. NEVER run twice.
+
+# ⚠️ xUnit v3 Testing Platform filter syntax (NOT --filter, NOT --treenode-filter):
+# Filter by test class:
+#   --filter-class "Namespace.ClassName"
+# Filter by test method:
+#   --filter-method "*MethodName*"
+# Filter by namespace:
+#   --filter-namespace "Namespace"
+# Wildcards (*) supported at beginning and/or end. Multiple values = OR.
+# NEVER use --filter (that is the old vstest flag and does not work).
+
 # Structural Testing — cross-cutting convention/schema/assembly validation
 make test-structural                          # All structural tests (non-informational)
 make test-structural METHOD=Service_HasValidConstructor  # Specific test by method name
@@ -217,7 +231,7 @@ Running events before models after adding a new `$ref` will produce duplicate ty
 **Claude's testing responsibilities**: WRITE all tests, but only RUN unit tests.
 
 **Three-tier architecture** (for reference - Claude does NOT run tiers 2-3):
-1. **Unit Tests**: Claude writes and runs these (`dotnet test --project plugins/lib-{service}.tests/...` — scoped to affected projects only)
+1. **Unit Tests**: Claude writes and runs these (`dotnet test --project plugins/lib-{service}.tests/... > /tmp/test-output.txt 2>&1` — scoped to affected projects only, ALWAYS redirect to file)
 2. **HTTP Integration Tests**: Claude writes these but does NOT run them (user runs `make test-http`)
 3. **WebSocket Edge Tests**: Claude writes these but does NOT run them (user runs `make test-edge`)
 

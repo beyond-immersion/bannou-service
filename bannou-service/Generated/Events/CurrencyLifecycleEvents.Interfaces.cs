@@ -20,3 +20,7 @@ public partial class CurrencyDefinitionDeletedEvent : ILifecycleDeletedEvent, ID
 public partial class CurrencyWalletCreatedEvent : ILifecycleCreatedEvent { }
 public partial class CurrencyWalletUpdatedEvent : ILifecycleUpdatedEvent { }
 public partial class CurrencyWalletDeletedEvent : ILifecycleDeletedEvent { }
+
+public partial class CurrencyBalanceCreatedEvent : ILifecycleCreatedEvent { }
+public partial class CurrencyBalanceUpdatedEvent : ILifecycleUpdatedEvent { }
+public partial class CurrencyBalanceDeletedEvent : ILifecycleDeletedEvent { }
