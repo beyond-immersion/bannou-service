@@ -43,5 +43,16 @@ public class CharacterServicePlugin : StandardServicePlugin<ICharacterService>
         {
             Logger?.LogWarning("Failed to register character compression callback with lib-resource");
         }
+
+        // Register resource migrate callbacks (generated from x-references with onDelete: restrict).
+        var migrateSuccess = await CharacterService.RegisterResourceMigrateCallbacksAsync(resourceClient, CancellationToken.None);
+        if (migrateSuccess)
+        {
+            Logger?.LogInformation("Registered character migrate callbacks with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register some character migrate callbacks with lib-resource");
+        }
     }
 }

@@ -93,18 +93,9 @@ public sealed class BundleMetadata
     public required BundleStatus Status { get; init; }
 
     /// <summary>
-    /// Type of owner for this bundle per FOUNDATION TENETS (Account Identity Boundary).
-    /// Session for user-initiated bundles, Service for service-initiated bundles.
-    /// Null for system-owned bundles.
+    /// Informational field recording who created this bundle. Not used for access control.
     /// </summary>
-    public AssetOwnerType? OwnerType { get; init; }
-
-    /// <summary>
-    /// Owner identifier. For Session type: the WebSocket session ID (UUID format).
-    /// For Service type: the service name (e.g., "orchestrator").
-    /// Null for system-owned bundles.
-    /// </summary>
-    public string? OwnerId { get; init; }
+    public string? CreatedBy { get; init; }
 
     /// <summary>
     /// Provenance data for metabundles - tracks which source bundles were composed.
@@ -153,8 +144,7 @@ public sealed class BundleMetadata
             MetadataVersion = MetadataVersion,
             Name = Name,
             Description = Description,
-            OwnerType = OwnerType,
-            OwnerId = OwnerId,
+            CreatedBy = CreatedBy,
             Realm = Realm,
             Tags = Tags,
             Status = LifecycleStatus switch
@@ -396,16 +386,9 @@ public sealed class BundleUploadSession
     public BundleManifestPreview? ManifestPreview { get; init; }
 
     /// <summary>
-    /// Type of owner for this upload session per FOUNDATION TENETS (Account Identity Boundary).
-    /// Session for user-initiated uploads, Service for service-initiated uploads.
+    /// Informational field recording who initiated this upload. Not used for access control.
     /// </summary>
-    public required AssetOwnerType OwnerType { get; init; }
-
-    /// <summary>
-    /// Owner identifier. For Session type: the WebSocket session ID (UUID format).
-    /// For Service type: the service name (e.g., "orchestrator").
-    /// </summary>
-    public required string OwnerId { get; init; }
+    public string? CreatedBy { get; init; }
 
     /// <summary>
     /// When the session was created.

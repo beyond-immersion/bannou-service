@@ -497,13 +497,14 @@ public class StructuralTests
 
     // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
-    /// Validates that services with generated RegisterResourceCleanupCallbacksAsync()
-    /// actually call it from their Plugin.cs OnRunningAsync. The method is generated from
-    /// x-references in the API schema, but if the plugin doesn't call it, cleanup callbacks
+    /// Validates that services with generated *ReferenceTracking.cs files actually call
+    /// the registration methods from their Plugin.cs OnRunningAsync. CASCADE/DETACH references
+    /// generate RegisterResourceCleanupCallbacksAsync; RESTRICT references generate
+    /// RegisterResourceMigrateCallbacksAsync. If the plugin doesn't call them, callbacks
     /// are silently missing at runtime.
     /// </summary>
     [Fact]
-    public void Services_WithResourceCleanup_MustCallRegistration()
+    public void Services_WithResourceTracking_MustCallRegistration()
     {
         EnsureAssembliesLoaded();
         var failures = new List<string>();
@@ -517,39 +518,43 @@ public class StructuralTests
             var pluginDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins", $"lib-{serviceName}");
             if (!Directory.Exists(pluginDir)) continue;
 
-            // Check if this service has a generated ReferenceTracking file with RegisterResourceCleanupCallbacksAsync
             var generatedDir = Path.Combine(pluginDir, "Generated");
             if (!Directory.Exists(generatedDir)) continue;
 
-            var hasReferenceTracking = Directory.GetFiles(generatedDir, "*ReferenceTracking.cs").Length > 0;
-            if (!hasReferenceTracking) continue;
+            var trackingFiles = Directory.GetFiles(generatedDir, "*ReferenceTracking.cs");
+            if (trackingFiles.Length == 0) continue;
 
-            // Verify the Plugin.cs calls RegisterResourceCleanupCallbacksAsync
+            // Read the generated file to determine which registration methods exist
+            var trackingContent = File.ReadAllText(trackingFiles[0]);
+
+            // Match actual method definitions, not comment references
+            var methodsToCheck = new List<string>();
+            if (trackingContent.Contains("Task<bool> RegisterResourceCleanupCallbacksAsync("))
+                methodsToCheck.Add("RegisterResourceCleanupCallbacksAsync");
+            if (trackingContent.Contains("Task<bool> RegisterResourceMigrateCallbacksAsync("))
+                methodsToCheck.Add("RegisterResourceMigrateCallbacksAsync");
+
+            if (methodsToCheck.Count == 0) continue;
+
+            // Read all Plugin.cs files to check for registration calls
             var pluginFiles = Directory.GetFiles(pluginDir, "*Plugin.cs", SearchOption.TopDirectoryOnly);
-            var callFound = false;
+            var pluginContent = string.Join("\n", pluginFiles.Select(File.ReadAllText));
 
-            foreach (var pluginFile in pluginFiles)
+            foreach (var method in methodsToCheck)
             {
-                var content = File.ReadAllText(pluginFile);
-                if (content.Contains("RegisterResourceCleanupCallbacksAsync"))
+                if (!pluginContent.Contains(method))
                 {
-                    callFound = true;
-                    break;
+                    failures.Add(
+                        $"{serviceType.Name} (lib-{serviceName}): generated *ReferenceTracking.cs " +
+                        $"defines {method}() but *Plugin.cs does not call it");
                 }
-            }
-
-            if (!callFound)
-            {
-                failures.Add(
-                    $"{serviceType.Name} (lib-{serviceName}): has generated *ReferenceTracking.cs " +
-                    $"but *Plugin.cs does not call RegisterResourceCleanupCallbacksAsync()");
             }
         }
 
         Assert.True(
             failures.Count == 0,
-            $"Services with x-references must call RegisterResourceCleanupCallbacksAsync() " +
-            $"in their Plugin OnRunningAsync (generated but not wired up):\n" +
+            $"Services with x-references must call their generated registration methods " +
+            $"in Plugin OnRunningAsync (generated but not wired up):\n" +
             string.Join("\n", failures.Select(f => $"  - {f}")));
     }
 

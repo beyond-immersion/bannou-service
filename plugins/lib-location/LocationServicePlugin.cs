@@ -68,6 +68,17 @@ public class LocationServicePlugin : StandardServicePlugin<ILocationService>
         {
             Logger?.LogWarning("Failed to register location compression callback with lib-resource");
         }
+
+        // Register resource migrate callbacks (generated from x-references with onDelete: restrict).
+        var migrateSuccess = await LocationService.RegisterResourceMigrateCallbacksAsync(resourceClient, cancellationToken);
+        if (migrateSuccess)
+        {
+            Logger?.LogInformation("Registered location migrate callbacks with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register some location migrate callbacks with lib-resource");
+        }
     }
 
     /// <summary>

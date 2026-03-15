@@ -708,15 +708,6 @@ components:
       - Desc
       description: Sort direction for query results
 
-    AssetOwnerType:
-      type: string
-      enum:
-      - Session
-      - Service
-      description: |
-        Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).
-        Session: user-initiated operation identified by WebSocket session ID (UUID).
-        Service: service-initiated operation identified by service name.
 
     StorageProvider:
       type: string
@@ -843,18 +834,11 @@ components:
       - filename
       - size
       - contentType
-      - ownerType
-      - ownerId
       properties:
-        ownerType:
-          $ref: '#/components/schemas/AssetOwnerType'
-          description: Type of owner initiating this upload
-        ownerId:
+        createdBy:
           type: string
-          minLength: 1
-          description: |
-            Owner identifier. For Session type: the WebSocket session ID (UUID format).
-            For Service type: the service name (e.g., "behavior", "orchestrator").
+          nullable: true
+          description: Informational field recording who initiated this upload. Not used for access control.
         filename:
           type: string
           minLength: 1
@@ -1330,17 +1314,11 @@ components:
       required:
       - bundleId
       - assetIds
-      - ownerType
-      - ownerId
       properties:
-        ownerType:
-          $ref: '#/components/schemas/AssetOwnerType'
-          description: Type of owner creating this bundle
-        ownerId:
+        createdBy:
           type: string
-          description: |
-            Owner identifier. For Session type: the WebSocket session ID (UUID format).
-            For Service type: the service name (e.g., "behavior", "orchestrator").
+          nullable: true
+          description: Informational field recording who created this bundle. Not used for access control.
         bundleId:
           type: string
           minLength: 1
@@ -1459,17 +1437,11 @@ components:
       required:
       - filename
       - size
-      - ownerType
-      - ownerId
       properties:
-        ownerType:
-          $ref: '#/components/schemas/AssetOwnerType'
-          description: Type of owner uploading this bundle
-        ownerId:
+        createdBy:
           type: string
-          description: |
-            Owner identifier. For Session type: the WebSocket session ID (UUID format).
-            For Service type: the service name (e.g., "behavior", "orchestrator").
+          nullable: true
+          description: Informational field recording who uploaded this bundle. Not used for access control.
         filename:
           type: string
           description: Must end with .bannou or .zip
@@ -1573,8 +1545,6 @@ components:
         This enables packaging behaviors/scripts with 3D assets as a complete unit.
       required:
       - metabundleId
-      - ownerType
-      - ownerId
       - realm
       properties:
         metabundleId:
@@ -1601,14 +1571,10 @@ components:
           type: string
           default: "1.0.0"
           description: Metabundle version string
-        ownerType:
-          $ref: '#/components/schemas/AssetOwnerType'
-          description: Type of owner creating this metabundle
-        ownerId:
+        createdBy:
           type: string
-          description: |
-            Owner identifier. For Session type: the WebSocket session ID (UUID format).
-            For Service type: the service name (e.g., "behavior", "orchestrator").
+          nullable: true
+          description: Informational field recording who created this metabundle. Not used for access control.
         realm:
           $ref: '#/components/schemas/GameRealm'
           description: Game realm for this metabundle
@@ -2179,15 +2145,10 @@ components:
           type: string
           nullable: true
           description: Bundle description
-        ownerType:
-          allOf:
-            - $ref: '#/components/schemas/AssetOwnerType'
-          nullable: true
-          description: Type of owner (null for system-owned bundles)
-        ownerId:
+        createdBy:
           type: string
           nullable: true
-          description: Owner identifier - session ID or service name (null for system-owned bundles)
+          description: Informational field recording who created this bundle. Not used for access control.
         realm:
           allOf:
             - $ref: '#/components/schemas/GameRealm'
@@ -2347,15 +2308,10 @@ components:
           type: string
           nullable: true
           description: Filter bundles with name containing this string (case-insensitive)
-        ownerType:
-          allOf:
-          - $ref: '#/components/schemas/AssetOwnerType'
-          nullable: true
-          description: Filter by owner type (null for any type)
-        ownerId:
+        createdBy:
           type: string
           nullable: true
-          description: Filter by owner identifier (session ID or service name)
+          description: Filter by creator (null for all creators)
         realm:
           allOf:
           - $ref: '#/components/schemas/GameRealm'

@@ -32,16 +32,9 @@ public sealed class UploadSession
     public AssetMetadataInput? Metadata { get; set; }
 
     /// <summary>
-    /// Type of owner for this upload session per FOUNDATION TENETS (Account Identity Boundary).
-    /// Session for user-initiated uploads, Service for service-initiated uploads.
+    /// Informational field recording who initiated this upload. Not used for access control.
     /// </summary>
-    public required AssetOwnerType OwnerType { get; set; }
-
-    /// <summary>
-    /// Owner identifier. For Session type: the WebSocket session ID (UUID format).
-    /// For Service type: the service name (e.g., "behavior", "orchestrator").
-    /// </summary>
-    public required string OwnerId { get; set; }
+    public string? CreatedBy { get; set; }
 
     /// <summary>
     /// Storage key where the file will be stored in MinIO.

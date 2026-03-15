@@ -3074,6 +3074,10 @@ public class AssetServiceTests
             .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
             .Returns(Task.CompletedTask);
 
+        _mockVersionStore
+            .Setup(s => s.GetSetAsync<int>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<int>());
+
         // Capture published event
         BeyondImmersion.BannouService.Events.BundleDeletedEvent? capturedEvent = null;
         _mockMessageBus
@@ -3128,6 +3132,10 @@ public class AssetServiceTests
         _mockStorageProvider
             .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
             .ThrowsAsync(new InvalidOperationException("Storage unavailable"));
+
+        _mockVersionStore
+            .Setup(s => s.GetSetAsync<int>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<int>());
 
         // Act
         var status = await service.DeleteBundleAsync(request, cancellationToken: TestContext.Current.CancellationToken);

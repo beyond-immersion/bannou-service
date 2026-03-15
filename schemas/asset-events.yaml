@@ -87,8 +87,6 @@ components:
         - eventId
         - timestamp
         - uploadId
-        - ownerType
-        - ownerId
         - filename
         - size
         - contentType
@@ -101,14 +99,10 @@ components:
           type: string
           format: uuid
           description: Upload session identifier
-        ownerType:
-          $ref: 'asset-api.yaml#/components/schemas/AssetOwnerType'
-          description: Type of owner initiating this upload
-        ownerId:
+        createdBy:
           type: string
-          description: |
-            Owner identifier. For Session type: the WebSocket session ID (UUID format).
-            For Service type: the service name (e.g., "behavior", "orchestrator").
+          nullable: true
+          description: Informational field recording who initiated this upload. Not used for access control.
         filename:
           type: string
           description: Original filename
@@ -144,8 +138,6 @@ components:
         - timestamp
         - assetId
         - uploadId
-        - ownerType
-        - ownerId
         - bucket
         - key
         - size
@@ -162,14 +154,10 @@ components:
           type: string
           format: uuid
           description: Upload session identifier
-        ownerType:
-          $ref: 'asset-api.yaml#/components/schemas/AssetOwnerType'
-          description: Type of owner for this upload
-        ownerId:
+        createdBy:
           type: string
-          description: |
-            Owner identifier. For Session type: the WebSocket session ID (UUID format).
-            For Service type: the service name (e.g., "behavior", "orchestrator").
+          nullable: true
+          description: Informational field recording who completed this upload. Not used for access control.
         bucket:
           type: string
           description: Storage bucket name
@@ -374,15 +362,10 @@ components:
         compression:
           $ref: 'asset-api.yaml#/components/schemas/CompressionType'
           description: Compression algorithm used for the bundle
-        ownerType:
-          allOf:
-            - $ref: 'asset-api.yaml#/components/schemas/AssetOwnerType'
-          nullable: true
-          description: Type of owner (null for system-owned bundles)
-        ownerId:
+        createdBy:
           type: string
           nullable: true
-          description: Owner identifier - session ID or service name (null for system-owned bundles)
+          description: Informational field recording who created this bundle. Not used for access control.
 
     MetabundleCreatedEvent:
       allOf:
@@ -443,15 +426,10 @@ components:
           format: int64
           nullable: true
           description: Metabundle file size in bytes
-        ownerType:
-          allOf:
-            - $ref: 'asset-api.yaml#/components/schemas/AssetOwnerType'
-          nullable: true
-          description: Type of owner (null for system-owned metabundles)
-        ownerId:
+        createdBy:
           type: string
           nullable: true
-          description: Owner identifier - session ID or service name (null for system-owned metabundles)
+          description: Informational field recording who created this metabundle. Not used for access control.
 
     BundleUpdatedEvent:
       allOf:
@@ -584,15 +562,10 @@ components:
           type: string
           nullable: true
           description: Original filename
-        ownerType:
-          allOf:
-            - $ref: 'asset-api.yaml#/components/schemas/AssetOwnerType'
-          nullable: true
-          description: Type of owner (null for system-initiated processing)
-        ownerId:
+        createdBy:
           type: string
           nullable: true
-          description: Owner identifier - session ID or service name (null for system-initiated processing)
+          description: Informational field recording who initiated this processing. Not used for access control.
         realmId:
           type: string
           format: uuid
