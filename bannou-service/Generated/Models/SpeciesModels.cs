@@ -31,44 +31,6 @@ namespace BeyondImmersion.BannouService.Species;
 using System = global::System;
 
 /// <summary>
-/// Request to remove all species from a realm (called by lib-resource cleanup)
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CleanupByRealmRequest
-{
-
-    /// <summary>
-    /// ID of the realm whose species associations should be removed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Result of realm species cleanup
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CleanupByRealmResponse
-{
-
-    /// <summary>
-    /// Number of species successfully disassociated from realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cleaned")]
-    public int Cleaned { get; set; } = default!;
-
-    /// <summary>
-    /// Number of species that failed to disassociate
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("failed")]
-    public int Failed { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Request to migrate all species from one realm to another (called by lib-resource migrate)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

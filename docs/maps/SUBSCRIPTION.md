@@ -14,7 +14,7 @@
 | Endpoints | 7 |
 | State Stores | subscription-statestore (MySQL), subscription-lock (Redis) |
 | Events Published | 1 (`subscription.updated`) |
-| Events Consumed | 0 |
+| Events Consumed | 1 (`account.deleted`) |
 | Client Events | 1 (`subscription.status-changed`) |
 | Background Services | 1 (SubscriptionExpirationService) |
 
@@ -54,6 +54,8 @@
 
 No soft dependencies. No DI provider/listener interfaces implemented or consumed.
 
+Service implements `IAccountDeletionCleanupRequired` marker interface (T28 Account Deletion Cleanup Obligation).
+
 ---
 
 ## Events Published
@@ -66,7 +68,9 @@ No soft dependencies. No DI provider/listener interfaces implemented or consumed
 
 ## Events Consumed
 
-This plugin does not consume external events.
+| Topic | Handler | Action |
+|-------|---------|--------|
+| `account.deleted` | `HandleAccountDeletedAsync` | T28 Account Deletion Cleanup Obligation. Reads account-subscriptions index, iterates all subscriptions with per-item error isolation: removes from service-subscriptions and global indexes, hard-deletes subscription record, publishes `subscription.updated` (Cancelled), pushes client event. Deletes account-subscriptions index after loop. |
 
 ---
 
@@ -92,27 +96,28 @@ Published best-effort alongside every `subscription.updated` event. Failure to p
 | `ITelemetryProvider` | Span instrumentation |
 | `IGameServiceClient` | Game service metadata resolution |
 | `IEntitySessionRegistry` | Account-session client event routing |
+| `IEventConsumer` | Registers `HandleAccountDeletedAsync` for `account.deleted` (not stored as field) |
 
 ---
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| GetAccountSubscriptions | POST /subscription/account/list | user | - | - |
-| QueryCurrentSubscriptions | POST /subscription/query | [] | - | - |
-| GetSubscription | POST /subscription/get | user | - | - |
-| CreateSubscription | POST /subscription/create | admin | subscription, account-index, service-index, global-index | subscription.updated |
-| UpdateSubscription | POST /subscription/update | admin | subscription | subscription.updated |
-| CancelSubscription | POST /subscription/cancel | user | subscription | subscription.updated |
-| RenewSubscription | POST /subscription/renew | admin | subscription | subscription.updated |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| GetAccountSubscriptions | POST /subscription/account/list | generated | [] | - | - |
+| QueryCurrentSubscriptions | POST /subscription/query | generated | [] | - | - |
+| GetSubscription | POST /subscription/get | generated | [] | - | - |
+| CreateSubscription | POST /subscription/create | generated | [] | subscription, account-index, service-index, global-index | subscription.updated |
+| UpdateSubscription | POST /subscription/update | generated | [] | subscription | subscription.updated |
+| CancelSubscription | POST /subscription/cancel | generated | user | subscription | subscription.updated |
+| RenewSubscription | POST /subscription/renew | generated | [] | subscription | subscription.updated |
 
 ---
 
 ## Methods
 
 ### GetAccountSubscriptions
-POST /subscription/account/list | Roles: [] (service-to-service)
+POST /subscription/account/list | Roles: []
 
 ```
 READ _indexStore:"account-subscriptions:{accountId}"            -> empty list if null
@@ -153,7 +158,7 @@ RETURN (200, QuerySubscriptionsResponse { subscriptions, accountIds })
 ---
 
 ### GetSubscription
-POST /subscription/get | Roles: [] (service-to-service)
+POST /subscription/get | Roles: []
 
 ```
 READ _subscriptionStore:"subscription:{subscriptionId}"        -> 404 if null
@@ -163,7 +168,7 @@ RETURN (200, SubscriptionInfo)
 ---
 
 ### CreateSubscription
-POST /subscription/create | Roles: [] (service-to-service)
+POST /subscription/create | Roles: []
 
 ```
 CALL IGameServiceClient.GetServiceAsync({ serviceId })         -> 404 if not found
@@ -196,7 +201,7 @@ RETURN (200, SubscriptionInfo)
 ---
 
 ### UpdateSubscription
-POST /subscription/update | Roles: [] (service-to-service)
+POST /subscription/update | Roles: []
 
 ```
 LOCK subscription-lock:"{subscriptionId}"                      -> 409 if fails
@@ -232,7 +237,7 @@ RETURN (200, SubscriptionInfo)
 ---
 
 ### RenewSubscription
-POST /subscription/renew | Roles: [] (service-to-service)
+POST /subscription/renew | Roles: []
 
 ```
 LOCK subscription-lock:"{subscriptionId}"                      -> 409 if fails
@@ -282,4 +287,50 @@ IF any marked for removal
   READ _indexStore:"subscription-index" [with ETag]
   ETAG-WRITE _indexStore:"subscription-index" <- index minus removed IDs
   // Retries on ETag mismatch; defers to next cycle after 3 failures
+```
+
+---
+
+## Event Handlers
+
+### HandleAccountDeletedAsync
+Topic: `account.deleted` | T28 Account Deletion Cleanup Obligation
+
+```
+// Top-level try-catch with telemetry span and error event publishing
+CALL CleanupSubscriptionsForAccountAsync(accountId)
+```
+
+### CleanupSubscriptionsForAccountAsync
+```
+READ _indexStore:"account-subscriptions:{accountId}"          -> return 0 if null
+FOREACH subscriptionId in index (per-item try-catch, failures logged as Warning)
+  READ _subscriptionStore:"subscription:{subscriptionId}"
+  IF null -> skip (already deleted, another node may have cleaned)
+  LOCK subscription-lock:"index:service-subscriptions:{model.ServiceId}"
+    // RemoveFromIndexAsync: READ + remove + WRITE (or DELETE if list empty)
+  LOCK subscription-lock:"index:subscription-index"
+    // RemoveFromIndexAsync: READ + remove + WRITE (or DELETE if list empty)
+  DELETE _subscriptionStore:"subscription:{subscriptionId}"
+  PUBLISH subscription.updated { action: Cancelled, isActive: false }
+  PUSH subscription.status-changed to account sessions (best-effort)
+DELETE _indexStore:"account-subscriptions:{accountId}"        // after loop, unconditional
+```
+
+---
+
+## Non-Standard Implementation Patterns
+
+### ExpireSubscriptionAsync (Partial Interface Extension)
+
+`ISubscriptionServiceExtensions.cs` extends the generated `ISubscriptionService` with `ExpireSubscriptionAsync(Guid, CancellationToken)`. This method is callable by the background worker via DI-resolved `ISubscriptionService` without being an HTTP endpoint. Follows the pattern established by lib-permission.
+
+```
+LOCK subscription-lock:"{subscriptionId}"                      -> return false if fails
+  READ _subscriptionStore:"subscription:{subscriptionId}"      -> return false if null or !IsActive
+  // Set IsActive=false, UpdatedAtUnix=now
+  WRITE _subscriptionStore:"subscription:{subscriptionId}" <- updated model
+  PUBLISH subscription.updated { action: Expired, isActive: false }
+  PUSH subscription.status-changed to account sessions (best-effort)
+RETURN true
 ```

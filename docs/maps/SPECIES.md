@@ -11,7 +11,7 @@
 |-------|-------|
 | Plugin | lib-species |
 | Layer | L2 GameFoundation |
-| Endpoints | 13 |
+| Endpoints | 15 |
 | State Stores | species-statestore (MySQL), species-lock (Redis) |
 | Events Published | 4 (`species.created`, `species.updated`, `species.deleted`, `species.merged`) |
 | Events Consumed | 0 |
@@ -52,7 +52,7 @@
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Spans on all private async helpers |
 | lib-character (`ICharacterClient`) | L2 | Hard | Reference checking (delete, merge, remove-from-realm), character migration (merge) |
 | lib-realm (`IRealmClient`) | L2 | Hard | Realm existence/active validation, realm code resolution (seed) |
-| lib-resource (`IResourceClient`) | L1 | Hard | Higher-layer reference checking and cleanup coordination (delete) |
+| lib-resource (`IResourceClient`) | L1 | Hard | Higher-layer reference checking and cleanup coordination (delete); realm RESTRICT reference registration (create, add-to-realm); migrate-by-realm callback |
 
 ---
 
@@ -61,7 +61,7 @@
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `species.created` | `SpeciesCreatedEvent` | CreateSpecies, SeedSpecies (create path) |
-| `species.updated` | `SpeciesUpdatedEvent` | UpdateSpecies, DeprecateSpecies, UndeprecateSpecies, AddSpeciesToRealm, RemoveSpeciesFromRealm, SeedSpecies (update path) |
+| `species.updated` | `SpeciesUpdatedEvent` | UpdateSpecies, DeprecateSpecies, UndeprecateSpecies, AddSpeciesToRealm, RemoveSpeciesFromRealm, CleanupByRealm, MigrateByRealm, SeedSpecies (update path) |
 | `species.deleted` | `SpeciesDeletedEvent` | DeleteSpecies, MergeSpecies (deleteAfterMerge path) |
 | `species.merged` | `SpeciesMergedEvent` | MergeSpecies |
 
@@ -92,21 +92,23 @@ This plugin does not consume external events.
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| GetSpecies | POST /species/get | user | - | - |
-| GetSpeciesByCode | POST /species/get-by-code | user | - | - |
-| ListSpecies | POST /species/list | user | - | - |
-| ListSpeciesByRealm | POST /species/list-by-realm | user | - | - |
-| CreateSpecies | POST /species/create | admin | species, code-index, realm-index, all-species | species.created |
-| UpdateSpecies | POST /species/update | admin | species | species.updated |
-| DeleteSpecies | POST /species/delete | admin | species, code-index, realm-index, all-species | species.deleted |
-| DeprecateSpecies | POST /species/deprecate | admin | species | species.updated |
-| UndeprecateSpecies | POST /species/undeprecate | admin | species | species.updated |
-| MergeSpecies | POST /species/merge | admin | species (via delete path) | species.merged, species.deleted |
-| AddSpeciesToRealm | POST /species/add-to-realm | admin | species, realm-index | species.updated |
-| RemoveSpeciesFromRealm | POST /species/remove-from-realm | admin | species, realm-index | species.updated |
-| SeedSpecies | POST /species/seed | admin | species, code-index, realm-index, all-species | species.created, species.updated |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| GetSpecies | POST /species/get | generated | [] | - | - |
+| GetSpeciesByCode | POST /species/get-by-code | generated | [] | - | - |
+| ListSpecies | POST /species/list | generated | [] | - | - |
+| ListSpeciesByRealm | POST /species/list-by-realm | generated | [] | - | - |
+| CreateSpecies | POST /species/create | generated | [] | species, code-index, realm-index, all-species | species.created |
+| UpdateSpecies | POST /species/update | generated | [] | species | species.updated |
+| DeleteSpecies | POST /species/delete | generated | [] | species, code-index, realm-index, all-species | species.deleted |
+| DeprecateSpecies | POST /species/deprecate | generated | [] | species | species.updated |
+| UndeprecateSpecies | POST /species/undeprecate | generated | [] | species | species.updated |
+| MergeSpecies | POST /species/merge | generated | [] | species (via delete path) | species.merged, species.deleted |
+| AddSpeciesToRealm | POST /species/add-to-realm | generated | [] | species, realm-index | species.updated |
+| RemoveSpeciesFromRealm | POST /species/remove-from-realm | generated | [] | species, realm-index | species.updated |
+| SeedSpecies | POST /species/seed | generated | [] | species, code-index, realm-index, all-species | species.created, species.updated |
+| CleanupByRealm | POST /species/cleanup-by-realm | generated | [] | species, realm-index | species.updated |
+| MigrateByRealm | POST /species/migrate-by-realm | generated | [] | species, realm-index | species.updated |
 
 ---
 
@@ -278,7 +280,7 @@ LOCK species-lock:"{min(sourceId, targetId)}"
       FOREACH character in page
         CALL ICharacterClient.UpdateCharacterAsync({ characterId, speciesId: target })
         IF update fails -> add characterId to failedEntityIds
-    PUBLISH species.merged { sourceSpeciesId, targetSpeciesId, mergedCharacterCount }
+    PUBLISH species.merged { sourceSpeciesId, targetSpeciesId, mergedCharacterCount, failedEntityIds }
     IF deleteAfterMerge AND failedEntityIds is empty
       // Delegates to DeleteSpeciesAsync (internal call)
       // Delete performs: deprecation check, character check, resource check, cleanup, index removal
@@ -351,6 +353,56 @@ FOREACH seedItem in request.species
   // Per-species exceptions caught, added to errors list
 RETURN (200, SeedSpeciesResponse { created, updated, skipped, errors })
 // Always returns 200; errors accumulated in response
+```
+
+### CleanupByRealm
+POST /species/cleanup-by-realm | Roles: [] (service-to-service)
+
+```
+// lib-resource cleanup callback — called when a realm is deleted
+READ _idListStore:"realm-index:{realmId}"
+IF null or empty
+  RETURN (200, CleanupByRealmResponse { cleaned: 0, failed: 0 })
+FOREACH speciesId in speciesIds
+  // Per-item error isolation
+  READ _speciesStore:"species:{speciesId}"
+  IF null -> count as cleaned (stale index), continue
+  // Remove realmId from model.RealmIds
+  WRITE _speciesStore:"species:{speciesId}" <- updated model
+  PUBLISH species.updated { full entity state, changedFields: [realmIds] }
+  // cleaned++
+  // On exception: failed++, log warning, continue
+IF failed == 0
+  DELETE _idListStore:"realm-index:{realmId}"
+RETURN (200, CleanupByRealmResponse { cleaned, failed })
+```
+
+### MigrateByRealm
+POST /species/migrate-by-realm | Roles: [] (service-to-service)
+
+```
+// lib-resource migrate callback — called when a realm is merged
+IF sourceRealmId == targetRealmId                               -> 400
+CALL IRealmClient.RealmExistsAsync({ targetRealmId })
+                                                                -> 404 if not found
+                                                                -> 400 if deprecated
+READ _idListStore:"realm-index:{sourceRealmId}"
+IF null or empty
+  RETURN (200, MigrateByRealmResponse { migrated: 0, failed: 0 })
+FOREACH speciesId in speciesIds
+  // Per-item error isolation
+  READ _speciesStore:"species:{speciesId}"
+  IF null -> skip (stale index), continue
+  // Replace sourceRealmId with targetRealmId in model.RealmIds
+  IF changed
+    WRITE _speciesStore:"species:{speciesId}" <- updated model
+    PUBLISH species.updated { full entity state, changedFields: [realmIds] }
+  // Update realm indexes for this species
+  // AddToRealmIndexAsync(targetRealmId, speciesId)
+  // RemoveFromRealmIndexAsync(sourceRealmId, speciesId)
+  // migrated++
+  // On exception: failed++, log warning, continue
+RETURN (200, MigrateByRealmResponse { migrated, failed })
 ```
 
 ---

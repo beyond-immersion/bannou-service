@@ -89,12 +89,6 @@ Catalogs the four deployment modes that a game built on Bannou can target (embed
 
 Designs a system where a divine actor (regional watcher pattern) orchestrates multi-feed video streaming from a developer's workspace -- selecting which terminal, IDE, or browser feed to feature based on detected activity events, compositing them into a single directed output stream via Broadcast's RTMP pipeline. Uses 100% of the same Actor runtime, ABML behaviors, Director plugin, Agency feed management, and Broadcast composition infrastructure as in-game cinematic direction. Improvements to directing behaviors, feed management, or composition for either use case (developer streams or in-game cinematics) directly benefit the other. No implementation exists yet.
 
-### Direct Dispatch Events: Zero-Overhead Event Delivery for Embedded and Sidecar Modes {#direct-dispatch-events}
-
-**Type**: Design | **Status**: Active | **Last Updated**: 2026-03-14 | **North Stars**: #3, #4 | [Full Document](planning/DIRECT-DISPATCH-EVENTS.md)
-
-Introduces a `DirectDispatchMessageBus` — a third `IMessageBus` implementation alongside `RabbitMQMessageBus` and `InMemoryMessageBus` — that eliminates the messaging abstraction overhead for embedded and sidecar deployments. On `TryPublishAsync`, instead of routing through a pub/sub layer, it dispatches directly to `IEventConsumer` handlers and any direct subscribers. This is the event-side analog to BANNOU-EMBEDDED.md's direct DI dispatch for mesh clients: same interface, same semantics, zero transport overhead. Objects are passed by reference, no serialization, no subscription management for IEventConsumer handlers, no intermediate bridge layer.
-
 ### Dungeon Extensions Design Notes {#dungeon-extensions-notes}
 
 **Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #4 | [Full Document](planning/DUNGEON-EXTENSIONS-NOTES.md)
@@ -185,7 +179,7 @@ Compiles established wildlife ecology research on predator coexistence, niche pa
 
 ### Batch Lifecycle Events: Normalized High-Frequency Event Publishing {#batch-lifecycle-events}
 
-**Type**: Implementation Plan | **Status**: Active | **Last Updated**: 2026-03-13 | **North Stars**: #1 | [Full Document](planning/BATCH-LIFECYCLE-EVENTS.md)
+**Type**: Implementation Plan | **Status**: Active | **Last Updated**: 2026-03-15 | **North Stars**: #1 | [Full Document](planning/BATCH-LIFECYCLE-EVENTS.md)
 
 Normalizes high-frequency event publishing across Bannou by extending x-lifecycle with a batch: true option that generates only batch event types, adding a shared EventBatcher helper to bannou-service, creating shared batch endpoint request/response models in common-api.yaml, and adding structural tests to enforce consistency. A structural analysis of x-references declarations revealed that nearly all 16 services storing per-character dependent data become high-frequency event publishers at 100K NPC scale, with their lifecycle events serving purely informational/analytics purposes (cleanup handled by lib-resource or DI Listeners, not event subscription). This establishes x-references targeting character-scale entities as a structural heuristic for batch: true candidacy, applicable to 15 of 16 x-references services.
 
@@ -217,7 +211,7 @@ Records the results of a full cross-service architectural audit comparing VISION
 
 ## Summary
 
-- **Documents in catalog**: 33
+- **Documents in catalog**: 32
 
 ---
 

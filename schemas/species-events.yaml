@@ -86,3 +86,10 @@ components:
         mergedCharacterCount:
           type: integer
           description: Number of characters that were migrated to the target species
+        failedEntityIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+            format: uuid
+          description: Character IDs that failed to migrate during the merge, null if all succeeded

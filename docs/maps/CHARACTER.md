@@ -13,7 +13,7 @@
 |-------|-------|
 | Plugin | lib-character |
 | Layer | L2 GameFoundation |
-| Endpoints | 12 |
+| Endpoints | 13 |
 | State Stores | character-statestore (MySQL), character-lock (Redis) |
 | Events Published | 6 (character.created, character.updated, character.deleted, character.compressed, character.realm.joined, character.realm.left) |
 | Events Consumed | 0 |
@@ -50,7 +50,7 @@ Used by `IDistributedLockProvider` for update, transfer, and compress operations
 | lib-messaging (`IEventConsumer`) | L0 | Hard | Event handler registration (no handlers currently) |
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation on async helpers |
 | lib-contract (`IContractClient`) | L1 | Hard | Contract reference counting during check-references |
-| lib-resource (`IResourceClient`) | L1 | Hard | L4 reference checking and cleanup execution during delete |
+| lib-resource (`IResourceClient`) | L1 | Hard | L4 reference checking and cleanup execution during delete; realm RESTRICT reference registration (create, transfer); migrate-by-realm callback |
 | lib-connect (`IEntitySessionRegistry`) | L1 | Hard | Client event push to WebSocket sessions observing a character |
 | lib-realm (`IRealmClient`) | L2 | Hard | Realm validation for create and transfer |
 | lib-species (`ISpeciesClient`) | L2 | Hard | Species validation for create |
@@ -65,10 +65,10 @@ Used by `IDistributedLockProvider` for update, transfer, and compress operations
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `character.created` | `CharacterCreatedEvent` | CreateCharacter |
-| `character.updated` | `CharacterUpdatedEvent` | UpdateCharacter (when fields changed), TransferCharacterToRealm |
+| `character.updated` | `CharacterUpdatedEvent` | UpdateCharacter (when fields changed), TransferCharacterToRealm, MigrateByRealm (via TransferCharacterToRealm) |
 | `character.deleted` | `CharacterDeletedEvent` | DeleteCharacter |
-| `character.realm.joined` | `CharacterRealmJoinedEvent` | CreateCharacter, TransferCharacterToRealm |
-| `character.realm.left` | `CharacterRealmLeftEvent` | DeleteCharacter (reason: Deletion), TransferCharacterToRealm (reason: Transfer) |
+| `character.realm.joined` | `CharacterRealmJoinedEvent` | CreateCharacter, TransferCharacterToRealm, MigrateByRealm (via TransferCharacterToRealm) |
+| `character.realm.left` | `CharacterRealmLeftEvent` | DeleteCharacter (reason: Deletion), TransferCharacterToRealm (reason: Transfer), MigrateByRealm (via TransferCharacterToRealm) |
 | `character.compressed` | `CharacterCompressedEvent` | CompressCharacter |
 
 ---
@@ -114,6 +114,7 @@ This plugin does not consume external events.
 | CheckCharacterReferences | POST /character/check-references | generated | admin | refcount | - |
 | GetCharactersByRealm | POST /character/by-realm | generated | user | - | - |
 | TransferCharacterToRealm | POST /character/transfer-realm | generated | admin | character, realm-index, global-index | character.realm.left, character.realm.joined, character.updated + client push |
+| MigrateByRealm | POST /character/migrate-by-realm | generated | [] | character, realm-index, global-index | character.realm.left, character.realm.joined, character.updated (via TransferCharacterToRealm) |
 | GetCompressData | POST /character/get-compress-data | generated | [] | - | - |
 
 ---
@@ -305,6 +306,24 @@ PUBLISH character.realm.joined { characterId, realmId: targetRealmId, previousRe
 PUBLISH character.updated { characterId, changedFields: ["realmId"] }
 PUSH character.realm-transferred to entity sessions { characterId, previousRealmId, newRealmId }
 RETURN (200, CharacterResponse)
+```
+
+### MigrateByRealm
+POST /character/migrate-by-realm | Roles: []
+
+```
+// lib-resource migrate callback — called during realm merge
+IF sourceRealmId == targetRealmId                        -> 400
+CALL IRealmClient.RealmExistsAsync(targetRealmId)        -> 404 if not found; 400 if deprecated
+QUERY character-statestore WHERE $.RealmId = sourceRealmId (paginated)
+FOREACH character in results
+  // Per-item error isolation
+  // Delegates to TransferCharacterToRealm logic:
+  //   re-keys character data, updates realm indexes and global index
+  //   publishes character.realm.left, character.realm.joined, character.updated
+  // migrated++
+  // On exception: failed++, log warning, continue
+RETURN (200, MigrateByRealmResponse { migrated, failed })
 ```
 
 ### GetCompressData

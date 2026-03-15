@@ -91,48 +91,62 @@ Self-subscriptions only. The service subscribes to its own events to keep the Si
 
 ## DI Services
 
+#### Constructor Dependencies
+
 | Service | Role |
 |---------|------|
 | `ILogger<RelationshipService>` | Structured logging |
 | `RelationshipServiceConfiguration` | 5 config properties (hierarchy depth, migration errors, lock timeout, provider page size, provider cache TTL) |
 | `IStateStoreFactory` | State store access (constructor only, not stored as field) |
 | `IDistributedLockProvider` | Distributed locking |
-| `IMessageBus` | Event publishing |
-| `IEventConsumer` | Event handler registration |
+| `IMessageBus` | Event publishing (7 topics) |
+| `IEventConsumer` | Event handler registration (3 self-subscriptions for cache invalidation) |
 | `ITelemetryProvider` | Span instrumentation |
 | `IResourceClient` | Reference tracking for character, realm, location entities |
 | `IRelationshipDataCache` | In-memory TTL cache for ABML variable provider |
-| `RelationshipProviderFactory` | `IVariableProviderFactory` impl (Singleton, registered in plugin) |
-| `RelationshipDataCache` | Singleton cache impl; self-calls via `IRelationshipClient` + `IServiceScopeFactory` |
-| `RelationshipProvider` | `IVariableProvider` impl; exposes `${relationship.has.*}`, `${relationship.count.*}`, `${relationship.total}` |
+
+#### DI Interfaces Implemented by This Plugin
+
+| Interface | Registered As | Direction | Consumer |
+|-----------|---------------|-----------|----------|
+| `IVariableProviderFactory` | `Singleton` (via `RelationshipProviderFactory` with `[BannouHelperService]`) | L2→L2 pull | Actor (L2) discovers via `IEnumerable<IVariableProviderFactory>`; provides `${relationship.*}` path resolution |
+| `IDeprecateAndMergeEntity` | Marker interface (no DI registration) | N/A | Structural test validates deprecation pattern compliance |
+
+#### Helper Services
+
+| Class | Location | Role |
+|-------|----------|------|
+| `RelationshipProviderFactory` | `Providers/RelationshipProviderFactory.cs` | `IVariableProviderFactory` Singleton; creates `RelationshipProvider` instances from cache data |
+| `RelationshipProvider` | `Providers/RelationshipProvider.cs` | `IVariableProvider` per-evaluation instance; exposes `${relationship.has.*}`, `${relationship.count.*}`, `${relationship.total}` |
+| `RelationshipDataCache` | `Caching/RelationshipDataCache.cs` | Singleton `IRelationshipDataCache`; uses `VariableProviderCacheBucket` with TTL; loads data via `IRelationshipClient` + `IServiceScopeFactory` |
 
 ---
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| CreateRelationship | POST /relationship/create | admin | rel, entity-idx, type-idx, composite | relationship.created |
-| GetRelationship | POST /relationship/get | user | - | - |
-| ListRelationshipsByEntity | POST /relationship/list-by-entity | user | - | - |
-| GetRelationshipsBetween | POST /relationship/get-between | user | - | - |
-| ListRelationshipsByType | POST /relationship/list-by-type | user | - | - |
-| UpdateRelationship | POST /relationship/update | admin | rel, type-idx | relationship.updated |
-| EndRelationship | POST /relationship/end | admin | rel, composite | relationship.deleted |
-| CleanupByEntity | POST /relationship/cleanup-by-entity | developer | rel, composite | relationship.deleted |
-| GetRelationshipType | POST /relationship-type/get | user | - | - |
-| GetRelationshipTypeByCode | POST /relationship-type/get-by-code | user | - | - |
-| ListRelationshipTypes | POST /relationship-type/list | user | - | - |
-| GetChildRelationshipTypes | POST /relationship-type/get-children | user | - | - |
-| MatchesHierarchy | POST /relationship-type/matches-hierarchy | user | - | - |
-| GetAncestors | POST /relationship-type/get-ancestors | user | - | - |
-| CreateRelationshipType | POST /relationship-type/create | admin | type, code-index, parent-index, all-types | relationship.type.created |
-| UpdateRelationshipType | POST /relationship-type/update | admin | type, parent-index | relationship.type.updated |
-| DeleteRelationshipType | POST /relationship-type/delete | admin | type, code-index, parent-index, all-types | relationship.type.deleted |
-| DeprecateRelationshipType | POST /relationship-type/deprecate | admin | type | relationship.type.updated |
-| UndeprecateRelationshipType | POST /relationship-type/undeprecate | admin | type | relationship.type.updated |
-| MergeRelationshipType | POST /relationship-type/merge | admin | rel, composite, type-idx | relationship.type.merged, relationship.deleted |
-| SeedRelationshipTypes | POST /relationship-type/seed | admin | (delegates to Create/Update) | (via Create/Update) |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| CreateRelationship | POST /relationship/create | generated | [] | rel, entity-idx, type-idx, composite | relationship.created |
+| GetRelationship | POST /relationship/get | generated | user | - | - |
+| ListRelationshipsByEntity | POST /relationship/list-by-entity | generated | user | - | - |
+| GetRelationshipsBetween | POST /relationship/get-between | generated | user | - | - |
+| ListRelationshipsByType | POST /relationship/list-by-type | generated | user | - | - |
+| UpdateRelationship | POST /relationship/update | generated | [] | rel, type-idx | relationship.updated |
+| EndRelationship | POST /relationship/end | generated | [] | rel, composite | relationship.deleted |
+| CleanupByEntity | POST /relationship/cleanup-by-entity | generated | [] | rel, composite | relationship.deleted |
+| GetRelationshipType | POST /relationship-type/get | generated | user | - | - |
+| GetRelationshipTypeByCode | POST /relationship-type/get-by-code | generated | user | - | - |
+| ListRelationshipTypes | POST /relationship-type/list | generated | user | - | - |
+| GetChildRelationshipTypes | POST /relationship-type/get-children | generated | user | - | - |
+| MatchesHierarchy | POST /relationship-type/matches-hierarchy | generated | user | - | - |
+| GetAncestors | POST /relationship-type/get-ancestors | generated | user | - | - |
+| CreateRelationshipType | POST /relationship-type/create | generated | developer | type, code-index, parent-index, all-types | relationship.type.created |
+| UpdateRelationshipType | POST /relationship-type/update | generated | developer | type, parent-index | relationship.type.updated |
+| DeleteRelationshipType | POST /relationship-type/delete | generated | developer | type, code-index, parent-index, all-types | relationship.type.deleted |
+| DeprecateRelationshipType | POST /relationship-type/deprecate | generated | developer | type | relationship.type.updated |
+| UndeprecateRelationshipType | POST /relationship-type/undeprecate | generated | developer | type | relationship.type.updated |
+| MergeRelationshipType | POST /relationship-type/merge | generated | developer | rel, composite, type-idx | relationship.type.merged, relationship.deleted |
+| SeedRelationshipTypes | POST /relationship-type/seed | generated | [] | (delegates to Create/Update) | (via Create/Update) |
 
 ---
 
@@ -336,17 +350,16 @@ POST /relationship-type/matches-hierarchy | Roles: [user]
 
 ```
 IF typeId == ancestorTypeId
- RETURN (200, MatchesHierarchyResponse { depth: 0 })
+ RETURN (200, MatchesHierarchyResponse { matches: true, depth: 0 })
 READ type-model-store:"type:{typeId}" -> 404 if null
 READ type-model-store:"type:{ancestorTypeId}" -> 404 if null
 // Walk parent chain from typeId upward
 FOREACH depth in 1..MaxHierarchyDepth
  READ type-model-store:"type:{currentParentId}"
  IF currentParentId == ancestorTypeId
- RETURN (200, MatchesHierarchyResponse { depth })
+ RETURN (200, MatchesHierarchyResponse { matches: true, depth })
  IF no parent: break
-RETURN (404)
-// 200 = matches (with depth), 404 = no match. No `matches` boolean needed.
+RETURN (200, MatchesHierarchyResponse { matches: false, depth: null })
 ```
 
 ### GetAncestors
@@ -539,3 +552,20 @@ RETURN (200, SeedRelationshipTypesResponse { created, updated, skipped, errors }
 ## Background Services
 
 No background services.
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### Plugin Lifecycle (OnRunningAsync)
+
+```
+CREATE scope
+CALL RegisterResourceCleanupCallbacksAsync(resourceClient)
+  CALL resourceClient.DefineCleanupCallbackAsync(character, cascade, /relationship/cleanup-by-entity)
+  CALL resourceClient.DefineCleanupCallbackAsync(realm, cascade, /relationship/cleanup-by-entity)
+  CALL resourceClient.DefineCleanupCallbackAsync(location, cascade, /relationship/cleanup-by-entity)
+  // Each callback try-caught individually; partial failure logged at Warning
+```
+
+Helper services (`RelationshipProviderFactory`, `RelationshipDataCache`) are registered automatically via `[BannouHelperService]` attribute — no explicit `ConfigureServices` registration needed.

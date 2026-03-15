@@ -768,28 +768,19 @@ public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
         ExecuteMigrateResponse migrateResult;
         try
         {
-            var (migrateStatus, migrateResponse) = await _resourceClient.ExecuteMigrateAsync(
+            migrateResult = await _resourceClient.ExecuteMigrateAsync(
                 new ExecuteMigrateRequest
                 {
                     ResourceType = "realm",
                     SourceResourceId = body.SourceRealmId,
                     TargetResourceId = body.TargetRealmId
                 }, cancellationToken);
-
-            if (migrateStatus != StatusCodes.OK || migrateResponse == null)
-            {
-                _logger.LogWarning("Resource migrate returned {Status} for realm merge {Source} -> {Target}",
-                    migrateStatus, body.SourceRealmId, body.TargetRealmId);
-                return (migrateStatus, null);
-            }
-
-            migrateResult = migrateResponse;
         }
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Resource service unavailable during realm merge {Source} -> {Target}",
                 body.SourceRealmId, body.TargetRealmId);
-            return (StatusCodes.ServiceUnavailable, null);
+            return ((StatusCodes)ex.StatusCode, null);
         }
 
         var totalMigrated = migrateResult.CallbackResults.Where(r => r.Success).Count();
@@ -805,15 +796,15 @@ public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
         var sourceDeleted = false;
         if (body.DeleteAfterMerge && migrateResult.Success)
         {
-            var (deleteStatus, _) = await DeleteRealmAsync(
+            var deleteResult = await DeleteRealmAsync(
                 new DeleteRealmRequest { RealmId = body.SourceRealmId }, cancellationToken);
 
-            sourceDeleted = deleteStatus == StatusCodes.OK;
+            sourceDeleted = deleteResult == StatusCodes.OK;
             if (!sourceDeleted)
             {
                 _logger.LogWarning(
                     "Post-merge deletion of source realm {SourceRealmId} returned {Status} (merge itself succeeded)",
-                    body.SourceRealmId, deleteStatus);
+                    body.SourceRealmId, deleteResult);
             }
         }
         else if (body.DeleteAfterMerge && !migrateResult.Success)

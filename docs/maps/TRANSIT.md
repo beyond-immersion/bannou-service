@@ -159,41 +159,41 @@
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| RegisterMode | POST /transit/mode/register | developer | mode | transit.mode.created |
-| GetMode | POST /transit/mode/get | user | - | - |
-| ListModes | POST /transit/mode/list | user | - | - |
-| UpdateMode | POST /transit/mode/update | developer | mode | transit.mode.updated |
-| DeprecateMode | POST /transit/mode/deprecate | developer | mode | transit.mode.updated |
-| UndeprecateMode | POST /transit/mode/undeprecate | developer | mode | transit.mode.updated |
-| DeleteMode | POST /transit/mode/delete | developer | mode | transit.mode.deleted |
-| CheckModeAvailability | POST /transit/mode/check-availability | user | - | - |
-| CreateConnection | POST /transit/connection/create | developer | connection, graph-cache | transit.connection.created |
-| GetConnection | POST /transit/connection/get | user | - | - |
-| QueryConnections | POST /transit/connection/query | user | - | - |
-| UpdateConnection | POST /transit/connection/update | developer | connection, graph-cache | transit.connection.updated |
-| UpdateConnectionStatus | POST /transit/connection/update-status | user | connection, graph-cache | transit.connection.status-changed |
-| DeleteConnection | POST /transit/connection/delete | developer | connection, graph-cache | transit.connection.deleted |
-| BulkSeedConnections | POST /transit/connection/bulk-seed | developer | connection, graph-cache | transit.connection.created, transit.connection.updated |
-| CreateJourney | POST /transit/journey/create | user | journey, journey-index | - |
-| DepartJourney | POST /transit/journey/depart | user | journey | transit.journey.departed |
-| ResumeJourney | POST /transit/journey/resume | user | journey | transit.journey.resumed |
-| AdvanceJourney | POST /transit/journey/advance | user | journey, discovery, discovery-cache | transit.journey.waypoint-reached or transit.journey.arrived, transit.discovery.revealed |
-| AdvanceBatchJourneys | POST /transit/journey/advance-batch | user | journey, discovery, discovery-cache | per-journey events |
-| ArriveJourney | POST /transit/journey/arrive | user | journey | transit.journey.arrived |
-| InterruptJourney | POST /transit/journey/interrupt | user | journey | transit.journey.interrupted |
-| AbandonJourney | POST /transit/journey/abandon | user | journey | transit.journey.abandoned |
-| GetJourney | POST /transit/journey/get | user | - | - |
-| QueryJourneysByConnection | POST /transit/journey/query-by-connection | user | - | - |
-| ListJourneys | POST /transit/journey/list | user | - | - |
-| QueryJourneyArchive | POST /transit/journey/query-archive | user | - | - |
-| CalculateRoute | POST /transit/route/calculate | user | - | - |
-| RevealDiscovery | POST /transit/discovery/reveal | user | discovery, discovery-cache | transit.discovery.revealed |
-| ListDiscoveries | POST /transit/discovery/list | user | - | - |
-| CheckDiscoveries | POST /transit/discovery/check | user | - | - |
-| CleanupByLocation | POST /transit/cleanup-by-location | [] | connection, journey, graph-cache | transit.connection.status-changed, transit.journey.interrupted, transit.journey.abandoned |
-| CleanupByCharacter | POST /transit/cleanup-by-character | [] | journey, discovery, discovery-cache | transit.journey.abandoned |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| RegisterMode | POST /transit/mode/register | generated | developer | mode | transit.mode.created |
+| GetMode | POST /transit/mode/get | generated | user | - | - |
+| ListModes | POST /transit/mode/list | generated | user | - | - |
+| UpdateMode | POST /transit/mode/update | generated | developer | mode | transit.mode.updated |
+| DeprecateMode | POST /transit/mode/deprecate | generated | developer | mode | transit.mode.updated |
+| UndeprecateMode | POST /transit/mode/undeprecate | generated | developer | mode | transit.mode.updated |
+| DeleteMode | POST /transit/mode/delete | generated | developer | mode | transit.mode.deleted |
+| CheckModeAvailability | POST /transit/mode/check-availability | generated | user | - | - |
+| CreateConnection | POST /transit/connection/create | generated | developer | connection, graph-cache | transit.connection.created |
+| GetConnection | POST /transit/connection/get | generated | user | - | - |
+| QueryConnections | POST /transit/connection/query | generated | user | - | - |
+| UpdateConnection | POST /transit/connection/update | generated | developer | connection, graph-cache | transit.connection.updated |
+| UpdateConnectionStatus | POST /transit/connection/update-status | generated | user | connection, graph-cache | transit.connection.status-changed |
+| DeleteConnection | POST /transit/connection/delete | generated | developer | connection, graph-cache | transit.connection.deleted |
+| BulkSeedConnections | POST /transit/connection/bulk-seed | generated | developer | connection, graph-cache | transit.connection.created, transit.connection.updated |
+| CreateJourney | POST /transit/journey/create | generated | user | journey, journey-index | - |
+| DepartJourney | POST /transit/journey/depart | generated | user | journey | transit.journey.departed |
+| ResumeJourney | POST /transit/journey/resume | generated | user | journey | transit.journey.resumed |
+| AdvanceJourney | POST /transit/journey/advance | generated | user | journey, discovery, discovery-cache | transit.journey.waypoint-reached or transit.journey.arrived, transit.discovery.revealed |
+| AdvanceBatchJourneys | POST /transit/journey/advance-batch | generated | user | journey, discovery, discovery-cache | per-journey events |
+| ArriveJourney | POST /transit/journey/arrive | generated | user | journey | transit.journey.arrived |
+| InterruptJourney | POST /transit/journey/interrupt | generated | user | journey | transit.journey.interrupted |
+| AbandonJourney | POST /transit/journey/abandon | generated | user | journey | transit.journey.abandoned |
+| GetJourney | POST /transit/journey/get | generated | user | - | - |
+| QueryJourneysByConnection | POST /transit/journey/query-by-connection | generated | user | - | - |
+| ListJourneys | POST /transit/journey/list | generated | user | - | - |
+| QueryJourneyArchive | POST /transit/journey/query-archive | generated | user | - | - |
+| CalculateRoute | POST /transit/route/calculate | generated | user | - | - |
+| RevealDiscovery | POST /transit/discovery/reveal | generated | user | discovery, discovery-cache | transit.discovery.revealed |
+| ListDiscoveries | POST /transit/discovery/list | generated | user | - | - |
+| CheckDiscoveries | POST /transit/discovery/check | generated | user | - | - |
+| CleanupByLocation | POST /transit/cleanup-by-location | generated | [] | connection, journey, graph-cache | transit.connection.status-changed, transit.journey.interrupted, transit.journey.abandoned |
+| CleanupByCharacter | POST /transit/cleanup-by-character | generated | [] | journey, discovery, discovery-cache | transit.journey.abandoned |
 
 ---
 
@@ -793,3 +793,19 @@ LOCK transit-lock:"journey-archival-sweep" // single-node coordination
  FOREACH expired in results
  DELETE journey-archive:"archive:{id}"
 ```
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### Plugin Lifecycle (OnRunningAsync)
+
+```
+// Resource cleanup callback registration (lib-resource integration)
+CALL TransitService.RegisterResourceCleanupCallbacksAsync(resourceClient)
+  // Registers two x-references cleanup callbacks:
+  // 1. location (CASCADE) → /transit/cleanup-by-location
+  // 2. character (CASCADE) → /transit/cleanup-by-character
+```
+
+No other non-standard patterns. All 33 endpoints are standard generated interface methods.

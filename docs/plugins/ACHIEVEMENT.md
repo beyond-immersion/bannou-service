@@ -95,7 +95,6 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 | Internal sync provider | Active | `InternalAchievementSync` is a no-op provider (`IsConfigured=true`) for internal-only achievements |
 | TotalEligibleEntities population | Not implemented | Field exists on definition but is never written to by any endpoint; rarity calc only works when manually populated <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/581 --> |
 | `SetProgressAsync` on platforms | Not called | IPlatformAchievementSync defines it, SteamAchievementSync implements it, but the service only calls `UnlockAsync` (never syncs incremental progress) <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/592 --> |
-| `CleanDeprecatedAchievementDefinitionsAsync` | Not implemented | `POST /achievement/definition/clean-deprecated` is schema-defined and generated (controller, interface) but the service method throws `NotImplementedException`. Should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` per T31 B20-B22. Sweeps deprecated definitions with zero remaining progress records. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. `x-permissions: [role: admin]`. |
 
 ## Potential Extensions
 
@@ -108,19 +107,19 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 
 ### Bugs (Fix Immediately)
 
-(No known bugs)
+1. **Missing `account.deleted` cleanup handler**: Achievement progress data is keyed by `{gameServiceId}:{entityType}:{entityId}` where `entityType` defaults to `Account`. When an account is deleted, progress records with `entityType=Account` are never cleaned up. Per Foundation Tenets (T28 Account Deletion Cleanup Obligation), Achievement MUST subscribe to `account.deleted` and implement `HandleAccountDeletedAsync` in `AchievementServiceEvents.cs` to delete all account-keyed progress records across all game services. Character cleanup is correctly handled via lib-resource (`x-references` with `/achievement/cleanup-by-character`), but lib-resource registration for accounts is forbidden (privacy) — account cleanup requires the event-based pattern. The handler should iterate all game services (same pattern as `CleanupByCharacterAsync`) deleting `{gameServiceId}:Account:{accountId}` progress entries.
 
 ### Intentional Quirks (Documented Behavior)
 
 1. **Rarity dual-threshold logic**: An achievement is "rare" if EarnedCount < RarityThresholdEarnedCount (100) OR RarityPercent < RareThresholdPercent (5%). A brand-new achievement with 0 earned is always rare regardless of percentage.
 
-2. **Category B deprecation lifecycle**: Achievement definitions follow Category B deprecation — deprecate-only, no delete, no undeprecate. Deprecated definitions persist forever. `includeDeprecated` parameter on all list endpoints defaults to `false`.
+2. **Category B deprecation lifecycle**: Achievement definitions follow Category B deprecation — deprecate-only, no undeprecate. Deprecated definitions with zero remaining progress records can be permanently removed via the `clean-deprecated` sweep endpoint. `includeDeprecated` parameter on all list endpoints defaults to `false`.
 
 3. **Event handlers load all definitions per event**: Each analytics/leaderboard event triggers `LoadAchievementDefinitionsAsync` which iterates the definition index set and loads each definition individually. This is intentional to ensure freshness but creates N+1 query pattern per event.
 
 4. **Progress TTL default is infinite**: ProgressTtlSeconds defaults to 0 meaning progress records never expire. This is intentional for persistent progress tracking but operators should be aware of storage growth.
 
-5. **Orphaned progress data**: Since definitions cannot be deleted (Category B), progress records may reference deprecated definitions. Orphaned entries are filtered at read time by verifying each definition still exists.
+5. **Orphaned progress data**: Progress records may reference deprecated or deleted definitions. Orphaned entries are filtered at read time by verifying each definition still exists. The `clean-deprecated` sweep removes deprecated definitions only when zero progress records remain, but direct deletion of progress records (e.g., via character cleanup) can leave index references to missing definitions.
 
 6. **Client milestone events at configurable thresholds**: Progress milestone client events fire at configurable percentage thresholds (default: 25%, 50%, 75%) via `ProgressMilestonePercents` configuration. Schema defines it as a typed integer array (`type: array`, `items: type: integer`); the "(comma-separated in env var)" note refers to standard environment variable serialization, not a schema typing issue.
 

@@ -79,6 +79,12 @@ public partial class SpeciesMergedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("mergedCharacterCount")]
     public int MergedCharacterCount { get; set; } = default!;
 
+    /// <summary>
+    /// Character IDs that failed to migrate during the merge, null if all succeeded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedEntityIds")]
+    public System.Collections.Generic.ICollection<System.Guid>? FailedEntityIds { get; set; } = default!;
+
 }
 
 

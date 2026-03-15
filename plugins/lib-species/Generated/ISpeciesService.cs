@@ -95,11 +95,6 @@ public partial interface ISpeciesService : IBannouService
         Task<(StatusCodes, SeedSpeciesResponse?)> SeedSpeciesAsync(SeedSpeciesRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// CleanupByRealm operation
-        /// </summary>
-        Task<(StatusCodes, CleanupByRealmResponse?)> CleanupByRealmAsync(CleanupByRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
         /// MigrateByRealm operation
         /// </summary>
         Task<(StatusCodes, MigrateByRealmResponse?)> MigrateByRealmAsync(MigrateByRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));

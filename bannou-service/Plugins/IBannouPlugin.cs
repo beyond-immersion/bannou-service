@@ -32,11 +32,21 @@ public interface IBannouPlugin
     void ConfigureServices(IServiceCollection services);
 
     /// <summary>
-    /// Configure the application pipeline.
+    /// Configure the application after the DI container is built.
     /// Called after the application is built but before it starts running.
+    /// Receives IServiceProvider to support both web and embedded deployment modes.
+    /// </summary>
+    /// <param name="services">The built service provider</param>
+    void ConfigureApplication(IServiceProvider services);
+
+    /// <summary>
+    /// Configure the web-specific application pipeline.
+    /// Called only in web hosting mode (not embedded). Override to register
+    /// middleware, endpoints, or other ASP.NET Core pipeline features.
+    /// Default implementation is a no-op.
     /// </summary>
     /// <param name="app">Web application to configure</param>
-    void ConfigureApplication(WebApplication app);
+    void ConfigureWebPipeline(WebApplication app) { }
 
     /// <summary>
     /// Initialize the plugin.

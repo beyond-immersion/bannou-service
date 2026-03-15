@@ -34,7 +34,6 @@ The Realm service (L2 GameFoundation) manages top-level persistent worlds in the
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `MergePageSize` | `REALM_MERGE_PAGE_SIZE` | `50` | Page size for paginated entity migration during realm merge (1-100) |
 | `OptimisticRetryAttempts` | `REALM_OPTIMISTIC_RETRY_ATTEMPTS` | `3` | Retry count for ETag-based optimistic concurrency operations (1-10) |
 | `MergeLockTimeoutSeconds` | `REALM_MERGE_LOCK_TIMEOUT_SECONDS` | `120` | Timeout for distributed lock during realm merge (10-600) |
 | `AutoInitializeWorldstateClock` | `REALM_AUTO_INITIALIZE_WORLDSTATE_CLOCK` | `false` | When true, auto-initializes a worldstate realm clock after creating a new realm. Failure does not block realm creation |
@@ -73,28 +72,20 @@ Realm Deletion Safety Chain
  (cannot skip deprecation step)
 
 
-Realm Merge Flow
-==================
+Realm Merge Flow (Resource-Coordinated)
+=========================================
 
  [Deprecated Source Realm] ──► POST /realm/merge ──► [Target Realm]
- │ │
- │ Phase A: Species Migration │
- │ paginate ListSpeciesByRealm(source) │
- │ for each: AddSpeciesToRealm(target) │
- │ RemoveSpeciesFromRealm(source) │
- │ │
- │ Phase B: Location Migration (root-first) │
- │ 1. ListRootLocations(source) │
- │ 2. For each root: │
- │ a. GetDescendants (while tree intact) │
- │ b. TransferLocationToRealm(root → target) │
- │ c. Transfer descendants by depth order │
- │ d. SetLocationParent (restore hierarchy) │
- │ │
- │ Phase C: Character Migration │
- │ paginate GetCharactersByRealm(source) │
- │ for each: TransferCharacterToRealm(target) │
- │ │
+ │                                                   │
+ │ Phase: Resource-Coordinated Migration             │
+ │ CALL /resource/migrate/execute(realm, source,     │
+ │                                target)            │
+ │ Resource invokes registered migrate callbacks:    │
+ │   → Species: /species/migrate-by-realm            │
+ │   → Locations: /location/migrate-by-realm         │
+ │   → Characters: /character/migrate-by-realm       │
+ │ Each service owns its own migration logic         │
+ │                                                   │
  └── if deleteAfterMerge && 0 failures ──► DeleteRealm(source)
 ```
 
@@ -155,8 +146,7 @@ None identified.
 
 1. **System realms are an architectural keystone**: The `isSystemType` flag on realms enables the **actor-bound entity pattern** — the single most powerful architectural pattern in Bannou (per VISION.md). System realms are non-physical conceptual spaces where metaphysical entities exist as first-class Characters, gaining the entire L2/L4 entity stack (personality, memory, history, growth, bonds, cognition) for free. Planned system realms: **PANTHEON** (gods/deities for content flywheel orchestration), **NEXIUS** (guardian spirits for progressive agency), **DUNGEON_CORES** (sentient dungeons), **SENTIENT_ARMS** (living weapons), **UNDERWORLD** (dead characters for afterlife gameplay). System realms are seeded via `/realm/seed` with `isSystemType: true`, protected from merge (merge validation rejects system realm sources), and the Realm service is **intentionally agnostic** to their semantics — it stores the flag; consuming services (Character, Puppetmaster, Gardener, Divine, Dungeon, etc.) interpret what "system realm" means for their domain. See [#268](https://github.com/beyond-immersion/bannou-service/issues/268) (closed — realm hierarchy explicitly not part of the flat-peer-world design).
 
-2. **Realm deletion safety depends on L2 reference registration**: The intended deletion workflow is deprecate → merge → delete, with merge migrating all species, locations, and characters before deletion. Realm's delete flow checks lib-resource for active references. For this safety net to work, L2 services that reference realms (Species, Location, Character) should register RESTRICT references with lib-resource. Tracked per-service: [#369](https://github.com/beyond-immersion/bannou-service/issues/369) (Species), [#590](https://github.com/beyond-immersion/bannou-service/issues/590) (Location), [#591](https://github.com/beyond-immersion/bannou-service/issues/591) (Character).
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/369 -->
+2. **Realm deletion safety via L2 reference registration**: The intended deletion workflow is deprecate → merge → delete, with merge delegating to `/resource/migrate/execute` which invokes each service's registered migration callback. Realm's delete flow checks lib-resource for active references. Species ([#369](https://github.com/beyond-immersion/bannou-service/issues/369)), Location ([#590](https://github.com/beyond-immersion/bannou-service/issues/590)), and Character ([#591](https://github.com/beyond-immersion/bannou-service/issues/591)) now have `x-references` with `target: realm` registered as RESTRICT, completing the safety net.
 
 Other design considerations resolved: Reference counting for safe deletion implemented via lib-resource integration (see [#170](https://github.com/beyond-immersion/bannou-service/issues/170), closed). Realm statistics evaluated and closed as wrong-layer — entity statistics belong in Analytics (L4), not Realm (L2) (see [#169](https://github.com/beyond-immersion/bannou-service/issues/169), closed).
 
@@ -174,10 +164,12 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-26**: deprecation lifecycle compliance — Deprecate and Undeprecate are now idempotent per IMPLEMENTATION TENETS.
 - **2026-02-28**: Production hardening audit — comprehensive tenet compliance pass (schema,,,,,,) and post-audit code review fixes (ETag concurrency for seed update, ApiException handling in migration helpers).
 - **2026-03-04**: Added `GetLocationCompressContext` endpoint and compression callback registration providing realm context (name, code, description) for location archives. Fixed `x-resource-lifecycle` placement (was at YAML root level instead of inside `info:` block, causing generators to silently skip it). Also registered `RealmContextTemplate` as `IResourceTemplate` for ABML path validation.
+- **2026-03-08**: Realm deletion safety — Species ([#369](https://github.com/beyond-immersion/bannou-service/issues/369)), Location ([#590](https://github.com/beyond-immersion/bannou-service/issues/590)), and Character ([#591](https://github.com/beyond-immersion/bannou-service/issues/591)) now have `x-references` with `target: realm` registered as RESTRICT.
+- **2026-03-15**: Merge refactored to resource-coordinated migration — Realm no longer directly calls ISpeciesClient or ICharacterClient for merge. Instead calls `IResourceClient.ExecuteMigrateAsync` which delegates to each service's registered migration callback. Removed `MergePageSize` config (pagination is now each service's concern). ILocationClient retained for compression context only.
 
 ### Pending Design
 
-- **2026-03-08**: Realm deletion safety — Species, Location, and Character need `x-references` with `target: realm` for the lib-resource safety net to work. Design questions tracked per-service: [#369](https://github.com/beyond-immersion/bannou-service/issues/369) (Species), [#590](https://github.com/beyond-immersion/bannou-service/issues/590) (Location), [#591](https://github.com/beyond-immersion/bannou-service/issues/591) (Character).
+None.
 
 ### Ready for Implementation
 

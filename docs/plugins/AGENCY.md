@@ -29,6 +29,8 @@ Three subsystems:
 
 **Cross-generational persistence**: Guardian seed growth persists across character lifetimes because seeds are account-owned, not character-owned. When a character dies, the spirit's accumulated capabilities (and therefore its UX manifest) are unaffected. The spirit carries its full agency into whatever character it possesses next.
 
+**Reactive manifest recomputation**: In addition to seed capability changes, manifests must also recompute when `disposition.guardian.shifted` fires, because `${spirit.compliance_base}` depends on Disposition's guardian feelings (trust, resentment, familiarity). Without this subscription, compliance variables would go stale until the next seed growth event. Note: the implementation map's Events Consumed section should include this trigger.
+
 **What Agency is NOT**:
 - **Not a permission system.** Permission (L1) gates API endpoint access based on roles and states. Agency gates UX module visibility based on spirit growth. They use similar push mechanisms but serve orthogonal purposes.
 - **Not a skill system.** Seed (L2) tracks capability depth and fidelity. Agency translates those numbers into UX decisions. Agency does not own growth, thresholds, or capability computation -- Seed does.
@@ -285,123 +287,31 @@ perception_handler:
 
 ---
 
-## Background Workers
-
-### ManifestRecomputeWorker
-
-**Trigger**: `seed.capability.updated`, `seed.growth.recorded`, and `disposition.guardian.shifted` events, debounced by `ManifestRecomputeDebounceMs`.
-
-The `disposition.guardian.shifted` trigger is necessary because `${spirit.compliance_base}` depends on Disposition's guardian feelings (trust, resentment, familiarity). When guardian feelings change (e.g., after repeated forced overrides or positive compliance), the compliance base changes, which affects which influences are effectively available and how the character responds to nudges. Without this subscription, compliance variables would go stale until the next seed growth event.
-
-**Multi-instance safety**: Debounce timers MUST be Redis-based (e.g., Redis key with TTL per seed), not in-memory. In-memory timers are per-instance and would cause duplicate recomputation across nodes.
-
-**Process**:
-1. Receive seed capability change event or disposition guardian shift event
-2. Check Redis debounce key -- if another event for this seed arrived within the debounce window, reset TTL
-3. After debounce settles, fetch seed's full capability manifest from Seed service
-4. If `CrossSeedPollinationEnabled`, also fetch capabilities from other seeds owned by the same account (apply `CrossSeedPollinationFactor` multiplier to cross-seed depths)
-5. Fetch guardian feelings from Disposition (soft dependency -- use `DefaultComplianceBase` if unavailable)
-6. For each registered module, evaluate whether depth meets threshold and compute fidelity level
-7. For each registered influence, evaluate whether depth meets threshold
-8. Compare with cached manifest
-9. If changed: update Redis cache, write to history store, publish `agency.manifest.updated`
-
----
-
-## Implementation Plan
-
-### Phase 1: Core Registry (6 endpoints)
-- Create schemas for domains, modules, influences
-- Generate code
-- Implement domain CRUD (create, get, list, delete)
-- Implement module create and list
-- Add state stores (agency-domains, agency-modules, agency-influences)
-
-### Phase 2: Manifest Engine (4 endpoints)
-- Implement manifest computation from seed capabilities
-- Add Redis caching (agency-manifest-cache)
-- Implement manifest get, recompute, diff, history
-- Subscribe to seed.capability.updated events
-- Implement ManifestRecomputeWorker with debouncing
-
-### Phase 3: Influence System (7 endpoints)
-- Implement influence create, update, get, list, delete
-- Implement influence evaluate and execute
-- Add rate limiting via Redis counters
-- Publish influence execution/rejection/resistance events
-
-### Phase 4: Variable Provider Factory
-- Implement SpiritProviderFactory and SpiritProvider
-- Register ${spirit.*} namespace
-- Integrate Disposition for compliance computation
-- Implement influence history tracking in Redis
-
-### Phase 5: Integration
-- Integrate with Gardener for manifest push routing via Entity Session Registry (available)
-- Seed from configuration support
-- Cross-seed pollination computation
-- Manifest history retention worker
-
-### Prerequisites
-- lib-seed (L2): Must be running for capability manifest reads (hard dependency)
-- lib-disposition (L4): Should be running for compliance computation (soft dependency — graceful degradation to `DefaultComplianceBase`)
-- lib-gardener (L4): Should be running for manifest push and influence execution routing (soft dependency)
-
----
-
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
 
-*(None -- pre-implementation)*
+1. **Modules and Influences incorrectly classified as Category A deprecation.** Per IMPLEMENTATION TENETS (T31 decision tree): "Does persistent data in OTHER services/entities store this entity's ID?" For modules and influences, no other persistent entity references moduleCode or influenceCode — manifests are computed Redis cache with TTL, not persistent entities. The tenet states: "Entities that are never referenced by ID MUST NOT have deprecation — use immediate deletion." Domains correctly remain Category A because modules and influences (other entity types within Agency) persistently store domainCode. Modules and influences should use immediate hard delete.
 
 ### Pre-Implementation Audit Findings (2026-03-03)
 
-**Critical (must resolve before writing schemas):**
+**Must resolve before writing schemas:**
 
-1. ~~**Missing x-lifecycle events**~~: **FIXED** (2026-03-08) - Implementation map now specifies 9 lifecycle events (created/updated/deleted for domain, module, influence) using `x-lifecycle` with `topic_prefix: agency` for Pattern C topic naming (`agency.domain.created`, etc.).
+1. **Missing lib-resource integration for seed-keyed data.** `agency-manifest-history` (MySQL) is persistent data keyed by seedId. Must implement `ISeededResourceProvider` and declare `x-references` with `target: seed, onDelete: cascade` per tenets.
 
-2. ~~**Missing x-permissions on all 22 endpoints**~~: **FIXED** (2026-03-08) - Implementation map specifies roles for all 22 endpoints: `developer` for admin CRUD (domain/module/influence management, seed-config, recompute), `user` for runtime queries (manifest get/diff/history, influence evaluate/execute).
+2. **FidelityCurve needs validation keywords**: `minItems: 1`, reasonable `maxItems`, `minimum: 0.0` on items.
 
-3. ~~**ComplianceFactors schema must be typed**~~: **FIXED** (2026-03-08) - ComplianceFactors defined as typed array of `{axisCode: string, weight: float}` objects. Agency reads specific keys per tenets; `additionalProperties: true` pattern avoided.
+3. **All config properties need `env:` keys** with `AGENCY_` prefix in configuration schema.
 
-4. ~~**Actor→Agency event hierarchy violation**~~: **FIXED** (2026-03-08) - Actor (L2) now publishes `actor.spirit-nudge.resisted` to its own namespace; Agency (L4) subscribes and relays as `agency.influence.resisted`. Hierarchy-safe event relay pattern.
+4. **Float config properties need min/max validation**: `DefaultComplianceBase` (0.0-1.0), `CrossSeedPollinationFactor` (0.0-1.0), etc.
 
-5. **Missing lib-resource integration for seed-keyed data.** `agency-manifest-history` (MySQL) is persistent data keyed by seedId. Must implement `ISeededResourceProvider` and declare `x-references` with `target: seed, onDelete: cascade` per tenets.
+5. **Must register `spirit` in `schemas/variable-providers.yaml`.**
 
-**Warnings (address during schema creation):**
+6. **Must list all events in `x-event-publications`.**
 
-6. **ManifestRecomputeWorker debouncing must use Redis**, not in-memory timers. Per-instance timers cause duplicate recomputation across nodes.
+7. **Manifest nested types** (`ManifestDomain`, `ManifestModule`, `ManifestInfluence`) must be defined as named schemas for `$ref` reuse.
 
-7. ~~**Compliance formula magic numbers**~~: **FIXED** (2026-03-08) - All formula coefficients (`ComplianceResentmentWeight`, `ComplianceFamiliarityScale`, `ComplianceFamiliarityFloor`, `DefaultComplianceBase`) documented as configurable properties in deep dive and referenced throughout implementation map pseudo-code.
-
-8. ~~**Rolling window for influence frequency**~~: **FIXED** (2026-03-08) - `InfluenceFrequencyWindowMinutes` configurable property documented in deep dive (default 5 minutes) and referenced in implementation map pseudo-code for rolling window calculation.
-
-9. **Influence frequency counters must use Redis** (sorted sets or atomic counters), not in-memory state, for multi-instance safety.
-
-10. ~~**Custom events must use flat structure**~~: **FIXED** (2026-03-08) - Original finding was incorrect. SCHEMA-RULES.md explicitly requires custom events to use `allOf` composition with `BaseServiceEvent` (line 962: "Custom service events MUST use `allOf` composition with `BaseServiceEvent`"). The `allOf` pattern produces C# inheritance, `IBannouEvent` implementation, and `EventName` for message tap forwarding. `eventId` and `timestamp` are inherited from `BaseServiceEvent` and must NOT be redefined as properties (only listed in `required`).
-
-11. **FidelityCurve needs validation keywords**: `minItems: 1`, reasonable `maxItems`, `minimum: 0.0` on items.
-
-12. ~~**State store naming**~~: **FIXED** (2026-03-08) - Header and implementation map updated to `agency-manifest-cache`; `agency-lock` added for distributed locking. Redis `prefix` declarations will be added when `state-stores.yaml` entries are created during implementation.
-
-13. **All config properties need `env:` keys** with `AGENCY_` prefix in configuration schema.
-
-14. **Float config properties need min/max validation**: `DefaultComplianceBase` (0.0-1.0), `CrossSeedPollinationFactor` (0.0-1.0), etc.
-
-15. **Must declare `x-references`** for seed-keyed data cleanup.
-
-16. **Must register `spirit` in `schemas/variable-providers.yaml`.**
-
-17. **Must list all events in `x-event-publications`.**
-
-18. **Manifest nested types** (`ManifestDomain`, `ManifestModule`, `ManifestInfluence`) must be defined as named schemas for `$ref` reuse.
-
-19. ~~**Inconsistent create/delete naming**~~: **FIXED** (2026-03-08) - Standardized to `create/delete` throughout deep dive and implementation map. Agency's entities are Category A definitions with full CRUD lifecycle (not type registrations), matching the established pattern (item templates, quest definitions, currency definitions).
-
-20. **Telemetry spans** required on all async helpers per tenets (add `ITelemetryProvider` to DI services).
-
-21. **Game service cleanup**: game-service-scoped definitions become orphaned if a game service is deleted. Consider lib-resource integration for game-service-keyed data.
+8. **Game service cleanup**: game-service-scoped definitions become orphaned if a game service is deleted. Consider lib-resource integration for game-service-keyed data.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -415,7 +325,7 @@ The `disposition.guardian.shifted` trigger is necessary because `${spirit.compli
 
 5. **Rate limiting is per-seed, not per-session.** `InfluenceRateLimitPerSecond` applies to the seed (guardian spirit), not the WebSocket session. If a player reconnects rapidly, the rate limit persists because it's tracked against the seed ID in Redis, not the session.
 
-6. **Deprecation lifecycle.** Domains, modules, and influence types are **Category A** definition entities per tenets: they are world-building definitions that need deprecation→delete lifecycle with reason tracking, idempotent deprecation, and `includeDeprecated` on list endpoints. Manifests are computed output (not entities) and do not need deprecation.
+6. **Deprecation lifecycle applies to domains only.** Domains are **Category A** definition entities per IMPLEMENTATION TENETS: modules and influences persistently reference domainCode, so domains need deprecation→delete lifecycle with reason tracking, idempotent deprecation, and `includeDeprecated` on list endpoints. Modules and influences are NOT referenced by other persistent entities and use immediate hard delete (see Bugs #1). Manifests are computed output (not entities) and do not need deprecation.
 
 ### Design Considerations (Requires Planning)
 
@@ -423,6 +333,8 @@ The `disposition.guardian.shifted` trigger is necessary because `${spirit.compli
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/610 -->
 
 2. **Realm-specific module sets.** Game-service scoping is sufficient for now. Realm-specific scoping would require a RealmId field on module definitions.
+
+3. **Map inconsistency: missing `disposition.guardian.shifted` event subscription.** The deep dive describes `disposition.guardian.shifted` as a trigger for manifest recomputation (see Architecture § Reactive manifest recomputation), but the implementation map's Events Consumed table omits this event. The map should be updated to include it.
 
 ---
 
@@ -445,13 +357,13 @@ No Agency-specific issues exist yet (pre-implementation). The following cross-cu
 | [#386](https://github.com/beyond-immersion/bannou-service/issues/386) | Gardener: Bond communication via Chat | Open | Alternative spirit-character communication channel alongside influence system. |
 | [#375](https://github.com/beyond-immersion/bannou-service/issues/375) | Collection→Seed→Status pipeline | **Closed** | Foundational growth pipeline that feeds Agency's capability reads. |
 
-### Issues to Create
+### Planned Issues (Pre-Implementation)
 
-1. **Agency: Implementation tracking** — Master issue for the 5-phase implementation plan.
-2. **Agency: Client events design** — Define how manifest updates route through Gardener to clients.
-3. **Agency: Disposition integration** — Compliance feedback loop: influence outcomes → guardian feelings → compliance base.
-4. **Agency: Gardener integration** — Manifest routing, influence validation, god-actor modulation path.
-5. **Agency: `${spirit.*}` variable provider coordination** — Ensure no namespace collision with `${seed.*}` provider.
+- **Agency: Implementation tracking** — Master issue for the implementation phases
+- **Agency: Client events design** — Define how manifest updates route through Gardener to clients
+- **Agency: Disposition integration** — Compliance feedback loop: influence outcomes → guardian feelings → compliance base
+- **Agency: Gardener integration** — Manifest routing, influence validation, god-actor modulation path
+- **Agency: `${spirit.*}` variable provider coordination** — Ensure no namespace collision with `${seed.*}` provider
 
 ---
 

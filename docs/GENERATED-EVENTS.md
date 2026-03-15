@@ -435,8 +435,6 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `ItemInstanceBoundEvent` | Custom | `item-instance-bound` | Event published when an item is bound to a charact... |
-| `ItemInstanceDestroyedEvent` | Custom | `item-instance-destroyed` | Event published when an item instance is permanent... |
-| `ItemInstanceModifiedEvent` | Custom | `item-instance-modified` | Event published when an item instance is modified ... |
 | `ItemInstanceUnboundEvent` | Custom | `item-instance-unbound` | Event published when an item binding is removed (a... |
 | `ItemUseFailedEvent` | Custom | `item-use-failed` | Published when item use attempts fail, batched wit... |
 | `ItemUseStepCompletedEvent` | Custom | `item-use-step-completed` | Published when a multi-step item use milestone is ... |
@@ -587,6 +585,8 @@ This document lists all events defined in Bannou's event schemas.
 | `ResourceCompressedEvent` | Custom | `resource-compressed` | Published when compression completes successfully. |
 | `ResourceDecompressedEvent` | Custom | `resource-decompressed` | Published when decompression completes with at lea... |
 | `ResourceGracePeriodStartedEvent` | Custom | `resource-grace-period-started` | Published when a resource's reference count reache... |
+| `ResourceMigrateCallbackFailedEvent` | Custom | `resource-migrate-callback-failed` | Published when a migration callback fails during r... |
+| `ResourceMigratedEvent` | Custom | `resource-migrated` | Published when a resource migration completes succ... |
 | `ResourceSnapshotCreatedEvent` | Lifecycle (Created) | `resource-snapshot.created` | Published when an ephemeral snapshot of a living r... |
 
 ### Save Load

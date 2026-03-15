@@ -1849,7 +1849,7 @@ public class TestPlugin : IBannouPlugin
     public string Version => "1.0.0";
 
     public void ConfigureServices(IServiceCollection services) { }
-    public void ConfigureApplication(WebApplication app) { }
+    public void ConfigureApplication(IServiceProvider services) { }
     public Task<bool> InitializeAsync() => Task.FromResult(true);
     public Task<bool> StartAsync() => Task.FromResult(true);
     public Task RunningAsync() => Task.CompletedTask;

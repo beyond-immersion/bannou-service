@@ -10,7 +10,7 @@
 
 ## Overview
 
-The Analytics plugin (L4 GameFeatures) is the central event aggregation point for all game-related statistics. Handles event ingestion, entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. Publishes score updates and milestone events consumed by Achievement and Leaderboard for downstream processing. Subscribes to game session lifecycle and character/realm history events for automatic ingestion. Unlike typical L4 services, Analytics only observes via event subscriptions -- it does not invoke L2/L4 service APIs and should not be called by L1/L2/L3 services.
+The Analytics plugin (L4 GameFeatures) is the central event aggregation point for all game-related statistics. Handles event ingestion, entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. Publishes score updates and milestone events consumed by Achievement and Leaderboard for downstream processing. Subscribes to game session lifecycle and character/realm history events for automatic ingestion. Unlike typical L4 services, Analytics is a leaf node for write calls — it makes read-only entity resolution calls to L2 services (game-service, game-session, realm, character) but no write calls to any other service. It should not be called by L1/L2/L3 services.
 
 ## Type Field Classification
 
@@ -118,10 +118,6 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 ## Potential Extensions
 
-- **Rating period scheduling**: A background task that periodically increases RD for inactive players (common in competitive games). Tracked above in Stubs as "Rating Period Decay" ([#249](https://github.com/beyond-immersion/bannou-service/issues/249)).
-<!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/249 -->
-- **Per-game milestones**: API for game-specific milestone definitions (currently global config only). Tracked above in Stubs as "Per-Game Milestone Definitions" ([#602](https://github.com/beyond-immersion/bannou-service/issues/602)).
-<!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/602 -->
 - **Auth audit event consumption**: Security monitoring, anomaly detection, and IP geolocation enrichment from auth audit events (login success/fail, registration, OAuth, MFA). Auth publishes 12 well-typed events with IP addresses — Analytics is the natural consumer for cross-account correlation and admin alerting.
 <!-- AUDIT:EXTERNAL:2026-03-13:https://github.com/beyond-immersion/bannou-service/issues/142 -->
 <!-- AUDIT:EXTERNAL:2026-03-13:https://github.com/beyond-immersion/bannou-service/issues/639 -->
@@ -135,6 +131,8 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 ### Bugs (Fix Immediately)
 
 1. **`MilestoneThresholds` uses comma-delimited string for structured data**: The `MilestoneThresholds` configuration property is defined as a comma-separated string (`"10,25,50,..."`) that is parsed at runtime into a list of integers. Per IMPLEMENTATION TENETS (Configuration-First), structured data should use typed schema constructs — in this case, a YAML array type (`type: array, items: { type: integer }`) rather than a string requiring runtime parsing. The current approach bypasses compile-time type safety and schema validation. The fix requires updating the configuration schema to use an array type and updating the service code to consume the typed array.
+
+2. **Missing `account.deleted` cleanup handler**: Analytics stores data keyed by `accountId` — controller history records use key pattern `{gameServiceId}:controller:{accountId}:{timestamp}`, and entity summaries/skill ratings can reference accounts via `entityType: Account`. Per FOUNDATION TENETS (Resource-Managed Cleanup — Account Deletion Cleanup Obligation), every service that stores data with account ownership MUST subscribe to the `account.deleted` broadcast event and delete all account-owned data. Analytics currently has no `HandleAccountDeletedAsync` handler, no `account.deleted` entry in `x-event-subscriptions`, and no cleanup logic for account-keyed data. The fix requires: (1) adding `account.deleted` to `x-event-subscriptions` in `analytics-events.yaml`, (2) implementing `HandleAccountDeletedAsync` in `AnalyticsServiceEvents.cs` that deletes controller history records for the account and cleans up any summaries/ratings where entityType is Account, and (3) following the canonical pattern from lib-collection with telemetry spans, per-item error isolation, and error event publishing.
 
 ### Intentional Quirks (Documented Behavior)
 

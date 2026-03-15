@@ -157,8 +157,8 @@
 | RecomputeManifest | POST /agency/manifest/recompute | developer | manifest-cache, manifest-history | agency.manifest.updated |
 | DiffManifests | POST /agency/manifest/diff | user | - | - |
 | GetManifestHistory | POST /agency/manifest/history | user | - | - |
-| EvaluateInfluence | POST /agency/influence/evaluate | user | - | - |
-| ExecuteInfluence | POST /agency/influence/execute | user | rate, influence-last, influence-freq, resistance | agency.influence.executed, agency.influence.rejected |
+| EvaluateInfluence | POST /agency/influence/evaluate | [] | - | - |
+| ExecuteInfluence | POST /agency/influence/execute | [] | rate, influence-last, influence-freq, resistance | agency.influence.executed, agency.influence.rejected |
 | SetSeedConfig | POST /agency/seed-config/set | developer | seed-config | - |
 | GetSeedConfig | POST /agency/seed-config/get | developer | - | - |
 
@@ -445,7 +445,7 @@ RETURN (200, ManifestHistoryResponse { entries, totalCount })
 ---
 
 ### EvaluateInfluence
-POST /agency/influence/evaluate | Roles: [user]
+POST /agency/influence/evaluate | Roles: []
 
 ```
 READ _influencesStore:influence:{request.InfluenceCode} -> 404 if null
@@ -469,7 +469,7 @@ RETURN (200, InfluenceEvaluationResponse { available: true, complianceBase, rate
 ---
 
 ### ExecuteInfluence
-POST /agency/influence/execute | Roles: [user]
+POST /agency/influence/execute | Roles: []
 
 ```
 READ _influencesStore:influence:{request.InfluenceCode} -> 404 if null

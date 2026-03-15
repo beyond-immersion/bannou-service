@@ -73,7 +73,7 @@ Platform streaming integration and RTMP output management service (L3 AppFeature
 
 ## Character {#character}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/CHARACTER.md](plugins/CHARACTER.md) | **Map**: [docs/maps/CHARACTER.md](maps/CHARACTER.md)
+**Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/CHARACTER.md](plugins/CHARACTER.md) | **Map**: [docs/maps/CHARACTER.md](maps/CHARACTER.md)
 
 The Character service (L2 GameFoundation) manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from lib-relationship), and compression/archival for dead characters via lib-resource. Per the service hierarchy, Character cannot depend on L4 services (personality, history, encounters) -- callers needing that data should aggregate from L4 services directly.
 
@@ -261,7 +261,7 @@ The License service (L4 GameFeatures) provides grid-based progression boards (sk
 
 ## Location {#location}
 
-**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 25 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md) | **Map**: [docs/maps/LOCATION.md](maps/LOCATION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 26 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md) | **Map**: [docs/maps/LOCATION.md](maps/LOCATION.md)
 
 Hierarchical location management (L2 GameFoundation) for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation, circular reference prevention, cascading depth updates, code-based lookups, and bulk seeding with two-pass parent resolution.
 
@@ -299,7 +299,7 @@ Native service mesh (L0 Infrastructure) providing direct in-process service-to-s
 
 **Version**: 1.0.0 | **Schema**: `schemas/messaging-api.yaml` | **Endpoints**: 4 | **Deep Dive**: [docs/plugins/MESSAGING.md](plugins/MESSAGING.md) | **Map**: [docs/maps/MESSAGING.md](maps/MESSAGING.md)
 
-The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrastructure for Bannou. Operates in a dual role: as the `IMessageBus`/`IMessageSubscriber` infrastructure library used by all services for event publishing and subscription, and as an HTTP API providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, and aggressive retry buffering with crash-fast philosophy for unrecoverable failures.
+The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrastructure for Bannou. Operates in a dual role: as the `IMessageBus`/`IMessageSubscriber` infrastructure library used by all services for event publishing and subscription, and as an HTTP API providing dynamic subscription management with HTTP callback delivery. Three messaging backends: RabbitMQ (cloud, with channel pooling and aggressive retry buffering), InMemoryMessageBus (testing), and DirectDispatchMessageBus (embedded/sidecar, zero-overhead dispatch directly to IEventConsumer).
 
 ## Music {#music}
 
@@ -385,7 +385,7 @@ The `${relationship.*}` ABML variable namespace is implemented via `Relationship
 
 ## Resource {#resource}
 
-**Version**: 1.0.0 | **Schema**: `schemas/resource-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/RESOURCE.md](plugins/RESOURCE.md) | **Map**: [docs/maps/RESOURCE.md](maps/RESOURCE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/resource-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/RESOURCE.md](plugins/RESOURCE.md) | **Map**: [docs/maps/RESOURCE.md](maps/RESOURCE.md)
 
 Resource reference tracking, lifecycle management, and hierarchical compression service (L1 AppFoundation) for foundational resources. Enables safe deletion of L2 resources by tracking references from higher-layer consumers (L2/L3/L4) without hierarchy violations, coordinates cleanup callbacks with CASCADE/RESTRICT/DETACH policies, and centralizes compression of resources and their dependents into unified MySQL-backed archives. Placed at L1 so all layers can use it; uses opaque string identifiers for resource/source types to avoid coupling to higher layers. Widely integrated: 13 services use generated reference tracking, 11 services register compression callbacks, and 20 services total inject `IResourceClient`.
 
@@ -415,7 +415,7 @@ In-game streaming metagame service (L4 GameFeatures) for simulated audience pool
 
 ## Species {#species}
 
-**Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/SPECIES.md](plugins/SPECIES.md) | **Map**: [docs/maps/SPECIES.md](maps/SPECIES.md)
+**Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml` | **Endpoints**: 14 | **Deep Dive**: [docs/plugins/SPECIES.md](plugins/SPECIES.md) | **Map**: [docs/maps/SPECIES.md](maps/SPECIES.md)
 
 Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. Manages playable and NPC races with trait modifiers, realm-specific availability, and a full deprecation lifecycle (deprecate, merge, delete). Species are globally defined but assigned to specific realms, enabling different worlds to offer different playable options. Supports bulk seeding from configuration and cross-service character reference checking to prevent orphaned data.
 
@@ -441,7 +441,7 @@ The Storyline service (L4 GameFeatures) wraps the `storyline-theory` and `storyl
 
 **Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml` | **Endpoints**: 7 | **Deep Dive**: [docs/plugins/SUBSCRIPTION.md](plugins/SUBSCRIPTION.md) | **Map**: [docs/maps/SUBSCRIPTION.md](maps/SUBSCRIPTION.md)
 
-The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing, and pushes `subscription.status_changed` client events to connected players via WebSocket account-session routing. Includes a background expiration worker that periodically deactivates expired subscriptions. Internal-only, serves as the canonical source for subscription state.
+The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing, and pushes `subscription.status-changed` client events to connected players via WebSocket account-session routing. Includes a background expiration worker that periodically deactivates expired subscriptions. Serves as the canonical source for subscription state. Most mutating endpoints are service-to-service (admin/internal), but account listing, subscription get, and cancel are user-facing.
 
 Client events are routed via `IEntitySessionRegistry.PublishToEntitySessionsAsync("account", accountId, ...)` to all WebSocket sessions for the affected account. This is especially important for background expiration (the player didn't initiate the state change) and admin renewals.
 
@@ -498,7 +498,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 77
-- **Total endpoints**: 942
+- **Total endpoints**: 948
 
 ---
 

@@ -953,9 +953,10 @@ public class SchemaValidationTests
     }
 
     /// <summary>
-    /// Informational test: surfaces x-lifecycle instance entities in services with
-    /// x-references targeting character that do NOT use batch: true. These are
-    /// structurally high-frequency at 100K NPC scale and should consider batching.
+    /// Informational test: surfaces x-lifecycle instance entities in services declaring
+    /// x-references that do NOT use batch: true. Services with x-references store
+    /// dependent data for entities owned by other services — structurally high-frequency
+    /// at scale. The human evaluates each suggestion.
     /// </summary>
     [Fact]
     public void XReferencesServices_WithLifecycleInstances_ShouldConsiderBatchEvents()
@@ -966,58 +967,23 @@ public class SchemaValidationTests
         var schemasDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "schemas");
         var suggestions = new List<string>();
 
-        // Build set of services that declare x-references targeting character-scale entities
-        var characterTargetingServices = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var characterTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "character", "account", "location", "realm" };
+        // Build set of services that declare x-references (any target).
+        // The x-references declaration itself is the signal — it means the service
+        // stores dependent data for entities owned by other services.
+        var xReferencesServices = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var apiFile in Directory.EnumerateFiles(schemasDir, "*-api.yaml"))
         {
-            var lines = File.ReadAllLines(apiFile);
-            var inXReferences = false;
-            var hasCharacterTarget = false;
-
-            foreach (var line in lines)
-            {
-                var trimmed = line.TrimStart();
-                if (trimmed.StartsWith("x-references:", StringComparison.Ordinal))
-                {
-                    inXReferences = true;
-                    continue;
-                }
-
-                if (inXReferences)
-                {
-                    // Exit x-references block at next top-level key
-                    if (!line.StartsWith(" ", StringComparison.Ordinal) &&
-                        !line.StartsWith("-", StringComparison.Ordinal) &&
-                        trimmed.Length > 0 && !trimmed.StartsWith("#", StringComparison.Ordinal))
-                    {
-                        inXReferences = false;
-                        continue;
-                    }
-
-                    // Handle both "target: X" and "- target: X" YAML list item format
-                    var targetLine = trimmed.StartsWith("- ", StringComparison.Ordinal)
-                        ? trimmed[2..] : trimmed;
-                    if (targetLine.StartsWith("target:", StringComparison.Ordinal))
-                    {
-                        var target = targetLine["target:".Length..].Trim();
-                        if (characterTargets.Contains(target))
-                            hasCharacterTarget = true;
-                    }
-                }
-            }
-
-            if (hasCharacterTarget)
+            var content = File.ReadAllText(apiFile);
+            if (content.Contains("x-references:", StringComparison.Ordinal))
             {
                 var serviceName = Path.GetFileNameWithoutExtension(apiFile)
                     .Replace("-api", "", StringComparison.Ordinal);
-                characterTargetingServices.Add(serviceName);
+                xReferencesServices.Add(serviceName);
             }
         }
 
-        // Check each service's lifecycle entities for missing batch: true
+        // Check each x-references service's lifecycle entities for missing batch: true
         foreach (var eventsFile in SchemaParser.GetEventSchemaFiles())
         {
             var fileName = Path.GetFileNameWithoutExtension(eventsFile);
@@ -1025,30 +991,43 @@ public class SchemaValidationTests
                 ? fileName[..^"-events".Length]
                 : fileName;
 
-            if (!characterTargetingServices.Contains(serviceName))
+            if (!xReferencesServices.Contains(serviceName))
                 continue;
 
-            foreach (var entity in SchemaParser.GetLifecycleEntities(eventsFile))
+            // Build the set of confirmed instance entity names (referenced by
+            // another entity's instanceEntity field) for this schema file.
+            var allEntities = SchemaParser.GetLifecycleEntities(eventsFile).ToList();
+            var confirmedInstances = new HashSet<string>(
+                allEntities
+                    .Where(e => e.InstanceEntity != null)
+                    .Select(e => e.InstanceEntity!),
+                StringComparer.Ordinal);
+
+            foreach (var entity in allEntities)
             {
                 if (entity.IsBatch)
                     continue; // already batched
 
-                // Skip definition/template entities — only flag instance entities.
-                // Definition entities are identified by: having deprecation, or having
-                // instanceEntity (they're a Category B template naming their instance),
-                // or being referenced as another entity's instanceEntity.
+                // Skip definition entities: have deprecation, or declare instanceEntity
+                // (Category B template naming its instance type)
                 if (entity.HasDeprecation)
                     continue;
                 if (entity.InstanceEntity != null)
                     continue;
 
+                // Flag confirmed instance entities (named by a template's instanceEntity)
+                // and standalone entities (no template/instance split — e.g., Relationship)
+                // that aren't definitions by naming convention.
+                var isConfirmedInstance = confirmedInstances.Contains(entity.EntityName);
+
                 suggestions.Add(
-                    $"{serviceName}: {entity.EntityName} — service has x-references targeting " +
-                    $"character-scale entities; consider batch: true for NPC-scale event volume");
+                    $"{serviceName}: {entity.EntityName}" +
+                    (isConfirmedInstance ? " (confirmed instance)" : "") +
+                    " — service declares x-references; consider batch: true");
             }
         }
 
-        // This test surfaces suggestions, not failures — but uses Assert.True so the
+        // This test surfaces suggestions, not failures — but uses Assert.Fail so the
         // suggestions appear in the test output when BANNOU_RUN_INFORMATIONAL_TESTS=true
         if (suggestions.Count > 0)
         {
@@ -1112,5 +1091,147 @@ public class SchemaValidationTests
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Validates that x-references declarations use the correct callback pattern for their
+    /// onDelete policy. The three policies have distinct, non-overlapping callback requirements:
+    /// <list type="bullet">
+    /// <item><b>restrict</b>: MUST have migrate callback, MUST NOT have cleanup callback.
+    ///   RESTRICT blocks deletion while references exist; migrate moves them to unblock.</item>
+    /// <item><b>cascade</b>: MUST have cleanup callback, MUST NOT have migrate callback.
+    ///   CASCADE deletes dependents when the parent is deleted.</item>
+    /// <item><b>detach</b>: MUST have cleanup callback, MUST NOT have migrate callback.
+    ///   DETACH nullifies the reference when the parent is deleted.</item>
+    /// </list>
+    /// Per FOUNDATION TENETS — Resource-Managed Cleanup (T28).
+    /// </summary>
+    [Fact]
+    public void XReferences_CallbackPatternMatchesOnDeletePolicy()
+    {
+        var violations = new List<string>();
+
+        foreach (var apiFile in SchemaParser.GetApiSchemaFiles())
+        {
+            var refs = SchemaParser.GetReferenceDeclarations(apiFile).ToList();
+            foreach (var r in refs)
+            {
+                switch (r.OnDelete)
+                {
+                    case "restrict":
+                        if (!r.HasMigrateCallback)
+                        {
+                            violations.Add(
+                                $"{r.ServiceName}: x-references target={r.Target} sourceType={r.SourceType} " +
+                                $"has onDelete=restrict but no migrate callback. " +
+                                $"RESTRICT entries MUST declare a migrate section to move references before deletion.");
+                        }
+                        if (r.HasCleanupCallback)
+                        {
+                            violations.Add(
+                                $"{r.ServiceName}: x-references target={r.Target} sourceType={r.SourceType} " +
+                                $"has onDelete=restrict but also declares a cleanup callback. " +
+                                $"RESTRICT cleanup callbacks can never fire — RESTRICT blocks deletion, " +
+                                $"and after migration the references are gone. Remove the cleanup section.");
+                        }
+                        break;
+
+                    case "cascade":
+                        if (!r.HasCleanupCallback)
+                        {
+                            violations.Add(
+                                $"{r.ServiceName}: x-references target={r.Target} sourceType={r.SourceType} " +
+                                $"has onDelete=cascade but no cleanup callback. " +
+                                $"CASCADE entries MUST declare a cleanup section to delete dependents.");
+                        }
+                        if (r.HasMigrateCallback)
+                        {
+                            violations.Add(
+                                $"{r.ServiceName}: x-references target={r.Target} sourceType={r.SourceType} " +
+                                $"has onDelete=cascade but also declares a migrate callback. " +
+                                $"CASCADE dependents are deleted, not migrated. " +
+                                $"If this entity should be migrated, use onDelete=restrict instead.");
+                        }
+                        break;
+
+                    case "detach":
+                        if (!r.HasCleanupCallback)
+                        {
+                            violations.Add(
+                                $"{r.ServiceName}: x-references target={r.Target} sourceType={r.SourceType} " +
+                                $"has onDelete=detach but no cleanup callback. " +
+                                $"DETACH entries MUST declare a cleanup section to nullify references.");
+                        }
+                        if (r.HasMigrateCallback)
+                        {
+                            violations.Add(
+                                $"{r.ServiceName}: x-references target={r.Target} sourceType={r.SourceType} " +
+                                $"has onDelete=detach but also declares a migrate callback. " +
+                                $"DETACH nullifies references, not migrates them. " +
+                                $"If this entity should be migrated, use onDelete=restrict instead.");
+                        }
+                        break;
+
+                    default:
+                        violations.Add(
+                            $"{r.ServiceName}: x-references target={r.Target} sourceType={r.SourceType} " +
+                            $"has unknown onDelete value '{r.OnDelete}'. " +
+                            $"Must be one of: cascade, restrict, detach.");
+                        break;
+                }
+            }
+        }
+
+        if (violations.Count == 0) return;
+
+        var report = string.Join("\n", violations.Select(v => $"  - {v}"));
+        Assert.Fail(
+            $"Found {violations.Count} x-references callback/policy mismatch violation(s). " +
+            $"Each onDelete policy requires specific callback types:\n" +
+            $"  restrict → migrate only (no cleanup)\n" +
+            $"  cascade  → cleanup only (no migrate)\n" +
+            $"  detach   → cleanup only (no migrate)\n" +
+            $"Violations:\n{report}");
+    }
+
+    /// <summary>
+    /// Validates that every x-references entry explicitly declares an onDelete policy.
+    /// Implicit defaulting to CASCADE is forbidden — each consumer must make a deliberate
+    /// choice about how their data should be handled when the referenced resource is deleted:
+    /// <list type="bullet">
+    /// <item><b>cascade</b>: Delete dependent data (sub-entity data with no meaning without parent)</item>
+    /// <item><b>restrict</b>: Block deletion; require migration first (significant entities too valuable to discard)</item>
+    /// <item><b>detach</b>: Nullify the reference (entity can exist independently without the parent)</item>
+    /// </list>
+    /// Per FOUNDATION TENETS — Resource-Managed Cleanup (T28).
+    /// </summary>
+    [Fact]
+    public void XReferences_MustDeclareExplicitOnDeletePolicy()
+    {
+        var violations = new List<string>();
+
+        foreach (var apiFile in SchemaParser.GetApiSchemaFiles())
+        {
+            var refs = SchemaParser.GetReferenceDeclarations(apiFile).ToList();
+            foreach (var r in refs)
+            {
+                if (!r.HasExplicitOnDelete)
+                {
+                    violations.Add(
+                        $"{r.ServiceName}: x-references target={r.Target} sourceType={r.SourceType} " +
+                        $"does not declare onDelete. Every x-references entry must explicitly specify " +
+                        $"onDelete: cascade, restrict, or detach. Implicit defaulting is forbidden — " +
+                        $"each consumer must make a deliberate policy choice.");
+                }
+            }
+        }
+
+        if (violations.Count == 0) return;
+
+        var report = string.Join("\n", violations.Select(v => $"  - {v}"));
+        Assert.Fail(
+            $"Found {violations.Count} x-references entry/entries without explicit onDelete policy. " +
+            $"Every x-references declaration must specify onDelete: cascade | restrict | detach.\n" +
+            $"Violations:\n{report}");
     }
 }

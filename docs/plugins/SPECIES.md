@@ -35,6 +35,7 @@ Species has no Category A (entity reference) fields -- species are referenced by
 | lib-transit | Uses `ISpeciesClient.GetSpeciesAsync` for species lookup during journey speed calculations |
 | lib-ethology | Uses `ISpeciesClient` for archetype validation; subscribes to `species.updated` (for deprecation changes via changedFields) and `species.deleted` events for cleanup. Provides the `${nature.*}` variable namespace to Actor (L2) via `NatureProviderFactory`, exposing species-level behavioral baselines built on species code lookups |
 | lib-character-lifecycle | Uses `ISpeciesClient` for lifecycle template resolution — species determines longevity ranges, stage boundaries, fertility windows, and heritable trait definitions (not yet implemented) |
+| lib-resource | Tracks realm RESTRICT references via `x-references`; calls `migrate-by-realm` during realm merge |
 
 ### Architectural Role in the NPC Intelligence Stack
 
@@ -128,8 +129,7 @@ State Store Layout
 
 ## Stubs & Unimplemented Features
 
-1. **No realm deletion cleanup via lib-resource**: When a realm is deleted, species that reference that realm retain the stale GUID in their `RealmIds` list. The intended workflow is deprecate → merge → delete, where the merge step migrates species to the target realm. Species (along with Location and Character) should register **RESTRICT** references with lib-resource when associating with a realm, ensuring that attempting to delete a realm with remaining species is blocked. This replaces the earlier event-subscription approach.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-10:https://github.com/beyond-immersion/bannou-service/issues/369 -->
+1. ~~**No realm deletion cleanup via lib-resource**~~ ([#369](https://github.com/beyond-immersion/bannou-service/issues/369)): **COMPLETED** (2026-03-15) — Species now declares `x-references` with `target: realm` and `onDelete: restrict` in its schema. RESTRICT references are registered with lib-resource when species are added to a realm (`CreateSpecies`, `AddSpeciesToRealm`). Realm deletion is blocked if species reference that realm. A `migrate-by-realm` endpoint handles realm merge by replacing the source realm with the target realm in each species' `RealmIds` list, updating realm indexes accordingly.
 
 ---
 
@@ -144,7 +144,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-1. **`SpeciesMergedEvent` missing failed entity IDs**: The merged event includes `MergedCharacterCount` (successful migrations) but not individual failed entity IDs. Implementation Tenets (T31 merge requirement #8) explicitly requires: "Publish `*.merged` event with source ID, target ID, migrated count, **and failed IDs**." The `SpeciesMergedEvent` schema and publish call must be updated to include `failedEntityIds`. Failed IDs are currently returned only in the API response.
+1. ~~**`SpeciesMergedEvent` missing failed entity IDs**~~: **FIXED** (2026-03-15) - Added `failedEntityIds` (nullable uuid array) to `SpeciesMergedEvent` schema in `species-events.yaml`. Updated `PublishSpeciesMergedEventAsync` to accept and propagate the failed IDs list. Null when all migrations succeed, populated with character IDs on partial failure.
 
 ### Intentional Quirks (Documented Behavior)
 

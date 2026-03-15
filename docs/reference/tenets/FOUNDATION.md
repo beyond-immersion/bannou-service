@@ -825,10 +825,12 @@ await _resourceClient.RegisterReferenceAsync(new RegisterReferenceRequest
 }, ct);
 ```
 
-**Step 2**: Higher-layer services declare cleanup callbacks in their API schema via `x-references`, which generates `RegisterResourceCleanupCallbacksAsync()`:
+**Step 2**: Higher-layer services declare callbacks in their API schema via `x-references`. Each entry specifies an `onDelete` policy that determines the callback type — `cleanup:` for CASCADE/DETACH, or `migrate:` for RESTRICT. See [SCHEMA-RULES.md § x-references](../SCHEMA-RULES.md#x-references-resource-reference-tracking) for the full policy-callback decision tree and exclusivity rules.
+
+**CASCADE/DETACH** — cleanup callback (delete or nullify dependents when resource is deleted):
 
 ```yaml
-# In character-encounter-api.yaml — declares cleanup callback endpoint
+# In character-encounter-api.yaml — CASCADE: delete encounter data when character is deleted
 info:
   x-references:
     - target: character
@@ -840,36 +842,53 @@ info:
         payloadTemplate: '{"characterId": "{{resourceId}}"}'
 ```
 
-```csharp
-// Generated: CharacterEncounterReferenceTracking.cs registers the callback at startup.
-// The service implements the cleanup endpoint in its service class:
-public async Task<(StatusCodes, DeleteByCharacterResponse?)> DeleteByCharacterAsync(
-    DeleteByCharacterRequest body, CancellationToken ct = default)
-{
-    // Delete all encounter data for the character
-    await DeleteEncountersForCharacterAsync(body.CharacterId, ct);
-    return (StatusCodes.OK, new DeleteByCharacterResponse());
-}
+**RESTRICT** — migrate callback (move dependents to a new parent before resource can be deleted):
+
+```yaml
+# In character-api.yaml — RESTRICT: block realm deletion; migrate characters during realm merge
+info:
+  x-references:
+    - target: realm
+      sourceType: character
+      field: realmId
+      onDelete: restrict
+      migrate:
+        endpoint: /character/migrate-by-realm
+        payloadTemplate: '{"sourceRealmId": "{{sourceResourceId}}", "targetRealmId": "{{targetResourceId}}"}'
 ```
 
-**Step 3**: When the foundational resource is deleted, lib-resource coordinates cleanup:
+Generated code produces `RegisterResourceCleanupCallbacksAsync()` for CASCADE/DETACH entries and `RegisterResourceMigrateCallbacksAsync()` for RESTRICT entries. Both are called at plugin startup.
+
+**Step 3**: When the foundational resource is deleted, lib-resource coordinates the full lifecycle:
 
 ```csharp
-// L2 (Character) asks lib-resource to coordinate deletion
-var result = await _resourceClient.ExecuteCleanupAsync(new ExecuteCleanupRequest
+// For Category A merge: migrate RESTRICT references first, then delete
+// Step 3a: Move RESTRICT dependents (character, location, species) to target
+var migrateResult = await _resourceClient.ExecuteMigrateAsync(new ExecuteMigrateRequest
 {
-    ResourceType = "character",
-    ResourceId = characterId,
-    Policy = CleanupPolicy.Cascade
+    ResourceType = "realm",
+    SourceResourceId = sourceRealmId,
+    TargetResourceId = targetRealmId
+}, ct);
+
+// Step 3b: Delete with cleanup — RESTRICT check passes (all migrated), CASCADE/DETACH execute
+var cleanupResult = await _resourceClient.ExecuteCleanupAsync(new ExecuteCleanupRequest
+{
+    ResourceType = "realm",
+    ResourceId = sourceRealmId,
+    CleanupPolicy = CleanupPolicy.AllRequired
 }, ct);
 ```
+
+The sequencing is: migrate all RESTRICT → block if any RESTRICT remain → execute CASCADE/DETACH callbacks → delete.
 
 ### What This Replaces
 
 | Before (FORBIDDEN) | After (REQUIRED) |
 |---------------------|-------------------|
-| Character-Encounter subscribes to `character.deleted` | Character-Encounter declares `x-references` in schema, implements cleanup endpoint, calls generated `RegisterResourceCleanupCallbacksAsync()` at startup |
-| Any L4 plugin subscribes to L2 `*.deleted` for destruction | L4 declares `x-references` in schema, implements cleanup endpoint |
+| Character-Encounter subscribes to `character.deleted` | Character-Encounter declares `x-references` with `cleanup:` in schema, implements cleanup endpoint |
+| Any L4 plugin subscribes to L2 `*.deleted` for destruction | Declares `x-references` with `cleanup:` (CASCADE/DETACH) or `migrate:` (RESTRICT) |
+| Realm directly calls ISpeciesClient/ILocationClient/ICharacterClient to move entities during merge | Dependents register `migrate:` callbacks; Realm calls `ExecuteMigrateAsync` via lib-resource |
 
 ### Events Are Still Valid for Live State Reactions
 

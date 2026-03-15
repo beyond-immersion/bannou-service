@@ -1,13 +1,11 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -36,9 +34,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     private readonly Mock<ILogger<RealmService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IResourceClient> _mockResourceClient;
-    private readonly Mock<ISpeciesClient> _mockSpeciesClient;
     private readonly Mock<ILocationClient> _mockLocationClient;
-    private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IWorldstateClient> _mockWorldstateClient;
@@ -59,9 +55,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockLogger = new Mock<ILogger<RealmService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockResourceClient = new Mock<IResourceClient>();
-        _mockSpeciesClient = new Mock<ISpeciesClient>();
         _mockLocationClient = new Mock<ILocationClient>();
-        _mockCharacterClient = new Mock<ICharacterClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockWorldstateClient = new Mock<IWorldstateClient>();
@@ -95,9 +89,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockLockProvider.Object,
             _mockTelemetryProvider.Object,
             _mockResourceClient.Object,
-            _mockSpeciesClient.Object,
             _mockLocationClient.Object,
-            _mockCharacterClient.Object,
             _mockWorldstateClient.Object);
     }
 
@@ -1686,31 +1678,17 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{targetId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(targetModel);
 
-        // All entity lists return empty
-        _mockSpeciesClient
-            .Setup(s => s.ListSpeciesByRealmAsync(It.IsAny<ListSpeciesByRealmRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new SpeciesListResponse { Species = new List<SpeciesResponse>(), TotalCount = 0 });
-        _mockLocationClient
-            .Setup(l => l.ListRootLocationsAsync(It.IsAny<ListRootLocationsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new LocationListResponse
+        // Resource migrate returns success with no callbacks (nothing to migrate)
+        _mockResourceClient
+            .Setup(r => r.ExecuteMigrateAsync(It.IsAny<ExecuteMigrateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ExecuteMigrateResponse
             {
-                Locations = new List<LocationResponse>(),
-                TotalCount = 0,
-                Page = 1,
-                PageSize = 50,
-                HasNextPage = false,
-                HasPreviousPage = false
-            });
-        _mockCharacterClient
-            .Setup(c => c.GetCharactersByRealmAsync(It.IsAny<GetCharactersByRealmRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CharacterListResponse
-            {
-                Characters = new List<CharacterResponse>(),
-                TotalCount = 0,
-                Page = 1,
-                PageSize = 50,
-                HasNextPage = false,
-                HasPreviousPage = false
+                ResourceType = "realm",
+                SourceResourceId = sourceId,
+                TargetResourceId = targetId,
+                Success = true,
+                CallbackResults = new List<MigrateCallbackResult>(),
+                DryRun = false
             });
 
         // Capture published merge event
@@ -1731,12 +1709,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(0, response.SpeciesMigrated);
-        Assert.Equal(0, response.SpeciesFailed);
-        Assert.Equal(0, response.LocationsMigrated);
-        Assert.Equal(0, response.LocationsFailed);
-        Assert.Equal(0, response.CharactersMigrated);
-        Assert.Equal(0, response.CharactersFailed);
+        Assert.Equal(0, response.TotalMigrated);
+        Assert.Equal(0, response.TotalFailed);
         Assert.False(response.SourceDeleted);
 
         // Assert merge event published
@@ -1775,80 +1749,33 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{targetId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(targetModel);
 
-        // Species: 1 species, successfully migrated, then empty on second call
-        var speciesCallCount = 0;
-        _mockSpeciesClient
-            .Setup(s => s.ListSpeciesByRealmAsync(It.IsAny<ListSpeciesByRealmRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() =>
+        // Resource migrate returns success with 2 successful callback results
+        _mockResourceClient
+            .Setup(r => r.ExecuteMigrateAsync(It.IsAny<ExecuteMigrateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ExecuteMigrateResponse
             {
-                speciesCallCount++;
-                if (speciesCallCount == 1)
+                ResourceType = "realm",
+                SourceResourceId = sourceId,
+                TargetResourceId = targetId,
+                Success = true,
+                CallbackResults = new List<MigrateCallbackResult>
                 {
-                    return new SpeciesListResponse
+                    new MigrateCallbackResult
                     {
-                        Species = new List<SpeciesResponse>
-                        {
-                            new SpeciesResponse { SpeciesId = Guid.NewGuid(), Code = "HUMAN", Name = "Human" }
-                        },
-                        TotalCount = 1
-                    };
-                }
-                return new SpeciesListResponse { Species = new List<SpeciesResponse>(), TotalCount = 0 };
-            });
-
-        // Locations: empty (no root locations)
-        _mockLocationClient
-            .Setup(l => l.ListRootLocationsAsync(It.IsAny<ListRootLocationsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new LocationListResponse
-            {
-                Locations = new List<LocationResponse>(),
-                TotalCount = 0,
-                Page = 1,
-                PageSize = 50,
-                HasNextPage = false,
-                HasPreviousPage = false
-            });
-
-        // Characters: 1 character, successfully migrated, then empty on second call
-        var charCallCount = 0;
-        _mockCharacterClient
-            .Setup(c => c.GetCharactersByRealmAsync(It.IsAny<GetCharactersByRealmRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() =>
-            {
-                charCallCount++;
-                if (charCallCount == 1)
-                {
-                    return new CharacterListResponse
+                        SourceType = "species",
+                        ServiceName = "species",
+                        Endpoint = "species/migrate-realm",
+                        Success = true
+                    },
+                    new MigrateCallbackResult
                     {
-                        Characters = new List<CharacterResponse>
-                        {
-                            new CharacterResponse
-                            {
-                                CharacterId = Guid.NewGuid(),
-                                Name = "Hero",
-                                RealmId = sourceId,
-                                SpeciesId = Guid.NewGuid(),
-                                BirthDate = DateTimeOffset.UtcNow,
-                                Status = CharacterStatus.Alive,
-                                CreatedAt = DateTimeOffset.UtcNow
-                            }
-                        },
-                        TotalCount = 1,
-                        Page = 1,
-                        PageSize = 50,
-                        HasNextPage = false,
-                        HasPreviousPage = false
-                    };
-                }
-                return new CharacterListResponse
-                {
-                    Characters = new List<CharacterResponse>(),
-                    TotalCount = 0,
-                    Page = 1,
-                    PageSize = 50,
-                    HasNextPage = false,
-                    HasPreviousPage = false
-                };
+                        SourceType = "character",
+                        ServiceName = "character",
+                        Endpoint = "character/migrate-realm",
+                        Success = true
+                    }
+                },
+                DryRun = false
             });
 
         // Act
@@ -1857,12 +1784,8 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(1, response.SpeciesMigrated);
-        Assert.Equal(0, response.SpeciesFailed);
-        Assert.Equal(0, response.LocationsMigrated);
-        Assert.Equal(0, response.LocationsFailed);
-        Assert.Equal(1, response.CharactersMigrated);
-        Assert.Equal(0, response.CharactersFailed);
+        Assert.Equal(2, response.TotalMigrated);
+        Assert.Equal(0, response.TotalFailed);
     }
 
     [Fact]
@@ -1894,31 +1817,17 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{targetId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(targetModel);
 
-        // All empty entities
-        _mockSpeciesClient
-            .Setup(s => s.ListSpeciesByRealmAsync(It.IsAny<ListSpeciesByRealmRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new SpeciesListResponse { Species = new List<SpeciesResponse>(), TotalCount = 0 });
-        _mockLocationClient
-            .Setup(l => l.ListRootLocationsAsync(It.IsAny<ListRootLocationsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new LocationListResponse
+        // Resource migrate returns success with no callbacks (nothing to migrate)
+        _mockResourceClient
+            .Setup(r => r.ExecuteMigrateAsync(It.IsAny<ExecuteMigrateRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ExecuteMigrateResponse
             {
-                Locations = new List<LocationResponse>(),
-                TotalCount = 0,
-                Page = 1,
-                PageSize = 50,
-                HasNextPage = false,
-                HasPreviousPage = false
-            });
-        _mockCharacterClient
-            .Setup(c => c.GetCharactersByRealmAsync(It.IsAny<GetCharactersByRealmRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CharacterListResponse
-            {
-                Characters = new List<CharacterResponse>(),
-                TotalCount = 0,
-                Page = 1,
-                PageSize = 50,
-                HasNextPage = false,
-                HasPreviousPage = false
+                ResourceType = "realm",
+                SourceResourceId = sourceId,
+                TargetResourceId = targetId,
+                Success = true,
+                CallbackResults = new List<MigrateCallbackResult>(),
+                DryRun = false
             });
 
         // Setup for delete operation (called after merge)
@@ -2379,9 +2288,7 @@ public class RealmLocationCompressionTests : ServiceTestBase<RealmServiceConfigu
     private readonly Mock<ILogger<RealmService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IResourceClient> _mockResourceClient;
-    private readonly Mock<ISpeciesClient> _mockSpeciesClient;
     private readonly Mock<ILocationClient> _mockLocationClient;
-    private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IWorldstateClient> _mockWorldstateClient;
@@ -2399,9 +2306,7 @@ public class RealmLocationCompressionTests : ServiceTestBase<RealmServiceConfigu
         _mockLogger = new Mock<ILogger<RealmService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockResourceClient = new Mock<IResourceClient>();
-        _mockSpeciesClient = new Mock<ISpeciesClient>();
         _mockLocationClient = new Mock<ILocationClient>();
-        _mockCharacterClient = new Mock<ICharacterClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockWorldstateClient = new Mock<IWorldstateClient>();
@@ -2426,9 +2331,7 @@ public class RealmLocationCompressionTests : ServiceTestBase<RealmServiceConfigu
             _mockLockProvider.Object,
             _mockTelemetryProvider.Object,
             _mockResourceClient.Object,
-            _mockSpeciesClient.Object,
             _mockLocationClient.Object,
-            _mockCharacterClient.Object,
             _mockWorldstateClient.Object);
     }
 

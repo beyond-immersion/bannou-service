@@ -628,24 +628,16 @@ paths:
         : \"If true, hard-delete the source realm after successful merge (skipped if any failures)\"\n                }\n\
         \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MergeRealmsResponse\"\
-        ,\n    \"$defs\": {\n        \"MergeRealmsResponse\": {\n            \"description\": \"Result of a realm merge operation
-        including per-entity-type migration statistics\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"speciesMigrated\",\n                \"speciesFailed\",\n\
-        \                \"locationsMigrated\",\n                \"locationsFailed\",\n                \"charactersMigrated\"\
-        ,\n                \"charactersFailed\",\n                \"sourceDeleted\"\n            ],\n            \"properties\"\
-        : {\n                \"speciesMigrated\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Number of species successfully added to target realm and removed from source\"\n                },\n         \
-        \       \"speciesFailed\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Number of species that failed to migrate\"\n                },\n                \"locationsMigrated\": {\n       \
-        \             \"type\": \"integer\",\n                    \"description\": \"Number of locations successfully transferred
-        to target realm\"\n                },\n                \"locationsFailed\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Number of locations that failed to transfer\"\n                },\n    \
-        \            \"charactersMigrated\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Number of characters successfully transferred to target realm\"\n                },\n                \"charactersFailed\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of characters that
-        failed to transfer\"\n                },\n                \"sourceDeleted\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether the source realm was hard-deleted after merge\"\n              \
-        \  }\n            }\n        }\n    }\n}"
+        ,\n    \"$defs\": {\n        \"MergeRealmsResponse\": {\n            \"description\": \"Result of a realm merge operation.
+        Migration is delegated to lib-resource\\nwhich calls registered migrate callbacks for each dependent entity type.\\\
+        n\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"totalMigrated\",\n                \"totalFailed\",\n                \"sourceDeleted\"\n       \
+        \     ],\n            \"properties\": {\n                \"totalMigrated\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Number of migrate callbacks that completed successfully\"\n            \
+        \    },\n                \"totalFailed\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of migrate callbacks that failed\"\n                },\n                \"sourceDeleted\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the source realm was hard-deleted
+        after merge\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Merge a deprecated realm into another realm\",\n    \"description\": \"\
         Migrates all entities (species, locations, characters) from a deprecated\\nsource realm into a target realm. Migration
         order: species first (add target\\nrealm association), then locations (root-first tree moves), then characters\\n(bulk
@@ -1356,36 +1348,22 @@ components:
           default: false
           description: If true, hard-delete the source realm after successful merge (skipped if any failures)
     MergeRealmsResponse:
-      description: Result of a realm merge operation including per-entity-type migration statistics
+      description: |
+        Result of a realm merge operation. Migration is delegated to lib-resource
+        which calls registered migrate callbacks for each dependent entity type.
       type: object
       additionalProperties: false
       required:
-      - speciesMigrated
-      - speciesFailed
-      - locationsMigrated
-      - locationsFailed
-      - charactersMigrated
-      - charactersFailed
+      - totalMigrated
+      - totalFailed
       - sourceDeleted
       properties:
-        speciesMigrated:
+        totalMigrated:
           type: integer
-          description: Number of species successfully added to target realm and removed from source
-        speciesFailed:
+          description: Number of migrate callbacks that completed successfully
+        totalFailed:
           type: integer
-          description: Number of species that failed to migrate
-        locationsMigrated:
-          type: integer
-          description: Number of locations successfully transferred to target realm
-        locationsFailed:
-          type: integer
-          description: Number of locations that failed to transfer
-        charactersMigrated:
-          type: integer
-          description: Number of characters successfully transferred to target realm
-        charactersFailed:
-          type: integer
-          description: Number of characters that failed to transfer
+          description: Number of migrate callbacks that failed
         sourceDeleted:
           type: boolean
           description: Whether the source realm was hard-deleted after merge

@@ -720,78 +720,6 @@ public partial class SpeciesService : ISpeciesService, IDeprecateAndMergeEntity
     }
 
     /// <summary>
-    /// Removes all species associations from a realm. Called by lib-resource cleanup when a realm is deleted.
-    /// Species themselves are NOT deleted — only the realm association is removed (species may belong to other realms).
-    /// </summary>
-    public async Task<(StatusCodes, CleanupByRealmResponse?)> CleanupByRealmAsync(
-        CleanupByRealmRequest body,
-        CancellationToken cancellationToken = default)
-    {
-        _logger.LogDebug("Cleaning up species associations for realm: {RealmId}", body.RealmId);
-
-        var realmIndexKey = BuildRealmIndexKey(body.RealmId);
-        var speciesIds = await _idListStore.GetAsync(realmIndexKey, cancellationToken: cancellationToken);
-
-        if (speciesIds == null || speciesIds.Count == 0)
-        {
-            _logger.LogDebug("No species associated with realm {RealmId}, nothing to clean up", body.RealmId);
-            return (StatusCodes.OK, new CleanupByRealmResponse { Cleaned = 0, Failed = 0 });
-        }
-
-        var cleaned = 0;
-        var failed = 0;
-
-        // Per-item error isolation per IMPLEMENTATION TENETS
-        foreach (var speciesId in speciesIds.ToList())
-        {
-            try
-            {
-                var speciesKey = BuildSpeciesKey(speciesId);
-                var model = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
-
-                if (model == null)
-                {
-                    // Species no longer exists — index is stale, count as cleaned
-                    cleaned++;
-                    continue;
-                }
-
-                if (!model.RealmIds.Contains(body.RealmId))
-                {
-                    // Already not associated — count as cleaned (idempotent)
-                    cleaned++;
-                    continue;
-                }
-
-                model.RealmIds.Remove(body.RealmId);
-                model.UpdatedAt = DateTimeOffset.UtcNow;
-
-                await _speciesStore.SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
-                await PublishSpeciesUpdatedEventAsync(model, new[] { "realmIds" }, cancellationToken);
-
-                cleaned++;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to remove realm association for species {SpeciesId} from realm {RealmId}",
-                    speciesId, body.RealmId);
-                failed++;
-            }
-        }
-
-        // Clear the realm index since all associations have been processed
-        if (failed == 0)
-        {
-            await _idListStore.DeleteAsync(realmIndexKey, cancellationToken);
-        }
-
-        _logger.LogInformation("Realm species cleanup complete for {RealmId}: cleaned {Cleaned}, failed {Failed}",
-            body.RealmId, cleaned, failed);
-
-        return (StatusCodes.OK, new CleanupByRealmResponse { Cleaned = cleaned, Failed = failed });
-    }
-
-    /// <summary>
     /// Migrates all species associations from one realm to another.
     /// For each species in the source realm: adds to target realm, removes from source realm.
     /// Species may already exist in the target realm (idempotent add).
@@ -1264,7 +1192,7 @@ public partial class SpeciesService : ISpeciesService, IDeprecateAndMergeEntity
             body.SourceSpeciesId, body.TargetSpeciesId, migratedCount, failedEntityIds.Count);
 
         // Publish species merged event for downstream services (analytics, achievements)
-        await PublishSpeciesMergedEventAsync(sourceModel, targetModel, migratedCount, cancellationToken);
+        await PublishSpeciesMergedEventAsync(sourceModel, targetModel, migratedCount, failedEntityIds, cancellationToken);
 
         // Handle delete-after-merge if requested and all migrations succeeded
         var sourceDeleted = false;
@@ -1570,6 +1498,7 @@ public partial class SpeciesService : ISpeciesService, IDeprecateAndMergeEntity
         SpeciesModel sourceModel,
         SpeciesModel targetModel,
         int migratedCharacterCount,
+        List<Guid> failedEntityIds,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.species", "SpeciesService.PublishSpeciesMergedEventAsync");
@@ -1583,7 +1512,8 @@ public partial class SpeciesService : ISpeciesService, IDeprecateAndMergeEntity
                 SourceSpeciesCode = sourceModel.Code,
                 TargetSpeciesId = targetModel.SpeciesId,
                 TargetSpeciesCode = targetModel.Code,
-                MergedCharacterCount = migratedCharacterCount
+                MergedCharacterCount = migratedCharacterCount,
+                FailedEntityIds = failedEntityIds.Count > 0 ? failedEntityIds : null
             };
 
             await _messageBus.PublishSpeciesMergedAsync(eventModel, cancellationToken);

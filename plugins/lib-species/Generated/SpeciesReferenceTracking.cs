@@ -22,7 +22,6 @@ namespace BeyondImmersion.BannouService.Species;
 /// Call RegisterResourceCleanupCallbacksAsync() during service startup to register cleanup callbacks.
 /// </para>
 /// </remarks>
-[ResourceCleanupRequired("CleanupByRealmAsync")]
 public partial class SpeciesService
 {
 
@@ -70,47 +69,6 @@ public partial class SpeciesService
                 SourceId = speciesId
             },
             cancellationToken);
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Cleanup Callback Registration
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Registers cleanup callbacks with lib-resource for all resource references.
-    /// Call this during service startup or when the IResourceClient becomes available.
-    /// </summary>
-    /// <param name="resourceClient">The resource service client.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if all callbacks were registered successfully.</returns>
-    public static async Task<bool> RegisterResourceCleanupCallbacksAsync(
-        IResourceClient resourceClient,
-        CancellationToken cancellationToken = default)
-    {
-        var allSucceeded = true;
-
-        // Register cleanup callback for realm references
-        try
-        {
-            await resourceClient.DefineCleanupCallbackAsync(
-                new DefineCleanupRequest
-                {
-                    ResourceType = "realm",
-                    SourceType = "species",
-                    OnDeleteAction = OnDeleteAction.Restrict,
-                    ServiceName = "species",
-                    CallbackEndpoint = "/species/cleanup-by-realm",
-                    PayloadTemplate = "{\"realmId\": \"{{resourceId}}\"}",
-                    Description = "Cleanup species entities referencing deleted realm"
-                },
-                cancellationToken);
-        }
-        catch (ApiException)
-        {
-            allSucceeded = false;
-        }
-
-        return allSucceeded;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

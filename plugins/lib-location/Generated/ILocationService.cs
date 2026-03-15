@@ -155,11 +155,6 @@ public partial interface ILocationService : IBannouService
         Task<(StatusCodes, LocationBaseArchive?)> GetLocationCompressDataAsync(GetLocationCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// CleanupByRealm operation
-        /// </summary>
-        Task<(StatusCodes, CleanupByRealmResponse?)> CleanupByRealmAsync(CleanupByRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
         /// MigrateByRealm operation
         /// </summary>
         Task<(StatusCodes, MigrateByRealmResponse?)> MigrateByRealmAsync(MigrateByRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));

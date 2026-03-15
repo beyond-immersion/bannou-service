@@ -372,6 +372,45 @@ instanceEventBatchMaxSize:
 
 **Structural test**: `BatchLifecycleEntities_HaveBatchEventPublications` validates that `batch: true` entities have batch publications and no individual lifecycle publications.
 
+### Resource Migration Callbacks (RESTRICT Policy)
+
+**When to use**: When a consumer's dependent data is too valuable to delete when the parent resource dies (e.g., characters are too important to destroy when a realm is merged — they should be moved to the target realm instead).
+
+**How it works**: The consumer declares `onDelete: restrict` with a `migrate:` callback in its `x-references` schema. When the parent resource's owner invokes `/resource/migrate/execute`, lib-resource calls all registered migrate callbacks to reassign dependents from the source to the target. After migration, the RESTRICT references are gone and deletion can proceed normally via `/resource/cleanup/execute`.
+
+**The three-policy model** — each consumer independently chooses its policy:
+
+| Policy | Consumer declares | What happens at deletion | Example |
+|--------|------------------|-------------------------|---------|
+| CASCADE | `cleanup:` callback | Dependent data is deleted | Actor → Character, RealmHistory → Realm |
+| RESTRICT | `migrate:` callback | Deletion blocked until migration moves references | Character → Realm, Location → Realm |
+| DETACH | `cleanup:` callback | Reference is nullified, entity continues to exist | (future: optional associations) |
+
+A single resource type (e.g., realm) can have a **mix of all three policies** from different consumers. The flow is: migrate RESTRICT → check RESTRICT cleared → execute CASCADE/DETACH → delete.
+
+**Migrate callback endpoint shape** — receives source and target resource IDs:
+
+```csharp
+public async Task<(StatusCodes, MigrateByRealmResponse?)> MigrateByRealmAsync(
+    MigrateByRealmRequest body, CancellationToken ct = default)
+{
+    // Load all entities referencing the source realm
+    // Transfer each to the target realm (reuse existing transfer logic)
+    // Per-item error isolation (T7)
+    return (StatusCodes.OK, new MigrateByRealmResponse { Migrated = count, Failed = failCount });
+}
+```
+
+**Payload template placeholders**: `{{sourceResourceId}}` and `{{targetResourceId}}` (vs cleanup's `{{resourceId}}`).
+
+**Generated code**: `RegisterResourceMigrateCallbacksAsync()` in `{Service}ReferenceTracking.cs` — mirrors `RegisterResourceCleanupCallbacksAsync()` for cleanup.
+
+**Structural enforcement**:
+- `XReferences_MustDeclareExplicitOnDeletePolicy` — every entry must explicitly set `onDelete`
+- `XReferences_CallbackPatternMatchesOnDeletePolicy` — RESTRICT must have `migrate:` only; CASCADE/DETACH must have `cleanup:` only
+
+**Reference implementation**: Character/Location/Species `x-references` targeting realm with `onDelete: restrict` + `migrate:` callbacks. Realm's `MergeRealmsAsync` calls `ExecuteMigrateAsync` via lib-resource instead of direct L2 client orchestration.
+
 ---
 
 ## 3. Background Worker Helpers

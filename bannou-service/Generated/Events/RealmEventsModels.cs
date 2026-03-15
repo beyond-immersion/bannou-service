@@ -31,7 +31,10 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published when a deprecated realm is merged into another realm
+/// Published when a deprecated realm is merged into another realm.
+/// <br/>Migration is delegated to lib-resource which calls registered migrate callbacks
+/// <br/>(species, location, character each own their own migration logic).
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RealmMergedEvent : BaseServiceEvent
@@ -74,40 +77,16 @@ public partial class RealmMergedEvent : BaseServiceEvent
     public string? TargetRealmCode { get; set; } = default!;
 
     /// <summary>
-    /// Number of species successfully migrated to the target realm
+    /// Number of migrate callbacks that completed successfully
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("speciesMigrated")]
-    public int SpeciesMigrated { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("totalMigrated")]
+    public int TotalMigrated { get; set; } = default!;
 
     /// <summary>
-    /// Number of species that failed to migrate
+    /// Number of migrate callbacks that failed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("speciesFailed")]
-    public int SpeciesFailed { get; set; } = default!;
-
-    /// <summary>
-    /// Number of locations successfully transferred to the target realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("locationsMigrated")]
-    public int LocationsMigrated { get; set; } = default!;
-
-    /// <summary>
-    /// Number of locations that failed to transfer
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("locationsFailed")]
-    public int LocationsFailed { get; set; } = default!;
-
-    /// <summary>
-    /// Number of characters successfully transferred to the target realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("charactersMigrated")]
-    public int CharactersMigrated { get; set; } = default!;
-
-    /// <summary>
-    /// Number of characters that failed to transfer
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("charactersFailed")]
-    public int CharactersFailed { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("totalFailed")]
+    public int TotalFailed { get; set; } = default!;
 
 }
 

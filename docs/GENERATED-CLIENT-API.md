@@ -17,7 +17,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Auth Service API](#auth) | `client.Auth` | 18 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Bannou Broadcast Service API](#broadcast) | `client.Broadcast` | 22 | Platform streaming integration and RTMP output management se... |
-| [Bannou Character Service API](#character) | `client.Character` | 12 | Character management service for game worlds. |
+| [Bannou Character Service API](#character) | `client.Character` | 13 | Character management service for game worlds. |
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
@@ -37,7 +37,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [License Service API](#license) | `client.License` | 20 | Grid-based progression boards via itemized contracts. |
-| [Bannou Location Service API](#location) | `client.Location` | 25 | Location management service for game worlds. |
+| [Bannou Location Service API](#location) | `client.Location` | 26 | Location management service for game worlds. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 19 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
 | [Bannou Mesh Service API](#mesh) | `client.Mesh` | 8 | Native service mesh plugin providing direct service-to-servi... |
@@ -51,11 +51,11 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Realm Service API](#realm) | `client.Realm` | 13 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 21 | Relationship and relationship type management service for en... |
-| [Resource Lifecycle API](#resource) | `client.Resource` | 17 | Resource reference tracking and lifecycle management. |
+| [Resource Lifecycle API](#resource) | `client.Resource` | 20 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
 | [Seed Service API](#seed) | `client.Seed` | 24 | Generic progressive growth entity service (L2 GameFoundation... |
-| [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
+| [Bannou Species Service API](#species) | `client.Species` | 14 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 12 | Repository pattern state management with Redis and MySQL bac... |
 | [Status Service API](#status) | `client.Status` | 19 | Unified entity effects query layer for temporary contract-ma... |
 | [Storyline Composer API](#storyline) | `client.Storyline` | 16 | Seeded narrative generation from compressed archives using t... |
@@ -479,6 +479,12 @@ Character management service for game worlds.
 | `DeleteCharacterEventAsync` | `DeleteCharacterRequest` | *(fire-and-forget)* | Delete character (permanent removal) |
 | `ListCharactersAsync` | `ListCharactersRequest` | `CharacterListResponse` | List characters with filtering |
 | `TransfercharactertorealmAsync` | `TransferCharacterToRealmRequest` | `CharacterResponse` | Transfer character to a different realm |
+
+### Character Resource Migration
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `MigratebyrealmAsync` | `MigrateByRealmRequest` | `MigrateByRealmResponse` | Migrate all characters from one realm to another |
 
 ---
 
@@ -1527,6 +1533,12 @@ Location management service for game worlds.
 | `ListEntitiesatlocationAsync` | `ListEntitiesAtLocationRequest` | `ListEntitiesAtLocationResponse` | List entities currently at a location |
 | `ClearentitypositionAsync` | `ClearEntityPositionRequest` | `ClearEntityPositionResponse` | Remove entity presence from its current location |
 
+### Location Resource Migration
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `MigratebyrealmAsync` | `MigrateByRealmRequest` | `MigrateByRealmResponse` | Migrate all locations from one realm to another |
+
 ---
 
 ## Bannou Mapping Service API {#mapping}
@@ -2061,6 +2073,14 @@ Resource reference tracking and lifecycle management.
 | `ListCompresscallbacksAsync` | `ListCompressCallbacksRequest` | `ListCompressCallbacksResponse` | List registered compression callbacks |
 | `GetArchiveAsync` | `GetArchiveRequest` | `GetArchiveResponse` | Retrieve compressed archive |
 
+### Migration Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `DefinemigratecallbackAsync` | `DefineMigrateCallbackRequest` | `DefineMigrateCallbackResponse` | Define a migrate callback for a resource type |
+| `ExecutemigrateAsync` | `ExecuteMigrateRequest` | `ExecuteMigrateResponse` | Execute migration for a resource |
+| `ListMigratecallbacksAsync` | `ListMigrateCallbacksRequest` | `ListMigrateCallbacksResponse` | List registered migrate callbacks |
+
 ### Reference Management
 
 | Method | Request | Response | Summary |
@@ -2277,6 +2297,12 @@ Species management service for game worlds.
 | `AddspeciestorealmAsync` | `AddSpeciesToRealmRequest` | `SpeciesResponse` | Add species to a realm |
 | `RemovespeciesfromrealmAsync` | `RemoveSpeciesFromRealmRequest` | `SpeciesResponse` | Remove species from a realm |
 | `SeedspeciesAsync` | `SeedSpeciesRequest` | `SeedSpeciesResponse` | Seed species from configuration |
+
+### Species Resource Migration
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `MigratebyrealmAsync` | `MigrateByRealmRequest` | `MigrateByRealmResponse` | Migrate all species realm associations from one realm to another |
 
 ---
 
@@ -2630,7 +2656,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 56
-- **Total methods**: 923
+- **Total methods**: 929
 
 ---
 

@@ -1,5 +1,4 @@
 using BeyondImmersion.BannouService.Services;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -28,12 +27,12 @@ public abstract class StandardServicePlugin<TService> : BaseBannouPlugin
     /// Configure application pipeline - stores service provider for lifecycle management.
     /// Override to add custom pipeline configuration, but call base.ConfigureApplication first.
     /// </summary>
-    public override void ConfigureApplication(WebApplication app)
+    public override void ConfigureApplication(IServiceProvider services)
     {
         Logger?.LogDebug("Configuring application pipeline");
 
         // Store service provider for lifecycle management
-        ServiceProvider = app.Services;
+        ServiceProvider = services;
 
         Logger?.LogDebug("Application pipeline configured");
     }

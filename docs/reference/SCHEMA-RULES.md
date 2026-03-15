@@ -404,31 +404,67 @@ Each helper config class:
 
 ### x-references (Resource Reference Tracking)
 
-Defined in consumer service API schemas (`*-api.yaml`), declares references to foundational resources for lifecycle management via lib-resource. Higher-layer services (L3/L4) declare their references to foundational resources (L2); the code generator produces helper methods for publishing reference events and registering cleanup callbacks.
+Defined in consumer service API schemas (`*-api.yaml`), declares references to foundational resources for lifecycle management via lib-resource. Higher-layer services (L2/L3/L4) declare their references to foundational resources; the code generator produces helper methods for reference registration and cleanup/migration callback registration.
 
+Each entry declares an `onDelete` policy that determines which callback section is required:
+
+| Policy | Meaning | Required Callback | Forbidden Callback |
+|--------|---------|-------------------|-------------------|
+| `cascade` | Delete dependent data when resource is deleted | `cleanup:` | `migrate:` |
+| `restrict` | Block deletion; require migration to unblock | `migrate:` | `cleanup:` |
+| `detach` | Nullify the reference when resource is deleted | `cleanup:` | `migrate:` |
+
+**CASCADE/DETACH example** (cleanup callback — delete or nullify dependents):
 ```yaml
 info:
   x-references:
     - target: character                         # Resource type being referenced (opaque string)
       sourceType: actor                         # This service's entity type (opaque string)
       field: characterId                        # Field holding the reference (documentation)
-      onDelete: cascade                         # cascade | restrict | detach (intent)
-      cleanup:
+      onDelete: cascade                         # REQUIRED: explicit policy declaration
+      cleanup:                                  # Required for cascade/detach
         endpoint: /actor/cleanup-by-character   # Cleanup callback endpoint
         payloadTemplate: '{"characterId": "{{resourceId}}"}'
+```
+
+**RESTRICT example** (migrate callback — move dependents to a new parent):
+```yaml
+info:
+  x-references:
+    - target: realm                             # Resource type being referenced
+      sourceType: character                     # This service's entity type
+      field: realmId                            # Field holding the reference
+      onDelete: restrict                        # Block deletion; migrate to unblock
+      migrate:                                  # Required for restrict
+        endpoint: /character/migrate-by-realm   # Migration callback endpoint
+        payloadTemplate: '{"sourceRealmId": "{{sourceResourceId}}", "targetRealmId": "{{targetResourceId}}"}'
 ```
 
 **Field definitions**:
 - `target`: Resource type (must match `resourceType` in the foundational service's `x-resource-lifecycle`)
 - `sourceType`: This service's entity type (opaque string)
 - `field`: Field name holding the reference (informational)
-- `onDelete`: `cascade` (delete dependents), `restrict` (block deletion if references exist), `detach` (nullify reference on deletion)
-- `cleanup.endpoint`: Service endpoint called during cleanup
+- `onDelete`: `cascade` (delete dependents), `restrict` (block deletion, use migrate), `detach` (nullify reference). **REQUIRED** — implicit defaulting is forbidden; structural test `XReferences_MustDeclareExplicitOnDeletePolicy` enforces this
+- `cleanup.endpoint`: Service endpoint called during resource deletion (CASCADE/DETACH only)
 - `cleanup.payloadTemplate`: JSON template with `{{resourceId}}` placeholder
+- `migrate.endpoint`: Service endpoint called during resource migration (RESTRICT only)
+- `migrate.payloadTemplate`: JSON template with `{{sourceResourceId}}` and `{{targetResourceId}}` placeholders
+
+**Policy-callback exclusivity**: RESTRICT entries MUST have `migrate:` and MUST NOT have `cleanup:` (RESTRICT blocks deletion — cleanup callbacks can never fire). CASCADE/DETACH entries MUST have `cleanup:` and MUST NOT have `migrate:`. Structural test `XReferences_CallbackPatternMatchesOnDeletePolicy` enforces this.
+
+**Decision tree for choosing onDelete policy**:
+
+| Test (apply in order) | Result | Examples |
+|---|---|---|
+| Dependent is sub-entity data with no meaning without parent | **cascade** | Actor → Character, CharacterPersonality → Character, RealmHistory → Realm |
+| Dependent is a significant entity that can be migrated to a different parent | **restrict** | Character → Realm, Location → Realm, Species → Realm |
+| Reference is nullable/optional — entity can exist without the parent | **detach** | (future: optional realm assignment) |
 
 **Generated output** (`lib-{service}/Generated/{Service}ReferenceTracking.cs`):
 - Helper methods: `Register{Target}ReferenceAsync()`, `Unregister{Target}ReferenceAsync()`
-- Cleanup callback registration via `RegisterResourceCleanupCallbacksAsync()` static method, called from plugin startup (`OnRunningAsync`)
+- Cleanup callback registration: `RegisterResourceCleanupCallbacksAsync()` — generated when any entry has `cleanup:` section
+- Migration callback registration: `RegisterResourceMigrateCallbacksAsync()` — generated when any entry has `migrate:` section
+- Both are static methods called from plugin startup (`OnRunningAsync`)
 
 See [Helpers & Common Patterns § Test Validators](HELPERS-AND-COMMON-PATTERNS.md#13-test-validators) for `ResourceCleanupValidator` which verifies services with `[ResourceCleanupRequired]` implement their declared cleanup methods.
 

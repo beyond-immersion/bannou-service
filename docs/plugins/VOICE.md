@@ -312,21 +312,19 @@ SHOWTIME_SERVICE_ENABLED=true
 
 ## Potential Extensions
 
-1. **RTP server pool**: Multiple RTPEngine instances with load-based allocation. *(Duplicate of Stubs #2 -- tracked by #258)*
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/258 -->
-2. **Room quality metrics**: Track audio quality, latency, packet loss per participant.
+1. **Room quality metrics**: Track audio quality, latency, packet loss per participant.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/400 -->
-3. **Recording support**: Integrate RTPEngine recording for compliance/replay.
+2. **Recording support**: Integrate RTPEngine recording for compliance/replay.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/401 -->
-4. **Mute state synchronization**: Currently `IsMuted` is tracked but not synchronized across peers.
+3. **Mute state synchronization**: Currently `IsMuted` is tracked but not synchronized across peers.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/402 -->
-5. **ICE trickle support**: Current implementation sends all ICE candidates in initial SDP; could support trickle ICE for faster connections.
+4. **ICE trickle support**: Current implementation sends all ICE candidates in initial SDP; could support trickle ICE for faster connections.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/403 -->
-6. **Spatial audio**: For in-game voice (Arcadia bard performances, dungeon master communication), voice rooms could carry spatial position metadata. Clients mix audio volumes based on character proximity. Voice wouldn't compute audio -- it would relay position metadata alongside SDP, and clients would handle spatial mixing locally.
+5. **Spatial audio**: For in-game voice (Arcadia bard performances, dungeon master communication), voice rooms could carry spatial position metadata. Clients mix audio volumes based on character proximity. Voice wouldn't compute audio -- it would relay position metadata alongside SDP, and clients would handle spatial mixing locally.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/547 -->
-7. **Voice-to-text transcription**: For accessibility. Voice audio routed through a speech-to-text service, with transcriptions pushed as client events alongside the audio stream. Privacy-sensitive: requires separate consent from broadcast consent.
+6. **Voice-to-text transcription**: For accessibility. Voice audio routed through a speech-to-text service, with transcriptions pushed as client events alongside the audio stream. Privacy-sensitive: requires separate consent from broadcast consent.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/548 -->
-8. **NPC voice integration**: When combined with text-to-speech services, NPC dialogue could be delivered through voice rooms. A dungeon master's commands to their dungeon could be vocalized. This would require voice rooms to accept synthetic audio sources alongside human participants.
+7. **NPC voice integration**: When combined with text-to-speech services, NPC dialogue could be delivered through voice rooms. A dungeon master's commands to their dungeon could be vocalized. This would require voice rooms to accept synthetic audio sources alongside human participants.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/549 -->
 
 ---
@@ -355,6 +353,8 @@ SHOWTIME_SERVICE_ENABLED=true
 1. **RTPEngine cookie mismatch correctness bug**: The RTPEngine UDP client uses raw UDP with bencode encoding. Cookie mismatch responses (stale data from previous timed-out requests) are logged but used anyway, meaning the service can act on wrong response data. The triage on #404 confirms this is a correctness bug requiring a loop-receive until the correct cookie arrives or timeout expires, discarding mismatched responses.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/404 -->
 
+2. **SipEndpointRegistry local cache uses inline invalidation (IMPLEMENTATION TENETS — Multi-Instance Safety)**: `SipEndpointRegistry` maintains a local `ConcurrentDictionary` cache synchronized with Redis on every mutation. Per IMPLEMENTATION TENETS, services using `ConcurrentDictionary` caches MUST invalidate via self-event-subscription, not inline method calls. Inline invalidation only reaches the node that processed the request — other nodes' local caches serve stale participant data until they next read from Redis. Voice publishes `voice.peer.joined` and `voice.peer.left` events but does not subscribe to its own events for cache invalidation. Fix: SipEndpointRegistry should subscribe to Voice's own peer lifecycle events via `IEventConsumer` for cross-node cache invalidation.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **SDP answer in SdpOffer field**: The `VoicePeerUpdatedEvent` reuses the `SdpOffer` field in `VoicePeerInfo` to carry the SDP answer from `/voice/peer/answer`. This is intentional - the same model represents both directions of the WebRTC handshake.
@@ -363,15 +363,13 @@ SHOWTIME_SERVICE_ENABLED=true
 
 3. **P2P upgrade threshold is "exceeds", not "at"**: `ShouldUpgradeToScaledAsync` triggers when `currentParticipantCount > maxP2P`. A room AT capacity is still P2P; only when the next participant joins does upgrade trigger. This is deliberate to avoid unnecessary upgrades.
 
-4. **Local cache + Redis dual storage**: `SipEndpointRegistry` maintains a local `ConcurrentDictionary` cache that is synchronized with Redis on every mutation. This is for performance but means state can be transiently inconsistent across service instances.
+4. **Session-based privacy**: All participant tracking uses `sessionId` (WebSocket session) rather than `accountId` to prevent leaking account information. Display names are opt-in.
 
-5. **Session-based privacy**: All participant tracking uses `sessionId` (WebSocket session) rather than `accountId` to prevent leaking account information. Display names are opt-in.
+5. **Permission state set for BOTH directions**: When joining a room with existing peers, `voice:ringing` is set for both the joining session AND all existing sessions. This enables bidirectional SDP exchange.
 
-6. **Permission state set for BOTH directions**: When joining a room with existing peers, `voice:ringing` is set for both the joining session AND all existing sessions. This enables bidirectional SDP exchange.
+6. **Permission state race on peer leave during join**: The sequential `voice:ringing` loop in `NotifyPeerJoinedAsync` can set state on a session that left between the participant list fetch and the state update. This is benign: every `UpdateSessionStateAsync` call is try-catch wrapped (logs warning), and the leaving session's own `LeaveVoiceRoomAsync` path clears its permission state independently.
 
-7. **Permission state race on peer leave during join**: The sequential `voice:ringing` loop in `NotifyPeerJoinedAsync` can set state on a session that left between the participant list fetch and the state update. This is benign: every `UpdateSessionStateAsync` call is try-catch wrapped (logs warning), and the leaving session's own `LeaveVoiceRoomAsync` path clears its permission state independently.
-
-8. **Realm-agnostic by design (L3 boundary)**: Voice rooms have zero realm or game concept awareness. The same voice room primitive manifests differently per realm via client rendering — explicit voice chat in Omega (cyberpunk), "speaking at a gathering" or "bard performing for a crowd" in Arcadia. Realm-specific presentation is entirely a lib-showtime (L4) and client concern. This is an architectural boundary enforced by Voice's L3 AppFeatures layer: it cannot depend on L2 GameFoundation services like Realm.
+7. **Realm-agnostic by design (L3 boundary)**: Voice rooms have zero realm or game concept awareness. The same voice room primitive manifests differently per realm via client rendering — explicit voice chat in Omega (cyberpunk), "speaking at a gathering" or "bard performing for a crowd" in Arcadia. Realm-specific presentation is entirely a lib-showtime (L4) and client concern. This is an architectural boundary enforced by Voice's L3 AppFeatures layer: it cannot depend on L2 GameFoundation services like Realm.
 
 ### Design Considerations (Requires Planning)
 
@@ -380,6 +378,8 @@ SHOWTIME_SERVICE_ENABLED=true
 
 2. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/405 -->
+
+3. **StunServers comma-delimited string configuration**: `StunServers` is documented as "Comma-separated STUN URLs for WebRTC" with a string default. Per IMPLEMENTATION TENETS (Configuration-First), comma-delimited strings parsed at runtime bypass schema validation and type safety. If the configuration schema defines this as a plain string, it should be an array type instead. However, STUN URLs are inherently string values (not enums), so this is at the boundary of the rule — the concern is structural (array vs. parseable string), not type-narrowing. Verify the schema definition and consider migrating to an array type if it is indeed a single string field.
 
 ---
 

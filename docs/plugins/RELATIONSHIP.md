@@ -242,6 +242,7 @@ State Store Layout
 ### Bugs (Fix Immediately)
 
 1. **Soft-delete pattern for ended relationships violates Foundation Tenets (Deletion Finality)**: The overview describes "soft-deletion with recreate capability" — `EndRelationship` sets `EndedAt` while retaining the record indefinitely, and publishes `relationship.deleted`. This is the exact soft-delete anti-pattern prohibited by Foundation Tenets: "Soft-delete patterns (setting a `DeletedAt`/`IsDeleted` flag while retaining the record indefinitely) are forbidden." The only exception is Account with a time-limited retention worker; no such worker exists for relationships. Instance data (which explicitly includes "relationships" per Implementation Tenets § Deprecation Lifecycle) requires immediate hard delete. The cascade cleanup endpoint (`CleanupByEntity`) also "ends" rather than hard-deletes, compounding the issue. Fix: hard-delete relationship records when ended, and preserve historical relationship data through an appropriate mechanism (e.g., character-history backstory entries, resource compression callbacks) rather than retaining soft-deleted records in the primary store.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-15:https://github.com/beyond-immersion/bannou-service/issues/661 -->
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -300,6 +301,7 @@ State Store Layout
 - [#510](https://github.com/beyond-immersion/bannou-service/issues/510): Unbounded index growth from ended relationships — entity and type indexes accumulate IDs indefinitely, includes orphaned entity-idx after cascade deletion (Design Consideration #2). Orphaned entity-idx cleanup in `CleanupByEntityAsync` is trivially fixable independent of the broader design
 - [#544](https://github.com/beyond-immersion/bannou-service/issues/544): Game-time auto-population for `startedAt`/`endedAt` fields — cross-cutting with Character Encounter. Key open question: relationships are cross-realm (no single clock applies), so game-time may not be applicable here
 - [#564](https://github.com/beyond-immersion/bannou-service/issues/564): Expand `x-references` cleanup to cover Organization and Faction entity types (when those plugins are implemented)
+- [#661](https://github.com/beyond-immersion/bannou-service/issues/661): Hard-delete ended relationships (T28 deletion finality) — soft-delete pattern violates Foundation Tenets; requires design decision on historical data preservation mechanism (Bug #1)
 
 ### Active
 

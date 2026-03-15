@@ -47,9 +47,6 @@ info:
     sourceType: location
     field: realmId
     onDelete: restrict
-    cleanup:
-      endpoint: /location/cleanup-by-realm
-      payloadTemplate: '{"realmId": "{{resourceId}}"}'
     migrate:
       endpoint: /location/migrate-by-realm
       payloadTemplate: '{"sourceRealmId": "{{sourceResourceId}}", "targetRealmId": "{{targetResourceId}}"}'
@@ -746,31 +743,6 @@ paths:
           description: Location is not deprecated (cannot compress active locations)
         '404':
           description: Location not found
-
-  /location/cleanup-by-realm:
-    post:
-      summary: Delete all locations in a realm
-      operationId: cleanupByRealm
-      tags:
-      - Location Resource Cleanup
-      description: |
-        Called by lib-resource during realm deletion cleanup.
-        Deletes all locations belonging to the specified realm (children first).
-        Publishes location.deleted events for each removed location.
-      x-permissions: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CleanupByRealmRequest'
-      responses:
-        '200':
-          description: Locations cleaned up
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CleanupByRealmResponse'
 
   /location/migrate-by-realm:
     post:
@@ -1790,35 +1762,8 @@ components:
           description: Location the entity was removed from (null if entity had no active presence)
 
     # ===========================================================================
-    # Resource Cleanup & Migration Models
+    # Resource Migration Models
     # ===========================================================================
-
-    CleanupByRealmRequest:
-      description: Request to delete all locations in a realm (called by lib-resource cleanup)
-      type: object
-      additionalProperties: false
-      required:
-      - realmId
-      properties:
-        realmId:
-          type: string
-          format: uuid
-          description: ID of the realm whose locations should be deleted
-
-    CleanupByRealmResponse:
-      description: Result of realm location cleanup
-      type: object
-      additionalProperties: false
-      required:
-      - deleted
-      - failed
-      properties:
-        deleted:
-          type: integer
-          description: Number of locations successfully deleted
-        failed:
-          type: integer
-          description: Number of locations that failed to delete
 
     MigrateByRealmRequest:
       description: Request to migrate all locations from one realm to another (called by lib-resource migrate)

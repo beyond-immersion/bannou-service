@@ -338,7 +338,8 @@ public static class Program
 
             // Configure plugin application pipeline
             Logger.Log(LogLevel.Debug, null, "Configuring plugin application pipeline...");
-            PluginLoader?.ConfigureApplication(webApp);
+            PluginLoader?.ConfigureApplication(webApp.Services);
+            PluginLoader?.ConfigureWebPipeline(webApp);
 
             // Resolve services centrally for plugins
             Logger.Log(LogLevel.Debug, null, "Resolving plugin services from DI container...");

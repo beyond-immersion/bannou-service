@@ -13,7 +13,7 @@ Distributed actor management and execution (L2 GameFoundation) for NPC brains, e
 
 ## Character {#character}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/CHARACTER.md](plugins/CHARACTER.md) | **Map**: [docs/maps/CHARACTER.md](maps/CHARACTER.md)
+**Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/CHARACTER.md](plugins/CHARACTER.md) | **Map**: [docs/maps/CHARACTER.md](maps/CHARACTER.md)
 
 The Character service (L2 GameFoundation) manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from lib-relationship), and compression/archival for dead characters via lib-resource. Per the service hierarchy, Character cannot depend on L4 services (personality, history, encounters) -- callers needing that data should aggregate from L4 services directly.
 
@@ -65,7 +65,7 @@ Dual-model item management (L2 GameFoundation) with templates (definitions/proto
 
 ## Location {#location}
 
-**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 25 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md) | **Map**: [docs/maps/LOCATION.md](maps/LOCATION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 26 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md) | **Map**: [docs/maps/LOCATION.md](maps/LOCATION.md)
 
 Hierarchical location management (L2 GameFoundation) for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation, circular reference prevention, cascading depth updates, code-based lookups, and bulk seeding with two-pass parent resolution.
 
@@ -111,7 +111,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 ## Species {#species}
 
-**Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/SPECIES.md](plugins/SPECIES.md) | **Map**: [docs/maps/SPECIES.md](maps/SPECIES.md)
+**Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml` | **Endpoints**: 14 | **Deep Dive**: [docs/plugins/SPECIES.md](plugins/SPECIES.md) | **Map**: [docs/maps/SPECIES.md](maps/SPECIES.md)
 
 Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. Manages playable and NPC races with trait modifiers, realm-specific availability, and a full deprecation lifecycle (deprecate, merge, delete). Species are globally defined but assigned to specific realms, enabling different worlds to offer different playable options. Supports bulk seeding from configuration and cross-service character reference checking to prevent orphaned data.
 
@@ -119,7 +119,7 @@ Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. 
 
 **Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml` | **Endpoints**: 7 | **Deep Dive**: [docs/plugins/SUBSCRIPTION.md](plugins/SUBSCRIPTION.md) | **Map**: [docs/maps/SUBSCRIPTION.md](maps/SUBSCRIPTION.md)
 
-The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing, and pushes `subscription.status_changed` client events to connected players via WebSocket account-session routing. Includes a background expiration worker that periodically deactivates expired subscriptions. Internal-only, serves as the canonical source for subscription state.
+The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing, and pushes `subscription.status-changed` client events to connected players via WebSocket account-session routing. Includes a background expiration worker that periodically deactivates expired subscriptions. Serves as the canonical source for subscription state. Most mutating endpoints are service-to-service (admin/internal), but account listing, subscription get, and cancel are user-facing.
 
 Client events are routed via `IEntitySessionRegistry.PublishToEntitySessionsAsync("account", accountId, ...)` to all WebSocket sessions for the affected account. This is especially important for background expiration (the player didn't initiate the state change) and admin renewals.
 
@@ -138,7 +138,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Services in layer**: 18
-- **Endpoints in layer**: 310
+- **Endpoints in layer**: 313
 
 ---
 

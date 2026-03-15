@@ -35,9 +35,6 @@ info:
     sourceType: character
     field: realmId
     onDelete: restrict
-    cleanup:
-      endpoint: /character/cleanup-by-realm
-      payloadTemplate: '{"realmId": "{{resourceId}}"}'
     migrate:
       endpoint: /character/migrate-by-realm
       payloadTemplate: '{"sourceRealmId": "{{sourceResourceId}}", "targetRealmId": "{{targetResourceId}}"}'
@@ -911,49 +908,6 @@ paths:
         by Resource service during compression.\\nReturns core character data (name, dates, family summary).\\nReturns BadRequest
         if character is alive - only dead characters can be compressed.\\n\",\n    \"tags\": [\n        \"Character Compression\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCompressData\"\n}"
-  /character/cleanup-by-realm:
-    post:
-      summary: Delete all characters in a realm
-      operationId: cleanupByRealm
-      tags:
-      - Character Resource Cleanup
-      description: |
-        Called by lib-resource during realm deletion cleanup.
-        Deletes all characters belonging to the specified realm.
-        Publishes character.deleted events for each removed character.
-      x-permissions: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CleanupByRealmRequest'
-      responses:
-        '200':
-          description: Characters cleaned up
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CleanupByRealmResponse'
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByRealmRequest\"\
-        ,\n    \"$defs\": {\n        \"CleanupByRealmRequest\": {\n            \"description\": \"Request to delete all characters
-        in a realm (called by lib-resource cleanup)\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the realm whose characters should be deleted\"\n                }\n\
-        \            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByRealmResponse\"\
-        ,\n    \"$defs\": {\n        \"CleanupByRealmResponse\": {\n            \"description\": \"Result of realm character
-        cleanup\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"deleted\",\n                \"failed\"\n            ],\n            \"properties\": {\n   \
-        \             \"deleted\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Number of characters successfully deleted\"\n                },\n                \"failed\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"description\": \"Number of characters that failed to delete\"\n\
-        \                }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Delete all characters in a realm\",\n    \"description\": \"Called by lib-resource
-        during realm deletion cleanup.\\nDeletes all characters belonging to the specified realm.\\nPublishes character.deleted
-        events for each removed character.\\n\",\n    \"tags\": [\n        \"Character Resource Cleanup\"\n    ],\n    \"\
-        deprecated\": false,\n    \"operationId\": \"cleanupByRealm\"\n}"
   /character/migrate-by-realm:
     post:
       summary: Migrate all characters from one realm to another
@@ -1567,31 +1521,6 @@ components:
           format: date-time
           nullable: true
           description: When refCount first reached zero (null if refCount > 0)
-    CleanupByRealmRequest:
-      description: Request to delete all characters in a realm (called by lib-resource cleanup)
-      type: object
-      additionalProperties: false
-      required:
-      - realmId
-      properties:
-        realmId:
-          type: string
-          format: uuid
-          description: ID of the realm whose characters should be deleted
-    CleanupByRealmResponse:
-      description: Result of realm character cleanup
-      type: object
-      additionalProperties: false
-      required:
-      - deleted
-      - failed
-      properties:
-        deleted:
-          type: integer
-          description: Number of characters successfully deleted
-        failed:
-          type: integer
-          description: Number of characters that failed to delete
     MigrateByRealmRequest:
       description: Request to migrate all characters from one realm to another (called by lib-resource migrate)
       type: object

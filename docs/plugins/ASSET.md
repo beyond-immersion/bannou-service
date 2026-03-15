@@ -16,6 +16,26 @@ The Asset service (L3 AppFeatures) provides storage, versioning, and distributio
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `assetType` | C (System State/Mode) | `AssetType` enum (`texture`, `model`, `audio`, `behavior`, `bundle`, `prefab`, `other`) | Classifies asset content for processing pipeline routing; values are system-defined pipeline categories, not game content types |
+| `processingStatus` | C (System State/Mode) | `ProcessingStatus` enum (`pending`, `processing`, `complete`, `failed`) | Tracks position in the processing pipeline state machine |
+| `processingType` (events) | C (System State/Mode) | `ProcessingTypeEnum` enum (`mipmaps`, `lod_generation`, `transcode`, `compression`, `validation`, `behavior_compile`) | Identifies which processing operation is being performed; system pipeline stages |
+| `bundleType` | C (System State/Mode) | `BundleType` enum (`source`, `metabundle`) | Distinguishes original bundles from server-composed super-bundles; structural system distinction |
+| `compression` | C (System State/Mode) | `CompressionType` enum (`lz4`, `lzma`, `none`) | Algorithm selection for bundle compression; system infrastructure choice |
+| `format` | C (System State/Mode) | `BundleFormat` enum (`bannou`, `zip`) | Wire format for bundle download; system transport choice |
+| `realm` | B (Game Content Type) | Opaque string (`GameRealm`) | Realm stub name (e.g., `"shared"`, `"realm-1"`); references Realm service data, not a fixed enum |
+| `owner` (events) | -- (Polymorphic identifier) | Plain string | Dual-purpose: accountId (UUID) for user uploads, service name string for service uploads; not a type field per se. Deviates from polymorphic pattern (`ownerType` + `ownerId`) because Asset predates the convention and upload ownership is event-only metadata (not used for queries or referential integrity). See Bug #2 below. |
+
+**Notes**:
+- Asset service has no `EntityType` enum fields (Category A). Ownership is tracked via plain string `owner` fields rather than typed entity references.
+- `GameRealm` is a plain `type: string` in the schema (not an enum), matching the opaque string pattern for game-configurable content.
+- `ProcessorError` enum (7 values: `UnsupportedContentType`, `UnsupportedFormat`, `FileTooLarge`, `MissingExtension`, `SourceNotFound`, `TranscodingFailed`, `ProcessingError`) exists in the internal processor interface (`IAssetProcessor.cs`) for validation/processing error categorization. API-level error reporting uses the generated `ProcessingErrorCode` enum from the schema.
+
+---
+
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -31,26 +51,6 @@ The Asset service (L3 AppFeatures) provides storage, versioning, and distributio
 | lib-procedural (planned) | Will store HDA templates and retrieve generated geometry assets via `IAssetClient` |
 
 No external services subscribe to asset events; all event consumption is internal.
-
----
-
-## Type Field Classification
-
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `assetType` | C (System State/Mode) | `AssetType` enum (`texture`, `model`, `audio`, `behavior`, `bundle`, `prefab`, `other`) | Classifies asset content for processing pipeline routing; values are system-defined pipeline categories, not game content types |
-| `processingStatus` | C (System State/Mode) | `ProcessingStatus` enum (`pending`, `processing`, `complete`, `failed`) | Tracks position in the processing pipeline state machine |
-| `processingType` (events) | C (System State/Mode) | `ProcessingTypeEnum` enum (`mipmaps`, `lod_generation`, `transcode`, `compression`, `validation`, `behavior_compile`) | Identifies which processing operation is being performed; system pipeline stages |
-| `bundleType` | C (System State/Mode) | `BundleType` enum (`source`, `metabundle`) | Distinguishes original bundles from server-composed super-bundles; structural system distinction |
-| `compression` | C (System State/Mode) | `CompressionType` enum (`lz4`, `lzma`, `none`) | Algorithm selection for bundle compression; system infrastructure choice |
-| `format` | C (System State/Mode) | `BundleFormat` enum (`bannou`, `zip`) | Wire format for bundle download; system transport choice |
-| `realm` | B (Game Content Type) | Opaque string (`GameRealm`) | Realm stub name (e.g., `"shared"`, `"realm-1"`); references Realm service data, not a fixed enum |
-| `owner` (events) | -- (Polymorphic identifier) | Plain string | Dual-purpose: accountId (UUID) for user uploads, service name string for service uploads; not a type field per se. Deviates from polymorphic pattern (`ownerType` + `ownerId`) because Asset predates the convention and upload ownership is event-only metadata (not used for queries or referential integrity). Tracked for future cleanup. |
-
-**Notes**:
-- Asset service has no `EntityType` enum fields (Category A). Ownership is tracked via plain string `owner` fields rather than typed entity references.
-- `GameRealm` is a plain `type: string` in the schema (not an enum), matching the opaque string pattern for game-configurable content.
-- `ProcessorError` enum (7 values: `UnsupportedContentType`, `UnsupportedFormat`, `FileTooLarge`, `MissingExtension`, `SourceNotFound`, `TranscodingFailed`, `ProcessingError`) exists in the internal processor interface (`IAssetProcessor.cs`) for validation/processing error categorization. API-level error reporting uses the generated `ProcessingErrorCode` enum from the schema.
 
 ---
 
@@ -197,16 +197,6 @@ Client Asset Service MinIO Storage
 
 ---
 
-## Background Workers
-
-| Worker | Purpose | Key Configuration |
-|--------|---------|-------------------|
-| `AssetProcessingWorker` | Polls for queued processing jobs, dispatches to content-type-specific processors (texture, model, audio) | `ProcessingQueueCheckIntervalSeconds`, `ProcessingBatchIntervalSeconds`, `ProcessorMaxConcurrentJobs` |
-| Bundle Cleanup Worker | Purges soft-deleted bundles past retention window from Redis metadata and MinIO storage | `BundleCleanupIntervalMinutes`, `DeletedBundleRetentionDays` |
-| ZIP Cache Cleanup Worker | Removes expired ZIP conversion cache entries | `ZipCacheCleanupIntervalMinutes`, `ZipCacheTtlHours` |
-
----
-
 ## Stubs & Unimplemented Features
 
 1. **Texture and Model Processors**: `TextureProcessor` and `ModelProcessor` are registered but contain minimal implementations (validation only, no actual format conversion or optimization). The `AudioProcessor` with FFmpeg integration is the only fully functional processor.
@@ -243,7 +233,15 @@ Client Asset Service MinIO Storage
 
 ### Bugs (Fix Immediately)
 
-*(No bugs identified.)*
+1. **Bundle soft-delete pattern violates Foundation Tenets**: Bundles use a `LifecycleStatus: Deleted` flag with `DeletedAt` timestamp, a configurable retention period (`DeletedBundleRetentionDays`), a `BundleCleanupWorker` for deferred permanent deletion, and a `RestoreBundle` endpoint for undelete. Foundation Tenets (T28 — Deletion Finality) explicitly prohibits soft-delete patterns; Account is the sole exception with time-limited retention. The correct pattern depends on whether bundles are referenced by ID from other services (→ Category A deprecation lifecycle) or not (→ immediate hard delete). The restore capability also violates T28 which says undo/restore is not supported at the entity level.
+
+2. **`owner` event field violates polymorphic typing and account identity boundary**: The `owner` field in Asset events is a plain string carrying either accountId (UUID) for user uploads or service name (string) for service uploads. This violates Foundation Tenets (T14 — polymorphic associations require `ownerType` enum + `ownerId`) and Foundation Tenets (T32 Rule 5 — polymorphic owner fields mixing accountId with service names are forbidden). Asset is not in the identity boundary. Fix: split into `ownerType` enum + `ownerId`; use `sessionId` instead of `accountId` for user-initiated operations per T32 Rule 4.
+
+3. **Orchestrator hard dependency violates L3 graceful degradation requirement**: `IOrchestratorClient` (L3) is constructor-injected as a hard dependency per the implementation map. Service Hierarchy rules require L3 dependencies to handle absence gracefully (asterisk rule: "Must handle absence gracefully"). Asset will crash at startup if Orchestrator is not enabled. Fix: use `IServiceProvider.GetService<IOrchestratorClient>()` with null check; degrade by disabling pool-based processing when Orchestrator is absent.
+
+4. **Comma-delimited string configuration properties**: `AdditionalProcessableContentTypes`, `AdditionalExtensionMappings`, and `AdditionalForbiddenContentTypes` are described as comma-separated strings requiring runtime parsing. Implementation Tenets (T21 — No Structured Data as Parseable Strings) prohibits comma-delimited strings for structured data. These are lists encoded as parseable strings. Fix: define as `type: array, items: { type: string }` in the configuration schema.
+
+5. **MinIO connectivity check uses try/finally instead of `using`**: (Reclassified from Intentional Quirk #9.) The `WaitForMinioConnectivityAsync` method uses explicit try/finally disposal for a temporary `MinioClient`. Implementation Tenets (T24 — Using Statement Pattern) requires `using` for method-scoped disposables and lists try/finally as a violation pattern. The rationale that "fluent API returns `this` from `Build()` making `using` semantics unclear" does not match a defined T24 exception. Fix: use `using var client = new MinioClient(...).Build();` — if `Build()` returns `this`, `using` correctly disposes the client.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -263,9 +261,7 @@ Client Asset Service MinIO Storage
 
 8. **MinIO startup retry with exponential backoff cap**: The plugin waits up to `MinioStartupMaxRetries` (default 30) retries with delays capped at `5 × MinioStartupRetryDelayMs` (default 10 seconds max). If MinIO is unavailable after all retries, the entire Asset service fails to start. Both values are configurable.
 
-9. **MinIO connectivity check uses try/finally dispose pattern**: The `WaitForMinioConnectivityAsync` method creates a temporary `MinioClient` with explicit try/finally disposal instead of `using` because the fluent API returns `this` from `Build()`, making `using` semantics unclear. The pattern is correct but differs from the standard `using` approach.
-
-10. **Processor ValidateAsync uses `await Task.CompletedTask` (compliant)**: `TextureProcessor.ValidateAsync`, `ModelProcessor.ValidateAsync`, `AudioProcessor.ValidateAsync`, and `MinioHealthCheck.CheckHealthAsync` use `await Task.CompletedTask` because they implement async interfaces with synchronous validation logic. This is the explicitly documented pattern for synchronous implementations of async interfaces. No performance concern — `ValueTask` or separate sync/async interface paths would add complexity for zero benefit.
+9. **Processor ValidateAsync uses `await Task.CompletedTask` (compliant)**: `TextureProcessor.ValidateAsync`, `ModelProcessor.ValidateAsync`, `AudioProcessor.ValidateAsync`, and `MinioHealthCheck.CheckHealthAsync` use `await Task.CompletedTask` because they implement async interfaces with synchronous validation logic. This is the explicitly documented pattern for synchronous implementations of async interfaces. No performance concern — `ValueTask` or separate sync/async interface paths would add complexity for zero benefit.
 
 ### Design Considerations (Requires Planning)
 
@@ -289,4 +285,3 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Resolved
 - **Bundle cleanup workers implemented**: The `BundleCleanupIntervalMinutes` and `ZipCacheCleanupIntervalMinutes` configuration properties drive active cleanup workers. The Asset portion of [#156](https://github.com/beyond-immersion/bannou-service/issues/156) (item #1: "no cleanup task") is resolved.
-- **#117 closed**: Tag hierarchy integration with lib-relationship was a hierarchy violation (L3 → L2). Closed with design alternatives noted in Potential Extensions #6.

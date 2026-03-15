@@ -38,6 +38,7 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 | lib-actor | Registers `x-references` cleanup callback (`/actor/cleanup-by-character`); cleanup invoked via lib-resource when character deleted |
 | lib-species | Calls `ICharacterClient` to check character references during species deprecation |
 | lib-realm | Calls `ICharacterClient` to check character references during realm deprecation |
+| lib-resource | Tracks realm RESTRICT references via `x-references`; calls `migrate-by-realm` during realm merge |
 | lib-quest | Calls `ICharacterClient` to validate character existence when accepting quests |
 | lib-obligation | Calls `ICharacterClient` for character data retrieval during obligation tracking |
 | lib-license | Calls `ICharacterClient` for character owner validation on license board operations |
@@ -127,8 +128,7 @@ None currently tracked.
 1. **Delete flow O(N) reference unregistration**: When Character is deleted, cleanup callbacks fire on 4 L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor). Each entity deletion in those services publishes an individual `resource.reference.unregistered` event. For characters with rich data (hundreds of encounters, many history entries), this creates O(N) message bus traffic. A batch unregistration endpoint in lib-resource would reduce this to a single operation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/351 -->
 
-2. **No realm deletion reference tracking via lib-resource** ([#591](https://github.com/beyond-immersion/bannou-service/issues/591)): Character stores `realmId` on every character but does not register RESTRICT references with lib-resource when creating or transferring characters. This means realm deletion cannot be blocked by the existence of characters in that realm. The intended workflow (deprecate → merge → delete) migrates characters before deletion, but the lib-resource safety net is missing. Species (#369) and Location (#590) have the same gap. Adding `x-references` with `target: realm` and `onDelete: restrict` would complete the realm deletion safety chain documented in REALM.md.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-15:https://github.com/beyond-immersion/bannou-service/issues/591 -->
+2. ~~**No realm deletion reference tracking via lib-resource**~~ ([#591](https://github.com/beyond-immersion/bannou-service/issues/591)): **COMPLETED** (2026-03-15) — Character now declares `x-references` with `target: realm` and `onDelete: restrict` in its schema. RESTRICT references are registered with lib-resource during character creation and transfer. Realm deletion is blocked if characters exist in that realm. A `migrate-by-realm` endpoint is available for lib-resource to call during realm merge, re-keying characters from the source realm to the target realm.
 
 
 ---

@@ -57,7 +57,7 @@ public class PluginLoader
     // Resolved service instances for enabled plugins only
     private readonly Dictionary<string, IBannouService> _resolvedServices = new();
 
-    // WebApplication reference for service startup (stored during ConfigureApplication)
+    // WebApplication reference for service startup (stored during ConfigureWebPipeline)
     private WebApplication? _webApp;
 
     // Types discovered for registration in DI
@@ -1260,14 +1260,12 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Configure application pipeline for enabled plugins only.
+    /// Configure application for enabled plugins only.
+    /// Receives IServiceProvider to support both web and embedded deployment modes.
     /// </summary>
-    /// <param name="app">Web application</param>
-    public void ConfigureApplication(WebApplication app)
+    /// <param name="services">The built service provider</param>
+    public void ConfigureApplication(IServiceProvider services)
     {
-        // Store WebApplication reference for use during service startup
-        _webApp = app;
-
         _logger.LogInformation("Configuring application pipeline for {EnabledCount} enabled plugins", _enabledPlugins.Count);
 
         foreach (var plugin in _enabledPlugins)
@@ -1275,7 +1273,7 @@ public class PluginLoader
             try
             {
                 _logger.LogDebug("Configuring application for plugin: {PluginName}", plugin.PluginName);
-                plugin.ConfigureApplication(app);
+                plugin.ConfigureApplication(services);
             }
             catch (Exception ex)
             {
@@ -1285,6 +1283,29 @@ public class PluginLoader
         }
 
         _logger.LogInformation("Application configuration complete for enabled plugins");
+    }
+
+    /// <summary>
+    /// Configure web-specific pipeline for enabled plugins (endpoint mapping, middleware, etc.).
+    /// Called only in web hosting mode. Stores the WebApplication reference for OnStartAsync.
+    /// </summary>
+    /// <param name="app">Web application</param>
+    public void ConfigureWebPipeline(WebApplication app)
+    {
+        _webApp = app;
+
+        foreach (var plugin in _enabledPlugins)
+        {
+            try
+            {
+                plugin.ConfigureWebPipeline(app);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to configure web pipeline for plugin: {PluginName}", plugin.PluginName);
+                throw;
+            }
+        }
     }
 
     /// <summary>

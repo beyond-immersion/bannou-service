@@ -133,32 +133,32 @@ This plugin does not consume external events. The Collection-to-Seed growth pipe
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| CreateSeed | POST /seed/create | user | seed, growth | seed.created |
-| GetSeed | POST /seed/get | user | - | - |
-| GetSeedsByOwner | POST /seed/get-by-owner | user | - | - |
-| ListSeeds | POST /seed/list | developer | - | - |
-| UpdateSeed | POST /seed/update | user | seed | seed.updated |
-| ActivateSeed | POST /seed/activate | user | seed (multiple) | seed.updated, seed.activated |
-| ArchiveSeed | POST /seed/archive | user | seed | seed.archived |
-| GetGrowth | POST /seed/growth/get | user | - | - |
-| RecordGrowth | POST /seed/growth/record | developer | growth, seed, bond, cap (delete) | seed.growth.updated, seed.phase.changed |
-| RecordGrowthBatch | POST /seed/growth/record-batch | developer | growth, seed, bond, cap (delete) | seed.growth.updated, seed.phase.changed |
-| GetGrowthPhase | POST /seed/growth/get-phase | user | - | - |
-| GetCapabilityManifest | POST /seed/capability/get-manifest | user | cap (write-through) | seed.capability.updated |
-| RegisterSeedType | POST /seed/type/register | developer | type | seed.type.created |
-| GetSeedType | POST /seed/type/get | user | - | - |
-| ListSeedTypes | POST /seed/type/list | user | - | - |
-| UpdateSeedType | POST /seed/type/update | developer | type, seed (recompute) | seed.type.updated, seed.phase.changed |
-| DeprecateSeedType | POST /seed/type/deprecate | developer | type | seed.type.updated |
-| UndeprecateSeedType | POST /seed/type/undeprecate | developer | type | seed.type.updated |
-| DeleteSeedType | POST /seed/type/delete | developer | type (delete) | seed.type.deleted |
-| InitiateBond | POST /seed/bond/initiate | user | bond | - |
-| ConfirmBond | POST /seed/bond/confirm | user | bond, seed (multiple) | seed.bond.formed |
-| GetBond | POST /seed/bond/get | user | - | - |
-| GetBondForSeed | POST /seed/bond/get-for-seed | user | - | - |
-| GetBondPartners | POST /seed/bond/get-partners | user | - | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| CreateSeed | POST /seed/create | generated | user | seed, growth | seed.created |
+| GetSeed | POST /seed/get | generated | user | - | - |
+| GetSeedsByOwner | POST /seed/get-by-owner | generated | user | - | - |
+| ListSeeds | POST /seed/list | generated | developer | - | - |
+| UpdateSeed | POST /seed/update | generated | user | seed | seed.updated |
+| ActivateSeed | POST /seed/activate | generated | user | seed (multiple) | seed.updated, seed.activated |
+| ArchiveSeed | POST /seed/archive | generated | user | seed | seed.archived |
+| GetGrowth | POST /seed/growth/get | generated | user | - | - |
+| RecordGrowth | POST /seed/growth/record | generated | [] | growth, seed, bond, cap (delete) | seed.growth.updated, seed.phase.changed |
+| RecordGrowthBatch | POST /seed/growth/record-batch | generated | [] | growth, seed, bond, cap (delete) | seed.growth.updated, seed.phase.changed |
+| GetGrowthPhase | POST /seed/growth/get-phase | generated | user | - | - |
+| GetCapabilityManifest | POST /seed/capability/get-manifest | generated | user | cap (write-through) | seed.capability.updated |
+| RegisterSeedType | POST /seed/type/register | generated | developer | type | seed.type.created |
+| GetSeedType | POST /seed/type/get | generated | user | - | - |
+| ListSeedTypes | POST /seed/type/list | generated | user | - | - |
+| UpdateSeedType | POST /seed/type/update | generated | developer | type, seed (recompute) | seed.type.updated, seed.phase.changed |
+| DeprecateSeedType | POST /seed/type/deprecate | generated | developer | type | seed.type.updated |
+| UndeprecateSeedType | POST /seed/type/undeprecate | generated | developer | type | seed.type.updated |
+| DeleteSeedType | POST /seed/type/delete | generated | developer | type (delete) | seed.type.deleted |
+| InitiateBond | POST /seed/bond/initiate | generated | user | bond | - |
+| ConfirmBond | POST /seed/bond/confirm | generated | user | bond, seed (multiple) | seed.bond.formed |
+| GetBond | POST /seed/bond/get | generated | user | - | - |
+| GetBondForSeed | POST /seed/bond/get-for-seed | generated | user | - | - |
+| GetBondPartners | POST /seed/bond/get-partners | generated | user | - | - |
 
 ---
 
@@ -266,7 +266,7 @@ RETURN (200, GrowthResponse { seedId, totalGrowth, domains })
 ```
 
 ### RecordGrowth
-POST /seed/growth/record | Roles: [developer]
+POST /seed/growth/record | Roles: []
 
 ```
 // Delegates to RecordGrowthInternal with single (domain, amount) entry
@@ -274,7 +274,7 @@ POST /seed/growth/record | Roles: [developer]
 ```
 
 ### RecordGrowthBatch
-POST /seed/growth/record-batch | Roles: [developer]
+POST /seed/growth/record-batch | Roles: []
 
 ```
 // Delegates to RecordGrowthInternal with entries array
@@ -406,8 +406,8 @@ LOCK seed-lock:"type:{gameServiceId}:{seedTypeCode}"       -> 409 if fails
   WRITE type-store:"type:{...}" <- updated
   PUBLISH seed.type.updated { ..., changedFields }
   IF phasesChanged or capabilityRulesChanged
-    // RecomputeSeedsForType: paginated loop over all seeds of this type
-    QUERY seed-store WHERE SeedTypeCode, GameServiceId, Status != Archived PAGED(offset, config.DefaultQueryPageSize)
+    // RecomputeSeedsForType: paginated loop over ALL seeds of this type (including archived)
+    QUERY seed-store WHERE SeedTypeCode, GameServiceId PAGED(offset, config.DefaultQueryPageSize)
     FOREACH seed in results
       // Recompute phase from new definitions
       IF phase changed
@@ -568,3 +568,9 @@ FOREACH seedType in results
           DISPATCH ISeedEvolutionListener.OnPhaseChangedAsync
         DELETE cap-store:"cap:{seedId}"     // Invalidate capability cache
 ```
+
+---
+
+## Non-Standard Implementation Patterns
+
+No non-standard patterns.

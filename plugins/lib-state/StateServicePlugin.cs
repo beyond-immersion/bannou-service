@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -19,10 +18,10 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
     private IServiceProvider? _serviceProvider;
 
     /// <inheritdoc/>
-    public override void ConfigureApplication(WebApplication app)
+    public override void ConfigureApplication(IServiceProvider services)
     {
-        base.ConfigureApplication(app);
-        _serviceProvider = app.Services;
+        base.ConfigureApplication(services);
+        _serviceProvider = services;
     }
 
     /// <summary>

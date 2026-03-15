@@ -11,9 +11,9 @@
 |-------|-------|
 | Plugin | lib-resource |
 | Layer | L1 AppFoundation |
-| Endpoints | 17 |
-| State Stores | resource-refcounts (Redis), resource-grace (Redis), resource-cleanup (Redis), resource-compress (Redis), resource-archives (MySQL), resource-snapshots (Redis) |
-| Events Published | 6 (resource.grace-period.started, resource.cleanup.callback-failed, resource.compressed, resource.compress.callback-failed, resource.decompressed, resource.snapshot.created) |
+| Endpoints | 20 |
+| State Stores | resource-refcounts (Redis), resource-grace (Redis), resource-cleanup (Redis), resource-compress (Redis), resource-archives (MySQL), resource-snapshots (Redis), resource-migrate (Redis) |
+| Events Published | 8 (resource.grace-period.started, resource.cleanup.callback-failed, resource.compressed, resource.compress.callback-failed, resource.decompressed, resource.snapshot.created, resource.migrated, resource.migrate.callback-failed) |
 | Events Consumed | 0 |
 | Client Events | 0 |
 | Background Services | 0 |
@@ -62,16 +62,23 @@
 |-------------|-----------|---------|
 | `snap:{snapshotId}` | `ResourceSnapshotModel` | Ephemeral snapshot; auto-expired by Redis TTL |
 
+**Store**: `resource-migrate` (Backend: Redis)
+
+| Key Pattern | Data Type | Purpose |
+|-------------|-----------|---------|
+| `callback:{resourceType}:{sourceType}` | `MigrateCallbackDefinition` | Migrate callback registration (service, endpoint, template) |
+| `callback-index:{resourceType}` | Set of `string` | Source types with registered migrate callbacks for this resource type |
+
 ---
 
 ## Dependencies
 
 | Dependency | Layer | Type | Usage |
 |------------|-------|------|-------|
-| lib-state (`IStateStoreFactory`) | L0 | Hard | Acquires 6 state stores; inline `GetCacheableStore<string>` for set index operations |
+| lib-state (`IStateStoreFactory`) | L0 | Hard | Acquires 7 state stores; inline `GetCacheableStore<string>` for set index operations |
 | lib-state (`IDistributedLockProvider`) | L0 | Hard | Cleanup locks (`cleanup:{resourceType}:{resourceId}`) and compression locks (`compress:{resourceType}:{resourceId}`) |
-| lib-messaging (`IMessageBus`) | L0 | Hard | Publishing all 6 service events |
-| lib-mesh (`IServiceNavigator`) | L0 | Hard | Executing cleanup/compression/decompression callbacks via `ExecutePreboundApiAsync` / `ExecutePreboundApiBatchAsync` |
+| lib-messaging (`IMessageBus`) | L0 | Hard | Publishing all 8 service events |
+| lib-mesh (`IServiceNavigator`) | L0 | Hard | Executing cleanup/compression/decompression/migration callbacks via `ExecutePreboundApiAsync` / `ExecutePreboundApiBatchAsync` |
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation in helper methods |
 
 **DI Provider interface consumed**: `IEnumerable<ISeededResourceProvider>` — higher-layer plugins implement this to expose embedded resources (ABML behaviors, templates). Resource discovers providers via DI collection and aggregates them through the seeded resource endpoints.
@@ -92,6 +99,8 @@
 | `resource.compress.callback-failed` | `ResourceCompressCallbackFailedEvent` | ExecuteCompress or ExecuteSnapshot per failed callback |
 | `resource.decompressed` | `ResourceDecompressedEvent` | ExecuteDecompress when at least one callback succeeds |
 | `resource.snapshot.created` | `ResourceSnapshotCreatedEvent` | ExecuteSnapshot on successful snapshot creation |
+| `resource.migrated` | `ResourceMigratedEvent` | ExecuteMigrate on success |
+| `resource.migrate.callback-failed` | `ResourceMigrateCallbackFailedEvent` | ExecuteMigrate per failed callback |
 
 ---
 
@@ -107,10 +116,10 @@ This plugin does not consume external events. `ResourceServiceEvents.cs` registe
 |---------|------|
 | `ILogger<ResourceService>` | Structured logging |
 | `ResourceServiceConfiguration` | Typed configuration access (10 properties) |
-| `IStateStoreFactory` | State store access (6 stores + inline cacheable stores for set indexes) |
+| `IStateStoreFactory` | State store access (7 stores + inline cacheable stores for set indexes) |
 | `IDistributedLockProvider` | Cleanup and compression distributed locks |
-| `IMessageBus` | Event publishing (6 topics) |
-| `IServiceNavigator` | Prebound API callback execution for cleanup/compression/decompression |
+| `IMessageBus` | Event publishing (8 topics) |
+| `IServiceNavigator` | Prebound API callback execution for cleanup/compression/decompression/migration |
 | `ITelemetryProvider` | Span instrumentation in helper methods |
 | `IEventConsumer` | Event fan-out registration (none currently registered) |
 | `IEnumerable<ISeededResourceProvider>` | DI provider collection for seeded resource listing/retrieval |
@@ -138,6 +147,9 @@ This plugin does not consume external events. `ResourceServiceEvents.cs` registe
 | GetSnapshot | POST /resource/snapshot/get | generated | [] | - | - |
 | ListSeededResources | POST /resource/seeded/list | generated | [] | - | - |
 | GetSeededResource | POST /resource/seeded/get | generated | [] | - | - |
+| DefineMigrateCallback | POST /resource/migrate/define | generated | [] | migrate-callback, migrate-index | - |
+| ExecuteMigrate | POST /resource/migrate/execute | generated | [] | - | resource.migrated, resource.migrate.callback-failed |
+| ListMigrateCallbacks | POST /resource/migrate/list | generated | [] | - | - |
 
 ---
 
@@ -544,6 +556,74 @@ RETURN (200, GetSeededResourceResponse { found: false })
 
 ---
 
+### DefineMigrateCallback
+POST /resource/migrate/define | Roles: []
+
+```
+READ _migrateStore:callback:{resourceType}:{sourceType} // check for existing -> previouslyDefined
+WRITE _migrateStore:callback:{resourceType}:{sourceType} <- MigrateCallbackDefinition
+ // serviceName defaults to sourceType
+WRITE _migrateStore:callback-index:{resourceType} <- sourceType // set add
+RETURN (200, DefineMigrateCallbackResponse { previouslyDefined })
+// 200 confirms registration; no `registered` boolean needed.
+```
+
+---
+
+### ExecuteMigrate
+POST /resource/migrate/execute | Roles: []
+
+```
+// Gather all migrate callbacks for this resourceType
+READ _migrateStore:callback-index:{resourceType} // set -> sourceTypes
+FOREACH sourceType
+ READ _migrateStore:callback:{resourceType}:{sourceType}
+
+IF no callbacks
+ RETURN (200, ExecuteMigrateResponse { success: false, abortReason: "No migrate callbacks registered" })
+
+LOCK _refStore:migrate:{resourceType}:{sourceResourceId}
+ IF lock fails
+ RETURN (200, ExecuteMigrateResponse { success: false, abortReason: "Failed to acquire migrate lock" })
+
+ FOREACH callback (sequential)
+ // Substitute {{sourceResourceId}} and {{targetResourceId}} in PayloadTemplate
+ CALL _navigator.ExecutePreboundApiAsync(callback.CallbackEndpoint, substitutedPayload, timeout)
+ IF failure
+  PUBLISH resource.migrate.callback-failed { eventId, timestamp, resourceType, sourceResourceId, targetResourceId, sourceType, serviceName, endpoint, statusCode, errorMessage }
+
+ IF AllRequired policy AND any failure
+ RETURN (200, ExecuteMigrateResponse { success: false, abortReason: "AllRequired callback failed", callbackResults })
+
+ IF no successful callbacks
+ RETURN (200, ExecuteMigrateResponse { success: false, abortReason: "No successful migrate callbacks" })
+
+ PUBLISH resource.migrated { eventId, timestamp, resourceType, sourceResourceId, targetResourceId, callbacksSucceeded, callbacksFailed }
+
+RETURN (200, ExecuteMigrateResponse { success: true, callbackResults })
+// All outcomes return 200; success/failure communicated via response body flags.
+```
+
+---
+
+### ListMigrateCallbacks
+POST /resource/migrate/list | Roles: []
+
+```
+IF resourceType specified
+ READ _migrateStore:callback-index:{resourceType} // set -> sourceTypes
+ FOREACH sourceType
+ READ _migrateStore:callback:{resourceType}:{sourceType}
+ IF sourceType filter also specified
+ // filter results by sourceType
+ELSE
+ // enumerate all registered resource types from callback-index keys
+ // (no master index — iterate known resource types)
+RETURN (200, ListMigrateCallbacksResponse { callbacks, totalCount })
+```
+
+---
+
 ## Background Services
 
 No background services.
@@ -553,3 +633,5 @@ No background services.
 ## Non-Standard Implementation Patterns
 
 **All-200 response pattern**: Unlike most Bannou services that use HTTP status codes (404, 409, etc.) to communicate business failures, Resource returns `200 OK` for all outcomes and uses structured response flags (`success`, `found`, `abortReason`) to communicate results. This is intentional — Resource's callers are other Bannou services performing orchestration, and they need structured callback results (per-entry success/failure details, abort reasons, duration metrics) that cannot be expressed through HTTP status codes alone. The only non-200 return is a defensive `500` in ExecuteCleanup when CheckReferences unexpectedly returns null.
+
+**Migrate callbacks mirror cleanup callbacks**: The `resource-migrate` store uses the same key patterns and indexing strategy as `resource-cleanup`. Migration callbacks substitute `{{sourceResourceId}}` and `{{targetResourceId}}` in payload templates (vs. cleanup's `{{resourceId}}`), enabling dependent services to re-point their references from one resource to another.

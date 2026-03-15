@@ -10,8 +10,8 @@ need deprecation marker interfaces, and the current state of Category B complian
 ## Summary
 
 - **Total deprecatable entities**: 20
-- **With `instanceEntity` declared**: 11
-- **Missing `instanceEntity`**: 9
+- **With `instanceEntity` declared**: 12
+- **Missing `instanceEntity`**: 8
 
 ## All Deprecatable Entities
 
@@ -22,7 +22,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 | Chat | `ChatRoomType` | `ChatRoom` | OK |
 | Collection | `CollectionEntryTemplate` | `Collection` | OK |
 | Contract | `ContractTemplate` | `ContractInstance` | OK |
-| Currency | `CurrencyDefinition` | — | Missing |
+| Currency | `CurrencyDefinition` | `CurrencyBalance` | OK |
 | Faction | `Faction` | — | Missing |
 | Gardener | `ScenarioTemplate` | `ScenarioInstance` | OK |
 | Item | `ItemTemplate` | `ItemInstance` | OK |
@@ -85,7 +85,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `currency`
 - **Schema**: `schemas/currency-events.yaml`
 - **Topic prefix**: `currency`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `CurrencyBalance`
 - **Model fields**: `definitionId`, `code`, `name`, `scope`, `precision`, `isActive`, `modifiedAt`
 
 ### Faction: Faction

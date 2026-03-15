@@ -4,8 +4,10 @@
 > **Schema**: schemas/resource-api.yaml
 > **Version**: 1.0.0
 > **Layer**: AppFoundation
-> **State Store**: resource-refcounts (Redis), resource-cleanup (Redis), resource-grace (Redis), resource-compress (Redis), resource-archives (MySQL), resource-snapshots (Redis)
+> **State Store**: resource-refcounts (Redis), resource-cleanup (Redis), resource-grace (Redis), resource-compress (Redis), resource-archives (MySQL), resource-snapshots (Redis), resource-migrate (Redis)
 > **Implementation Map**: [docs/maps/RESOURCE.md](../maps/RESOURCE.md)
+> **Endpoints**: 20
+> **Events Published**: 8 (resource.grace-period.started, resource.cleanup.callback-failed, resource.compressed, resource.compress.callback-failed, resource.decompressed, resource.snapshot.created, resource.migrated, resource.migrate.callback-failed)
 > **Short**: Cross-layer reference tracking, cleanup coordination (CASCADE/RESTRICT/DETACH), and hierarchical compression
 
 ---
@@ -179,6 +181,17 @@ All configuration properties are verified as used in `ResourceService.cs`.
 │  │   CreatedAt, ExpiresAt                                              │   │
 │  │ }                                                                   │   │
 │  │ Auto-deleted: When Redis TTL expires (default 1 hour)               │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  resource-migrate (Redis)                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Key: callback:{resourceType}:{sourceType}                           │   │
+│  │ Type: JSON object                                                   │   │
+│  │ Value: { ServiceName, CallbackEndpoint, PayloadTemplate, ... }      │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ Key: callback-index:{resourceType}                                  │   │
+│  │ Type: Redis Set (for enumeration without KEYS/SCAN)                 │   │
+│  │ Members: [ "actor", "character-personality", "quest" ]              │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘

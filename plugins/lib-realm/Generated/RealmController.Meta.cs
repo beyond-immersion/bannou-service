@@ -1440,42 +1440,22 @@ public partial class RealmController
     "$ref": "#/$defs/MergeRealmsResponse",
     "$defs": {
         "MergeRealmsResponse": {
-            "description": "Result of a realm merge operation including per-entity-type migration statistics",
+            "description": "Result of a realm merge operation. Migration is delegated to lib-resource\nwhich calls registered migrate callbacks for each dependent entity type.\n",
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "speciesMigrated",
-                "speciesFailed",
-                "locationsMigrated",
-                "locationsFailed",
-                "charactersMigrated",
-                "charactersFailed",
+                "totalMigrated",
+                "totalFailed",
                 "sourceDeleted"
             ],
             "properties": {
-                "speciesMigrated": {
+                "totalMigrated": {
                     "type": "integer",
-                    "description": "Number of species successfully added to target realm and removed from source"
+                    "description": "Number of migrate callbacks that completed successfully"
                 },
-                "speciesFailed": {
+                "totalFailed": {
                     "type": "integer",
-                    "description": "Number of species that failed to migrate"
-                },
-                "locationsMigrated": {
-                    "type": "integer",
-                    "description": "Number of locations successfully transferred to target realm"
-                },
-                "locationsFailed": {
-                    "type": "integer",
-                    "description": "Number of locations that failed to transfer"
-                },
-                "charactersMigrated": {
-                    "type": "integer",
-                    "description": "Number of characters successfully transferred to target realm"
-                },
-                "charactersFailed": {
-                    "type": "integer",
-                    "description": "Number of characters that failed to transfer"
+                    "description": "Number of migrate callbacks that failed"
                 },
                 "sourceDeleted": {
                     "type": "boolean",

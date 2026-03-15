@@ -13,7 +13,7 @@
 |-------|-------|
 | Plugin | lib-location |
 | Layer | L2 GameFoundation |
-| Endpoints | 25 |
+| Endpoints | 26 |
 | State Stores | location-statestore (MySQL), location-cache (Redis), location-lock (Redis), location-entity-presence (Redis), location-entity-set (Redis) |
 | Events Published | 5 (`location.created`, `location.updated`, `location.deleted`, `location.entity-arrived`, `location.entity-departed`) |
 | Events Consumed | 0 |
@@ -68,7 +68,7 @@ Used by `IDistributedLockProvider` for distributed locks on index mutations. Loc
 | lib-messaging (`IMessageBus`) | L0 | Hard | Publishing 5 event topics |
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation on async helpers |
 | lib-realm (`IRealmClient`) | L2 | Hard | Realm existence validation (create, transfer, seed) |
-| lib-resource (`IResourceClient`) | L1 | Hard | Reference checks and cleanup execution on delete; compression callback registration at startup |
+| lib-resource (`IResourceClient`) | L1 | Hard | Reference checks and cleanup execution on delete; compression callback registration at startup; realm RESTRICT reference registration (create, transfer); migrate-by-realm callback |
 | lib-contract (`IContractClient`) | L1 | Hard | `territory_constraint` clause type registration at startup (OnRunningAsync) |
 | lib-connect (`IEntitySessionRegistry`) | L1 | Hard | Client event delivery to sessions observing locations |
 
@@ -86,7 +86,7 @@ Used by `IDistributedLockProvider` for distributed locks on index mutations. Loc
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `location.created` | `LocationCreatedEvent` | CreateLocation, SeedLocations (via CreateLocation) |
-| `location.updated` | `LocationUpdatedEvent` | UpdateLocation, SetLocationParent, RemoveLocationParent, DeprecateLocation, UndeprecateLocation, TransferLocationToRealm, SeedLocations (when updateExisting and fields changed) |
+| `location.updated` | `LocationUpdatedEvent` | UpdateLocation, SetLocationParent, RemoveLocationParent, DeprecateLocation, UndeprecateLocation, TransferLocationToRealm, MigrateByRealm (via TransferLocationToRealm), SeedLocations (when updateExisting and fields changed) |
 | `location.deleted` | `LocationDeletedEvent` | DeleteLocation |
 | `location.entity-arrived` | `LocationEntityArrivedEvent` | ReportEntityPosition (only on actual location change, not TTL refresh) |
 | `location.entity-departed` | `LocationEntityDepartedEvent` | ReportEntityPosition (when moving from previous location), ClearEntityPosition |
@@ -157,6 +157,7 @@ Routed via `IEntitySessionRegistry.PublishToEntitySessionsAsync("location", loca
 | GetEntityLocation | POST /location/get-entity-location | generated | [] | - | - |
 | ListEntitiesAtLocation | POST /location/list-entities-at-location | generated | [] | - | - |
 | ClearEntityPosition | POST /location/clear-entity-position | generated | [] | entity-presence, entity-set | location.entity-departed |
+| MigrateByRealm | POST /location/migrate-by-realm | generated | [] | location, code-index, realm-index, parent-index/root-locations, cache | location.updated (via TransferLocationToRealm) |
 | GetLocationCompressData | POST /location/get-compress-data | generated | [] | - | - |
 
 ---
@@ -629,6 +630,27 @@ WRITE set:location-entities:{existing.LocationId} <- remove "{entityType}:{entit
 PUBLISH location.entity-departed { entityType, entityId, existing.LocationId, realmId, reportedBy }
 PUSH location.presence-changed to sessions observing existing.LocationId { changeType: Departed }
 RETURN (200, ClearEntityPositionResponse { previousLocationId: existing.LocationId })
+```
+
+### MigrateByRealm
+POST /location/migrate-by-realm | Roles: []
+
+```
+// lib-resource migrate callback — called during realm merge
+IF sourceRealmId == targetRealmId                        -> 400
+CALL _realmClient.RealmExistsAsync(targetRealmId)        -> 404 if not found/inactive
+READ store:realm-index:{sourceRealmId}
+IF null or empty
+  RETURN (200, MigrateByRealmResponse { migrated: 0, failed: 0 })
+FOREACH locationId in sourceRealmIndex
+  // Per-item error isolation
+  // Delegates to TransferLocationToRealm logic:
+  //   re-keys location data, updates code-index, realm-index, parent/root indexes, clears cache
+  //   clears parent (becomes root in target realm, depth 0)
+  //   publishes location.updated with changedFields [realmId, parentLocationId, depth]
+  // migrated++
+  // On exception: failed++, log warning, continue
+RETURN (200, MigrateByRealmResponse { migrated, failed })
 ```
 
 ### GetLocationCompressData

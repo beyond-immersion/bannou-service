@@ -61,24 +61,15 @@ public class TelemetryServicePlugin : StandardServicePlugin<ITelemetryService>
     }
 
     /// <summary>
-    /// Configure application pipeline - maps Prometheus metrics endpoint.
+    /// Configure application - logs final telemetry configuration summary.
     /// </summary>
-    public override void ConfigureApplication(WebApplication app)
+    public override void ConfigureApplication(IServiceProvider services)
     {
-        base.ConfigureApplication(app);
-
-        // Map Prometheus metrics endpoint if metrics are enabled
-        var config = app.Services.GetRequiredService<TelemetryServiceConfiguration>();
-        if (config.MetricsEnabled)
-        {
-            // Map Prometheus scraping endpoint at /metrics
-            // This exposes all registered meters for Prometheus to scrape
-            app.MapPrometheusScrapingEndpoint("/metrics");
-            Logger?.LogInformation("Prometheus metrics endpoint mapped at /metrics");
-        }
+        base.ConfigureApplication(services);
 
         // Log final configuration summary
-        var appConfig = app.Services.GetRequiredService<AppConfiguration>();
+        var config = services.GetRequiredService<TelemetryServiceConfiguration>();
+        var appConfig = services.GetRequiredService<AppConfiguration>();
         var serviceName = !string.IsNullOrWhiteSpace(config.ServiceName)
             ? config.ServiceName
             : appConfig.EffectiveAppId;
@@ -86,6 +77,20 @@ public class TelemetryServicePlugin : StandardServicePlugin<ITelemetryService>
         Logger?.LogInformation(
             "OpenTelemetry finalized: serviceName={ServiceName}, tracing={TracingEnabled}, metrics={MetricsEnabled}, endpoint={Endpoint}",
             serviceName, config.TracingEnabled, config.MetricsEnabled, config.OtlpEndpoint);
+    }
+
+    /// <summary>
+    /// Configure web pipeline - maps Prometheus metrics endpoint.
+    /// Only called in web hosting mode (not embedded).
+    /// </summary>
+    public void ConfigureWebPipeline(WebApplication app)
+    {
+        var config = app.Services.GetRequiredService<TelemetryServiceConfiguration>();
+        if (config.MetricsEnabled)
+        {
+            app.MapPrometheusScrapingEndpoint("/metrics");
+            Logger?.LogInformation("Prometheus metrics endpoint mapped at /metrics");
+        }
     }
 
     /// <summary>

@@ -743,6 +743,9 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ITEM_DEFAULT_SOULBOUND_TYPE` | string | `none` | Default soulbound type for new templates |
 | `ITEM_DEFAULT_WEIGHT_PRECISION` | string | `decimal_2` | Default weight precision for new templates |
 | `ITEM_INSTANCE_CACHE_TTL_SECONDS` | int | `900` | TTL for instance cache entries in seconds (15 minutes for ac... |
+| `ITEM_INSTANCE_EVENT_BATCH_INTERVAL_SECONDS` | int | `5` | Interval in seconds between instance lifecycle batch event f... |
+| `ITEM_INSTANCE_EVENT_BATCH_MAX_SIZE` | int | `500` | Maximum entries per batch event before forced flush |
+| `ITEM_INSTANCE_EVENT_BATCH_STARTUP_DELAY_SECONDS` | int | `10` | Startup delay in seconds before instance lifecycle batch eve... |
 | `ITEM_LIST_OPERATION_MAX_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency on list op... |
 | `ITEM_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed locks on item instance mo... |
 | `ITEM_MAX_INSTANCES_PER_QUERY` | int | `1000` | Maximum item instances returned in a single query |
@@ -930,8 +933,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `5` | Maximum retry attempts before discarding message to dead-let... |
 | `MESSAGING_RETRY_MAX_BACKOFF_MS` | int | `60000` | Maximum backoff delay between retries in milliseconds (caps ... |
 | `MESSAGING_SHUTDOWN_TIMEOUT_SECONDS` | int | `10` | Maximum seconds to wait for graceful subscription cleanup du... |
+| `MESSAGING_SKIP_UNHANDLED_TOPICS` | bool | `false` | When true, TryPublishAsync skips scope creation for topics w... |
 | `MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS` | int | `2` | Delay in seconds before starting subscription recovery servi... |
 | `MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS` | int | `6` | Interval in hours between subscription TTL refresh operation... |
+| `MESSAGING_USE_DIRECT_DISPATCH` | bool | `false` | When true, events are dispatched directly to IEventConsumer ... |
 | `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
 
 ### Music
@@ -1348,9 +1353,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1064
+- **Total properties**: 1069
 - **Required (no default)**: 67
-- **Optional (has default)**: 997
+- **Optional (has default)**: 1002
 
 ## Environment Variable Naming Convention
 

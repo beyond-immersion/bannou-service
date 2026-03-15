@@ -40,9 +40,6 @@ info:
     sourceType: species
     field: realmIds
     onDelete: restrict
-    cleanup:
-      endpoint: /species/cleanup-by-realm
-      payloadTemplate: '{"realmId": "{{resourceId}}"}'
     migrate:
       endpoint: /species/migrate-by-realm
       payloadTemplate: '{"sourceRealmId": "{{sourceResourceId}}", "targetRealmId": "{{targetResourceId}}"}'
@@ -999,51 +996,6 @@ paths:
         to seed species from provided data.\\nCreates species that don't exist, optionally updates existing species.\\nTypically
         called at service startup with YAML-defined species.\\n\",\n    \"tags\": [\n        \"Species Admin\"\n    ],\n \
         \   \"deprecated\": false,\n    \"operationId\": \"seedSpecies\"\n}"
-  /species/cleanup-by-realm:
-    post:
-      summary: Remove all species from a realm
-      operationId: cleanupByRealm
-      tags:
-      - Species Resource Cleanup
-      description: |
-        Called by lib-resource during realm deletion cleanup.
-        Removes the realm association from all species associated with it.
-        Species that belong to multiple realms retain their other associations.
-        Species that belong only to the deleted realm become realm-orphans.
-      x-permissions: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CleanupByRealmRequest'
-      responses:
-        '200':
-          description: Species cleaned up
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CleanupByRealmResponse'
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByRealmRequest\"\
-        ,\n    \"$defs\": {\n        \"CleanupByRealmRequest\": {\n            \"description\": \"Request to remove all species
-        from a realm (called by lib-resource cleanup)\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the realm whose species associations should be removed\"\n       \
-        \         }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByRealmResponse\"\
-        ,\n    \"$defs\": {\n        \"CleanupByRealmResponse\": {\n            \"description\": \"Result of realm species
-        cleanup\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"cleaned\",\n                \"failed\"\n            ],\n            \"properties\": {\n   \
-        \             \"cleaned\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Number of species successfully disassociated from realm\"\n                },\n                \"failed\": {\n   \
-        \                 \"type\": \"integer\",\n                    \"description\": \"Number of species that failed to
-        disassociate\"\n                }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Remove all species from a realm\",\n    \"description\": \"Called by lib-resource
-        during realm deletion cleanup.\\nRemoves the realm association from all species associated with it.\\nSpecies that
-        belong to multiple realms retain their other associations.\\nSpecies that belong only to the deleted realm become
-        realm-orphans.\\n\",\n    \"tags\": [\n        \"Species Resource Cleanup\"\n    ],\n    \"deprecated\": false,\n\
-        \    \"operationId\": \"cleanupByRealm\"\n}"
   /species/migrate-by-realm:
     post:
       summary: Migrate all species realm associations from one realm to another
@@ -1093,31 +1045,6 @@ paths:
         \    ],\n    \"deprecated\": false,\n    \"operationId\": \"migrateByRealm\"\n}"
 components:
   schemas:
-    CleanupByRealmRequest:
-      description: Request to remove all species from a realm (called by lib-resource cleanup)
-      type: object
-      additionalProperties: false
-      required:
-      - realmId
-      properties:
-        realmId:
-          type: string
-          format: uuid
-          description: ID of the realm whose species associations should be removed
-    CleanupByRealmResponse:
-      description: Result of realm species cleanup
-      type: object
-      additionalProperties: false
-      required:
-      - cleaned
-      - failed
-      properties:
-        cleaned:
-          type: integer
-          description: Number of species successfully disassociated from realm
-        failed:
-          type: integer
-          description: Number of species that failed to disassociate
     MigrateByRealmRequest:
       description: Request to migrate all species from one realm to another (called by lib-resource migrate)
       type: object

@@ -224,7 +224,7 @@ Services distributed across N nodes. Orchestrator manages topology. Mesh routes 
 | [#393](https://github.com/beyondimmersion/bannou-service/issues/393) | Actor migration between pool nodes without state loss (~100-200ms handoff) | Open |
 | [#409](https://github.com/beyondimmersion/bannou-service/issues/409) | Game Engine <-> Actor WebSocket transport via Connect Internal mode | Open |
 | [#552](https://github.com/beyondimmersion/bannou-service/issues/552) | Orchestrator blue-green deployment support | Open |
-| [#406](https://github.com/beyondimmersion/bannou-service/issues/406) | Entity presence tracking (prerequisite for #409 location-keyed routing) | Open |
+| [#406](https://github.com/beyondimmersion/bannou-service/issues/406) | Entity presence tracking (prerequisite for #409 location-keyed routing) | Closed (implemented) |
 
 The 1000-player dedicated server works today with manual topology configuration. 10,000+ players requires the Actor auto-scaling (#318) and migration (#393) work.
 
@@ -549,7 +549,7 @@ Moving a running actor from one pool node to another without state loss. V1 stra
 **Reference**: [#409](https://github.com/beyondimmersion/bannou-service/issues/409), [#406](https://github.com/beyondimmersion/bannou-service/issues/406)
 **Effort**: Medium-Large
 
-Location-keyed WebSocket connection pool between Actor pool nodes and game servers. Includes route table, lazy/immediate/none initialization modes, perception event learning, and 3-tier transport fallback. Prerequisite: Entity Presence Tracking (#406).
+Location-keyed WebSocket connection pool between Actor pool nodes and game servers. Includes route table, lazy/immediate/none initialization modes, perception event learning, and 3-tier transport fallback. Prerequisite: Entity Presence Tracking (#406, implemented).
 
 ### Gap 6: Region-Aware Mesh Routing
 
@@ -604,7 +604,7 @@ Atomic topology switchover for distributed deployments. Not required for any oth
 
 **Status**: Decided (implemented)
 
-`DirectDispatchMessageBus` (`MESSAGING_USE_DIRECT_DISPATCH=true`) is the recommended messaging backend for both embedded and non-dedicated deployments. It dispatches `TryPublishAsync` directly to `IEventConsumer.DispatchAsync`, eliminating the NativeEventConsumerBackend bridge layer that InMemoryMessageBus still carries. Zero serialization, zero intermediate subscription registry. For 2-8 player non-dedicated hosting and single-player embedded mode, this is optimal. Bundling RabbitMQ with a game client is too heavy for these models. InMemoryMessageBus remains available (`MESSAGING_USE_INMEMORY=true`) for testing and backward compatibility. See [DIRECT-DISPATCH-EVENTS.md](DIRECT-DISPATCH-EVENTS.md) for full design.
+`DirectDispatchMessageBus` (`MESSAGING_USE_DIRECT_DISPATCH=true`) is the recommended messaging backend for both embedded and non-dedicated deployments. It dispatches `TryPublishAsync` directly to `IEventConsumer.DispatchAsync`, eliminating the NativeEventConsumerBackend bridge layer that InMemoryMessageBus still carries. Zero serialization, zero intermediate subscription registry. For 2-8 player non-dedicated hosting and single-player embedded mode, this is optimal. Bundling RabbitMQ with a game client is too heavy for these models. InMemoryMessageBus remains available (`MESSAGING_USE_INMEMORY=true`) for testing and backward compatibility. See [MESSAGING.md deep dive](../plugins/MESSAGING.md) quirk #11 for full design details.
 
 ### D2: Anti-Piracy Is a Game-Side Concern
 
@@ -705,7 +705,7 @@ If 2-8 players with hundreds of active NPCs is the target for non-dedicated, cen
 
 ### GitHub Issues
 - [#409](https://github.com/beyondimmersion/bannou-service/issues/409) -- ActorConnectionManager design (location-keyed WebSocket transport)
-- [#406](https://github.com/beyondimmersion/bannou-service/issues/406) -- Entity Presence Tracking (prerequisite for #409)
+- [#406](https://github.com/beyondimmersion/bannou-service/issues/406) -- Entity Presence Tracking (prerequisite for #409, implemented)
 - [#318](https://github.com/beyondimmersion/bannou-service/issues/318) -- Actor pool auto-scaling
 - [#393](https://github.com/beyondimmersion/bannou-service/issues/393) -- Actor migration between pool nodes
 - [#552](https://github.com/beyondimmersion/bannou-service/issues/552) -- Orchestrator blue-green deployment

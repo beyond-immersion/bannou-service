@@ -188,23 +188,6 @@ public interface ICharacterController : BeyondImmersion.BannouService.Controller
 
 
     /// <summary>
-    /// Delete all characters in a realm
-    /// </summary>
-
-    /// <remarks>
-    /// Called by lib-resource during realm deletion cleanup.
-    /// <br/>Deletes all characters belonging to the specified realm.
-    /// <br/>Publishes character.deleted events for each removed character.
-    /// </remarks>
-
-
-
-    /// <returns>Characters cleaned up</returns>
-
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealm(CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-
-    /// <summary>
     /// Migrate all characters from one realm to another
     /// </summary>
 
@@ -833,56 +816,6 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:character/get-compress-data",
-                stack: ex_.StackTrace,
-                cancellationToken: cancellationToken);
-            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
-            return StatusCode(500);
-        }
-    }
-
-    /// <summary>
-    /// Delete all characters in a realm
-    /// </summary>
-    /// <remarks>
-    /// Called by lib-resource during realm deletion cleanup.
-    /// <br/>Deletes all characters belonging to the specified realm.
-    /// <br/>Publishes character.deleted events for each removed character.
-    /// </remarks>
-    /// <returns>Characters cleaned up</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("character/cleanup-by-realm")]
-
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        using var activity_ = _telemetryProvider.StartActivity(
-            "bannou.character",
-            "CharacterController.CleanupByRealm",
-            System.Diagnostics.ActivityKind.Server);
-        activity_?.SetTag("http.route", "character/cleanup-by-realm");
-        try
-        {
-
-            var (statusCode, result) = await _implementation.CleanupByRealmAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode, result);
-        }
-        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
-        {
-            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character/cleanup-by-realm");
-            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
-            return StatusCode(503);
-        }
-        catch (System.Exception ex_)
-        {
-            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:character/cleanup-by-realm");
-            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
-            await messageBus_.TryPublishErrorAsync(
-                "character",
-                "CleanupByRealm",
-                "unexpected_exception",
-                ex_.Message,
-                endpoint: "post:character/cleanup-by-realm",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

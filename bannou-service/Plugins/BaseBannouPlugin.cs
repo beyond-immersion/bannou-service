@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -30,7 +29,7 @@ public abstract class BaseBannouPlugin : IBannouPlugin
     }
 
     /// <inheritdoc />
-    public virtual void ConfigureApplication(WebApplication app)
+    public virtual void ConfigureApplication(IServiceProvider services)
     {
         // Default implementation - override in derived classes if needed
         // Most services will use existing controller routing

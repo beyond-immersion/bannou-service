@@ -116,13 +116,13 @@ None identified.
 
 ### Bugs (Fix Immediately)
 
-1. **Missing account deletion cleanup handler (Foundation Tenets — T28 Account Deletion Cleanup Obligation)**: Subscription stores data with account ownership (`accountId` is a direct ownership key) but does not subscribe to `account.deleted` and clean up subscriptions for deleted accounts. Per Foundation Tenets, every service with account-owned data MUST implement `HandleAccountDeletedAsync` in `*ServiceEvents.cs`. This is not a design question — the pattern is unambiguous. Reference implementation: `lib-collection/CollectionServiceEvents.cs`. See [#566](https://github.com/beyond-immersion/bannou-service/issues/566).
-<!-- AUDIT:TODO:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/566 -->
+1. ~~**Missing account deletion cleanup handler (Foundation Tenets — T28 Account Deletion Cleanup Obligation)**~~: **FIXED** (2026-03-15) - `HandleAccountDeletedAsync` implemented in `SubscriptionServiceEvents.cs` with full compliance: telemetry span, top-level try-catch with error event publishing, per-item error isolation in `CleanupSubscriptionsForAccountAsync`, lifecycle event publishing for each deleted subscription, and index cleanup. Service implements `IAccountDeletionCleanupRequired`. Schema declares `x-event-subscriptions` for `account.deleted`.
 
 2. **Missing lib-resource registration for GameService references (Foundation Tenets — T28 Resource-Managed Cleanup)**: Subscription records reference `serviceId` (a GameService entity at L2), but no `x-references` declaration exists in the schema and no cleanup endpoint is implemented. Per Foundation Tenets, dependent data cleanup for non-account entities MUST use lib-resource — declare `x-references` in the API schema, implement a `delete-by-service` cleanup endpoint, and register via generated `RegisterResourceCleanupCallbacksAsync()`. See [#567](https://github.com/beyond-immersion/bannou-service/issues/567).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/567 -->
 
 3. **CancelSubscription accepts accountId from user-facing WebSocket (Foundation Tenets — T32 Account Identity Boundary)**: The `CancelSubscription` endpoint has `x-permissions: [role: user]` (user-facing via WebSocket) but accepts `accountId` in the request body for ownership verification. Per Foundation Tenets Rule 1, client-facing endpoints MUST NOT accept `accountId` in request bodies. The correct pattern is server-injected `accountId` via the shortcut system (Rule 2), consistent with how GameSession handles join/leave.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-15:https://github.com/beyond-immersion/bannou-service/issues/660 -->
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -161,4 +161,6 @@ None identified.
 
 *This section tracks active development work managed by the `/audit-plugin` workflow.*
 
-*No active work items.*
+### Completed
+
+- [#566](https://github.com/beyond-immersion/bannou-service/issues/566) — Account deletion cleanup handler: Confirmed implemented (2026-03-15)

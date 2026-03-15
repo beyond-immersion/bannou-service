@@ -114,7 +114,7 @@ internal static class SchemaParser
             if (entityMapping.Children.TryGetValue(new YamlScalarNode("batch"), out var batchNode))
             {
                 isBatch = batchNode is YamlScalarNode batchScalar &&
-                         string.Equals(batchScalar.Value, "true", StringComparison.OrdinalIgnoreCase);
+                        string.Equals(batchScalar.Value, "true", StringComparison.OrdinalIgnoreCase);
             }
 
             // Check instanceEntity (Category B: names the lifecycle entity representing instances)
@@ -153,4 +153,105 @@ internal static class SchemaParser
         bool HasDeprecation,
         string? InstanceEntity,
         bool IsBatch = false);
+
+    /// <summary>
+    /// Gets all non-generated API schema YAML files.
+    /// </summary>
+    internal static IEnumerable<string> GetApiSchemaFiles()
+    {
+        if (!Directory.Exists(SchemasDir))
+            yield break;
+
+        foreach (var file in Directory.EnumerateFiles(SchemasDir, "*-api.yaml"))
+        {
+            var relativePath = Path.GetRelativePath(SchemasDir, file);
+            if (relativePath.StartsWith("Generated", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            // Skip common-api.yaml (shared types, not a service)
+            if (Path.GetFileName(file) == "common-api.yaml")
+                continue;
+
+            yield return file;
+        }
+    }
+
+    /// <summary>
+    /// Extracts x-references declarations from an API schema file.
+    /// Returns parsed reference entries with target, sourceType, onDelete policy,
+    /// and which callback sections (cleanup, migrate) are declared.
+    /// </summary>
+    internal static IEnumerable<ReferenceDeclaration> GetReferenceDeclarations(string apiFilePath)
+    {
+        var root = ParseYamlFile(apiFilePath);
+        if (root == null)
+            yield break;
+
+        if (!root.Children.TryGetValue(new YamlScalarNode("info"), out var infoNode))
+            yield break;
+
+        if (infoNode is not YamlMappingNode infoMapping)
+            yield break;
+
+        if (!infoMapping.Children.TryGetValue(new YamlScalarNode("x-references"), out var refsNode))
+            yield break;
+
+        if (refsNode is not YamlSequenceNode refsSequence)
+            yield break;
+
+        var serviceName = Path.GetFileNameWithoutExtension(apiFilePath).Replace("-api", "");
+
+        foreach (var refNode in refsSequence)
+        {
+            if (refNode is not YamlMappingNode refMapping)
+                continue;
+
+            var target = GetScalarValue(refMapping, "target") ?? "";
+            var sourceType = GetScalarValue(refMapping, "sourceType") ?? "";
+            var onDeleteRaw = GetScalarValue(refMapping, "onDelete");
+            var onDelete = onDeleteRaw ?? "cascade";
+            var hasExplicitOnDelete = onDeleteRaw != null;
+
+            var hasCleanup = refMapping.Children.ContainsKey(new YamlScalarNode("cleanup"));
+            var hasMigrate = refMapping.Children.ContainsKey(new YamlScalarNode("migrate"));
+
+            yield return new ReferenceDeclaration(
+                ServiceName: serviceName,
+                Target: target,
+                SourceType: sourceType,
+                OnDelete: onDelete.ToLowerInvariant(),
+                HasExplicitOnDelete: hasExplicitOnDelete,
+                HasCleanupCallback: hasCleanup,
+                HasMigrateCallback: hasMigrate);
+        }
+    }
+
+    private static string? GetScalarValue(YamlMappingNode mapping, string key)
+    {
+        if (mapping.Children.TryGetValue(new YamlScalarNode(key), out var node) &&
+            node is YamlScalarNode scalar)
+        {
+            return scalar.Value;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Represents a parsed x-references declaration from an API schema.
+    /// </summary>
+    /// <param name="ServiceName">Service name derived from filename (e.g., "character" from "character-api.yaml")</param>
+    /// <param name="Target">Resource type being referenced (e.g., "realm", "character")</param>
+    /// <param name="SourceType">Entity type holding the reference (e.g., "character", "location")</param>
+    /// <param name="OnDelete">Delete policy: "cascade", "restrict", or "detach"</param>
+    /// <param name="HasExplicitOnDelete">Whether onDelete was explicitly declared (vs defaulted to cascade)</param>
+    /// <param name="HasCleanupCallback">Whether a cleanup section is declared</param>
+    /// <param name="HasMigrateCallback">Whether a migrate section is declared</param>
+    internal sealed record ReferenceDeclaration(
+        string ServiceName,
+        string Target,
+        string SourceType,
+        string OnDelete,
+        bool HasExplicitOnDelete,
+        bool HasCleanupCallback,
+        bool HasMigrateCallback);
 }

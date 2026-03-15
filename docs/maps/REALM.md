@@ -47,10 +47,8 @@
 | lib-messaging (IMessageBus) | L0 | Hard | Publishing realm.created/updated/deleted/merged events |
 | lib-messaging (IEventConsumer) | L0 | Hard | Event handler registration (no handlers currently) |
 | lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation on async helpers |
-| lib-resource (IResourceClient) | L1 | Hard | CheckReferences + ExecuteCleanup before deletion; compression callback registration at startup |
-| lib-species (ISpeciesClient) | L2 | Hard | Species migration during realm merge |
-| lib-location (ILocationClient) | L2 | Hard | Location migration during merge; location lookup for compression context |
-| lib-character (ICharacterClient) | L2 | Hard | Character migration during realm merge |
+| lib-resource (IResourceClient) | L1 | Hard | CheckReferences + ExecuteCleanup before deletion; ExecuteMigrateAsync for merge; compression callback registration at startup |
+| lib-location (ILocationClient) | L2 | Hard | Location lookup for compression context |
 | lib-worldstate (IWorldstateClient) | L2 | Hard | Optional clock initialization after creation (soft-failure: warning logged, creation proceeds) |
 
 No DI Provider/Listener interfaces implemented or consumed.
@@ -64,7 +62,7 @@ No DI Provider/Listener interfaces implemented or consumed.
 | `realm.created` | `RealmCreatedEvent` | CreateRealm, SeedRealms (new realm path) |
 | `realm.updated` | `RealmUpdatedEvent` | UpdateRealm, DeprecateRealm, UndeprecateRealm, SeedRealms (update path) — includes `changedFields` |
 | `realm.deleted` | `RealmDeletedEvent` | DeleteRealm, MergeRealms (deleteAfterMerge path) |
-| `realm.merged` | `RealmMergedEvent` | MergeRealms — includes per-entity-type migration counts |
+| `realm.merged` | `RealmMergedEvent` | MergeRealms — includes TotalMigrated/TotalFailed counts |
 
 ---
 
@@ -79,16 +77,14 @@ This plugin does not consume external events.
 | Service | Role |
 |---------|------|
 | `ILogger<RealmService>` | Structured logging |
-| `RealmServiceConfiguration` | Typed config (MergePageSize, OptimisticRetryAttempts, MergeLockTimeoutSeconds, AutoInitializeWorldstateClock, DefaultCalendarTemplateCode) |
+| `RealmServiceConfiguration` | Typed config (OptimisticRetryAttempts, MergeLockTimeoutSeconds, AutoInitializeWorldstateClock, DefaultCalendarTemplateCode) |
 | `IStateStoreFactory` | State store access (constructor-only, not stored as field) |
 | `IDistributedLockProvider` | Distributed locks for merge |
 | `ITelemetryProvider` | Span instrumentation |
 | `IMessageBus` | Event publishing |
 | `IEventConsumer` | Event registration (no handlers) |
-| `IResourceClient` | Reference checking and cleanup orchestration |
-| `ISpeciesClient` | Species realm association for merge |
-| `ILocationClient` | Location transfer for merge; location lookup for compression |
-| `ICharacterClient` | Character transfer for merge |
+| `IResourceClient` | Reference checking, cleanup orchestration, and ExecuteMigrateAsync for merge |
+| `ILocationClient` | Location lookup for compression context |
 | `IWorldstateClient` | Optional clock initialization after creation |
 
 ---
@@ -107,7 +103,7 @@ This plugin does not consume external events.
 | DeleteRealm | POST /realm/delete | generated | [] | realm, code-index, all-realms | realm.deleted |
 | DeprecateRealm | POST /realm/deprecate | generated | [] | realm | realm.updated |
 | UndeprecateRealm | POST /realm/undeprecate | generated | [] | realm | realm.updated |
-| MergeRealms | POST /realm/merge | generated | [] | (delegates to L2 clients) | realm.merged, realm.deleted |
+| MergeRealms | POST /realm/merge | generated | [] | (delegates via IResourceClient) | realm.merged, realm.deleted |
 | SeedRealms | POST /realm/seed | generated | [] | realm, code-index, all-realms | realm.created, realm.updated |
 | GetLocationCompressContext | POST /realm/get-location-compress-context | generated | [] | - | - |
 
@@ -281,37 +277,18 @@ LOCK realm-lock:merge:{smallerId}:{largerId} -> 409 if lock fails
  IF source.IsSystemType -> 400
  READ realm:{targetRealmId} -> 404 if null
 
- // Phase A: Species Migration
- // Page-1-always loop (successful migrations remove from source)
- FOREACH page of species from ISpeciesClient.ListSpeciesByRealmAsync(source)
- FOREACH species
- CALL ISpeciesClient.AddSpeciesToRealmAsync(species, target)
- CALL ISpeciesClient.RemoveSpeciesFromRealmAsync(species, source)
- // Individual failures tracked, do not abort
+ // Resource-coordinated migration
+ // Delegates to registered migrate callbacks (Species, Location, Character)
+ // Each service owns its own migration logic and pagination
+ CALL IResourceClient.ExecuteMigrateAsync(realm, sourceRealmId, targetRealmId)
+ // Returns TotalMigrated / TotalFailed aggregates
 
- // Phase B: Location Migration (root-first)
- FOREACH page of roots from ILocationClient.ListRootLocationsAsync(source)
- FOREACH root
- CALL ILocationClient.GetLocationDescendantsAsync(root)
- CALL ILocationClient.TransferLocationToRealmAsync(root, target)
- FOREACH descendant sorted by depth (shallowest first)
- CALL ILocationClient.TransferLocationToRealmAsync(descendant, target)
- IF descendant has parent
- CALL ILocationClient.SetLocationParentAsync(descendant, parent)
-
- // Phase C: Character Migration
- // Page-1-always loop
- FOREACH page of characters from ICharacterClient.GetCharactersByRealmAsync(source)
- FOREACH character
- CALL ICharacterClient.TransferCharacterToRealmAsync(character, target)
- // Individual failures tracked, do not abort
-
- PUBLISH realm.merged { sourceRealmId, targetRealmId, migration counts }
+ PUBLISH realm.merged { sourceRealmId, targetRealmId, TotalMigrated, TotalFailed }
 
  IF body.DeleteAfterMerge && totalFailed == 0
  // Calls self.DeleteRealmAsync (includes resource check, publishes realm.deleted)
 
-RETURN (200, MergeRealmsResponse { per-type migrated/failed counts, sourceDeleted })
+RETURN (200, MergeRealmsResponse { totalMigrated, totalFailed, sourceDeleted })
 ```
 
 ---

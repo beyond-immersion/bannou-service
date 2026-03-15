@@ -376,7 +376,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Service | Layer | Role | EP |
 |---------|-------|------|----|
 | Mesh | L0 | Service-to-service invocation via YARP with circuit breaking and Redis-backed discovery | 8 |
-| Messaging | L0 | RabbitMQ pub/sub infrastructure (IMessageBus/IMessageSubscriber) with in-memory testing mode | 4 |
+| Messaging | L0 | RabbitMQ pub/sub infrastructure (IMessageBus/IMessageSubscriber) with in-memory testing mode and direct dispatch for embedded/sidecar | 4 |
 | State | L0 | Unified state persistence (Redis/MySQL/SQLite/InMemory) with optimistic concurrency and specialized interfaces | 12 |
 | Telemetry | L0 | OpenTelemetry distributed tracing and metrics via ITelemetryProvider (optional, NullTelemetryProvider fallback) | 2 |
 | Account | L1 | Internal user account CRUD (never internet-facing; external access via Auth only) | 18 |
@@ -385,9 +385,9 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Connect | L1 | WebSocket edge gateway with zero-copy binary routing, client-salted GUIDs, and multi-node relay | 7 |
 | Contract | L1 | Binding agreements with milestone progression, consent flows, and prebound API execution | 32 |
 | Permission | L1 | RBAC capability manifest compilation from service x state x role permission matrices | 8 |
-| Resource | L1 | Cross-layer reference tracking, cleanup coordination (CASCADE/RESTRICT/DETACH), and hierarchical compression | 17 |
+| Resource | L1 | Cross-layer reference tracking, cleanup coordination (CASCADE/RESTRICT/DETACH), and hierarchical compression | 20 |
 | Actor | L2 | NPC behavior execution runtime (ABML, GOAP, perception queues, variable providers, dynamic character binding) | 17 |
-| Character | L2 | Game world character management with realm partitioning and system realm support | 12 |
+| Character | L2 | Game world character management with realm partitioning and system realm support | 13 |
 | Collection | L2 | Universal content unlock and archive system with DI-dispatched unlock listeners | 23 |
 | Currency | L2 | Multi-currency economy (wallets, transfers, exchange rates, holds, escrow integration) | 35 |
 | Game Service | L2 | Registry of available games/applications with stub-name lookup | 5 |
@@ -395,12 +395,12 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Genesis | L2 | Template-driven entity awakening lifecycle — seed, economy, storage, and cognitive progression for entities that grow from inert objects into autonomous agents | — |
 | Inventory | L2 | Container and item placement with constraint models (slot/weight/grid/volumetric/unlimited) | 16 |
 | Item | L2 | Dual-model items -- templates (definitions) and instances (occurrences) with quantity models and binding | 17 |
-| Location | L2 | Hierarchical location tree within realms (cities, regions, buildings, rooms) with depth tracking | 25 |
+| Location | L2 | Hierarchical location tree within realms (cities, regions, buildings, rooms) with depth tracking | 26 |
 | Quest | L2 | Objective-based progression as thin orchestration over Contract with prerequisite provider extensibility | 20 |
 | Realm | L2 | Top-level persistent world management with deprecation lifecycle and seed-from-configuration | 13 |
 | Relationship | L2 | Entity-to-entity relationships with type taxonomy, bidirectional uniqueness, and ABML variable provider | 21 |
 | Seed | L2 | Generic progressive growth primitive with polymorphic ownership and phase-gated capabilities | 24 |
-| Species | L2 | Realm-scoped species definitions with trait modifiers and deprecation lifecycle | 13 |
+| Species | L2 | Realm-scoped species definitions with trait modifiers and deprecation lifecycle | 14 |
 | Subscription | L2 | Account-to-game access mapping with time-limited subscriptions and expiration worker | 7 |
 | Transit | L2 | Geographic connectivity graph, transit modes, and game-time journey tracking | 33 |
 | Worldstate | L2 | Per-realm game clock, calendar system, temporal events, and ${world.*} variable provider | 18 |
@@ -453,7 +453,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**77 services, 942 endpoints**
+**77 services, 948 endpoints**
 
 For full per-service details: `docs/GENERATED-*-SERVICE-DETAILS.md`
 

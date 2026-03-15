@@ -697,47 +697,25 @@ public partial class MergeRealmsRequest
 }
 
 /// <summary>
-/// Result of a realm merge operation including per-entity-type migration statistics
+/// Result of a realm merge operation. Migration is delegated to lib-resource
+/// <br/>which calls registered migrate callbacks for each dependent entity type.
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MergeRealmsResponse
 {
 
     /// <summary>
-    /// Number of species successfully added to target realm and removed from source
+    /// Number of migrate callbacks that completed successfully
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("speciesMigrated")]
-    public int SpeciesMigrated { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("totalMigrated")]
+    public int TotalMigrated { get; set; } = default!;
 
     /// <summary>
-    /// Number of species that failed to migrate
+    /// Number of migrate callbacks that failed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("speciesFailed")]
-    public int SpeciesFailed { get; set; } = default!;
-
-    /// <summary>
-    /// Number of locations successfully transferred to target realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("locationsMigrated")]
-    public int LocationsMigrated { get; set; } = default!;
-
-    /// <summary>
-    /// Number of locations that failed to transfer
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("locationsFailed")]
-    public int LocationsFailed { get; set; } = default!;
-
-    /// <summary>
-    /// Number of characters successfully transferred to target realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("charactersMigrated")]
-    public int CharactersMigrated { get; set; } = default!;
-
-    /// <summary>
-    /// Number of characters that failed to transfer
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("charactersFailed")]
-    public int CharactersFailed { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("totalFailed")]
+    public int TotalFailed { get; set; } = default!;
 
     /// <summary>
     /// Whether the source realm was hard-deleted after merge

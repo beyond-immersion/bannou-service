@@ -21,7 +21,7 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-mesh | Consumes `bannou.full-service-mappings` events for dynamic service routing |
-| lib-actor | **Planned**: Will use processing pool for auto-scaled NPC brain worker containers via `IActorPoolScaleListener` DI pattern (see [#318](https://github.com/beyond-immersion/bannou-service/issues/318)). Currently manages its own pool nodes independently. |
+| lib-actor | **Planned**: Will use processing pool for auto-scaled NPC brain worker containers via a planned `IActorPoolScaleListener` DI Listener pattern (see [#318](https://github.com/beyond-immersion/bannou-service/issues/318)). Interface not yet defined. Currently manages its own pool nodes independently. |
 | lib-procedural | Uses processing pool acquire/release for Houdini worker containers (hard dependency on `IOrchestratorClient`) |
 | All services | Receive routing updates published by orchestrator after topology changes |
 
@@ -252,21 +252,16 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 |---------|--------|-------|
 | Queue depth tracking (pool status) | Hardcoded 0 | Comment: "We don't have a queue yet" |
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/252 -->
-| Auto-scaling (pool) | No trigger | Thresholds are stored but no background job evaluates them |
+| Auto-scaling (pool) | No trigger | `ScaleUpThreshold`/`ScaleDownThreshold` stored in pool config but no timer-based background service evaluates utilization or triggers scaling |
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
-| Idle timeout cleanup (pool) | No trigger | `IdleTimeoutMinutes` stored but no background timer |
+| Idle timeout cleanup (pool) | No trigger | `IdleTimeoutMinutes` stored in pool config but no background timer cleans up idle pool workers |
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
-| ~~Preset infrastructure config~~ | **FIXED** (2026-03-07) | `ConvertInfrastructure` now maps `PresetInfrastructure` to `InfrastructureConfig` (enabled flag per service). `Version` field is not mapped (no equivalent in API model). |
 
 ---
 
 ## Potential Extensions
 
-- **Auto-scaling background service**: A timer-based service that evaluates pool utilization against `ScaleUpThreshold`/`ScaleDownThreshold` and automatically scales pools.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
-- **Idle timeout enforcement**: Background cleanup for pool workers that have been available beyond `IdleTimeoutMinutes`.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
-- **Actor pool auto-scale integration**: Implement `IActorPoolScaleListener` (DI Listener interface defined in `bannou-service/Providers/`) so Orchestrator can react to Actor pool capacity exhaustion and underutilization events. This is the most north-star-critical gap — 100K+ concurrent NPCs depends on auto-scaling. Requires #550 (auto-scaling background service) as a prerequisite.
+- **Actor pool auto-scale integration**: Define and implement an `IActorPoolScaleListener` DI Listener interface (in `bannou-service/Providers/`) so Orchestrator can react to Actor pool capacity exhaustion and underutilization events. This is the most north-star-critical gap — 100K+ concurrent NPCs depends on auto-scaling. Requires #550 (auto-scaling background service) as a prerequisite. The interface does not yet exist.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/318 -->
 
 - **Deploy validation**: Pre-flight checks before deployment (disk space, network reachability, image pull verification).
@@ -318,10 +313,6 @@ None currently active.
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
-
-### Completed
-
-- **Preset infrastructure config** (2026-03-07): Implemented `ConvertInfrastructure` in `PresetLoader.cs` to map preset infrastructure definitions to `InfrastructureConfig` on the output `ServiceTopology`. All 4 presets with `infrastructure:` sections now surface that data in API responses.
 
 ---
 

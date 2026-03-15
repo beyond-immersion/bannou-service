@@ -131,6 +131,16 @@ Arcadia's specific calendar (month names, season names, day-period boundaries), 
 
 ---
 
+## Client Time Synchronization
+
+Worldstate pushes `WorldstateTimeSyncEvent` (defined in `worldstate-client-events.yaml`) to connected WebSocket sessions via the Entity Session Registry pattern. Worldstate calls `IEntitySessionRegistry.PublishToEntitySessionsAsync("realm", realmId, event)` which resolves realm→session mappings and publishes to those sessions. Agency (L4) registers `("realm", realmId) → sessionId` bindings when a player enters a realm.
+
+Syncs are published on period-changed boundaries (~5 per game day, ~12 real minutes at 24:1), on ratio changes, on admin clock advancement, and on-demand via the `TriggerTimeSync` endpoint.
+
+The event includes a full game time snapshot (all `GameTimeSnapshot` fields inlined), `previousPeriod` (nullable), and `syncReason` (`TimeSyncReason` enum). Between syncs, the client advances its local clock: `localGameSeconds += realDelta * timeRatio`. The `timestamp` field (inherited from `BaseClientEvent`) provides the reference for drift correction.
+
+---
+
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -151,31 +161,6 @@ Arcadia's specific calendar (month names, season names, day-period boundaries), 
 | lib-market (L4, future) | Can use game-time for price history bucketing instead of server time. |
 | lib-loot (L4, future) | Seasonal loot modifiers query current season from worldstate. |
 | Any service with `inGameTime` fields | Encounter, Relationship, and future services can populate `inGameTime` from worldstate instead of caller-provided values. |
-
----
-
-### Type Field Classification
-
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `DowntimePolicy` | C (System State) | Service-specific enum (`Advance`, `Pause`) | Finite set of two system-owned policies for handling clock gaps after service downtime |
-| `TimeRatioChangeReason` | C (System State) | Service-specific enum (`Initial`, `AdminAdjustment`, `Event`, `Pause`, `Resume`) | Finite set of system-owned reasons for time ratio changes; used in ratio history tracking |
-| `TimeSyncReason` | C (System State) | Service-specific enum (`PeriodChanged`, `RatioChanged`, `AdminAdvance`, `TriggerSync`) | Finite set of system-owned reasons for client time sync events |
-| day period codes (e.g., `dawn`, `morning`, `night`) | B (Content Code) | Opaque string | Game-configurable day period names defined in calendar templates. Different games define different period structures (5 periods for Arcadia, 2 for a tidally locked world). Extensible without schema changes |
-| month codes (e.g., `frostmere`, `greenleaf`) | B (Content Code) | Opaque string | Game-configurable month names defined in calendar templates. Calendar structures vary per game service. Extensible without schema changes |
-| season codes (e.g., `winter`, `spring`, `wet`, `dry`) | B (Content Code) | Opaque string | Game-configurable season names defined in calendar templates. Referenced by Transit for seasonal connection availability. Extensible without schema changes |
-| era label codes | B (Content Code) | Opaque string | Game-configurable era names for year-range labeling in calendar templates. Optional, extensible without schema changes |
-| `calendarTemplateCode` | B (Content Code) | Opaque string | Unique identifier for calendar template definitions, registered via API per game service. Extensible without schema changes |
-
----
-
-## Client Time Synchronization
-
-Worldstate pushes `WorldstateTimeSyncEvent` (defined in `worldstate-client-events.yaml`) to connected WebSocket sessions via the Entity Session Registry pattern. Worldstate calls `IEntitySessionRegistry.PublishToEntitySessionsAsync("realm", realmId, event)` which resolves realm→session mappings and publishes to those sessions. Agency (L4) registers `("realm", realmId) → sessionId` bindings when a player enters a realm.
-
-Syncs are published on period-changed boundaries (~5 per game day, ~12 real minutes at 24:1), on ratio changes, on admin clock advancement, and on-demand via the `TriggerTimeSync` endpoint.
-
-The event includes a full game time snapshot (all `GameTimeSnapshot` fields inlined), `previousPeriod` (nullable), and `syncReason` (`TimeSyncReason` enum). Between syncs, the client advances its local clock: `localGameSeconds += realDelta * timeRatio`. The `timestamp` field (inherited from `BaseClientEvent`) provides the reference for drift correction.
 
 ---
 
@@ -294,6 +279,21 @@ All 18 endpoints are fully implemented. No stubs remain.
 
 6. **Variable-rate time**: Time ratio that changes based on player population. When no players are in a realm, time accelerates to advance the simulation faster.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/543 -->
+
+---
+
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `DowntimePolicy` | C (System State) | Service-specific enum (`Advance`, `Pause`) | Finite set of two system-owned policies for handling clock gaps after service downtime |
+| `TimeRatioChangeReason` | C (System State) | Service-specific enum (`Initial`, `AdminAdjustment`, `Event`, `Pause`, `Resume`) | Finite set of system-owned reasons for time ratio changes; used in ratio history tracking |
+| `TimeSyncReason` | C (System State) | Service-specific enum (`PeriodChanged`, `RatioChanged`, `AdminAdvance`, `TriggerSync`) | Finite set of system-owned reasons for client time sync events |
+| day period codes (e.g., `dawn`, `morning`, `night`) | B (Content Code) | Opaque string | Game-configurable day period names defined in calendar templates. Different games define different period structures (5 periods for Arcadia, 2 for a tidally locked world). Extensible without schema changes |
+| month codes (e.g., `frostmere`, `greenleaf`) | B (Content Code) | Opaque string | Game-configurable month names defined in calendar templates. Calendar structures vary per game service. Extensible without schema changes |
+| season codes (e.g., `winter`, `spring`, `wet`, `dry`) | B (Content Code) | Opaque string | Game-configurable season names defined in calendar templates. Referenced by Transit for seasonal connection availability. Extensible without schema changes |
+| era label codes | B (Content Code) | Opaque string | Game-configurable era names for year-range labeling in calendar templates. Optional, extensible without schema changes |
+| `calendarTemplateCode` | B (Content Code) | Opaque string | Unique identifier for calendar template definitions, registered via API per game service. Extensible without schema changes |
 
 ---
 

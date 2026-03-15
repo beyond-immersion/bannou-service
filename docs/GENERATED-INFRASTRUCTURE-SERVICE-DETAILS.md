@@ -15,7 +15,7 @@ Native service mesh (L0 Infrastructure) providing direct in-process service-to-s
 
 **Version**: 1.0.0 | **Schema**: `schemas/messaging-api.yaml` | **Endpoints**: 4 | **Deep Dive**: [docs/plugins/MESSAGING.md](plugins/MESSAGING.md) | **Map**: [docs/maps/MESSAGING.md](maps/MESSAGING.md)
 
-The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrastructure for Bannou. Operates in a dual role: as the `IMessageBus`/`IMessageSubscriber` infrastructure library used by all services for event publishing and subscription, and as an HTTP API providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, and aggressive retry buffering with crash-fast philosophy for unrecoverable failures.
+The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrastructure for Bannou. Operates in a dual role: as the `IMessageBus`/`IMessageSubscriber` infrastructure library used by all services for event publishing and subscription, and as an HTTP API providing dynamic subscription management with HTTP callback delivery. Three messaging backends: RabbitMQ (cloud, with channel pooling and aggressive retry buffering), InMemoryMessageBus (testing), and DirectDispatchMessageBus (embedded/sidecar, zero-overhead dispatch directly to IEventConsumer).
 
 ## State {#state}
 

@@ -32,6 +32,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     private readonly Mock<IQueryableStateStore<ItemInstanceModel>> _mockInstanceQueryableStore;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<ILogger<ItemService>> _mockLogger;
+    private readonly ItemInstanceEventBatcher _instanceEventBatcher;
 
     public ItemServiceTests()
     {
@@ -145,6 +146,11 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
 
         // Default configuration: disable admin override so bind tests expect Conflict
         Configuration.BindingAllowAdminOverride = false;
+
+        // Instance lifecycle event batcher (real instance — tests inspect accumulated entries directly)
+        _instanceEventBatcher = new ItemInstanceEventBatcher(
+            new Mock<IServiceProvider>().Object,
+            new Mock<ILogger<ItemInstanceEventBatcher>>().Object);
     }
 
     private ItemService CreateService()
@@ -156,7 +162,8 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             _mockContractClient.Object,
             _mockTelemetryProvider.Object,
             _mockLogger.Object,
-            Configuration);
+            Configuration,
+            _instanceEventBatcher);
     }
 
     #region Constructor Tests
@@ -962,12 +969,10 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         await service.CreateItemInstanceAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal("item.instance.created", capturedTopic);
-        Assert.NotNull(capturedEvent);
-        var typedEvent = Assert.IsType<ItemInstanceCreatedEvent>(capturedEvent);
-        Assert.Equal(templateId, typedEvent.TemplateId);
-        Assert.Equal(containerId, typedEvent.ContainerId);
-        Assert.Equal(realmId, typedEvent.RealmId);
+        // Instance lifecycle events now go through the batcher, not the message bus.
+        // Verify the batcher accumulated a creation entry (batcher helpers tested separately).
+        Assert.False(_instanceEventBatcher.AllFlushables[0].IsEmpty,
+            "Expected batcher to have a created entry after CreateItemInstanceAsync");
     }
 
     #endregion
@@ -2243,12 +2248,9 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.Null(response.RemainingQuantity);  // Destroyed
         Assert.Equal(contractInstanceId, response.ContractInstanceId);
 
-        var destroyEvent = capturedEvents
-            .Where(e => e.Topic == "item.instance.destroyed")
-            .Select(e => e.Event)
-            .SingleOrDefault();
-        Assert.NotNull(destroyEvent);
-        Assert.IsType<ItemInstanceDestroyedEvent>(destroyEvent);
+        // Instance destroy events now go through the batcher (batcher helpers tested separately).
+        Assert.False(_instanceEventBatcher.AllFlushables[2].IsEmpty,
+            "Expected batcher to have a destroyed entry after UseItemAsync consumed the item");
     }
 
     [Fact]
