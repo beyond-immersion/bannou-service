@@ -77,6 +77,7 @@ public partial class TelemetryClient : ITelemetryClient, BeyondImmersion.BannouS
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
     private readonly Microsoft.Extensions.Logging.ILogger<TelemetryClient>? _logger;
+    private readonly System.IServiceProvider? _directDispatchProvider;
 
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
@@ -103,11 +104,13 @@ public partial class TelemetryClient : ITelemetryClient, BeyondImmersion.BannouS
     /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
     /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
     /// <param name="logger">Optional logger for diagnostic output.</param>
-    public TelemetryClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<TelemetryClient>? logger = null)
+    /// <param name="directDispatchProvider">Optional service provider for direct dispatch in embedded/sidecar mode. When provided, service calls bypass HTTP mesh and resolve directly via DI.</param>
+    public TelemetryClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<TelemetryClient>? logger = null, System.IServiceProvider? directDispatchProvider = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
         _resolver = resolver ?? throw new System.ArgumentNullException(nameof(resolver));
         _logger = logger;
+        _directDispatchProvider = directDispatchProvider;
         Initialize();
     }
 
@@ -222,6 +225,14 @@ public partial class TelemetryClient : ITelemetryClient, BeyondImmersion.BannouS
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<TelemetryHealthResponse> HealthAsync(TelemetryHealthRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TelemetryHealthResponse>(
+                _directDispatchProvider, _serviceName, "HealthAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "telemetry/health"
@@ -302,6 +313,14 @@ public partial class TelemetryClient : ITelemetryClient, BeyondImmersion.BannouS
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<TelemetryStatusResponse> StatusAsync(TelemetryStatusRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TelemetryStatusResponse>(
+                _directDispatchProvider, _serviceName, "StatusAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "telemetry/status"

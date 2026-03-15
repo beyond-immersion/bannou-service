@@ -305,6 +305,7 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
     private readonly Microsoft.Extensions.Logging.ILogger<QuestClient>? _logger;
+    private readonly System.IServiceProvider? _directDispatchProvider;
 
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
@@ -331,11 +332,13 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
     /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
     /// <param name="logger">Optional logger for diagnostic output.</param>
-    public QuestClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<QuestClient>? logger = null)
+    /// <param name="directDispatchProvider">Optional service provider for direct dispatch in embedded/sidecar mode. When provided, service calls bypass HTTP mesh and resolve directly via DI.</param>
+    public QuestClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<QuestClient>? logger = null, System.IServiceProvider? directDispatchProvider = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
         _resolver = resolver ?? throw new System.ArgumentNullException(nameof(resolver));
         _logger = logger;
+        _directDispatchProvider = directDispatchProvider;
         Initialize();
     }
 
@@ -453,6 +456,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QuestDefinitionResponse>(
+                _directDispatchProvider, _serviceName, "CreateQuestDefinitionAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "quest/definition/create"
@@ -548,6 +559,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QuestDefinitionResponse>(
+                _directDispatchProvider, _serviceName, "GetQuestDefinitionAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "quest/definition/get"
@@ -637,6 +656,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListQuestDefinitionsResponse>(
+                _directDispatchProvider, _serviceName, "ListQuestDefinitionsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "quest/definition/list"
@@ -719,6 +746,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QuestDefinitionResponse>(
+                _directDispatchProvider, _serviceName, "UpdateQuestDefinitionAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -810,6 +845,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QuestDefinitionResponse>(
+                _directDispatchProvider, _serviceName, "DeprecateQuestDefinitionAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -904,6 +947,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedResponse>(
+                _directDispatchProvider, _serviceName, "CleanDeprecatedQuestDefinitionsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "quest/definition/clean-deprecated"
@@ -987,6 +1038,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QuestInstanceResponse>(
+                _directDispatchProvider, _serviceName, "AcceptQuestAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1089,6 +1148,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QuestInstanceResponse>(
+                _directDispatchProvider, _serviceName, "AbandonQuestAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "quest/abandon"
@@ -1186,6 +1253,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QuestInstanceResponse>(
+                _directDispatchProvider, _serviceName, "DeleteQuestInstanceAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "quest/instance/delete"
@@ -1274,6 +1349,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QuestInstanceResponse>(
+                _directDispatchProvider, _serviceName, "GetQuestAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1364,6 +1447,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListQuestsResponse>(
+                _directDispatchProvider, _serviceName, "ListQuestsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "quest/list"
@@ -1446,6 +1537,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListAvailableQuestsResponse>(
+                _directDispatchProvider, _serviceName, "ListAvailableQuestsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1530,6 +1629,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QuestLogResponse>(
+                _directDispatchProvider, _serviceName, "GetQuestLogAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "quest/log"
@@ -1612,6 +1719,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ObjectiveProgressResponse>(
+                _directDispatchProvider, _serviceName, "ReportObjectiveProgressAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1702,6 +1817,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ObjectiveProgressResponse>(
+                _directDispatchProvider, _serviceName, "ForceCompleteObjectiveAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "quest/objective/complete"
@@ -1790,6 +1913,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ObjectiveProgressResponse>(
+                _directDispatchProvider, _serviceName, "GetObjectiveProgressAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1880,6 +2011,15 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
+                _directDispatchProvider, _serviceName, "HandleMilestoneCompletedAsync",
+                body, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "quest/internal/milestone-completed"
@@ -1956,6 +2096,15 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
+                _directDispatchProvider, _serviceName, "HandleQuestCompletedAsync",
+                body, cancellationToken).ConfigureAwait(false);
+            return;
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -2034,6 +2183,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QuestArchive>(
+                _directDispatchProvider, _serviceName, "GetCompressDataAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -2125,6 +2282,14 @@ public partial class QuestClient : IQuestClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteByCharacterResponse>(
+                _directDispatchProvider, _serviceName, "DeleteByCharacterAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();

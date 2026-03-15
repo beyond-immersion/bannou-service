@@ -206,11 +206,8 @@ namespace Bannou
         /** Update bundle metadata */
         constexpr const TCHAR* AssetUpdateBundle = TEXT("POST:/bundles/update");
 
-        /** Soft-delete a bundle */
+        /** Delete a bundle */
         constexpr const TCHAR* AssetDeleteBundle = TEXT("POST:/bundles/delete");
-
-        /** Restore a soft-deleted bundle */
-        constexpr const TCHAR* AssetRestoreBundle = TEXT("POST:/bundles/restore");
 
         /** Query bundles with advanced filters */
         constexpr const TCHAR* AssetQueryBundles = TEXT("POST:/bundles/query");
@@ -2146,16 +2143,8 @@ namespace Bannou
                 TEXT("/bundles/delete"),
                 TEXT("bundles"),
                 TEXT("FDeleteBundleRequest"),
-                TEXT("FDeleteBundleResponse"),
-                TEXT("Soft-delete a bundle")
-            });
-            Registry.Add(TEXT("AssetRestoreBundle"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/bundles/restore"),
-                TEXT("bundles"),
-                TEXT("FRestoreBundleRequest"),
-                TEXT("FRestoreBundleResponse"),
-                TEXT("Restore a soft-deleted bundle")
+                TEXT(""),
+                TEXT("Delete a bundle")
             });
             Registry.Add(TEXT("AssetQueryBundles"), FEndpointInfo{
                 TEXT("POST"),

@@ -361,6 +361,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
     private readonly Microsoft.Extensions.Logging.ILogger<GardenerClient>? _logger;
+    private readonly System.IServiceProvider? _directDispatchProvider;
 
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
@@ -387,11 +388,13 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
     /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
     /// <param name="logger">Optional logger for diagnostic output.</param>
-    public GardenerClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<GardenerClient>? logger = null)
+    /// <param name="directDispatchProvider">Optional service provider for direct dispatch in embedded/sidecar mode. When provided, service calls bypass HTTP mesh and resolve directly via DI.</param>
+    public GardenerClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<GardenerClient>? logger = null, System.IServiceProvider? directDispatchProvider = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
         _resolver = resolver ?? throw new System.ArgumentNullException(nameof(resolver));
         _logger = logger;
+        _directDispatchProvider = directDispatchProvider;
         Initialize();
     }
 
@@ -511,6 +514,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GardenStateResponse>(
+                _directDispatchProvider, _serviceName, "EnterGardenAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "gardener/garden/enter"
@@ -606,6 +617,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GardenStateResponse>(
+                _directDispatchProvider, _serviceName, "GetGardenStateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "gardener/garden/get"
@@ -695,6 +714,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PositionUpdateResponse>(
+                _directDispatchProvider, _serviceName, "UpdatePositionAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -786,6 +813,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LeaveGardenResponse>(
+                _directDispatchProvider, _serviceName, "LeaveGardenAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "gardener/garden/leave"
@@ -874,6 +909,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListPoisResponse>(
+                _directDispatchProvider, _serviceName, "ListPoisAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -965,6 +1008,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PoiInteractionResponse>(
+                _directDispatchProvider, _serviceName, "InteractWithPoiAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1061,6 +1112,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeclinePoiResponse>(
+                _directDispatchProvider, _serviceName, "DeclinePoiAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1159,6 +1218,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioStateResponse>(
+                _directDispatchProvider, _serviceName, "EnterScenarioAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "gardener/scenario/enter"
@@ -1254,6 +1321,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioStateResponse>(
+                _directDispatchProvider, _serviceName, "GetScenarioStateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "gardener/scenario/get"
@@ -1343,6 +1418,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioCompletionResponse>(
+                _directDispatchProvider, _serviceName, "CompleteScenarioAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1434,6 +1517,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AbandonScenarioResponse>(
+                _directDispatchProvider, _serviceName, "AbandonScenarioAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "gardener/scenario/abandon"
@@ -1524,6 +1615,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioStateResponse>(
+                _directDispatchProvider, _serviceName, "ChainScenarioAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1620,6 +1719,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioTemplateResponse>(
+                _directDispatchProvider, _serviceName, "CreateTemplateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "gardener/template/create"
@@ -1708,6 +1815,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioTemplateResponse>(
+                _directDispatchProvider, _serviceName, "GetTemplateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1798,6 +1913,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioTemplateResponse>(
+                _directDispatchProvider, _serviceName, "GetTemplateByCodeAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "gardener/template/get-by-code"
@@ -1887,6 +2010,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListTemplatesResponse>(
+                _directDispatchProvider, _serviceName, "ListTemplatesAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "gardener/template/list"
@@ -1969,6 +2100,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioTemplateResponse>(
+                _directDispatchProvider, _serviceName, "UpdateTemplateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -2060,6 +2199,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioTemplateResponse>(
+                _directDispatchProvider, _serviceName, "DeprecateTemplateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -2154,6 +2301,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedResponse>(
+                _directDispatchProvider, _serviceName, "CleanDeprecatedTemplatesAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "gardener/template/clean-deprecated"
@@ -2236,6 +2391,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PhaseConfigResponse>(
+                _directDispatchProvider, _serviceName, "GetPhaseConfigAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -2320,6 +2483,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PhaseConfigResponse>(
+                _directDispatchProvider, _serviceName, "UpdatePhaseConfigAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "gardener/phase/update"
@@ -2402,6 +2573,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PhaseMetricsResponse>(
+                _directDispatchProvider, _serviceName, "GetPhaseMetricsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -2486,6 +2665,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioStateResponse>(
+                _directDispatchProvider, _serviceName, "EnterScenarioTogetherAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -2581,6 +2768,14 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SharedGardenStateResponse>(
+                _directDispatchProvider, _serviceName, "GetSharedGardenStateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();

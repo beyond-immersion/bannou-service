@@ -256,6 +256,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
     private readonly Microsoft.Extensions.Logging.ILogger<ActorClient>? _logger;
+    private readonly System.IServiceProvider? _directDispatchProvider;
 
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
@@ -282,11 +283,13 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
     /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
     /// <param name="logger">Optional logger for diagnostic output.</param>
-    public ActorClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<ActorClient>? logger = null)
+    /// <param name="directDispatchProvider">Optional service provider for direct dispatch in embedded/sidecar mode. When provided, service calls bypass HTTP mesh and resolve directly via DI.</param>
+    public ActorClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<ActorClient>? logger = null, System.IServiceProvider? directDispatchProvider = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
         _resolver = resolver ?? throw new System.ArgumentNullException(nameof(resolver));
         _logger = logger;
+        _directDispatchProvider = directDispatchProvider;
         Initialize();
     }
 
@@ -401,6 +404,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ActorTemplateResponse>(
+                _directDispatchProvider, _serviceName, "CreateActorTemplateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "actor/template/create"
@@ -480,6 +491,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ActorTemplateResponse>(
+                _directDispatchProvider, _serviceName, "GetActorTemplateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -561,6 +580,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListActorTemplatesResponse>(
+                _directDispatchProvider, _serviceName, "ListActorTemplatesAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "actor/template/list"
@@ -640,6 +667,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ActorTemplateResponse>(
+                _directDispatchProvider, _serviceName, "UpdateActorTemplateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -721,6 +756,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteActorTemplateResponse>(
+                _directDispatchProvider, _serviceName, "DeleteActorTemplateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "actor/template/delete"
@@ -800,6 +843,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ActorInstanceResponse>(
+                _directDispatchProvider, _serviceName, "SpawnActorAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -886,6 +937,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ActorInstanceResponse>(
+                _directDispatchProvider, _serviceName, "GetActorAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "actor/get"
@@ -965,6 +1024,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<StopActorResponse>(
+                _directDispatchProvider, _serviceName, "StopActorAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1052,6 +1119,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ActorInstanceResponse>(
+                _directDispatchProvider, _serviceName, "BindActorCharacterAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "actor/bind-character"
@@ -1138,6 +1213,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupByCharacterResponse>(
+                _directDispatchProvider, _serviceName, "CleanupByCharacterAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "actor/cleanup-by-character"
@@ -1217,6 +1300,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListActorsResponse>(
+                _directDispatchProvider, _serviceName, "ListActorsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1302,6 +1393,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<InjectPerceptionResponse>(
+                _directDispatchProvider, _serviceName, "InjectPerceptionAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1394,6 +1493,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryOptionsResponse>(
+                _directDispatchProvider, _serviceName, "QueryOptionsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "actor/query-options"
@@ -1479,6 +1586,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<StartEncounterResponse>(
+                _directDispatchProvider, _serviceName, "StartEncounterAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "actor/encounter/start"
@@ -1562,6 +1677,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<UpdateEncounterPhaseResponse>(
+                _directDispatchProvider, _serviceName, "UpdateEncounterPhaseAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1647,6 +1770,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EndEncounterResponse>(
+                _directDispatchProvider, _serviceName, "EndEncounterAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "actor/encounter/end"
@@ -1730,6 +1861,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetEncounterResponse>(
+                _directDispatchProvider, _serviceName, "GetEncounterAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();

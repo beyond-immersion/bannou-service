@@ -48,10 +48,7 @@ info:
       description: Published when bundle metadata is updated
     - topic: asset.bundle.deleted
       event: BundleDeletedEvent
-      description: Published when a bundle is soft-deleted or permanently deleted
-    - topic: asset.bundle.restored
-      event: BundleRestoredEvent
-      description: Published when a soft-deleted bundle is restored
+      description: Published when a bundle is permanently deleted
     # Processing pool dispatch events
     - topic: "asset.processing.job.{poolType}"
       event: AssetProcessingJobDispatchedEvent
@@ -508,13 +505,12 @@ components:
         - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
-      description: Event published when a bundle is soft-deleted or permanently deleted
+      description: Event published when a bundle is permanently deleted
       required:
         - eventName
         - eventId
         - timestamp
         - bundleId
-        - permanent
         - deletedBy
       properties:
         eventName:
@@ -524,14 +520,6 @@ components:
         bundleId:
           type: string
           description: Human-readable bundle identifier
-        permanent:
-          type: boolean
-          description: True if permanently deleted, false for soft-delete
-        retentionUntil:
-          type: string
-          format: date-time
-          nullable: true
-          description: When soft-deleted bundle will be permanently removed (null for permanent deletes)
         reason:
           type: string
           nullable: true
@@ -539,43 +527,6 @@ components:
         deletedBy:
           type: string
           description: Session ID or service name that performed the deletion
-        realm:
-          allOf:
-            - $ref: 'asset-api.yaml#/components/schemas/GameRealm'
-          nullable: true
-          description: Game realm of the bundle. Null for cross-realm bundles.
-
-    BundleRestoredEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-      type: object
-      additionalProperties: false
-      description: Event published when a soft-deleted bundle is restored
-      required:
-        - eventName
-        - eventId
-        - timestamp
-        - bundleId
-        - restoredFromVersion
-        - restoredBy
-      properties:
-        eventName:
-          type: string
-          default: asset.bundle.restored
-          description: 'Event type identifier: asset.bundle.restored'
-        bundleId:
-          type: string
-          description: Human-readable bundle identifier
-        restoredFromVersion:
-          type: integer
-          description: Metadata version the bundle was restored from
-        reason:
-          type: string
-          nullable: true
-          description: Reason provided for the restoration
-        restoredBy:
-          type: string
-          description: Session ID or service name that performed the restoration
         realm:
           allOf:
             - $ref: 'asset-api.yaml#/components/schemas/GameRealm'

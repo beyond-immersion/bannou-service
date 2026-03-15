@@ -143,26 +143,6 @@ public enum BundleType
 #pragma warning restore CS1591
 
 /// <summary>
-/// Result of a deletion operation:
-/// <br/>- deleted: Soft-deleted (within retention period, can be restored)
-/// <br/>- permanently_deleted: Permanently removed (unrecoverable)
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DeletionStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Deleted")]
-    Deleted = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PermanentlyDeleted")]
-    PermanentlyDeleted = 1,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Fields available for sorting bundle query results
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -2317,7 +2297,6 @@ public enum BundleStatus
 /// <summary>
 /// Bundle lifecycle status:
 /// <br/>- active: Bundle is available for use
-/// <br/>- deleted: Bundle has been soft-deleted (within retention period)
 /// <br/>- processing: Bundle is being processed (metabundle creation)
 /// <br/>
 /// </summary>
@@ -2329,11 +2308,8 @@ public enum BundleLifecycle
     [System.Runtime.Serialization.EnumMember(Value = @"Active")]
     Active = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"Deleted")]
-    Deleted = 1,
-
     [System.Runtime.Serialization.EnumMember(Value = @"Processing")]
-    Processing = 2,
+    Processing = 1,
 
 }
 #pragma warning restore CS1591
@@ -2449,12 +2425,6 @@ public partial class BundleInfo
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
-    /// <summary>
-    /// When the bundle was soft-deleted (null if active)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedAt")]
-    public System.DateTimeOffset? DeletedAt { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -2547,7 +2517,7 @@ public partial class UpdateBundleResponse
 }
 
 /// <summary>
-/// Request to delete a bundle
+/// Request to permanently delete a bundle
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteBundleRequest
@@ -2563,96 +2533,10 @@ public partial class DeleteBundleRequest
     public string BundleId { get; set; } = default!;
 
     /// <summary>
-    /// If true, permanently delete (admin only). If false, soft-delete.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("permanent")]
-    public bool Permanent { get; set; } = false;
-
-    /// <summary>
     /// Optional reason for deletion (recorded in version history)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     public string? Reason { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Result of bundle deletion
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DeleteBundleResponse
-{
-
-    /// <summary>
-    /// Deletion status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DeletionStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// When the bundle was deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset DeletedAt { get; set; } = default!;
-
-    /// <summary>
-    /// When soft-deleted bundle will be permanently removed (null for permanent deletes)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("retentionUntil")]
-    public System.DateTimeOffset? RetentionUntil { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Request to restore a soft-deleted bundle
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RestoreBundleRequest
-{
-
-    /// <summary>
-    /// Human-readable bundle identifier to restore
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
-    public string BundleId { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for restoration (recorded in version history)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    public string? Reason { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Result of bundle restoration
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RestoreBundleResponse
-{
-
-    /// <summary>
-    /// Current bundle lifecycle status after restoration (should be "active")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BundleLifecycle Status { get; set; } = default!;
-
-    /// <summary>
-    /// Version number the bundle was restored from
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("restoredFromVersion")]
-    public int RestoredFromVersion { get; set; } = default!;
 
 }
 
@@ -2758,12 +2642,6 @@ public partial class QueryBundlesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
     public int Offset { get; set; } = 0;
-
-    /// <summary>
-    /// Include soft-deleted bundles in results
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("includeDeleted")]
-    public bool IncludeDeleted { get; set; } = false;
 
 }
 

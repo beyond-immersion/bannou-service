@@ -13,12 +13,12 @@
 |-------|-------|
 | Plugin | lib-asset |
 | Layer | L3 AppFeatures |
-| Endpoints | 20 |
+| Endpoints | 18 |
 | State Stores | asset-statestore (Redis), asset-processor-pool (Redis) |
-| Events Published | 14 (`asset.upload.requested`, `asset.upload.completed`, `asset.ready`, `asset.processing.queued`, `asset.processing.job.{poolType}`, `asset.processing.retry`, `asset.processing.completed`, `asset.bundle.create`, `asset.bundle.created`, `asset.bundle.updated`, `asset.bundle.deleted`, `asset.bundle.restored`, `asset.metabundle.created`, `asset.metabundle.job.queued`) |
+| Events Published | 12 (`asset.upload.requested`, `asset.upload.completed`, `asset.ready`, `asset.processing.queued`, `asset.processing.job.{poolType}`, `asset.processing.retry`, `asset.processing.completed`, `asset.bundle.create`, `asset.bundle.created`, `asset.bundle.updated`, `asset.bundle.deleted`, `asset.metabundle.created`, `asset.metabundle.job.queued`) |
 | Events Consumed | 1 (`asset.metabundle.job.queued` — self-consumption) |
 | Client Events | 8 |
-| Background Services | 3 |
+| Background Services | 2 |
 
 ---
 
@@ -33,7 +33,6 @@
 | `{BundleUploadSessionKeyPrefix}{uploadId}` | `BundleUploadSession` | Pre-made bundle upload sessions; saved with TTL |
 | `{BundleKeyPrefix}{bundleId}` | `BundleMetadata` | Bundle manifest (asset list, owner, version, compression, lifecycle status, provenance) |
 | `{BundleKeyPrefix}bundles-index:{realm}` | `List<string>` | Per-realm bundle ID index; realm falls back to `"_global"` when null |
-| `{BundleKeyPrefix}deleted-bundles-index` | Sorted set (`ICacheableStateStore`) | Deferred permanent deletion queue; scored by `DeletedAt` unix timestamp |
 | `{AssetIndexKeyPrefix}{realm}:{contentType}` | `List<string>` | Asset IDs indexed by realm and content type |
 | `{AssetBundleIndexKeyPrefix}{assetId}` | `AssetBundleIndex` | Reverse index: which bundles contain this asset |
 | `{MetabundleJobKeyPrefix}{jobId}` | `MetabundleJob` | Async metabundle job state (status, progress, result) |
@@ -90,8 +89,7 @@
 | `asset.bundle.create` | `BundleCreationJobQueuedEvent` | `CreateBundleAsync` — when delegating to processing pool |
 | `asset.bundle.created` | `BundleCreatedEvent` | `CreateBundleAsync` (inline path), metabundle job completion |
 | `asset.bundle.updated` | `BundleUpdatedEvent` | `UpdateBundleAsync` — after metadata update |
-| `asset.bundle.deleted` | `BundleDeletedEvent` | `DeleteBundleAsync` (soft), `BundleCleanupWorker` (permanent) |
-| `asset.bundle.restored` | `BundleRestoredEvent` | `RestoreBundleAsync` |
+| `asset.bundle.deleted` | `BundleDeletedEvent` | `DeleteBundleAsync` (permanent) |
 | `asset.metabundle.created` | `MetabundleCreatedEvent` | `CreateMetabundleAsync` (sync path), `ProcessMetabundleJobAsync` (async job path) |
 | `asset.metabundle.job.queued` | `MetabundleJobQueuedEvent` | `CreateMetabundleAsync` (async path only) — self-consumed for load distribution |
 
@@ -121,7 +119,6 @@
 | `IAssetProcessorPoolManager` | Processor node state tracking |
 | `IBundleConverter` | `.bannou` / `.zip` format conversion |
 | `AssetProcessingWorker` | Background job consumer with heartbeat and graceful drain |
-| `BundleCleanupWorker` | Background purge of soft-deleted bundles |
 | `ZipCacheCleanupWorker` | Background purge of expired ZIP cache entries |
 
 ---
@@ -146,8 +143,7 @@
 | ResolveBundles | POST /bundles/resolve | user | - | - |
 | QueryBundlesByAsset | POST /bundles/query/by-asset | user | - | - |
 | UpdateBundle | POST /bundles/update | user | bundle, version-history | asset.bundle.updated |
-| DeleteBundle | POST /bundles/delete | user | bundle, realm-index, deleted-index | asset.bundle.deleted |
-| RestoreBundle | POST /bundles/restore | user | bundle, realm-index, deleted-index | asset.bundle.restored |
+| DeleteBundle | POST /bundles/delete | user | bundle, indexes, version-history | asset.bundle.deleted |
 | QueryBundles | POST /bundles/query | user | - | - |
 | ListBundleVersions | POST /bundles/list-versions | user | - | - |
 
@@ -452,46 +448,20 @@ POST /bundles/delete | Roles: [user]
 
 ```
 READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId} -> 404 if null
-IF bundle.LifecycleStatus == Deleted
- RETURN (400, null)
-IF request.permanent
- // Immediate permanent deletion
- CALL _storageProvider.DeleteObjectAsync(bucket, storageKey)
- DELETE _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
- // Clean up per-asset reverse indexes
- FOREACH assetId in bundle.AssetIds
- READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} [with ETag]
- ETAG-WRITE _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} <- remove bundleId
- PUBLISH asset.bundle.deleted { bundleId, permanent: true }
-ELSE
- // Soft delete: mark deleted, add to cleanup queue
- WRITE _bundleMetadataStore:{BundleKeyPrefix}{bundleId} <- bundle { LifecycleStatus: Deleted, DeletedAt: now }
- WRITE _bundleMetadataCacheStore:{BundleKeyPrefix}deleted-bundles-index
- <- AddToSortedSetAsync(deletedAt.ToUnixTimeSeconds(), bundleId)
- // Remove from realm index (optimistic concurrency retry)
- READ _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} [with ETag]
- ETAG-WRITE _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} <- remove bundleId
- PUBLISH asset.bundle.deleted { bundleId, permanent: false, retentionUntil }
-RETURN (200, DeleteBundleResponse)
-```
-
-### RestoreBundle
-POST /bundles/restore | Roles: [user]
-
-```
-READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId} -> 404 if null
-IF bundle.LifecycleStatus != Deleted
- RETURN (400, null)
-// Restore: clear deletion, re-index
-WRITE _bundleMetadataStore:{BundleKeyPrefix}{bundleId} <- bundle { LifecycleStatus: Active, DeletedAt: null }
-// Remove from deleted-bundles-index sorted set
-WRITE _bundleMetadataCacheStore:{BundleKeyPrefix}deleted-bundles-index
- <- RemoveFromSortedSetAsync(bundleId)
-// Add back to realm index (optimistic concurrency retry)
-READ _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} [with ETag]
-ETAG-WRITE _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} <- add bundleId
-PUBLISH asset.bundle.restored { bundleId, restoredFromVersion }
-RETURN (200, RestoreBundleResponse)
+// Permanent hard delete per FOUNDATION TENETS (no soft-delete)
+CALL _storageProvider.DeleteObjectAsync(bucket, storageKey)
+DELETE _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
+// Clean up per-asset reverse indexes
+FOREACH assetId in bundle.AssetIds
+ READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId}
+ WRITE _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} <- remove bundleId
+// Delete version history entries
+READ _bundleVersionRecordCacheStore:bundle-version-index:{bundleId}
+FOREACH version in versionNumbers
+ DELETE _bundleVersionRecordCacheStore:bundle-version:{bundleId}:{version}
+DELETE _bundleVersionRecordCacheStore:bundle-version-index:{bundleId}
+PUBLISH asset.bundle.deleted { bundleId, reason, deletedBy, realm }
+RETURN 200
 ```
 
 ### QueryBundles
@@ -502,7 +472,7 @@ READ _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm}
 FOREACH bundleId in index
  READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
 // Filter by: lifecycle status, tags, tagExists/tagNotExists, createdAfter/Before,
-// nameContains, owner, bundleType, includeDeleted
+// nameContains, owner, bundleType
 // Sort by sortField (CreatedAt/UpdatedAt/Name/Size) in sortOrder (Asc/Desc)
 // Paginate by limit/offset
 RETURN (200, QueryBundlesResponse)

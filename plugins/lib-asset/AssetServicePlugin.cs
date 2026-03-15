@@ -141,9 +141,6 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         // Worker checks ProcessingMode from configuration at startup and exits early if mode is "api"
         services.AddHostedService<AssetProcessingWorker>();
 
-        // Register background worker for expired deleted bundle cleanup
-        services.AddHostedService<Bundles.BundleCleanupWorker>();
-
         // Register background worker for expired ZIP cache cleanup
         services.AddHostedService<Bundles.ZipCacheCleanupWorker>();
 

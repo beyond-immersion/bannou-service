@@ -258,7 +258,7 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 - Declare `x-service-layer: AppFeatures` at schema root (default is GameFeatures -- wrong layer without this)
 - Declare `x-references` block for lib-resource cleanup of non-account entity references; for account-owned data, subscribe to `account.deleted` per tenets's Account Deletion Cleanup Obligation
 - Create broadcast-events.yaml schema using `x-lifecycle` with `topic_prefix: broadcast` for PlatformLink, PlatformSession, and Output entities; plus 1 custom event (`broadcast.audience.pulse`)
-- Define consumed event models inline in `broadcast-events.yaml` (voice events, session events -- cannot `$ref` other service event files per FOUNDATION TENETS)
+- Declare `x-event-subscriptions` in `broadcast-events.yaml` for consumed events (voice broadcast/mute events, account.deleted, session.disconnected) using class name references -- the generator resolves event types across all `*-events.yaml` schemas at generation time. Do NOT redefine consumed event models inline (causes duplicate C# types, same problem as `$ref` to other event files)
 - Create broadcast-configuration.yaml schema (36 configuration properties with validation ranges)
 - Create broadcast-client-events.yaml (5 client events: output started/stopped/source-changed, session started/ended)
 - Define `AudioCodec` and `VideoCodec` enums in configuration schema (LGPL-compliant codecs only per tenets)

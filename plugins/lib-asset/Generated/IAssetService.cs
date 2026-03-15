@@ -107,12 +107,7 @@ public partial interface IAssetService : IBannouService
         /// <summary>
         /// DeleteBundle operation
         /// </summary>
-        Task<(StatusCodes, DeleteBundleResponse?)> DeleteBundleAsync(DeleteBundleRequest body, CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
-        /// RestoreBundle operation
-        /// </summary>
-        Task<(StatusCodes, RestoreBundleResponse?)> RestoreBundleAsync(RestoreBundleRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<StatusCodes> DeleteBundleAsync(DeleteBundleRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// QueryBundles operation

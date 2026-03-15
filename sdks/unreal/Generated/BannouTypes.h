@@ -336,7 +336,6 @@ struct FDeleteArchiveResponse;
 struct FDeleteAreaContentConfigRequest;
 struct FDeleteBoardRequest;
 struct FDeleteBundleRequest;
-struct FDeleteBundleResponse;
 struct FDeleteCalendarRequest;
 struct FDeleteCalendarResponse;
 struct FDeleteCollectionRequest;
@@ -361,7 +360,6 @@ struct FDeleteSlotResponse;
 struct FDeleteStatusTemplateRequest;
 struct FDeleteVersionRequest;
 struct FDeleteVersionResponse;
-struct FDeletionStatus;
 struct FDeltaAlgorithm;
 struct FDepartJourneyRequest;
 struct FDeploymentPhase;
@@ -993,8 +991,6 @@ struct FResolvedReference;
 struct FResponseValidation;
 struct FRestoreArchiveRequest;
 struct FRestoreArchiveResponse;
-struct FRestoreBundleRequest;
-struct FRestoreBundleResponse;
 struct FResumeJourneyRequest;
 struct FRetireCameraRequest;
 struct FRevealDiscoveryRequest;
@@ -4417,10 +4413,6 @@ struct FBundleInfo
     /** When the bundle metadata was last updated */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FDateTime> UpdatedAt;
-
-    /** When the bundle was soft-deleted (null if active) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDateTime> DeletedAt;
 
 };
 
@@ -10335,7 +10327,7 @@ struct FDeleteBoardRequest
 };
 
 /**
- * Request to delete a bundle
+ * Request to permanently delete a bundle
  */
 USTRUCT(BlueprintType)
 struct FDeleteBundleRequest
@@ -10346,35 +10338,9 @@ struct FDeleteBundleRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString BundleId;
 
-    /** If true, permanently delete (admin only). If false, soft-delete. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool Permanent = false;
-
     /** Optional reason for deletion (recorded in version history) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Reason;
-
-};
-
-/**
- * Result of bundle deletion
- */
-USTRUCT(BlueprintType)
-struct FDeleteBundleResponse
-{
-    GENERATED_BODY()
-
-    /** Deletion status */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FDeletionStatus Status;
-
-    /** When the bundle was deleted */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FDateTime DeletedAt;
-
-    /** When soft-deleted bundle will be permanently removed (null for permanent deletes) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDateTime> RetentionUntil;
 
 };
 
@@ -10759,16 +10725,6 @@ struct FDeleteVersionResponse
     /** Storage freed in bytes */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int64 BytesFreed = 0;
-
-};
-
-/**
- * Result of a deletion operation:
- */
-USTRUCT(BlueprintType)
-struct FDeletionStatus
-{
-    GENERATED_BODY()
 
 };
 
@@ -23622,10 +23578,6 @@ struct FQueryBundlesRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int32> Offset;
 
-    /** Include soft-deleted bundles in results */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool IncludeDeleted = false;
-
 };
 
 /**
@@ -26135,42 +26087,6 @@ struct FRestoreArchiveResponse
     /** Number of existing documents deleted before restore */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int32> PreviousDocumentsDeleted;
-
-};
-
-/**
- * Request to restore a soft-deleted bundle
- */
-USTRUCT(BlueprintType)
-struct FRestoreBundleRequest
-{
-    GENERATED_BODY()
-
-    /** Human-readable bundle identifier to restore */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString BundleId;
-
-    /** Optional reason for restoration (recorded in version history) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Reason;
-
-};
-
-/**
- * Result of bundle restoration
- */
-USTRUCT(BlueprintType)
-struct FRestoreBundleResponse
-{
-    GENERATED_BODY()
-
-    /** Current bundle lifecycle status after restoration (should be "active") */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FBundleLifecycle Status;
-
-    /** Version number the bundle was restored from */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    int32 RestoredFromVersion = 0;
 
 };
 

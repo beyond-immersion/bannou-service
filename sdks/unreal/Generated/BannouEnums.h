@@ -252,14 +252,12 @@ enum class EBundleFormat : uint8
 
 /** Bundle lifecycle status:
 - active: Bundle is available for use
-- deleted: Bundle has been soft-deleted (within retention period)
 - processing: Bundle is being processed (metabundle creation)
  */
 UENUM(BlueprintType)
 enum class EBundleLifecycle : uint8
 {
     Active UMETA(DisplayName = "Active"),
-    Deleted UMETA(DisplayName = "Deleted"),
     Processing UMETA(DisplayName = "Processing"),
 };
 
@@ -593,17 +591,6 @@ enum class ECurrencyScope : uint8
     Global UMETA(DisplayName = "Global"),
     RealmSpecific UMETA(DisplayName = "RealmSpecific"),
     MultiRealm UMETA(DisplayName = "MultiRealm"),
-};
-
-/** Result of a deletion operation:
-- deleted: Soft-deleted (within retention period, can be restored)
-- permanently_deleted: Permanently removed (unrecoverable)
- */
-UENUM(BlueprintType)
-enum class EDeletionStatus : uint8
-{
-    Deleted UMETA(DisplayName = "Deleted"),
-    PermanentlyDeleted UMETA(DisplayName = "PermanentlyDeleted"),
 };
 
 /** Algorithm used for delta computation.

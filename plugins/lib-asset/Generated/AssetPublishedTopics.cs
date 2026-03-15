@@ -41,11 +41,8 @@ public static class AssetPublishedTopics
     /// <summary>Published when bundle metadata is updated.</summary>
     public const string BundleUpdated = "asset.bundle.updated";
 
-    /// <summary>Published when a bundle is soft-deleted or permanently deleted.</summary>
+    /// <summary>Published when a bundle is permanently deleted.</summary>
     public const string BundleDeleted = "asset.bundle.deleted";
-
-    /// <summary>Published when a soft-deleted bundle is restored.</summary>
-    public const string BundleRestored = "asset.bundle.restored";
 
     /// <summary>Published when a processing job is dispatched to a pool-type-specific topic (e.g., asset.processing.job.audio).</summary>
     public const string AssetProcessingJobDispatched = "asset.processing.job.{poolType}";

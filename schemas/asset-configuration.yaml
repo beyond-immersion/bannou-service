@@ -293,27 +293,6 @@ x-service-configuration:
       description: Directory for ZIP cache files. When null, uses the system temp directory with a 'bannou-zip-cache' subdirectory.
       env: ASSET_ZIP_CACHE_DIRECTORY
 
-    DeletedBundleRetentionDays:
-      type: integer
-      minimum: 0
-      description: Number of days to retain soft-deleted bundles before permanent removal. Set to 0 for immediate deletion.
-      env: ASSET_DELETED_BUNDLE_RETENTION_DAYS
-      default: 30
-
-    BundleCleanupIntervalMinutes:
-      type: integer
-      minimum: 1
-      description: Interval in minutes between bundle cleanup scans for permanently removing expired soft-deleted bundles.
-      env: ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES
-      default: 60
-
-    BundleCleanupStartupDelaySeconds:
-      type: integer
-      minimum: 0
-      description: Delay in seconds before the bundle cleanup worker begins its first scan after startup, allowing other services to initialize.
-      env: ASSET_BUNDLE_CLEANUP_STARTUP_DELAY_SECONDS
-      default: 30
-
     ZipCacheCleanupIntervalMinutes:
       type: integer
       minimum: 1

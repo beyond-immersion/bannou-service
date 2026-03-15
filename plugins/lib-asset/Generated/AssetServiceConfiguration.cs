@@ -312,27 +312,6 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     public string? ZipCacheDirectory { get; set; }
 
     /// <summary>
-    /// Number of days to retain soft-deleted bundles before permanent removal. Set to 0 for immediate deletion.
-    /// Environment variable: ASSET_DELETED_BUNDLE_RETENTION_DAYS
-    /// </summary>
-    [ConfigRange(Minimum = 0)]
-    public int DeletedBundleRetentionDays { get; set; } = 30;
-
-    /// <summary>
-    /// Interval in minutes between bundle cleanup scans for permanently removing expired soft-deleted bundles.
-    /// Environment variable: ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES
-    /// </summary>
-    [ConfigRange(Minimum = 1)]
-    public int BundleCleanupIntervalMinutes { get; set; } = 60;
-
-    /// <summary>
-    /// Delay in seconds before the bundle cleanup worker begins its first scan after startup, allowing other services to initialize.
-    /// Environment variable: ASSET_BUNDLE_CLEANUP_STARTUP_DELAY_SECONDS
-    /// </summary>
-    [ConfigRange(Minimum = 0)]
-    public int BundleCleanupStartupDelaySeconds { get; set; } = 30;
-
-    /// <summary>
     /// Interval in minutes between ZIP cache cleanup scans for removing expired converted bundles from storage.
     /// Environment variable: ASSET_ZIP_CACHE_CLEANUP_INTERVAL_MINUTES
     /// </summary>

@@ -528,39 +528,12 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Soft-delete a bundle
-     * @description Soft-delete a bundle, marking it as deleted but retaining data
-     *     for the configured retention period (default 30 days).
-     *
-     *     Deleted bundles are excluded from resolution and queries by default.
-     *     Use permanent=true for immediate, unrecoverable deletion (admin only).
+     * Delete a bundle
+     * @description Permanently delete a bundle, removing it from storage and all indexes.
      *
      *     Only the bundle owner or admin can delete.
      */
     post: operations['asset_deleteBundle'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/bundles/restore': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Restore a soft-deleted bundle
-     * @description Restore a bundle that was soft-deleted, making it active again.
-     *     Can only restore bundles within their retention period.
-     *
-     *     Only the bundle owner or admin can restore.
-     */
-    post: operations['asset_restoreBundle'];
     delete?: never;
     options?: never;
     head?: never;
@@ -580,7 +553,7 @@ export interface paths {
      * Query bundles with advanced filters
      * @description Query bundles with flexible filtering options including:
      *     - Tag matching (exact, exists, not exists)
-     *     - Status filtering (active, deleted)
+     *     - Status filtering (active, processing)
      *     - Date range filtering
      *     - Name search (contains)
      *     - Owner filtering
@@ -12826,20 +12799,14 @@ export interface components {
        * @description When the bundle metadata was last updated
        */
       updatedAt?: string | null;
-      /**
-       * Format: date-time
-       * @description When the bundle was soft-deleted (null if active)
-       */
-      deletedAt?: string | null;
     };
     /**
      * @description Bundle lifecycle status:
      *     - active: Bundle is available for use
-     *     - deleted: Bundle has been soft-deleted (within retention period)
      *     - processing: Bundle is being processed (metabundle creation)
      * @enum {string}
      */
-    BundleLifecycle: 'Active' | 'Deleted' | 'Processing';
+    BundleLifecycle: 'Active' | 'Processing';
     /** @description Preview of bundle manifest for validation */
     BundleManifestPreview: {
       /** @description Human-readable bundle identifier from the manifest */
@@ -16691,32 +16658,12 @@ export interface components {
        */
       boardId: string;
     };
-    /** @description Request to delete a bundle */
+    /** @description Request to permanently delete a bundle */
     DeleteBundleRequest: {
       /** @description Human-readable bundle identifier to delete */
       bundleId: string;
-      /**
-       * @description If true, permanently delete (admin only). If false, soft-delete.
-       * @default false
-       */
-      permanent: boolean;
       /** @description Optional reason for deletion (recorded in version history) */
       reason?: string | null;
-    };
-    /** @description Result of bundle deletion */
-    DeleteBundleResponse: {
-      /** @description Deletion status */
-      status: components['schemas']['DeletionStatus'];
-      /**
-       * Format: date-time
-       * @description When the bundle was deleted
-       */
-      deletedAt: string;
-      /**
-       * Format: date-time
-       * @description When soft-deleted bundle will be permanently removed (null for permanent deletes)
-       */
-      retentionUntil?: string | null;
     };
     /** @description Request to delete a calendar template */
     DeleteCalendarRequest: {
@@ -16921,13 +16868,6 @@ export interface components {
        */
       bytesFreed: number;
     };
-    /**
-     * @description Result of a deletion operation:
-     *     - deleted: Soft-deleted (within retention period, can be restored)
-     *     - permanently_deleted: Permanently removed (unrecoverable)
-     * @enum {string}
-     */
-    DeletionStatus: 'Deleted' | 'PermanentlyDeleted';
     /**
      * @description Algorithm used for delta computation.
      *     JSON_PATCH: RFC 6902, best for structured JSON data
@@ -24958,11 +24898,6 @@ export interface components {
        * @default 0
        */
       offset: number;
-      /**
-       * @description Include soft-deleted bundles in results
-       * @default false
-       */
-      includeDeleted: boolean;
     };
     /** @description Bundle query results */
     QueryBundlesResponse: {
@@ -26594,20 +26529,6 @@ export interface components {
       documentsRestored: number;
       /** @description Number of existing documents deleted before restore */
       previousDocumentsDeleted?: number;
-    };
-    /** @description Request to restore a soft-deleted bundle */
-    RestoreBundleRequest: {
-      /** @description Human-readable bundle identifier to restore */
-      bundleId: string;
-      /** @description Optional reason for restoration (recorded in version history) */
-      reason?: string | null;
-    };
-    /** @description Result of bundle restoration */
-    RestoreBundleResponse: {
-      /** @description Current bundle lifecycle status after restoration (should be "active") */
-      status: components['schemas']['BundleLifecycle'];
-      /** @description Version number the bundle was restored from */
-      restoredFromVersion: number;
     };
     /** @description Request to resume an interrupted journey */
     ResumeJourneyRequest: {
@@ -32578,9 +32499,7 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['DeleteBundleResponse'];
-        };
+        content?: never;
       };
       /** @description Invalid request */
       400: {
@@ -32598,58 +32517,6 @@ export interface operations {
       };
       /** @description Bundle not found */
       404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  asset_restoreBundle: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RestoreBundleRequest'];
-      };
-    };
-    responses: {
-      /** @description Bundle restored successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RestoreBundleResponse'];
-        };
-      };
-      /** @description Invalid request or bundle not in deleted state */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Not authorized to restore this bundle */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Bundle not found or permanently deleted */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Bundle retention period has expired */
-      410: {
         headers: {
           [name: string]: unknown;
         };

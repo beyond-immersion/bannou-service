@@ -77,19 +77,12 @@ public static class AssetEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(AssetPublishedTopics.BundleUpdated, eventData, cancellationToken);
 
-    /// <summary>Published when a bundle is soft-deleted or permanently deleted.</summary>
+    /// <summary>Published when a bundle is permanently deleted.</summary>
     public static Task<bool> PublishBundleDeletedAsync(
         this IMessageBus messageBus,
         BundleDeletedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(AssetPublishedTopics.BundleDeleted, eventData, cancellationToken);
-
-    /// <summary>Published when a soft-deleted bundle is restored.</summary>
-    public static Task<bool> PublishBundleRestoredAsync(
-        this IMessageBus messageBus,
-        BundleRestoredEvent eventData,
-        CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(AssetPublishedTopics.BundleRestored, eventData, cancellationToken);
 
     /// <summary>Published when a processing job is dispatched to a pool-type-specific topic (e.g., asset.processing.job.audio).</summary>
     public static Task<bool> PublishAssetProcessingJobDispatchedAsync(

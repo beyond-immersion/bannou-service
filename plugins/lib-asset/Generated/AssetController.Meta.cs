@@ -3270,7 +3270,7 @@ public partial class AssetController
         "DeleteBundleRequest": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Request to delete a bundle",
+            "description": "Request to permanently delete a bundle",
             "required": [
                 "bundleId"
             ],
@@ -3280,11 +3280,6 @@ public partial class AssetController
                     "minLength": 1,
                     "maxLength": 255,
                     "description": "Human-readable bundle identifier to delete"
-                },
-                "permanent": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "If true, permanently delete (admin only). If false, soft-delete."
                 },
                 "reason": {
                     "type": "string",
@@ -3298,52 +3293,13 @@ public partial class AssetController
 """;
 
     private static readonly string _DeleteBundle_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/DeleteBundleResponse",
-    "$defs": {
-        "DeleteBundleResponse": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "Result of bundle deletion",
-            "required": [
-                "status",
-                "deletedAt"
-            ],
-            "properties": {
-                "status": {
-                    "$ref": "#/$defs/DeletionStatus",
-                    "description": "Deletion status"
-                },
-                "deletedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the bundle was deleted"
-                },
-                "retentionUntil": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When soft-deleted bundle will be permanently removed (null for permanent deletes)"
-                }
-            }
-        },
-        "DeletionStatus": {
-            "type": "string",
-            "enum": [
-                "Deleted",
-                "PermanentlyDeleted"
-            ],
-            "description": "Result of a deletion operation:\n- deleted: Soft-deleted (within retention period, can be restored)\n- permanently_deleted: Permanently removed (unrecoverable)\n"
-        }
-    }
-}
+{}
 """;
 
     private static readonly string _DeleteBundle_Info = """
 {
-    "summary": "Soft-delete a bundle",
-    "description": "Soft-delete a bundle, marking it as deleted but retaining data\nfor the configured retention period (default 30 days).\n\nDeleted bundles are excluded from resolution and queries by default.\nUse permanent=true for immediate, unrecoverable deletion (admin only).\n\nOnly the bundle owner or admin can delete.\n",
+    "summary": "Delete a bundle",
+    "description": "Permanently delete a bundle, removing it from storage and all indexes.\n\nOnly the bundle owner or admin can delete.\n",
     "tags": [
         "Bundles"
     ],
@@ -3391,129 +3347,6 @@ public partial class AssetController
             _DeleteBundle_Info,
             _DeleteBundle_RequestSchema,
             _DeleteBundle_ResponseSchema));
-
-    #endregion
-
-    #region Meta Endpoints for RestoreBundle
-
-    private static readonly string _RestoreBundle_RequestSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/RestoreBundleRequest",
-    "$defs": {
-        "RestoreBundleRequest": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "Request to restore a soft-deleted bundle",
-            "required": [
-                "bundleId"
-            ],
-            "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 255,
-                    "description": "Human-readable bundle identifier to restore"
-                },
-                "reason": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional reason for restoration (recorded in version history)"
-                }
-            }
-        }
-    }
-}
-""";
-
-    private static readonly string _RestoreBundle_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/RestoreBundleResponse",
-    "$defs": {
-        "RestoreBundleResponse": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "Result of bundle restoration",
-            "required": [
-                "status",
-                "restoredFromVersion"
-            ],
-            "properties": {
-                "status": {
-                    "$ref": "#/$defs/BundleLifecycle",
-                    "description": "Current bundle lifecycle status after restoration (should be \"active\")"
-                },
-                "restoredFromVersion": {
-                    "type": "integer",
-                    "description": "Version number the bundle was restored from"
-                }
-            }
-        },
-        "BundleLifecycle": {
-            "type": "string",
-            "enum": [
-                "Active",
-                "Deleted",
-                "Processing"
-            ],
-            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
-        }
-    }
-}
-""";
-
-    private static readonly string _RestoreBundle_Info = """
-{
-    "summary": "Restore a soft-deleted bundle",
-    "description": "Restore a bundle that was soft-deleted, making it active again.\nCan only restore bundles within their retention period.\n\nOnly the bundle owner or admin can restore.\n",
-    "tags": [
-        "Bundles"
-    ],
-    "deprecated": false,
-    "operationId": "restoreBundle"
-}
-""";
-
-    /// <summary>Returns endpoint information for RestoreBundle</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/bundles/restore/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreBundle_MetaInfo()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
-            "Asset",
-            "POST",
-            "/bundles/restore",
-            _RestoreBundle_Info));
-
-    /// <summary>Returns request schema for RestoreBundle</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/bundles/restore/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreBundle_MetaRequestSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Asset",
-            "POST",
-            "/bundles/restore",
-            "request-schema",
-            _RestoreBundle_RequestSchema));
-
-    /// <summary>Returns response schema for RestoreBundle</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/bundles/restore/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreBundle_MetaResponseSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
-            "Asset",
-            "POST",
-            "/bundles/restore",
-            "response-schema",
-            _RestoreBundle_ResponseSchema));
-
-    /// <summary>Returns full schema for RestoreBundle</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/bundles/restore/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreBundle_MetaFullSchema()
-        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
-            "Asset",
-            "POST",
-            "/bundles/restore",
-            _RestoreBundle_Info,
-            _RestoreBundle_RequestSchema,
-            _RestoreBundle_ResponseSchema));
 
     #endregion
 
@@ -3638,11 +3471,6 @@ public partial class AssetController
                     "type": "integer",
                     "default": 0,
                     "description": "Pagination offset"
-                },
-                "includeDeleted": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Include soft-deleted bundles in results"
                 }
             }
         },
@@ -3650,10 +3478,9 @@ public partial class AssetController
             "type": "string",
             "enum": [
                 "Active",
-                "Deleted",
                 "Processing"
             ],
-            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\ n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- processing: Bundle is being processed (metabundle creation)\n"
         },
         "AssetOwnerType": {
             "type": "string",
@@ -3674,7 +3501,7 @@ public partial class AssetController
                 "Source",
                 "Metabundle"
             ],
-            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
         "BundleSortField": {
             "type": "string",
@@ -3830,12 +3657,6 @@ public partial class AssetController
                     "format": "date-time",
                     "nullable": true,
                     "description": "When the bundle metadata was last updated"
-                },
-                "deletedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the bundle was soft-deleted (null if active)"
                 }
             }
         },
@@ -3853,7 +3674,7 @@ public partial class AssetController
                 "Session",
                 "Service"
             ],
-            "description": "Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).\nSession: user-initiated operation identified by WebSocket session ID (UUID).\ nService: service-initiated operation identified by service name.\n"
+            "description": "Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).\nSession: user-initiated operation identified by WebSocket session ID (UUID).\nService: service-initiated operation identified by service name.\n"
         },
         "GameRealm": {
             "type": "string",
@@ -3864,10 +3685,9 @@ public partial class AssetController
             "type": "string",
             "enum": [
                 "Active",
-                "Deleted",
                 "Processing"
             ],
-            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- processing: Bundle is being processed (metabundle creation)\n"
         }
     }
 }
@@ -3876,7 +3696,7 @@ public partial class AssetController
     private static readonly string _QueryBundles_Info = """
 {
     "summary": "Query bundles with advanced filters",
-    "description": "Query bundles with flexible filtering options including:\n- Tag matching (exact, exists, not exists)\n- Status filtering (active, deleted)\n- Date range filtering\n- Name search (contains)\n- Owner filtering\n- Realm and bundle type filtering\ n\nSupports pagination and sorting.\n",
+    "description": "Query bundles with flexible filtering options including:\n- Tag matching (exact, exists, not exists)\n- Status filtering (active, processing)\n- Date range filtering\n- Name search (contains)\n- Owner filtering\n- Realm and bundle type filtering\ n\nSupports pagination and sorting.\n",
     "tags": [
         "Bundles"
     ],
@@ -4145,12 +3965,6 @@ public partial class AssetController
                     "format": "date-time",
                     "nullable": true,
                     "description": "When the bundle metadata was last updated"
-                },
-                "deletedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When the bundle was soft-deleted (null if active)"
                 }
             }
         },
@@ -4179,10 +3993,9 @@ public partial class AssetController
             "type": "string",
             "enum": [
                 "Active",
-                "Deleted",
                 "Processing"
             ],
-            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\ n- processing: Bundle is being processed (metabundle creation)\n"
         }
     }
 }

@@ -7,7 +7,7 @@ Services in the **App Features (L3)** layer.
 
 ## Asset {#asset}
 
-**Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/ASSET.md](plugins/ASSET.md) | **Map**: [docs/maps/ASSET.md](maps/ASSET.md)
+**Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/ASSET.md](plugins/ASSET.md) | **Map**: [docs/maps/ASSET.md](maps/ASSET.md)
 
 The Asset service (L3 AppFeatures) provides storage, versioning, and distribution of large binary assets (textures, audio, 3D models) using MinIO/S3-compatible object storage. Issues pre-signed URLs so clients upload/download directly to the storage backend, never routing raw asset data through the WebSocket gateway. Also manages bundles (grouped assets in a custom `.bannou` format with LZ4 compression), metabundles (merged super-bundles), and a distributed processor pool for content-type-specific transcoding. Used by lib-behavior, lib-save-load, lib-mapping, and lib-documentation for binary storage needs.
 
@@ -44,7 +44,7 @@ Public-facing website service (L3 AppFeatures) for browser-based access to news,
 ## Summary
 
 - **Services in layer**: 6
-- **Endpoints in layer**: 117
+- **Endpoints in layer**: 116
 
 ---
 

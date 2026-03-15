@@ -287,21 +287,6 @@ public static class AssetPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/bundles/restore",
-            Method = ServiceEndpointMethod.Post,
-            Description = "restoreBundle",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/bundles/query",
             Method = ServiceEndpointMethod.Post,
             Description = "queryBundles",

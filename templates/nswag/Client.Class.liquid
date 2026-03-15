@@ -12,6 +12,7 @@
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
     private readonly Microsoft.Extensions.Logging.ILogger<{{ Class }}>? _logger;
+    private readonly System.IServiceProvider? _directDispatchProvider;
 
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
@@ -32,18 +33,20 @@
     /// </summary>
     public System.Guid InstanceId => _meshClient.InstanceId;
 
-{% assign constructorParameters = "BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<" | append: Class | append: ">? logger = null" -%}
+{% assign constructorParameters = "BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<" | append: Class | append: ">? logger = null, System.IServiceProvider? directDispatchProvider = null" -%}
     /// <summary>
     /// Initializes a new instance of the <see cref="{{ Class }}"/> class.
     /// </summary>
     /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
     /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
     /// <param name="logger">Optional logger for diagnostic output.</param>
+    /// <param name="directDispatchProvider">Optional service provider for direct dispatch in embedded/sidecar mode. When provided, service calls bypass HTTP mesh and resolve directly via DI.</param>
     public {{ Class }}({{ constructorParameters }})
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
         _resolver = resolver ?? throw new System.ArgumentNullException(nameof(resolver));
         _logger = logger;
+        _directDispatchProvider = directDispatchProvider;
         Initialize();
     {% template Client.Class.Constructor %}
     }
@@ -211,6 +214,23 @@
             throw new System.ArgumentNullException("{{ operation.ContentParameter.VariableName }}");
 
 {%     endif -%}
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+{%     if operation.HasContent -%}
+{%         if operation.HasResult -%}
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<{{ operation.UnwrappedResultType }}>(
+                _directDispatchProvider, _serviceName, "{{ operation.ActualOperationName }}Async",
+                {{ operation.ContentParameter.VariableName }}, cancellationToken).ConfigureAwait(false);
+{%         else -%}
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
+                _directDispatchProvider, _serviceName, "{{ operation.ActualOperationName }}Async",
+                {{ operation.ContentParameter.VariableName }}, cancellationToken).ConfigureAwait(false);
+            return;
+{%         endif -%}
+{%     endif -%}
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "{{ operation.Path }}"

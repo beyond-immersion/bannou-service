@@ -81,8 +81,15 @@ public static class ServiceClientExtensions
                 else if (paramType == typeof(string) && parameters[i].Name == "serviceName")
                     args[i] = serviceName;
                 else
-                    args[i] = serviceProvider.GetService(paramType) ??
-                            throw new InvalidOperationException($"Cannot resolve parameter {parameters[i].Name} of type {paramType.Name}");
+                {
+                    var resolved = serviceProvider.GetService(paramType);
+                    if (resolved != null)
+                        args[i] = resolved;
+                    else if (parameters[i].HasDefaultValue)
+                        args[i] = parameters[i].DefaultValue!;
+                    else
+                        throw new InvalidOperationException($"Cannot resolve parameter {parameters[i].Name} of type {paramType.Name}");
+                }
             }
 
             var instance = Activator.CreateInstance(typeof(TClient), args)

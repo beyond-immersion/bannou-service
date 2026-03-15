@@ -262,35 +262,16 @@ public partial interface IAssetClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Soft-delete a bundle
+    /// Delete a bundle
     /// </summary>
     /// <remarks>
-    /// Soft-delete a bundle, marking it as deleted but retaining data
-    /// <br/>for the configured retention period (default 30 days).
-    /// <br/>
-    /// <br/>Deleted bundles are excluded from resolution and queries by default.
-    /// <br/>Use permanent=true for immediate, unrecoverable deletion (admin only).
+    /// Permanently delete a bundle, removing it from storage and all indexes.
     /// <br/>
     /// <br/>Only the bundle owner or admin can delete.
     /// </remarks>
     /// <returns>Bundle deleted successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<DeleteBundleResponse> DeleteBundleAsync(DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <param name="body">The body parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Restore a soft-deleted bundle
-    /// </summary>
-    /// <remarks>
-    /// Restore a bundle that was soft-deleted, making it active again.
-    /// <br/>Can only restore bundles within their retention period.
-    /// <br/>
-    /// <br/>Only the bundle owner or admin can restore.
-    /// </remarks>
-    /// <returns>Bundle restored successfully</returns>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<RestoreBundleResponse> RestoreBundleAsync(RestoreBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task DeleteBundleAsync(DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -300,7 +281,7 @@ public partial interface IAssetClient
     /// <remarks>
     /// Query bundles with flexible filtering options including:
     /// <br/>- Tag matching (exact, exists, not exists)
-    /// <br/>- Status filtering (active, deleted)
+    /// <br/>- Status filtering (active, processing)
     /// <br/>- Date range filtering
     /// <br/>- Name search (contains)
     /// <br/>- Owner filtering
@@ -360,6 +341,7 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
     private readonly Microsoft.Extensions.Logging.ILogger<AssetClient>? _logger;
+    private readonly System.IServiceProvider? _directDispatchProvider;
 
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
@@ -386,11 +368,13 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
     /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
     /// <param name="logger">Optional logger for diagnostic output.</param>
-    public AssetClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<AssetClient>? logger = null)
+    /// <param name="directDispatchProvider">Optional service provider for direct dispatch in embedded/sidecar mode. When provided, service calls bypass HTTP mesh and resolve directly via DI.</param>
+    public AssetClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<AssetClient>? logger = null, System.IServiceProvider? directDispatchProvider = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
         _resolver = resolver ?? throw new System.ArgumentNullException(nameof(resolver));
         _logger = logger;
+        _directDispatchProvider = directDispatchProvider;
         Initialize();
     }
 
@@ -509,6 +493,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<UploadResponse>(
+                _directDispatchProvider, _serviceName, "RequestUploadAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "assets/upload/request"
@@ -612,6 +604,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AssetMetadata>(
+                _directDispatchProvider, _serviceName, "CompleteUploadAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "assets/upload/complete"
@@ -708,6 +708,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AssetWithDownloadUrl>(
+                _directDispatchProvider, _serviceName, "GetAssetAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "assets/get"
@@ -797,6 +805,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteAssetResponse>(
+                _directDispatchProvider, _serviceName, "DeleteAssetAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -894,6 +910,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AssetVersionList>(
+                _directDispatchProvider, _serviceName, "ListAssetVersionsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "assets/list-versions"
@@ -984,6 +1008,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AssetSearchResult>(
+                _directDispatchProvider, _serviceName, "SearchAssetsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "assets/search"
@@ -1068,6 +1100,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CreateBundleResponse>(
+                _directDispatchProvider, _serviceName, "CreateBundleAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1169,6 +1209,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BundleWithDownloadUrl>(
+                _directDispatchProvider, _serviceName, "GetBundleAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "bundles/get"
@@ -1258,6 +1306,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<UploadResponse>(
+                _directDispatchProvider, _serviceName, "RequestBundleUploadAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1353,6 +1409,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CreateMetabundleResponse>(
+                _directDispatchProvider, _serviceName, "CreateMetabundleAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1459,6 +1523,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetJobStatusResponse>(
+                _directDispatchProvider, _serviceName, "GetJobStatusAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "bundles/job/status"
@@ -1551,6 +1623,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CancelJobResponse>(
+                _directDispatchProvider, _serviceName, "CancelJobAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1656,6 +1736,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ResolveBundlesResponse>(
+                _directDispatchProvider, _serviceName, "ResolveBundlesAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "bundles/resolve"
@@ -1746,6 +1834,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryBundlesByAssetResponse>(
+                _directDispatchProvider, _serviceName, "QueryBundlesByAssetAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1840,6 +1936,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<UpdateBundleResponse>(
+                _directDispatchProvider, _serviceName, "UpdateBundleAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "bundles/update"
@@ -1929,23 +2033,28 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Soft-delete a bundle
+    /// Delete a bundle
     /// </summary>
     /// <remarks>
-    /// Soft-delete a bundle, marking it as deleted but retaining data
-    /// <br/>for the configured retention period (default 30 days).
-    /// <br/>
-    /// <br/>Deleted bundles are excluded from resolution and queries by default.
-    /// <br/>Use permanent=true for immediate, unrecoverable deletion (admin only).
+    /// Permanently delete a bundle, removing it from storage and all indexes.
     /// <br/>
     /// <br/>Only the bundle owner or admin can delete.
     /// </remarks>
     /// <returns>Bundle deleted successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<DeleteBundleResponse> DeleteBundleAsync(DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task DeleteBundleAsync(DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
+                _directDispatchProvider, _serviceName, "DeleteBundleAsync",
+                body, cancellationToken).ConfigureAwait(false);
+            return;
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1965,7 +2074,6 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
-            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
             // Apply custom headers
             ApplyHeaders(request_);
@@ -1988,12 +2096,7 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<DeleteBundleResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
+                        return;
                     }
                     else
                     if (status_ == 400)
@@ -2036,122 +2139,12 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Restore a soft-deleted bundle
-    /// </summary>
-    /// <remarks>
-    /// Restore a bundle that was soft-deleted, making it active again.
-    /// <br/>Can only restore bundles within their retention period.
-    /// <br/>
-    /// <br/>Only the bundle owner or admin can restore.
-    /// </remarks>
-    /// <returns>Bundle restored successfully</returns>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<RestoreBundleResponse> RestoreBundleAsync(RestoreBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (body == null)
-            throw new System.ArgumentNullException("body");
-
-        // Build method path (without base URL - mesh client handles endpoint resolution)
-        var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "bundles/restore"
-        urlBuilder_.Append("bundles/restore");
-
-        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
-        var appId_ = _resolver.GetAppIdForService(ServiceName);
-
-        // Create HTTP request via mesh client
-        using (var request_ = _meshClient.CreateInvokeMethodRequest(
-            new System.Net.Http.HttpMethod("POST"),
-            appId_,
-            methodPath_))
-        {
-            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
-            var content_ = new System.Net.Http.ByteArrayContent(json_);
-            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-            request_.Content = content_;
-            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-            // Apply custom headers
-            ApplyHeaders(request_);
-
-            try
-            {
-                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<RestoreBundleResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid request or bundle not in deleted state", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 403)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Not authorized to restore this bundle", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 404)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Bundle not found or permanently deleted", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 410)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Bundle retention period has expired", status_, responseText_, headers_, null);
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-            finally
-            {
-                // Clear headers after request (one-time use)
-                ClearHeaders();
-            }
-        }
-    }
-
-    /// <param name="body">The body parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
     /// Query bundles with advanced filters
     /// </summary>
     /// <remarks>
     /// Query bundles with flexible filtering options including:
     /// <br/>- Tag matching (exact, exists, not exists)
-    /// <br/>- Status filtering (active, deleted)
+    /// <br/>- Status filtering (active, processing)
     /// <br/>- Date range filtering
     /// <br/>- Name search (contains)
     /// <br/>- Owner filtering
@@ -2165,6 +2158,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryBundlesResponse>(
+                _directDispatchProvider, _serviceName, "QueryBundlesAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -2263,6 +2264,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListBundleVersionsResponse>(
+                _directDispatchProvider, _serviceName, "ListBundleVersionsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "bundles/list-versions"
@@ -2353,6 +2362,14 @@ public partial class AssetClient : IAssetClient, BeyondImmersion.BannouService.S
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BulkGetAssetsResponse>(
+                _directDispatchProvider, _serviceName, "BulkGetAssetsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();

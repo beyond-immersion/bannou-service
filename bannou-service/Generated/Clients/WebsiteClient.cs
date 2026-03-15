@@ -177,6 +177,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
     private readonly Microsoft.Extensions.Logging.ILogger<WebsiteClient>? _logger;
+    private readonly System.IServiceProvider? _directDispatchProvider;
 
     /// <summary>
     /// Service name used for app-id resolution. Extracted from class name.
@@ -203,11 +204,13 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
     /// <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
     /// <param name="logger">Optional logger for diagnostic output.</param>
-    public WebsiteClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<WebsiteClient>? logger = null)
+    /// <param name="directDispatchProvider">Optional service provider for direct dispatch in embedded/sidecar mode. When provided, service calls bypass HTTP mesh and resolve directly via DI.</param>
+    public WebsiteClient(BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<WebsiteClient>? logger = null, System.IServiceProvider? directDispatchProvider = null)
     {
         _meshClient = meshClient ?? throw new System.ArgumentNullException(nameof(meshClient));
         _resolver = resolver ?? throw new System.ArgumentNullException(nameof(resolver));
         _logger = logger;
+        _directDispatchProvider = directDispatchProvider;
         Initialize();
     }
 
@@ -318,6 +321,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<StatusResponse> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "website/status"
@@ -393,6 +401,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     {
         if (slug == null)
             throw new System.ArgumentNullException("slug");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -475,6 +488,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<NewsResponse> GetNewsAsync(int? limit = null, int? offset = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "website/news"
@@ -558,6 +576,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<DownloadsResponse> GetDownloadsAsync(Platform? platform = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "website/downloads"
@@ -639,6 +662,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ContactResponse>(
+                _directDispatchProvider, _serviceName, "SubmitContactAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -728,6 +759,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AccountProfile> GetAccountProfileAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "website/account/profile"
@@ -807,6 +843,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<PageMetadata>> ListPagesAsync(bool? includeUnpublished = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "website/cms/pages"
@@ -888,6 +929,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PageContent>(
+                _directDispatchProvider, _serviceName, "CreatePageAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -973,6 +1022,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
         if (body == null)
             throw new System.ArgumentNullException("body");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PageContent>(
+                _directDispatchProvider, _serviceName, "UpdatePageAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "website/cms/pages/{slug}"
@@ -1054,6 +1111,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
         if (slug == null)
             throw new System.ArgumentNullException("slug");
 
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "website/cms/pages/{slug}"
@@ -1121,6 +1183,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SiteSettings> GetSiteSettingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "website/cms/site-settings"
@@ -1196,6 +1263,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SiteSettings>(
+                _directDispatchProvider, _serviceName, "UpdateSiteSettingsAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
@@ -1273,6 +1348,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ThemeConfig> GetThemeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+        }
+
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
         // Operation Path: "website/cms/theme"
@@ -1348,6 +1428,15 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
+                _directDispatchProvider, _serviceName, "UpdateThemeAsync",
+                body, cancellationToken).ConfigureAwait(false);
+            return;
+        }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();

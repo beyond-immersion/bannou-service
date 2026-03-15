@@ -17,7 +17,7 @@
 | Endpoints | 22 (19 generated + 3 x-controller-only) |
 | State Stores | broadcast-platforms (MySQL), broadcast-sessions (Redis), broadcast-sentiment-buffer (Redis), broadcast-outputs (Redis), broadcast-cameras (Redis), broadcast-lock (Redis) |
 | Events Published | 10 (broadcast.platform-link.created/updated/deleted, broadcast.platform-session.created/updated/deleted, broadcast.output.created/updated/deleted, broadcast.audience.pulse) |
-| Events Consumed | 5 (account.deleted, voice.room.broadcast.approved, voice.room.broadcast.stopped, voice.participant.muted, session.disconnected) |
+| Events Consumed | 4 (account.deleted, voice.broadcast.approved, voice.broadcast.stopped, session.disconnected) |
 | Client Events | 5 (broadcast.output.started/stopped/source-changed, broadcast.session.started/ended) |
 | Background Services | 6 |
 
@@ -112,13 +112,12 @@
 
 | Topic | Handler | Source | Action |
 |-------|---------|--------|--------|
-| `voice.room.broadcast.approved` | `HandleVoiceBroadcastApprovedAsync` | lib-voice (L3) | Start RTMP output for voice room after consent. Connects to room's RTP audio. Soft -- no-op if lib-voice absent. |
-| `voice.room.broadcast.stopped` | `HandleVoiceBroadcastStoppedAsync` | lib-voice (L3) | Stop RTMP output for voice room. Consent revoked or room closed. Soft -- no-op if lib-voice absent. |
-| `voice.participant.muted` | `HandleVoiceParticipantMutedAsync` | lib-voice (L3) | Exclude/include muted participant audio from RTMP output mixing. Soft -- no-op if lib-voice absent. |
+| `voice.broadcast.approved` | `HandleVoiceBroadcastApprovedAsync` | lib-voice (L3) | Start RTMP output for voice room after consent. Connects to room's RTP audio. Soft -- no-op if lib-voice absent. |
+| `voice.broadcast.stopped` | `HandleVoiceBroadcastStoppedAsync` | lib-voice (L3) | Stop RTMP output for voice room. Consent revoked or room closed. Soft -- no-op if lib-voice absent. |
 | `account.deleted` | `HandleAccountDeletedAsync` | lib-account (L1) | Clean up all account-owned platform links, sessions, broadcasts, tracking IDs. T28 Account Deletion Cleanup Obligation (lib-resource forbidden for account references). |
 | `session.disconnected` | `HandleSessionDisconnectedAsync` | lib-connect (L1) | Cleanup platform session on WebSocket disconnect. Prevents orphaned Redis sessions. compliant: sessions have TTL and would expire naturally; the event accelerates cleanup. |
 
-All consumed voice event models are redefined inline in `broadcast-events.yaml` (cannot `$ref` other service event files per Foundation Tenets).
+Consumed events are declared via `x-event-subscriptions` class name references in `broadcast-events.yaml`. The generator resolves event types across all `*-events.yaml` schemas — no inline redefinition or `$ref` to other service event files needed (either would cause duplicate C# types).
 
 ---
 
@@ -569,7 +568,7 @@ CALL self.CleanupByAccountAsync(body.accountId)
 ```
 
 ### HandleVoiceBroadcastApprovedAsync
-Topic: `voice.room.broadcast.approved` | Source: lib-voice (L3, soft)
+Topic: `voice.broadcast.approved` | Source: lib-voice (L3, soft)
 
 ```
 // All voice room participants have consented to broadcasting
@@ -603,7 +602,7 @@ PUBLISH broadcast.output.created { broadcastId, sourceType: VoiceRoom, maskedRtm
 ```
 
 ### HandleVoiceBroadcastStoppedAsync
-Topic: `voice.room.broadcast.stopped` | Source: lib-voice (L3, soft)
+Topic: `voice.broadcast.stopped` | Source: lib-voice (L3, soft)
 
 ```
 // Consent revoked, room closed, or manual stop from voice side
@@ -617,22 +616,6 @@ LOCK lockStore:broadcast:lock:broadcast:{broadcastId}
  CALL _broadcastCoordinator.StopBroadcastAsync(broadcastId)
  DELETE broadcastStore:out:{broadcastId}
 PUBLISH broadcast.output.deleted { broadcastId }
-```
-
-### HandleVoiceParticipantMutedAsync
-Topic: `voice.participant.muted` | Source: lib-voice (L3, soft)
-
-```
-// Participant muted/unmuted in a voice room being broadcast
-QUERY broadcastStore WHERE $.sourceType == VoiceRoom AND $.sourceId == body.roomId AND $.state == Active
-IF no results -> no-op (log debug)
-
-broadcastId = results[0].broadcastId
-
-// Signal IBroadcastCoordinator to update FFmpeg audio mixing
-// Muted participant's RTP stream excluded/included in the mix
-CALL _broadcastCoordinator.UpdateParticipantMuteStateAsync(broadcastId, body.participantSessionId, body.isMuted)
-// Transient state -- no Redis write, no event published
 ```
 
 ### HandleSessionDisconnectedAsync

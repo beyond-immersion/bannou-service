@@ -127,8 +127,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_AUDIO_OUTPUT_FORMAT` | string | `mp3` | Default audio output format |
 | `ASSET_AUDIO_PRESERVE_LOSSLESS` | bool | `true` | Keep original lossless file alongside transcoded version |
 | `ASSET_AUDIO_PROCESSOR_POOL_TYPE` | string | `audio-processor` | Pool type name for audio processing |
-| `ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES` | int | `60` | Interval in minutes between bundle cleanup scans for permane... |
-| `ASSET_BUNDLE_CLEANUP_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before the bundle cleanup worker begins its... |
 | `ASSET_BUNDLE_COMPRESSION_DEFAULT` | string | `lz4` | Default compression for bundles |
 | `ASSET_BUNDLE_CURRENT_PATH_PREFIX` | string | `bundles/current` | Path prefix for finalized bundles in storage bucket |
 | `ASSET_BUNDLE_KEY_PREFIX` | string | `bundle:` | Key prefix for bundle entries in state store |
@@ -137,7 +135,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS` | int | `24` | Default TTL in hours for bundle cache entries |
 | `ASSET_DEFAULT_LIST_LIMIT` | int | `50` | Default number of results per page when client does not spec... |
 | `ASSET_DEFAULT_PROCESSOR_POOL_TYPE` | string | `asset-processor` | Default pool type name for general asset processing |
-| `ASSET_DELETED_BUNDLE_RETENTION_DAYS` | int | `30` | Number of days to retain soft-deleted bundles before permane... |
 | `ASSET_DOWNLOAD_TOKEN_TTL_SECONDS` | int | `900` | TTL for download URLs (can be shorter than upload) |
 | `ASSET_FFMPEG_PATH` | string | **REQUIRED** | Path to FFmpeg binary (empty = use system PATH) |
 | `ASSET_FFMPEG_WORKING_DIR` | string | `/tmp/bannou-ffmpeg` | Working directory for FFmpeg temporary files |
@@ -1353,9 +1350,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1069
+- **Total properties**: 1066
 - **Required (no default)**: 67
-- **Optional (has default)**: 1002
+- **Optional (has default)**: 999
 
 ## Environment Variable Naming Convention
 

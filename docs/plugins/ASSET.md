@@ -99,9 +99,6 @@ No external services subscribe to asset events; all event consumption is interna
 | `BundleCompressionDefault` | `ASSET_BUNDLE_COMPRESSION_DEFAULT` | `lz4` | Default bundle compression (lz4/lzma/none) |
 | `ZipCacheTtlHours` | `ASSET_ZIP_CACHE_TTL_HOURS` | `24` | TTL for cached ZIP conversions |
 | `ZipCacheDirectory` | `ASSET_ZIP_CACHE_DIRECTORY` | *nullable* | ZIP cache directory (system temp if unset) |
-| `DeletedBundleRetentionDays` | `ASSET_DELETED_BUNDLE_RETENTION_DAYS` | `30` | Soft-delete retention period |
-| `BundleCleanupIntervalMinutes` | `ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES` | `60` | Interval between bundle cleanup scans |
-| `BundleCleanupStartupDelaySeconds` | `ASSET_BUNDLE_CLEANUP_STARTUP_DELAY_SECONDS` | `30` | Startup delay before first bundle cleanup scan |
 | `ZipCacheCleanupIntervalMinutes` | `ASSET_ZIP_CACHE_CLEANUP_INTERVAL_MINUTES` | `120` | Interval between ZIP cache cleanup scans |
 | `ZipCacheCleanupStartupDelaySeconds` | `ASSET_ZIP_CACHE_CLEANUP_STARTUP_DELAY_SECONDS` | `60` | Startup delay before first ZIP cache cleanup scan |
 | `MinioWebhookSecret` | `ASSET_MINIO_WEBHOOK_SECRET` | *nullable* | Webhook validation secret (disabled if unset) |
@@ -233,7 +230,7 @@ Client Asset Service MinIO Storage
 
 ### Bugs (Fix Immediately)
 
-1. **Bundle soft-delete pattern violates Foundation Tenets**: Bundles use a `LifecycleStatus: Deleted` flag with `DeletedAt` timestamp, a configurable retention period (`DeletedBundleRetentionDays`), a `BundleCleanupWorker` for deferred permanent deletion, and a `RestoreBundle` endpoint for undelete. Foundation Tenets (T28 — Deletion Finality) explicitly prohibits soft-delete patterns; Account is the sole exception with time-limited retention. The correct pattern depends on whether bundles are referenced by ID from other services (→ Category A deprecation lifecycle) or not (→ immediate hard delete). The restore capability also violates T28 which says undo/restore is not supported at the entity level.
+1. ~~**Bundle soft-delete pattern violates Foundation Tenets**~~: **FIXED** (2026-03-15) - Removed soft-delete pattern entirely. DeleteBundle now always performs immediate hard deletion (storage + metadata + indexes + version history). Removed RestoreBundle endpoint, BundleCleanupWorker background service, `deleted-bundles-index` state store, `DeletedAt` field from BundleMetadata, `Deleted` value from BundleLifecycleStatus enum, and three configuration properties (DeletedBundleRetentionDays, BundleCleanupIntervalMinutes, BundleCleanupStartupDelaySeconds). No services hold persistent references to bundleIds, so immediate hard delete is the correct pattern per Foundation Tenets.
 
 2. **`owner` event field violates polymorphic typing and account identity boundary**: The `owner` field in Asset events is a plain string carrying either accountId (UUID) for user uploads or service name (string) for service uploads. This violates Foundation Tenets (T14 — polymorphic associations require `ownerType` enum + `ownerId`) and Foundation Tenets (T32 Rule 5 — polymorphic owner fields mixing accountId with service names are forbidden). Asset is not in the identity boundary. Fix: split into `ownerType` enum + `ownerId`; use `sessionId` instead of `accountId` for user-initiated operations per T32 Rule 4.
 
@@ -285,3 +282,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Resolved
 - **Bundle cleanup workers implemented**: The `BundleCleanupIntervalMinutes` and `ZipCacheCleanupIntervalMinutes` configuration properties drive active cleanup workers. The Asset portion of [#156](https://github.com/beyond-immersion/bannou-service/issues/156) (item #1: "no cleanup task") is resolved.
+- **Bundle soft-delete removed (Bug #1)**: Removed entire soft-delete/restore pattern per FOUNDATION TENETS (T28). Bundles are now hard-deleted immediately. Removed RestoreBundle endpoint, BundleCleanupWorker, deleted-bundles-index, and 3 config properties. (2026-03-15)

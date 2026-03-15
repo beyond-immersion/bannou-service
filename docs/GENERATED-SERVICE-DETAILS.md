@@ -39,7 +39,7 @@ The Agency service (L4 GameFeatures) manages the guardian spirit's progressive a
 
 **Version**: 1.0.0 | **Schema**: `schemas/analytics-api.yaml` | **Endpoints**: 9 | **Deep Dive**: [docs/plugins/ANALYTICS.md](plugins/ANALYTICS.md) | **Map**: [docs/maps/ANALYTICS.md](maps/ANALYTICS.md)
 
-The Analytics plugin (L4 GameFeatures) is the central event aggregation point for all game-related statistics. Handles event ingestion, entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. Publishes score updates and milestone events consumed by Achievement and Leaderboard for downstream processing. Subscribes to game session lifecycle and character/realm history events for automatic ingestion. Unlike typical L4 services, Analytics only observes via event subscriptions -- it does not invoke L2/L4 service APIs and should not be called by L1/L2/L3 services.
+The Analytics plugin (L4 GameFeatures) is the central event aggregation point for all game-related statistics. Handles event ingestion, entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. Publishes score updates and milestone events consumed by Achievement and Leaderboard for downstream processing. Subscribes to game session lifecycle and character/realm history events for automatic ingestion. Unlike typical L4 services, Analytics is a leaf node for write calls — it makes read-only entity resolution calls to L2 services (game-service, game-session, realm, character) but no write calls to any other service. It should not be called by L1/L2/L3 services.
 
 ## Arbitration {#arbitration}
 
@@ -49,7 +49,7 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 
 ## Asset {#asset}
 
-**Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/ASSET.md](plugins/ASSET.md) | **Map**: [docs/maps/ASSET.md](maps/ASSET.md)
+**Version**: 1.0.0 | **Schema**: `schemas/asset-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/ASSET.md](plugins/ASSET.md) | **Map**: [docs/maps/ASSET.md](maps/ASSET.md)
 
 The Asset service (L3 AppFeatures) provides storage, versioning, and distribution of large binary assets (textures, audio, 3D models) using MinIO/S3-compatible object storage. Issues pre-signed URLs so clients upload/download directly to the storage backend, never routing raw asset data through the WebSocket gateway. Also manages bundles (grouped assets in a custom `.bannou` format with LZ4 compression), metabundles (merged super-bundles), and a distributed processor pool for content-type-specific transcoding. Used by lib-behavior, lib-save-load, lib-mapping, and lib-documentation for binary storage needs.
 
@@ -498,7 +498,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 77
-- **Total endpoints**: 948
+- **Total endpoints**: 947
 
 ---
 

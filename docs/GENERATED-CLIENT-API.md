@@ -13,7 +13,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Achievement Service API](#achievement) | `client.Achievement` | 12 | Achievement and trophy system with progress tracking and pla... |
 | [Actor Service API](#actor) | `client.Actor` | 17 | Distributed actor management and execution for NPC brains, e... |
 | [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
-| [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
+| [Asset Service API](#asset) | `client.Asset` | 19 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 18 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Bannou Broadcast Service API](#broadcast) | `client.Broadcast` | 22 | Platform streaming integration and RTMP output management se... |
@@ -275,8 +275,7 @@ Asset management service for storage, versioning, and distribution of large bina
 | `ResolvebundlesAsync` | `ResolveBundlesRequest` | `ResolveBundlesResponse` | Compute optimal bundles for requested assets |
 | `QuerybundlesbyassetAsync` | `QueryBundlesByAssetRequest` | `QueryBundlesByAssetResponse` | Find all bundles containing a specific asset |
 | `UpdateBundleAsync` | `UpdateBundleRequest` | `UpdateBundleResponse` | Update bundle metadata |
-| `DeleteBundleAsync` | `DeleteBundleRequest` | `DeleteBundleResponse` | Soft-delete a bundle |
-| `RestorebundleAsync` | `RestoreBundleRequest` | `RestoreBundleResponse` | Restore a soft-deleted bundle |
+| `DeleteBundleEventAsync` | `DeleteBundleRequest` | *(fire-and-forget)* | Delete a bundle |
 | `QuerybundlesAsync` | `QueryBundlesRequest` | `QueryBundlesResponse` | Query bundles with advanced filters |
 | `ListBundleversionsAsync` | `ListBundleVersionsRequest` | `ListBundleVersionsResponse` | List version history for a bundle |
 
@@ -2656,7 +2655,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 56
-- **Total methods**: 929
+- **Total methods**: 928
 
 ---
 

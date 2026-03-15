@@ -199,41 +199,20 @@ export class BundlesProxy {
   }
 
   /**
-   * Soft-delete a bundle
+   * Delete a bundle
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
+   * @returns Promise that completes when the event is sent.
    */
-  async assetDeleteBundleAsync(
+  async assetDeleteBundleEventAsync(
     request: Schemas['DeleteBundleRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['DeleteBundleResponse']>> {
-    return this.client.invokeAsync<Schemas['DeleteBundleRequest'], Schemas['DeleteBundleResponse']>(
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['DeleteBundleRequest']>(
       '/bundles/delete',
       request,
-      channel,
-      timeout
+      channel
     );
-  }
-
-  /**
-   * Restore a soft-deleted bundle
-   * @param request - The request payload.
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async assetRestoreBundleAsync(
-    request: Schemas['RestoreBundleRequest'],
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['RestoreBundleResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['RestoreBundleRequest'],
-      Schemas['RestoreBundleResponse']
-    >('/bundles/restore', request, channel, timeout);
   }
 
   /**

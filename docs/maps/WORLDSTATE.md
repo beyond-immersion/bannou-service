@@ -141,26 +141,26 @@ All consumed events are self-subscriptions for cross-node in-memory cache invali
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| GetRealmTime | POST /worldstate/clock/get-realm-time | user | - | - |
-| GetRealmTimeByCode | POST /worldstate/clock/get-realm-time-by-code | user | - | - |
-| BatchGetRealmTimes | POST /worldstate/clock/batch-get-realm-times | user | - | - |
-| GetElapsedGameTime | POST /worldstate/clock/get-elapsed-game-time | user | - | - |
-| TriggerTimeSync | POST /worldstate/clock/trigger-sync | user | - | - (pushes client event) |
-| InitializeRealmClock | POST /worldstate/clock/initialize | developer | clock, realm-config, ratio-history | worldstate.realm-clock.initialized, worldstate.realm-config.created |
-| SetTimeRatio | POST /worldstate/clock/set-ratio | developer | clock, realm-config, ratio-history | boundary events, worldstate.ratio-changed, worldstate.realm-config.updated |
-| AdvanceClock | POST /worldstate/clock/advance | developer | clock | boundary events, worldstate.clock-advanced |
-| SeedCalendar | POST /worldstate/calendar/seed | developer | calendar | worldstate.calendar-template.created |
-| GetCalendar | POST /worldstate/calendar/get | developer | - | - |
-| ListCalendars | POST /worldstate/calendar/list | developer | - | - |
-| UpdateCalendar | POST /worldstate/calendar/update | developer | calendar | worldstate.calendar-template.updated |
-| DeleteCalendar | POST /worldstate/calendar/delete | developer | calendar | worldstate.calendar-template.deleted |
-| GetRealmConfig | POST /worldstate/realm-config/get | developer | - | - |
-| UpdateRealmConfig | POST /worldstate/realm-config/update | developer | realm-config, clock | worldstate.realm-config.updated |
-| ListRealmClocks | POST /worldstate/realm-config/list | developer | - | - |
-| CleanupByRealm | POST /worldstate/cleanup-by-realm | [] | clock, ratio-history, realm-config | worldstate.realm-config.deleted |
-| CleanupByGameService | POST /worldstate/cleanup-by-game-service | [] | calendar | worldstate.calendar-template.deleted |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| GetRealmTime | POST /worldstate/clock/get-realm-time | generated | [] | - | - |
+| GetRealmTimeByCode | POST /worldstate/clock/get-realm-time-by-code | generated | [] | - | - |
+| BatchGetRealmTimes | POST /worldstate/clock/batch-get-realm-times | generated | [] | - | - |
+| GetElapsedGameTime | POST /worldstate/clock/get-elapsed-game-time | generated | [] | - | - |
+| TriggerTimeSync | POST /worldstate/clock/trigger-sync | generated | [] | - | - (pushes client event) |
+| InitializeRealmClock | POST /worldstate/clock/initialize | generated | developer | clock, realm-config, ratio-history | worldstate.realm-clock.initialized, worldstate.realm-config.created |
+| SetTimeRatio | POST /worldstate/clock/set-ratio | generated | developer | clock, realm-config, ratio-history | boundary events, worldstate.ratio-changed, worldstate.realm-config.updated |
+| AdvanceClock | POST /worldstate/clock/advance | generated | developer | clock | boundary events, worldstate.clock-advanced |
+| SeedCalendar | POST /worldstate/calendar/seed | generated | developer | calendar | worldstate.calendar-template.created |
+| GetCalendar | POST /worldstate/calendar/get | generated | [] | - | - |
+| ListCalendars | POST /worldstate/calendar/list | generated | [] | - | - |
+| UpdateCalendar | POST /worldstate/calendar/update | generated | developer | calendar | worldstate.calendar-template.updated |
+| DeleteCalendar | POST /worldstate/calendar/delete | generated | developer | calendar | worldstate.calendar-template.deleted |
+| GetRealmConfig | POST /worldstate/realm-config/get | generated | [] | - | - |
+| UpdateRealmConfig | POST /worldstate/realm-config/update | generated | developer | realm-config, clock | worldstate.realm-config.updated |
+| ListRealmClocks | POST /worldstate/realm-config/list | generated | [] | - | - |
+| CleanupByRealm | POST /worldstate/cleanup-by-realm | generated | [] | clock, ratio-history, realm-config | worldstate.realm-config.deleted |
+| CleanupByGameService | POST /worldstate/cleanup-by-game-service | generated | [] | calendar | worldstate.calendar-template.deleted |
 
 ---
 
@@ -491,4 +491,18 @@ FOREACH config in realmConfigs
  WRITE _clockStore:realm:{config.RealmId} <- updated clock
  // Update in-memory cache for variable provider
  clockCache.Update(config.RealmId, clock)
+```
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### OnRunningAsync
+
+Registers resource cleanup callbacks with lib-resource at service startup.
+
+```
+CALL WorldstateService.RegisterResourceCleanupCallbacksAsync(resourceClient)
+  // CASCADE cleanup for "realm" → POST /worldstate/cleanup-by-realm
+  // CASCADE cleanup for "game-service" → POST /worldstate/cleanup-by-game-service
 ```

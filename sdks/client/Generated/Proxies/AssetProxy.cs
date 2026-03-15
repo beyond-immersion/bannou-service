@@ -297,39 +297,19 @@ public sealed class AssetProxy
     }
 
     /// <summary>
-    /// Soft-delete a bundle
+    /// Delete a bundle
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing DeleteBundleResponse on success.</returns>
-    public Task<ApiResponse<DeleteBundleResponse>> DeleteBundleAsync(
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task DeleteBundleEventAsync(
         DeleteBundleRequest request,
         ushort channel = 0,
-        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<DeleteBundleRequest, DeleteBundleResponse>(
-            "/bundles/delete", request, channel, timeout, cancellationToken);
-    }
-
-    /// <summary>
-    /// Restore a soft-deleted bundle
-    /// </summary>
-    /// <param name="request">The request payload.</param>
-    /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing RestoreBundleResponse on success.</returns>
-    public Task<ApiResponse<RestoreBundleResponse>> RestoreBundleAsync(
-        RestoreBundleRequest request,
-        ushort channel = 0,
-        TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default)
-    {
-        return _client.InvokeAsync<RestoreBundleRequest, RestoreBundleResponse>(
-            "/bundles/restore", request, channel, timeout, cancellationToken);
+        return _client.SendEventAsync<DeleteBundleRequest>(
+            "/bundles/delete", request, channel, cancellationToken);
     }
 
     /// <summary>

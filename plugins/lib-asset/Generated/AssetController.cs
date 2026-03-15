@@ -297,15 +297,11 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
 
 
     /// <summary>
-    /// Soft-delete a bundle
+    /// Delete a bundle
     /// </summary>
 
     /// <remarks>
-    /// Soft-delete a bundle, marking it as deleted but retaining data
-    /// <br/>for the configured retention period (default 30 days).
-    /// <br/>
-    /// <br/>Deleted bundles are excluded from resolution and queries by default.
-    /// <br/>Use permanent=true for immediate, unrecoverable deletion (admin only).
+    /// Permanently delete a bundle, removing it from storage and all indexes.
     /// <br/>
     /// <br/>Only the bundle owner or admin can delete.
     /// </remarks>
@@ -314,25 +310,7 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Bundle deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteBundleResponse>> DeleteBundle(DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-
-    /// <summary>
-    /// Restore a soft-deleted bundle
-    /// </summary>
-
-    /// <remarks>
-    /// Restore a bundle that was soft-deleted, making it active again.
-    /// <br/>Can only restore bundles within their retention period.
-    /// <br/>
-    /// <br/>Only the bundle owner or admin can restore.
-    /// </remarks>
-
-
-
-    /// <returns>Bundle restored successfully</returns>
-
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreBundleResponse>> RestoreBundle(RestoreBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteBundle(DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -342,7 +320,7 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <remarks>
     /// Query bundles with flexible filtering options including:
     /// <br/>- Tag matching (exact, exists, not exists)
-    /// <br/>- Status filtering (active, deleted)
+    /// <br/>- Status filtering (active, processing)
     /// <br/>- Date range filtering
     /// <br/>- Name search (contains)
     /// <br/>- Owner filtering
@@ -1210,21 +1188,17 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase, 
     }
 
     /// <summary>
-    /// Soft-delete a bundle
+    /// Delete a bundle
     /// </summary>
     /// <remarks>
-    /// Soft-delete a bundle, marking it as deleted but retaining data
-    /// <br/>for the configured retention period (default 30 days).
-    /// <br/>
-    /// <br/>Deleted bundles are excluded from resolution and queries by default.
-    /// <br/>Use permanent=true for immediate, unrecoverable deletion (admin only).
+    /// Permanently delete a bundle, removing it from storage and all indexes.
     /// <br/>
     /// <br/>Only the bundle owner or admin can delete.
     /// </remarks>
     /// <returns>Bundle deleted successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("bundles/delete")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteBundleResponse>> DeleteBundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteBundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
@@ -1235,8 +1209,8 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase, 
         try
         {
 
-            var (statusCode, result) = await _implementation.DeleteBundleAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode, result);
+            var statusCode = await _implementation.DeleteBundleAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
@@ -1264,63 +1238,12 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase, 
     }
 
     /// <summary>
-    /// Restore a soft-deleted bundle
-    /// </summary>
-    /// <remarks>
-    /// Restore a bundle that was soft-deleted, making it active again.
-    /// <br/>Can only restore bundles within their retention period.
-    /// <br/>
-    /// <br/>Only the bundle owner or admin can restore.
-    /// </remarks>
-    /// <returns>Bundle restored successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("bundles/restore")]
-
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreBundleResponse>> RestoreBundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RestoreBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        using var activity_ = _telemetryProvider.StartActivity(
-            "bannou.bundles",
-            "AssetController.RestoreBundle",
-            System.Diagnostics.ActivityKind.Server);
-        activity_?.SetTag("http.route", "bundles/restore");
-        try
-        {
-
-            var (statusCode, result) = await _implementation.RestoreBundleAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode, result);
-        }
-        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
-        {
-            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/restore");
-            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
-            return StatusCode(503);
-        }
-        catch (System.Exception ex_)
-        {
-            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:bundles/restore");
-            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
-            await messageBus_.TryPublishErrorAsync(
-                "bundles",
-                "RestoreBundle",
-                "unexpected_exception",
-                ex_.Message,
-                endpoint: "post:bundles/restore",
-                stack: ex_.StackTrace,
-                cancellationToken: cancellationToken);
-            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
-            return StatusCode(500);
-        }
-    }
-
-    /// <summary>
     /// Query bundles with advanced filters
     /// </summary>
     /// <remarks>
     /// Query bundles with flexible filtering options including:
     /// <br/>- Tag matching (exact, exists, not exists)
-    /// <br/>- Status filtering (active, deleted)
+    /// <br/>- Status filtering (active, processing)
     /// <br/>- Date range filtering
     /// <br/>- Name search (contains)
     /// <br/>- Owner filtering

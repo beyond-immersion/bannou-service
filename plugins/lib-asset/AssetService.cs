@@ -2702,12 +2702,6 @@ public partial class AssetService : IAssetService
             return (StatusCodes.NotFound, null);
         }
 
-        if (bundle.LifecycleStatus == Models.BundleLifecycleStatus.Deleted)
-        {
-            _logger.LogWarning("UpdateBundle: Bundle {BundleId} is deleted", body.BundleId);
-            return (StatusCodes.NotFound, null);
-        }
-
         // Track changes
         var changes = new List<string>();
         var previousVersion = bundle.MetadataVersion;
@@ -2830,219 +2824,72 @@ public partial class AssetService : IAssetService
     }
 
     /// <summary>
-    /// Soft-delete or permanently delete a bundle.
+    /// Permanently delete a bundle, removing it from storage and all indexes.
     /// </summary>
-    public async Task<(StatusCodes, DeleteBundleResponse?)> DeleteBundleAsync(DeleteBundleRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> DeleteBundleAsync(DeleteBundleRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("DeleteBundle: bundleId={BundleId}, permanent={Permanent}", body.BundleId, body.Permanent);
+        _logger.LogInformation("DeleteBundle: bundleId={BundleId}", body.BundleId);
 
         if (string.IsNullOrWhiteSpace(body.BundleId))
         {
             _logger.LogWarning("DeleteBundle: Empty bundleId");
-            return (StatusCodes.BadRequest, null);
+            return StatusCodes.BadRequest;
         }
 
         var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
 
-        var (bundle, bundleEtag) = await _bundleMetadataStore.GetWithETagAsync(bundleKey, cancellationToken);
+        var bundle = await _bundleMetadataStore.GetAsync(bundleKey, cancellationToken);
         if (bundle == null)
         {
             _logger.LogWarning("DeleteBundle: Bundle {BundleId} not found", body.BundleId);
-            return (StatusCodes.NotFound, null);
+            return StatusCodes.NotFound;
         }
 
-        var deletedAt = DateTimeOffset.UtcNow;
-        DateTimeOffset? retentionUntil = null;
-
-        if (body.Permanent == true)
+        // Delete the actual bundle file from object storage
+        if (!string.IsNullOrEmpty(bundle.StorageKey))
         {
-            // Permanent delete - remove from storage and state
-            // Delete the actual bundle file
-            if (!string.IsNullOrEmpty(bundle.StorageKey))
+            try
             {
-                try
-                {
-                    await _storageProvider.DeleteObjectAsync(
-                        bundle.Bucket ?? _configuration.StorageBucket,
-                        bundle.StorageKey).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "DeleteBundle: Failed to delete storage object for bundle {BundleId}", body.BundleId);
-                    // Continue with metadata deletion even if storage deletion fails
-                }
+                await _storageProvider.DeleteObjectAsync(
+                    bundle.Bucket ?? _configuration.StorageBucket,
+                    bundle.StorageKey);
             }
-
-            // Delete metadata
-            await _bundleMetadataStore.DeleteAsync(bundleKey, cancellationToken);
-
-            // Remove from asset-bundle index
-            await RemoveFromBundleIndexAsync(bundle.BundleId, bundle.AssetIds, bundle.Realm, cancellationToken);
-
-            _logger.LogInformation("DeleteBundle: Permanently deleted bundle {BundleId}", body.BundleId);
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "DeleteBundle: Failed to delete storage object for bundle {BundleId}", body.BundleId);
+                // Continue with metadata deletion even if storage deletion fails
+            }
         }
-        else
+
+        // Delete metadata
+        await _bundleMetadataStore.DeleteAsync(bundleKey, cancellationToken);
+
+        // Remove from per-asset reverse indexes
+        await RemoveFromBundleIndexAsync(bundle.BundleId, bundle.AssetIds, bundle.Realm, cancellationToken);
+
+        // Delete version history entries
+        var versionIndexKey = $"bundle-version-index:{body.BundleId}";
+        var versionNumbers = await _bundleVersionRecordCacheStore.GetSetAsync<int>(versionIndexKey, cancellationToken);
+        foreach (var version in versionNumbers)
         {
-            // Soft delete - mark as deleted with retention period
-            var retentionDays = _configuration.DeletedBundleRetentionDays;
-            retentionUntil = deletedAt.AddDays(retentionDays);
-
-            bundle.LifecycleStatus = Models.BundleLifecycleStatus.Deleted;
-            bundle.DeletedAt = deletedAt;
-            bundle.MetadataVersion++;
-            bundle.UpdatedAt = deletedAt;
-
-            // Save version history
-            var versionRecord = new Models.StoredBundleVersionRecord
-            {
-                BundleId = body.BundleId,
-                Version = bundle.MetadataVersion,
-                CreatedAt = deletedAt,
-                CreatedBy = bundle.OwnerId ?? "system",
-                Changes = new List<string> { "bundle deleted" },
-                Reason = body.Reason,
-                Snapshot = bundle // Save snapshot for potential restore
-            };
-
-            var versionKey = $"bundle-version:{body.BundleId}:{bundle.MetadataVersion}";
-            await _bundleVersionRecordCacheStore.SaveAsync(versionKey, versionRecord, cancellationToken: cancellationToken);
-
-            // Add to version index for efficient listing
-            var versionIndexKey = $"bundle-version-index:{body.BundleId}";
-            await _bundleVersionRecordCacheStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
-
-            // GetWithETagAsync returns non-null ETag when bundle is found; coalesce satisfies compiler
-            var deleteEtag = await _bundleMetadataStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken: cancellationToken);
-            if (deleteEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for bundle {BundleId} during delete", body.BundleId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Add to deleted bundles index for cleanup worker to scan (set operations require cacheable store)
-            await _bundleMetadataCacheStore.AddToSetAsync("deleted-bundles-index", body.BundleId, cancellationToken: cancellationToken);
-
-            // Remove from per-asset reverse indexes so ResolveBundles skips this bundle immediately
-            // (defensive: ResolveBundles also checks LifecycleStatus, but removing from indexes prevents wasted lookups)
-            await RemoveFromBundleIndexAsync(bundle.BundleId, bundle.AssetIds, bundle.Realm, cancellationToken);
-
-            _logger.LogInformation("DeleteBundle: Soft-deleted bundle {BundleId}, retention until {RetentionUntil}",
-                body.BundleId, retentionUntil);
+            await _bundleVersionRecordCacheStore.DeleteAsync($"bundle-version:{body.BundleId}:{version}", cancellationToken);
         }
+        await _bundleVersionRecordCacheStore.DeleteAsync(versionIndexKey, cancellationToken);
 
-        // Publish event
+        // Publish deletion event
         await _messageBus.PublishBundleDeletedAsync(new BeyondImmersion.BannouService.Events.BundleDeletedEvent
         {
             EventId = Guid.NewGuid(),
-            Timestamp = deletedAt,
+            Timestamp = DateTimeOffset.UtcNow,
             BundleId = body.BundleId,
-            Permanent = body.Permanent == true,
-            RetentionUntil = retentionUntil,
             Reason = body.Reason,
             DeletedBy = bundle.OwnerId ?? "system",
             Realm = bundle.Realm
         });
 
-        return (StatusCodes.OK, new DeleteBundleResponse
-        {
-            Status = body.Permanent == true
-                ? DeletionStatus.PermanentlyDeleted
-                : DeletionStatus.Deleted,
-            DeletedAt = deletedAt,
-            RetentionUntil = retentionUntil
-        });
-    }
+        _logger.LogInformation("DeleteBundle: Permanently deleted bundle {BundleId}", body.BundleId);
 
-    /// <summary>
-    /// Restore a soft-deleted bundle.
-    /// </summary>
-    public async Task<(StatusCodes, RestoreBundleResponse?)> RestoreBundleAsync(RestoreBundleRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("RestoreBundle: bundleId={BundleId}", body.BundleId);
-
-        if (string.IsNullOrWhiteSpace(body.BundleId))
-        {
-            _logger.LogWarning("RestoreBundle: Empty bundleId");
-            return (StatusCodes.BadRequest, null);
-        }
-
-        var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
-
-        var (bundle, bundleEtag) = await _bundleMetadataStore.GetWithETagAsync(bundleKey, cancellationToken);
-        if (bundle == null)
-        {
-            _logger.LogWarning("RestoreBundle: Bundle {BundleId} not found", body.BundleId);
-            return (StatusCodes.NotFound, null);
-        }
-
-        if (bundle.LifecycleStatus != Models.BundleLifecycleStatus.Deleted)
-        {
-            _logger.LogWarning("RestoreBundle: Bundle {BundleId} is not deleted (status={Status})",
-                body.BundleId, bundle.LifecycleStatus);
-            return (StatusCodes.BadRequest, null);
-        }
-
-        var restoredAt = DateTimeOffset.UtcNow;
-        var restoredFromVersion = bundle.MetadataVersion;
-
-        // Restore the bundle
-        bundle.LifecycleStatus = Models.BundleLifecycleStatus.Active;
-        bundle.DeletedAt = null;
-        bundle.MetadataVersion++;
-        bundle.UpdatedAt = restoredAt;
-
-        // Save version history
-        var versionRecord = new Models.StoredBundleVersionRecord
-        {
-            BundleId = body.BundleId,
-            Version = bundle.MetadataVersion,
-            CreatedAt = restoredAt,
-            CreatedBy = bundle.OwnerId ?? "system",
-            Changes = new List<string> { "bundle restored" },
-            Reason = body.Reason
-        };
-
-        var versionKey = $"bundle-version:{body.BundleId}:{bundle.MetadataVersion}";
-        await _bundleVersionRecordCacheStore.SaveAsync(versionKey, versionRecord, cancellationToken: cancellationToken);
-
-        // Add to version index for efficient listing
-        var versionIndexKey = $"bundle-version-index:{body.BundleId}";
-        await _bundleVersionRecordCacheStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
-
-        // GetWithETagAsync returns non-null ETag when bundle is found; coalesce satisfies compiler
-        var restoreEtag = await _bundleMetadataStore.TrySaveAsync(bundleKey, bundle, bundleEtag ?? string.Empty, cancellationToken: cancellationToken);
-        if (restoreEtag == null)
-        {
-            _logger.LogWarning("Concurrent modification detected for bundle {BundleId} during restore", body.BundleId);
-            return (StatusCodes.Conflict, null);
-        }
-
-        // Remove from deleted bundles index (set operations require cacheable store)
-        await _bundleMetadataCacheStore.RemoveFromSetAsync("deleted-bundles-index", body.BundleId, cancellationToken: cancellationToken);
-
-        // Re-add to per-asset reverse indexes (removed during soft-delete)
-        await IndexBundleAssetsAsync(bundle, cancellationToken);
-
-        // Publish event
-        await _messageBus.PublishBundleRestoredAsync(new BeyondImmersion.BannouService.Events.BundleRestoredEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = restoredAt,
-            BundleId = body.BundleId,
-            RestoredFromVersion = restoredFromVersion,
-            Reason = body.Reason,
-            RestoredBy = bundle.OwnerId ?? "system",
-            Realm = bundle.Realm
-        });
-
-        _logger.LogInformation("RestoreBundle: Restored bundle {BundleId} from version {RestoredFromVersion}",
-            body.BundleId, restoredFromVersion);
-
-        return (StatusCodes.OK, new RestoreBundleResponse
-        {
-            Status = BundleLifecycle.Active,
-            RestoredFromVersion = restoredFromVersion
-        });
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -3090,17 +2937,11 @@ public partial class AssetService : IAssetService
         var bundles = bundleDict.Values.AsEnumerable();
 
         // Apply filters
-        if (body.IncludeDeleted != true)
-        {
-            bundles = bundles.Where(b => b.LifecycleStatus != Models.BundleLifecycleStatus.Deleted);
-        }
-
         if (body.Status.HasValue)
         {
             var targetStatus = body.Status.Value switch
             {
                 BundleLifecycle.Active => Models.BundleLifecycleStatus.Active,
-                BundleLifecycle.Deleted => Models.BundleLifecycleStatus.Deleted,
                 BundleLifecycle.Processing => Models.BundleLifecycleStatus.Processing,
                 _ => Models.BundleLifecycleStatus.Active
             };

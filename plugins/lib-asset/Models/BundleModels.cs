@@ -83,12 +83,7 @@ public sealed class BundleMetadata
     public DateTimeOffset? UpdatedAt { get; set; }
 
     /// <summary>
-    /// When the bundle was soft-deleted (null if active).
-    /// </summary>
-    public DateTimeOffset? DeletedAt { get; set; }
-
-    /// <summary>
-    /// Bundle lifecycle status (active, deleted, processing).
+    /// Bundle lifecycle status (active, processing).
     /// </summary>
     public BundleLifecycleStatus LifecycleStatus { get; set; } = BundleLifecycleStatus.Active;
 
@@ -165,15 +160,13 @@ public sealed class BundleMetadata
             Status = LifecycleStatus switch
             {
                 BundleLifecycleStatus.Active => Asset.BundleLifecycle.Active,
-                BundleLifecycleStatus.Deleted => Asset.BundleLifecycle.Deleted,
                 BundleLifecycleStatus.Processing => Asset.BundleLifecycle.Processing,
                 _ => Asset.BundleLifecycle.Active
             },
             AssetCount = AssetIds.Count,
             SizeBytes = SizeBytes,
             CreatedAt = CreatedAt,
-            UpdatedAt = UpdatedAt,
-            DeletedAt = DeletedAt
+            UpdatedAt = UpdatedAt
         };
     }
 }
@@ -187,11 +180,6 @@ public enum BundleLifecycleStatus
     /// Bundle is active and available.
     /// </summary>
     Active,
-
-    /// <summary>
-    /// Bundle has been soft-deleted.
-    /// </summary>
-    Deleted,
 
     /// <summary>
     /// Bundle is being processed (metabundle creation).
