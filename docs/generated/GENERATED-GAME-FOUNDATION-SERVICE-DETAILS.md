@@ -1,0 +1,145 @@
+# Generated Game Foundation (L2) Service Details
+
+> **Source**: `docs/plugins/*.md`
+> **Do not edit manually** - regenerate with `make generate-docs`
+
+Services in the **Game Foundation (L2)** layer.
+
+## Actor {#actor}
+
+**Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/ACTOR.md](../plugins/ACTOR.md) | **Map**: [docs/maps/ACTOR.md](../maps/ACTOR.md)
+
+Distributed actor management and execution (L2 GameFoundation) for NPC brains, event coordinators, and long-running behavior loops. Actors output behavioral state (feelings, goals, memories) to characters -- not directly visible to players. Supports multiple deployment modes (local, pool-per-type, shared-pool, auto-scale), ABML behavior document execution with hot-reload, GOAP planning integration, bounded perception queues with urgency filtering, and dynamic character binding (actors can start without a character and bind to one at runtime, transitioning from event brain to character brain mode without relaunch). Receives data from L4 services (personality, encounters, history) via the Variable Provider Factory pattern without depending on them.
+
+## Character {#character}
+
+**Version**: 1.0.0 | **Schema**: `schemas/character-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/CHARACTER.md](../plugins/CHARACTER.md) | **Map**: [docs/maps/CHARACTER.md](../maps/CHARACTER.md)
+
+The Character service (L2 GameFoundation) manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from lib-relationship), and compression/archival for dead characters via lib-resource. Per the service hierarchy, Character cannot depend on L4 services (personality, history, encounters) -- callers needing that data should aggregate from L4 services directly.
+
+**System realm characters**: The Character service is agnostic to realm type -- it treats characters in system realms (PANTHEON, DUNGEON_CORES, SENTIENT_ARMS, NEXIUS, UNDERWORLD) identically to characters in physical realms. This is by design: system realms give non-physical entities (gods, dungeon cores, sentient weapons, guardian spirits) character records for the actor-bound entity pattern without polluting physical realm queries. System realm filtering is the Realm service's responsibility via `isSystemType`.
+
+## Collection {#collection}
+
+**Version**: 1.0.0 | **Schema**: `schemas/collection-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/COLLECTION.md](../plugins/COLLECTION.md) | **Map**: [docs/maps/COLLECTION.md](../maps/COLLECTION.md)
+
+The Collection service (L2 GameFoundation) manages universal content unlock and archive systems for collectible content: voice galleries, scene archives, music libraries, bestiaries, recipe books, and custom types. Follows the "items in inventories" pattern: entry templates define what can be collected, collection instances create inventory containers per owner, and granting an entry creates an item instance in that container. Unlike License (which orchestrates contracts for LP deduction), Collection uses direct grants without contract delegation. Features dynamic content selection based on unlocked entries and area theme configurations. Collection types are opaque strings (not enums), allowing new types without schema changes. Dispatches unlock notifications to registered `ICollectionUnlockListener` implementations via DI for guaranteed in-process delivery (e.g., Seed growth pipeline). Internal-only, never internet-facing.
+
+## Currency {#currency}
+
+**Version**: 1.0.0 | **Schema**: `schemas/currency-api.yaml` | **Endpoints**: 35 | **Deep Dive**: [docs/plugins/CURRENCY.md](../plugins/CURRENCY.md) | **Map**: [docs/maps/CURRENCY.md](../maps/CURRENCY.md)
+
+Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features three background workers: autogain for passive income, currency expiration for removing expired balances, and hold expiration for auto-releasing stale authorization holds. Transaction history has configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
+
+## Game Service {#game-service}
+
+**Version**: 1.0.0 | **Schema**: `schemas/game-service-api.yaml` | **Endpoints**: 5 | **Deep Dive**: [docs/plugins/GAME-SERVICE.md](../plugins/GAME-SERVICE.md) | **Map**: [docs/maps/GAME-SERVICE.md](../maps/GAME-SERVICE.md)
+
+The Game Service is a minimal registry (L2 GameFoundation) that maintains a catalog of available games/applications (e.g., Arcadia, Fantasia) that users can subscribe to. Provides simple CRUD operations for managing service definitions, with stub-name-based lookup for human-friendly identifiers. Internal-only, never internet-facing. Referenced by nearly all L2/L4 services for game-scoping operations.
+
+## Game Session {#game-session}
+
+**Version**: 2.0.0 | **Schema**: `schemas/game-session-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/GAME-SESSION.md](../plugins/GAME-SESSION.md) | **Map**: [docs/maps/GAME-SESSION.md](../maps/GAME-SESSION.md)
+
+Multiplayer session container primitive (L2 GameFoundation) with subscription-driven shortcut publishing for basic game access. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission for `in_game` state tracking and Subscription for account eligibility. Publishes WebSocket shortcuts to connected clients for one-click game join, lifecycle events for session state changes, and supports per-game horizontal scaling via `SupportedGameServices` partitioning.
+
+GameSession is to players what Inventory is to items: a **container primitive**. It owns who is in what multiplayer context, with distributed locking, reservation tokens, and permission state management. Higher-layer services (Gardener, Matchmaking) create and manage these containers for their own purposes.
+
+## Genesis {#genesis}
+
+**Deep Dive**: [docs/plugins/GENESIS.md](../plugins/GENESIS.md)
+
+Template-driven entity awakening lifecycle service (L2 GameFoundation) for managing entities that progressively grow from inert objects into autonomous agents with personalities, memories, and the full cognitive stack. Encapsulates the Actor-Bound Entity pattern (previously a documentation pattern across VISION.md and ACTOR-BOUND-ENTITIES.md) as reusable infrastructure: a single `CreateEntity` call provisions the seed, currency wallets, inventories, and resource registrations from a template definition, then manages the Dormant → EventBrain → CharacterBrain cognitive progression automatically as currency accumulates. Seed growth is driven entirely by currency transactions via template-defined growth mappings — the seed is an internal implementation detail never exposed to callers. Domain-specific plugins (lib-dungeon, lib-divine) sit on top for their ceremony; simple entity types (treasure chests, living weapons, haunted buildings, sentient ships) need no additional plugin. Game-agnostic: entity types, growth domains, currencies, behaviors, and awakening configurations are all template-defined seed data. Internal-only, never internet-facing.
+
+## Inventory {#inventory}
+
+**Version**: 1.0.0 | **Schema**: `schemas/inventory-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/INVENTORY.md](../plugins/INVENTORY.md) | **Map**: [docs/maps/INVENTORY.md](../maps/INVENTORY.md)
+
+Container and item placement management (L2 GameFoundation) for games. Handles container lifecycle (CRUD), item movement between containers, stacking operations (split/merge), and inventory queries. Does NOT handle item definitions or instances directly -- delegates to lib-item for all item-level operations. Supports multiple constraint models (slot-only, weight-only, grid, volumetric, unlimited), category restrictions, and nesting depth limits. Designed as the placement layer that orchestrates lib-item.
+
+## Item {#item}
+
+**Version**: 1.0.0 | **Schema**: `schemas/item-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/ITEM.md](../plugins/ITEM.md) | **Map**: [docs/maps/ITEM.md](../maps/ITEM.md)
+
+Dual-model item management (L2 GameFoundation) with templates (definitions/prototypes) and instances (individual occurrences). Templates define item properties (code, game scope, quantity model, stats, effects, rarity); instances represent actual items in the game world with quantity, durability, custom stats, and binding state. Supports multiple quantity models (discrete stacks, continuous weights, unique items). Designed to pair with lib-inventory for container placement management.
+
+## Location {#location}
+
+**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 26 | **Deep Dive**: [docs/plugins/LOCATION.md](../plugins/LOCATION.md) | **Map**: [docs/maps/LOCATION.md](../maps/LOCATION.md)
+
+Hierarchical location management (L2 GameFoundation) for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation, circular reference prevention, cascading depth updates, code-based lookups, and bulk seeding with two-pass parent resolution.
+
+## Quest {#quest}
+
+**Version**: 1.0.0 | **Schema**: `schemas/quest-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/QUEST.md](../plugins/QUEST.md) | **Map**: [docs/maps/QUEST.md](../maps/QUEST.md)
+
+The Quest service (L2 GameFoundation) provides objective-based gameplay progression as a thin orchestration layer over lib-contract. Translates game-flavored quest semantics (objectives, rewards, quest givers) into Contract infrastructure (milestones, prebound APIs, parties), leveraging Contract's state machine and cleanup orchestration while presenting a player-friendly API. Agnostic to prerequisite sources: L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` for validation without Quest depending on them. Exposes quest data to the Actor service via the Variable Provider Factory pattern for ABML behavior expressions.
+
+**Deprecation Lifecycle (Category B)**: Quest definitions are Category B entities — instances persist independently, so definitions must remain readable forever. Deprecation is one-way (no undeprecate), there is no delete endpoint, and acceptance of deprecated definitions is rejected with `BadRequest` (instance creation guard). Uses triple-field deprecation model: `IsDeprecated` (bool), `DeprecatedAt` (DateTimeOffset?), `DeprecationReason` (string?). Deprecation is idempotent (returns OK when already deprecated). `ListQuestDefinitions` includes `includeDeprecated` parameter (default: `false`). Deprecation is communicated via `quest.definition.updated` with `changedFields` containing deprecation fields (no dedicated deprecation event per tenets). Contract templates are structurally immutable once created (trust guarantee); only quest metadata (name, description, category, difficulty, tags) can be updated.
+
+## Realm {#realm}
+
+**Version**: 1.0.0 | **Schema**: `schemas/realm-api.yaml` | **Endpoints**: 13 | **Deep Dive**: [docs/plugins/REALM.md](../plugins/REALM.md) | **Map**: [docs/maps/REALM.md](../maps/REALM.md)
+
+The Realm service (L2 GameFoundation) manages top-level persistent worlds in the Arcadia game system. Realms are peer worlds (e.g., Omega, Arcadia, Fantasia) with no hierarchical relationships between them. Each realm operates as an independent world with distinct species populations and cultural contexts. Provides CRUD with deprecation lifecycle and seed-from-configuration support. Internal-only.
+
+## Relationship {#relationship}
+
+**Version**: 2.0.0 | **Schema**: `schemas/relationship-api.yaml` | **Endpoints**: 21 | **Deep Dive**: [docs/plugins/RELATIONSHIP.md](../plugins/RELATIONSHIP.md) | **Map**: [docs/maps/RELATIONSHIP.md](../maps/RELATIONSHIP.md)
+
+A unified relationship management service (L2 GameFoundation) combining entity-to-entity relationships (character friendships, alliances, rivalries) with hierarchical relationship type taxonomy definitions. Supports bidirectional uniqueness enforcement, polymorphic entity types, soft-deletion with recreate capability, type deprecation with merge, and bulk seeding. Used by the Character service for inter-character bonds and family tree categorization, and by the Storyline service for narrative generation. Consolidated from the former separate relationship and relationship-type plugins.
+
+### System Realm & Cross-Cutting Use Cases
+
+Relationship's polymorphic entity support makes it a key primitive for system realm entities and cross-cutting game mechanics. Planned relationship type codes and their consumers:
+
+| Use Case | Type Code(s) | Entities | Consumer |
+|----------|-------------|----------|----------|
+| Family tree | `PARENT`, `CHILD`, `SIBLING`, etc. | Character ↔ Character | lib-character (implemented) |
+| NPC social bonds | `FRIEND`, `RIVAL`, `MENTOR`, etc. | Character ↔ Character | lib-storyline (implemented) |
+| Divine followers | Follower/devotee types | Character ↔ Deity (PANTHEON) | lib-divine (planned) |
+| Marriage bonds | `SPOUSE` | Character ↔ Character | lib-character-lifecycle (planned) |
+| Living weapon wielder | `WEAPON_WIELDER` | Character ↔ Weapon (SENTIENT_ARMS) | Zero-plugin pattern (planned) |
+
+The `${relationship.*}` ABML variable namespace is implemented via `RelationshipProviderFactory` (registered as `IVariableProviderFactory`), exposing relationship data to the Actor behavior system. NPCs make social decisions based on relationship type, existence, and hierarchy through variables like `${relationship.has.*}`, `${relationship.count.*}`, and `${relationship.total}`.
+
+## Seed {#seed}
+
+**Version**: 1.0.0 | **Schema**: `schemas/seed-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/SEED.md](../plugins/SEED.md) | **Map**: [docs/maps/SEED.md](../maps/SEED.md)
+
+Generic progressive growth primitive (L2 GameFoundation) for game entities. Seeds start empty and grow by accumulating metadata across named domains, progressively gaining capabilities at configurable thresholds. Seeds are polymorphically owned (accounts, actors, realms, characters, relationships) and agnostic to what they represent -- guardian spirits, dungeon cores, combat archetypes, crafting specializations, and governance roles are all equally valid seed types. Seed types are string codes (not enums), allowing new types without schema changes. Each seed type defines its own growth phase labels, capability computation rules, and bond semantics. Consumers register seed types via API, contribute growth via the record API or DI provider listeners (e.g., Collection→Seed pipeline), and query capability manifests to gate actions.
+
+## Species {#species}
+
+**Version**: 2.0.0 | **Schema**: `schemas/species-api.yaml` | **Endpoints**: 14 | **Deep Dive**: [docs/plugins/SPECIES.md](../plugins/SPECIES.md) | **Map**: [docs/maps/SPECIES.md](../maps/SPECIES.md)
+
+Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. Manages playable and NPC races with trait modifiers, realm-specific availability, and a full deprecation lifecycle (deprecate, merge, delete). Species are globally defined but assigned to specific realms, enabling different worlds to offer different playable options. Supports bulk seeding from configuration and cross-service character reference checking to prevent orphaned data.
+
+## Subscription {#subscription}
+
+**Version**: 1.0.0 | **Schema**: `schemas/subscription-api.yaml` | **Endpoints**: 7 | **Deep Dive**: [docs/plugins/SUBSCRIPTION.md](../plugins/SUBSCRIPTION.md) | **Map**: [docs/maps/SUBSCRIPTION.md](../maps/SUBSCRIPTION.md)
+
+The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing, and pushes `subscription.status-changed` client events to connected players via WebSocket account-session routing. Includes a background expiration worker that periodically deactivates expired subscriptions. Serves as the canonical source for subscription state. Most mutating endpoints are service-to-service (admin/internal), but account listing, subscription get, and cancel are user-facing.
+
+Client events are routed via `IEntitySessionRegistry.PublishToEntitySessionsAsync("account", accountId, ...)` to all WebSocket sessions for the affected account. This is especially important for background expiration (the player didn't initiate the state change) and admin renewals.
+
+## Transit {#transit}
+
+**Version**: 1.0.0 | **Schema**: `schemas/transit-api.yaml` | **Endpoints**: 33 | **Deep Dive**: [docs/plugins/TRANSIT.md](../plugins/TRANSIT.md) | **Map**: [docs/maps/TRANSIT.md](../maps/TRANSIT.md)
+
+The Transit service (L2 GameFoundation) is the geographic connectivity and movement primitive for Bannou. It completes the spatial model by adding **edges** (connections between locations) to Location's **nodes** (the hierarchical place tree), then provides a type registry for **how** things move (transit modes) and temporal tracking for **when** they arrive (journeys computed against Worldstate's game clock). Transit is to movement what Seed is to growth and Collection is to unlocks -- a generic, reusable primitive that higher-layer services orchestrate for domain-specific purposes. Internal-only, never internet-facing.
+
+## Worldstate {#worldstate}
+
+**Version**: 1.0.0 | **Schema**: `schemas/worldstate-api.yaml` | **Endpoints**: 18 | **Deep Dive**: [docs/plugins/WORLDSTATE.md](../plugins/WORLDSTATE.md) | **Map**: [docs/maps/WORLDSTATE.md](../maps/WORLDSTATE.md)
+
+Per-realm game time authority, calendar system, and temporal event broadcasting service (L2 GameFoundation). Maps real-world time to configurable game-time progression with per-realm time ratios, calendar templates (configurable days, months, seasons, years), and day-period cycles. Publishes boundary events at game-time transitions consumed by other services for time-aligned processing, and provides the `${world.*}` variable namespace to the Actor behavior system via the Variable Provider Factory pattern. Also provides a time-elapsed query API for lazy evaluation patterns (computing game-time duration between two real timestamps accounting for ratio changes and pauses). Game-agnostic: calendar structures, time ratios, and day-period definitions are configured per game service. Internal-only, never internet-facing.
+
+## Summary
+
+- **Services in layer**: 18
+- **Endpoints in layer**: 313
+
+---
+
+*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*

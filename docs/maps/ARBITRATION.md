@@ -16,8 +16,8 @@
 | Layer | L4 GameFeatures |
 | Endpoints | 25 |
 | State Stores | arbitration-cases (MySQL), arbitration-rulings (MySQL), arbitration-evidence (MySQL), arbitration-arbiters (Redis), arbitration-cache (Redis), arbitration-lock (Redis) |
-| Events Published | 16 (`arbitration.case.created`, `arbitration.case.updated`, `arbitration.case.deleted`, `arbitration.case.filed`, `arbitration.case.closed`, `arbitration.case.defaulted`, `arbitration.notice.confirmed`, `arbitration.evidence.submitted`, `arbitration.hearing.completed`, `arbitration.ruling.issued`, `arbitration.ruling.appealed`, `arbitration.ruling.enforced`, `arbitration.arbiter.assigned`, `arbitration.arbiter.recused`, `arbitration.case.divine-requested`, `arbitration.jurisdiction.challenged`) |
-| Events Consumed | 6 |
+| Events Published | 16 (`arbitration.case.created`, `arbitration.case.updated`, `arbitration.case.deleted`, `arbitration.case.filed`, `arbitration.case.closed`, `arbitration.case.defaulted`, `arbitration.notice.confirmed`, `arbitration.evidence.submitted`, `arbitration.hearing.completed`, `arbitration.ruling.issued`, `arbitration.ruling.appealed`, `arbitration.ruling.enforced`, `arbitration.arbiter.assigned`, `arbitration.arbiter.recused`, `arbitration.arbiter.requested`, `arbitration.jurisdiction.challenged`) |
+| Events Consumed | 10 |
 | Client Events | 0 |
 | Background Services | 1 |
 
@@ -37,7 +37,7 @@
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `ruling:{rulingId}` | `ArbitrationRulingModel` | Primary ruling lookup by ID |
+| `ruling:{rulingId}` | `ArbitrationRulingModel` | Primary ruling lookup by ID. Includes `consequenceResults` list tracking per-consequence execution status (Pending/Succeeded/Failed with attempt count and last error). |
 
 **Store**: `arbitration-evidence` (Backend: MySQL)
 
@@ -120,7 +120,7 @@
 | `arbitration.ruling.enforced` | `ArbitrationRulingEnforcedEvent` | EnforceRuling |
 | `arbitration.arbiter.assigned` | `ArbitrationArbiterAssignedEvent` | AssignArbiter |
 | `arbitration.arbiter.recused` | `ArbitrationArbiterRecusedEvent` | RecuseArbiter |
-| `arbitration.case.divine-requested` | `ArbitrationDivineRequestedEvent` | AssignArbiter (DivineArbiter selection mode) |
+| `arbitration.arbiter.requested` | `ArbitrationArbiterRequestedEvent` | AssignArbiter (ExternalRequest selection mode — any external actor type) |
 | `arbitration.jurisdiction.challenged` | `ArbitrationJurisdictionChallengedEvent` | ChallengeJurisdiction |
 
 ---
@@ -130,15 +130,15 @@
 | Topic | Handler | Action |
 |-------|---------|--------|
 | `contract.milestone.completed` | `HandleMilestoneCompletedAsync` | Advances case state for arbitration contract milestones. Publishes `arbitration.notice.confirmed` or `arbitration.hearing.completed` per milestone type. |
-| `contract.milestone.failed` | `HandleMilestoneFailedAsync` | Handles deadline expiry (response deadline → default proceeding, publishes `arbitration.case.defaulted`). |
+| `contract.milestone.failed` | `HandleMilestoneFailedAsync` | Handles deadline expiry. Response deadline → default proceeding (publishes `arbitration.case.defaulted`). Enforcement deadline → re-executes failed consequences via EnforceRuling (self-healing retry for partially-enforced rulings). |
 | `contract.fulfilled` | `HandleContractFulfilledAsync` | Marks case Closed, publishes `arbitration.case.closed`. |
 | `contract.terminated` | `HandleContractTerminatedAsync` | Handles abnormal closure (withdrawal, dismissal), publishes `arbitration.case.closed`. |
 | `faction.territory.claimed` | `HandleTerritoryClaimedAsync` | Invalidates jurisdiction cache for affected location. |
 | `faction.territory.released` | `HandleTerritoryReleasedAsync` | Invalidates jurisdiction cache for affected location. |
-| `faction.governance.defined` | `HandleGovernanceDefinedAsync` | // Future: not yet published by Faction — see #601. Invalidates jurisdiction cache for affected faction's locations + domain. |
-| `faction.governance.deleted` | `HandleGovernanceDeletedAsync` | // Future: not yet published by Faction — see #601. Invalidates jurisdiction cache for affected faction + domain. |
-| `faction.authority.delegated` | `HandleAuthorityDelegatedAsync` | // Future: not yet published by Faction — see #601. Invalidates jurisdiction cache for delegated locations + domain. |
-| `faction.authority.revoked` | `HandleAuthorityRevokedAsync` | // Future: not yet published by Faction — see #601. Invalidates jurisdiction cache for revoked delegation scope. |
+| `faction.governance.defined` | `HandleGovernanceDefinedAsync` | Invalidates jurisdiction cache for affected faction's controlled locations + domain. |
+| `faction.governance.deleted` | `HandleGovernanceDeletedAsync` | Invalidates jurisdiction cache for affected faction + domain. |
+| `faction.authority.delegated` | `HandleAuthorityDelegatedAsync` | Invalidates jurisdiction cache for delegated locations + domain. |
+| `faction.authority.revoked` | `HandleAuthorityRevokedAsync` | Invalidates jurisdiction cache for revoked delegation scope. |
 
 ---
 
@@ -370,9 +370,11 @@ IF selectionMode == FactionLeader
   CALL _factionClient.GetFactionLeaderAsync(sovereignFactionId)  -> 400 if Faction unavailable
 ELSE IF selectionMode == AppointedOfficial
   // Resolve appointed arbiter from case.governanceParametersSnapshot (arbiter ID configured in governance record)
-ELSE IF selectionMode == DivineArbiter
-  PUBLISH arbitration.case.divine-requested { caseId, timeoutAt }
-  // Deferred assignment — divine actor responds via API
+ELSE IF selectionMode == ExternalRequest
+  // Generic external arbiter request — any actor type (divine, cross-jurisdiction, player-controlled)
+  PUBLISH arbitration.arbiter.requested { caseId, requesterType, timeoutAt: now + config.ExternalArbiterTimeoutDays }
+  // Deferred assignment — external actor responds via AssignArbiter with explicit arbiter ID
+  // If no response within timeout, deadline worker falls back to FactionLeader mode
   RETURN (200, AssignArbiterResponse { caseId, pending: true })
 ELSE IF selectionMode == PeerPanel
   // Peer panel mechanics — not yet specified
@@ -452,35 +454,45 @@ LOCK _lockStore:arb:lock:ruling:{caseId}                         -> 409 if fails
     // Check for existing ruling (idempotency guard)
     QUERY _rulingStore WHERE $.caseId == caseId                  -> 409 if exists
 
-    WRITE _rulingStore:ruling:{rulingId} <- ArbitrationRulingModel { rulingType, consequenceManifest, reasoning, appealDeadline }
+    WRITE _rulingStore:ruling:{rulingId} <- ArbitrationRulingModel { rulingType, consequenceManifest, consequenceResults: [], reasoning, appealDeadline }
 
     // Execute consequences (best-effort, per-item isolation)
+    // Results tracked on ruling record for enforcement retry
     FOREACH consequence in consequenceManifest
-      IF consequence.type == RelationshipChange
-        CALL _relationshipClient.UpdateRelationshipAsync(...)
-      ELSE IF consequence.type == AssetDivision
-        CALL _escrowClient?.CreateEscrowAsync(...)               // soft dep, skip if absent
-      ELSE IF consequence.type == OngoingObligation
-        CALL _obligationClient?.CreateObligationAsync(...)       // soft dep, skip if absent
-      ELSE IF consequence.type == CustodyAssignment
-        CALL _characterClient.UpdateCharacterAsync(...)
-      ELSE IF consequence.type == Exile
-        CALL _factionClient?.ExileMemberAsync(...)               // soft dep, skip if absent
-      ELSE IF consequence.type == Fine
-        CALL _currencyClient.TransferAsync(respondent, sovereign, amount)
-      ELSE IF consequence.type == Imprisonment
-        CALL _statusClient?.ApplyStatusAsync(...)                // soft dep, skip if absent
-      ELSE IF consequence.type == SovereigntyTransfer
-        CALL _factionClient?.TransferSovereigntyAsync(...)       // soft dep, skip if absent
-      // Per-item: catch ApiException, log warning, continue
+      TRY
+        IF consequence.type == RelationshipChange
+          CALL _relationshipClient.UpdateRelationshipAsync(...)
+        ELSE IF consequence.type == AssetDivision
+          CALL _escrowClient?.CreateEscrowAsync(...)             // soft dep, skip if absent
+        ELSE IF consequence.type == OngoingObligation
+          CALL _obligationClient?.CreateObligationAsync(...)     // soft dep, skip if absent
+        ELSE IF consequence.type == CustodyAssignment
+          CALL _characterClient.UpdateCharacterAsync(...)
+        ELSE IF consequence.type == Exile
+          CALL _factionClient?.ExileMemberAsync(...)             // soft dep, skip if absent
+        ELSE IF consequence.type == Fine
+          CALL _currencyClient.TransferAsync(respondent, sovereign, amount)
+        ELSE IF consequence.type == Imprisonment
+          CALL _statusClient?.ApplyStatusAsync(...)              // soft dep, skip if absent
+        ELSE IF consequence.type == SovereigntyTransfer
+          CALL _factionClient?.TransferSovereigntyAsync(...)     // soft dep, skip if absent
+        ELSE IF consequence.type == OrganizationDissolution
+          CALL _organizationClient?.DissolveAsync(...)           // soft dep, skip if absent
+        ELSE IF consequence.type == SeedGrowthTransfer
+          CALL _seedClient.TransferGrowthAsync(sourceSeedId, targetSeedId, proportion)
+        record consequenceResult: Succeeded, attemptCount: 1
+      CATCH ApiException
+        record consequenceResult: Failed, attemptCount: 1, lastError
+        // Per-item: log warning, continue to next consequence
 
+    WRITE _rulingStore:ruling:{rulingId} <- updated consequenceResults
     CALL _contractClient.AdvanceMilestoneAsync(case.contractId, "ruling_issued")
     WRITE _caseStore:case:{caseId} <- status: Ruled, rulingId
     WRITE _caseStore:case-code:{gameServiceId}:{caseCode} <- updated
     WRITE _caseStore:case-contract:{contractId} <- updated
 
 PUBLISH arbitration.case.updated { changedFields: [status, rulingId] }
-PUBLISH arbitration.ruling.issued { rulingId, caseId, arbiterId, rulingType, consequenceManifest }
+PUBLISH arbitration.ruling.issued { rulingId, caseId, arbiterId, rulingType, consequenceResults }
 RETURN (200, IssueRulingResponse { rulingId })
 ```
 
@@ -520,24 +532,39 @@ RETURN (200, GetRulingResponse)
 POST /arbitration/ruling/enforce | Roles: []
 
 ```
+// Idempotent — safe to call multiple times (by deadline worker, admin, or divine actor)
 READ _caseStore:case:{caseId} [with ETag]                        -> 404 if null
+IF case.status == Closed                                         -> 200 (already enforced, idempotent)
 IF case.status != Ruled                                          -> 409
-READ _rulingStore:ruling:{case.rulingId}                         -> 404 if null
+READ _rulingStore:ruling:{case.rulingId} [with ETag]             -> 404 if null
 
 LOCK _lockStore:arb:lock:case:{caseId}
-  // Verify all consequences executed (check downstream service state)
+  // Re-execute any consequences that are not yet Succeeded
   FOREACH consequence in ruling.consequenceManifest
-    // Re-execute any missed consequences (best-effort)
+    IF ruling.consequenceResults[consequence].status == Succeeded -> skip
+    TRY
+      // Same dispatch logic as IssueRuling (per consequence type)
+      record consequenceResult: Succeeded, attemptCount++
+    CATCH ApiException
+      record consequenceResult: Failed, attemptCount++, lastError
+      // Per-item: log warning, continue to next consequence
 
-  CALL _contractClient.AdvanceMilestoneAsync(case.contractId, "enforcement_confirmed")
-  WRITE _caseStore:case:{caseId} <- status: Closed
-  WRITE _caseStore:case-code:{gameServiceId}:{caseCode} <- updated
-  WRITE _caseStore:case-contract:{contractId} <- updated
+  WRITE _rulingStore:ruling:{case.rulingId} <- updated consequenceResults [with ETag]
 
-PUBLISH arbitration.case.updated { changedFields: [status] }
-PUBLISH arbitration.ruling.enforced { rulingId, caseId }
-PUBLISH arbitration.case.closed { caseId, closedReason: RulingEnforced }
-RETURN (200, EnforceRulingResponse)
+  IF all consequenceResults are Succeeded
+    // Full enforcement — close the case
+    CALL _contractClient.AdvanceMilestoneAsync(case.contractId, "enforcement_confirmed")
+    WRITE _caseStore:case:{caseId} <- status: Closed
+    WRITE _caseStore:case-code:{gameServiceId}:{caseCode} <- updated
+    WRITE _caseStore:case-contract:{contractId} <- updated
+    PUBLISH arbitration.case.updated { changedFields: [status] }
+    PUBLISH arbitration.ruling.enforced { rulingId, caseId }
+    PUBLISH arbitration.case.closed { caseId, closedReason: RulingEnforced }
+  ELSE
+    // Partial enforcement — case stays in Ruled, next milestone expiry retries
+    PUBLISH arbitration.case.updated { changedFields: [consequenceResults] }
+
+RETURN (200, EnforceRulingResponse { rulingId, allEnforced, consequenceResults })
 ```
 
 ### ResolveJurisdiction
@@ -579,18 +606,23 @@ RETURN (200, GetJurisdictionHierarchyResponse { hierarchy })
 POST /arbitration/cleanup-by-character | Roles: []
 
 ```
-// Resource-managed CASCADE cleanup
-QUERY _caseStore WHERE ($.petitionerEntityId == characterId OR $.respondentEntityId == characterId)
-  AND $.status NOT IN [Closed, Dismissed, Withdrawn]
+// Resource-managed DETACH cleanup — nullify references, preserve data
+// Active cases: close with reason; terminal cases: nullify character reference
+QUERY _caseStore WHERE $.petitionerEntityId == characterId OR $.respondentEntityId == characterId
 
-FOREACH case in activeCases
+FOREACH case in allCases
   TRY
     LOCK _lockStore:arb:lock:case:{case.caseId}
-      CALL _contractClient.TerminateContractAsync(case.contractId, "PartyDeleted")
-      WRITE _caseStore:case:{case.caseId} <- status: Closed, closedReason: PartyCharacterDeleted
+      IF case.status NOT IN [Closed, Dismissed, Withdrawn]
+        CALL _contractClient.TerminateContractAsync(case.contractId, "PartyDeleted")
+        WRITE _caseStore:case:{case.caseId} <- status: Closed, closedReason: PartyCharacterDeleted, nullify characterId reference
+        PUBLISH arbitration.case.closed { caseId, closedReason: PartyCharacterDeleted }
+      ELSE
+        // Terminal case: nullify the deleted character's reference only
+        WRITE _caseStore:case:{case.caseId} <- nullify characterId reference
       WRITE _caseStore:case-code:{...} <- updated
       WRITE _caseStore:case-contract:{...} <- updated
-    PUBLISH arbitration.case.closed { caseId, closedReason: PartyCharacterDeleted }
+    PUBLISH arbitration.case.updated { changedFields: [petitionerEntityId or respondentEntityId] }
   CATCH -> LogWarning, continue  // Per-item isolation
 
 RETURN (200, CleanupResponse)
@@ -600,18 +632,21 @@ RETURN (200, CleanupResponse)
 POST /arbitration/cleanup-by-realm | Roles: []
 
 ```
-// Resource-managed cleanup
+// Resource-managed DETACH cleanup — nullify references, preserve data
 QUERY _caseStore WHERE $.locationId IN realm locations
-  AND $.status NOT IN [Closed, Dismissed, Withdrawn]
 
-FOREACH case in activeCases
+FOREACH case in allCases
   TRY
     LOCK _lockStore:arb:lock:case:{case.caseId}
-      CALL _contractClient.TerminateContractAsync(case.contractId, "RealmDeleted")
-      WRITE _caseStore:case:{case.caseId} <- status: Closed, closedReason: RealmDeleted
+      IF case.status NOT IN [Closed, Dismissed, Withdrawn]
+        CALL _contractClient.TerminateContractAsync(case.contractId, "RealmDeleted")
+        WRITE _caseStore:case:{case.caseId} <- status: Closed, closedReason: RealmDeleted, nullify locationId
+        PUBLISH arbitration.case.closed { caseId, closedReason: RealmDeleted }
+      ELSE
+        WRITE _caseStore:case:{case.caseId} <- nullify locationId
       WRITE _caseStore:case-code:{...} <- updated
       WRITE _caseStore:case-contract:{...} <- updated
-    PUBLISH arbitration.case.closed { caseId, closedReason: RealmDeleted }
+    PUBLISH arbitration.case.updated { changedFields: [locationId] }
   CATCH -> LogWarning, continue  // Per-item isolation
 
 RETURN (200, CleanupResponse)
@@ -621,18 +656,21 @@ RETURN (200, CleanupResponse)
 POST /arbitration/cleanup-by-faction | Roles: []
 
 ```
-// Resource-managed cleanup
+// Resource-managed DETACH cleanup — nullify references, preserve data
 QUERY _caseStore WHERE $.sovereignFactionId == factionId
-  AND $.status NOT IN [Closed, Dismissed, Withdrawn]
 
-FOREACH case in activeCases
+FOREACH case in allCases
   TRY
     LOCK _lockStore:arb:lock:case:{case.caseId}
-      CALL _contractClient.TerminateContractAsync(case.contractId, "SovereignFactionDeleted")
-      WRITE _caseStore:case:{case.caseId} <- status: Closed, closedReason: JurisdictionVoid
+      IF case.status NOT IN [Closed, Dismissed, Withdrawn]
+        CALL _contractClient.TerminateContractAsync(case.contractId, "SovereignFactionDeleted")
+        WRITE _caseStore:case:{case.caseId} <- status: Closed, closedReason: JurisdictionVoid, nullify sovereignFactionId
+        PUBLISH arbitration.case.closed { caseId, closedReason: JurisdictionVoid }
+      ELSE
+        WRITE _caseStore:case:{case.caseId} <- nullify sovereignFactionId
       WRITE _caseStore:case-code:{...} <- updated
       WRITE _caseStore:case-contract:{...} <- updated
-    PUBLISH arbitration.case.closed { caseId, closedReason: JurisdictionVoid }
+    PUBLISH arbitration.case.updated { changedFields: [sovereignFactionId] }
   CATCH -> LogWarning, continue  // Per-item isolation
 
 // Invalidate jurisdiction cache entries referencing this faction
@@ -645,21 +683,24 @@ RETURN (200, CleanupResponse)
 POST /arbitration/cleanup-by-location | Roles: []
 
 ```
-// Resource-managed cleanup
+// Resource-managed DETACH cleanup — nullify references, preserve data
 QUERY _caseStore WHERE $.locationId == locationId
-  AND $.status NOT IN [Closed, Dismissed, Withdrawn]
 
-FOREACH case in activeCases
+FOREACH case in allCases
   TRY
     LOCK _lockStore:arb:lock:case:{case.caseId}
-      CALL _contractClient.TerminateContractAsync(case.contractId, "LocationDeleted")
-      WRITE _caseStore:case:{case.caseId} <- status: Closed, closedReason: JurisdictionVoid
+      IF case.status NOT IN [Closed, Dismissed, Withdrawn]
+        CALL _contractClient.TerminateContractAsync(case.contractId, "LocationDeleted")
+        WRITE _caseStore:case:{case.caseId} <- status: Closed, closedReason: JurisdictionVoid, nullify locationId
+        PUBLISH arbitration.case.closed { caseId, closedReason: JurisdictionVoid }
+      ELSE
+        WRITE _caseStore:case:{case.caseId} <- nullify locationId
       WRITE _caseStore:case-code:{...} <- updated
       WRITE _caseStore:case-contract:{...} <- updated
-    PUBLISH arbitration.case.closed { caseId, closedReason: JurisdictionVoid }
+    PUBLISH arbitration.case.updated { changedFields: [locationId] }
   CATCH -> LogWarning, continue  // Per-item isolation
 
-DELETE _cacheStore:juris:{locationId}:*  // all case types
+DELETE _cacheStore:juris:{locationId}:*  // all domains
 
 RETURN (200, CleanupResponse)
 ```

@@ -20,7 +20,7 @@ Generate Client Events Documentation from event schemas.
 This script scans *-client-events.yaml schema files and generates a compact reference
 document showing all subscribable events available to Client SDK users.
 
-Output: docs/GENERATED-CLIENT-EVENTS.md
+Output: docs/generated/GENERATED-CLIENT-EVENTS.md
 
 Usage:
     python3 scripts/generate-client-events-docs.py
@@ -272,7 +272,7 @@ def generate_markdown(services: List[ServiceEvents]) -> str:
         "",
         "---",
         "",
-        "*This file is auto-generated from event schemas. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "*This file is auto-generated from event schemas. See [TENETS.md](../reference/TENETS.md) for architectural context.*",
         "",
     ])
 
@@ -284,7 +284,7 @@ def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
     schema_dir = repo_root / 'schemas'
-    output_file = repo_root / 'docs' / 'GENERATED-CLIENT-EVENTS.md'
+    output_file = repo_root / 'docs' / 'generated' / 'GENERATED-CLIENT-EVENTS.md'
 
     if not schema_dir.exists():
         print(f"ERROR: Schema directory not found: {schema_dir}")

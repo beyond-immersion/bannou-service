@@ -18,9 +18,11 @@
 #
 # Generate Documentation from Schemas and Components
 #
-# This script generates auto-maintained documentation files:
-# - docs/GENERATED-STATE-STORES.md - State store components reference
-# - docs/GENERATED-EVENTS.md - Event schemas reference
+# This script generates auto-maintained documentation files into docs/generated/:
+# - docs/generated/GENERATED-STATE-STORES.md - State store components reference
+# - docs/generated/GENERATED-VARIABLE-PROVIDERS.md - Variable provider reference
+# - docs/generated/GENERATED-LOCALIZATION-CATEGORIES.md - Localization category reference
+# - docs/generated/GENERATED-EVENTS.md - Event schemas reference
 #
 # Usage:
 #   ./scripts/generate-docs.sh
@@ -47,6 +49,10 @@ python3 "$SCRIPT_DIR/generate-state-stores.py"
 # Generate variable provider documentation (from schemas/variable-providers.yaml)
 echo "  → Generating variable provider reference..."
 python3 "$SCRIPT_DIR/generate-variable-providers.py"
+
+# Generate localization category documentation (from schemas/localization-categories.yaml)
+echo "  → Generating localization category reference..."
+python3 "$SCRIPT_DIR/generate-localization-categories.py"
 
 # Generate events documentation
 echo "  → Generating events reference..."
@@ -88,5 +94,8 @@ python3 "$SCRIPT_DIR/generate-faq-catalog.py"
 
 echo "  → Generating operations catalog..."
 python3 "$SCRIPT_DIR/generate-operations-catalog.py"
+
+echo "  → Generating specifications catalog..."
+python3 "$SCRIPT_DIR/generate-specifications-catalog.py"
 
 echo "✅ Documentation generation complete"

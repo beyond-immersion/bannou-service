@@ -55,18 +55,19 @@ public class BroadcastServiceSessionTests
             .ReturnsAsync(true);
 
         var linkId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
         platformStoreMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PlatformLinkModel
             {
                 LinkId = linkId,
-                AccountId = Guid.NewGuid(),
+                AccountId = accountId,
                 Platform = PlatformType.Twitch,
                 LinkedAt = DateTimeOffset.UtcNow
             });
 
         var request = new StartSessionRequest
         {
-            WebSocketSessionId = Guid.NewGuid(),
+            WebSocketSessionId = accountId,
             LinkId = linkId
         };
 
@@ -119,12 +120,13 @@ public class BroadcastServiceSessionTests
             .ReturnsAsync(true);
 
         var platformSessionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
         sessionStoreMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PlatformSessionModel
             {
                 PlatformSessionId = platformSessionId,
                 LinkId = Guid.NewGuid(),
-                AccountId = Guid.NewGuid(),
+                AccountId = accountId,
                 Platform = PlatformType.Twitch,
                 State = PlatformSessionState.Active,
                 StartTime = DateTimeOffset.UtcNow.AddMinutes(-10)
@@ -132,7 +134,7 @@ public class BroadcastServiceSessionTests
 
         var request = new StopSessionRequest
         {
-            WebSocketSessionId = Guid.NewGuid(),
+            WebSocketSessionId = accountId,
             PlatformSessionId = platformSessionId
         };
 
@@ -184,12 +186,13 @@ public class BroadcastServiceSessionTests
             .ReturnsAsync(true);
 
         var platformSessionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
         sessionStoreMock.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((new PlatformSessionModel
             {
                 PlatformSessionId = platformSessionId,
                 LinkId = Guid.NewGuid(),
-                AccountId = Guid.NewGuid(),
+                AccountId = accountId,
                 Platform = PlatformType.YouTube,
                 State = PlatformSessionState.Active,
                 StartTime = DateTimeOffset.UtcNow.AddMinutes(-5)
@@ -202,7 +205,7 @@ public class BroadcastServiceSessionTests
 
         var request = new AssociateSessionRequest
         {
-            WebSocketSessionId = Guid.NewGuid(),
+            WebSocketSessionId = accountId,
             PlatformSessionId = platformSessionId,
             StreamSessionId = Guid.NewGuid()
         };
@@ -242,12 +245,13 @@ public class BroadcastServiceSessionTests
         var (service, _, _, sessionStoreMock) = CreateService();
 
         var platformSessionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
         sessionStoreMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PlatformSessionModel
             {
                 PlatformSessionId = platformSessionId,
                 LinkId = Guid.NewGuid(),
-                AccountId = Guid.NewGuid(),
+                AccountId = accountId,
                 Platform = PlatformType.Twitch,
                 State = PlatformSessionState.Active,
                 StartTime = DateTimeOffset.UtcNow.AddMinutes(-15),
@@ -256,7 +260,7 @@ public class BroadcastServiceSessionTests
 
         var request = new GetSessionStatusRequest
         {
-            WebSocketSessionId = Guid.NewGuid(),
+            WebSocketSessionId = accountId,
             PlatformSessionId = platformSessionId
         };
 
@@ -302,6 +306,8 @@ public class BroadcastServiceSessionTests
         var authClient = new Mock<IAuthClient>();
         var serviceProvider = new Mock<IServiceProvider>();
         var telemetryProvider = new Mock<ITelemetryProvider>();
+        var meshInstanceIdentifier = new Mock<IMeshInstanceIdentifier>();
+        meshInstanceIdentifier.Setup(x => x.InstanceId).Returns(Guid.NewGuid());
         var broadcastCoordinator = new Mock<IBroadcastCoordinator>();
         var sentimentProcessor = new Mock<ISentimentProcessor>();
         var webhookHandler = new Mock<IPlatformWebhookHandler>();
@@ -342,6 +348,7 @@ public class BroadcastServiceSessionTests
             authClient.Object,
             serviceProvider.Object,
             telemetryProvider.Object,
+            meshInstanceIdentifier.Object,
             broadcastCoordinator.Object,
             sentimentProcessor.Object,
             webhookHandler.Object,

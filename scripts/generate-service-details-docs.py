@@ -29,8 +29,8 @@ Also generates GENERATED-COMPOSITION-REFERENCE.md by combining:
 - The ## Overview section from docs/reference/SERVICE-HIERARCHY.md
 - A service registry table built from > **Short**: fields in deep dive headers
 
-Output: docs/GENERATED-SERVICE-DETAILS.md, docs/GENERATED-*-SERVICE-DETAILS.md,
-        docs/GENERATED-COMPOSITION-REFERENCE.md
+Output: docs/generated/GENERATED-SERVICE-DETAILS.md, docs/generated/GENERATED-*-SERVICE-DETAILS.md,
+        docs/generated/GENERATED-COMPOSITION-REFERENCE.md
 
 Usage:
     python3 scripts/generate-service-details-docs.py
@@ -287,15 +287,15 @@ def generate_markdown(services: dict, schemas: dict, maps_dir: Path) -> str:
                 f"**Version**: {schema['version']} | "
                 f"**Schema**: `schemas/{schema['source_file']}` | "
                 f"**Endpoints**: {schema['endpoint_count']} | "
-                f"**Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})"
+                f"**Deep Dive**: [docs/plugins/{deep_dive_file}](../plugins/{deep_dive_file})"
             )
         else:
             meta = (
-                f"**Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})"
+                f"**Deep Dive**: [docs/plugins/{deep_dive_file}](../plugins/{deep_dive_file})"
             )
 
         if has_map:
-            meta += f" | **Map**: [docs/maps/{map_file}](maps/{map_file})"
+            meta += f" | **Map**: [docs/maps/{map_file}](../maps/{map_file})"
 
         lines.append(meta)
         lines.append("")
@@ -311,7 +311,7 @@ def generate_markdown(services: dict, schemas: dict, maps_dir: Path) -> str:
         "",
         "---",
         "",
-        "*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*",
         "",
     ])
 
@@ -353,15 +353,15 @@ def generate_layer_markdown(layer: str, services: dict, schemas: dict, maps_dir:
                 f"**Version**: {schema['version']} | "
                 f"**Schema**: `schemas/{schema['source_file']}` | "
                 f"**Endpoints**: {schema['endpoint_count']} | "
-                f"**Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})"
+                f"**Deep Dive**: [docs/plugins/{deep_dive_file}](../plugins/{deep_dive_file})"
             )
         else:
             meta = (
-                f"**Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})"
+                f"**Deep Dive**: [docs/plugins/{deep_dive_file}](../plugins/{deep_dive_file})"
             )
 
         if has_map:
-            meta += f" | **Map**: [docs/maps/{map_file}](maps/{map_file})"
+            meta += f" | **Map**: [docs/maps/{map_file}](../maps/{map_file})"
 
         lines.append(meta)
         lines.append("")
@@ -376,7 +376,7 @@ def generate_layer_markdown(layer: str, services: dict, schemas: dict, maps_dir:
         "",
         "---",
         "",
-        "*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*",
         "",
     ])
 
@@ -514,11 +514,11 @@ def generate_composition_reference(
     lines.append("")
     lines.append(f"**{service_count} services, {total_endpoints} endpoints**")
     lines.append("")
-    lines.append(f"For full per-service details: `docs/GENERATED-*-SERVICE-DETAILS.md`")
+    lines.append(f"For full per-service details: `docs/generated/GENERATED-*-SERVICE-DETAILS.md`")
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*")
+    lines.append("*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*")
     lines.append("")
 
     return '\n'.join(lines)
@@ -546,7 +546,7 @@ def main():
     total_endpoints = sum(s['endpoint_count'] for s in schemas.values() if s.get('endpoint_count'))
 
     # Write combined output
-    output_file = repo_root / 'docs' / 'GENERATED-SERVICE-DETAILS.md'
+    output_file = repo_root / 'docs' / 'generated' / 'GENERATED-SERVICE-DETAILS.md'
     with open(output_file, 'w') as f:
         f.write(markdown)
 
@@ -559,7 +559,7 @@ def main():
             continue
 
         layer_markdown = generate_layer_markdown(layer, services, schemas, maps_dir)
-        layer_file = repo_root / 'docs' / filename
+        layer_file = repo_root / 'docs' / 'generated' / filename
         with open(layer_file, 'w') as f:
             f.write(layer_markdown)
 
@@ -572,7 +572,7 @@ def main():
 
     # Generate composition reference (combines ASPIRATIONS + ORCHESTRATION-PATTERNS + service registry)
     comp_markdown = generate_composition_reference(services, schemas, repo_root)
-    comp_file = repo_root / 'docs' / 'GENERATED-COMPOSITION-REFERENCE.md'
+    comp_file = repo_root / 'docs' / 'generated' / 'GENERATED-COMPOSITION-REFERENCE.md'
     with open(comp_file, 'w') as f:
         f.write(comp_markdown)
     print(f"Generated {comp_file} with {len(services)} services in registry")

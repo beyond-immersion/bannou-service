@@ -5,6 +5,7 @@
 > **Version**: N/A (Pre-Implementation)
 > **State Store**: localization-category-store (MySQL), localization-entry-store (MySQL), localization-compiled-cache (Redis), localization-lock (Redis) — all planned
 > **Layer**: AppFoundation
+> **Implementation Map**: [docs/maps/LOCALIZATION.md](../maps/LOCALIZATION.md)
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Short**: Multi-language translation tables with category lifecycle, pronunciation annotations, bulk export, and DI-based key validation for cross-service localization
 
@@ -54,7 +55,7 @@ Client resolves {prefix}.{suffix} against cached localization table.
 Categories are defined in a central schema file `schemas/localization-categories.yaml`, following the same pattern as `schemas/state-stores.yaml` for state store definitions. This generates:
 
 1. **`LocalizationCategoryDefinitions.cs`** — `public const string` fields for each category (e.g., `LocalizationCategoryDefinitions.Items`, `.Quests`, `.Locations`)
-2. **Generated documentation** — Category descriptions, validation modes, and consumer plugins appear in `docs/GENERATED-LOCALIZATION-CATEGORIES.md` (same as `GENERATED-STATE-STORES.md` for state stores)
+2. **Generated documentation** — Category descriptions, validation modes, and consumer plugins appear in `docs/generated/GENERATED-LOCALIZATION-CATEGORIES.md` (same as `generated/GENERATED-STATE-STORES.md` for state stores)
 
 ```
 schemas/localization-categories.yaml
@@ -146,7 +147,6 @@ The `/localization/export-pls` endpoint compiles pronunciation entries into W3C 
 | `CacheExpirationMinutes` | `LOCALIZATION_CACHE_EXPIRATION_MINUTES` | 60 | Redis TTL for compiled export cache |
 | `LockExpirySeconds` | `LOCALIZATION_LOCK_EXPIRY_SECONDS` | 15 | Distributed lock expiry timeout |
 | `ExportPageSize` | `LOCALIZATION_EXPORT_PAGE_SIZE` | 5000 | Entries per page when building compiled export |
-| `ServerSalt` | `LOCALIZATION_SERVER_SALT` | (dev default) | Server salt for session shortcut GUID generation |
 
 ---
 
@@ -193,7 +193,7 @@ Entry Lifecycle & Export Flow
  ├──generates──▶ LocalizationCategoryDefinitions.cs
  │               (Items, Quests, Locations, Lexicon, ...)
  │
- ├──generates──▶ GENERATED-LOCALIZATION-CATEGORIES.md
+ ├──generates──▶ generated/GENERATED-LOCALIZATION-CATEGORIES.md
  │               (documentation with consumers, modes)
  │
  └──enforces───▶ Structural Tests
@@ -335,7 +335,7 @@ This model is defined in the localization API schema as `RubyAnnotation`. Ruby a
 
 5. **Machine-readable identifier format standardization**: Localization keys use `^[a-z][a-z0-9._-]*$` (lowercase, dot-separated hierarchy, kebab-case segments). This same class of constraint — "machine-readable string identifier" — appears across 6+ services with ad-hoc variations: save-load (`^[a-z][a-z0-9-]*$`), item (`^[a-z][a-z0-9_]{1,63}$`), currency (`^[a-z][a-z0-9_]{1,31}$`), contract (`^[a-z0-9_]+$`), leaderboard/achievement (`^[a-z0-9_-]+$`), website (`^[a-z0-9-]+$`). SCHEMA-RULES.md should define standardized identifier format classes (e.g., `x-string-format: slug`, `x-string-format: code`, `x-string-format: hierarchical-key`) so the constraint is mechanical based on the field's semantic role, not ad-hoc per service. This is a cross-cutting concern beyond localization — flagging for SCHEMA-RULES.md consideration.
 
-6. **Generation script for localization-categories.yaml**: Needs a new generation script (`scripts/generate-localization-categories.sh`) that reads `schemas/localization-categories.yaml` and produces `bannou-service/Generated/LocalizationCategoryDefinitions.cs` and `docs/GENERATED-LOCALIZATION-CATEGORIES.md`. Follow the same pattern as `generate-state-stores.sh` / `StateStoreDefinitions.cs`. Also needs two structural tests in `structural-tests/StructuralTests.cs`: one validating all constants are referenced by declared consumer assemblies, and one validating all `ILocalizationKeyValidator` calls use generated constants.
+6. **Generation script for localization-categories.yaml**: Needs a new generation script (`scripts/generate-localization-categories.sh`) that reads `schemas/localization-categories.yaml` and produces `bannou-service/Generated/LocalizationCategoryDefinitions.cs` and `docs/generated/GENERATED-LOCALIZATION-CATEGORIES.md`. Follow the same pattern as `generate-state-stores.sh` / `StateStoreDefinitions.cs`. Also needs two structural tests in `structural-tests/StructuralTests.cs`: one validating all constants are referenced by declared consumer assemblies, and one validating all `ILocalizationKeyValidator` calls use generated constants.
 
 ---
 

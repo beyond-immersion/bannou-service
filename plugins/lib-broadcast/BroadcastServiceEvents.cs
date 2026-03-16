@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -48,9 +49,20 @@ public partial class BroadcastService
             "bannou.broadcast", "BroadcastService.HandleAccountDeleted");
 
         _logger.LogInformation("Handling account.deleted for account {AccountId}", evt.AccountId);
-        await CleanupByAccountAsync(
-            new CleanupByAccountRequest { AccountId = evt.AccountId },
-            CancellationToken.None);
+        try
+        {
+            await CleanupByAccountAsync(
+                new CleanupByAccountRequest { AccountId = evt.AccountId },
+                CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to clean up broadcast data for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "broadcast", "CleanupForAccount", ex.GetType().Name, ex.Message,
+                endpoint: "account.deleted", details: $"accountId={evt.AccountId}",
+                stack: ex.StackTrace);
+        }
     }
 
     /// <summary>
@@ -121,14 +133,24 @@ public partial class BroadcastService
             return;
         }
 
-        var sourceUrl = $"rtp://voice-room/{evt.RoomId}";
+        // Validate room exists per map specification
+        try
+        {
+            await voiceClient.GetVoiceRoomAsync(new GetVoiceRoomRequest { RoomId = evt.RoomId }, CancellationToken.None);
+        }
+        catch (ApiException)
+        {
+            _logger.LogError("Voice broadcast failed: room {RoomId} not found", evt.RoomId);
+            return;
+        }
+
+        var sourceUrl = evt.RtpAudioEndpoint;
         await _broadcastCoordinator.StartBroadcastAsync(
             broadcastId, evt.RtpAudioEndpoint, sourceUrl, CancellationToken.None);
 
         var now = DateTimeOffset.UtcNow;
         var maskedUrl = MaskRtmpUrl(evt.RtpAudioEndpoint);
-        var instanceId = _serviceProvider.GetService<IMeshInstanceIdentifier>()?.InstanceId.ToString()
-            ?? Environment.MachineName;
+        var instanceId = _meshInstanceIdentifier.InstanceId.ToString();
 
         var model = new BroadcastOutputModel
         {

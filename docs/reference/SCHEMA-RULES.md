@@ -132,277 +132,84 @@ Bannou uses custom OpenAPI extensions to drive code generation.
 
 Declares role and state requirements for WebSocket client access. **All endpoints MUST have x-permissions.**
 
-**How it works**: The Permission service builds a per-session allowlist from registered permission matrices. Only endpoints with at least one role entry appear in the matrix. Endpoints with `x-permissions: []` are **excluded from the matrix entirely** — they receive no session GUID, do not appear in the client's capability manifest, and are unreachable via WebSocket. They are accessible only via lib-mesh (service-to-service).
-
-```yaml
-paths:
-  /account/get:
-    post:
-      x-permissions:
-        - role: user          # Requires authentication via WebSocket
-  /auth/login:
-    post:
-      x-permissions:
-        - role: anonymous     # Accessible to all WebSocket clients (pre-auth)
-  /achievement/progress/update:
-    post:
-      x-permissions: []       # NOT exposed via WebSocket — service-to-service only
-```
+> **Full specification**: [X-PERMISSIONS.md](specifications/X-PERMISSIONS.md) — complete syntax, role hierarchy, state requirements, generated output, and examples.
 
 | Value | Meaning | WebSocket Access |
 |-------|---------|------------------|
 | `x-permissions: [{role: admin}]` | Admin-only | Admin WebSocket sessions only |
-| `x-permissions: [{role: developer}]` | Developer+ | Developer and admin sessions |
 | `x-permissions: [{role: user}]` | Authenticated | Any authenticated session |
 | `x-permissions: [{role: anonymous}]` | Pre-auth public | All connected clients (rare) |
 | `x-permissions: []` | Service-to-service only | **No WebSocket access** |
-| *(omitted entirely)* | Not in WebSocket API | **No WebSocket access** |
 
-**Role hierarchy**: `anonymous` → `user` → `developer` → `admin` (higher includes lower)
-
-**With state requirements**: Add `states: { game-session: in_lobby }` to require both role AND state.
-
-> **Choosing the right level**: This section defines the **syntax** of `x-permissions`. For guidance on **which** permission level to choose for each endpoint and why, see [ENDPOINT-PERMISSION-GUIDELINES.md](ENDPOINT-PERMISSION-GUIDELINES.md).
+**Role hierarchy**: `anonymous` → `user` → `developer` → `admin` (higher includes lower). State requirements can be combined with roles. See [ENDPOINT-PERMISSION-GUIDELINES.md](ENDPOINT-PERMISSION-GUIDELINES.md) for choosing the right level.
 
 ### x-lifecycle (Lifecycle Event Generation)
 
-Defined in `{service}-events.yaml`, generates CRUD lifecycle events automatically.
+Defined in `{service}-events.yaml`, generates CRUD lifecycle events automatically. **NEVER manually define `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent`** — use `x-lifecycle` instead.
+
+> **Full specification**: [X-LIFECYCLE.md](specifications/X-LIFECYCLE.md) — complete syntax, topic derivation, deprecation, instanceEntity, resource_mapping, batch mode, generated output, and structural tests.
 
 ```yaml
 x-lifecycle:
-  topic_prefix: myservice              # Optional: enables Pattern C namespaced topics
+  topic_prefix: myservice
   TemplateEntity:
-    deprecation: true                  # Optional: auto-injects isDeprecated/deprecatedAt/deprecationReason
-    instanceEntity: InstanceEntity     # Required when deprecation: true (Category B) — names the
-                                       # lifecycle entity representing instances of this template.
-                                       # Must be an x-lifecycle entity in the same file.
+    deprecation: true
+    instanceEntity: InstanceEntity
     model:
       templateId: { type: string, format: uuid, primary: true, required: true }
       name: { type: string, required: true }
-    sensitive: [secretKey]             # Fields excluded from events
-    resource_mapping:                  # Optional: enables Puppetmaster watch subscriptions
-      resource_type: entity            # Defaults to entity name in kebab-case
-      resource_id_field: entityId      # Defaults to primary key field
-      source_type: entity              # Defaults to entity name in kebab-case
-  InstanceEntity:                      # The instance lifecycle entity referenced above
-    model:
-      instanceId: { type: string, format: uuid, primary: true, required: true }
-      templateId: { type: string, format: uuid, required: true }
+    sensitive: [secretKey]
+    resource_mapping:
+      resource_type: entity
 ```
 
-**`topic_prefix`** controls how lifecycle event topics are derived (see [Topic Naming Convention](#topic-naming-convention)):
-- **Without `topic_prefix`**: Topics use Pattern A — `{entity-kebab}.{action}` (e.g., `account.created`)
-- **With `topic_prefix`**: Topics use Pattern C — the prefix becomes a dot-separated namespace:
-  - If entity-kebab equals the prefix: `{entity}.{action}` (Pattern A, e.g., `seed.created` with `topic_prefix: seed`)
-  - If entity-kebab starts with `{prefix}-`: strips and dot-separates (e.g., `transit.connection.created` from `TransitConnection` with `topic_prefix: transit`)
-  - Otherwise: prepends with dot (e.g., `worldstate.calendar-template.created` from `CalendarTemplate` with `topic_prefix: worldstate`)
-
-**When to use `topic_prefix`**: Required for multi-entity services (services with more than one entity type in `x-lifecycle`) and for any entity whose kebab-case name embeds the service name via hyphens (Pattern B is forbidden — see Topic Naming Convention).
-
-**Hyphenated service names**: When a service has a hyphenated name (e.g., `save-load`), the `topic_prefix` must use the full hyphenated name: `topic_prefix: save-load`, NOT `save.load`. The prefix is the service identity, not a dot-separated namespace. Without `topic_prefix`, the lifecycle generator derives the prefix from the service name (file name minus `-events.yaml`), which automatically preserves hyphens (e.g., `game-session-events.yaml` → prefix `game-session`).
-
-**Generated output** (`schemas/Generated/{service}-lifecycle-events.yaml`):
-- `EntityNameCreatedEvent` - Full entity data (sensitive fields excluded)
-- `EntityNameUpdatedEvent` - Full entity data + `changedFields` array
-- `EntityNameDeletedEvent` - Full entity data + nullable `deletedReason`
-
-All three events carry the complete model so consumers can react without needing a follow-up lookup.
-
-All three generated events use `allOf` with `BaseServiceEvent` (producing C# inheritance and `IBannouEvent` implementation) and include an `eventName` property with a `default:` value matching the event's topic (e.g., `account.created`). This is automatic — no manual configuration is needed for lifecycle events to integrate with message taps and generic event processing.
-
-If `resource_mapping` is specified, each generated event includes `x-resource-mapping` for Puppetmaster watch subscriptions.
-
-**`deprecation`**: If `deprecation: true` is set on an entity, three fields are auto-injected into all lifecycle events: `isDeprecated` (bool, required), `deprecatedAt` (date-time, nullable), `deprecationReason` (string, nullable, maxLength 500). Manual definitions of these fields in the model block are stripped and replaced by the auto-injected versions. The `IDeprecatableEntity` interface (from `BeyondImmersion.Bannou.Core`) is added to the generated C# partial classes. The structural test `LifecycleModels_DoNotContainAutoInjectedDeprecationFields` validates that no manual deprecation fields exist in `x-lifecycle` model blocks when `deprecation: true` is set. For full deprecation lifecycle rules (Category A/B classification, required endpoints, storage, behavioral rules), see [IMPLEMENTATION-BEHAVIOR.md § Tenet 31](tenets/IMPLEMENTATION-BEHAVIOR.md#tenet-31-deprecation-lifecycle-mandatory). For copy-paste schema and implementation templates, see [HELPERS-AND-COMMON-PATTERNS § 15](HELPERS-AND-COMMON-PATTERNS.md#15-category-b-deprecation-template).
-
-**`instanceEntity`**: Required when `deprecation: true` is set on a Category B entity (content templates). Names the x-lifecycle entity in the same events file that represents instances of this template. The clean-deprecated sweep uses reverse-index instance counts to determine when a deprecated template has zero remaining instances and can be permanently deleted. If instances cannot be deleted (no lifecycle `*.deleted` event), cleanup can never succeed. By requiring `instanceEntity` to reference an x-lifecycle entity in the same file, the structural test `DeprecatableEntities_MustDeclareInstanceEntity` guarantees the instance entity has full CRUD lifecycle events including deletion capability. Category A entities (world-building definitions with merge semantics) are exempt — they use `x-references` for delete eligibility, not instance counts.
-
-**Many:many relationships**: The `instanceEntity` does NOT require a 1:many relationship between template and instance. When an instance record contains embedded references to multiple templates (e.g., an item with multiple affix slots each referencing a different definition), the `instanceEntity` names the **lifecycle entity containing the references** (e.g., `AffixInstance`), not the embedded sub-entity (e.g., `AffixSlotModel`). The reverse index is maintained at the operation that creates/removes the reference (e.g., apply/remove), not just at instance creation/deletion. On instance destruction, all referenced template indexes are cleaned up. The `hasInstancesAsync` delegate and `DeprecationCleanupHelper` are agnostic to relationship cardinality — they check a reverse index key, not a relationship shape. See [HELPERS-AND-COMMON-PATTERNS § Reverse Index for Instance Checks](HELPERS-AND-COMMON-PATTERNS.md#reverse-index-for-instance-checks-required) for the many:many index maintenance pattern.
-
-**NEVER manually define `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent`** - use `x-lifecycle` instead.
+**Generated output**: `EntityNameCreatedEvent`, `EntityNameUpdatedEvent`, `EntityNameDeletedEvent` — all carry full entity data. Auto-injected fields: `createdAt`, `updatedAt`. With `deprecation: true`: `isDeprecated`, `deprecatedAt`, `deprecationReason`.
 
 ### x-resource-mapping (Resource Event Mapping)
 
 Defined on **event schema definitions** in `{service}-events.yaml`, declares how the event relates to a watchable resource for Puppetmaster's watch system.
 
-**For lifecycle events**: Use `resource_mapping` in `x-lifecycle` (above) - the generator adds `x-resource-mapping` automatically.
+> **Full specification**: [X-RESOURCE-MAPPING.md](specifications/X-RESOURCE-MAPPING.md) — complete syntax, field reference, lifecycle vs manual usage, generated output, and examples.
 
-**For manually-defined events** (non-lifecycle):
+**For lifecycle events**: Use `resource_mapping` in `x-lifecycle` — the generator adds `x-resource-mapping` automatically. **For manually-defined events**: Add `x-resource-mapping` directly with `resource_type`, `resource_id_field`, `source_type`, and optional `is_deletion`.
 
-```yaml
-PersonalityUpdatedEvent:
-  allOf:
-    - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-  type: object
-  additionalProperties: false
-  description: Published when character personality traits change
-  x-resource-mapping:
-    resource_type: character             # Type of resource this event affects
-    resource_id_field: characterId       # JSON field containing resource ID
-    source_type: character-personality   # Source type identifier for filtering
-    is_deletion: false                   # Optional (inferred from event name ending in "Deleted")
-  required: [eventName, eventId, timestamp, characterId]
-  properties:
-    eventName:
-      type: string
-      default: personality.updated
-      description: 'Event type identifier: personality.updated'
-    characterId:
-      type: string
-      format: uuid
-      description: Character whose personality was updated
-```
-
-**Generated output**: `bannou-service/Generated/ResourceEventMappings.cs` - static class with `IReadOnlyList<ResourceEventMappingEntry>` used by Puppetmaster's watch system.
+**Generated output**: `bannou-service/Generated/ResourceEventMappings.cs` — static class with `IReadOnlyList<ResourceEventMappingEntry>` used by Puppetmaster's watch system.
 
 ### x-event-subscriptions (Event Handler Generation)
 
 Defined in `{service}-events.yaml` under `info:`, declares events this service consumes and generates subscription handler scaffolding.
 
-```yaml
-info:
-  x-event-subscriptions:
-    - topic: account.deleted
-      event: AccountDeletedEvent
-      handler: HandleAccountDeleted
-```
+> **Full specification**: [X-EVENT-SUBSCRIPTIONS.md](specifications/X-EVENT-SUBSCRIPTIONS.md) — complete syntax, cross-service event resolution, generated output, and examples.
 
-- `topic`: RabbitMQ routing key — must match exactly what the producing service publishes. Verify against the producer's `x-event-publications` in their `*-events.yaml`, or their implementation map's Events Published table.
-- `event`: Event model class name. Must be a valid C# class in the `BeyondImmersion.BannouService.Events` namespace — generated from any `*-events.yaml` or `common-events.yaml` schema. The generator validates that the type exists in at least one event schema's `components/schemas` section at generation time.
-- `handler`: Handler method name (without `Async` suffix)
+Fields: `topic` (RabbitMQ routing key), `event` (class name resolved across all event schemas), `handler` (method name without `Async`). The `event` field is a **class name**, not a `$ref` — the generator resolves it across ALL `*-events.yaml` schemas.
 
-**How cross-service event resolution works**: The `event` field is a **class name**, not a `$ref`. When `broadcast-events.yaml` declares `event: VoiceBroadcastApprovedEvent`, the generator searches ALL `*-events.yaml` schemas (including `voice-events.yaml`) for a matching `components/schemas` entry. The type is already generated into the shared `BeyondImmersion.BannouService.Events` namespace by the producing service's event generation step. The consuming service does NOT need to redefine the event model inline — doing so would create duplicate C# types. This is the same mechanism that lets `achievement-events.yaml` subscribe to `AnalyticsScoreUpdatedEvent` (defined in `analytics-events.yaml`) and `auth-events.yaml` subscribe to `AccountDeletedEvent` (defined in `account-events.yaml`) without any inline copies.
-
-**Generated output**: `{Service}ServiceEvents.cs` (one-time template with `RegisterEventConsumers` method and handler stubs; never overwritten if the file already exists).
+**Generated output**: `{Service}ServiceEvents.cs` (one-time template; never overwritten if exists).
 
 ### x-event-publications (Event Publication Registry)
 
-Defined in `{service}-events.yaml` under `info:`, declares all events this service publishes. Serves as the authoritative registry of what a service emits.
+Defined in `{service}-events.yaml` under `info:`, declares all events this service publishes. Serves as the authoritative registry of what a service emits. **Both lifecycle and custom events should be listed.**
 
-```yaml
-info:
-  x-event-publications:
-    - topic: character.created
-      event: CharacterCreatedEvent
-      description: Published when a new character is created
-    - topic: character.realm.joined
-      event: CharacterRealmJoinedEvent
-      description: Published when a character joins a realm
-```
+> **Full specification**: [X-EVENT-PUBLICATIONS.md](specifications/X-EVENT-PUBLICATIONS.md) — complete syntax, parameterized topics, generated output, structural tests, and examples.
 
-- `topic`: RabbitMQ routing key (must match what the service publishes via `IMessageBus`)
-- `event`: Event model class name (must exist in `components/schemas` or generated lifecycle events)
-- `description`: Human-readable purpose
+Fields: `topic` (routing key), `event` (class name), `description`, optional `topic-params` (for dynamic routing keys with `{placeholder}` syntax).
 
-**Both lifecycle and custom events should be listed.** Lifecycle events (from `x-lifecycle`) are auto-generated but should still appear in `x-event-publications` so the full event catalog is in one place. Custom events defined in `components/schemas` must also be listed here.
-
-**Generated output** (two companion files):
-- `{Service}PublishedTopics.cs` — `public const string` fields for each topic (generated by `generate-published-topics.py`)
-- `{Service}EventPublisher.cs` — Typed `Publish*Async` extension methods on `IMessageBus` (generated by `generate-event-publishers.py`)
-
-Services MUST use the generated extension methods (or topic constants) instead of inline topic strings. The structural test `Service_CallsAllGeneratedEventPublishers` validates that every generated publisher method is called from the plugin assembly.
-
-#### Parameterized Topics (topic-params)
-
-Some events are published to dynamic topics where part of the routing key varies at runtime (e.g., per pool type, per region). Declare these with `topic-params`:
-
-```yaml
-info:
-  x-event-publications:
-    - topic: "asset.processing.job.{poolType}"
-      event: AssetProcessingJobDispatchedEvent
-      description: Published when a processing job is dispatched to a pool-type-specific topic
-      topic-params:
-        - name: poolType
-          type: string
-    - topic: "map.{regionId}.{kind}.updated"
-      event: MapUpdatedEvent
-      description: Published when map data is updated
-      topic-params:
-        - name: regionId
-          type: uuid
-        - name: kind
-          type: MapKind
-```
-
-Each entry in `topic-params`:
-- `name`: Must match a `{placeholder}` in the topic string
-- `type`: Schema type mapped to C# — `string` → `string`, `uuid` → `Guid`, anything else is used as a C# type name (e.g., enum names)
-
-The generator produces two overloads for parameterized topics: a base method using the literal topic constant (template string), and a parameterized overload marked with `[ParameterizedTopic]` that accepts typed parameters and uses C# string interpolation. Services call the parameterized overload; the structural test accepts either.
+**Generated output**: `{Service}PublishedTopics.cs` (const strings) and `{Service}EventPublisher.cs` (typed `Publish*Async` extension methods). Services MUST use generated methods or constants instead of inline topic strings.
 
 ### x-service-layer (Service Hierarchy Layer)
 
-Defined at the **root level** of `{service}-api.yaml`, declares the service's position in the hierarchy per [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md). Controls plugin load order and enables safe cross-layer constructor injection.
+Defined at the **root level** of `{service}-api.yaml`, declares the service's position in the six-layer hierarchy. Controls plugin load order and cross-layer constructor injection.
 
-```yaml
-openapi: 3.0.4
-info:
-  title: Location Service API
-  version: 1.0.0
-x-service-layer: GameFoundation  # L2 service
-```
+> **Full specification**: [X-SERVICE-LAYER.md](specifications/X-SERVICE-LAYER.md) — complete syntax, valid values, numeric equivalents, default behavior, and generated output.
 
-**Valid values** (in load order):
-| Value | Layer | Description | Example Services |
-|-------|-------|-------------|------------------|
-| `Infrastructure` | L0 | Core infrastructure plugins | state, messaging, mesh, telemetry |
-| `AppFoundation` | L1 | Required for any deployment | account, auth, chat, connect, permission, contract, resource |
-| `GameFoundation` | L2 | Required for game deployments | realm, character, species, location, currency, item, inventory, etc. |
-| `AppFeatures` | L3 | Optional app capabilities | asset, orchestrator, documentation, website, voice, broadcast |
-| `GameFeatures` | L4 | Optional game capabilities | behavior, matchmaking, analytics, achievement, escrow |
-| `Extensions` | L5 | Third-party/meta-services | Custom plugins that need full stack |
+Valid values: `Infrastructure` (L0), `AppFoundation` (L1), `GameFoundation` (L2), `AppFeatures` (L3), `GameFeatures` (L4), `Extensions` (L5). Default: `GameFeatures`. See [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md) for dependency rules.
 
-**Numeric values also accepted** (for programmatic generation): `0` = Infrastructure, `100` = AppFoundation, `200` = GameFoundation, `300` = AppFeatures, `400` = GameFeatures, `500` = Extensions.
+### x-service-configuration and x-helper-configurations (Configuration Properties)
 
-**Default**: If omitted, defaults to `GameFeatures` (most permissive).
+Defined in `{service}-configuration.yaml`. Generates typed configuration classes with environment variable binding and startup validation.
 
-**Generated**: `[BannouService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]`
+> **Full specification**: [X-SERVICE-CONFIGURATION.md](specifications/X-SERVICE-CONFIGURATION.md) — complete syntax for both main and helper configurations, property rules, validation keywords, generated output, and examples.
 
-### x-service-configuration (Configuration Properties)
-
-Defined in `{service}-configuration.yaml`. See [Configuration Schema Rules](#configuration-schema-rules) for detailed requirements.
-
-```yaml
-x-service-configuration:
-  properties:
-    MaxConnections:
-      type: integer
-      env: MY_SERVICE_MAX_CONNECTIONS
-      default: 100
-      description: Maximum concurrent connections
-```
-
-### x-helper-configurations (Helper Service Configuration)
-
-Defined in `{service}-configuration.yaml` alongside `x-service-configuration`. Generates additional configuration classes for helper/sub-services within the same plugin, each with their own env var prefix.
-
-```yaml
-x-helper-configurations:
-  token:
-    properties:
-      JwtExpirationMinutes:
-        type: integer
-        env: AUTH_TOKEN_JWT_EXPIRATION_MINUTES
-        default: 60
-        minimum: 1
-        maximum: 1440
-      RefreshTokenTtlDays:
-        type: integer
-        env: AUTH_TOKEN_REFRESH_TOKEN_TTL_DAYS
-        default: 30
-```
-
-**Generated output**: `lib-{service}/Generated/{Service}{Helper}Configuration.cs` — one file per helper entry.
-
-Each helper config class:
-- Uses `[ServiceConfiguration("{service-name}", envPrefix: "{SERVICE}_{HELPER}_")]` with the string-based constructor (lazy service type resolution via assembly scanning)
-- Extends `BaseServiceConfiguration`
-- Supports the same property types, defaults, validation attributes, and `$ref` enums as the main config
-- Env var prefix follows the pattern `{SERVICE}_{HELPER}_` (e.g., `AUTH_TOKEN_` for auth's `token` helper)
-
-**When to use**: When a plugin has distinct helper services (e.g., `TokenService`, `EmailService` within auth) that have their own configuration concerns separate from the main service config. This keeps configuration organized by responsibility rather than lumping everything into a single config class.
-
-**Property rules**: Same as [Configuration Schema Rules](#configuration-schema-rules) — every property needs `env`, proper prefix, and follows NRT/default conventions.
+`x-service-configuration` generates `{Service}ServiceConfiguration.cs`. `x-helper-configurations` generates additional `{Service}{Helper}Configuration.cs` per helper entry with `{SERVICE}_{HELPER}_` env var prefix. Both support `x-constraint-groups` (see below). Property rules: see [Configuration Schema Rules](#configuration-schema-rules).
 
 ### x-constraint-groups (Cross-Property Configuration Validation)
 
@@ -453,290 +260,77 @@ x-service-configuration:
 
 **Generated output**: `[ConfigConstraintGroupDefinition]` class-level attributes and `[ConfigConstraintGroup]` property-level attributes. Validated at startup by `IServiceConfiguration.ValidateConstraintGroups()` — fail-fast with `InvalidOperationException`.
 
-### x-references (Resource Reference Tracking)
+### x-references and x-resource-lifecycle (Resource Reference Tracking)
 
-Defined in consumer service API schemas (`*-api.yaml`), declares references to foundational resources for lifecycle management via lib-resource. Higher-layer services (L2/L3/L4) declare their references to foundational resources; the code generator produces helper methods for reference registration and cleanup/migration callback registration.
+`x-references` (consumer API schemas) declares resource dependencies with explicit delete policies. `x-resource-lifecycle` (foundational API schemas) declares grace periods and cleanup policies.
 
-Each entry declares an `onDelete` policy that determines which callback section is required:
+> **Full specification**: [X-REFERENCES.md](specifications/X-REFERENCES.md) — complete syntax for both attributes, delete policies (cascade/restrict/detach), callback sections, decision tree, generated output, structural tests, and examples.
 
-| Policy | Meaning | Required Callback | Forbidden Callback |
-|--------|---------|-------------------|-------------------|
-| `cascade` | Delete dependent data when resource is deleted | `cleanup:` | `migrate:` |
-| `restrict` | Block deletion; require migration to unblock | `migrate:` | `cleanup:` |
-| `detach` | Nullify the reference when resource is deleted | `cleanup:` | `migrate:` |
+| Policy | Meaning | Required Callback |
+|--------|---------|-------------------|
+| `cascade` | Delete dependent data | `cleanup:` with `{{resourceId}}` |
+| `restrict` | Block deletion; require migration | `migrate:` with `{{sourceResourceId}}`, `{{targetResourceId}}` |
+| `detach` | Nullify the reference | `cleanup:` with `{{resourceId}}` |
 
-**CASCADE/DETACH example** (cleanup callback — delete or nullify dependents):
-```yaml
-info:
-  x-references:
-    - target: character                         # Resource type being referenced (opaque string)
-      sourceType: actor                         # This service's entity type (opaque string)
-      field: characterId                        # Field holding the reference (documentation)
-      onDelete: cascade                         # REQUIRED: explicit policy declaration
-      cleanup:                                  # Required for cascade/detach
-        endpoint: /actor/cleanup-by-character   # Cleanup callback endpoint
-        payloadTemplate: '{"characterId": "{{resourceId}}"}'
-```
+`onDelete` is **REQUIRED** on every entry — implicit defaulting is forbidden. Policy-callback exclusivity is enforced by structural tests.
 
-**RESTRICT example** (migrate callback — move dependents to a new parent):
-```yaml
-info:
-  x-references:
-    - target: realm                             # Resource type being referenced
-      sourceType: character                     # This service's entity type
-      field: realmId                            # Field holding the reference
-      onDelete: restrict                        # Block deletion; migrate to unblock
-      migrate:                                  # Required for restrict
-        endpoint: /character/migrate-by-realm   # Migration callback endpoint
-        payloadTemplate: '{"sourceRealmId": "{{sourceResourceId}}", "targetRealmId": "{{targetResourceId}}"}'
-```
+**Generated output**: `{Service}ReferenceTracking.cs` with Register/Unregister helpers and callback registration methods.
 
-**Field definitions**:
-- `target`: Resource type (must match `resourceType` in the foundational service's `x-resource-lifecycle`)
-- `sourceType`: This service's entity type (opaque string)
-- `field`: Field name holding the reference (informational)
-- `onDelete`: `cascade` (delete dependents), `restrict` (block deletion, use migrate), `detach` (nullify reference). **REQUIRED** — implicit defaulting is forbidden; structural test `XReferences_MustDeclareExplicitOnDeletePolicy` enforces this
-- `cleanup.endpoint`: Service endpoint called during resource deletion (CASCADE/DETACH only)
-- `cleanup.payloadTemplate`: JSON template with `{{resourceId}}` placeholder
-- `migrate.endpoint`: Service endpoint called during resource migration (RESTRICT only)
-- `migrate.payloadTemplate`: JSON template with `{{sourceResourceId}}` and `{{targetResourceId}}` placeholders
+### x-compression-callback and x-archive-type (Resource Archival)
 
-**Policy-callback exclusivity**: RESTRICT entries MUST have `migrate:` and MUST NOT have `cleanup:` (RESTRICT blocks deletion — cleanup callbacks can never fire). CASCADE/DETACH entries MUST have `cleanup:` and MUST NOT have `migrate:`. Structural test `XReferences_CallbackPatternMatchesOnDeletePolicy` enforces this.
+`x-compression-callback` declares compression callbacks for hierarchical resource archival via lib-resource. `x-archive-type` marks response schemas as archive types for compile-time ABML path validation.
 
-**Decision tree for choosing onDelete policy**:
+> **Full specification**: [X-COMPRESSION-CALLBACK.md](specifications/X-COMPRESSION-CALLBACK.md) — complete syntax for both attributes, priority guidelines, generated output, template generation, and examples.
 
-| Test (apply in order) | Result | Examples |
-|---|---|---|
-| Dependent is sub-entity data with no meaning without parent | **cascade** | Actor → Character, CharacterPersonality → Character, RealmHistory → Realm |
-| Dependent is a significant entity that can be migrated to a different parent | **restrict** | Character → Realm, Location → Realm, Species → Realm |
-| Reference is nullable/optional — entity can exist without the parent | **detach** | (future: optional realm assignment) |
+**Priority guidelines**: 0 = base entity data, 10-30 = extension data, 50-100 = optional/derived data. Eligibility: entity identity and narrative data only — not game-mechanical state (see [FOUNDATION.md T29](tenets/FOUNDATION.md)).
 
-**Generated output** (`lib-{service}/Generated/{Service}ReferenceTracking.cs`):
-- Helper methods: `Register{Target}ReferenceAsync()`, `Unregister{Target}ReferenceAsync()`
-- Cleanup callback registration: `RegisterResourceCleanupCallbacksAsync()` — generated when any entry has `cleanup:` section
-- Migration callback registration: `RegisterResourceMigrateCallbacksAsync()` — generated when any entry has `migrate:` section
-- Both are static methods called from plugin startup (`OnRunningAsync`)
-
-See [Helpers & Common Patterns § Test Validators](HELPERS-AND-COMMON-PATTERNS.md#13-test-validators) for `ResourceCleanupValidator` which verifies services with `[ResourceCleanupRequired]` implement their declared cleanup methods.
-
-### x-resource-lifecycle (Resource Cleanup Configuration)
-
-Defined in foundational service API schemas (`*-api.yaml`), declares grace period and cleanup policy for resources tracked by lib-resource.
-
-```yaml
-info:
-  x-resource-lifecycle:
-    resourceType: character            # Must match x-references target
-    gracePeriodSeconds: 604800         # 7 days before cleanup eligible
-    cleanupPolicy: BEST_EFFORT        # BEST_EFFORT | ALL_REQUIRED
-```
-
-- `BEST_EFFORT`: Proceed with deletion even if some callbacks fail
-- `ALL_REQUIRED`: Abort deletion if any callback fails
-
-**Note**: Documentation/configuration only - does not generate code. Values are used when calling `/resource/cleanup/execute`.
-
-### x-compression-callback (Compression Callback Registration)
-
-Defined at the **info level** of `{service}-api.yaml`, declares compression callback registration for hierarchical resource archival via lib-resource.
-
-```yaml
-info:
-  x-compression-callback:
-    resourceType: character                                          # Required
-    sourceType: character-personality                                # Required
-    compressEndpoint: /character-personality/get-compress-data       # Required (must exist in paths)
-    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'     # Required
-    priority: 10                                                     # Required (lower = earlier)
-    templateNamespace: personality                                   # Optional (defaults to sourceType)
-    description: Personality traits and combat preferences           # Optional
-    decompressEndpoint: /character-personality/restore-from-archive  # Optional
-    decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}' # Optional
-```
-
-**Generated output** (`lib-{service}/Generated/{Service}CompressionCallbacks.cs`): Static class with `RegisterAsync()` method, called from plugin's `OnRunningAsync`.
-
-**Priority Guidelines**:
-
-| Priority Range | Purpose |
-|----------------|---------|
-| 0 | Base entity data (e.g., character core fields) |
-| 10-30 | Extension data (personality, history, encounters) |
-| 50-100 | Optional/derived data (quests, storylines) |
-
-**Eligibility**: Compression callbacks are for entity identity and narrative data only — not game-mechanical operational state. See [FOUNDATION.md T29](tenets/FOUNDATION.md) for the full eligibility rules.
-
-**Validation**: Generator validates that `compressEndpoint` and `decompressEndpoint` (if specified) exist in the schema's paths.
-
-### x-archive-type (Resource Template Generation)
-
-Defined on **compression response schemas** (return type of `/get-compress-data` endpoints), marks a schema as an archive type. When combined with `x-compression-callback`, triggers generation of `IResourceTemplate` implementations for compile-time ABML path validation.
-
-```yaml
-CharacterPersonalityArchive:
-  type: object
-  additionalProperties: false
-  x-archive-type: true
-  description: Compressed archive of character personality data
-  allOf:
-    - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
-  required: [characterId]
-  properties:
-    characterId:
-      type: string
-      format: uuid
-      description: Character this archive belongs to
-    personality:
-      $ref: '#/components/schemas/PersonalityResponse'
-      description: Personality trait snapshot
-```
-
-**How template generation works**:
-1. Generator scans for schemas with `x-archive-type: true`
-2. Matches to `x-compression-callback` to get `sourceType` and `templateNamespace`
-3. Traverses schema to build `ValidPaths` dictionary (property names → C# types)
-4. Generates template class to `bannou-service/Generated/ResourceTemplates/{SourceType}Template.cs`
-
-Templates enable compile-time validation of ABML snapshot access expressions (e.g., `${candidate.personality.archetypeHint}`). Register in `OnRunningAsync` via `IResourceTemplateRegistry.Register()`.
+**Generated output**: `{Service}CompressionCallbacks.cs` (callback registration) and `{SourceType}Template.cs` (ABML path validation).
 
 ### x-event-template (Event Template Generation)
 
 Defined on **individual event schema definitions** in `{service}-events.yaml`, declares that the event should have an auto-generated template for use with `emit_event:` ABML actions.
 
-```yaml
-EncounterRecordedEvent:
-  allOf:
-    - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-  type: object
-  additionalProperties: false
-  description: Published when a new encounter is recorded
-  x-event-template:
-    name: encounter_recorded    # Template name for ABML emit_event
-    topic: encounter.recorded   # Event topic (RabbitMQ routing key)
-  required: [eventName, eventId, timestamp, encounterId]
-  properties:
-    eventName:
-      type: string
-      default: encounter.recorded
-      description: 'Event type identifier: encounter.recorded'
-    encounterId:
-      type: string
-      format: uuid
-      description: Encounter that was recorded
-```
+> **Full specification**: [X-EVENT-TEMPLATE.md](specifications/X-EVENT-TEMPLATE.md) — complete syntax, payload template generation rules, generated output, and examples.
 
-**PayloadTemplate generation rules**:
-- `type: string` (non-nullable) → `"{{propertyName}}"` (quoted)
-- `type: string` (nullable) → `{{propertyName}}` (unquoted, TemplateSubstitutor handles null)
-- `type: integer`, `type: number`, `type: boolean` → `{{propertyName}}` (unquoted)
-- `type: array`, `type: object` → `{{propertyName}}` (unquoted, pre-serialized JSON)
+Fields: `name` (template name for ABML `emit_event`), `topic` (event routing key). Generator produces `EventTemplate` instances with type-aware payload templates (quoted strings, unquoted numerics/arrays).
 
-**Generated output** (`lib-{service}/Generated/{Service}EventTemplates.cs`): Static class with `EventTemplate` fields and `RegisterAll(IEventTemplateRegistry)` method. Call from `OnRunningAsync`.
+**Generated output**: `lib-{service}/Generated/{Service}EventTemplates.cs` — static class with `RegisterAll(IEventTemplateRegistry)` method.
 
 ### x-controller-only and x-manual-implementation (Manual Controller Endpoints)
 
-Both flags mark individual operations in `{service}-api.yaml` as requiring manual controller implementation. **Both** exclude the endpoint from `I{Service}Service` (via `generate-interface.sh`) and the generated `{Service}Service.cs` implementation stub (via `generate-implementation.sh`). They differ only in what the NSwag Liquid template (`Controller.liquid`) generates for the controller class.
+Both flags mark individual operations in `{service}-api.yaml` as requiring manual controller implementation, excluding them from the generated service interface and implementation stub. **These flags are NOT interchangeable.**
 
-**`x-controller-only`** — NSwag generates an `abstract` method with its own route and parameter signature. The controller class becomes `abstract class {Service}ControllerBase`. The developer provides a concrete `{Service}Controller` class that inherits from the base and uses `override` to implement the method with matching NSwag parameter types.
-
-```yaml
-paths:
-  /connect:
-    get:
-      x-controller-only: true
-      summary: WebSocket upgrade endpoint
-```
-
-**`x-manual-implementation`** — NSwag generates nothing (comment placeholder only). The controller class remains `partial class {Service}Controller`. The developer adds methods in a manual partial class with fully custom routes, HTTP methods, and parameter signatures.
-
-```yaml
-paths:
-  /documentation/view/{slug}:
-    get:
-      x-manual-implementation: true
-      summary: View documentation page in browser
-```
-
-#### Behavioral Difference Summary
+> **Full specification**: [X-CONTROLLER-ONLY.md](specifications/X-CONTROLLER-ONLY.md) — complete syntax, behavioral differences, when to use which, generated output, and examples.
 
 | Aspect | `x-controller-only` | `x-manual-implementation` |
 |--------|---------------------|---------------------------|
-| `I{Service}Service` | Excluded | Excluded |
-| `{Service}Service.cs` stub | Excluded | Excluded |
-| Controller class declaration | `abstract class {Service}ControllerBase` | `partial class {Service}Controller` |
+| Controller class | `abstract class {Service}ControllerBase` | `partial class {Service}Controller` |
 | Controller method | `public abstract` with NSwag signature | Comment only (no method) |
 | Manual class pattern | Inherits from Base, uses `override` | Partial class, defines own routes/params |
-| NSwag parameter types | Must match generated types | Fully custom |
-
-#### When to Use Which
-
-Use **`x-controller-only`** when the endpoint needs direct `HttpContext` access but its parameters can be expressed in OpenAPI (header parameters, standard request body). The generated abstract method provides route, HTTP method, and parameter binding; the override provides the implementation. Used by `connect-api.yaml` (WebSocket upgrade) and `auth-api.yaml` (OAuth redirect).
-
-Use **`x-manual-implementation`** when the endpoint's parameter model cannot be expressed through NSwag — typically browser-facing GET endpoints with path parameters, query strings, and non-JSON content types (HTML, markdown). The manual partial class defines everything from scratch. Used by `documentation-api.yaml` (browser-facing GET endpoints).
-
-**These flags are NOT interchangeable.** Switching from `x-manual-implementation` to `x-controller-only` changes the generated class from `partial` to `abstract` with a `Base` suffix, which breaks existing manual controller classes that use the partial pattern.
 
 ### x-from-authorization (Authorization Header Parameter)
 
-Defined on **parameters** in `{service}-api.yaml`, marks a parameter that is extracted from the Authorization header rather than the request body. Used exclusively by auth-related endpoints where the JWT token is both the credential and a request parameter.
+Defined on **parameters** in `{service}-api.yaml`, marks a parameter extracted from the Authorization header. Used exclusively by auth-related endpoints where the JWT is both credential and request parameter.
 
-```yaml
-parameters:
-  - name: jwt
-    in: header
-    required: true
-    x-from-authorization: bearer
-    schema:
-      type: string
-```
+> **Full specification**: [X-FROM-AUTHORIZATION.md](specifications/X-FROM-AUTHORIZATION.md) — complete syntax, generated behavior, and examples.
 
-**Generated behavior**: `generate-client.sh` strips these parameters from the generated service client (since service-to-service calls use a different auth mechanism). The parameter is only relevant for direct HTTP calls from external clients.
+**Generated behavior**: `generate-client.sh` strips these parameters from service clients (service-to-service calls use a different auth mechanism).
 
 ### x-client-event (Server-to-Client Push Event)
 
-Defined on **schema objects** in `{service}-client-events.yaml`, marks a schema as a server-to-client WebSocket push event. These events are published via `IClientEventPublisher` (not `IMessageBus`) and delivered to connected clients through per-session RabbitMQ queues managed by Connect.
+Defined on **schema objects** in `{service}-client-events.yaml`, marks a schema as a server-to-client WebSocket push event published via `IClientEventPublisher` (not `IMessageBus`).
 
-```yaml
-MatchFoundEvent:
-  allOf:
-    - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
-  type: object
-  additionalProperties: false
-  x-client-event: true
-  description: Sent to clients when a match is found.
-  required: [eventName, eventId, timestamp, matchId]
-  properties:
-    eventName:
-      type: string
-      default: "match.found"
-      description: Fixed event type identifier
-    matchId:
-      type: string
-      format: uuid
-      description: Identifier of the matched game
-```
+> **Full specification**: [X-CLIENT-EVENT.md](specifications/X-CLIENT-EVENT.md) — complete syntax, generator consumption, x-internal companion flag, generated output, and examples.
 
-**Used by generators**: `generate-client-event-groups.py` (groups events by service for typed subscription API), `generate-client-event-registry.py` (C# type→eventName mapping), `generate-client-event-registry-ts.py` (TypeScript registry), `generate-unreal-types.py` (Unreal Engine event types).
-
-**Related**: `x-internal: true` can be added alongside `x-client-event: true` to mark events that are used internally by the Connect/Permission infrastructure but should not be exposed to game client SDKs (e.g., `CapabilityManifestClientEvent`).
+Used by 4+ generators for typed subscription APIs across .NET, TypeScript, and Unreal Engine SDKs. Optional `x-internal: true` excludes infrastructure events from game client SDK exposure.
 
 ### x-sdk-type (External SDK Type Mapping)
 
-Defined on **schema objects** in `{service}-api.yaml`, maps an OpenAPI schema type to an existing C# type from the Core SDK (`BeyondImmersion.Bannou.Core`). Instead of generating a duplicate C# class, NSwag excludes the type and the generated code references the SDK type directly.
+Defined on **schema objects** in `{service}-api.yaml`, maps an OpenAPI schema type to an existing C# type from the Core SDK (`BeyondImmersion.Bannou.Core`), preventing duplicate class generation.
 
-```yaml
-components:
-  schemas:
-    EntityType:
-      x-sdk-type: BeyondImmersion.Bannou.Core.EntityType
-      type: string
-      enum: [Account, Character, Realm, Location]
-      description: Core entity type from Bannou Core SDK
-```
+> **Full specification**: [X-SDK-TYPE.md](specifications/X-SDK-TYPE.md) — complete syntax, restriction to Core SDK types, generated behavior, and examples.
 
-**Restriction: Core SDK types only.** `x-sdk-type` may ONLY reference types from the Core SDK (`BeyondImmersion.Bannou.Core`). Domain-specific SDKs must define their own types in the service API schema and map between generated and SDK types at the plugin boundary.
-
-**Generated behavior**: `extract-sdk-types.py` scans for `x-sdk-type` markers and outputs exclusion lists. `generate-models.sh` and `generate-config.sh` consume these to exclude SDK types from NSwag generation and add the SDK namespace `using` statements.
+**Restriction: Core SDK types only.** Domain-specific SDKs must define their own types and map at the plugin boundary. Generated behavior: `extract-sdk-types.py` produces exclusion lists consumed by `generate-models.sh` and `generate-config.sh`.
 
 ---
 
@@ -1245,7 +839,7 @@ x-state-stores:
 | `purpose` | Yes | Human-readable description |
 | `enableSearch` | No | Enable RedisSearch full-text indexing (redis only, default false) |
 
-**Generated output**: `bannou-service/Generated/StateStoreDefinitions.cs` — static class with string constants for each store name, plus `docs/GENERATED-STATE-STORES.md`.
+**Generated output**: `bannou-service/Generated/StateStoreDefinitions.cs` — static class with string constants for each store name, plus `docs/generated/GENERATED-STATE-STORES.md`.
 
 ---
 

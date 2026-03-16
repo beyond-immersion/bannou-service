@@ -8,7 +8,7 @@
 
 ## Composition Reference
 
-> This section is extracted by the doc generation pipeline for GENERATED-COMPOSITION-REFERENCE.md. It describes the composable architecture, SDK ecosystem, and development patterns.
+> This section is extracted by the doc generation pipeline for generated/GENERATED-COMPOSITION-REFERENCE.md. It describes the composable architecture, SDK ecosystem, and development patterns.
 
 ### The Three Deployment Modes
 

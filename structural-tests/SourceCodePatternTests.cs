@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using BeyondImmersion.BannouService.Services;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.StructuralTests;
@@ -166,4 +167,102 @@ public class SourceCodePatternTests
             $"StandardServicePlugin<T> ConfigureServices override:\n" +
             string.Join("\n", violations.Select(v => $"  - {v}")));
     }
+
+    // =========================================================================
+    // Localization Category Registry Validation
+    // =========================================================================
+
+    /// <summary>
+    /// Validates that every constant in <see cref="LocalizationCategoryDefinitions"/> has at least
+    /// one declared consumer plugin in the schema (<c>schemas/localization-categories.yaml</c>).
+    /// Categories without consumers are orphaned — no service validates keys against them.
+    /// </summary>
+    [Fact]
+    public void LocalizationCategories_AreAllReferenced()
+    {
+        // Read the schema YAML and check that every category has non-empty consumers
+        var schemaFile = Path.Combine(TestAssemblyDiscovery.RepoRoot, "schemas", "localization-categories.yaml");
+        if (!File.Exists(schemaFile))
+        {
+            // Schema not yet created — skip gracefully
+            return;
+        }
+
+        // Use the generated metadata which faithfully mirrors the schema
+        var orphaned = new List<string>();
+        foreach (var (code, metadata) in LocalizationCategoryDefinitions.Metadata)
+        {
+            if (metadata.Consumers.Length == 0)
+            {
+                orphaned.Add(code);
+            }
+        }
+
+        Assert.True(
+            orphaned.Count == 0,
+            $"Found {orphaned.Count} localization category constant(s) with no declared consumers " +
+            $"in schemas/localization-categories.yaml. Every category should declare at least one " +
+            $"consumer plugin:\n" +
+            string.Join("\n", orphaned.Select(c => $"  - LocalizationCategoryDefinitions.{ToPascalCase(c)} (\"{c}\")")));
+    }
+
+    /// <summary>
+    /// Validates that every call to <c>ValidateLocalizationKeyAsync</c> in plugin source code
+    /// passes a <see cref="LocalizationCategoryDefinitions"/> constant as the category argument,
+    /// not a hardcoded string literal. Structural enforcement of the localization category registry.
+    /// </summary>
+    [Fact]
+    public void LocalizationValidator_UsesGeneratedConstants()
+    {
+        // Pattern: ValidateLocalizationKeyAsync( followed by a string literal instead of a constant
+        // Good: ValidateLocalizationKeyAsync(LocalizationCategoryDefinitions.Items, ...)
+        // Bad:  ValidateLocalizationKeyAsync("items", ...)
+        var callPattern = new Regex(
+            @"ValidateLocalizationKeyAsync\s*\(",
+            RegexOptions.Compiled);
+        var stringLiteralArgPattern = new Regex(
+            @"ValidateLocalizationKeyAsync\s*\(\s*""",
+            RegexOptions.Compiled);
+
+        var violations = new List<string>();
+
+        foreach (var file in GetPluginSourceFiles())
+        {
+            var lines = File.ReadAllLines(file);
+            var relativePath = Path.GetRelativePath(TestAssemblyDiscovery.RepoRoot, file);
+
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                var trimmed = line.TrimStart();
+
+                // Skip comments
+                if (trimmed.StartsWith("//", StringComparison.Ordinal))
+                    continue;
+
+                // Only inspect lines that call the validator
+                if (!callPattern.IsMatch(line))
+                    continue;
+
+                // Flag if the first argument is a string literal
+                if (stringLiteralArgPattern.IsMatch(line))
+                {
+                    violations.Add($"{relativePath}:{i + 1}: {trimmed.Trim()}");
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} call(s) to ValidateLocalizationKeyAsync with hardcoded " +
+            $"string category argument. Use LocalizationCategoryDefinitions constants instead:\n" +
+            string.Join("\n", violations.Select(v => $"  - {v}")));
+    }
+
+    /// <summary>
+    /// Converts a kebab-case or snake_case string to PascalCase for display purposes.
+    /// </summary>
+    private static string ToPascalCase(string name) =>
+        string.Concat(name.Split('-', '_').Select(p =>
+            p.Length > 0 ? char.ToUpper(p[0]) + p[1..] : p));
 }

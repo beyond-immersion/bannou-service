@@ -20,7 +20,7 @@ Generate State Store Documentation from Component Files.
 This script scans state store component YAML files and generates a comprehensive
 markdown table documenting all state stores used in Bannou.
 
-Output: docs/GENERATED-STATE-STORES.md
+Output: docs/generated/GENERATED-STATE-STORES.md
 
 Usage:
     python3 scripts/generate-state-store-docs.py
@@ -228,7 +228,7 @@ def main():
     markdown = generate_markdown(all_stores)
 
     # Write output
-    output_file = repo_root / 'docs' / 'GENERATED-STATE-STORES.md'
+    output_file = repo_root / 'docs' / 'generated' / 'GENERATED-STATE-STORES.md'
     with open(output_file, 'w') as f:
         f.write(markdown)
 

@@ -37,7 +37,7 @@ should understand whether this document is relevant to their task.}
 ```
 
 **Rules:**
-1. **2-4 sentences maximum** — this section is extracted by the documentation generation pipeline for `GENERATED-OPERATIONS-CATALOG.md`
+1. **2-4 sentences maximum** — this section is extracted by the documentation generation pipeline for `generated/GENERATED-OPERATIONS-CATALOG.md`
 2. Must answer: What operational concern does this cover? Who needs this? When should they read it?
 3. **No markdown links, code blocks, or formatting** — plain text only
 4. **No self-references** — write as a third-person description

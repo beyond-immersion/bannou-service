@@ -21,7 +21,7 @@ Scans docs/operations/*.md (excluding CLAUDE-SKILLS.md) and extracts header
 metadata (Last Updated, Scope) and ## Summary sections. Documents missing
 standardized headers are included with whatever metadata exists.
 
-Output: docs/GENERATED-OPERATIONS-CATALOG.md
+Output: docs/generated/GENERATED-OPERATIONS-CATALOG.md
 
 Usage:
     python3 scripts/generate-operations-catalog.py
@@ -165,7 +165,7 @@ def generate_markdown(docs: list) -> str:
             meta_parts.append(f"**Last Updated**: {doc['last_updated']}")
         if doc['scope']:
             meta_parts.append(f"**Scope**: {doc['scope']}")
-        meta_parts.append(f"[Full Document](operations/{doc['filename']})")
+        meta_parts.append(f"[Full Document](../operations/{doc['filename']})")
 
         lines.append(' | '.join(meta_parts))
         lines.append("")
@@ -181,7 +181,7 @@ def generate_markdown(docs: list) -> str:
         "",
         "---",
         "",
-        "*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*",
         "",
     ])
 
@@ -200,7 +200,7 @@ def main():
 
     markdown = generate_markdown(docs)
 
-    output_file = repo_root / 'docs' / 'GENERATED-OPERATIONS-CATALOG.md'
+    output_file = repo_root / 'docs' / 'generated' / 'GENERATED-OPERATIONS-CATALOG.md'
     with open(output_file, 'w') as f:
         f.write(markdown)
 

@@ -19,7 +19,7 @@ Generate State Store Code and Documentation from Schema.
 
 This script reads schemas/state-stores.yaml and generates:
 1. bannou-service/Generated/StateStoreDefinitions.cs - Typed constants and configuration
-2. docs/GENERATED-STATE-STORES.md - Documentation
+2. docs/generated/GENERATED-STATE-STORES.md - Documentation
 
 Usage:
     python3 scripts/generate-state-stores.py
@@ -266,7 +266,7 @@ def generate_markdown(stores: dict) -> str:
         "",
         "---",
         "",
-        "*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*",
         "",
     ])
 
@@ -304,7 +304,7 @@ def main():
 
     # Generate documentation
     markdown = generate_markdown(stores)
-    md_output = repo_root / 'docs' / 'GENERATED-STATE-STORES.md'
+    md_output = repo_root / 'docs' / 'generated' / 'GENERATED-STATE-STORES.md'
     with open(md_output, 'w') as f:
         f.write(markdown)
     print(f"Generated {md_output}")

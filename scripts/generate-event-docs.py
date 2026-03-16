@@ -20,7 +20,7 @@ Generate Events Documentation from Schema Files.
 This script scans *-events.yaml schema files and generates comprehensive
 markdown documentation for all events used in Bannou.
 
-Output: docs/GENERATED-EVENTS.md
+Output: docs/generated/GENERATED-EVENTS.md
 
 Usage:
     python3 scripts/generate-event-docs.py
@@ -301,7 +301,7 @@ def main():
     markdown = generate_markdown(events_by_service)
 
     # Write output
-    output_file = repo_root / 'docs' / 'GENERATED-EVENTS.md'
+    output_file = repo_root / 'docs' / 'generated' / 'GENERATED-EVENTS.md'
     with open(output_file, 'w') as f:
         f.write(markdown)
 

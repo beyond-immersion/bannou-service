@@ -17,7 +17,7 @@ All FAQ documents MUST use this header format:
 > **Last Updated**: {YYYY-MM-DD}
 > **Related Plugins**: {comma-separated plugin names, e.g., Item (L2), Inventory (L2)}
 > **Short Answer**: {1-3 sentences answering the question directly. This is
-> extracted by the documentation generation pipeline for GENERATED-FAQ-CATALOG.md.
+> extracted by the documentation generation pipeline for generated/GENERATED-FAQ-CATALOG.md.
 > Must be self-contained — a reader of only this block should get a useful answer.}
 ```
 

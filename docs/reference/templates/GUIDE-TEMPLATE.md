@@ -49,7 +49,7 @@ understand the guide's scope and value.}
 ```
 
 **Rules:**
-1. **2-4 sentences maximum** — this section is extracted by the documentation generation pipeline for `GENERATED-GUIDES-CATALOG.md`
+1. **2-4 sentences maximum** — this section is extracted by the documentation generation pipeline for `generated/GENERATED-GUIDES-CATALOG.md`
 2. Must answer: What does this guide teach? Who is the audience? What will they be able to do after reading it?
 3. **No markdown links, code blocks, or formatting** — plain text only
 4. **No self-references** — write as a third-person description, not "this document explains..."

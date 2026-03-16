@@ -1046,6 +1046,7 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 ### Design Considerations (Requires Planning)
 
 1. **Dungeon garden type design (Pattern A only)**: The dungeon-as-garden concept requires: a registered garden type in Gardener, entity association rules for the dungeon context, ABML action handlers for Gardener APIs (analogous to Puppetmaster's `spawn_watcher:`, `watch:` handlers), and a gardener behavior document for the dungeon core actor. Pattern B does not use a dungeon garden -- the dungeon influence is routed through the character's Actor perception pipeline. This is a cross-service design effort.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/669 -->
 
 2. **Growth contribution debouncing**: Dungeons generate many growth events per tick (every monster kill, every trap trigger). Growth contributions to lib-seed need debouncing (`GrowthContributionDebounceMs` config property, default 5000ms) to avoid overwhelming the seed service with individual growth API calls.
 
@@ -1070,6 +1071,7 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 7. **Pattern B transient UX routing**: When the player switches characters within a garden, the dungeon UX modules need to appear/disappear based on whether the currently-controlled character has a dungeon_master seed. This requires the client's UX capability manifest to be dynamically updated on character switch -- likely via the same Permission/Connect capability manifest push mechanism, extended to include seed-derived UX capabilities.
 
 8. **Dungeon system realm provisioning**: The dungeon system realm (e.g., `DUNGEON_CORES` with `isSystemType: true`) must be seeded on startup, analogous to the divine system realm for gods. Design decisions: Is there one global dungeon system realm or one per game service? What dungeon species are registered (one per personality type, or a generic "dungeon core" species)? How does species assignment map to personality type? The system realm is seeded via `/realm/seed` -- configuration, not code. See [DIVINE.md: Broader System Realm Implications](DIVINE.md#broader-system-realm-implications) for the established pattern.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/667 -->
 
 9. **Character creation timing at Awakened phase**: When `HandleGenesisPhaseChangedAsync` detects the transition to Awakened, it must orchestrate: character creation (ICharacterClient), personality trait seeding (ICharacterPersonalityClient, soft), backstory initialization (ICharacterHistoryClient, soft), and actor binding (IActorClient). This is a multi-service orchestration that needs failure handling -- if character creation succeeds but binding fails, the dungeon should retry binding on the next event rather than creating duplicate characters. The characterId stored on DungeonCoreModel serves as the idempotency check.
 

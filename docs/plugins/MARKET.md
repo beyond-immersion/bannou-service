@@ -1039,7 +1039,7 @@ Market is a multi-entity service. All event topics use Pattern C (`market.{entit
 
 ### Endpoint Count
 
-Planned: 5 (definition) + 6 (auction) + 7 (vendor) + 4 (stock) + 3 (price) + 3 (NPC economics) + 2 (supply/demand) + 3 (cleanup) = **33 endpoints**. No schema exists yet — GENERATED-COMPOSITION-REFERENCE.md currently shows "—" for Market.
+Planned: 5 (definition) + 6 (auction) + 7 (vendor) + 4 (stock) + 3 (price) + 3 (NPC economics) + 2 (supply/demand) + 3 (cleanup) = **33 endpoints**. No schema exists yet — generated/GENERATED-COMPOSITION-REFERENCE.md currently shows "—" for Market.
 
 ---
 

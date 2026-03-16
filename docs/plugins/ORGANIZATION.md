@@ -1069,7 +1069,8 @@ How organizations participate in the NPC-driven economy through GOAP-based econo
 
 ### Bugs (Fix Immediately)
 
-*No bugs to report. Plugin is in pre-implementation phase.*
+1. **Missing Dissolve endpoint for household split**: Organization must provide a `POST /organization/dissolve` endpoint called by Arbitration's `OrganizationDissolution` consequence during ruling enforcement. Must identify shared assets (wallets, inventories, locations, contracts), generate an asset manifest for Escrow division, redistribute members to solo status or branch organizations, and handle succession for partial dissolutions. This is the structural dissolution API that Arbitration orchestrates. Design decision made in #436; implementation tracked in #670.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/670 -->
 
 ### Intentional Quirks (Documented Behavior)
 

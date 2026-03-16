@@ -1,0 +1,66 @@
+# Generated Variable Provider Reference
+
+> **Source**: `schemas/variable-providers.yaml`
+> **Do not edit manually** - regenerate with `make generate-docs`
+
+This document lists all ABML variable providers used by the Actor runtime.
+Variable providers supply entity data to behavior expressions via the
+`IVariableProviderFactory` / `IVariableProvider` pattern.
+
+## Variable Providers
+
+| Namespace | Service | Purpose |
+|-----------|---------|---------|
+| `${affix.*}` | Affix | Item affix data for NPC GOAP evaluation of equipment quality (${affix.*}) |
+| `${backstory.*}` | CharacterHistory | Character backstory elements for ABML expressions (${backstory.*}) |
+| `${combat.*}` | CharacterPersonality | Combat preference data for ABML expressions (${combat.*}) |
+| `${currency.*}` | Currency | Currency balance and wallet data for ABML expressions (${currency.*}) |
+| `${encounters.*}` | CharacterEncounter | Encounter history and sentiment for ABML expressions (${encounters.*}) |
+| `${faction.*}` | Faction | Faction membership and status data for ABML expressions (${faction.*}) |
+| `${heritage.*}` | CharacterLifecycle | Genetic heritage data — phenotype traits, aptitudes, bloodline membership, species, generation depth (${heritage.*}) |
+| `${inventory.*}` | Inventory | Item possession and container data for ABML expressions (${inventory.*}) |
+| `${lifecycle.*}` | CharacterLifecycle | Lifecycle state data — age, stage, fertility, health modifier, marriage status, child count, fulfillment (${lifecycle.*}) |
+| `${location.*}` | Location | Location context data for ABML expressions (${location.*}) |
+| `${obligations.*}` | Obligation | Contract obligation action cost modifiers for ABML expressions (${obligations.*}) |
+| `${personality.*}` | CharacterPersonality | Personality trait values for ABML expressions (${personality.*}) |
+| `${quest.*}` | Quest | Active quest data for ABML expressions (${quest.*}) |
+| `${relationship.*}` | Relationship | Entity relationship data for ABML expressions (${relationship.*}) |
+| `${seed.*}` | Seed | Seed growth and capability data for ABML expressions (${seed.*}) |
+| `${transit.*}` | Transit | Transit mode availability, journey state, and route data for ABML expressions (${transit.*}) |
+| `${world.*}` | Worldstate | Game time, calendar, and season data for ABML expressions (${world.*}) |
+
+**Total**: 17 providers
+
+## How Providers Work
+
+1. **Schema**: Provider namespaces are defined in `schemas/variable-providers.yaml`
+2. **Constants**: Generated to `VariableProviderDefinitions` in `bannou-service/Generated/`
+3. **Registration**: Each plugin registers its `IVariableProviderFactory` implementation via DI
+4. **Discovery**: Actor runtime discovers all factories via `IEnumerable<IVariableProviderFactory>`
+5. **Resolution**: ABML expressions like `${personality.openness}` resolve the `personality` namespace,
+   then delegate to the provider for sub-path resolution
+
+## Usage in ABML
+
+```yaml
+# Access personality traits
+condition: ${personality.openness} > 0.7
+
+# Check quest state
+condition: ${quest.active_count} > 0
+
+# Encounter sentiment
+condition: ${encounters.sentiment.{targetId}} < -0.5
+```
+
+## Generated Code
+
+Variable provider definitions are generated to `bannou-service/Generated/VariableProviderDefinitions.cs`,
+providing:
+
+- **Name constants**: `VariableProviderDefinitions.Personality`, `VariableProviderDefinitions.Quest`, etc.
+- **Metadata**: `VariableProviderDefinitions.Metadata` for validation and tooling
+
+---
+
+*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*

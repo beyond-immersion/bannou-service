@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Item;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -163,7 +164,8 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
             _mockTelemetryProvider.Object,
             _mockLogger.Object,
             Configuration,
-            _instanceEventBatcher);
+            _instanceEventBatcher,
+            Enumerable.Empty<IItemInstanceDestructionListener>());
     }
 
     #region Constructor Tests

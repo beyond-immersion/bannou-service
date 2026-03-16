@@ -83,7 +83,7 @@ For plugins with NO schema and NO code (pure design specifications):
 
 The `Layer` field is mandatory in both header formats. It provides at-a-glance layer identification and is used by the doc generation pipeline to split services into per-layer reference documents.
 
-The `Short` field is mandatory in both header formats. It must be the **last line** of the header blockquote. It provides a one-line compositional summary extracted by the doc generation pipeline for the service registry in `GENERATED-COMPOSITION-REFERENCE.md`. Write it as a bare description (no "The X service..." prefix), focusing on what the service does and what it composes with.
+The `Short` field is mandatory in both header formats. It must be the **last line** of the header blockquote. It provides a one-line compositional summary extracted by the doc generation pipeline for the service registry in `generated/GENERATED-COMPOSITION-REFERENCE.md`. Write it as a bare description (no "The X service..." prefix), focusing on what the service does and what it composes with.
 
 **Common header mistakes to avoid:**
 - `# {Name} Service (lib-{name})` — use `# {Name} Plugin Deep Dive`
@@ -170,7 +170,7 @@ Plugins may include additional `##` sections for service-specific content that d
 1. Use `##` headers (same level as other numbered sections)
 2. Must NOT duplicate content that belongs in standard sections above
 3. Content must be specific to this plugin's implementation, not general patterns
-4. Do not add extra sections to the overview/summary (that gets copied to GENERATED-SERVICE-DETAILS.md)
+4. Do not add extra sections to the overview/summary (that gets copied to generated/GENERATED-SERVICE-DETAILS.md)
 5. Position A sections should be limited to 1-3 sections maximum — if you need more, some belong in Position B
 
 ---

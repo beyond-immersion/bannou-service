@@ -21,7 +21,7 @@ This script scans all *-events.yaml files for x-lifecycle entities with
 deprecation: true and generates a reference document listing every
 deprecatable entity, its service, instanceEntity declaration, and model fields.
 
-Output: docs/GENERATED-DEPRECATION-ENTITIES.md
+Output: docs/generated/GENERATED-DEPRECATION-ENTITIES.md
 
 Usage:
     python3 scripts/generate-deprecation-docs.py
@@ -201,7 +201,7 @@ def generate_markdown(all_entities: list) -> str:
     lines.extend([
         "---",
         "",
-        "*This file is auto-generated from x-lifecycle definitions. See [TENETS.md](reference/TENETS.md) for deprecation lifecycle rules.*",
+        "*This file is auto-generated from x-lifecycle definitions. See [TENETS.md](../reference/TENETS.md) for deprecation lifecycle rules.*",
         "",
     ])
 
@@ -232,7 +232,7 @@ def main():
 
     # Generate documentation
     markdown = generate_markdown(all_entities)
-    md_output = repo_root / 'docs' / 'GENERATED-DEPRECATION-ENTITIES.md'
+    md_output = repo_root / 'docs' / 'generated' / 'GENERATED-DEPRECATION-ENTITIES.md'
     with open(md_output, 'w') as f:
         f.write(markdown)
     print(f"Generated {md_output}")

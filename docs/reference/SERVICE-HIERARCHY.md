@@ -12,7 +12,7 @@ This document defines the authoritative service dependency hierarchy for Bannou.
 
 ## Overview
 
-> **Extraction notice**: This section is extracted into `GENERATED-COMPOSITION-REFERENCE.md` by the doc generation pipeline. Keep it self-contained — it must make sense without the surrounding document.
+> **Extraction notice**: This section is extracted into `generated/GENERATED-COMPOSITION-REFERENCE.md` by the doc generation pipeline. Keep it self-contained — it must make sense without the surrounding document.
 
 **The Golden Rule**: A service may ONLY depend on services in its own layer or lower layers. "Depend on" means injecting a client (`ICharacterClient`), calling via lib-mesh, or requiring the service to be running. Publishing events consumed by higher layers is NOT a dependency — that's the consumer's dependency.
 

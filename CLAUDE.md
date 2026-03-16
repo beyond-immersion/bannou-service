@@ -23,14 +23,14 @@ This is NOT a reference to claude-code's issues or any other repository.
 
 **Implementation Maps**: Every service has an implementation map at `docs/maps/{SERVICE}.md` containing the detailed method-by-method pseudocode, state store key patterns, dependency tables, event inventories, DI service lists, and complete endpoint indexes with routes, roles, mutations, and published events. Deep dives (`docs/plugins/{SERVICE}.md`) provide high-level context (overview, design considerations, quirks, work tracking); implementation maps provide the detailed "what does each method do" specification. **When investigating a specific plugin's behavior, always read its implementation map** — the deep dive alone does not contain endpoint details, dependency tables, or method logic.
 
-@docs/GENERATED-COMPOSITION-REFERENCE.md
+@docs/generated/GENERATED-COMPOSITION-REFERENCE.md
 
 @docs/reference/TENETS.md
 
 **On-demand references** (read when needed, not auto-included):
 - `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` — Shared helpers, canonical implementation patterns, test validators. **Read this FIRST when searching for the canonical example of any pattern** (background workers, state store access, event publishing, deprecation, cleanup, enum mapping, telemetry, etc.)
 - `docs/reference/SERVICE-HIERARCHY.md` — Full hierarchy rules, Variable Provider Factory, DI Provider vs Listener safety, deployment modes (read when designing cross-layer communication)
-- `docs/GENERATED-*-SERVICE-DETAILS.md` — Full per-service details by layer (read when investigating a specific layer's services)
+- `docs/generated/GENERATED-*-SERVICE-DETAILS.md` — Full per-service details by layer (read when investigating a specific layer's services)
 - `docs/reference/ORCHESTRATION-PATTERNS.md` — Full orchestration specifications (bootstrap sequence, divine economy, dungeon patterns, living weapons)
 - `docs/BANNOU-ASPIRATIONS.md` § Platform Vision — Genre case studies, developer time savings, competitive positioning
 
@@ -65,14 +65,15 @@ These documents provide the high-level architectural north-star context for the 
 
 | Agent Mission | Must Read Before Starting |
 |---------------|--------------------------|
-| **Investigation** (understanding services, tracing dependencies, exploring architecture) | The layer-specific service details files: `docs/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FEATURES-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md`. For specific plugin investigation, also read `docs/maps/{SERVICE}.md` (implementation map) for endpoint details, dependencies, events, and method pseudocode. |
+| **Investigation** (understanding services, tracing dependencies, exploring architecture) | The layer-specific service details files: `docs/generated/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md`, `docs/generated/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md`, `docs/generated/GENERATED-APP-FEATURES-SERVICE-DETAILS.md`, `docs/generated/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md`, `docs/generated/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md`. For specific plugin investigation, also read `docs/maps/{SERVICE}.md` (implementation map) for endpoint details, dependencies, events, and method pseudocode. |
 | **Plugin work** (auditing, mapping, testing, implementing, or maintaining a specific plugin) | The plugin's deep dive `docs/plugins/{SERVICE}.md` AND its implementation map `docs/maps/{SERVICE}.md`. The deep dive provides context, quirks, and design rationale; the map provides method-level detail, state key patterns, dependency tables, and event inventories. **Always read both.** |
 | **Code auditing** (reviewing implementations, checking tenet compliance, finding violations) | ALL tenet files in `docs/reference/tenets/`: `FOUNDATION.md`, `IMPLEMENTATION-BEHAVIOR.md`, `IMPLEMENTATION-DATA.md`, `QUALITY.md`, `TESTING-PATTERNS.md` |
 | **Testing work** (writing, reviewing, or designing unit tests, structural tests, enum mapping tests, or any test code) | `docs/reference/tenets/TESTING-PATTERNS.md` — contains test placement rules, isolation boundaries, mocking patterns, capture patterns, structural validators, enum mapping tests, forbidden patterns, and tier scope. This is the sole testing reference for agents. |
 | **Schema auditing** (reviewing OpenAPI schemas, checking schema rules, validating schema design) | `docs/reference/SCHEMA-RULES.md` |
+| **Specification work** (creating, reviewing, or implementing extension attribute specifications) | `docs/reference/SCHEMA-RULES.md` (for context on existing x-* attributes) and the relevant specification in `docs/reference/specifications/X-{ATTRIBUTE-NAME}.md`. For implementation work, also read `docs/reference/templates/SPECIFICATION-TEMPLATE.md` for the required document structure. |
 | **High-level vision** (evaluating how services serve gameplay, cross-cutting feature planning, content flywheel analysis) | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode) |
 | **Canonical pattern lookup** (searching for the correct way to implement a pattern — background workers, state store access, event publishing, deprecation, cleanup, enum mapping, etc.) | `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` — read this FIRST before grepping the codebase for examples. It catalogs all shared helpers, canonical skeletons, and reference implementations with code samples and "when to use" guidance. |
-| **Documentation search** (broad search across guides, planning docs, FAQs, or operations docs) | The relevant catalog file(s): `docs/GENERATED-GUIDES-CATALOG.md`, `docs/GENERATED-PLANNING-CATALOG.md`, `docs/GENERATED-FAQ-CATALOG.md`, `docs/GENERATED-OPERATIONS-CATALOG.md`. Read the catalog first to identify target documents from summaries, then read only the identified documents. Never glob a docs directory and read files blindly. |
+| **Documentation search** (broad search across guides, planning docs, FAQs, operations docs, or specifications) | The relevant catalog file(s): `docs/generated/GENERATED-GUIDES-CATALOG.md`, `docs/generated/GENERATED-PLANNING-CATALOG.md`, `docs/generated/GENERATED-FAQ-CATALOG.md`, `docs/generated/GENERATED-OPERATIONS-CATALOG.md`, `docs/generated/GENERATED-SPECIFICATIONS-CATALOG.md`. Read the catalog first to identify target documents from summaries, then read only the identified documents. Never glob a docs directory and read files blindly. |
 
 **Rules:**
 1. Every sub-agent prompt MUST include an explicit instruction to read the relevant documents listed above BEFORE doing any work
@@ -89,15 +90,16 @@ These documents provide the high-level architectural north-star context for the 
 
 **Auto-Generated References** (regenerate with `make generate-docs`):
 
-- **Service Details**: `docs/GENERATED-SERVICE-DETAILS.md` - Service descriptions and API endpoints
-- **Configuration**: `docs/GENERATED-CONFIGURATION.md` - Environment variables per service
-- **Events**: `docs/GENERATED-EVENTS.md` - Event schemas and topics
-- **State Stores**: `docs/GENERATED-STATE-STORES.md` - Redis/MySQL state stores
+- **Service Details**: `docs/generated/GENERATED-SERVICE-DETAILS.md` - Service descriptions and API endpoints
+- **Configuration**: `docs/generated/GENERATED-CONFIGURATION.md` - Environment variables per service
+- **Events**: `docs/generated/GENERATED-EVENTS.md` - Event schemas and topics
+- **State Stores**: `docs/generated/GENERATED-STATE-STORES.md` - Redis/MySQL state stores
 - **Document Catalogs** (index-first search — see rule below):
-  - `docs/GENERATED-GUIDES-CATALOG.md` — All developer guides with summaries, status, key plugins
-  - `docs/GENERATED-PLANNING-CATALOG.md` — All planning/design/research docs with summaries, type, status, north stars
-  - `docs/GENERATED-FAQ-CATALOG.md` — All architectural rationale FAQs with summaries and related plugins
-  - `docs/GENERATED-OPERATIONS-CATALOG.md` — All operations docs with summaries and scope
+  - `docs/generated/GENERATED-GUIDES-CATALOG.md` — All developer guides with summaries, status, key plugins
+  - `docs/generated/GENERATED-PLANNING-CATALOG.md` — All planning/design/research docs with summaries, type, status, north stars
+  - `docs/generated/GENERATED-FAQ-CATALOG.md` — All architectural rationale FAQs with summaries and related plugins
+  - `docs/generated/GENERATED-OPERATIONS-CATALOG.md` — All operations docs with summaries and scope
+  - `docs/generated/GENERATED-SPECIFICATIONS-CATALOG.md` — All extension attribute specifications with summaries, status, schema scope
 
 ### Catalog-First Documentation Search (MANDATORY)
 
@@ -107,11 +109,12 @@ These documents provide the high-level architectural north-star context for the 
 
 | Looking for... | Read first |
 |----------------|------------|
-| How-to guides, SDK docs, system explanations, developer workflows | `docs/GENERATED-GUIDES-CATALOG.md` |
-| Design documents, vision docs, research, implementation plans, architectural analysis | `docs/GENERATED-PLANNING-CATALOG.md` |
-| "Why does Bannou do X?", architectural rationale, design decision justification | `docs/GENERATED-FAQ-CATALOG.md` |
-| Deployment, testing, CI/CD, linting, release procedures | `docs/GENERATED-OPERATIONS-CATALOG.md` |
-| Unknown or cross-cutting topic | Check all four catalogs (they're small — total ~500 lines) |
+| How-to guides, SDK docs, system explanations, developer workflows | `docs/generated/GENERATED-GUIDES-CATALOG.md` |
+| Design documents, vision docs, research, implementation plans, architectural analysis | `docs/generated/GENERATED-PLANNING-CATALOG.md` |
+| "Why does Bannou do X?", architectural rationale, design decision justification | `docs/generated/GENERATED-FAQ-CATALOG.md` |
+| Deployment, testing, CI/CD, linting, release procedures | `docs/generated/GENERATED-OPERATIONS-CATALOG.md` |
+| Extension attribute syntax, generation behavior, runtime validation | `docs/generated/GENERATED-SPECIFICATIONS-CATALOG.md` |
+| Unknown or cross-cutting topic | Check all five catalogs (they're small — total ~600 lines) |
 
 **This applies to both direct searches and sub-agent instructions.** When launching an agent to "search documentation for X", instruct it to read the relevant catalog(s) first, identify target documents from the summaries, and only then read the full documents it identified. Do not instruct agents to glob `docs/guides/` or `docs/planning/` and read files blindly.
 

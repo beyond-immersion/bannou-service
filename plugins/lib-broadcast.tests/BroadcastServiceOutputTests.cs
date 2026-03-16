@@ -428,6 +428,8 @@ public class BroadcastServiceOutputTests
         var authClient = new Mock<IAuthClient>();
         var serviceProvider = new Mock<IServiceProvider>();
         var telemetryProvider = new Mock<ITelemetryProvider>();
+        var meshInstanceIdentifier = new Mock<IMeshInstanceIdentifier>();
+        meshInstanceIdentifier.Setup(x => x.InstanceId).Returns(Guid.NewGuid());
         var broadcastCoordinator = new Mock<IBroadcastCoordinator>();
         var sentimentProcessor = new Mock<ISentimentProcessor>();
         var webhookHandler = new Mock<IPlatformWebhookHandler>();
@@ -464,6 +466,7 @@ public class BroadcastServiceOutputTests
             authClient.Object,
             serviceProvider.Object,
             telemetryProvider.Object,
+            meshInstanceIdentifier.Object,
             broadcastCoordinator.Object,
             sentimentProcessor.Object,
             webhookHandler.Object,

@@ -22,7 +22,7 @@ Last Updated, North Stars, Related Plugins) and ## Summary sections. Entries
 are grouped by Type. Documents missing standardized headers are included with
 whatever metadata exists.
 
-Output: docs/GENERATED-PLANNING-CATALOG.md
+Output: docs/generated/GENERATED-PLANNING-CATALOG.md
 
 Usage:
     python3 scripts/generate-planning-catalog.py
@@ -182,7 +182,7 @@ def generate_entry(doc: dict) -> list:
         meta_parts.append(f"**Last Updated**: {doc['last_updated']}")
     if doc['north_stars']:
         meta_parts.append(f"**North Stars**: {doc['north_stars']}")
-    meta_parts.append(f"[Full Document](planning/{doc['filename']})")
+    meta_parts.append(f"[Full Document](../planning/{doc['filename']})")
 
     lines.append(' | '.join(meta_parts))
     lines.append("")
@@ -247,7 +247,7 @@ def generate_markdown(docs: list) -> str:
         "",
         "---",
         "",
-        "*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*",
         "",
     ])
 
@@ -266,7 +266,7 @@ def main():
 
     markdown = generate_markdown(docs)
 
-    output_file = repo_root / 'docs' / 'GENERATED-PLANNING-CATALOG.md'
+    output_file = repo_root / 'docs' / 'generated' / 'GENERATED-PLANNING-CATALOG.md'
     with open(output_file, 'w') as f:
         f.write(markdown)
 

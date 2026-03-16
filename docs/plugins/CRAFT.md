@@ -6,6 +6,7 @@
 > **State Store**: craft-recipe-store (MySQL), craft-recipe-cache (Redis), craft-session-store (MySQL), craft-station-registry (MySQL), craft-discovery-store (MySQL), craft-lock (Redis) — all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Implementation Map**: [docs/maps/CRAFT.md](../maps/CRAFT.md)
 > **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
 > **Short**: Recipe-based crafting orchestration composing Item, Inventory, Contract, Currency, and Affix
 
@@ -121,6 +122,7 @@ RecipeDefinition:
  stationType: string? # Required station type (null = no station needed)
  toolCategory: string? # Required tool category (null = no tool needed)
  skillCheck: bool # Whether this step has a quality-affecting skill check
+ eligibleRoles: [string]? # Which participant roles can advance this step (null = primary only)
 
  # Outputs (production recipes)
  outputs:
@@ -233,6 +235,30 @@ Crafting Session Flow:
 ```
 
 **Why Contract integration matters**: Contracts provide durable state machines. If the server crashes mid-craft, the Contract persists the session state. Steps can have real-time durations (a forging step takes 30 seconds of in-game time). Prebound APIs on the final milestone handle the actual item creation/modification, ensuring atomicity.
+
+### Multi-Entity Sessions (Collaborative Crafting)
+
+Crafting sessions support multiple participants via Contract's multi-party model. This enables master-apprentice training, cooperative crafting, and NPC skill propagation through social relationships.
+
+**Participant model**: `StartSession` accepts an optional `participants` list. Each entry has an `entityId`, `entityType`, and `role` (opaque string — "master", "apprentice", "assistant" are conventions). The session creator is always the primary participant. All participants must consent via Contract's multi-party consent flow before the session begins.
+
+**Per-step role eligibility**: Recipe steps gain an `eligibleRoles` field (nullable string list). When null, only the primary participant can advance the step. When specified, any participant whose role is in the list can advance it. This enables recipes where the master handles skill-check steps while the apprentice handles preparation steps.
+
+```
+steps:
+ - {code: "prepare_materials", eligibleRoles: ["master", "apprentice"], skillCheck: false}
+ - {code: "heat_metal", eligibleRoles: ["master"], skillCheck: true, stationType: "forge"}
+ - {code: "hammer_blade", eligibleRoles: ["master"], skillCheck: true, toolCategory: "hammer"}
+ - {code: "quench", eligibleRoles: ["master", "apprentice"], skillCheck: false}
+```
+
+**Quality**: Multi-entity sessions gain a `collaborationBonus` quality factor. When multiple participants contribute skill-check steps, the collaboration bonus adds a configurable quality multiplier (`CollaborationBonusMultiplier` in configuration, default: 0.05 per additional participant).
+
+**Experience distribution**: All participants receive experience on session completion, weighted by role. The primary participant (master) receives full `baseExperience`. Other participants receive `baseExperience * apprenticeBonusMultiplier` (`ApprenticeBonusMultiplier` in configuration, default: 0.5). This creates a natural incentive for NPCs to train apprentices — the master still gets full XP while the apprentice gains half.
+
+**NPC social integration**: NPC crafting GOAP decisions include "assist master at forge" as an action when an NPC's `${craft.proficiency.<domain>}` is below the recipe's requirement but a master NPC is crafting nearby. The apprentice NPC joins the session via `StartSession` with the master's session ID. This enables emergent skill propagation through NPC social networks — blacksmith guilds naturally train new members.
+
+**Single-entity sessions remain the default**: When no `participants` list is provided, sessions work exactly as before with zero overhead. The multi-entity path is purely additive.
 
 ### Recipe Types In Detail
 
@@ -435,33 +461,6 @@ NPC crafting decisions are driven by GOAP:
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-### Hard Dependencies (constructor injection -- crash if missing)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Recipe definitions (MySQL), sessions (MySQL), proficiency (MySQL), station registry (MySQL), discovery (MySQL), recipe cache (Redis), distributed locks (Redis) |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for session operations and recipe mutations |
-| lib-messaging (`IMessageBus`) | Publishing crafting lifecycle events, error events |
-| lib-item (`IItemClient`) | Creating output items, destroying items for extraction, reading item metadata for material quality, tool quality (L2) |
-| lib-inventory (`IInventoryClient`) | Consuming materials from containers, placing outputs in containers, checking tool availability (L2) |
-| lib-contract (`IContractClient`) | Creating session contracts from recipe step structures, milestone progression (L1) |
-| lib-currency (`ICurrencyClient`) | Deducting currency costs for recipes (L2) |
-| lib-game-service (`IGameServiceClient`) | Validating game service existence for recipe scoping (L2) |
-| lib-seed (`ISeedClient`) | Reading/updating proficiency seeds for crafting skill tracking (L2) |
-| lib-location (`ILocationClient`) | Resolving station locations for proximity checks (L2) |
-| lib-character (`ICharacterClient`) | Resolving character's current location for variable provider station proximity checks (L2) |
-
-### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
-
-| Dependency | Usage | Behavior When Missing |
-|------------|-------|-----------------------|
-| lib-affix (`IAffixClient`) | Executing modification recipe affix operations (apply, remove, reroll, etc.) | Modification recipes return error; production and extraction recipes work normally |
-| lib-analytics (`IAnalyticsClient`) | Publishing crafting statistics for economy monitoring | Statistics not collected; crafting works normally |
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -470,69 +469,7 @@ NPC crafting decisions are driven by GOAP:
 | lib-market (L4, future) | Reads crafting cost data for price estimation heuristics |
 | NPC Actor runtime (L2, via Variable Provider) | `${craft.*}` variables for crafting GOAP decisions |
 
----
-
-## State Storage
-
-### Recipe Definition Store
-**Store**: `craft-recipe-store` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `recipe:{recipeId}` | `RecipeDefinitionModel` | Primary lookup by recipe ID |
-| `recipe-code:{gameServiceId}:{code}` | `RecipeDefinitionModel` | Code-uniqueness lookup within game service |
-
-Paginated queries by gameServiceId + optional filters (recipeType, domain, category, tags, proficiency domain, proficiency level range) use `IJsonQueryableStateStore<RecipeDefinitionModel>.JsonQueryPagedAsync()`.
-
-### Recipe Definition Cache
-**Store**: `craft-recipe-cache` (Backend: Redis, prefix: `craft:recipe`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `recipe:{recipeId}` | `RecipeDefinitionModel` | Recipe hot cache (read-through from MySQL) |
-| `recipe-domain:{gameServiceId}:{domain}` | `List<RecipeDefinitionModel>` | All recipes in a domain (for proficiency-based filtering) |
-
-**TTL**: `RecipeCacheTtlSeconds` (default: 3600, 1 hour).
-
-### Crafting Session Store
-**Store**: `craft-session-store` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `session:{sessionId}` | `CraftingSessionModel` | Active session state (sessionId = contractInstanceId) |
-| `session-entity:{entityId}:{entityType}` | `List<string>` | Active session IDs for an entity |
-
-Sessions are cleaned up on completion, cancellation, or expiration.
-
-### Station Registry
-**Store**: `craft-station-registry` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `station:{stationId}` | `StationDefinitionModel` | Station definition and location |
-| `station-loc:{locationId}` | `List<string>` | Station IDs at a location |
-| `station-type:{gameServiceId}:{stationType}` | `List<string>` | Station IDs by type |
-
-### Discovery Store
-**Store**: `craft-discovery-store` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `known:{entityId}:{entityType}:{gameServiceId}` | `KnownRecipesModel` | Set of recipe codes known by this entity |
-| `discovery-attempt:{entityId}:{hash}` | `DiscoveryAttemptModel` | Recent discovery attempts (for hint progression) |
-
-### Distributed Locks
-**Store**: `craft-lock` (Backend: Redis, prefix: `craft:lock`)
-
-| Key Pattern | Purpose |
-|-------------|---------|
-| `session:{sessionId}` | Session step advancement lock (prevents concurrent step completion) |
-| `recipe:{recipeId}` | Recipe definition mutation lock |
-| `station:{stationId}` | Station occupancy lock (one session per station at a time, if configured) |
-
----
-
-### Type Field Classification
+## Type Field Classification
 
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
@@ -546,42 +483,6 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 | `ownerType` (on StationDefinition) | A (Entity Reference) | `EntityType` enum (nullable) | Station owners are first-class Bannou entities (characters, guilds, etc.); null when unowned |
 | `entityType` (on session/proficiency keys) | A (Entity Reference) | `EntityType` enum | Crafting sessions and proficiency are polymorphically owned by Bannou entities |
 
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `craft.recipe.created` | `CraftRecipeCreatedEvent` | Recipe definition created (x-lifecycle auto-generated) |
-| `craft.recipe.updated` | `CraftRecipeUpdatedEvent` | Recipe definition updated (x-lifecycle auto-generated); deprecation is signaled via `changedFields` containing `isDeprecated`, `deprecatedAt`, `deprecationReason` |
-| `craft.recipe.deleted` | `CraftRecipeDeletedEvent` | Recipe definition permanently removed by clean-deprecated sweep (unused Category B infrastructure — exists for future safe deletion pattern) |
-| `craft.session.started` | `CraftSessionStartedEvent` | Crafting session started |
-| `craft.session.step-completed` | `CraftSessionStepCompletedEvent` | A recipe step completed (includes quality contribution) |
-| `craft.session.completed` | `CraftSessionCompletedEvent` | Session completed successfully (includes output items, quality score) |
-| `craft.session.failed` | `CraftSessionFailedEvent` | Session failed (material returned or consumed depending on step) |
-| `craft.session.cancelled` | `CraftSessionCancelledEvent` | Session cancelled by entity (materials returned) |
-| `craft.proficiency.gained` | `CraftProficiencyGainedEvent` | Entity gained crafting experience |
-| `craft.proficiency.leveled` | `CraftProficiencyLeveledEvent` | Entity reached a new proficiency level |
-| `craft.recipe.discovered` | `CraftRecipeDiscoveredEvent` | Entity discovered a new recipe |
-
-### Consumed Events
-
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `contract.terminated` | `HandleContractTerminated` | Clean up crafting sessions whose backing contract has terminated (timeout, breach) |
-
-### Resource Cleanup
-
-| Target Resource | Source Type | On Delete | Cleanup Endpoint |
-|----------------|-------------|-----------|-----------------|
-| game-service | craft | CASCADE | `/craft/cleanup-by-game-service` |
-| character | craft | CASCADE | `/craft/cleanup-by-entity` |
-| location | craft | CASCADE | `/craft/cleanup-by-location` |
-
----
-
 ## Configuration
 
 | Property | Env Var | Default | Purpose |
@@ -592,132 +493,15 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 | `DefaultQualityMaterialWeight` | `CRAFT_DEFAULT_QUALITY_MATERIAL_WEIGHT` | `0.3` | Default material quality weight when recipe doesn't specify |
 | `DefaultQualityProficiencyWeight` | `CRAFT_DEFAULT_QUALITY_PROFICIENCY_WEIGHT` | `0.5` | Default proficiency quality weight |
 | `DefaultQualityToolWeight` | `CRAFT_DEFAULT_QUALITY_TOOL_WEIGHT` | `0.2` | Default tool quality weight |
-
-**Constraint group**: The three `DefaultQuality*Weight` properties use `x-constraint-group` with `sum-equals: 1.0` to enforce that the default quality weights collectively equal 1.0 at startup. If an operator overrides one weight without adjusting the others, the service fails fast with a descriptive error. Per-recipe `qualityWeights` are validated at the API level when recipes are seeded, not via configuration constraint groups.
 | `DiscoveryMaterialConsumptionRate` | `CRAFT_DISCOVERY_MATERIAL_CONSUMPTION_RATE` | `0.5` | Fraction of materials consumed on failed discovery attempt |
 | `MaxRecipesPerGameService` | `CRAFT_MAX_RECIPES_PER_GAME_SERVICE` | `10000` | Safety limit for recipe count per game service |
 | `LockTimeoutSeconds` | `CRAFT_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout |
 | `StationExclusivity` | `CRAFT_STATION_EXCLUSIVITY` | `false` | Whether stations are locked to one session at a time |
 | `ExperienceScalingFactor` | `CRAFT_EXPERIENCE_SCALING_FACTOR` | `1.0` | Global experience multiplier |
+| `ApprenticeBonusMultiplier` | `CRAFT_APPRENTICE_BONUS_MULTIPLIER` | `0.5` | XP multiplier for non-primary participants in multi-entity sessions |
+| `CollaborationBonusMultiplier` | `CRAFT_COLLABORATION_BONUS_MULTIPLIER` | `0.05` | Quality bonus per additional participant in multi-entity sessions |
 
----
-
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ILogger<CraftService>` | Structured logging |
-| `CraftServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates 6 stores) |
-| `IMessageBus` | Event publishing |
-| `IDistributedLockProvider` | Distributed lock acquisition (L0) |
-| `IItemClient` | Item creation/destruction, metadata reads (L2 hard) |
-| `IInventoryClient` | Material consumption, output placement (L2 hard) |
-| `IContractClient` | Session contract creation and milestone progression (L1 hard) |
-| `ICurrencyClient` | Currency cost deduction (L2 hard) |
-| `IGameServiceClient` | Game service existence validation (L2 hard) |
-| `ISeedClient` | Proficiency seed reading/updating (L2 hard) |
-| `ILocationClient` | Station location resolution for proximity checks (L2 hard) |
-| `ICharacterClient` | Character location resolution for variable provider station proximity (L2 hard) |
-| `IServiceProvider` | Runtime resolution of soft L4 dependencies |
-
-### Variable Provider Factories
-
-| Factory | Namespace | Data Source | Registration |
-|---------|-----------|-------------|--------------|
-| `CraftDecisionProviderFactory` | `${craft.*}` | Reads entity's proficiency (via lib-seed), known recipes, nearby stations (via lib-character for entity location + lib-location for station lookup), inventory materials | `IVariableProviderFactory` (DI singleton) |
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Recipe Management (8 endpoints)
-
-Write endpoints (`CreateRecipe`, `UpdateRecipe`, `DeprecateRecipe`, `SeedRecipes`) require `developer` role. Read endpoints (`GetRecipe`, `ListRecipes`, `ListDomains`) use `x-permissions: []` (internal queries called by NPC GOAP and game engine).
-
-- **CreateRecipe** (`/craft/recipe/create`): Validates game service existence. Validates code uniqueness. Validates step structure (at least one step, valid step codes). Validates input references (item template codes exist). Validates output references. Enforces `MaxRecipesPerGameService`. Saves to MySQL. Populates cache. Publishes `craft.recipe.created`.
-
-- **GetRecipe** (`/craft/recipe/get`): Cache read-through (Redis -> MySQL -> populate cache). Supports lookup by recipeId or by gameServiceId + code.
-
-- **ListRecipes** (`/craft/recipe/list`): Paged JSON query with required gameServiceId filter. Optional filters: recipeType, domain, category, tags (any match), proficiency requirements range, `includeDeprecated: boolean (default: false)`. Sorted by domain then category.
-
-- **UpdateRecipe** (`/craft/recipe/update`): Acquires distributed lock. Partial update. **Cannot change**: code, gameServiceId, recipeType (identity-level). Invalidates caches. Publishes `craft.recipe.updated`.
-
-- **DeprecateRecipe** (`/craft/recipe/deprecate`): Sets `isDeprecated: true`, `deprecatedAt: DateTimeOffset.UtcNow`, and `deprecationReason` from request. Idempotent: returns OK if already deprecated. Active sessions using this recipe continue to completion. No undeprecate endpoint exists (Category B — one-way). Invalidates caches. Publishes `craft.recipe.updated` with `changedFields` containing deprecation fields.
-
-- **SeedRecipes** (`/craft/recipe/seed`): Bulk creation, skipping existing codes (idempotent). Validates game service once. Returns created/skipped counts.
-
-- **ListDomains** (`/craft/recipe/list-domains`): Returns distinct proficiency domains for a game service with recipe counts per domain. Supports `includeDeprecated: boolean (default: false)` for whether deprecated recipes count toward domain totals.
-
-- **CleanDeprecatedRecipes** (`/craft/recipe/clean-deprecated`): Category B cleanup sweep (per Implementation Tenets). Permanently removes deprecated recipe definitions with zero active sessions and past the configurable grace period. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. `x-permissions: [role: admin]`. Supports dry-run mode. Implementation uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`. Publishes `craft.recipe.deleted` for each permanently removed recipe.
-
-### Session Management (5 endpoints)
-
-`x-permissions: []` (internal-only, called by NPC actors and game engine).
-
-- **StartSession** (`/craft/session/start`): The core session creation. **Rejects with BadRequest if recipe is deprecated** (Category B instance creation guard). Validates: entity knows the recipe, meets proficiency requirements, has required materials, has required currency, station available (if needed), tool available (if needed). For modification: validates target item meets requirements. Creates Contract instance with milestones matching recipe steps. Records material reservations. Returns sessionId + first step info.
-
-- **AdvanceSession** (`/craft/session/advance`): Advances to the next step. Acquires session lock. Validates: step sequence correct, station still available, tool still held. If step has `skillCheck`: computes quality contribution for this step. If step has `consumeOnStep`: consumes specified materials now. Completes the Contract milestone for this step. If final step: triggers session completion via Contract prebound API. Returns step result (quality contribution, next step code).
-
-- **CancelSession** (`/craft/session/cancel`): Cancels an active session. Returns unconsumed materials to entity's inventory. Releases currency holds. Terminates the backing Contract. Publishes `craft.session.cancelled`.
-
-- **GetSession** (`/craft/session/get`): Returns current session state: recipe info, current step, accumulated quality, elapsed time.
-
-- **ListSessions** (`/craft/session/list`): Lists active sessions for an entity. Returns summary info for each.
-
-### Proficiency (4 endpoints)
-
-`x-permissions: []` for Get/List (internal queries). `developer` role for Grant/Set (admin operations).
-
-- **GetProficiency** (`/craft/proficiency/get`): Returns proficiency state for an entity in a specific domain. Reads from lib-seed (L2, guaranteed available).
-
-- **ListProficiencies** (`/craft/proficiency/list`): Returns all proficiency domains and levels for an entity via lib-seed.
-
-- **GrantExperience** (`/craft/proficiency/grant`): Manually grants experience (for quest rewards, training, etc.). Validates domain exists. Records growth via lib-seed. Publishes `craft.proficiency.gained` and optionally `craft.proficiency.leveled`.
-
-- **SetProficiency** (`/craft/proficiency/set`): Admin endpoint. Directly sets proficiency level. Requires `developer` role.
-
-### Station Management (4 endpoints)
-
-Write endpoints (`RegisterStation`, `DeregisterStation`) require `developer` role. Read endpoints (`GetStation`, `ListStations`) use `x-permissions: []` (internal queries called by NPC GOAP and session validation).
-
-- **RegisterStation** (`/craft/station/register`): Creates a station definition at a location. Validates location exists via `ILocationClient` (L2, hard dependency). Updates location and type indexes.
-
-- **GetStation** (`/craft/station/get`): Returns station definition.
-
-- **ListStations** (`/craft/station/list`): List stations with filters: stationType, locationId, gameServiceId, isActive.
-
-- **DeregisterStation** (`/craft/station/deregister`): Marks station inactive. Active sessions at this station continue. Future sessions cannot use it.
-
-### Discovery (3 endpoints)
-
-`x-permissions: []` (internal-only, called by game engine and NPC actors).
-
-- **AttemptDiscovery** (`/craft/discovery/attempt`): Entity provides materials + station type. lib-craft hashes the combination and checks against discoverable recipes' hints. If match: recipe added to known set, materials partially consumed, publishes `craft.recipe.discovered`. If no match: materials partially consumed (configurable rate), returns failure with optional hint progression.
-
-- **ListKnownRecipes** (`/craft/discovery/list-known`): Returns all recipe codes known by an entity for a game service. Includes proficiency eligibility (can they actually craft each one?).
-
-- **TeachRecipe** (`/craft/discovery/teach`): Adds a recipe to an entity's known set. Used by NPC trainers, recipe scroll items, quest rewards.
-
-### Query (3 endpoints)
-
-`x-permissions: []` (internal-only, used by NPC GOAP and game engine).
-
-- **CanCraft** (`/craft/query/can-craft`): Checks if an entity can craft a specific recipe. Returns detailed breakdown: proficiency met?, materials available?, station nearby?, tool available?, currency sufficient? Used by UI and NPC GOAP.
-
-- **EstimateCraftQuality** (`/craft/query/estimate-quality`): Given entity + recipe + specific materials + tool, estimates the output quality score without executing. Used for UI preview and NPC decision-making.
-
-- **GetRecipeOutputPreview** (`/craft/query/output-preview`): Returns what a recipe would produce at various quality levels. Used for UI tooltips.
-
-### Cleanup (3 endpoints)
-
-`x-permissions: []` (internal-only, called by lib-resource cleanup callbacks).
-
-- **CleanupByGameService** (`/craft/cleanup-by-game-service`): Deletes all recipes, sessions, stations, and discovery data for a game service. Called by lib-resource on game service deletion.
-
-- **CleanupByEntity** (`/craft/cleanup-by-entity`): Cancels active sessions, clears discovery data for an entity. Called by lib-resource on character deletion.
-
-- **CleanupByLocation** (`/craft/cleanup-by-location`): Deactivates all stations at a location. Called by lib-resource on location deletion.
+**Constraint group**: The three `DefaultQuality*Weight` properties use `x-constraint-group` with `sum-equals: 1.0` to enforce that the default quality weights collectively equal 1.0 at startup. If an operator overrides one weight without adjusting the others, the service fails fast with a descriptive error. Per-recipe `qualityWeights` are validated at the API level when recipes are seeded, not via configuration constraint groups.
 
 ---
 
@@ -927,9 +711,7 @@ Crafting Session Lifecycle (Production)
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Missing `craft.recipe.deleted` event publication**~~: **FIXED** (2026-03-16) - Added `craft.recipe.deleted` to the Published Events table. Category B infrastructure event published by clean-deprecated sweep.
-
-2. ~~**Missing `clean-deprecated` endpoint for RecipeDefinition**~~: **FIXED** (2026-03-16) - Added `POST /craft/recipe/clean-deprecated` to Recipe Management endpoints (now 8 endpoints). Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse`, `x-permissions: [role: admin]`, `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`.
+*No bugs — specification includes all required Category B elements (event, endpoint, clean-deprecated sweep). Both formerly listed items (missing event, missing endpoint) were resolved in the 2026-03-16 maintenance pass and are now captured in the implementation map.*
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -953,8 +735,7 @@ Crafting Session Lifecycle (Production)
 
 ### Design Considerations (Requires Planning)
 
-1. **Cross-entity crafting**: Can entity A start a session and entity B advance a step? (e.g., an apprentice assists a master). The current model assumes single-entity sessions. Multi-entity crafting could use Contract's multi-party model.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/613 -->
+1. ~~**Cross-entity crafting**~~: **RESOLVED** (2026-03-16, #613) — Multi-entity sessions approved. Contract's multi-party model provides the mechanism. `StartSession` accepts an optional `participants` list (entityId + entityType + role). Recipe steps gain an `eligibleRoles` field controlling which participants can advance each step. Quality formula gains a `collaborationBonus` factor. XP distributed to all participants weighted by role (`apprenticeBonusMultiplier` in configuration). Single-entity sessions remain the default. See "Multi-Entity Sessions" in Core Concepts.
 
 2. **Offline NPC crafting**: When an NPC's actor is running and they're crafting, step advancement happens through GOAP actions. But what about when the NPC's actor is suspended? Options: (a) sessions pause when actor suspends, (b) sessions auto-complete on a timer, (c) sessions are represented as Contract timer milestones that progress independently of the actor, (d) NPC crafting delegates to lib-workshop blueprints that reference lib-craft recipes — Workshop's lazy evaluation pattern handles "production continues when nobody is watching" natively via piecewise rate segments and background materialization, avoiding duplicate infrastructure. Option (d) would mean player crafting uses Contract-backed live sessions (interactive, skill checks) while NPC crafting uses Workshop (lazy, scalable to 100k+ artisans). Workshop already has a soft dependency on lib-craft for recipe-referenced blueprints.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/614 -->
@@ -970,6 +751,8 @@ Crafting Session Lifecycle (Production)
 **Predecessor**: [#285](https://github.com/beyond-immersion/bannou-service/issues/285) (World Events and Crafting as Contract-Orchestrated Systems) — crafting portion superseded by this deep dive. World Events portion is a separate concern.
 
 **Audit History**:
+- **2026-03-16**: Resolved Design Consideration #1 (cross-entity crafting → [#613](https://github.com/beyond-immersion/bannou-service/issues/613)). Multi-entity sessions approved using Contract multi-party model. Added "Multi-Entity Sessions" subsection to Core Concepts, `eligibleRoles` to recipe steps, `ApprenticeBonusMultiplier` and `CollaborationBonusMultiplier` to configuration. Updated implementation map (StartSession, AdvanceSession, CompleteSession).
+- **2026-03-16**: Maintenance pass 2 (`/maintain-plugin`). Implementation map migration: removed 5 operational sections (Dependencies, State Storage, Events, DI Services, API Endpoints) now covered by `docs/maps/CRAFT.md`. Deleted 2 FIXED strikethrough bugs (resolved in earlier same-day pass). Fixed broken Configuration table (constraint group paragraph was splitting the table). Kept Type Field Classification as Position B reference section. Kept Dependents and Configuration sections per template.
 - **2026-03-16**: Audit pass (`/audit-plugin`). Marked Bugs #1-#2 as FIXED — documentation gaps (missing event, missing endpoint) were already corrected during the same-day maintain-plugin pass. Pre-implementation plugin: no further actionable gaps (all remaining items are planned implementation phases, potential extensions, or design considerations with issue tracking).
 - **2026-03-16**: Maintenance pass (`/maintain-plugin`). Added 2 bugs: missing `craft.recipe.deleted` event (B11), missing `clean-deprecated` endpoint (B17-B19). Added Design Consideration #3: Category B `instanceEntity` for ephemeral CraftingSession — resolved by augmenting IMPLEMENTATION-BEHAVIOR.md T31 with ephemeral instance entity guidance. Deleted 5 resolved strikethrough Design Considerations (#1 quality-to-affix, #2 concurrent crafting, #3 real-time durations, #4 seed type registration, #6 material quality). Updated Extension #5 with T29 metadata bag clarification. Updated Recipe Management endpoint count (7→8).
 - **2026-03-15**: Issue #607: Resolved quality-to-affix tier mapping — lib-craft owns the quality→affix-param translation (weightModifiers + valuePercentileTarget). lib-affix accepts generic parameters with no crafting knowledge. Quality curve configuration belongs in craft-configuration.yaml. Updated Design Consideration #1.

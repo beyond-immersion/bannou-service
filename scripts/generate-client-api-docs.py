@@ -20,7 +20,7 @@ Generate Client API Documentation from OpenAPI schemas.
 This script scans *-api.yaml schema files and generates a compact reference
 document showing all typed proxy methods available to Client SDK users.
 
-Output: docs/GENERATED-CLIENT-API.md
+Output: docs/generated/GENERATED-CLIENT-API.md
 
 Usage:
     python3 scripts/generate-client-api-docs.py
@@ -338,7 +338,7 @@ def generate_markdown(services: List[ServiceInfo]) -> str:
         "",
         "---",
         "",
-        "*This file is auto-generated from OpenAPI schemas. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "*This file is auto-generated from OpenAPI schemas. See [TENETS.md](../reference/TENETS.md) for architectural context.*",
         "",
     ])
 
@@ -350,7 +350,7 @@ def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
     schema_dir = repo_root / 'schemas'
-    output_file = repo_root / 'docs' / 'GENERATED-CLIENT-API.md'
+    output_file = repo_root / 'docs' / 'generated' / 'GENERATED-CLIENT-API.md'
 
     if not schema_dir.exists():
         print(f"ERROR: Schema directory not found: {schema_dir}")

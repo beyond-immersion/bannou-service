@@ -33,7 +33,7 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 | `rulingType` | C (System State) | Service-specific enum | Finite set of ruling outcomes (PetitionerFavored, RespondentFavored, Split, Dismissed). System-owned; determines consequence execution logic. |
 | `evidenceType` | C (System State) | Service-specific enum | Finite set of evidence categories (Testimony, Document, Witness, Physical). System-owned; affects evidence relevance scoring. |
 | `status` (on case) | C (System State) | Service-specific enum | Finite set of case lifecycle states (Filed, AwaitingArbiter, Hearing, Deliberation, Ruled, Appealed, Closed). System-owned state machine managed via contract milestones. |
-| `arbiterSelectionMode` | C (System State) | Service-specific enum | Finite set of arbiter selection strategies (FactionLeader, AppointedOfficial, DivineArbiter, PeerPanel). System-owned; determines how arbiters are assigned from governance data. |
+| `arbiterSelectionMode` | C (System State) | Service-specific enum | Finite set of arbiter selection strategies (FactionLeader, AppointedOfficial, ExternalRequest, PeerPanel). System-owned; determines how arbiters are assigned from governance data. |
 
 ---
 
@@ -203,7 +203,7 @@ Schema changes:
 - Implement arbiter selection modes (faction leader, appointed official, peer panel)
 - Implement arbiter assignment with caseload tracking
 - Implement arbiter recusal
-- Implement divine arbiter request flow (event publication, timeout, fallback)
+- Implement external arbiter request flow (generic event publication, timeout, fallback)
 
 ### Phase 4: Ruling & Consequence Execution
 - Implement ruling issuance with consequence manifest
@@ -528,7 +528,7 @@ The arbiter for a case is determined by the jurisdictional faction's governance 
 |------|-----------|-----------|
 | **Faction leader** | The sovereign/delegated faction's leader character is the arbiter | Default for most case types. Simple governance. |
 | **Appointed official** | The sovereign designates specific characters as arbiters for case types (stored in governance data) | Specialized courts: merchant guild's trade arbiter, temple's religious judge |
-| **Divine arbiter** | A regional watcher god serves as arbiter (via Puppetmaster actor) | Sovereignty disputes, religious matters, cases where mortal authority is contested |
+| **External request** | An external actor (divine, cross-jurisdiction authority, player-controlled) is requested as arbiter via generic `arbitration.arbiter.requested` event. Timeout + fallback to mortal arbiter if no response. | Sovereignty disputes, religious matters, cases where mortal authority is contested, or any scenario requiring an arbiter outside the faction's governance hierarchy |
 | **Peer panel** | Multiple faction members serve as a jury (majority rules) | Complex cases requiring community judgment. Template configures panel size. |
 
 ### NPC Arbiter Decision-Making
@@ -544,30 +544,30 @@ This means arbiter corruption is emergent. An arbiter with low honesty and a bri
 
 Beyond arbiters, any NPC with the `evaluate_consequences` cognition stage can autonomously decide to initiate, contest, or cooperate with arbitration proceedings. An unhappy NPC in a bad marriage evaluates the cost of continuing vs. filing for dissolution vs. fleeing to a permissive jurisdiction. A merchant NPC evaluates whether to contest a trade dispute ruling or accept the loss. This is emergent narrative from the intersection of sovereignty + arbitration + cognition.
 
-### Divine Arbiter Pattern
+### External Arbiter Request Pattern
 
-For cases involving sovereignty disputes or where mortal authority is contested, a regional watcher god can serve as arbiter:
+For cases requiring an arbiter outside the faction's governance hierarchy — sovereignty disputes, religious matters, cross-jurisdiction authority, or player-controlled arbitration — the generic external request flow applies:
 
 ```
-Case filed with divine arbitration request
+Case filed with ExternalRequest selection mode
  │
  ▼
-lib-arbitration publishes arbitration.case.divine-requested event
+lib-arbitration publishes arbitration.arbiter.requested { requesterType, caseId, timeoutAt }
  │
  ▼
-Regional watcher (via Puppetmaster) perceives the request
- - God's aesthetic preferences evaluate the case
- - Domain relevance: god of justice more likely to intervene
- than god of war (unless it's a combat dispute)
+External actor perceives the request
+ - Divine actors (via Puppetmaster): god's aesthetic preferences evaluate the case
+ - Cross-jurisdiction authorities: evaluate whether to accept jurisdiction
+ - Player-controlled arbiters: receive notification via client events (future)
  │
  ▼
-God accepts or ignores
- - Accept: god actor issues ruling via Arbitration API
- (ruling carries divine authority weight)
- - Ignore: case falls back to mortal arbiter selection
+Actor accepts or ignores
+ - Accept: actor calls AssignArbiter with explicit arbiter ID
+   (ruling carries the requester's authority weight)
+ - Ignore/timeout: deadline worker falls back to FactionLeader selection mode
 ```
 
-Divine arbitration is never guaranteed. Gods have their own priorities, attention budgets, and domain preferences. Requesting divine arbitration is a petition, not a command.
+External arbiter assignment is never guaranteed. The request is a petition, not a command. The `requesterType` field (opaque string, e.g., `"divine"`, `"cross-jurisdiction"`, `"player"`) identifies the category of external arbiter being requested — consumers filter on this to decide whether the request is relevant to them.
 
 ---
 
@@ -575,8 +575,7 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 
 ### Bugs (Fix Immediately)
 
-1. **CASCADE cleanup behavior contradicts CASCADE policy**: All four `x-references` entries declare `onDelete: cascade`, but the cleanup endpoint descriptions describe DETACH behavior — "preserves rulings for historical record," "archives evidence," "cases in terminal states are preserved," "archives case data." Per Foundation Tenets (Resource-Managed Cleanup), CASCADE means dependent data is deleted. If the intent is to preserve rulings and terminal case data while nullifying the deleted entity's reference, the policy should be `onDelete: detach` (not `cascade`). If the intent is genuine CASCADE, the cleanup endpoints must delete all dependent data including rulings, evidence, and terminal cases. Fix: determine the correct policy for each target resource and update both the `x-references` declaration and cleanup endpoint descriptions to match.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-15:https://github.com/beyond-immersion/bannou-service/issues/664 -->
+1. ~~**CASCADE cleanup behavior contradicts CASCADE policy**~~: **FIXED** (2026-03-16) — Policy changed to `onDelete: detach` for all four resource targets (character, realm, faction, location). Arbitration data (rulings, evidence, terminal cases) is preserved through resource cleanup with nullified references. Active cases are closed; terminal cases and rulings survive with the deleted entity's reference set to null. Resource IDs on case/ruling/evidence models are nullable to support detachment.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -594,24 +593,21 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 
 7. **Case codes are human-readable**: Every case gets a sequential code (`ARB-DISS-00142`) within its game service scope, in addition to the GUID. This is for NPC dialogue, encounter memories, and player-facing UX. The code prefix is configurable.
 
-8. **Ruling consequences are best-effort**: Consequences are executed via downstream service API calls. If a downstream service is unavailable (soft dependency), that consequence is skipped and logged. The ruling itself is still valid -- enforcement verification will detect the gap and retry. This follows the orchestration pattern where the orchestrator doesn't guarantee atomicity.
+8. **Ruling consequences are best-effort with self-healing retry**: Consequences are executed via downstream service API calls. If a downstream service is unavailable (soft dependency), that consequence is skipped and logged with status `Failed` in the ruling's `consequenceResults`. The ruling itself is still valid. The self-healing mechanism: the contract's enforcement milestone has a deadline; when it expires without EnforceRuling closing the case, `HandleMilestoneFailedAsync` re-executes only the Failed consequences. This repeats until all succeed or the contract template's milestone structure is exhausted. Admin and divine actors can also call EnforceRuling manually at any time. Per Implementation Tenets — Multi-Service Call Compensation (Strategy 2: documented self-healing).
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Faction sovereignty implementation**~~: **DESIGNED** (2026-03-16, #601) — Schema designed with `AuthorityLevel` enum, governance data model, 6 governance endpoints, and enhanced `ApplicableNormResponse`. Service code implementation pending. See Phase 0 and Faction Sovereignty Dependency sections above for the full resolved design.
-<!-- AUDIT:DESIGNED:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/601 -->
+1. ~~**Faction sovereignty implementation**~~: **FIXED** (2026-03-16) — Faction sovereignty fully implemented (#601). `AuthorityLevel` enum, governance data model, 6 governance endpoints, 4 governance events, and enhanced `ApplicableNormResponse` all in place. Arbitration's Faction API dependency is now available.
 
 2. **Contract template authoring**: Procedural templates (dissolution-standard, criminal-trial-standard, etc.) must be authored and registered in lib-contract at deployment time. Template design is a game design task, not a service engineering task -- but the template structure must support the milestone patterns described in this document.
 
 3. **NPC arbiter cognition**: NPC arbiters need behavior documents that support case evaluation -- reviewing evidence, weighing arguments, considering precedent. This is an ABML behavior authoring task. The arbiter actor receives case perceptions and must produce a ruling action.
 
-4. **Divine arbiter coordination**: The flow where a divine actor accepts or ignores an arbitration request requires Puppetmaster integration. The regional watcher actor must have a perception handler for `arbitration.case.divine-requested` events and an action handler for issuing rulings via the Arbitration API.
+4. **External arbiter consumer integration**: The generic `arbitration.arbiter.requested` event needs at least one consumer. The primary consumer is Puppetmaster (divine actors filtering on `requesterType: "divine"`), which requires a perception handler for the event and an action handler for calling AssignArbiter with the god's character ID. Other consumers (cross-jurisdiction authorities, player-controlled arbiters) are future extensions that consume the same event with different `requesterType` filters.
 
-5. **Household split integration**: The dissolution case type's consequence includes household fragmentation, which is a cross-cutting concern involving Organization (if it exists), Relationship, Character, and Seed. The boundary between "arbitration ruling consequence" and "household split mechanic" needs clear delineation. Arbitration issues the ruling; the household split is executed by the downstream services in response.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/436 -->
+5. ~~**Household split integration**~~: **FIXED** (2026-03-16) — The household split is a dissolution case type orchestrated through Arbitration's existing procedural template system. Boundary resolved: Arbitration calls downstream service APIs as consequences; Organization.Dissolve handles structural dissolution (member redistribution, asset identification for Escrow); Seed.TransferGrowth handles proportional growth splitting. Two new consequence types added to IssueRuling dispatch: `OrganizationDissolution` and `SeedGrowthTransfer`. Remaining implementation work tracked on the respective plugins: Organization (Dissolve endpoint, #436), Seed (TransferGrowth API, #436), Contract (Organization as party entity type, #436).
 
-6. **Ruling consequence retry mechanism**: Intentional Quirk #8 documents best-effort consequence execution with "enforcement verification" as the self-healing mechanism (per Implementation Tenets — Multi-Service Call Compensation). However, the concrete mechanism for re-invoking EnforceRuling when consequences fail is unspecified. The contract milestone `enforcement_confirmed` fires once; if the downstream service is still unavailable at enforcement time, there is no background worker or scheduled retry to re-attempt. At scale with many concurrent cases and intermittent soft-dependency availability, failed consequences may remain unresolved indefinitely. Consider: a background enforcement worker that periodically scans cases in `Ruled` status past their enforcement deadline, or making EnforceRuling idempotent and callable by admin/divine actors.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-15:https://github.com/beyond-immersion/bannou-service/issues/666 -->
+6. ~~**Ruling consequence retry mechanism**~~: **FIXED** (2026-03-16) — Self-healing mechanism designed using existing infrastructure: EnforceRuling is idempotent and re-executes only Failed consequences (skipping Succeeded). Contract's enforcement milestone deadline expiry triggers `contract.milestone.failed`, which `HandleMilestoneFailedAsync` receives and re-invokes consequence execution. No new background worker needed. Consequence results tracked per-item on the ruling record (`consequenceResults` list with status/attemptCount/lastError). Retry bounded by contract template milestone structure. Case stays in `Ruled` until all consequences succeed; admin/divine actors can also call EnforceRuling manually.
 
 ---
 
@@ -624,9 +620,9 @@ When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitratio
 - `servers: [{ url: http://localhost:5012 }]`
 - Schema Modification Gate in `info.description`
 - `x-permissions: []` on all endpoints (service-to-service only — pure orchestration service)
-- `x-references` block for all 4 resource cleanup targets (character, realm, faction, location) with `sourceType: arbitration`
+- `x-references` block for all 4 resource cleanup targets (character, realm, faction, location) with `sourceType: arbitration` and `onDelete: detach`
 - Consider `x-compression-callback` for character archival (case participation history)
-- All service-specific enums (`ArbitrationRulingType`, `ArbitrationEvidenceType`, `ArbitrationCaseStatus`, `ArbiterSelectionMode`) defined here, referenced via `$ref` from events
+- All service-specific enums (`ArbitrationRulingType`, `ArbitrationEvidenceType`, `ArbitrationCaseStatus`, `ArbiterSelectionMode` with values `FactionLeader`, `AppointedOfficial`, `ExternalRequest`, `PeerPanel`) defined here, referenced via `$ref` from events
 - `entityType` on petitioner/respondent uses `$ref: 'common-api.yaml#/components/schemas/EntityType'`
 - Ruling `reasoning` field: `nullable: true` (not `required: false` with non-nullable type)
 - Evidence `content` field: must be a typed model (per evidence type or discriminated union), NOT `additionalProperties: true`

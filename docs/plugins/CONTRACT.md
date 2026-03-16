@@ -411,7 +411,8 @@ When a clause execution fails:
 
 ### Bugs (Fix Immediately)
 
-*None currently tracked.*
+1. **Organization not supported as contract party entity type**: Contract currently supports Character and Account as party entity types. Organization must be added as a valid party type to support household dissolution contracts and organizational charter contracts. Affects party validation in CreateContract and consent flows (how does an Organization consent — head of household, quorum?). Design decision made in #436; implementation tracked in #672.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/672 -->
 
 ### Intentional Quirks (Documented Behavior)
 

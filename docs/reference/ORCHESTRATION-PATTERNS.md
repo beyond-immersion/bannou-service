@@ -9,7 +9,7 @@
 
 ## Overview
 
-> This section is extracted by the doc generation pipeline for GENERATED-COMPOSITION-REFERENCE.md. It captures the essential orchestration concepts needed in every conversation.
+> This section is extracted by the doc generation pipeline for generated/GENERATED-COMPOSITION-REFERENCE.md. It captures the essential orchestration concepts needed in every conversation.
 
 Bannou's 45+ services have no central "gameplay loop" plugin. Instead, **god-actors** — long-running ABML behavior documents executed by the Actor runtime — orchestrate services into emergent gameplay. Orchestration is authored content (YAML), not compiled code.
 

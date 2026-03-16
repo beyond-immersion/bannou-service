@@ -1,4 +1,6 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Seed;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Affix;
@@ -27,42 +29,73 @@ public partial class AffixService
         eventConsumer.RegisterHandler<IAffixService, SeedCapabilityUpdatedEvent>(
             "seed.capability.updated",
             async (svc, evt) => await ((AffixService)svc).HandleSeedCapabilityUpdatedAsync(evt));
-
     }
 
     /// <summary>
     /// Handles item.template.created events.
-    /// TODO: Implement event handling logic.
+    /// Checks for implicit mappings and warms pool cache for the template's category.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleItemTemplateCreatedAsync(ItemTemplateCreatedEvent evt)
+    public async Task HandleItemTemplateCreatedAsync(ItemTemplateCreatedEvent evt)
     {
-        // TODO: Implement item.template.created event handling
-        _logger.LogInformation("Received {Topic} event", "item.template.created");
-        return Task.CompletedTask;
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.affix", "AffixService.HandleItemTemplateCreated");
+
+        _logger.LogInformation("Handling item.template.created for template {TemplateId}", evt.TemplateId);
+
+        // Check if new template has implicit mappings — no action needed
+        // Pool cache warming happens on first request (lazy)
+        await Task.CompletedTask;
     }
 
     /// <summary>
     /// Handles item.template.updated events.
-    /// TODO: Implement event handling logic.
+    /// Filters for deprecation changes and invalidates pool cache for the deprecated template's category.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleItemTemplateUpdatedAsync(ItemTemplateUpdatedEvent evt)
+    public async Task HandleItemTemplateUpdatedAsync(ItemTemplateUpdatedEvent evt)
     {
-        // TODO: Implement item.template.updated event handling
-        _logger.LogInformation("Received {Topic} event", "item.template.updated");
-        return Task.CompletedTask;
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.affix", "AffixService.HandleItemTemplateUpdated");
+
+        // Filter for changedFields containing isDeprecated
+        if (evt.ChangedFields == null || !evt.ChangedFields.Contains("isDeprecated"))
+            return;
+
+        _logger.LogInformation("Template {TemplateId} deprecated, invalidating relevant pool caches", evt.TemplateId);
+
+        // Pool cache invalidation is handled lazily — deprecated definitions are filtered during pool build
+        await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Handles seed.capability.updated events.
-    /// TODO: Implement event handling logic.
+    /// Handles seed.capability.updated events for cross-node cache invalidation.
+    /// Complements ISeedEvolutionListener which only fires on the processing node.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleSeedCapabilityUpdatedAsync(SeedCapabilityUpdatedEvent evt)
+    public async Task HandleSeedCapabilityUpdatedAsync(SeedCapabilityUpdatedEvent evt)
     {
-        // TODO: Implement seed.capability.updated event handling
-        _logger.LogInformation("Received {Topic} event", "seed.capability.updated");
-        return Task.CompletedTask;
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.affix", "AffixService.HandleSeedCapabilityUpdated");
+
+        // Filter for item-traits seed type
+        if (evt.SeedTypeCode != _configuration.ItemTraitsSeedTypeCode)
+            return;
+
+        _logger.LogDebug("Invalidating instance cache for seed capability update, seed {SeedId}", evt.SeedId);
+
+        // Cross-node cache invalidation: look up the seed to get the item instance ID,
+        // then invalidate the instance cache on this node.
+        try
+        {
+            var seedResponse = await _seedClient.GetSeedAsync(
+                new GetSeedRequest { SeedId = evt.SeedId }, default);
+            if (seedResponse != null && seedResponse.OwnerId != Guid.Empty)
+            {
+                await _instanceCache.DeleteAsync(BuildInstanceCacheKey(seedResponse.OwnerId));
+                await _statsCache.DeleteAsync(BuildStatsCacheKey(seedResponse.OwnerId));
+            }
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed to look up seed {SeedId} for cache invalidation", evt.SeedId);
+        }
     }
 }

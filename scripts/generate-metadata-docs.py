@@ -23,7 +23,7 @@ No Metadata Bag Contracts (FOUNDATION TENETS) compliance. Each metadata bag prop
 categorized as compliant or non-compliant based on whether its description
 contains the required compliance marker text.
 
-Output: docs/GENERATED-METADATA-PROPERTIES.md
+Output: docs/generated/GENERATED-METADATA-PROPERTIES.md
 
 Usage:
     python3 scripts/generate-metadata-docs.py
@@ -368,7 +368,7 @@ def generate_markdown(properties_by_service: dict, service_layers: dict) -> str:
     lines.extend([
         "---",
         "",
-        "*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for FOUNDATION TENETS (No Metadata Bag Contracts).*",
+        "*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for FOUNDATION TENETS (No Metadata Bag Contracts).*",
         "",
     ])
 
@@ -407,7 +407,7 @@ def main():
     markdown = generate_markdown(properties_by_service, service_layers)
 
     # Write output
-    output_file = repo_root / 'docs' / 'GENERATED-METADATA-PROPERTIES.md'
+    output_file = repo_root / 'docs' / 'generated' / 'GENERATED-METADATA-PROPERTIES.md'
     with open(output_file, 'w') as f:
         f.write(markdown)
 

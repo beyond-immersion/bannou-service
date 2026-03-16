@@ -385,7 +385,7 @@ All endpoints are service-to-service (`x-permissions: []`). All operations proxy
 
 All endpoints are service-to-service (`x-permissions: []`). Blessings are entity-agnostic (entityId + entityType polymorphism).
 
-- **Grant** (`/divine/blessing/grant`): Full ceremony -- validate deity is Active, validate entity exists, check blessing count < `MaxBlessingsPerEntity`, calculate divinity cost from tier config, debit divinity, grant via lib-collection (Greater/Supreme) or Status Inventory (Minor/Standard), create BlessingModel record. Publishes `divine.blessing.granted` event.
+- **Grant** (`/divine/blessing/grant`): Full ceremony -- validate deity is Active, validate entity exists, check blessing count < `MaxBlessingsPerEntity`, calculate divinity cost from tier config, debit divinity, grant via lib-collection (Greater/Supreme) or Status Inventory (Minor/Standard), create BlessingModel record. Publishes `divine.blessing.granted` event. **Compensation (per Implementation Tenets)**: If the collection/status grant fails after divinity debit, the implementation must re-credit the divinity amount in a catch block before propagating the error.
 - **Revoke** (`/divine/blessing/revoke`): Lock. For status-type blessings: remove status item. For permanent blessings: mark revoked in collection. Update BlessingModel with revocation timestamp. Publishes `divine.blessing.revoked` event.
 - **ListByEntity** (`/divine/blessing/list-by-entity`): Paged JSON query on `divine-blessings` by entityId + entityType.
 - **ListByDeity** (`/divine/blessing/list-by-deity`): Paged JSON query on `divine-blessings` by deityId, optional tier filter.
@@ -471,7 +471,7 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 5. **All cleanup endpoints**: Cleanup-by-character, cleanup-by-game-service
 6. **Background workers**: Attention decay worker and divinity generation worker
 7. **Event handler**: `HandleAnalyticsScoreUpdated` (analytics score -> divinity generation)
-8. **Plugin startup registration**: Seed type, currency definition, relationship types, collection/status templates
+8. **Plugin startup registration**: Seed type, currency definition, relationship types, collection/status templates. Pattern established by Gardener/Faction: call `RegisterSeedTypeAsync` etc. in `OnRunningAsync` with inline definitions, catch 409 for idempotent restart, use config code properties (`DeitySeedTypeCode`, `BlessingCollectionType`, `FollowerRelationshipTypeCode`, `RivalryRelationshipTypeCode`)
 
 ## Potential Extensions
 
@@ -493,9 +493,9 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 
 ### Bugs (Fix Immediately)
 
-1. **Blessing grant flow missing multi-service compensation**: The planned blessing grant flow debits divinity via `ICurrencyClient` then grants via `ICollectionClient` (Greater/Supreme) or `IStatusClient` (Minor/Standard). If the grant step fails after the currency debit succeeds, divinity is lost with no compensation or self-healing mechanism described. Per Implementation Tenets (Multi-Service Call Compensation), the implementation must either re-credit divinity in a catch block or document a specific self-healing mechanism (e.g., a reconciliation worker that detects debits without matching blessing records).
+1. ~~**Blessing grant flow missing multi-service compensation**~~: **FIXED** (2026-03-16) - Added catch-block re-credit compensation requirement to the grant flow description in API Endpoints section. Implementer must re-credit divinity if the collection/status grant fails after debit.
 
-2. **Consumed Events section missing `genesis.entity.phase-changed`**: The Overview and Dependencies sections describe subscribing to `genesis.entity.phase-changed` for deity lifecycle transitions (attention slot initialization, follower management setup, divinity economy activation), but the Consumed Events table only lists `analytics.score.updated`. The events schema must include this subscription and the Consumed Events section must document it.
+2. ~~**Consumed Events section missing `genesis.entity.phase-changed`**~~: **FIXED** (2026-03-16) - Added `genesis.entity.phase-changed` to the Consumed Events table with handler name and description. Events schema still needs the corresponding `x-event-subscriptions` entry when the plugin is implemented.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -518,7 +518,7 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 1. **Domain-to-analytics mapping**: The `HandleAnalyticsScoreUpdated` handler needs a mapping from analytics categories to domain codes. The plan suggests either a config property (`DomainAnalyticsMappings` as JSON string) or a dedicated mapping state store. **Note**: The JSON string config option would violate Implementation Tenets (Configuration-First — no structured data as parseable strings). A dedicated mapping state store with CRUD endpoints, or individual typed config properties per domain, are the tenet-compliant alternatives.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/636 -->
 
-2. **Blessing template management on startup**: `OnRunningAsync` should create collection entry templates and status templates if they don't exist. The exact set of templates depends on game configuration, not lib-divine itself.
+2. ~~**Blessing template management on startup**~~: **FIXED** (2026-03-16) - Reclassified from Design Consideration to implementation task. The pattern is established by Gardener and Faction: hardcode type definitions inline in `OnRunningAsync`, make only type code strings configurable (already defined: `DeitySeedTypeCode`, `BlessingCollectionType`), catch 409 for idempotent restart. No design question remains — captured in Stubs item #8.
 
 3. **No owner validation for blessings**: Entity existence validation depends on the `entityType` -- the service would need to resolve the correct client dynamically. The plan validates characters via `ICharacterClient`, but entity-agnostic blessings may need a pluggable validation strategy.
 

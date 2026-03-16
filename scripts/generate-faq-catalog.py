@@ -22,7 +22,7 @@ Plugins) and the > **Short Answer**: block (which may span multiple
 continuation lines). The Short Answer IS the summary. Sorted alphabetically
 by filename.
 
-Output: docs/GENERATED-FAQ-CATALOG.md
+Output: docs/generated/GENERATED-FAQ-CATALOG.md
 
 Usage:
     python3 scripts/generate-faq-catalog.py
@@ -183,7 +183,7 @@ def generate_markdown(faqs: list) -> str:
             meta_parts.append(f"**Last Updated**: {faq['last_updated']}")
         if faq['related_plugins']:
             meta_parts.append(f"**Related Plugins**: {faq['related_plugins']}")
-        meta_parts.append(f"[Full FAQ](faqs/{faq['filename']})")
+        meta_parts.append(f"[Full FAQ](../faqs/{faq['filename']})")
 
         lines.append(' | '.join(meta_parts))
         lines.append("")
@@ -199,7 +199,7 @@ def generate_markdown(faqs: list) -> str:
         "",
         "---",
         "",
-        "*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*",
         "",
     ])
 
@@ -218,7 +218,7 @@ def main():
 
     markdown = generate_markdown(faqs)
 
-    output_file = repo_root / 'docs' / 'GENERATED-FAQ-CATALOG.md'
+    output_file = repo_root / 'docs' / 'generated' / 'GENERATED-FAQ-CATALOG.md'
     with open(output_file, 'w') as f:
         f.write(markdown)
 

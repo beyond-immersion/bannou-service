@@ -20,7 +20,7 @@ Generate Configuration Documentation from Schema Files.
 This script scans *-configuration.yaml schema files and generates comprehensive
 markdown documentation for all configuration options used in Bannou services.
 
-Output: docs/GENERATED-CONFIGURATION.md
+Output: docs/generated/GENERATED-CONFIGURATION.md
 
 Usage:
     python3 scripts/generate-config-docs.py
@@ -242,7 +242,7 @@ def generate_markdown(config_by_service: dict) -> str:
         "",
         "---",
         "",
-        "*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*",
         "",
     ])
 
@@ -266,7 +266,7 @@ def main():
     markdown = generate_markdown(config_by_service)
 
     # Write output
-    output_file = repo_root / 'docs' / 'GENERATED-CONFIGURATION.md'
+    output_file = repo_root / 'docs' / 'generated' / 'GENERATED-CONFIGURATION.md'
     with open(output_file, 'w') as f:
         f.write(markdown)
 

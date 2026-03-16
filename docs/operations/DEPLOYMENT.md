@@ -437,4 +437,4 @@ curl http://localhost:5012/connect/health
 
 - [Testing Guide](TESTING.md) - Test your deployment
 - [GitHub Actions](GITHUB-ACTIONS.md) - CI/CD pipeline
-- [Configuration Reference](../GENERATED-CONFIGURATION.md) - All environment variables
+- [Configuration Reference](../generated/GENERATED-CONFIGURATION.md) - All environment variables

@@ -66,6 +66,15 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     /// <summary>Ephemeral cache for resolved norm hierarchies (Redis).</summary>
     private readonly IStateStore<ResolvedNormCacheModel> _normCacheStore;
 
+    /// <summary>Ephemeral cache for governance resolution results (Redis).</summary>
+    private readonly IStateStore<CachedGovernanceResolution> _governanceCacheStore;
+
+    /// <summary>Durable store for governance entry records (MySQL).</summary>
+    private readonly IStateStore<GovernanceEntryModel> _governanceStore;
+
+    /// <summary>Durable store for per-faction governance entry list aggregates (MySQL).</summary>
+    private readonly IStateStore<GovernanceEntryListModel> _governanceListStore;
+
     /// <summary>
     /// Initializes a new instance of the FactionService.
     /// All L0/L1/L2 dependencies are hard (constructor-injected, fail at startup if missing).
@@ -105,23 +114,32 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         _normStore = stateStoreFactory.GetStore<NormDefinitionModel>(StateStoreDefinitions.FactionNorm);
         _normListStore = stateStoreFactory.GetStore<NormListModel>(StateStoreDefinitions.FactionNorm);
         _normCacheStore = stateStoreFactory.GetStore<ResolvedNormCacheModel>(StateStoreDefinitions.FactionCache);
+        _governanceCacheStore = stateStoreFactory.GetStore<CachedGovernanceResolution>(StateStoreDefinitions.FactionCache);
+        _governanceStore = stateStoreFactory.GetStore<GovernanceEntryModel>(StateStoreDefinitions.FactionGovernance);
+        _governanceListStore = stateStoreFactory.GetStore<GovernanceEntryListModel>(StateStoreDefinitions.FactionGovernance);
     }
 
     // ========================================================================
     // KEY BUILDERS
     // ========================================================================
 
-    internal static string FactionKey(Guid factionId) => $"fac:{factionId}";
-    internal static string FactionCodeKey(Guid gameServiceId, string code) => $"fac:{gameServiceId}:{code}";
-    internal static string MemberKey(Guid factionId, Guid characterId) => $"mem:{factionId}:{characterId}";
-    internal static string CharacterMembershipsKey(Guid characterId) => $"mem:char:{characterId}";
-    internal static string ClaimKey(Guid claimId) => $"tcl:{claimId}";
-    internal static string LocationClaimKey(Guid locationId) => $"tcl:loc:{locationId}";
-    internal static string FactionClaimsKey(Guid factionId) => $"tcl:fac:{factionId}";
-    internal static string NormKey(Guid normId) => $"nrm:{normId}";
-    internal static string FactionNormsKey(Guid factionId) => $"nrm:fac:{factionId}";
-    internal static string NormCacheKey(Guid characterId, Guid? locationId) =>
+    internal static string BuildFactionKey(Guid factionId) => $"fac:{factionId}";
+    internal static string BuildFactionCodeKey(Guid gameServiceId, string code) => $"fac:{gameServiceId}:{code}";
+    internal static string BuildMemberKey(Guid factionId, Guid characterId) => $"mem:{factionId}:{characterId}";
+    internal static string BuildCharacterMembershipsKey(Guid characterId) => $"mem:char:{characterId}";
+    internal static string BuildClaimKey(Guid claimId) => $"tcl:{claimId}";
+    internal static string BuildLocationClaimKey(Guid locationId) => $"tcl:loc:{locationId}";
+    internal static string BuildFactionClaimsKey(Guid factionId) => $"tcl:fac:{factionId}";
+    internal static string BuildNormKey(Guid normId) => $"nrm:{normId}";
+    internal static string BuildFactionNormsKey(Guid factionId) => $"nrm:fac:{factionId}";
+    internal static string BuildNormCacheKey(Guid characterId, Guid? locationId) =>
         $"ncache:{characterId}:{locationId?.ToString() ?? "none"}";
+    internal static string BuildGovernanceCacheKey(Guid locationId, string domain) =>
+        $"govcache:{locationId}:{domain.ToLowerInvariant()}";
+    internal static string BuildGovernanceKey(Guid governanceId) => $"gov:{governanceId}";
+    internal static string BuildFactionGovernanceKey(Guid factionId) => $"gov:fac:{factionId}";
+    internal static string BuildFactionGovernanceDomainKey(Guid factionId, string domain) =>
+        $"gov:fac:{factionId}:dom:{domain.ToLowerInvariant()}";
 
     // ========================================================================
     // MAPPING HELPERS
@@ -139,6 +157,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         ParentFactionId = model.ParentFactionId,
         SeedId = model.SeedId,
         Status = model.Status,
+        AuthorityLevel = model.AuthorityLevel,
         CurrentPhase = model.CurrentPhase,
         MemberCount = model.MemberCount,
         IsDeprecated = model.IsDeprecated,
@@ -176,6 +195,17 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         Severity = model.Severity,
         Scope = model.Scope,
         Description = model.Description,
+        CreatedAt = model.CreatedAt,
+        UpdatedAt = model.UpdatedAt,
+    };
+
+    private static GovernanceEntryResponse MapToGovernanceResponse(GovernanceEntryModel model) => new()
+    {
+        GovernanceId = model.GovernanceId,
+        FactionId = model.FactionId,
+        Domain = model.Domain,
+        TemplateCode = model.TemplateCode,
+        GovernanceParameters = model.GovernanceParameters,
         CreatedAt = model.CreatedAt,
         UpdatedAt = model.UpdatedAt,
     };
@@ -226,6 +256,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             ParentFactionId = model.ParentFactionId,
             SeedId = model.SeedId,
             Status = model.Status,
+            AuthorityLevel = model.AuthorityLevel,
             CurrentPhase = model.CurrentPhase,
             MemberCount = model.MemberCount,
             IsDeprecated = model.IsDeprecated,
@@ -257,6 +288,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             ParentFactionId = model.ParentFactionId,
             SeedId = model.SeedId,
             Status = model.Status,
+            AuthorityLevel = model.AuthorityLevel,
             CurrentPhase = model.CurrentPhase,
             MemberCount = model.MemberCount,
             IsDeprecated = model.IsDeprecated,
@@ -304,7 +336,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             foreach (var member in members.Items)
             {
                 // Delete the generic cache key (no location)
-                await _normCacheStore.DeleteAsync(NormCacheKey(member.Value.CharacterId, null), ct);
+                await _normCacheStore.DeleteAsync(BuildNormCacheKey(member.Value.CharacterId, null), ct);
             }
 
             offset += pageSize;
@@ -320,7 +352,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     {
         using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.InvalidateNormCacheForCharacterAsync");
         // Delete the generic cache key (no location); location-specific entries expire via TTL
-        await _normCacheStore.DeleteAsync(NormCacheKey(characterId, null), ct);
+        await _normCacheStore.DeleteAsync(BuildNormCacheKey(characterId, null), ct);
     }
 
     // ========================================================================
@@ -362,13 +394,13 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         }
 
         // Check code uniqueness within game service scope
-        var existing = await _factionStore.GetAsync(FactionCodeKey(body.GameServiceId, body.Code), cancellationToken);
+        var existing = await _factionStore.GetAsync(BuildFactionCodeKey(body.GameServiceId, body.Code), cancellationToken);
         if (existing != null) return (StatusCodes.Conflict, null);
 
         // Validate parent faction if specified and check hierarchy depth
         if (body.ParentFactionId.HasValue)
         {
-            var parent = await _factionStore.GetAsync(FactionKey(body.ParentFactionId.Value), cancellationToken);
+            var parent = await _factionStore.GetAsync(BuildFactionKey(body.ParentFactionId.Value), cancellationToken);
             if (parent == null) return (StatusCodes.BadRequest, null);
 
             // Walk up the parent chain to check hierarchy depth
@@ -383,7 +415,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                         depth + 1, _configuration.MaxHierarchyDepth, body.ParentFactionId.Value);
                     return (StatusCodes.BadRequest, null);
                 }
-                current = await _factionStore.GetAsync(FactionKey(current.ParentFactionId.Value), cancellationToken);
+                current = await _factionStore.GetAsync(BuildFactionKey(current.ParentFactionId.Value), cancellationToken);
                 if (current == null) break;
                 depth++;
             }
@@ -434,14 +466,15 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             ParentFactionId = body.ParentFactionId,
             SeedId = seedId,
             Status = FactionStatus.Active,
+            AuthorityLevel = body.AuthorityLevel,
             CurrentPhase = null,
             MemberCount = 0,
             CreatedAt = now,
             UpdatedAt = now,
         };
 
-        await _factionStore.SaveAsync(FactionKey(factionId), model, cancellationToken: cancellationToken);
-        await _factionStore.SaveAsync(FactionCodeKey(body.GameServiceId, body.Code), model, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionKey(factionId), model, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionCodeKey(body.GameServiceId, body.Code), model, cancellationToken: cancellationToken);
 
         await PublishCreatedEventAsync(model, cancellationToken);
 
@@ -456,7 +489,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     {
         _logger.LogDebug("Getting faction {FactionId}", body.FactionId);
 
-        var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
+        var model = await _factionStore.GetAsync(BuildFactionKey(body.FactionId), cancellationToken);
         if (model == null) return (StatusCodes.NotFound, null);
 
         return (StatusCodes.OK, MapToResponse(model));
@@ -469,7 +502,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     {
         _logger.LogDebug("Getting faction by code {Code} for game service {GameServiceId}", body.Code, body.GameServiceId);
 
-        var model = await _factionStore.GetAsync(FactionCodeKey(body.GameServiceId, body.Code), cancellationToken);
+        var model = await _factionStore.GetAsync(BuildFactionCodeKey(body.GameServiceId, body.Code), cancellationToken);
         if (model == null) return (StatusCodes.NotFound, null);
 
         return (StatusCodes.OK, MapToResponse(model));
@@ -544,7 +577,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
 
-        var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
+        var model = await _factionStore.GetAsync(BuildFactionKey(body.FactionId), cancellationToken);
         if (model == null) return (StatusCodes.NotFound, null);
 
         var changedFields = new List<string>();
@@ -559,7 +592,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         if (body.Code != null && body.Code != model.Code)
         {
             // Check new code uniqueness
-            var codeCheck = await _factionStore.GetAsync(FactionCodeKey(model.GameServiceId, body.Code), cancellationToken);
+            var codeCheck = await _factionStore.GetAsync(BuildFactionCodeKey(model.GameServiceId, body.Code), cancellationToken);
             if (codeCheck != null && codeCheck.FactionId != model.FactionId) return (StatusCodes.Conflict, null);
             model.Code = body.Code;
             changedFields.Add("code");
@@ -575,13 +608,13 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
 
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _factionStore.SaveAsync(FactionKey(model.FactionId), model, cancellationToken: cancellationToken);
-        await _factionStore.SaveAsync(FactionCodeKey(model.GameServiceId, model.Code), model, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionKey(model.FactionId), model, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionCodeKey(model.GameServiceId, model.Code), model, cancellationToken: cancellationToken);
 
         // If code changed, remove old code key
         if (changedFields.Contains("code"))
         {
-            await _factionStore.DeleteAsync(FactionCodeKey(model.GameServiceId, oldCode), cancellationToken: cancellationToken);
+            await _factionStore.DeleteAsync(BuildFactionCodeKey(model.GameServiceId, oldCode), cancellationToken: cancellationToken);
         }
 
         await PublishUpdatedEventAsync(model, changedFields, cancellationToken);
@@ -606,7 +639,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
 
-        var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
+        var model = await _factionStore.GetAsync(BuildFactionKey(body.FactionId), cancellationToken);
         if (model == null) return (StatusCodes.NotFound, null);
         // Dissolved factions cannot be deprecated (terminal state)
         if (model.Status == FactionStatus.Dissolved) return (StatusCodes.Conflict, null);
@@ -618,8 +651,8 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         model.DeprecationReason = body.DeprecationReason;
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _factionStore.SaveAsync(FactionKey(model.FactionId), model, cancellationToken: cancellationToken);
-        await _factionStore.SaveAsync(FactionCodeKey(model.GameServiceId, model.Code), model, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionKey(model.FactionId), model, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionCodeKey(model.GameServiceId, model.Code), model, cancellationToken: cancellationToken);
 
         await PublishUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
 
@@ -643,7 +676,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
 
-        var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
+        var model = await _factionStore.GetAsync(BuildFactionKey(body.FactionId), cancellationToken);
         if (model == null) return (StatusCodes.NotFound, null);
         // Dissolved factions cannot be undeprecated (terminal state)
         if (model.Status == FactionStatus.Dissolved) return (StatusCodes.Conflict, null);
@@ -655,8 +688,8 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         model.DeprecationReason = null;
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _factionStore.SaveAsync(FactionKey(model.FactionId), model, cancellationToken: cancellationToken);
-        await _factionStore.SaveAsync(FactionCodeKey(model.GameServiceId, model.Code), model, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionKey(model.FactionId), model, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionCodeKey(model.GameServiceId, model.Code), model, cancellationToken: cancellationToken);
 
         await PublishUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
 
@@ -680,7 +713,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return StatusCodes.Conflict;
 
-        var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
+        var model = await _factionStore.GetAsync(BuildFactionKey(body.FactionId), cancellationToken);
         if (model == null) return StatusCodes.NotFound;
         // Category A deprecation lifecycle: must be deprecated before deletion (per IMPLEMENTATION TENETS)
         if (!model.IsDeprecated) return StatusCodes.BadRequest;
@@ -699,41 +732,87 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                 memberConditions, memberOffset, _configuration.SeedBulkPageSize, cancellationToken: cancellationToken);
             foreach (var member in members.Items)
             {
-                await RemoveMemberInternalAsync(member.Value.FactionId, member.Value.CharacterId, cancellationToken);
+                try
+                {
+                    await RemoveMemberInternalAsync(member.Value.FactionId, member.Value.CharacterId, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to remove member {CharacterId} from faction {FactionId} during cascade delete, continuing",
+                        member.Value.CharacterId, body.FactionId);
+                }
             }
             memberOffset += _configuration.SeedBulkPageSize;
             memberHasMore = members.HasMore;
         } while (memberHasMore);
 
         // Cascade: release all territory claims
-        var claimList = await _territoryListStore.GetAsync(FactionClaimsKey(body.FactionId), cancellationToken);
+        var claimList = await _territoryListStore.GetAsync(BuildFactionClaimsKey(body.FactionId), cancellationToken);
         if (claimList != null)
         {
             foreach (var claimId in claimList.ClaimIds.ToList())
             {
-                var claim = await _territoryStore.GetAsync(ClaimKey(claimId), cancellationToken);
-                if (claim != null && claim.Status == TerritoryClaimStatus.Active)
+                try
                 {
-                    await ReleaseTerritoryInternalAsync(claim, cancellationToken);
+                    var claim = await _territoryStore.GetAsync(BuildClaimKey(claimId), cancellationToken);
+                    if (claim != null && claim.Status == TerritoryClaimStatus.Active)
+                    {
+                        await ReleaseTerritoryInternalAsync(claim, cancellationToken);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to release territory claim {ClaimId} during cascade delete for faction {FactionId}, continuing",
+                        claimId, body.FactionId);
                 }
             }
-            await _territoryListStore.DeleteAsync(FactionClaimsKey(body.FactionId), cancellationToken: cancellationToken);
+            await _territoryListStore.DeleteAsync(BuildFactionClaimsKey(body.FactionId), cancellationToken: cancellationToken);
         }
 
         // Cascade: delete all norms
-        var normList = await _normListStore.GetAsync(FactionNormsKey(body.FactionId), cancellationToken);
+        var normList = await _normListStore.GetAsync(BuildFactionNormsKey(body.FactionId), cancellationToken);
         if (normList != null)
         {
             foreach (var normId in normList.NormIds.ToList())
             {
-                await _normStore.DeleteAsync(NormKey(normId), cancellationToken: cancellationToken);
+                try
+                {
+                    await _normStore.DeleteAsync(BuildNormKey(normId), cancellationToken: cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete norm {NormId} during cascade delete for faction {FactionId}, continuing",
+                        normId, body.FactionId);
+                }
             }
-            await _normListStore.DeleteAsync(FactionNormsKey(body.FactionId), cancellationToken: cancellationToken);
+            await _normListStore.DeleteAsync(BuildFactionNormsKey(body.FactionId), cancellationToken: cancellationToken);
+        }
+
+        // Cascade governance entries
+        var govList = await _governanceListStore.GetAsync(BuildFactionGovernanceKey(body.FactionId), cancellationToken);
+        if (govList != null)
+        {
+            foreach (var govId in govList.GovernanceIds.ToList())
+            {
+                try
+                {
+                    var entry = await _governanceStore.GetAsync(BuildGovernanceKey(govId), cancellationToken);
+                    if (entry != null)
+                        await _governanceStore.DeleteAsync(BuildFactionGovernanceDomainKey(body.FactionId, entry.Domain), cancellationToken);
+                    await _governanceStore.DeleteAsync(BuildGovernanceKey(govId), cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete governance entry {GovernanceId} during cascade delete for faction {FactionId}, continuing",
+                        govId, body.FactionId);
+                }
+            }
+            await _governanceListStore.DeleteAsync(BuildFactionGovernanceKey(body.FactionId), cancellationToken);
         }
 
         // Delete faction records
-        await _factionStore.DeleteAsync(FactionKey(model.FactionId), cancellationToken: cancellationToken);
-        await _factionStore.DeleteAsync(FactionCodeKey(model.GameServiceId, model.Code), cancellationToken: cancellationToken);
+        await _factionStore.DeleteAsync(BuildFactionKey(model.FactionId), cancellationToken: cancellationToken);
+        await _factionStore.DeleteAsync(BuildFactionCodeKey(model.GameServiceId, model.Code), cancellationToken: cancellationToken);
 
         var deletedEvt = new FactionDeletedEvent
         {
@@ -779,7 +858,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         // Pass 1: Create factions without parent references
         foreach (var def in body.Factions)
         {
-            var existing = await _factionStore.GetAsync(FactionCodeKey(body.GameServiceId, def.Code), cancellationToken);
+            var existing = await _factionStore.GetAsync(BuildFactionCodeKey(body.GameServiceId, def.Code), cancellationToken);
             if (existing != null)
             {
                 skipped++;
@@ -835,14 +914,15 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                 ParentFactionId = null,
                 SeedId = seedId,
                 Status = FactionStatus.Active,
+                AuthorityLevel = def.IsRealmBaseline ? AuthorityLevel.Sovereign : def.AuthorityLevel,
                 CurrentPhase = null,
                 MemberCount = 0,
                 CreatedAt = now,
                 UpdatedAt = now,
             };
 
-            await _factionStore.SaveAsync(FactionKey(factionId), model, cancellationToken: cancellationToken);
-            await _factionStore.SaveAsync(FactionCodeKey(body.GameServiceId, def.Code), model, cancellationToken: cancellationToken);
+            await _factionStore.SaveAsync(BuildFactionKey(factionId), model, cancellationToken: cancellationToken);
+            await _factionStore.SaveAsync(BuildFactionCodeKey(body.GameServiceId, def.Code), model, cancellationToken: cancellationToken);
 
             createdFactions[def.Code] = model;
             created++;
@@ -859,8 +939,8 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             {
                 child.ParentFactionId = parent.FactionId;
                 child.UpdatedAt = DateTimeOffset.UtcNow;
-                await _factionStore.SaveAsync(FactionKey(child.FactionId), child, cancellationToken: cancellationToken);
-                await _factionStore.SaveAsync(FactionCodeKey(body.GameServiceId, child.Code), child, cancellationToken: cancellationToken);
+                await _factionStore.SaveAsync(BuildFactionKey(child.FactionId), child, cancellationToken: cancellationToken);
+                await _factionStore.SaveAsync(BuildFactionCodeKey(body.GameServiceId, child.Code), child, cancellationToken: cancellationToken);
             }
             else
             {
@@ -902,7 +982,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
 
-        var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
+        var model = await _factionStore.GetAsync(BuildFactionKey(body.FactionId), cancellationToken);
         if (model == null) return (StatusCodes.NotFound, null);
 
         Guid? previousBaselineId = null;
@@ -922,16 +1002,22 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                 previousBaselineId = existing.Value.FactionId;
                 existing.Value.IsRealmBaseline = false;
                 existing.Value.UpdatedAt = DateTimeOffset.UtcNow;
-                await _factionStore.SaveAsync(FactionKey(existing.Value.FactionId), existing.Value, cancellationToken: cancellationToken);
-                await _factionStore.SaveAsync(FactionCodeKey(existing.Value.GameServiceId, existing.Value.Code), existing.Value, cancellationToken: cancellationToken);
+                await _factionStore.SaveAsync(BuildFactionKey(existing.Value.FactionId), existing.Value, cancellationToken: cancellationToken);
+                await _factionStore.SaveAsync(BuildFactionCodeKey(existing.Value.GameServiceId, existing.Value.Code), existing.Value, cancellationToken: cancellationToken);
             }
         }
 
         model.IsRealmBaseline = true;
+        var changedFields = new List<string> { "isRealmBaseline" };
+        if (model.AuthorityLevel != AuthorityLevel.Sovereign)
+        {
+            model.AuthorityLevel = AuthorityLevel.Sovereign;
+            changedFields.Add("authorityLevel");
+        }
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _factionStore.SaveAsync(FactionKey(model.FactionId), model, cancellationToken: cancellationToken);
-        await _factionStore.SaveAsync(FactionCodeKey(model.GameServiceId, model.Code), model, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionKey(model.FactionId), model, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionCodeKey(model.GameServiceId, model.Code), model, cancellationToken: cancellationToken);
 
         var evt = new FactionRealmBaselineDesignatedEvent
         {
@@ -942,6 +1028,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             PreviousBaselineFactionId = previousBaselineId,
         };
         await _messageBus.PublishFactionRealmBaselineDesignatedAsync(evt, cancellationToken);
+        await PublishUpdatedEventAsync(model, changedFields, cancellationToken);
         await InvalidateNormCacheForFactionAsync(model.FactionId, cancellationToken);
         if (previousBaselineId.HasValue)
         {
@@ -994,12 +1081,12 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
 
-        var faction = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
+        var faction = await _factionStore.GetAsync(BuildFactionKey(body.FactionId), cancellationToken);
         if (faction == null) return (StatusCodes.NotFound, null);
         if (faction.IsDeprecated || faction.Status != FactionStatus.Active) return (StatusCodes.BadRequest, null);
 
         // Check for existing membership
-        var existingMember = await _memberStore.GetAsync(MemberKey(body.FactionId, body.CharacterId), cancellationToken);
+        var existingMember = await _memberStore.GetAsync(BuildMemberKey(body.FactionId, body.CharacterId), cancellationToken);
         if (existingMember != null) return (StatusCodes.Conflict, null);
 
         var now = DateTimeOffset.UtcNow;
@@ -1015,10 +1102,10 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             FactionCode = faction.Code,
         };
 
-        await _memberStore.SaveAsync(MemberKey(body.FactionId, body.CharacterId), member, cancellationToken: cancellationToken);
+        await _memberStore.SaveAsync(BuildMemberKey(body.FactionId, body.CharacterId), member, cancellationToken: cancellationToken);
 
         // Update character's membership list
-        var charList = await _memberListStore.GetAsync(CharacterMembershipsKey(body.CharacterId), cancellationToken)
+        var charList = await _memberListStore.GetAsync(BuildCharacterMembershipsKey(body.CharacterId), cancellationToken)
             ?? new MembershipListModel { CharacterId = body.CharacterId };
         charList.Memberships.Add(new MembershipEntry
         {
@@ -1026,13 +1113,13 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             Role = role,
             JoinedAt = now,
         });
-        await _memberListStore.SaveAsync(CharacterMembershipsKey(body.CharacterId), charList, cancellationToken: cancellationToken);
+        await _memberListStore.SaveAsync(BuildCharacterMembershipsKey(body.CharacterId), charList, cancellationToken: cancellationToken);
 
         // Update faction member count
         faction.MemberCount++;
         faction.UpdatedAt = now;
-        await _factionStore.SaveAsync(FactionKey(faction.FactionId), faction, cancellationToken: cancellationToken);
-        await _factionStore.SaveAsync(FactionCodeKey(faction.GameServiceId, faction.Code), faction, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionKey(faction.FactionId), faction, cancellationToken: cancellationToken);
+        await _factionStore.SaveAsync(BuildFactionCodeKey(faction.GameServiceId, faction.Code), faction, cancellationToken: cancellationToken);
 
         // Register reference with lib-resource for cleanup coordination
         try
@@ -1090,10 +1177,10 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     private async Task<StatusCodes> RemoveMemberInternalAsync(Guid factionId, Guid characterId, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.RemoveMemberInternalAsync");
-        var member = await _memberStore.GetAsync(MemberKey(factionId, characterId), ct);
+        var member = await _memberStore.GetAsync(BuildMemberKey(factionId, characterId), ct);
         if (member == null) return StatusCodes.NotFound;
 
-        await _memberStore.DeleteAsync(MemberKey(factionId, characterId), cancellationToken: ct);
+        await _memberStore.DeleteAsync(BuildMemberKey(factionId, characterId), cancellationToken: ct);
 
         // Unregister resource reference with lib-resource (mirrors RegisterReferenceAsync in AddMemberAsync)
         try
@@ -1112,21 +1199,21 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         }
 
         // Update character's membership list
-        var charList = await _memberListStore.GetAsync(CharacterMembershipsKey(characterId), ct);
+        var charList = await _memberListStore.GetAsync(BuildCharacterMembershipsKey(characterId), ct);
         if (charList != null)
         {
             charList.Memberships.RemoveAll(m => m.FactionId == factionId);
-            await _memberListStore.SaveAsync(CharacterMembershipsKey(characterId), charList, cancellationToken: ct);
+            await _memberListStore.SaveAsync(BuildCharacterMembershipsKey(characterId), charList, cancellationToken: ct);
         }
 
         // Update faction member count
-        var faction = await _factionStore.GetAsync(FactionKey(factionId), ct);
+        var faction = await _factionStore.GetAsync(BuildFactionKey(factionId), ct);
         if (faction != null)
         {
             faction.MemberCount = Math.Max(0, faction.MemberCount - 1);
             faction.UpdatedAt = DateTimeOffset.UtcNow;
-            await _factionStore.SaveAsync(FactionKey(faction.FactionId), faction, cancellationToken: ct);
-            await _factionStore.SaveAsync(FactionCodeKey(faction.GameServiceId, faction.Code), faction, cancellationToken: ct);
+            await _factionStore.SaveAsync(BuildFactionKey(faction.FactionId), faction, cancellationToken: ct);
+            await _factionStore.SaveAsync(BuildFactionCodeKey(faction.GameServiceId, faction.Code), faction, cancellationToken: ct);
         }
 
         var evt = new FactionMemberRemovedEvent
@@ -1184,14 +1271,14 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     {
         _logger.LogDebug("Listing memberships for character {CharacterId}", body.CharacterId);
 
-        var charList = await _memberListStore.GetAsync(CharacterMembershipsKey(body.CharacterId), cancellationToken);
+        var charList = await _memberListStore.GetAsync(BuildCharacterMembershipsKey(body.CharacterId), cancellationToken);
 
         var entries = new List<CharacterMembershipEntry>();
         if (charList != null)
         {
             foreach (var membership in charList.Memberships)
             {
-                var faction = await _factionStore.GetAsync(FactionKey(membership.FactionId), cancellationToken);
+                var faction = await _factionStore.GetAsync(BuildFactionKey(membership.FactionId), cancellationToken);
                 if (faction == null) continue;
 
                 if (body.GameServiceId.HasValue && faction.GameServiceId != body.GameServiceId.Value) continue;
@@ -1230,7 +1317,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
 
-        var member = await _memberStore.GetAsync(MemberKey(body.FactionId, body.CharacterId), cancellationToken);
+        var member = await _memberStore.GetAsync(BuildMemberKey(body.FactionId, body.CharacterId), cancellationToken);
         if (member == null) return (StatusCodes.NotFound, null);
 
         var previousRole = member.Role;
@@ -1239,15 +1326,15 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         member.Role = body.Role;
         member.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _memberStore.SaveAsync(MemberKey(body.FactionId, body.CharacterId), member, cancellationToken: cancellationToken);
+        await _memberStore.SaveAsync(BuildMemberKey(body.FactionId, body.CharacterId), member, cancellationToken: cancellationToken);
 
         // Update character's membership list
-        var charList = await _memberListStore.GetAsync(CharacterMembershipsKey(body.CharacterId), cancellationToken);
+        var charList = await _memberListStore.GetAsync(BuildCharacterMembershipsKey(body.CharacterId), cancellationToken);
         if (charList != null)
         {
             var entry = charList.Memberships.Find(m => m.FactionId == body.FactionId);
             if (entry != null) entry.Role = body.Role;
-            await _memberListStore.SaveAsync(CharacterMembershipsKey(body.CharacterId), charList, cancellationToken: cancellationToken);
+            await _memberListStore.SaveAsync(BuildCharacterMembershipsKey(body.CharacterId), charList, cancellationToken: cancellationToken);
         }
 
         var evt = new FactionMemberRoleChangedEvent
@@ -1273,7 +1360,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     {
         _logger.LogDebug("Checking membership for {CharacterId} in faction {FactionId}", body.CharacterId, body.FactionId);
 
-        var member = await _memberStore.GetAsync(MemberKey(body.FactionId, body.CharacterId), cancellationToken);
+        var member = await _memberStore.GetAsync(BuildMemberKey(body.FactionId, body.CharacterId), cancellationToken);
 
         return (StatusCodes.OK, new CheckMembershipResponse
         {
@@ -1303,7 +1390,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
 
-        var faction = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
+        var faction = await _factionStore.GetAsync(BuildFactionKey(body.FactionId), cancellationToken);
         if (faction == null) return (StatusCodes.NotFound, null);
         if (faction.IsDeprecated || faction.Status != FactionStatus.Active) return (StatusCodes.BadRequest, null);
 
@@ -1327,12 +1414,12 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         }
 
         // Check no existing active claim on this location
-        var existingClaim = await _territoryStore.GetAsync(LocationClaimKey(body.LocationId), cancellationToken);
+        var existingClaim = await _territoryStore.GetAsync(BuildLocationClaimKey(body.LocationId), cancellationToken);
         if (existingClaim != null && existingClaim.Status == TerritoryClaimStatus.Active)
             return (StatusCodes.Conflict, null);
 
         // Check faction territory limit
-        var claimList = await _territoryListStore.GetAsync(FactionClaimsKey(body.FactionId), cancellationToken)
+        var claimList = await _territoryListStore.GetAsync(BuildFactionClaimsKey(body.FactionId), cancellationToken)
             ?? new TerritoryClaimListModel { FactionId = body.FactionId };
         if (claimList.ClaimIds.Count >= _configuration.MaxTerritoriesPerFaction) return (StatusCodes.BadRequest, null);
 
@@ -1348,11 +1435,11 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             ClaimedAt = now,
         };
 
-        await _territoryStore.SaveAsync(ClaimKey(claimId), claim, cancellationToken: cancellationToken);
-        await _territoryStore.SaveAsync(LocationClaimKey(body.LocationId), claim, cancellationToken: cancellationToken);
+        await _territoryStore.SaveAsync(BuildClaimKey(claimId), claim, cancellationToken: cancellationToken);
+        await _territoryStore.SaveAsync(BuildLocationClaimKey(body.LocationId), claim, cancellationToken: cancellationToken);
 
         claimList.ClaimIds.Add(claimId);
-        await _territoryListStore.SaveAsync(FactionClaimsKey(body.FactionId), claimList, cancellationToken: cancellationToken);
+        await _territoryListStore.SaveAsync(BuildFactionClaimsKey(body.FactionId), claimList, cancellationToken: cancellationToken);
 
         // Register reference with lib-resource
         try
@@ -1392,7 +1479,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     {
         _logger.LogDebug("Releasing territory claim {ClaimId}", body.ClaimId);
 
-        var claim = await _territoryStore.GetAsync(ClaimKey(body.ClaimId), cancellationToken);
+        var claim = await _territoryStore.GetAsync(BuildClaimKey(body.ClaimId), cancellationToken);
         if (claim == null) return StatusCodes.NotFound;
 
         var lockOwner = $"release-territory-{Guid.NewGuid():N}";
@@ -1413,8 +1500,8 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         claim.Status = TerritoryClaimStatus.Released;
         claim.ReleasedAt = DateTimeOffset.UtcNow;
 
-        await _territoryStore.SaveAsync(ClaimKey(claim.ClaimId), claim, cancellationToken: ct);
-        await _territoryStore.DeleteAsync(LocationClaimKey(claim.LocationId), cancellationToken: ct);
+        await _territoryStore.SaveAsync(BuildClaimKey(claim.ClaimId), claim, cancellationToken: ct);
+        await _territoryStore.DeleteAsync(BuildLocationClaimKey(claim.LocationId), cancellationToken: ct);
 
         // Unregister resource reference with lib-resource (mirrors RegisterReferenceAsync in ClaimTerritoryAsync)
         try
@@ -1433,11 +1520,11 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         }
 
         // Update faction's claim list
-        var claimList = await _territoryListStore.GetAsync(FactionClaimsKey(claim.FactionId), ct);
+        var claimList = await _territoryListStore.GetAsync(BuildFactionClaimsKey(claim.FactionId), ct);
         if (claimList != null)
         {
             claimList.ClaimIds.Remove(claim.ClaimId);
-            await _territoryListStore.SaveAsync(FactionClaimsKey(claim.FactionId), claimList, cancellationToken: ct);
+            await _territoryListStore.SaveAsync(BuildFactionClaimsKey(claim.FactionId), claimList, cancellationToken: ct);
         }
 
         var evt = new FactionTerritoryReleasedEvent
@@ -1495,10 +1582,10 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     {
         _logger.LogDebug("Getting controlling faction for location {LocationId}", body.LocationId);
 
-        var claim = await _territoryStore.GetAsync(LocationClaimKey(body.LocationId), cancellationToken);
+        var claim = await _territoryStore.GetAsync(BuildLocationClaimKey(body.LocationId), cancellationToken);
         if (claim == null || claim.Status != TerritoryClaimStatus.Active) return (StatusCodes.NotFound, null);
 
-        var faction = await _factionStore.GetAsync(FactionKey(claim.FactionId), cancellationToken);
+        var faction = await _factionStore.GetAsync(BuildFactionKey(claim.FactionId), cancellationToken);
         if (faction == null) return (StatusCodes.NotFound, null);
 
         return (StatusCodes.OK, new ControllingFactionResponse
@@ -1531,7 +1618,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
 
-        var faction = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
+        var faction = await _factionStore.GetAsync(BuildFactionKey(body.FactionId), cancellationToken);
         if (faction == null) return (StatusCodes.NotFound, null);
         if (faction.IsDeprecated || faction.Status != FactionStatus.Active) return (StatusCodes.BadRequest, null);
 
@@ -1543,7 +1630,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         }
 
         // Check norm limit
-        var normList = await _normListStore.GetAsync(FactionNormsKey(body.FactionId), cancellationToken)
+        var normList = await _normListStore.GetAsync(BuildFactionNormsKey(body.FactionId), cancellationToken)
             ?? new NormListModel { FactionId = body.FactionId };
         if (normList.NormIds.Count >= _configuration.MaxNormsPerFaction) return (StatusCodes.BadRequest, null);
 
@@ -1562,10 +1649,10 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             CreatedAt = now,
         };
 
-        await _normStore.SaveAsync(NormKey(normId), norm, cancellationToken: cancellationToken);
+        await _normStore.SaveAsync(BuildNormKey(normId), norm, cancellationToken: cancellationToken);
 
         normList.NormIds.Add(normId);
-        await _normListStore.SaveAsync(FactionNormsKey(body.FactionId), normList, cancellationToken: cancellationToken);
+        await _normListStore.SaveAsync(BuildFactionNormsKey(body.FactionId), normList, cancellationToken: cancellationToken);
 
         var evt = new FactionNormDefinedEvent
         {
@@ -1593,7 +1680,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     {
         _logger.LogDebug("Updating norm {NormId}", body.NormId);
 
-        var norm = await _normStore.GetAsync(NormKey(body.NormId), cancellationToken);
+        var norm = await _normStore.GetAsync(BuildNormKey(body.NormId), cancellationToken);
         if (norm == null) return (StatusCodes.NotFound, null);
 
         var lockOwner = $"update-norm-{Guid.NewGuid():N}";
@@ -1633,7 +1720,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         }
 
         norm.UpdatedAt = DateTimeOffset.UtcNow;
-        await _normStore.SaveAsync(NormKey(body.NormId), norm, cancellationToken: cancellationToken);
+        await _normStore.SaveAsync(BuildNormKey(body.NormId), norm, cancellationToken: cancellationToken);
 
         var evt = new FactionNormUpdatedEvent
         {
@@ -1660,7 +1747,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     {
         _logger.LogDebug("Deleting norm {NormId}", body.NormId);
 
-        var norm = await _normStore.GetAsync(NormKey(body.NormId), cancellationToken);
+        var norm = await _normStore.GetAsync(BuildNormKey(body.NormId), cancellationToken);
         if (norm == null) return StatusCodes.NotFound;
 
         var lockOwner = $"delete-norm-{Guid.NewGuid():N}";
@@ -1672,13 +1759,13 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             cancellationToken: cancellationToken);
         if (!lockResponse.Success) return StatusCodes.Conflict;
 
-        await _normStore.DeleteAsync(NormKey(body.NormId), cancellationToken: cancellationToken);
+        await _normStore.DeleteAsync(BuildNormKey(body.NormId), cancellationToken: cancellationToken);
 
-        var normList = await _normListStore.GetAsync(FactionNormsKey(norm.FactionId), cancellationToken);
+        var normList = await _normListStore.GetAsync(BuildFactionNormsKey(norm.FactionId), cancellationToken);
         if (normList != null)
         {
             normList.NormIds.Remove(body.NormId);
-            await _normListStore.SaveAsync(FactionNormsKey(norm.FactionId), normList, cancellationToken: cancellationToken);
+            await _normListStore.SaveAsync(BuildFactionNormsKey(norm.FactionId), normList, cancellationToken: cancellationToken);
         }
 
         var evt = new FactionNormDeletedEvent
@@ -1703,7 +1790,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     {
         _logger.LogDebug("Listing norms for faction {FactionId}", body.FactionId);
 
-        var normList = await _normListStore.GetAsync(FactionNormsKey(body.FactionId), cancellationToken);
+        var normList = await _normListStore.GetAsync(BuildFactionNormsKey(body.FactionId), cancellationToken);
         if (normList == null)
         {
             return (StatusCodes.OK, new ListNormsResponse
@@ -1716,7 +1803,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         var norms = new List<NormDefinitionResponse>();
         foreach (var normId in normList.NormIds)
         {
-            var norm = await _normStore.GetAsync(NormKey(normId), cancellationToken);
+            var norm = await _normStore.GetAsync(BuildNormKey(normId), cancellationToken);
             if (norm == null) continue;
 
             if (body.Severity.HasValue && norm.Severity != body.Severity.Value) continue;
@@ -1743,7 +1830,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         _logger.LogDebug("Querying applicable norms for character {CharacterId} in realm {RealmId}",
             body.CharacterId, body.RealmId);
 
-        var cacheKey = NormCacheKey(body.CharacterId, body.LocationId);
+        var cacheKey = BuildNormCacheKey(body.CharacterId, body.LocationId);
 
         // Check cache unless force refresh
         if (!body.ForceRefresh)
@@ -1763,6 +1850,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                         Severity = n.Severity,
                         Scope = n.Scope,
                         Source = n.Source,
+                        AuthorityLevel = n.AuthorityLevel,
                         Description = n.Description,
                     }).ToList(),
                     MergedNormMap = cached.MergedNormMap.ToDictionary(
@@ -1774,6 +1862,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                             Source = kvp.Value.Source,
                             FactionId = kvp.Value.FactionId,
                             Severity = kvp.Value.Severity,
+                            AuthorityLevel = kvp.Value.AuthorityLevel,
                         }),
                     MembershipFactionCount = cached.MembershipFactionCount,
                     TerritoryFactionResolved = cached.TerritoryFactionResolved,
@@ -1789,22 +1878,22 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         bool baselineResolved = false;
 
         // 1. Guild faction norms (character's direct memberships) - HIGHEST PRIORITY
-        var charList = await _memberListStore.GetAsync(CharacterMembershipsKey(body.CharacterId), cancellationToken);
+        var charList = await _memberListStore.GetAsync(BuildCharacterMembershipsKey(body.CharacterId), cancellationToken);
         if (charList != null)
         {
             foreach (var membership in charList.Memberships)
             {
-                var faction = await _factionStore.GetAsync(FactionKey(membership.FactionId), cancellationToken);
+                var faction = await _factionStore.GetAsync(BuildFactionKey(membership.FactionId), cancellationToken);
                 if (faction == null || faction.IsDeprecated || faction.Status != FactionStatus.Active) continue;
                 if (body.GameServiceId.HasValue && faction.GameServiceId != body.GameServiceId.Value) continue;
 
-                var normListModel = await _normListStore.GetAsync(FactionNormsKey(membership.FactionId), cancellationToken);
+                var normListModel = await _normListStore.GetAsync(BuildFactionNormsKey(membership.FactionId), cancellationToken);
                 if (normListModel == null) continue;
 
                 membershipFactionCount++;
                 foreach (var normId in normListModel.NormIds)
                 {
-                    var norm = await _normStore.GetAsync(NormKey(normId), cancellationToken);
+                    var norm = await _normStore.GetAsync(BuildNormKey(normId), cancellationToken);
                     if (norm == null) continue;
 
                     var entry = new CachedApplicableNorm
@@ -1817,6 +1906,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                         Severity = norm.Severity,
                         Scope = norm.Scope,
                         Source = NormSource.Membership,
+                        AuthorityLevel = faction.AuthorityLevel,
                         Description = norm.Description,
                     };
                     applicableNorms.Add(entry);
@@ -1831,6 +1921,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                             Source = NormSource.Membership,
                             FactionId = norm.FactionId,
                             Severity = norm.Severity,
+                            AuthorityLevel = faction.AuthorityLevel,
                         };
                     }
                 }
@@ -1840,19 +1931,19 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         // 2. Location controlling faction norms - MEDIUM PRIORITY
         if (body.LocationId.HasValue)
         {
-            var locationClaim = await _territoryStore.GetAsync(LocationClaimKey(body.LocationId.Value), cancellationToken);
+            var locationClaim = await _territoryStore.GetAsync(BuildLocationClaimKey(body.LocationId.Value), cancellationToken);
             if (locationClaim != null && locationClaim.Status == TerritoryClaimStatus.Active)
             {
-                var controllingFaction = await _factionStore.GetAsync(FactionKey(locationClaim.FactionId), cancellationToken);
+                var controllingFaction = await _factionStore.GetAsync(BuildFactionKey(locationClaim.FactionId), cancellationToken);
                 if (controllingFaction != null && !controllingFaction.IsDeprecated && controllingFaction.Status == FactionStatus.Active)
                 {
                     territoryResolved = true;
-                    var normListModel = await _normListStore.GetAsync(FactionNormsKey(locationClaim.FactionId), cancellationToken);
+                    var normListModel = await _normListStore.GetAsync(BuildFactionNormsKey(locationClaim.FactionId), cancellationToken);
                     if (normListModel != null)
                     {
                         foreach (var normId in normListModel.NormIds)
                         {
-                            var norm = await _normStore.GetAsync(NormKey(normId), cancellationToken);
+                            var norm = await _normStore.GetAsync(BuildNormKey(normId), cancellationToken);
                             if (norm == null) continue;
 
                             var entry = new CachedApplicableNorm
@@ -1865,6 +1956,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                                 Severity = norm.Severity,
                                 Scope = norm.Scope,
                                 Source = NormSource.Territory,
+                                AuthorityLevel = controllingFaction.AuthorityLevel,
                                 Description = norm.Description,
                             };
                             applicableNorms.Add(entry);
@@ -1879,6 +1971,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                                     Source = NormSource.Territory,
                                     FactionId = norm.FactionId,
                                     Severity = norm.Severity,
+                                    AuthorityLevel = controllingFaction.AuthorityLevel,
                                 };
                             }
                         }
@@ -1901,12 +1994,12 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             if (!baselineFaction.IsDeprecated && baselineFaction.Status == FactionStatus.Active)
             {
                 baselineResolved = true;
-                var normListModel = await _normListStore.GetAsync(FactionNormsKey(baselineFaction.FactionId), cancellationToken);
+                var normListModel = await _normListStore.GetAsync(BuildFactionNormsKey(baselineFaction.FactionId), cancellationToken);
                 if (normListModel != null)
                 {
                     foreach (var normId in normListModel.NormIds)
                     {
-                        var norm = await _normStore.GetAsync(NormKey(normId), cancellationToken);
+                        var norm = await _normStore.GetAsync(BuildNormKey(normId), cancellationToken);
                         if (norm == null) continue;
 
                         var entry = new CachedApplicableNorm
@@ -1919,6 +2012,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                             Severity = norm.Severity,
                             Scope = norm.Scope,
                             Source = NormSource.RealmBaseline,
+                            AuthorityLevel = baselineFaction.AuthorityLevel,
                             Description = norm.Description,
                         };
                         applicableNorms.Add(entry);
@@ -1933,6 +2027,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                                 Source = NormSource.RealmBaseline,
                                 FactionId = norm.FactionId,
                                 Severity = norm.Severity,
+                                AuthorityLevel = baselineFaction.AuthorityLevel,
                             };
                         }
                     }
@@ -1972,6 +2067,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                 Severity = n.Severity,
                 Scope = n.Scope,
                 Source = n.Source,
+                AuthorityLevel = n.AuthorityLevel,
                 Description = n.Description,
             }).ToList(),
             MergedNormMap = mergedNormMap.ToDictionary(
@@ -1983,6 +2079,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                     Source = kvp.Value.Source,
                     FactionId = kvp.Value.FactionId,
                     Severity = kvp.Value.Severity,
+                    AuthorityLevel = kvp.Value.AuthorityLevel,
                 }),
             MembershipFactionCount = membershipFactionCount,
             TerritoryFactionResolved = territoryResolved,
@@ -2003,7 +2100,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         _logger.LogDebug("Cleaning up faction data for character {CharacterId}", body.CharacterId);
 
         int membershipsRemoved = 0;
-        var charList = await _memberListStore.GetAsync(CharacterMembershipsKey(body.CharacterId), cancellationToken);
+        var charList = await _memberListStore.GetAsync(BuildCharacterMembershipsKey(body.CharacterId), cancellationToken);
 
         if (charList != null)
         {
@@ -2051,10 +2148,10 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                 var faction = result.Value;
 
                 // Count cascaded data before deletion
-                var normList = await _normListStore.GetAsync(FactionNormsKey(faction.FactionId), cancellationToken);
+                var normList = await _normListStore.GetAsync(BuildFactionNormsKey(faction.FactionId), cancellationToken);
                 normsRemoved += normList?.NormIds.Count ?? 0;
 
-                var claimList = await _territoryListStore.GetAsync(FactionClaimsKey(faction.FactionId), cancellationToken);
+                var claimList = await _territoryListStore.GetAsync(BuildFactionClaimsKey(faction.FactionId), cancellationToken);
                 claimsRemoved += claimList?.ClaimIds.Count ?? 0;
 
                 membershipsRemoved += faction.MemberCount;
@@ -2087,7 +2184,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         _logger.LogDebug("Cleaning up territory claims for location {LocationId}", body.LocationId);
 
         int claimsRemoved = 0;
-        var claim = await _territoryStore.GetAsync(LocationClaimKey(body.LocationId), cancellationToken);
+        var claim = await _territoryStore.GetAsync(BuildLocationClaimKey(body.LocationId), cancellationToken);
         if (claim != null)
         {
             await ReleaseTerritoryInternalAsync(claim, cancellationToken);
@@ -2115,14 +2212,14 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     {
         _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
 
-        var charList = await _memberListStore.GetAsync(CharacterMembershipsKey(body.CharacterId), cancellationToken);
+        var charList = await _memberListStore.GetAsync(BuildCharacterMembershipsKey(body.CharacterId), cancellationToken);
 
         var memberships = new List<FactionMemberResponse>();
         if (charList != null)
         {
             foreach (var entry in charList.Memberships)
             {
-                var member = await _memberStore.GetAsync(MemberKey(entry.FactionId, body.CharacterId), cancellationToken);
+                var member = await _memberStore.GetAsync(BuildMemberKey(entry.FactionId, body.CharacterId), cancellationToken);
                 if (member != null)
                 {
                     memberships.Add(MapToMemberResponse(member));
@@ -2158,11 +2255,11 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         {
             foreach (var membership in archive.Memberships)
             {
-                var faction = await _factionStore.GetAsync(FactionKey(membership.FactionId), cancellationToken);
+                var faction = await _factionStore.GetAsync(BuildFactionKey(membership.FactionId), cancellationToken);
                 if (faction == null || faction.IsDeprecated || faction.Status != FactionStatus.Active) continue;
 
                 var existingMember = await _memberStore.GetAsync(
-                    MemberKey(membership.FactionId, body.CharacterId), cancellationToken);
+                    BuildMemberKey(membership.FactionId, body.CharacterId), cancellationToken);
                 if (existingMember != null) continue;
 
                 var member = new FactionMemberModel
@@ -2176,10 +2273,10 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                 };
 
                 await _memberStore.SaveAsync(
-                    MemberKey(membership.FactionId, body.CharacterId), member, cancellationToken: cancellationToken);
+                    BuildMemberKey(membership.FactionId, body.CharacterId), member, cancellationToken: cancellationToken);
 
                 // Update character's membership list
-                var charList = await _memberListStore.GetAsync(CharacterMembershipsKey(body.CharacterId), cancellationToken)
+                var charList = await _memberListStore.GetAsync(BuildCharacterMembershipsKey(body.CharacterId), cancellationToken)
                     ?? new MembershipListModel { CharacterId = body.CharacterId };
                 charList.Memberships.Add(new MembershipEntry
                 {
@@ -2187,13 +2284,13 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                     Role = membership.Role,
                     JoinedAt = membership.JoinedAt,
                 });
-                await _memberListStore.SaveAsync(CharacterMembershipsKey(body.CharacterId), charList, cancellationToken: cancellationToken);
+                await _memberListStore.SaveAsync(BuildCharacterMembershipsKey(body.CharacterId), charList, cancellationToken: cancellationToken);
 
                 // Update faction member count
                 faction.MemberCount++;
                 faction.UpdatedAt = DateTimeOffset.UtcNow;
-                await _factionStore.SaveAsync(FactionKey(faction.FactionId), faction, cancellationToken: cancellationToken);
-                await _factionStore.SaveAsync(FactionCodeKey(faction.GameServiceId, faction.Code), faction, cancellationToken: cancellationToken);
+                await _factionStore.SaveAsync(BuildFactionKey(faction.FactionId), faction, cancellationToken: cancellationToken);
+                await _factionStore.SaveAsync(BuildFactionCodeKey(faction.GameServiceId, faction.Code), faction, cancellationToken: cancellationToken);
 
                 // Register reference with lib-resource for cleanup coordination (mirrors AddMemberAsync)
                 try
@@ -2225,60 +2322,525 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         });
     }
 
-    #region Governance (Stub — schema defined #601, implementation pending)
+    #region Governance
 
-    /// <summary>Creates or updates a governance entry for a faction. Requires Sovereign/Delegated authority and governance.arbitrate.* seed capability.</summary>
+    /// <summary>Creates or updates a governance entry for a faction. Requires Sovereign/Delegated authority and governance.arbitrate seed capability.</summary>
     public async Task<(StatusCodes, GovernanceEntryResponse?)> SetGovernanceEntryAsync(
         SetGovernanceEntryRequest body, CancellationToken ct = default)
     {
-        _logger.LogWarning("SetGovernanceEntry is not yet implemented (schema-only, #601)");
-        await Task.CompletedTask;
-        return (StatusCodes.NotImplemented, null);
+        _logger.LogDebug("Setting governance entry for faction {FactionId}, domain {Domain}",
+            body.FactionId, body.Domain);
+
+        var lockOwner = $"set-governance-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
+            resourceId: $"governance:{body.FactionId}",
+            lockOwner,
+            expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken: ct);
+        if (!lockResponse.Success) return (StatusCodes.Conflict, null);
+
+        var faction = await _factionStore.GetAsync(BuildFactionKey(body.FactionId), ct);
+        if (faction == null) return (StatusCodes.NotFound, null);
+
+        if (faction.AuthorityLevel != AuthorityLevel.Sovereign && faction.AuthorityLevel != AuthorityLevel.Delegated)
+        {
+            _logger.LogDebug("Faction {FactionId} has authority level {AuthorityLevel}, must be Sovereign or Delegated",
+                body.FactionId, faction.AuthorityLevel);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (!await HasCapabilityAsync(faction.SeedId, "governance.arbitrate", ct))
+        {
+            _logger.LogDebug("Faction {FactionId} lacks governance.arbitrate capability", body.FactionId);
+            return (StatusCodes.Forbidden, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var domainKey = BuildFactionGovernanceDomainKey(body.FactionId, body.Domain);
+        var existing = await _governanceStore.GetAsync(domainKey, ct);
+        List<string>? changedFields = null;
+
+        GovernanceEntryModel entry;
+        if (existing != null)
+        {
+            // Upsert — update existing entry
+            changedFields = new List<string>();
+            if (existing.TemplateCode != body.TemplateCode) changedFields.Add("templateCode");
+            // GovernanceParameters is object? — always treat as changed on upsert
+            changedFields.Add("governanceParameters");
+
+            existing.TemplateCode = body.TemplateCode;
+            existing.GovernanceParameters = body.GovernanceParameters;
+            existing.UpdatedAt = now;
+            entry = existing;
+
+            await _governanceStore.SaveAsync(BuildGovernanceKey(existing.GovernanceId), entry, cancellationToken: ct);
+            await _governanceStore.SaveAsync(domainKey, entry, cancellationToken: ct);
+        }
+        else
+        {
+            // Check governance limit
+            var govList = await _governanceListStore.GetAsync(BuildFactionGovernanceKey(body.FactionId), ct)
+                ?? new GovernanceEntryListModel { FactionId = body.FactionId };
+            if (govList.GovernanceIds.Count >= _configuration.MaxGovernanceEntriesPerFaction)
+                return (StatusCodes.BadRequest, null);
+
+            var governanceId = Guid.NewGuid();
+            entry = new GovernanceEntryModel
+            {
+                GovernanceId = governanceId,
+                FactionId = body.FactionId,
+                Domain = body.Domain,
+                TemplateCode = body.TemplateCode,
+                GovernanceParameters = body.GovernanceParameters,
+                CreatedAt = now,
+            };
+
+            await _governanceStore.SaveAsync(BuildGovernanceKey(governanceId), entry, cancellationToken: ct);
+            await _governanceStore.SaveAsync(domainKey, entry, cancellationToken: ct);
+
+            govList.GovernanceIds.Add(governanceId);
+            await _governanceListStore.SaveAsync(BuildFactionGovernanceKey(body.FactionId), govList, cancellationToken: ct);
+        }
+
+        var evt = new FactionGovernanceDefinedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            FactionId = body.FactionId,
+            GovernanceId = entry.GovernanceId,
+            Domain = body.Domain,
+            TemplateCode = body.TemplateCode,
+            ChangedFields = changedFields,
+        };
+        await _messageBus.PublishFactionGovernanceDefinedAsync(evt, ct);
+
+        _logger.LogInformation("Set governance entry {GovernanceId} for faction {FactionId}, domain {Domain}",
+            entry.GovernanceId, body.FactionId, body.Domain);
+        return (StatusCodes.OK, MapToGovernanceResponse(entry));
     }
 
     /// <summary>Removes a governance entry for a specific domain from a faction.</summary>
     public async Task<StatusCodes> RemoveGovernanceEntryAsync(
         RemoveGovernanceEntryRequest body, CancellationToken ct = default)
     {
-        _logger.LogWarning("RemoveGovernanceEntry is not yet implemented (schema-only, #601)");
-        await Task.CompletedTask;
-        return StatusCodes.NotImplemented;
+        _logger.LogDebug("Removing governance entry for faction {FactionId}, domain {Domain}",
+            body.FactionId, body.Domain);
+
+        var lockOwner = $"remove-governance-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
+            resourceId: $"governance:{body.FactionId}",
+            lockOwner,
+            expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken: ct);
+        if (!lockResponse.Success) return StatusCodes.Conflict;
+
+        var domainKey = BuildFactionGovernanceDomainKey(body.FactionId, body.Domain);
+        var entry = await _governanceStore.GetAsync(domainKey, ct);
+        if (entry == null) return StatusCodes.NotFound;
+
+        await _governanceStore.DeleteAsync(BuildGovernanceKey(entry.GovernanceId), ct);
+        await _governanceStore.DeleteAsync(domainKey, ct);
+
+        var govList = await _governanceListStore.GetAsync(BuildFactionGovernanceKey(body.FactionId), ct);
+        if (govList != null)
+        {
+            govList.GovernanceIds.Remove(entry.GovernanceId);
+            await _governanceListStore.SaveAsync(BuildFactionGovernanceKey(body.FactionId), govList, cancellationToken: ct);
+        }
+
+        var evt = new FactionGovernanceDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            FactionId = body.FactionId,
+            GovernanceId = entry.GovernanceId,
+            Domain = body.Domain,
+        };
+        await _messageBus.PublishFactionGovernanceDeletedAsync(evt, ct);
+
+        _logger.LogInformation("Removed governance entry {GovernanceId} for faction {FactionId}, domain {Domain}",
+            entry.GovernanceId, body.FactionId, body.Domain);
+        return StatusCodes.OK;
     }
 
     /// <summary>Returns all governance entries defined by a faction.</summary>
     public async Task<(StatusCodes, ListGovernanceEntriesResponse?)> ListGovernanceEntriesAsync(
         ListGovernanceEntriesRequest body, CancellationToken ct = default)
     {
-        _logger.LogWarning("ListGovernanceEntries is not yet implemented (schema-only, #601)");
-        await Task.CompletedTask;
-        return (StatusCodes.NotImplemented, null);
+        _logger.LogDebug("Listing governance entries for faction {FactionId}", body.FactionId);
+
+        var faction = await _factionStore.GetAsync(BuildFactionKey(body.FactionId), ct);
+        if (faction == null) return (StatusCodes.NotFound, null);
+
+        var govList = await _governanceListStore.GetAsync(BuildFactionGovernanceKey(body.FactionId), ct);
+        var entries = new List<GovernanceEntryResponse>();
+
+        if (govList != null)
+        {
+            foreach (var govId in govList.GovernanceIds)
+            {
+                var entry = await _governanceStore.GetAsync(BuildGovernanceKey(govId), ct);
+                if (entry != null)
+                    entries.Add(MapToGovernanceResponse(entry));
+            }
+        }
+
+        return (StatusCodes.OK, new ListGovernanceEntriesResponse { Entries = entries });
     }
 
     /// <summary>Resolves governance data for a location and case type domain by walking the sovereignty hierarchy.</summary>
     public async Task<(StatusCodes, GovernanceDataResponse?)> QueryGovernanceDataAsync(
         QueryGovernanceDataRequest body, CancellationToken ct = default)
     {
-        _logger.LogWarning("QueryGovernanceData is not yet implemented (schema-only, #601)");
-        await Task.CompletedTask;
-        return (StatusCodes.NotImplemented, null);
+        _logger.LogDebug("Querying governance data for location {LocationId}, domain {Domain}",
+            body.LocationId, body.Domain);
+
+        // Check governance cache
+        var govCacheKey = BuildGovernanceCacheKey(body.LocationId, body.Domain);
+        if (_configuration.GovernanceCacheTtlSeconds > 0)
+        {
+            var cached = await _governanceCacheStore.GetAsync(govCacheKey, ct);
+            if (cached != null)
+            {
+                if (!cached.Resolved) return (StatusCodes.NotFound, null);
+                return (StatusCodes.OK, new GovernanceDataResponse
+                {
+                    JurisdictionalFactionId = cached.JurisdictionalFactionId ?? Guid.Empty,
+                    JurisdictionalFactionName = cached.JurisdictionalFactionName ?? string.Empty,
+                    AuthorityLevel = cached.AuthorityLevel ?? AuthorityLevel.Influence,
+                    TemplateCode = cached.TemplateCode ?? string.Empty,
+                    GovernanceParameters = cached.GovernanceParameters,
+                    SovereignFactionId = cached.SovereignFactionId ?? Guid.Empty,
+                });
+            }
+        }
+
+        // Step 1: Find the controlling faction at this location
+        var locationClaim = await _territoryStore.GetAsync(BuildLocationClaimKey(body.LocationId), ct);
+        FactionModel? controllingFaction = null;
+        if (locationClaim != null && locationClaim.Status == TerritoryClaimStatus.Active)
+        {
+            controllingFaction = await _factionStore.GetAsync(BuildFactionKey(locationClaim.FactionId), ct);
+        }
+
+        // Step 2: If controlling faction is Sovereign and has governance for this domain, return it
+        if (controllingFaction != null && controllingFaction.AuthorityLevel == AuthorityLevel.Sovereign)
+        {
+            var result = await TryResolveGovernanceAsync(controllingFaction, body.Domain, null, ct);
+            if (result != null) { await CacheGovernanceResolutionAsync(govCacheKey, result, ct); return (StatusCodes.OK, result); }
+        }
+
+        // Step 3: If controlling faction is Delegated and has governance for this domain, return it
+        if (controllingFaction != null && controllingFaction.AuthorityLevel == AuthorityLevel.Delegated)
+        {
+            // Find the sovereign by walking up the parent chain
+            var sovereign = await FindSovereignAsync(controllingFaction, ct);
+            var result = await TryResolveGovernanceAsync(controllingFaction, body.Domain, sovereign, ct);
+            if (result != null) { await CacheGovernanceResolutionAsync(govCacheKey, result, ct); return (StatusCodes.OK, result); }
+
+            // Delegated faction doesn't have this domain — check the sovereign
+            if (sovereign != null)
+            {
+                result = await TryResolveGovernanceAsync(sovereign, body.Domain, null, ct);
+                if (result != null) { await CacheGovernanceResolutionAsync(govCacheKey, result, ct); return (StatusCodes.OK, result); }
+            }
+        }
+
+        // Step 4: Walk up the parent chain of the controlling faction until Sovereign found
+        if (controllingFaction != null && controllingFaction.AuthorityLevel == AuthorityLevel.Influence)
+        {
+            var sovereign = await FindSovereignAsync(controllingFaction, ct);
+            if (sovereign != null)
+            {
+                var result = await TryResolveGovernanceAsync(sovereign, body.Domain, null, ct);
+                if (result != null) { await CacheGovernanceResolutionAsync(govCacheKey, result, ct); return (StatusCodes.OK, result); }
+            }
+        }
+
+        // Step 5: Fall back to realm baseline sovereign
+        var realmId = body.RealmId;
+        if (!realmId.HasValue && controllingFaction != null)
+        {
+            realmId = controllingFaction.RealmId;
+        }
+
+        if (realmId.HasValue)
+        {
+            var baselineConditions = new List<QueryCondition>
+            {
+                new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
+                new QueryCondition { Path = "$.RealmId", Operator = QueryOperator.Equals, Value = realmId.Value.ToString() },
+                new QueryCondition { Path = "$.IsRealmBaseline", Operator = QueryOperator.Equals, Value = "true" },
+            };
+            var baselineResults = await _factionQueryStore.JsonQueryPagedAsync(baselineConditions, 0, 1, cancellationToken: ct);
+            if (baselineResults.Items.Count > 0)
+            {
+                var baseline = baselineResults.Items[0].Value;
+                if (baseline.AuthorityLevel == AuthorityLevel.Sovereign)
+                {
+                    var result = await TryResolveGovernanceAsync(baseline, body.Domain, null, ct);
+                    if (result != null) { await CacheGovernanceResolutionAsync(govCacheKey, result, ct); return (StatusCodes.OK, result); }
+                }
+            }
+        }
+
+        // Step 6: No sovereign found anywhere — cache the negative result
+        await CacheGovernanceResolutionAsync(govCacheKey, null, ct);
+        _logger.LogDebug("No governance resolved for location {LocationId}, domain {Domain}", body.LocationId, body.Domain);
+        return (StatusCodes.NotFound, null);
+    }
+
+    /// <summary>
+    /// Walks up the faction parent chain to find a Sovereign faction.
+    /// </summary>
+    private async Task<FactionModel?> FindSovereignAsync(FactionModel faction, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.FindSovereign");
+        var current = faction;
+        int depth = 0;
+        while (current.ParentFactionId.HasValue && depth < _configuration.MaxHierarchyDepth)
+        {
+            current = await _factionStore.GetAsync(BuildFactionKey(current.ParentFactionId.Value), ct);
+            if (current == null) return null;
+            if (current.AuthorityLevel == AuthorityLevel.Sovereign) return current;
+            depth++;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Attempts to resolve governance data for a faction and domain.
+    /// Returns null if no governance entry exists for the domain.
+    /// </summary>
+    private async Task<GovernanceDataResponse?> TryResolveGovernanceAsync(
+        FactionModel faction, string domain, FactionModel? sovereign, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.TryResolveGovernance");
+        var domainKey = BuildFactionGovernanceDomainKey(faction.FactionId, domain);
+        var entry = await _governanceStore.GetAsync(domainKey, ct);
+        if (entry == null) return null;
+
+        return new GovernanceDataResponse
+        {
+            JurisdictionalFactionId = faction.FactionId,
+            JurisdictionalFactionName = faction.Name,
+            AuthorityLevel = faction.AuthorityLevel,
+            TemplateCode = entry.TemplateCode,
+            GovernanceParameters = entry.GovernanceParameters,
+            SovereignFactionId = sovereign?.FactionId ?? faction.FactionId,
+        };
+    }
+
+    /// <summary>
+    /// Caches a governance resolution result in Redis with configurable TTL.
+    /// Caches both positive (resolved) and negative (no jurisdiction) results.
+    /// </summary>
+    private async Task CacheGovernanceResolutionAsync(string cacheKey, GovernanceDataResponse? result, CancellationToken ct)
+    {
+        if (_configuration.GovernanceCacheTtlSeconds <= 0) return;
+
+        var cacheEntry = new CachedGovernanceResolution
+        {
+            Resolved = result != null,
+            JurisdictionalFactionId = result?.JurisdictionalFactionId,
+            JurisdictionalFactionName = result?.JurisdictionalFactionName,
+            AuthorityLevel = result?.AuthorityLevel,
+            TemplateCode = result?.TemplateCode,
+            GovernanceParameters = result?.GovernanceParameters,
+            SovereignFactionId = result?.SovereignFactionId,
+            CachedAt = DateTimeOffset.UtcNow,
+        };
+
+        await _governanceCacheStore.SaveAsync(cacheKey, cacheEntry,
+            new StateOptions { Ttl = _configuration.GovernanceCacheTtlSeconds },
+            cancellationToken: ct);
     }
 
     /// <summary>Delegates authority from a sovereign faction to a child faction for specific case type domains.</summary>
     public async Task<(StatusCodes, FactionResponse?)> DelegateAuthorityAsync(
         DelegateAuthorityRequest body, CancellationToken ct = default)
     {
-        _logger.LogWarning("DelegateAuthority is not yet implemented (schema-only, #601)");
-        await Task.CompletedTask;
-        return (StatusCodes.NotImplemented, null);
+        _logger.LogDebug("Delegating authority from {SovereignId} to {TargetId} for domains {Domains}",
+            body.SovereignFactionId, body.TargetFactionId, string.Join(", ", body.Domains));
+
+        var lockOwner = $"delegate-authority-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
+            resourceId: $"faction:{body.TargetFactionId}",
+            lockOwner,
+            expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken: ct);
+        if (!lockResponse.Success) return (StatusCodes.Conflict, null);
+
+        var sovereign = await _factionStore.GetAsync(BuildFactionKey(body.SovereignFactionId), ct);
+        if (sovereign == null) return (StatusCodes.NotFound, null);
+        if (sovereign.AuthorityLevel != AuthorityLevel.Sovereign)
+            return (StatusCodes.BadRequest, null);
+
+        var target = await _factionStore.GetAsync(BuildFactionKey(body.TargetFactionId), ct);
+        if (target == null) return (StatusCodes.NotFound, null);
+
+        // Validate target is a descendant of sovereign
+        bool isDescendant = false;
+        var current = target;
+        int depth = 0;
+        while (current.ParentFactionId.HasValue && depth < _configuration.MaxHierarchyDepth)
+        {
+            if (current.ParentFactionId.Value == body.SovereignFactionId)
+            {
+                isDescendant = true;
+                break;
+            }
+            current = await _factionStore.GetAsync(BuildFactionKey(current.ParentFactionId.Value), ct);
+            if (current == null) break;
+            depth++;
+        }
+        if (!isDescendant) return (StatusCodes.BadRequest, null);
+
+        var changedFields = new List<string>();
+        if (target.AuthorityLevel != AuthorityLevel.Delegated)
+        {
+            target.AuthorityLevel = AuthorityLevel.Delegated;
+            changedFields.Add("authorityLevel");
+        }
+        target.UpdatedAt = DateTimeOffset.UtcNow;
+        await _factionStore.SaveAsync(BuildFactionKey(target.FactionId), target, cancellationToken: ct);
+        await _factionStore.SaveAsync(BuildFactionCodeKey(target.GameServiceId, target.Code), target, cancellationToken: ct);
+
+        if (changedFields.Count > 0)
+            await PublishUpdatedEventAsync(target, changedFields, ct);
+
+        var evt = new FactionAuthorityDelegatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SovereignFactionId = body.SovereignFactionId,
+            TargetFactionId = body.TargetFactionId,
+            Domains = body.Domains.ToList(),
+        };
+        await _messageBus.PublishFactionAuthorityDelegatedAsync(evt, ct);
+
+        _logger.LogInformation("Delegated authority from {SovereignId} to {TargetId} for {DomainCount} domains",
+            body.SovereignFactionId, body.TargetFactionId, body.Domains.Count);
+        return (StatusCodes.OK, MapToResponse(target));
     }
 
     /// <summary>Revokes delegated authority from a child faction.</summary>
     public async Task<(StatusCodes, FactionResponse?)> RevokeAuthorityAsync(
         RevokeAuthorityRequest body, CancellationToken ct = default)
     {
-        _logger.LogWarning("RevokeAuthority is not yet implemented (schema-only, #601)");
-        await Task.CompletedTask;
-        return (StatusCodes.NotImplemented, null);
+        _logger.LogDebug("Revoking authority from {SovereignId} targeting {TargetId}",
+            body.SovereignFactionId, body.TargetFactionId);
+
+        var lockOwner = $"revoke-authority-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
+            resourceId: $"faction:{body.TargetFactionId}",
+            lockOwner,
+            expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken: ct);
+        if (!lockResponse.Success) return (StatusCodes.Conflict, null);
+
+        var sovereign = await _factionStore.GetAsync(BuildFactionKey(body.SovereignFactionId), ct);
+        if (sovereign == null) return (StatusCodes.NotFound, null);
+
+        var target = await _factionStore.GetAsync(BuildFactionKey(body.TargetFactionId), ct);
+        if (target == null) return (StatusCodes.NotFound, null);
+        if (target.AuthorityLevel != AuthorityLevel.Delegated)
+            return (StatusCodes.BadRequest, null);
+
+        // If specific domains are revoked, remove governance entries for those domains
+        List<string>? revokedDomains = null;
+        if (body.Domains != null && body.Domains.Count > 0)
+        {
+            revokedDomains = new List<string>();
+            foreach (var domain in body.Domains)
+            {
+                var domainKey = BuildFactionGovernanceDomainKey(body.TargetFactionId, domain);
+                var entry = await _governanceStore.GetAsync(domainKey, ct);
+                if (entry != null)
+                {
+                    await _governanceStore.DeleteAsync(BuildGovernanceKey(entry.GovernanceId), ct);
+                    await _governanceStore.DeleteAsync(domainKey, ct);
+
+                    var govList = await _governanceListStore.GetAsync(BuildFactionGovernanceKey(body.TargetFactionId), ct);
+                    if (govList != null)
+                    {
+                        govList.GovernanceIds.Remove(entry.GovernanceId);
+                        await _governanceListStore.SaveAsync(BuildFactionGovernanceKey(body.TargetFactionId), govList, cancellationToken: ct);
+                    }
+                    revokedDomains.Add(domain);
+                }
+            }
+        }
+
+        // If all domains revoked (null = blanket revocation) or no governance entries remain, revert to Influence
+        var changedFields = new List<string>();
+        bool shouldRevertToInfluence = body.Domains == null;
+        if (!shouldRevertToInfluence)
+        {
+            var remainingGovList = await _governanceListStore.GetAsync(BuildFactionGovernanceKey(body.TargetFactionId), ct);
+            shouldRevertToInfluence = remainingGovList == null || remainingGovList.GovernanceIds.Count == 0;
+        }
+
+        AuthorityLevel resultingLevel = target.AuthorityLevel;
+        if (shouldRevertToInfluence)
+        {
+            target.AuthorityLevel = AuthorityLevel.Influence;
+            changedFields.Add("authorityLevel");
+            resultingLevel = AuthorityLevel.Influence;
+
+            // Blanket revocation — remove all governance entries
+            if (body.Domains == null)
+            {
+                var govList = await _governanceListStore.GetAsync(BuildFactionGovernanceKey(body.TargetFactionId), ct);
+                if (govList != null)
+                {
+                    foreach (var govId in govList.GovernanceIds.ToList())
+                    {
+                        try
+                        {
+                            var entry = await _governanceStore.GetAsync(BuildGovernanceKey(govId), ct);
+                            if (entry != null)
+                                await _governanceStore.DeleteAsync(BuildFactionGovernanceDomainKey(body.TargetFactionId, entry.Domain), ct);
+                            await _governanceStore.DeleteAsync(BuildGovernanceKey(govId), ct);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to delete governance entry {GovernanceId} during blanket revocation for faction {FactionId}, continuing",
+                                govId, body.TargetFactionId);
+                        }
+                    }
+                    govList.GovernanceIds.Clear();
+                    await _governanceListStore.SaveAsync(BuildFactionGovernanceKey(body.TargetFactionId), govList, cancellationToken: ct);
+                }
+            }
+        }
+
+        target.UpdatedAt = DateTimeOffset.UtcNow;
+        await _factionStore.SaveAsync(BuildFactionKey(target.FactionId), target, cancellationToken: ct);
+        await _factionStore.SaveAsync(BuildFactionCodeKey(target.GameServiceId, target.Code), target, cancellationToken: ct);
+
+        if (changedFields.Count > 0)
+            await PublishUpdatedEventAsync(target, changedFields, ct);
+
+        var evt = new FactionAuthorityRevokedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SovereignFactionId = body.SovereignFactionId,
+            TargetFactionId = body.TargetFactionId,
+            RevokedDomains = revokedDomains,
+            ResultingAuthorityLevel = resultingLevel,
+        };
+        await _messageBus.PublishFactionAuthorityRevokedAsync(evt, ct);
+
+        _logger.LogInformation("Revoked authority from {TargetId}, resulting level: {Level}",
+            body.TargetFactionId, resultingLevel);
+        return (StatusCodes.OK, MapToResponse(target));
     }
 
     #endregion

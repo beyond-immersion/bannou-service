@@ -1,0 +1,157 @@
+openapi: 3.0.4
+info:
+  title: Localization Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for localization service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: localization-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    LocalizationCategoryCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to localization.category.created when a localizationcategory is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - categoryId
+      - code
+      - description
+      - isSchemaDefinition
+      - validationMode
+      - defaultLanguage
+      - entryCount
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: localization.category.created
+          description: 'Event type identifier: localization.category.created'
+        categoryId: &id001
+          type: string
+          format: uuid
+          description: "Unique category identifier"
+        code: &id002
+          type: string
+          description: "Machine-readable category code"
+        description: &id003
+          type: string
+          description: "Human-readable category description"
+        isSchemaDefinition: &id004
+          type: boolean
+          description: "Whether this category was seeded from localization-categories.yaml"
+        validationMode: &id005
+          $ref: ../localization-api.yaml#/components/schemas/ValidationMode
+          description: "How ILocalizationKeyValidator behaves for this category"
+        defaultLanguage: &id006
+          type: string
+          description: "Fallback language (BCP 47 tag)"
+        entryCount: &id007
+          type: integer
+          description: "Number of translation entries in this category"
+        lastEntryUpdateLanguage: &id008
+          type: string
+          nullable: true
+          description: "Language of most recent entry mutation (null if no entries)"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the localization category was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the localization category was last updated (set to createdAt on creation)
+    LocalizationCategoryUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to localization.category.updated when a localizationcategory is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - categoryId
+      - code
+      - description
+      - isSchemaDefinition
+      - validationMode
+      - defaultLanguage
+      - entryCount
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: localization.category.updated
+          description: 'Event type identifier: localization.category.updated'
+        categoryId: *id001
+        code: *id002
+        description: *id003
+        isSchemaDefinition: *id004
+        validationMode: *id005
+        defaultLanguage: *id006
+        entryCount: *id007
+        lastEntryUpdateLanguage: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the localization category was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the localization category was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    LocalizationCategoryDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to localization.category.deleted when a localizationcategory is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - categoryId
+      - code
+      - description
+      - isSchemaDefinition
+      - validationMode
+      - defaultLanguage
+      - entryCount
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: localization.category.deleted
+          description: 'Event type identifier: localization.category.deleted'
+        categoryId: *id001
+        code: *id002
+        description: *id003
+        isSchemaDefinition: *id004
+        validationMode: *id005
+        defaultLanguage: *id006
+        entryCount: *id007
+        lastEntryUpdateLanguage: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the localization category was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the localization category was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

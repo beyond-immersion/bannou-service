@@ -124,7 +124,7 @@ Schema-first applies to **HTTP APIs and service contracts**. Some components are
 
 ## Tenet 2: Service Hierarchy (INVIOLABLE)
 
-**Services are organized into layers (L0-L5). Dependencies may only flow downward.** The Service Registry in `GENERATED-COMPOSITION-REFERENCE.md` shows every service's layer. Before adding ANY service client dependency, read [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md).
+**Services are organized into layers (L0-L5). Dependencies may only flow downward.** The Service Registry in `generated/GENERATED-COMPOSITION-REFERENCE.md` shows every service's layer. Before adding ANY service client dependency, read [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md).
 
 > **A service may ONLY depend on services in its own layer or lower layers. Dependencies on higher layers are FORBIDDEN.**
 

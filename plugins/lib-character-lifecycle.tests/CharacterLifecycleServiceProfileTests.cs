@@ -1,10 +1,19 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterLifecycle;
+using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Currency;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.TestUtilities;
+using BeyondImmersion.BannouService.Worldstate;
 
 namespace BeyondImmersion.BannouService.CharacterLifecycle.Tests;
 
@@ -14,36 +23,147 @@ namespace BeyondImmersion.BannouService.CharacterLifecycle.Tests;
 /// </summary>
 public class CharacterLifecycleServiceProfileTests
 {
-    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
-    private readonly Mock<IMessageBus> _mockMessageBus;
-    private readonly Mock<IResourceClient> _mockResourceClient;
     private readonly Mock<ILogger<CharacterLifecycleService>> _mockLogger;
     private readonly CharacterLifecycleServiceConfiguration _configuration;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<ICharacterClient> _mockCharacterClient;
+    private readonly Mock<IRelationshipClient> _mockRelationshipClient;
+    private readonly Mock<ISpeciesClient> _mockSpeciesClient;
+    private readonly Mock<IWorldstateClient> _mockWorldstateClient;
+    private readonly Mock<IContractClient> _mockContractClient;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ISeedClient> _mockSeedClient;
+    private readonly Mock<IGameServiceClient> _mockGameServiceClient;
+    private readonly Mock<IInventoryClient> _mockInventoryClient;
+    private readonly Mock<ICurrencyClient> _mockCurrencyClient;
+    private readonly Mock<IServiceProvider> _mockServiceProvider;
+
+    // Constructor-cached store mocks matching service constructor types
+    private readonly Mock<IStateStore<LifecycleProfileModel>> _mockProfileStore;
+    private readonly Mock<IStateStore<object>> _mockHeritageStore;
+    private readonly Mock<IStateStore<object>> _mockBloodlineStore;
+    private readonly Mock<IStateStore<object>> _mockCacheStore;
 
     private const string PROFILES_STORE = "character-lifecycle-profiles";
     private const string HERITAGE_STORE = "character-lifecycle-heritage";
+    private const string BLOODLINES_STORE = "character-lifecycle-bloodlines";
     private const string CACHE_STORE = "character-lifecycle-cache";
 
     public CharacterLifecycleServiceProfileTests()
     {
-        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
-        _mockMessageBus = new Mock<IMessageBus>();
-        _mockResourceClient = new Mock<IResourceClient>();
         _mockLogger = new Mock<ILogger<CharacterLifecycleService>>();
         _configuration = new CharacterLifecycleServiceConfiguration();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockCharacterClient = new Mock<ICharacterClient>();
+        _mockRelationshipClient = new Mock<IRelationshipClient>();
+        _mockSpeciesClient = new Mock<ISpeciesClient>();
+        _mockWorldstateClient = new Mock<IWorldstateClient>();
+        _mockContractClient = new Mock<IContractClient>();
+        _mockResourceClient = new Mock<IResourceClient>();
+        _mockSeedClient = new Mock<ISeedClient>();
+        _mockGameServiceClient = new Mock<IGameServiceClient>();
+        _mockInventoryClient = new Mock<IInventoryClient>();
+        _mockCurrencyClient = new Mock<ICurrencyClient>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
+
+        // Constructor-cached store mocks
+        _mockProfileStore = new Mock<IStateStore<LifecycleProfileModel>>();
+        _mockHeritageStore = new Mock<IStateStore<object>>();
+        _mockBloodlineStore = new Mock<IStateStore<object>>();
+        _mockCacheStore = new Mock<IStateStore<object>>();
+
+        // Wire state store factory to return typed stores (constructor-cached)
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<LifecycleProfileModel>(PROFILES_STORE))
+            .Returns(_mockProfileStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<object>(HERITAGE_STORE))
+            .Returns(_mockHeritageStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<object>(BLOODLINES_STORE))
+            .Returns(_mockBloodlineStore.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<object>(CACHE_STORE))
+            .Returns(_mockCacheStore.Object);
+
+        // Default lock provider behavior - always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(r => r.Success).Returns(true);
+        mockLockResponse.Setup(r => r.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+
+        // Default message bus behavior
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
     }
 
     /// <summary>
-    /// Creates the service under test with default mocked dependencies.
+    /// Creates the service under test with the full 19-parameter constructor.
     /// </summary>
     private CharacterLifecycleService CreateService()
     {
         return new CharacterLifecycleService(
-            _mockMessageBus.Object,
-            _mockStateStoreFactory.Object,
-            _mockResourceClient.Object,
             _mockLogger.Object,
-            _configuration);
+            _configuration,
+            _mockStateStoreFactory.Object,
+            _mockLockProvider.Object,
+            _mockMessageBus.Object,
+            _mockEventConsumer.Object,
+            _mockTelemetryProvider.Object,
+            _mockCharacterClient.Object,
+            _mockRelationshipClient.Object,
+            _mockSpeciesClient.Object,
+            _mockWorldstateClient.Object,
+            _mockContractClient.Object,
+            _mockResourceClient.Object,
+            _mockSeedClient.Object,
+            _mockGameServiceClient.Object,
+            _mockInventoryClient.Object,
+            _mockCurrencyClient.Object,
+            _mockServiceProvider.Object);
+    }
+
+    /// <summary>
+    /// Creates a test lifecycle profile model with sensible defaults.
+    /// </summary>
+    private static LifecycleProfileModel CreateTestProfile(
+        Guid characterId,
+        Guid? gameServiceId = null,
+        Guid? realmId = null,
+        string speciesCode = "human",
+        int birthGameYear = 100,
+        int currentAge = 25,
+        string currentStage = "adult",
+        LifecycleStatus status = LifecycleStatus.Alive)
+    {
+        return new LifecycleProfileModel
+        {
+            CharacterId = characterId,
+            GameServiceId = gameServiceId ?? Guid.NewGuid(),
+            RealmId = realmId ?? Guid.NewGuid(),
+            SpeciesCode = speciesCode,
+            BirthGameYear = birthGameYear,
+            CurrentAge = currentAge,
+            CurrentStage = currentStage,
+            CauseOfCreation = CreationCause.Seeded,
+            ChildCount = 0,
+            TotalChildCount = 0,
+            FertilityModifier = 1.0f,
+            HealthModifier = 1.0f,
+            Status = status,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
     }
 
     #region GetLifecycleProfile
@@ -53,30 +173,11 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockProfileStore = new Mock<IStateStore<LifecycleProfileSummary>>();
-        var storedProfile = new LifecycleProfileSummary
-        {
-            CharacterId = characterId,
-            GameServiceId = Guid.NewGuid(),
-            RealmId = Guid.NewGuid(),
-            SpeciesCode = "human",
-            BirthGameYear = 100,
-            CurrentAge = 25,
-            CurrentStage = "adult",
-            CauseOfCreation = CreationCause.Seeded,
-            ChildCount = 0,
-            TotalChildCount = 0,
-            FertilityModifier = 1.0f,
-            HealthModifier = 1.0f,
-            Status = LifecycleStatus.Alive
-        };
+        var storedProfile = CreateTestProfile(characterId);
 
-        mockProfileStore.Setup(s => s.GetAsync(
+        _mockProfileStore.Setup(s => s.GetAsync(
                 $"profile:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(storedProfile);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileSummary>(PROFILES_STORE))
-            .Returns(mockProfileStore.Object);
 
         var service = CreateService();
 
@@ -98,13 +199,9 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockProfileStore = new Mock<IStateStore<LifecycleProfileSummary>>();
-        mockProfileStore.Setup(s => s.GetAsync(
+        _mockProfileStore.Setup(s => s.GetAsync(
                 $"profile:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((LifecycleProfileSummary?)null);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileSummary>(PROFILES_STORE))
-            .Returns(mockProfileStore.Object);
+            .ReturnsAsync((LifecycleProfileModel?)null);
 
         var service = CreateService();
 
@@ -127,52 +224,27 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockProfileStore = new Mock<IStateStore<LifecycleProfileSummary>>();
-        var mockCacheStore = new Mock<IStateStore<object>>();
+        var existingProfile = CreateTestProfile(characterId);
+        existingProfile.NaturalDeathYear = 180;
 
-        var existingProfile = new LifecycleProfileSummary
-        {
-            CharacterId = characterId,
-            GameServiceId = Guid.NewGuid(),
-            RealmId = Guid.NewGuid(),
-            SpeciesCode = "human",
-            BirthGameYear = 100,
-            CurrentAge = 25,
-            CurrentStage = "adult",
-            CauseOfCreation = CreationCause.Seeded,
-            ChildCount = 0,
-            TotalChildCount = 0,
-            FertilityModifier = 1.0f,
-            HealthModifier = 1.0f,
-            Status = LifecycleStatus.Alive,
-            NaturalDeathYear = 180
-        };
-
-        mockProfileStore.Setup(s => s.GetWithETagAsync(
+        _mockProfileStore.Setup(s => s.GetWithETagAsync(
                 $"profile:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingProfile, "etag-1"));
 
         // Capture saved profile
-        LifecycleProfileSummary? savedProfile = null;
-        mockProfileStore.Setup(s => s.TrySaveAsync(
-                $"profile:{characterId}", It.IsAny<LifecycleProfileSummary>(),
+        LifecycleProfileModel? savedProfile = null;
+        _mockProfileStore.Setup(s => s.TrySaveAsync(
+                $"profile:{characterId}", It.IsAny<LifecycleProfileModel>(),
                 "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, LifecycleProfileSummary, string, StateOptions?, CancellationToken>((_, m, _, _, _) => savedProfile = m)
+            .Callback<string, LifecycleProfileModel, string, StateOptions?, CancellationToken>((_, m, _, _, _) => savedProfile = m)
             .ReturnsAsync("etag-2");
 
         // Capture cache deletion
         string? deletedCacheKey = null;
-        mockCacheStore.Setup(s => s.DeleteAsync(
+        _mockCacheStore.Setup(s => s.DeleteAsync(
                 It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Callback<string, CancellationToken>((k, _) => deletedCacheKey = k)
             .ReturnsAsync(true);
-
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileSummary>(PROFILES_STORE))
-            .Returns(mockProfileStore.Object);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<object>(CACHE_STORE))
-            .Returns(mockCacheStore.Object);
 
         var service = CreateService();
 
@@ -194,13 +266,9 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockProfileStore = new Mock<IStateStore<LifecycleProfileSummary>>();
-        mockProfileStore.Setup(s => s.GetWithETagAsync(
+        _mockProfileStore.Setup(s => s.GetWithETagAsync(
                 $"profile:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(((LifecycleProfileSummary?)null, (string?)null));
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileSummary>(PROFILES_STORE))
-            .Returns(mockProfileStore.Object);
+            .ReturnsAsync(((LifecycleProfileModel?)null, (string?)null));
 
         var service = CreateService();
 
@@ -219,34 +287,15 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockProfileStore = new Mock<IStateStore<LifecycleProfileSummary>>();
-        var existingProfile = new LifecycleProfileSummary
-        {
-            CharacterId = characterId,
-            GameServiceId = Guid.NewGuid(),
-            RealmId = Guid.NewGuid(),
-            SpeciesCode = "human",
-            BirthGameYear = 100,
-            CurrentAge = 25,
-            CurrentStage = "adult",
-            CauseOfCreation = CreationCause.Seeded,
-            ChildCount = 0,
-            TotalChildCount = 0,
-            FertilityModifier = 1.0f,
-            HealthModifier = 1.0f,
-            Status = LifecycleStatus.Alive
-        };
+        var existingProfile = CreateTestProfile(characterId);
 
-        mockProfileStore.Setup(s => s.GetWithETagAsync(
+        _mockProfileStore.Setup(s => s.GetWithETagAsync(
                 $"profile:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingProfile, "etag-1"));
-        mockProfileStore.Setup(s => s.TrySaveAsync(
-                $"profile:{characterId}", It.IsAny<LifecycleProfileSummary>(),
+        _mockProfileStore.Setup(s => s.TrySaveAsync(
+                $"profile:{characterId}", It.IsAny<LifecycleProfileModel>(),
                 "etag-1", It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileSummary>(PROFILES_STORE))
-            .Returns(mockProfileStore.Object);
 
         var service = CreateService();
 
@@ -273,23 +322,18 @@ public class CharacterLifecycleServiceProfileTests
         var gameServiceId = Guid.NewGuid();
         var realmId = Guid.NewGuid();
 
-        var mockProfileStore = new Mock<IStateStore<LifecycleProfileSummary>>();
         // Neither profile exists
-        mockProfileStore.Setup(s => s.GetAsync(
+        _mockProfileStore.Setup(s => s.GetAsync(
                 It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((LifecycleProfileSummary?)null);
+            .ReturnsAsync((LifecycleProfileModel?)null);
 
         // Capture saves
         var savedKeys = new List<string>();
-        mockProfileStore.Setup(s => s.SaveAsync(
-                It.IsAny<string>(), It.IsAny<LifecycleProfileSummary>(),
+        _mockProfileStore.Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<LifecycleProfileModel>(),
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, LifecycleProfileSummary, StateOptions?, CancellationToken>((k, _, _, _) => savedKeys.Add(k))
+            .Callback<string, LifecycleProfileModel, StateOptions?, CancellationToken>((k, _, _, _) => savedKeys.Add(k))
             .ReturnsAsync("etag-new");
-
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileSummary>(PROFILES_STORE))
-            .Returns(mockProfileStore.Object);
 
         var service = CreateService();
         var request = new SeedLifecycleProfileRequest
@@ -329,42 +373,21 @@ public class CharacterLifecycleServiceProfileTests
         var gameServiceId = Guid.NewGuid();
         var realmId = Guid.NewGuid();
 
-        var mockProfileStore = new Mock<IStateStore<LifecycleProfileSummary>>();
-
         // Existing character already has a profile
-        mockProfileStore.Setup(s => s.GetAsync(
+        _mockProfileStore.Setup(s => s.GetAsync(
                 $"profile:{existingCharId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new LifecycleProfileSummary
-            {
-                CharacterId = existingCharId,
-                GameServiceId = gameServiceId,
-                RealmId = realmId,
-                SpeciesCode = "human",
-                BirthGameYear = 100,
-                CurrentAge = 20,
-                CurrentStage = "adult",
-                CauseOfCreation = CreationCause.Seeded,
-                ChildCount = 0,
-                TotalChildCount = 0,
-                FertilityModifier = 1.0f,
-                HealthModifier = 1.0f,
-                Status = LifecycleStatus.Alive
-            });
+            .ReturnsAsync(CreateTestProfile(existingCharId, gameServiceId, realmId));
         // New character does not
-        mockProfileStore.Setup(s => s.GetAsync(
+        _mockProfileStore.Setup(s => s.GetAsync(
                 $"profile:{newCharId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((LifecycleProfileSummary?)null);
+            .ReturnsAsync((LifecycleProfileModel?)null);
 
         var savedKeys = new List<string>();
-        mockProfileStore.Setup(s => s.SaveAsync(
-                It.IsAny<string>(), It.IsAny<LifecycleProfileSummary>(),
+        _mockProfileStore.Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<LifecycleProfileModel>(),
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, LifecycleProfileSummary, StateOptions?, CancellationToken>((k, _, _, _) => savedKeys.Add(k))
+            .Callback<string, LifecycleProfileModel, StateOptions?, CancellationToken>((k, _, _, _) => savedKeys.Add(k))
             .ReturnsAsync("etag-new");
-
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileSummary>(PROFILES_STORE))
-            .Returns(mockProfileStore.Object);
 
         var service = CreateService();
         var request = new SeedLifecycleProfileRequest
@@ -404,26 +427,22 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockHeritageStore = new Mock<IStateStore<GetGeneticProfileResponse>>();
-
-        var geneticProfile = new GetGeneticProfileResponse
+        var geneticProfile = new GeneticProfileModel
         {
             CharacterId = characterId,
             SpeciesCode = "human",
             GenerationDepth = 0,
-            Genotype = new[] { new GenotypeEntry { TraitCode = "height", AlleleA = 0.7f, AlleleB = 0.5f, Dominance = DominanceModel.Blending } },
-            Phenotype = new[] { new PhenotypeEntry { TraitCode = "height", Value = 0.6f, ExpressionRule = DominanceModel.Blending } },
-            Aptitudes = new[] { new AptitudeEntry { Domain = "strength", Value = 0.8f } },
-            Bloodlines = Array.Empty<BloodlineEntry>(),
-            Mutations = Array.Empty<MutationEntry>()
+            Genotype = new List<GenotypeEntry> { new() { TraitCode = "height", AlleleA = 0.7f, AlleleB = 0.5f, Dominance = DominanceModel.Blending } },
+            Phenotype = new List<PhenotypeEntry> { new() { TraitCode = "height", Value = 0.6f, ExpressionRule = DominanceModel.Blending } },
+            Aptitudes = new List<AptitudeEntry> { new() { Domain = "strength", Value = 0.8f } },
+            Bloodlines = new List<BloodlineEntry>(),
+            Mutations = new List<MutationEntry>(),
+            CreatedAt = DateTimeOffset.UtcNow
         };
 
-        mockHeritageStore.Setup(s => s.GetAsync(
+        _mockHeritageStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(geneticProfile);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetGeneticProfileResponse>(HERITAGE_STORE))
-            .Returns(mockHeritageStore.Object);
 
         var service = CreateService();
 
@@ -444,13 +463,9 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockHeritageStore = new Mock<IStateStore<GetGeneticProfileResponse>>();
-        mockHeritageStore.Setup(s => s.GetAsync(
+        _mockHeritageStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GetGeneticProfileResponse?)null);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetGeneticProfileResponse>(HERITAGE_STORE))
-            .Returns(mockHeritageStore.Object);
+            .ReturnsAsync((object?)null);
 
         var service = CreateService();
 
@@ -473,26 +488,22 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockHeritageStore = new Mock<IStateStore<GetGeneticProfileResponse>>();
-
-        var geneticProfile = new GetGeneticProfileResponse
+        var geneticProfile = new GeneticProfileModel
         {
             CharacterId = characterId,
             SpeciesCode = "elf",
             GenerationDepth = 1,
-            Genotype = new[] { new GenotypeEntry { TraitCode = "height", AlleleA = 0.9f, AlleleB = 0.8f, Dominance = DominanceModel.DominantHigh } },
-            Phenotype = new[] { new PhenotypeEntry { TraitCode = "height", Value = 0.9f, ExpressionRule = DominanceModel.DominantHigh } },
-            Aptitudes = new[] { new AptitudeEntry { Domain = "magic", Value = 0.95f } },
-            Bloodlines = Array.Empty<BloodlineEntry>(),
-            Mutations = Array.Empty<MutationEntry>()
+            Genotype = new List<GenotypeEntry> { new() { TraitCode = "height", AlleleA = 0.9f, AlleleB = 0.8f, Dominance = DominanceModel.DominantHigh } },
+            Phenotype = new List<PhenotypeEntry> { new() { TraitCode = "height", Value = 0.9f, ExpressionRule = DominanceModel.DominantHigh } },
+            Aptitudes = new List<AptitudeEntry> { new() { Domain = "magic", Value = 0.95f } },
+            Bloodlines = new List<BloodlineEntry>(),
+            Mutations = new List<MutationEntry>(),
+            CreatedAt = DateTimeOffset.UtcNow
         };
 
-        mockHeritageStore.Setup(s => s.GetAsync(
+        _mockHeritageStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(geneticProfile);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetGeneticProfileResponse>(HERITAGE_STORE))
-            .Returns(mockHeritageStore.Object);
 
         var service = CreateService();
 
@@ -514,13 +525,9 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockHeritageStore = new Mock<IStateStore<GetGeneticProfileResponse>>();
-        mockHeritageStore.Setup(s => s.GetAsync(
+        _mockHeritageStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GetGeneticProfileResponse?)null);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetGeneticProfileResponse>(HERITAGE_STORE))
-            .Returns(mockHeritageStore.Object);
+            .ReturnsAsync((object?)null);
 
         var service = CreateService();
 
@@ -539,51 +546,51 @@ public class CharacterLifecycleServiceProfileTests
     #region SeedGeneticProfile
 
     [Fact]
-    public async Task SeedGeneticProfile_NoExistingProfile_CreatesProfile()
+    public async Task SeedGeneticProfile_NoExistingProfile_CreatesProfileAndDeletesCache()
     {
         // Arrange
         var characterId = Guid.NewGuid();
         var gameServiceId = Guid.NewGuid();
-        var mockHeritageStore = new Mock<IStateStore<GetGeneticProfileResponse>>();
-        var mockCacheStore = new Mock<IStateStore<object>>();
 
         // No existing genetic profile
-        mockHeritageStore.Setup(s => s.GetAsync(
+        _mockHeritageStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GetGeneticProfileResponse?)null);
+            .ReturnsAsync((object?)null);
 
         // Trait template exists
-        var mockTraitTemplateStore = new Mock<IStateStore<GetHeritableTraitTemplateResponse>>();
-        mockTraitTemplateStore.Setup(s => s.GetAsync(
-                $"trait-template:human:{gameServiceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GetHeritableTraitTemplateResponse
+        var traitTemplate = new HeritableTraitTemplateModel
+        {
+            SpeciesCode = "human",
+            GameServiceId = gameServiceId,
+            Traits = new List<HeritableTraitDefinition>
             {
-                SpeciesCode = "human",
-                GameServiceId = gameServiceId,
-                Traits = new[] { new HeritableTraitDefinition
+                new()
                 {
                     TraitCode = "height", DisplayName = "Height", Category = "physical",
                     DominanceModel = DominanceModel.Blending, MutationChance = 0.05f, MutationRange = 0.1f
-                }}
-            });
+                }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        _mockHeritageStore.Setup(s => s.GetAsync(
+                $"trait-template:human:{gameServiceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(traitTemplate);
 
         // Capture save
-        GetGeneticProfileResponse? savedProfile = null;
-        mockHeritageStore.Setup(s => s.SaveAsync(
-                $"genetic:{characterId}", It.IsAny<GetGeneticProfileResponse>(),
+        object? savedProfile = null;
+        string? savedKey = null;
+        _mockHeritageStore.Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith("genetic:")), It.IsAny<object>(),
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, GetGeneticProfileResponse, StateOptions?, CancellationToken>((_, m, _, _) => savedProfile = m)
+            .Callback<string, object, StateOptions?, CancellationToken>((k, m, _, _) => { savedKey = k; savedProfile = m; })
             .ReturnsAsync("etag-new");
 
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetGeneticProfileResponse>(HERITAGE_STORE))
-            .Returns(mockHeritageStore.Object);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetHeritableTraitTemplateResponse>(HERITAGE_STORE))
-            .Returns(mockTraitTemplateStore.Object);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<object>(CACHE_STORE))
-            .Returns(mockCacheStore.Object);
+        // Capture cache deletion
+        string? deletedCacheKey = null;
+        _mockCacheStore.Setup(s => s.DeleteAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CancellationToken>((k, _) => deletedCacheKey = k)
+            .ReturnsAsync(true);
 
         var service = CreateService();
 
@@ -596,8 +603,8 @@ public class CharacterLifecycleServiceProfileTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.NotNull(savedProfile);
-        Assert.Equal(characterId, savedProfile.CharacterId);
-        Assert.Equal("human", savedProfile.SpeciesCode);
+        Assert.Equal($"genetic:{characterId}", savedKey);
+        Assert.Equal($"manifest:{characterId}", deletedCacheKey);
     }
 
     [Fact]
@@ -605,23 +612,21 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockHeritageStore = new Mock<IStateStore<GetGeneticProfileResponse>>();
-        mockHeritageStore.Setup(s => s.GetAsync(
+        var existingGenetic = new GeneticProfileModel
+        {
+            CharacterId = characterId,
+            SpeciesCode = "human",
+            GenerationDepth = 0,
+            Genotype = new List<GenotypeEntry>(),
+            Phenotype = new List<PhenotypeEntry>(),
+            Aptitudes = new List<AptitudeEntry>(),
+            Bloodlines = new List<BloodlineEntry>(),
+            Mutations = new List<MutationEntry>(),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        _mockHeritageStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GetGeneticProfileResponse
-            {
-                CharacterId = characterId,
-                SpeciesCode = "human",
-                GenerationDepth = 0,
-                Genotype = Array.Empty<GenotypeEntry>(),
-                Phenotype = Array.Empty<PhenotypeEntry>(),
-                Aptitudes = Array.Empty<AptitudeEntry>(),
-                Bloodlines = Array.Empty<BloodlineEntry>(),
-                Mutations = Array.Empty<MutationEntry>()
-            });
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetGeneticProfileResponse>(HERITAGE_STORE))
-            .Returns(mockHeritageStore.Object);
+            .ReturnsAsync(existingGenetic);
 
         var service = CreateService();
 
@@ -641,22 +646,13 @@ public class CharacterLifecycleServiceProfileTests
         // Arrange
         var characterId = Guid.NewGuid();
         var gameServiceId = Guid.NewGuid();
-        var mockHeritageStore = new Mock<IStateStore<GetGeneticProfileResponse>>();
-        var mockTraitTemplateStore = new Mock<IStateStore<GetHeritableTraitTemplateResponse>>();
 
-        mockHeritageStore.Setup(s => s.GetAsync(
+        _mockHeritageStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GetGeneticProfileResponse?)null);
-        mockTraitTemplateStore.Setup(s => s.GetAsync(
+            .ReturnsAsync((object?)null);
+        _mockHeritageStore.Setup(s => s.GetAsync(
                 $"trait-template:human:{gameServiceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GetHeritableTraitTemplateResponse?)null);
-
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetGeneticProfileResponse>(HERITAGE_STORE))
-            .Returns(mockHeritageStore.Object);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetHeritableTraitTemplateResponse>(HERITAGE_STORE))
-            .Returns(mockTraitTemplateStore.Object);
+            .ReturnsAsync((object?)null);
 
         var service = CreateService();
 
@@ -680,38 +676,36 @@ public class CharacterLifecycleServiceProfileTests
         // Arrange
         var parentAId = Guid.NewGuid();
         var parentBId = Guid.NewGuid();
-        var mockHeritageStore = new Mock<IStateStore<GetGeneticProfileResponse>>();
 
-        var parentAProfile = new GetGeneticProfileResponse
+        var parentAProfile = new GeneticProfileModel
         {
             CharacterId = parentAId,
             SpeciesCode = "human",
             GenerationDepth = 0,
-            Genotype = new[] { new GenotypeEntry { TraitCode = "height", AlleleA = 0.8f, AlleleB = 0.6f, Dominance = DominanceModel.Blending } },
-            Phenotype = new[] { new PhenotypeEntry { TraitCode = "height", Value = 0.7f, ExpressionRule = DominanceModel.Blending } },
-            Aptitudes = new[] { new AptitudeEntry { Domain = "strength", Value = 0.9f } },
-            Bloodlines = Array.Empty<BloodlineEntry>(),
-            Mutations = Array.Empty<MutationEntry>()
+            Genotype = new List<GenotypeEntry> { new() { TraitCode = "height", AlleleA = 0.8f, AlleleB = 0.6f, Dominance = DominanceModel.Blending } },
+            Phenotype = new List<PhenotypeEntry> { new() { TraitCode = "height", Value = 0.7f, ExpressionRule = DominanceModel.Blending } },
+            Aptitudes = new List<AptitudeEntry> { new() { Domain = "strength", Value = 0.9f } },
+            Bloodlines = new List<BloodlineEntry>(),
+            Mutations = new List<MutationEntry>(),
+            CreatedAt = DateTimeOffset.UtcNow
         };
-        var parentBProfile = new GetGeneticProfileResponse
+        var parentBProfile = new GeneticProfileModel
         {
             CharacterId = parentBId,
             SpeciesCode = "human",
             GenerationDepth = 0,
-            Genotype = new[] { new GenotypeEntry { TraitCode = "height", AlleleA = 0.5f, AlleleB = 0.4f, Dominance = DominanceModel.Blending } },
-            Phenotype = new[] { new PhenotypeEntry { TraitCode = "height", Value = 0.45f, ExpressionRule = DominanceModel.Blending } },
-            Aptitudes = new[] { new AptitudeEntry { Domain = "strength", Value = 0.3f } },
-            Bloodlines = Array.Empty<BloodlineEntry>(),
-            Mutations = Array.Empty<MutationEntry>()
+            Genotype = new List<GenotypeEntry> { new() { TraitCode = "height", AlleleA = 0.5f, AlleleB = 0.4f, Dominance = DominanceModel.Blending } },
+            Phenotype = new List<PhenotypeEntry> { new() { TraitCode = "height", Value = 0.45f, ExpressionRule = DominanceModel.Blending } },
+            Aptitudes = new List<AptitudeEntry> { new() { Domain = "strength", Value = 0.3f } },
+            Bloodlines = new List<BloodlineEntry>(),
+            Mutations = new List<MutationEntry>(),
+            CreatedAt = DateTimeOffset.UtcNow
         };
 
-        mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
+        _mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentAProfile);
-        mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentBId}", It.IsAny<CancellationToken>()))
+        _mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentBId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentBProfile);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetGeneticProfileResponse>(HERITAGE_STORE))
-            .Returns(mockHeritageStore.Object);
 
         var service = CreateService();
 
@@ -733,13 +727,9 @@ public class CharacterLifecycleServiceProfileTests
         // Arrange
         var parentAId = Guid.NewGuid();
         var parentBId = Guid.NewGuid();
-        var mockHeritageStore = new Mock<IStateStore<GetGeneticProfileResponse>>();
 
-        mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GetGeneticProfileResponse?)null);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetGeneticProfileResponse>(HERITAGE_STORE))
-            .Returns(mockHeritageStore.Object);
+        _mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((object?)null);
 
         var service = CreateService();
 
@@ -759,25 +749,24 @@ public class CharacterLifecycleServiceProfileTests
         // Arrange
         var parentAId = Guid.NewGuid();
         var parentBId = Guid.NewGuid();
-        var mockHeritageStore = new Mock<IStateStore<GetGeneticProfileResponse>>();
 
-        mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GetGeneticProfileResponse
-            {
-                CharacterId = parentAId,
-                SpeciesCode = "human",
-                GenerationDepth = 0,
-                Genotype = Array.Empty<GenotypeEntry>(),
-                Phenotype = Array.Empty<PhenotypeEntry>(),
-                Aptitudes = Array.Empty<AptitudeEntry>(),
-                Bloodlines = Array.Empty<BloodlineEntry>(),
-                Mutations = Array.Empty<MutationEntry>()
-            });
-        mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentBId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GetGeneticProfileResponse?)null);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<GetGeneticProfileResponse>(HERITAGE_STORE))
-            .Returns(mockHeritageStore.Object);
+        var parentAProfile = new GeneticProfileModel
+        {
+            CharacterId = parentAId,
+            SpeciesCode = "human",
+            GenerationDepth = 0,
+            Genotype = new List<GenotypeEntry>(),
+            Phenotype = new List<PhenotypeEntry>(),
+            Aptitudes = new List<AptitudeEntry>(),
+            Bloodlines = new List<BloodlineEntry>(),
+            Mutations = new List<MutationEntry>(),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(parentAProfile);
+        _mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentBId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((object?)null);
 
         var service = CreateService();
 
@@ -800,30 +789,9 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockProfileStore = new Mock<IStateStore<LifecycleProfileSummary>>();
-
-        mockProfileStore.Setup(s => s.GetAsync(
+        _mockProfileStore.Setup(s => s.GetAsync(
                 $"profile:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new LifecycleProfileSummary
-            {
-                CharacterId = characterId,
-                GameServiceId = Guid.NewGuid(),
-                RealmId = Guid.NewGuid(),
-                SpeciesCode = "human",
-                BirthGameYear = 100,
-                CurrentAge = 25,
-                CurrentStage = "adult",
-                CauseOfCreation = CreationCause.Seeded,
-                ChildCount = 0,
-                TotalChildCount = 0,
-                FertilityModifier = 1.0f,
-                HealthModifier = 1.0f,
-                Status = LifecycleStatus.Alive
-            });
-
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileSummary>(PROFILES_STORE))
-            .Returns(mockProfileStore.Object);
+            .ReturnsAsync(CreateTestProfile(characterId));
 
         var service = CreateService();
 
@@ -844,13 +812,9 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        var mockProfileStore = new Mock<IStateStore<LifecycleProfileSummary>>();
-        mockProfileStore.Setup(s => s.GetAsync(
+        _mockProfileStore.Setup(s => s.GetAsync(
                 $"profile:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((LifecycleProfileSummary?)null);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileSummary>(PROFILES_STORE))
-            .Returns(mockProfileStore.Object);
+            .ReturnsAsync((LifecycleProfileModel?)null);
 
         var service = CreateService();
 

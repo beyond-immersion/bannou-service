@@ -6,6 +6,7 @@
 > **State Store**: director-sessions (MySQL), director-events (MySQL), director-actor-taps (Redis), director-overrides (Redis), director-player-targets (Redis), director-lock (Redis) -- all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational -- no schema, no generated code, no service implementation exists.
+> **Implementation Map**: [docs/maps/DIRECTOR.md](../maps/DIRECTOR.md)
 > **Planning**: N/A
 > **Short**: Human-in-the-loop event coordination (Observe/Steer/Drive tiers) for live content management
 
@@ -160,46 +161,6 @@ All of these methods are existing service capabilities. Director orchestrates th
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-### Hard Dependencies (constructor injection -- crash if missing)
-
-| Dependency | Usage |
-|---|---|
-| lib-state (`IStateStoreFactory`) | Director sessions (MySQL), directed events (MySQL), actor taps (Redis), overrides (Redis), player targets (Redis), distributed locks (Redis) |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for session mutations, event lifecycle transitions, actor control tier changes |
-| lib-messaging (`IMessageBus`) | Publishing director lifecycle events (event created/activated/completed), tap relay setup, override broadcasts |
-| lib-messaging (`IMessageSubscriber`) | Dynamic subscriptions to `director.tap.{actorId}` topics for actor observation relay |
-| lib-actor (`IActorClient`) | Perception injection, actor state queries, actor listing, encounter observation (L2) |
-| lib-character (`ICharacterClient`) | Character existence validation for event scoping (L2) |
-| lib-realm (`IRealmClient`) | Realm existence validation for event scoping (L2) |
-| lib-game-service (`IGameServiceClient`) | Game service existence validation for event scoping (L2) |
-| lib-connect (`IConnectClient`) | Session awareness for player targeting, shortcut publishing for event entry, session-to-developer resolution (L1) |
-| lib-permission (`IPermissionClient`) | Developer role verification for all endpoints (L1) |
-| lib-quest (`IQuestClient`) | Event-related quest creation for drawing players to event regions (L2) |
-
-### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
-
-| Dependency | Usage | Behavior When Missing |
-|---|---|---|
-| lib-puppetmaster (`IPuppetmasterClient`) | Watcher lifecycle for event-related regional watchers, behavior cache queries | Cannot manage watchers directly; actor-level operations still work |
-| lib-gardener (`IGardenerClient`) | POI injection, scenario template boosting, player garden state queries for targeting | Player steering unavailable; actors still controllable, event still trackable |
-| lib-broadcast (`IBroadcastClient`) | Platform session coordination, camera management, broadcast priority signaling | No external streaming; event coordination and actor control still work |
-| lib-showtime (`IShowtimeClient`) | Audience pool priming, hype train amplification, content tag injection | No in-game audience metagame effects; event coordination still works |
-| lib-divine (`IDivineClient`) | Deity state queries for divine actor observation, blessing coordination during events | Cannot query divine-specific data; actor-level observation still works through Actor APIs |
-| lib-hearsay (`IHearsayClient`) | Rumor injection for organic player awareness of events | No NPC rumor-based player drawing; other targeting methods still available |
-| lib-analytics (`IAnalyticsClient`) | Post-event metrics (player participation, engagement, broadcast reach) | No post-event analytics; event completion still works |
-
----
-
-## Dependents (What Relies On This Plugin)
-
-| Dependent | Relationship |
-|---|---|
-| *(none)* | Director is a terminal L4 service with no planned consumers. It orchestrates other services; no service should depend on it. |
-
----
-
 ## Type Field Classification
 
 | Field | Category | Type | Rationale |
@@ -211,244 +172,6 @@ All of these methods are existing service capabilities. Director orchestrates th
 | `DirectorSessionStatus` | C (System State) | Service-specific enum (`Active`, `Suspended`, `Ended`) | Developer session lifecycle; system-owned |
 | `actorRole` | B (Content Code) | Opaque string | Role an actor plays in a directed event (e.g., `"primary_deity"`, `"supporting_npc"`, `"environmental"`). Game-configurable, extensible without schema changes. |
 | `eventCategory` | B (Content Code) | Opaque string | Category of directed event (e.g., `"world_event"`, `"regional_crisis"`, `"divine_intervention"`, `"economic_disruption"`). Game-configurable, extensible without schema changes. |
-
----
-
-## State Storage
-
-### Director Session Store
-**Store**: `director-sessions` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|---|---|---|
-| `dsess:{directorSessionId}` | `DirectorSessionModel` | Director session record: developer webSocketSessionId, start time, status, active taps count, active drives count, associated event IDs |
-| `dsess-ws:{webSocketSessionId}` | `DirectorSessionModel` | Active session lookup by WebSocket session (at most one director session per WebSocket connection) |
-
-### Directed Event Store
-**Store**: `director-events` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|---|---|---|
-| `devt:{eventId}` | `DirectedEventModel` | Directed event record: name, description, game service scope, realm scope, status, phase timestamps, actor list, target list, broadcast config |
-| `devt-active:{gameServiceId}` | `DirectedEventModel` | Active events by game service (for dashboard listing) |
-
-### Actor Tap Store
-**Store**: `director-actor-taps` (Backend: Redis, prefix: `director:tap`)
-
-| Key Pattern | Data Type | Purpose |
-|---|---|---|
-| `tap:{sessionId}:{actorId}` | `ActorTapModel` | Active tap subscription: session ID, actor ID, sampling rate (every Nth tick), subscribed data streams (perceptions, variables, goap, behavior), created timestamp |
-| `tap-actor:{actorId}` | `Set<Guid>` | Reverse index: which sessions are tapping this actor (for cleanup on actor deletion) |
-
-### Override Store
-**Store**: `director-overrides` (Backend: Redis, prefix: `director:ovr`)
-
-| Key Pattern | Data Type | Purpose |
-|---|---|---|
-| `ovr:{actorId}:priority` | `Dictionary<string, float>` | GOAP action cost modifiers per action type for this actor |
-| `ovr:{actorId}:gates` | `HashSet<string>` | Action types requiring developer approval before execution |
-| `ovr:{actorId}:drive` | `DriveSessionModel` | Active drive session: developer sessionId, bound timestamp, last command timestamp |
-
-### Player Target Store
-**Store**: `director-player-targets` (Backend: Redis, prefix: `director:tgt`)
-
-| Key Pattern | Data Type | Purpose |
-|---|---|---|
-| `tgt:{eventId}:{targetId}` | `PlayerTargetModel` | Player targeting record: target type, target identifier, method, priority, status (pending/active/completed) |
-
-### Distributed Locks
-**Store**: `director-lock` (Backend: Redis, prefix: `director:lock`)
-
-| Key Pattern | Purpose |
-|---|---|
-| `director:lock:session:{webSocketSessionId}` | Director session create/end lock (one session per WebSocket connection) |
-| `director:lock:event:{eventId}` | Directed event lifecycle transition lock |
-| `director:lock:drive:{actorId}` | Actor drive binding lock (one driver per actor) |
-| `director:lock:override:{actorId}` | Override modification lock |
-
----
-
-## Events
-
-### Published Events
-
-**x-lifecycle generated events** (auto-generated via `x-lifecycle` in `director-events.yaml`, `topic_prefix: director`).
-
-**Naming note**: The x-lifecycle entity for directed events is `DirectorEvent` (not `DirectedEvent`) so that kebab-case `director-event` starts with the prefix `director-` and strips to produce topic `director.event.*`. Internal models (`DirectedEventModel`, `DirectedEventStatus`, etc.) use the `Directed` form since they are not constrained by x-lifecycle naming rules.
-
-| Topic | Event Type | Trigger |
-|---|---|---|
-| `director.session.created` | `DirectorSessionCreatedEvent` | Developer starts a director session |
-| `director.session.updated` | `DirectorSessionUpdatedEvent` | Director session state changes (taps added/removed, status changed) |
-| `director.session.deleted` | `DirectorSessionDeletedEvent` | Director session ended (explicit or timeout) |
-| `director.event.created` | `DirectorEventCreatedEvent` | Directed event created |
-| `director.event.updated` | `DirectorEventUpdatedEvent` | Directed event modified (status changes, actors added, targets changed, phase transitions). Phase transitions (`Active`, `Climax`, `WindDown`, `Completed`, `Cancelled`) publish as `*.updated` with `changedFields` including `status` and relevant timestamp -- per IMPLEMENTATION TENETS, status changes are field updates, not separate lifecycle events. |
-| `director.event.deleted` | `DirectorEventDeletedEvent` | Directed event deleted (game-service cleanup cascade) |
-
-**Custom domain events** (manually defined):
-
-| Topic | Event Type | Trigger |
-|---|---|---|
-| `director.actor.tapped` | `DirectorActorTappedEvent` | Developer started observing an actor |
-| `director.actor.driven` | `DirectorActorDrivenEvent` | Developer took direct control of an actor |
-| `director.actor.released` | `DirectorActorReleasedEvent` | Developer released control of an actor |
-
-### Consumed Events
-
-| Topic | Handler | Action |
-|---|---|---|
-| `actor.instance.deleted` | `HandleActorDeletedAsync` | Clean up all taps, overrides, and drive sessions for the deleted actor (Redis-ephemeral, acceptable as live session management). Remove actor from any active directed events (MySQL persistent data -- **see Bug #1: this mutation requires lib-resource, not event subscription**). |
-| `actor.instance.status-changed` | `HandleActorStatusChangedAsync` | Update directed event actor status. If a driven actor errors, auto-release and alert the developer. |
-| `session.disconnected` | `HandleSessionDisconnectedAsync` | If the disconnected session belongs to a developer with an active director session, release all driven actors (fail-open) and suspend taps. Session can be resumed on reconnection. |
-
-### Resource Cleanup
-
-| Target Resource | Source Type | On Delete | Cleanup Endpoint |
-|---|---|---|---|
-| game-service | director | CASCADE | `/director/cleanup-by-game-service` |
-| actor | director | DETACH | `/director/cleanup-by-actor` (**missing -- see Bug #1**) |
-| realm | director | DETACH | `/director/cleanup-by-realm` (**missing -- see Bug #2**) |
-
-| Trigger | Cleanup Endpoint | Action |
-|---|---|---|
-| Game service deleted | `/director/cleanup-by-game-service` | Cancel all active directed events for the game service, end active director sessions, clean up all taps/overrides/targets |
-| Actor deleted | `/director/cleanup-by-actor` | Remove actor from all active directed events, clean up taps/overrides/drive sessions for that actor |
-| Realm deleted | `/director/cleanup-by-realm` | Null the `realmId` on directed events scoped to the deleted realm (or cancel them) |
-
-**Note**: No `cleanup-by-account` is needed. Director identifies developers by `webSocketSessionId`, not `accountId` (per FOUNDATION TENETS Account Identity Boundary). Developer session cleanup is handled by the `session.disconnected` event (live session management) and the session timeout background worker (stale session expiry).
-
-### DI Provider Pattern
-
-| Pattern | Interface | Registration |
-|---|---|---|
-| Variable Provider | `IVariableProviderFactory` | Registers `DirectorOverrideProviderFactory` providing the `director` namespace. Returns cost modifiers from `director-overrides` store for the actor's `actorId`. Returns null for all paths when no overrides are active (zero overhead for non-directed actors). |
-
----
-
-## Configuration
-
-| Property | Env Var | Default | Purpose |
-|---|---|---|---|
-| `MaxConcurrentDirectorSessions` | `DIRECTOR_MAX_CONCURRENT_SESSIONS` | `10` | Maximum simultaneously active director sessions across all developers |
-| `MaxTapsPerSession` | `DIRECTOR_MAX_TAPS_PER_SESSION` | `50` | Maximum actors a single developer can observe simultaneously |
-| `MaxDrivesPerSession` | `DIRECTOR_MAX_DRIVES_PER_SESSION` | `3` | Maximum actors a single developer can drive simultaneously |
-| `TapDefaultSamplingRate` | `DIRECTOR_TAP_DEFAULT_SAMPLING_RATE` | `5` | Default: relay every Nth tick of actor data (1 = every tick, 5 = every 5th tick) |
-| `TapVariableSnapshotRate` | `DIRECTOR_TAP_VARIABLE_SNAPSHOT_RATE` | `10` | Variable provider snapshots relayed every Nth tick (more expensive than perceptions) |
-| `ActionGateTimeoutSeconds` | `DIRECTOR_ACTION_GATE_TIMEOUT_SECONDS` | `10` | Seconds before an unapproved gated action auto-approves (fail-open) |
-| `DriveSessionTimeoutMinutes` | `DIRECTOR_DRIVE_SESSION_TIMEOUT_MINUTES` | `30` | Auto-release driven actors after this duration without developer commands |
-| `DriveIdleTimeoutMinutes` | `DIRECTOR_DRIVE_IDLE_TIMEOUT_MINUTES` | `5` | Auto-release if developer sends no commands within this window |
-| `MaxConcurrentDirectedEvents` | `DIRECTOR_MAX_CONCURRENT_EVENTS` | `5` | Maximum simultaneously active directed events per game service |
-| `EventDefaultTimeoutHours` | `DIRECTOR_EVENT_DEFAULT_TIMEOUT_HOURS` | `4` | Auto-complete directed events after this duration (prevent orphaned events) |
-| `GardenerAmplificationMultiplier` | `DIRECTOR_GARDENER_AMPLIFICATION_MULTIPLIER` | `2.0` | POI scoring weight boost for event-targeted players (multiplied into Gardener's normal scoring) |
-| `RumorInjectionCooldownSeconds` | `DIRECTOR_RUMOR_INJECTION_COOLDOWN_SECONDS` | `60` | Minimum interval between Hearsay rumor injections for the same event (prevent flooding) |
-| `BroadcastCoordinationEnabled` | `DIRECTOR_BROADCAST_COORDINATION_ENABLED` | `true` | Whether directed events automatically coordinate with Broadcast/Showtime |
-| `EventRetentionDays` | `DIRECTOR_EVENT_RETENTION_DAYS` | `90` | How long completed event records are retained in MySQL |
-| `DistributedLockTimeoutSeconds` | `DIRECTOR_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for distributed lock acquisition |
-| `SessionTimeoutWorkerIntervalSeconds` | `DIRECTOR_SESSION_TIMEOUT_WORKER_INTERVAL_SECONDS` | `30` | Interval for session/drive timeout detection worker |
-| `EventTimeoutWorkerIntervalSeconds` | `DIRECTOR_EVENT_TIMEOUT_WORKER_INTERVAL_SECONDS` | `60` | Interval for directed event auto-completion worker |
-
----
-
-## DI Services & Helpers
-
-| Service | Role |
-|---|---|
-| `ILogger<DirectorService>` | Structured logging |
-| `ITelemetryProvider` | Span creation for all async methods (L0) |
-| `DirectorServiceConfiguration` | Typed configuration access (17 properties) |
-| `IStateStoreFactory` | State store access (creates 6 stores) |
-| `IMessageBus` | Event publishing |
-| `IMessageSubscriber` | Dynamic tap topic subscriptions |
-| `IDistributedLockProvider` | Distributed lock acquisition (L0) |
-| `IActorClient` | Actor perception injection, state queries, listing (L2 hard) |
-| `ICharacterClient` | Character validation for event scoping (L2 hard) |
-| `IRealmClient` | Realm validation for event scoping (L2 hard) |
-| `IGameServiceClient` | Game service validation for event scoping (L2 hard) |
-| `IConnectClient` | Session awareness, shortcut publishing, session-to-developer resolution (L1 hard) |
-| `IPermissionClient` | Developer role verification (L1 hard) |
-| `IQuestClient` | Event-related quest creation for player targeting (L2 hard) |
-| `IServiceProvider` | Runtime resolution of soft L3/L4 dependencies (Puppetmaster, Gardener, Broadcast, Showtime, Divine, Hearsay, Analytics) |
-| `IClientEventPublisher` | Push tap data and approval requests to developer's WebSocket session |
-| `DirectorOverrideProviderFactory` | `IVariableProviderFactory` implementation for `${director.*}` namespace |
-| `ITapRelayManager` | Manages RabbitMQ subscriptions for actor tap data relay (internal) |
-| `IDriveSessionManager` | Manages actor cognition binding for drive sessions (internal) |
-| `ITargetingOrchestrator` | Coordinates multi-method player targeting across services (internal) |
-
-### Background Workers
-
-| Worker | Purpose | Interval Config | Lock Key |
-|---|---|---|---|
-| `DirectorSessionTimeoutWorker` | Detects idle/timed-out director sessions and drive bindings. Releases driven actors, closes stale taps, ends abandoned sessions. | `SessionTimeoutWorkerIntervalSeconds` (default: 30) | `director:lock:session-timeout-worker` |
-| `DirectorEventTimeoutWorker` | Auto-completes directed events that exceed `EventDefaultTimeoutHours`. Releases all actors, removes all overrides. | `EventTimeoutWorkerIntervalSeconds` (default: 60) | `director:lock:event-timeout-worker` |
-
-Both workers acquire distributed locks before processing to ensure multi-instance safety.
-
----
-
-## API Endpoints (Implementation Notes)
-
-**Current status**: Pre-implementation. All endpoints described below are architectural targets.
-
-### Director Session Management (3 endpoints)
-
-All endpoints require `developer` role.
-
-- **Start** (`/director/session/start`): Validates developer role via x-permissions. Checks `MaxConcurrentDirectorSessions` and one-session-per-WebSocket-connection constraint. Creates `DirectorSessionModel` in MySQL. Publishes `director.session.created` (x-lifecycle). Returns director session ID for all subsequent calls.
-- **Get** (`/director/session/get`): Returns session state including active tap count, drive count, associated events.
-- **End** (`/director/session/end`): Releases all driven actors, closes all taps, removes all overrides, marks session ended. Publishes `director.session.deleted` (x-lifecycle). Idempotent -- returns OK if already ended.
-
-### Actor Observation (4 endpoints)
-
-All endpoints require `developer` role and active director session.
-
-- **Tap** (`/director/actor/tap`): Creates tap subscription for the specified actor. Registers RabbitMQ relay from `director.tap.{actorId}` to the developer's WebSocket session. Actor receives `director_tap_start` perception. Returns current actor state snapshot as initial payload.
-- **Untap** (`/director/actor/untap`): Removes tap subscription. Actor receives `director_tap_stop` perception. Cleans up RabbitMQ relay. Idempotent.
-- **GetActorState** (`/director/actor/get-state`): One-shot query of an actor's current state (feelings, goals, memories, encounter, behavior position) without establishing a persistent tap. Proxies to `IActorClient.GetActorAsync`.
-- **ListActors** (`/director/actor/list`): Lists actors with optional filters (realm, category, status, within directed event). Proxies to `IActorClient.ListActorsAsync` with additional director-specific metadata (which actors are tapped, steered, driven by any director session).
-
-### Actor Control -- Steer (4 endpoints)
-
-All endpoints require `developer` role and active director session.
-
-- **InjectPerception** (`/director/actor/inject-perception`): Wraps `IActorClient.InjectPerceptionAsync` with director session tracking. Records the injection in the directed event log if the actor is part of an event.
-- **SetOverrides** (`/director/actor/set-overrides`): Sets GOAP priority cost modifiers for specific action types on the actor. Stored in `director-overrides` Redis store. The `DirectorOverrideProviderFactory` reads these during GOAP evaluation.
-- **ClearOverrides** (`/director/actor/clear-overrides`): Removes all priority overrides for the actor. Idempotent.
-- **SetActionGates** (`/director/actor/set-action-gates`): Marks specific action types as requiring developer approval before execution. Stored in `director-overrides`. The approval flow uses a RabbitMQ topic (`director.approval.{actorId}`) with timeout-based auto-approve.
-
-### Actor Control -- Drive (3 endpoints)
-
-All endpoints require `developer` role and active director session.
-
-- **Drive** (`/director/actor/drive`): Acquires drive lock. Pauses the actor's ABML execution loop. Registers the developer's session as cognition source. Returns the actor's current state and available action handlers. Publishes `director.actor.driven`.
-- **ExecuteAction** (`/director/actor/execute-action`): Executes an ABML-equivalent action through the actor's `IActionHandler` pipeline. Accepts the same action YAML syntax that ABML documents use (call, load_snapshot, watch, emit_perception, etc.). Returns the action result.
-- **Release** (`/director/actor/release`): Resumes ABML execution from last checkpoint. Removes drive binding. Any state changes persist. Publishes `director.actor.released`. Idempotent.
-
-### Expression Evaluation (1 endpoint)
-
-All endpoints require `developer` role and active director session.
-
-- **EvaluateExpression** (`/director/actor/evaluate-expression`): Evaluates an ABML expression string (e.g., `${personality.aggression > 0.7 AND encounters.last_hostile_days < 3}`) against the actor's current variable provider state. Returns the resolved value. Useful for debugging ABML behavior conditions without driving the actor.
-
-### Directed Event Management (8 endpoints)
-
-All endpoints require `developer` role and active director session.
-
-- **Create** (`/director/event/create`): Validates game service and optional realm. Checks `MaxConcurrentDirectedEvents`. Creates `DirectedEventModel` in MySQL with status `Planned`. Publishes `director.event.created`.
-- **Get** (`/director/event/get`): Returns full event state including actors, targets, broadcast links.
-- **List** (`/director/event/list`): Active and recent events by game service, paginated. Optional status filter.
-- **AddActor** (`/director/event/add-actor`): Associates an actor with the directed event. Specifies role (opaque string) and initial control tier. Actor must exist.
-- **AddTarget** (`/director/event/add-target`): Adds a player targeting record. Specifies target type, identifier, method, and priority. Does not begin targeting until event is activated.
-- **Activate** (`/director/event/activate`): Transitions to `Active`. Begins all targeting methods. Notifies Broadcast if `broadcastPriority > 0`. Publishes `director.event.updated` (x-lifecycle) with `changedFields: ["status", "startedAt"]`.
-- **SetPhase** (`/director/event/set-phase`): Transitions between `Active`/`Climax`/`WindDown`/`Cancelled`. Adjusts Broadcast priority and Showtime amplification accordingly. Publishes `director.event.updated` with `changedFields: ["status"]`.
-- **Complete** (`/director/event/complete`): Ends all targeting, releases all driven actors, removes all overrides. Archives to MySQL. Publishes `director.event.updated` with `changedFields: ["status", "completedAt"]`.
-
-### Cleanup Endpoints (1 endpoint)
-
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
-
-- **CleanupByGameService** (`/director/cleanup-by-game-service`): Cancel all active events for the game service. End all sessions. Clean up all Redis state.
-
----
 
 ## Visual Aid
 
@@ -665,9 +388,9 @@ This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hy
 
 ### Bugs (Fix Immediately)
 
-1. **Event-based cleanup of persistent data for actor deletion**: Director subscribes to `actor.instance.deleted` and removes the actor from active directed events stored in MySQL (`DirectedEventModel`). This modifies persistent dependent data via event subscription, which violates Foundation Tenets (Resource-Managed Cleanup): "never subscribe to lifecycle events for destruction." Director should declare `x-references` targeting `actor` with `onDelete: detach` policy and a cleanup callback endpoint (e.g., `/director/cleanup-by-actor`) that removes the actor from directed events. The Redis-ephemeral cleanup (taps, overrides, drives) is acceptable as live session management, but the MySQL mutation requires lib-resource.
+1. ~~**Event-based cleanup of persistent data for actor deletion**~~: **FIXED** (2026-03-16) - Corrected design: `actor.instance.deleted` event handler now only cleans up Redis-ephemeral state (taps, overrides, drives) as live session management. MySQL `DirectedEventModel` actor removal is handled by the `x-references` cleanup callback (`/director/cleanup-by-actor`) via lib-resource with `onDelete: detach` policy, added to the Resource Cleanup table.
 
-2. **Missing lib-resource declaration for realm references**: `DirectedEventModel` stores an optional `realmId` referencing realm entities. No `x-references` entry for realm exists. Realm is a Category A entity with deprecation lifecycle -- when a realm is deleted after deprecation, directed events scoped to that realm would be orphaned with invalid realm references. Director should declare `x-references` targeting `realm` with `onDelete: detach` policy (null the `realmId`) or `onDelete: cascade` (cancel events scoped to the deleted realm), with a cleanup callback endpoint.
+2. ~~**Missing lib-resource declaration for realm references**~~: **FIXED** (2026-03-16) - Added `x-references` entry targeting `realm` with `onDelete: detach` policy and cleanup callback endpoint (`/director/cleanup-by-realm`) to the Resource Cleanup table.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -695,7 +418,8 @@ This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hy
 2. **Drive session checkpoint mechanism**: When a developer releases a driven actor, the ABML execution must resume from a meaningful point. The simplest approach: resume from the `on_tick` entry point with all state changes preserved (feelings, goals, memories the developer set during the drive session are available to ABML). This avoids needing to track execution position within the ABML document, which would be complex. The trade-off is that any in-progress ABML action chain is abandoned on drive, then restarted from tick entry on release.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/612 -->
 
-3. **Action gate approval mechanism design**: The action gate description says "Actor's execution pauses before those actions and publishes an approval request to `director.approval.{actorId}`" with timeout-based auto-approve. The mechanism for how Actor (L2) receives the approval/denial response from Director (L4) is unspecified. If Actor subscribes to a Director response topic, that creates a lower-layer subscribing to higher-layer events (forbidden per Foundation Tenets Cross-Service Communication Discipline). If Actor polls a Redis key that Director writes, Actor's correctness depends on Director's Redis state. The implementation must use only generic hooks in Actor (e.g., a generic pre-action gate via DI Provider that any plugin can implement) to avoid L2→L4 conceptual coupling. Needs design before implementation.
+3. **Action gate approval mechanism design**: The action gate description says "Actor's execution pauses before those actions and publishes an approval request to `director.approval.{actorId}`" with timeout-based auto-approve. The mechanism for how Actor (L2) receives the approval/denial response from Director (L4) is unspecified. If Actor subscribes to a Director response topic, that creates a lower-layer subscribing to higher-layer events (forbidden per Foundation Tenets Cross-Service Communication Discipline). If Actor polls a Redis key that Director writes, Actor's correctness depends on Director's Redis state. The implementation must use only generic hooks in Actor (e.g., a generic pre-action gate via DI Provider that any plugin can implement) to avoid L2→L4 conceptual coupling. Open questions: (1) synchronous blocking (pauses actor tick) vs asynchronous (skip and re-evaluate next tick) vs hybrid (queue with timeout) — each has gameplay consequences; (2) generic `IActionGateProvider` interface vs Director-specific; (3) impact on GOAP plan consistency if actions are deferred.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/668 -->
 
 ---
 
@@ -709,3 +433,4 @@ This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hy
 - **Gardener integration depth resolved** (2026-03-08): Design Consideration #6 resolved — mandates direct API calls for same-layer (L4→L4) dependencies with graceful degradation. Option B (publish targeting intents) is the forbidden Inverted Subscription Anti-Pattern. Standard `GetService<IGardenerClient>()` + null check pattern applies.
 - **Cross-node actor driving resolved** (2026-03-08): Design Considerations #4 and #7 resolved — Actor's encounter operations already implement transparent cross-node forwarding via `IMeshInvocationClient`. Director drive commands follow the same mesh forwarding pattern. Actor-side Tier 3 prerequisites (pause/resume, action handler access) tracked in Actor issue #599.
 - **Directed event persistence scope resolved** (2026-03-08): Design Consideration #5 resolved — "restart interrupts active coordination" is the correct failure mode per universal Bannou Redis-ephemeral patterns (Connect sessions, Permission capabilities, Actor scheduled events). No service reconstructs Redis state from MySQL. Developer re-establishes coordination through normal APIs after Redis recovery.
+- **Resource cleanup design corrected** (2026-03-16): Bugs #1 and #2 fixed — actor deletion cleanup split: Redis-ephemeral state (taps, overrides, drives) cleaned via `actor.instance.deleted` event (live session management), MySQL `DirectedEventModel` actor removal via lib-resource cleanup callback (`/director/cleanup-by-actor`, `onDelete: detach`). Added `x-references` for both `actor` and `realm` targets to Resource Cleanup table.

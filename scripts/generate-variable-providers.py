@@ -19,7 +19,7 @@ Generate Variable Provider Code and Documentation from Schema.
 
 This script reads schemas/variable-providers.yaml and generates:
 1. bannou-service/Generated/VariableProviderDefinitions.cs - Typed constants and metadata
-2. docs/GENERATED-VARIABLE-PROVIDERS.md - Documentation
+2. docs/generated/GENERATED-VARIABLE-PROVIDERS.md - Documentation
 
 Usage:
     python3 scripts/generate-variable-providers.py
@@ -185,7 +185,7 @@ def generate_markdown(providers: dict) -> str:
         "",
         "---",
         "",
-        "*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*",
         "",
     ])
 
@@ -223,7 +223,7 @@ def main():
 
     # Generate documentation
     markdown = generate_markdown(providers)
-    md_output = repo_root / 'docs' / 'GENERATED-VARIABLE-PROVIDERS.md'
+    md_output = repo_root / 'docs' / 'generated' / 'GENERATED-VARIABLE-PROVIDERS.md'
     with open(md_output, 'w') as f:
         f.write(markdown)
     print(f"Generated {md_output}")

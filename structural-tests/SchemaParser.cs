@@ -254,4 +254,171 @@ internal static class SchemaParser
         bool HasExplicitOnDelete,
         bool HasCleanupCallback,
         bool HasMigrateCallback);
+
+    /// <summary>
+    /// Gets all non-generated configuration schema YAML files.
+    /// </summary>
+    internal static IEnumerable<string> GetConfigSchemaFiles()
+    {
+        if (!Directory.Exists(SchemasDir))
+            yield break;
+
+        foreach (var file in Directory.EnumerateFiles(SchemasDir, "*-configuration.yaml"))
+        {
+            var relativePath = Path.GetRelativePath(SchemasDir, file);
+            if (relativePath.StartsWith("Generated", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            yield return file;
+        }
+    }
+
+    /// <summary>
+    /// Extracts constraint group definitions and property memberships from a configuration schema.
+    /// Parses both x-service-configuration and x-helper-configurations blocks.
+    /// Returns one <see cref="ConfigConstraintGroupInfo"/> per configuration block that contains groups.
+    /// </summary>
+    internal static IEnumerable<ConfigConstraintGroupInfo> GetConstraintGroups(string configFilePath)
+    {
+        var root = ParseYamlFile(configFilePath);
+        if (root == null)
+            yield break;
+
+        var serviceName = Path.GetFileNameWithoutExtension(configFilePath).Replace("-configuration", "");
+
+        // Parse x-service-configuration
+        if (root.Children.TryGetValue(new YamlScalarNode("x-service-configuration"), out var mainConfigNode) &&
+            mainConfigNode is YamlMappingNode mainConfigMapping)
+        {
+            var result = ParseConstraintGroupsFromConfigBlock(mainConfigMapping, serviceName, "main");
+            if (result != null)
+                yield return result;
+        }
+
+        // Parse x-helper-configurations
+        if (root.Children.TryGetValue(new YamlScalarNode("x-helper-configurations"), out var helperNode) &&
+            helperNode is YamlMappingNode helperMapping)
+        {
+            foreach (var helper in helperMapping.Children)
+            {
+                var helperName = ((YamlScalarNode)helper.Key).Value ?? "unknown";
+                if (helper.Value is YamlMappingNode helperBlock)
+                {
+                    var result = ParseConstraintGroupsFromConfigBlock(helperBlock, serviceName, helperName);
+                    if (result != null)
+                        yield return result;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Parses constraint groups and property memberships from a single configuration block
+    /// (either x-service-configuration or one entry from x-helper-configurations).
+    /// </summary>
+    private static ConfigConstraintGroupInfo? ParseConstraintGroupsFromConfigBlock(
+        YamlMappingNode configBlock, string serviceName, string blockName)
+    {
+        // Extract x-constraint-groups
+        var groups = new List<ConstraintGroupDefinition>();
+        if (configBlock.Children.TryGetValue(new YamlScalarNode("x-constraint-groups"), out var groupsNode) &&
+            groupsNode is YamlMappingNode groupsMapping)
+        {
+            foreach (var groupEntry in groupsMapping.Children)
+            {
+                var groupName = ((YamlScalarNode)groupEntry.Key).Value ?? "";
+                if (groupEntry.Value is not YamlMappingNode groupDef)
+                    continue;
+
+                var constraint = GetScalarValue(groupDef, "constraint") ?? "";
+                var valueStr = GetScalarValue(groupDef, "value");
+                double? value = valueStr != null && double.TryParse(valueStr, out var v) ? v : null;
+                var toleranceStr = GetScalarValue(groupDef, "tolerance");
+                double? tolerance = toleranceStr != null && double.TryParse(toleranceStr, out var t) ? t : null;
+                var description = GetScalarValue(groupDef, "description");
+
+                groups.Add(new ConstraintGroupDefinition(groupName, constraint, value, tolerance, description));
+            }
+        }
+
+        // Extract property constraint-group memberships
+        var memberships = new List<PropertyConstraintGroupMembership>();
+        if (configBlock.Children.TryGetValue(new YamlScalarNode("properties"), out var propsNode) &&
+            propsNode is YamlMappingNode propsMapping)
+        {
+            foreach (var propEntry in propsMapping.Children)
+            {
+                var propName = ((YamlScalarNode)propEntry.Key).Value ?? "";
+                if (propEntry.Value is not YamlMappingNode propDef)
+                    continue;
+
+                var groupRef = GetScalarValue(propDef, "constraint-group");
+                if (groupRef == null)
+                    continue;
+
+                var propType = GetScalarValue(propDef, "type") ?? "string";
+                var isNullable = string.Equals(GetScalarValue(propDef, "nullable"), "true", StringComparison.OrdinalIgnoreCase);
+
+                memberships.Add(new PropertyConstraintGroupMembership(propName, groupRef, propType, isNullable));
+            }
+        }
+
+        if (groups.Count == 0 && memberships.Count == 0)
+            return null;
+
+        return new ConfigConstraintGroupInfo(serviceName, blockName, groups, memberships);
+    }
+
+    /// <summary>
+    /// Constraint group information parsed from a single configuration block.
+    /// </summary>
+    internal sealed record ConfigConstraintGroupInfo(
+        string ServiceName,
+        string BlockName,
+        List<ConstraintGroupDefinition> Groups,
+        List<PropertyConstraintGroupMembership> Memberships);
+
+    /// <summary>
+    /// A parsed x-constraint-groups entry.
+    /// </summary>
+    internal sealed record ConstraintGroupDefinition(
+        string GroupName,
+        string Constraint,
+        double? Value,
+        double? Tolerance,
+        string? Description);
+
+    /// <summary>
+    /// A property's constraint-group membership.
+    /// </summary>
+    internal sealed record PropertyConstraintGroupMembership(
+        string PropertyName,
+        string GroupName,
+        string PropertyType,
+        bool IsNullable);
+
+    /// <summary>
+    /// Valid constraint types for x-constraint-groups.
+    /// </summary>
+    internal static readonly HashSet<string> ValidConstraintTypes = new(StringComparer.Ordinal)
+    {
+        "exactly-one", "at-most-one", "all-or-none",
+        "sum-equals", "sum-minimum", "sum-maximum"
+    };
+
+    /// <summary>
+    /// Constraint types that require a value field.
+    /// </summary>
+    internal static readonly HashSet<string> SumConstraintTypes = new(StringComparer.Ordinal)
+    {
+        "sum-equals", "sum-minimum", "sum-maximum"
+    };
+
+    /// <summary>
+    /// Property types valid for sum constraints.
+    /// </summary>
+    internal static readonly HashSet<string> NumericPropertyTypes = new(StringComparer.Ordinal)
+    {
+        "number", "integer"
+    };
 }

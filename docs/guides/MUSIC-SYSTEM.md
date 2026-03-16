@@ -603,4 +603,4 @@ Are you building a music-aware game?
 - [MusicTheory SDK README](../../sdks/music-theory/README.md)
 - [MusicStoryteller SDK README](../../sdks/music-storyteller/README.md)
 - [MIDI-JSON Specification](https://github.com/Tonejs/Midi)
-- [Music Service API](../GENERATED-SERVICE-DETAILS.md#music)
+- [Music Service API](../generated/GENERATED-SERVICE-DETAILS.md#music)

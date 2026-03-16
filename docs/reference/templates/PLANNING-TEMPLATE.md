@@ -60,7 +60,7 @@ whether this document is relevant to their work.}
 ```
 
 **Rules:**
-1. **2-4 sentences maximum** — this section is extracted by the documentation generation pipeline for `GENERATED-PLANNING-CATALOG.md`
+1. **2-4 sentences maximum** — this section is extracted by the documentation generation pipeline for `generated/GENERATED-PLANNING-CATALOG.md`
 2. Must answer: What is the core idea? What problem does it solve? What is its current state?
 3. **No markdown links, code blocks, or formatting** — plain text only
 4. **No self-references** — write as a third-person description

@@ -1,0 +1,87 @@
+# Bannou Localization Category Definitions
+#
+# This file defines all localization categories used by Bannou services.
+# Generated code provides typed constants and metadata.
+#
+# SCHEMA MODIFICATION GATE: STOP. Before modifying this schema, you MUST:
+# 1. Read docs/reference/SCHEMA-RULES.md
+# 2. State which section applies to your change
+# 3. Only then proceed with edits
+# Edits without stating the applicable rule are FORBIDDEN.
+#
+# Schema: x-localization-categories defines each category with:
+#   - description: Human-readable description of the category's purpose
+#   - validationMode: None | WarnOnMissing | RejectOnMissing
+#   - consumers: List of plugin assemblies that use this category (e.g., [lib-item])
+#
+# The YAML key is the category code used in localization lookups.
+# For example, key "items" maps to LocalizationCategoryDefinitions.Items.
+#
+# Generated artifacts:
+#   - bannou-service/Generated/LocalizationCategoryDefinitions.cs
+#   - docs/generated/GENERATED-LOCALIZATION-CATEGORIES.md
+#
+# Regenerate with: python3 scripts/generate-localization-categories.py
+
+x-localization-categories:
+  # ============================================================================
+  # L2 Game Foundation Categories
+  # ============================================================================
+
+  items:
+    description: Item template display names and descriptions
+    validationMode: RejectOnMissing
+    consumers: [lib-item]
+
+  quests:
+    description: Quest definition names and descriptions
+    validationMode: WarnOnMissing
+    consumers: [lib-quest]
+
+  locations:
+    description: Location display names
+    validationMode: RejectOnMissing
+    consumers: [lib-location]
+
+  species:
+    description: Species definition display names and trait labels
+    validationMode: WarnOnMissing
+    consumers: [lib-species]
+
+  seeds:
+    description: Seed type definition display names
+    validationMode: WarnOnMissing
+    consumers: [lib-seed]
+
+  collections:
+    description: Collection type display names
+    validationMode: WarnOnMissing
+    consumers: [lib-collection]
+
+  realms:
+    description: Realm definition display names
+    validationMode: WarnOnMissing
+    consumers: [lib-realm]
+
+  relationships:
+    description: Relationship type definition display names
+    validationMode: WarnOnMissing
+    consumers: [lib-relationship]
+
+  # ============================================================================
+  # L4 Game Features Categories
+  # ============================================================================
+
+  lexicon:
+    description: Lexicon concept display names for client rendering
+    validationMode: None
+    consumers: [lib-lexicon]
+
+  # ============================================================================
+  # UI / Client Categories
+  # ============================================================================
+
+  ui:
+    description: General UI labels, buttons, tooltips, and system messages
+    validationMode: None
+    consumers: [lib-website]

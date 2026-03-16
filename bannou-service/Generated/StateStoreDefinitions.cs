@@ -313,6 +313,16 @@ public static class StateStoreDefinitions
     /// <summary>Distributed locks for board mutations and unlock operations</summary>
     public const string LicenseLock = "license-lock";
 
+    // Localization Service
+    /// <summary>Category definitions (schema-defined and runtime-created)</summary>
+    public const string LocalizationCategoryStore = "localization-category-store";
+    /// <summary>Compiled export bundles keyed by language and category (TTL-backed)</summary>
+    public const string LocalizationCompiledCache = "localization-compiled-cache";
+    /// <summary>Translation entries queryable by category, language, and key</summary>
+    public const string LocalizationEntryStore = "localization-entry-store";
+    /// <summary>Distributed locks for category and entry write operations</summary>
+    public const string LocalizationLock = "localization-lock";
+
     // Location Service
     /// <summary>Location lookup cache for frequently-accessed locations</summary>
     public const string LocationCache = "location-cache";
@@ -676,6 +686,10 @@ public static class StateStoreDefinitions
             [LicenseBoards] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "license_boards" },
             [LicenseDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "license_definitions" },
             [LicenseLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "license:lock" },
+            [LocalizationCategoryStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "localization_category_store" },
+            [LocalizationCompiledCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "localization:compiled" },
+            [LocalizationEntryStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "localization_entry_store" },
+            [LocalizationLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "localization:lock" },
             [LocationCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location" },
             [LocationEntityPresence] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location:presence" },
             [LocationEntitySet] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location:entities" },
@@ -897,6 +911,10 @@ public static class StateStoreDefinitions
             [LicenseBoards] = new StoreMetadata("License", "Board instances linking owners (polymorphic entity) to board templates", "mysql", false),
             [LicenseDefinitions] = new StoreMetadata("License", "License definitions (nodes) per board template with grid positions", "mysql", false),
             [LicenseLock] = new StoreMetadata("License", "Distributed locks for board mutations and unlock operations", "redis", false),
+            [LocalizationCategoryStore] = new StoreMetadata("Localization", "Category definitions (schema-defined and runtime-created)", "mysql", false),
+            [LocalizationCompiledCache] = new StoreMetadata("Localization", "Compiled export bundles keyed by language and category (TTL-backed)", "redis", false),
+            [LocalizationEntryStore] = new StoreMetadata("Localization", "Translation entries queryable by category, language, and key", "mysql", false),
+            [LocalizationLock] = new StoreMetadata("Localization", "Distributed locks for category and entry write operations", "redis", false),
             [LocationCache] = new StoreMetadata("Location", "Location lookup cache for frequently-accessed locations", "redis", false),
             [LocationEntityPresence] = new StoreMetadata("Location", "Ephemeral entity-to-location bindings with TTL for presence tracking", "redis", false),
             [LocationEntitySet] = new StoreMetadata("Location", "Redis Sets tracking which entities are at each location", "redis", false),

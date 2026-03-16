@@ -1,0 +1,43 @@
+openapi: 3.0.4
+info:
+  title: Localization Service Events
+  description: |
+    Event models for Localization service RabbitMQ pub/sub via lib-messaging.
+    Publishes category lifecycle events when categories or their entries are mutated.
+    Entry mutations are reflected in category.updated events via changedFields, not as separate entry events.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-publications:
+    - topic: localization.category.created
+      event: LocalizationCategoryCreatedEvent
+      description: Published when a new category is created (runtime or schema-defined seeding on first deploy)
+    - topic: localization.category.updated
+      event: LocalizationCategoryUpdatedEvent
+      description: Published when a category is updated, including entry mutations via changedFields ["entries"]
+    - topic: localization.category.deleted
+      event: LocalizationCategoryDeletedEvent
+      description: Published when a runtime category is deleted (schema-defined categories cannot be deleted)
+
+x-lifecycle:
+  topic_prefix: localization
+  LocalizationCategory:
+    model:
+      categoryId: { type: string, format: uuid, primary: true, required: true, description: "Unique category identifier" }
+      code: { type: string, required: true, description: "Machine-readable category code" }
+      description: { type: string, required: true, description: "Human-readable category description" }
+      isSchemaDefinition: { type: boolean, required: true, description: "Whether this category was seeded from localization-categories.yaml" }
+      validationMode: { $ref: 'localization-api.yaml#/components/schemas/ValidationMode', required: true, description: "How ILocalizationKeyValidator behaves for this category" }
+      defaultLanguage: { type: string, required: true, description: "Fallback language (BCP 47 tag)" }
+      entryCount: { type: integer, required: true, description: "Number of translation entries in this category" }
+      lastEntryUpdateLanguage: { type: string, nullable: true, description: "Language of most recent entry mutation (null if no entries)" }
+    sensitive: []
+
+paths: {}
+
+components:
+  schemas: {}

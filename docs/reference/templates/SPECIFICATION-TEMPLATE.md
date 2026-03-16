@@ -52,7 +52,7 @@ their work.}
 ```
 
 **Rules:**
-1. **2-4 sentences maximum** — this section is extracted by the documentation generation pipeline for `GENERATED-SPECIFICATIONS-CATALOG.md`
+1. **2-4 sentences maximum** — this section is extracted by the documentation generation pipeline for `generated/GENERATED-SPECIFICATIONS-CATALOG.md`
 2. Must answer: What does this attribute do? What problem does it solve? When should a developer use it?
 3. **No markdown links, code blocks, or formatting** — plain text only
 4. **No self-references** — write as a third-person description

@@ -1,0 +1,1414 @@
+openapi: 3.0.4
+info:
+  title: Bannou Localization Service API
+  description: |
+    Multi-language translation tables with category lifecycle, pronunciation annotations,
+    bulk export, and DI-based key validation for cross-service localization.
+    Categories organize entries by domain (items, quests, locations, UI).
+    Schema-defined categories are seeded on startup; runtime categories support L5 extensions.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+x-service-layer: AppFoundation
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+paths:
+  /localization/category/create:
+    post:
+      summary: Create a runtime localization category
+      description: |
+        Creates a new runtime category for organizing translation entries.
+        Schema-defined categories (from localization-categories.yaml) are seeded on startup
+        and cannot be created via this endpoint.
+        Returns 409 if a category with the same code already exists.
+      operationId: createCategory
+      tags:
+      - Category
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '200':
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '409':
+          description: Category with this code already exists
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateCategoryRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateCategoryRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to create a new runtime localization category\",\n            \"\
+        required\": [\n                \"code\",\n                \"description\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 64,\n                    \"pattern\": \"^[a-z][a-z0-9._-]*$\",\n             \
+        \       \"description\": \"Unique machine-readable category code (e.g., \\\"items\\\", \\\"quests\\\", \\\"ui\\\"\
+        )\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n         \
+        \           \"minLength\": 1,\n                    \"maxLength\": 500,\n                    \"description\": \"Human-readable
+        description of this category\"\n                },\n                \"validationMode\": {\n                    \"\
+        $ref\": \"#/$defs/ValidationMode\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Validation mode for key checks (defaults to configuration DefaultValidationMode if omitted)\"\n              \
+        \  },\n                \"defaultLanguage\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 35,\n                    \"description\": \"Default fallback language
+        (BCP 47 tag, defaults to configuration DefaultLanguage if omitted)\"\n                }\n            }\n        },\n\
+        \        \"ValidationMode\": {\n            \"type\": \"string\",\n            \"description\": \"How the ILocalizationKeyValidator
+        behaves for a category\",\n            \"enum\": [\n                \"None\",\n                \"WarnOnMissing\",\n\
+        \                \"RejectOnMissing\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CategoryResponse\"\
+        ,\n    \"$defs\": {\n        \"CategoryResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Localization category details\",\n            \"required\": [\n         \
+        \       \"categoryId\",\n                \"code\",\n                \"description\",\n                \"isSchemaDefinition\"\
+        ,\n                \"validationMode\",\n                \"defaultLanguage\",\n                \"entryCount\",\n  \
+        \              \"createdAt\"\n            ],\n            \"properties\": {\n                \"categoryId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique category identifier\"\n                },\n                \"code\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Machine-readable category code\"\n                },\n         \
+        \       \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        description\"\n                },\n                \"isSchemaDefinition\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this category was seeded from localization-categories.yaml (cannot
+        be deleted)\"\n                },\n                \"validationMode\": {\n                    \"$ref\": \"#/$defs/ValidationMode\"\
+        ,\n                    \"description\": \"How the ILocalizationKeyValidator behaves for this category\"\n        \
+        \        },\n                \"defaultLanguage\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Fallback language (BCP 47 tag)\"\n                },\n                \"entryCount\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of translation entries in this category\"\n                },\n                \"lastEntryUpdateLanguage\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Language of the most recent entry mutation (null if no entries yet)\"\n                },\n                \"\
+        createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When this category was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this category was last updated (null if never
+        updated)\"\n                }\n            }\n        },\n        \"ValidationMode\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How the ILocalizationKeyValidator behaves for a category\",\n          \
+        \  \"enum\": [\n                \"None\",\n                \"WarnOnMissing\",\n                \"RejectOnMissing\"\
+        \n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create a runtime localization category\",\n    \"description\": \"Creates
+        a new runtime category for organizing translation entries.\\nSchema-defined categories (from localization-categories.yaml)
+        are seeded on startup\\nand cannot be created via this endpoint.\\nReturns 409 if a category with the same code already
+        exists.\\n\",\n    \"tags\": [\n        \"Category\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        createCategory\"\n}"
+  /localization/category/get:
+    post:
+      summary: Get a localization category by ID or code
+      description: |
+        Retrieves a category by categoryId or code. At least one must be provided.
+        Returns both schema-defined and runtime categories.
+      operationId: getCategory
+      tags:
+      - Category
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCategoryRequest'
+      responses:
+        '200':
+          description: Category retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '400':
+          description: Neither categoryId nor code provided
+        '404':
+          description: Category not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCategoryRequest\"\
+        ,\n    \"$defs\": {\n        \"GetCategoryRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to retrieve a category by ID or code (at least one required)\",\n\
+        \            \"properties\": {\n                \"categoryId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Unique identifier of the category to retrieve (null if using code)\"\n                },\n                \"code\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 64,\n                    \"description\": \"Category code to retrieve (null if using categoryId)\"\n           \
+        \     }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CategoryResponse\"\
+        ,\n    \"$defs\": {\n        \"CategoryResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Localization category details\",\n            \"required\": [\n         \
+        \       \"categoryId\",\n                \"code\",\n                \"description\",\n                \"isSchemaDefinition\"\
+        ,\n                \"validationMode\",\n                \"defaultLanguage\",\n                \"entryCount\",\n  \
+        \              \"createdAt\"\n            ],\n            \"properties\": {\n                \"categoryId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique category identifier\"\n                },\n                \"code\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Machine-readable category code\"\n                },\n         \
+        \       \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        description\"\n                },\n                \"isSchemaDefinition\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this category was seeded from localization-categories.yaml (cannot
+        be deleted)\"\n                },\n                \"validationMode\": {\n                    \"$ref\": \"#/$defs/ValidationMode\"\
+        ,\n                    \"description\": \"How the ILocalizationKeyValidator behaves for this category\"\n        \
+        \        },\n                \"defaultLanguage\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Fallback language (BCP 47 tag)\"\n                },\n                \"entryCount\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of translation entries in this category\"\n                },\n                \"lastEntryUpdateLanguage\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Language of the most recent entry mutation (null if no entries yet)\"\n                },\n                \"\
+        createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When this category was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this category was last updated (null if never
+        updated)\"\n                }\n            }\n        },\n        \"ValidationMode\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How the ILocalizationKeyValidator behaves for a category\",\n          \
+        \  \"enum\": [\n                \"None\",\n                \"WarnOnMissing\",\n                \"RejectOnMissing\"\
+        \n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get a localization category by ID or code\",\n    \"description\": \"Retrieves
+        a category by categoryId or code. At least one must be provided.\\nReturns both schema-defined and runtime categories.\\\
+        n\",\n    \"tags\": [\n        \"Category\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCategory\"\
+        \n}"
+  /localization/category/list:
+    post:
+      summary: List localization categories
+      description: |
+        Returns a paginated list of localization categories.
+        By default includes both schema-defined and runtime categories.
+      operationId: listCategories
+      tags:
+      - Category
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCategoriesRequest'
+      responses:
+        '200':
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCategoriesResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCategoriesRequest\"\
+        ,\n    \"$defs\": {\n        \"ListCategoriesRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to list localization categories with optional filters\",\n      \
+        \      \"properties\": {\n                \"includeSchemaDefinitions\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": true,\n                    \"description\": \"Whether to include schema-defined
+        categories in results\"\n                },\n                \"page\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 1,\n                    \"minimum\": 1,\n                    \"description\":
+        \"Page number (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 50,\n                    \"minimum\": 1,\n                    \"maximum\": 200,\n\
+        \                    \"description\": \"Number of categories per page\"\n                }\n            }\n      \
+        \  }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCategoriesResponse\"\
+        ,\n    \"$defs\": {\n        \"ListCategoriesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Paginated list of localization categories\",\n            \"required\": [\n\
+        \                \"categories\",\n                \"totalCount\",\n                \"page\",\n                \"pageSize\"\
+        \n            ],\n            \"properties\": {\n                \"categories\": {\n                    \"type\":
+        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/CategoryResponse\"\n   \
+        \                 },\n                    \"description\": \"Categories in the current page\"\n                },\n\
+        \                \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Total number of categories matching the filter\"\n                },\n   \
+        \             \"page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Current
+        page number\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n \
+        \                   \"description\": \"Page size used\"\n                }\n            }\n        },\n        \"\
+        CategoryResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"description\": \"Localization category details\",\n            \"required\": [\n                \"categoryId\"\
+        ,\n                \"code\",\n                \"description\",\n                \"isSchemaDefinition\",\n        \
+        \        \"validationMode\",\n                \"defaultLanguage\",\n                \"entryCount\",\n            \
+        \    \"createdAt\"\n            ],\n            \"properties\": {\n                \"categoryId\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        Unique category identifier\"\n                },\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Machine-readable category code\"\n                },\n                \"\
+        description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        description\"\n                },\n                \"isSchemaDefinition\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this category was seeded from localization-categories.yaml (cannot
+        be deleted)\"\n                },\n                \"validationMode\": {\n                    \"$ref\": \"#/$defs/ValidationMode\"\
+        ,\n                    \"description\": \"How the ILocalizationKeyValidator behaves for this category\"\n        \
+        \        },\n                \"defaultLanguage\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Fallback language (BCP 47 tag)\"\n                },\n                \"entryCount\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of translation entries in this category\"\n                },\n                \"lastEntryUpdateLanguage\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Language of the most recent entry mutation (null if no entries yet)\"\n                },\n                \"\
+        createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When this category was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this category was last updated (null if never
+        updated)\"\n                }\n            }\n        },\n        \"ValidationMode\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How the ILocalizationKeyValidator behaves for a category\",\n          \
+        \  \"enum\": [\n                \"None\",\n                \"WarnOnMissing\",\n                \"RejectOnMissing\"\
+        \n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List localization categories\",\n    \"description\": \"Returns a paginated
+        list of localization categories.\\nBy default includes both schema-defined and runtime categories.\\n\",\n    \"tags\"\
+        : [\n        \"Category\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listCategories\"\n}"
+  /localization/category/update:
+    post:
+      summary: Update a localization category
+      description: |
+        Updates mutable properties of a category (description, validationMode, defaultLanguage).
+        Code and isSchemaDefinition are immutable. Works for both schema-defined and runtime categories.
+      operationId: updateCategory
+      tags:
+      - Category
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequest'
+      responses:
+        '200':
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '404':
+          description: Category not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateCategoryRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateCategoryRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to update mutable properties of a category (code and isSchemaDefinition
+        are immutable)\",\n            \"required\": [\n                \"categoryId\"\n            ],\n            \"properties\"\
+        : {\n                \"categoryId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Category to update\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 500,\n                    \"description\": \"Updated description (null to keep unchanged)\"\n                },\n\
+        \                \"validationMode\": {\n                    \"$ref\": \"#/$defs/ValidationMode\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Updated validation mode (null to keep unchanged)\"\
+        \n                },\n                \"defaultLanguage\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"maxLength\": 35,\n                    \"description\": \"\
+        Updated default language (null to keep unchanged)\"\n                }\n            }\n        },\n        \"ValidationMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How the ILocalizationKeyValidator behaves for
+        a category\",\n            \"enum\": [\n                \"None\",\n                \"WarnOnMissing\",\n          \
+        \      \"RejectOnMissing\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CategoryResponse\"\
+        ,\n    \"$defs\": {\n        \"CategoryResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Localization category details\",\n            \"required\": [\n         \
+        \       \"categoryId\",\n                \"code\",\n                \"description\",\n                \"isSchemaDefinition\"\
+        ,\n                \"validationMode\",\n                \"defaultLanguage\",\n                \"entryCount\",\n  \
+        \              \"createdAt\"\n            ],\n            \"properties\": {\n                \"categoryId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique category identifier\"\n                },\n                \"code\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Machine-readable category code\"\n                },\n         \
+        \       \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        description\"\n                },\n                \"isSchemaDefinition\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this category was seeded from localization-categories.yaml (cannot
+        be deleted)\"\n                },\n                \"validationMode\": {\n                    \"$ref\": \"#/$defs/ValidationMode\"\
+        ,\n                    \"description\": \"How the ILocalizationKeyValidator behaves for this category\"\n        \
+        \        },\n                \"defaultLanguage\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Fallback language (BCP 47 tag)\"\n                },\n                \"entryCount\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of translation entries in this category\"\n                },\n                \"lastEntryUpdateLanguage\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Language of the most recent entry mutation (null if no entries yet)\"\n                },\n                \"\
+        createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When this category was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When this category was last updated (null if never
+        updated)\"\n                }\n            }\n        },\n        \"ValidationMode\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How the ILocalizationKeyValidator behaves for a category\",\n          \
+        \  \"enum\": [\n                \"None\",\n                \"WarnOnMissing\",\n                \"RejectOnMissing\"\
+        \n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update a localization category\",\n    \"description\": \"Updates mutable
+        properties of a category (description, validationMode, defaultLanguage).\\nCode and isSchemaDefinition are immutable.
+        Works for both schema-defined and runtime categories.\\n\",\n    \"tags\": [\n        \"Category\"\n    ],\n    \"\
+        deprecated\": false,\n    \"operationId\": \"updateCategory\"\n}"
+  /localization/category/delete:
+    post:
+      summary: Delete a runtime localization category
+      description: |
+        Deletes a runtime category and cascades all entries within it.
+        Schema-defined categories (isSchemaDefinition = true) cannot be deleted and return 400.
+      operationId: deleteCategory
+      tags:
+      - Category
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteCategoryRequest'
+      responses:
+        '200':
+          description: Category deleted successfully (entries cascaded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCategoryResponse'
+        '400':
+          description: Cannot delete a schema-defined category
+        '404':
+          description: Category not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteCategoryRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteCategoryRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to delete a runtime category (schema-defined categories cannot be
+        deleted)\",\n            \"required\": [\n                \"categoryId\"\n            ],\n            \"properties\"\
+        : {\n                \"categoryId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Category to delete\"\n                }\n            }\n     \
+        \   }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteCategoryResponse\"\
+        ,\n    \"$defs\": {\n        \"DeleteCategoryResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Empty response. HTTP 200 confirms the category and all entries were deleted.\"\
+        ,\n            \"properties\": {}\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete a runtime localization category\",\n    \"description\": \"Deletes
+        a runtime category and cascades all entries within it.\\nSchema-defined categories (isSchemaDefinition = true) cannot
+        be deleted and return 400.\\n\",\n    \"tags\": [\n        \"Category\"\n    ],\n    \"deprecated\": false,\n    \"\
+        operationId\": \"deleteCategory\"\n}"
+  /localization/entry/set:
+    post:
+      summary: Upsert a localization entry
+      description: |
+        Creates or replaces a single translation entry within a category.
+        Upsert semantics — creates if the key+language combination does not exist, updates if it does.
+        Returns 409 if MaxEntriesPerCategory would be exceeded.
+      operationId: setEntry
+      tags:
+      - Entry
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetEntryRequest'
+      responses:
+        '200':
+          description: Entry created or updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryResponse'
+        '404':
+          description: Category not found
+        '409':
+          description: MaxEntriesPerCategory cap exceeded
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SetEntryRequest\"\
+        ,\n    \"$defs\": {\n        \"SetEntryRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to create or replace a single localization entry (upsert)\",\n  \
+        \          \"required\": [\n                \"categoryId\",\n                \"key\",\n                \"language\"\
+        ,\n                \"text\"\n            ],\n            \"properties\": {\n                \"categoryId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Category this entry belongs to\"\n                },\n                \"key\": {\n                    \"type\"\
+        : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                  \
+        \  \"pattern\": \"^[a-z][a-z0-9._-]*$\",\n                    \"description\": \"Dot-separated entry key (e.g., \\\
+        \"direwolf.name\\\", \\\"rescue-princess.title\\\")\"\n                },\n                \"language\": {\n     \
+        \               \"type\": \"string\",\n                    \"minLength\": 2,\n                    \"maxLength\": 35,\n\
+        \                    \"description\": \"BCP 47 language tag (e.g., \\\"en\\\", \\\"ja-JP\\\", \\\"fr-FR\\\")\"\n \
+        \               },\n                \"text\": {\n                    \"type\": \"string\",\n                    \"\
+        minLength\": 1,\n                    \"maxLength\": 10000,\n                    \"description\": \"Translated text
+        value (supports {0} parameter placeholders)\"\n                },\n                \"pronunciation\": {\n        \
+        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 500,\n\
+        \                    \"description\": \"IPA phoneme transcription for TTS engines (e.g., \\\"\\u02c8da\\u026a.\\u025a.w\\\
+        u028alf\\\")\"\n                },\n                \"ruby\": {\n                    \"type\": \"array\",\n      \
+        \              \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RubyAnnotation\"\
+        \n                    },\n                    \"description\": \"CJK ruby text annotations for furigana/pinyin display\"\
+        \n                }\n            }\n        },\n        \"RubyAnnotation\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"CJK ruby text annotation pairing base
+        text with phonetic reading\",\n            \"required\": [\n                \"base\",\n                \"reading\"\
+        ,\n                \"startIndex\"\n            ],\n            \"properties\": {\n                \"base\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Base text segment being annotated
+        (e.g., kanji characters)\"\n                },\n                \"reading\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Phonetic reading (e.g., hiragana for Japanese, pinyin for Chinese)\"\n \
+        \               },\n                \"startIndex\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 0,\n                    \"description\": \"Character position in the translated text where this
+        annotation begins\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EntryResponse\"\
+        ,\n    \"$defs\": {\n        \"EntryResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Localization entry details\",\n            \"required\": [\n            \
+        \    \"entryId\",\n                \"categoryId\",\n                \"key\",\n                \"language\",\n    \
+        \            \"text\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n           \
+        \     \"entryId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Unique entry identifier\"\n                },\n                \"categoryId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Category this entry belongs to\"\n                },\n                \"key\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Dot-separated entry key\"\n                },\n            \
+        \    \"language\": {\n                    \"type\": \"string\",\n                    \"description\": \"BCP 47 language
+        tag\"\n                },\n                \"text\": {\n                    \"type\": \"string\",\n              \
+        \      \"description\": \"Translated text value\"\n                },\n                \"pronunciation\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"IPA phoneme transcription\"\n                },\n                \"ruby\": {\n                    \"type\": \"\
+        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/RubyAnnotation\"\n                    },\n                    \"description\": \"CJK ruby text annotations\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When this entry was last modified\"\n  \
+        \              }\n            }\n        },\n        \"RubyAnnotation\": {\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"description\": \"CJK ruby text annotation pairing base
+        text with phonetic reading\",\n            \"required\": [\n                \"base\",\n                \"reading\"\
+        ,\n                \"startIndex\"\n            ],\n            \"properties\": {\n                \"base\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Base text segment being annotated
+        (e.g., kanji characters)\"\n                },\n                \"reading\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Phonetic reading (e.g., hiragana for Japanese, pinyin for Chinese)\"\n \
+        \               },\n                \"startIndex\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 0,\n                    \"description\": \"Character position in the translated text where this
+        annotation begins\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Upsert a localization entry\",\n    \"description\": \"Creates or replaces
+        a single translation entry within a category.\\nUpsert semantics \\u2014 creates if the key+language combination does
+        not exist, updates if it does.\\nReturns 409 if MaxEntriesPerCategory would be exceeded.\\n\",\n    \"tags\": [\n\
+        \        \"Entry\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"setEntry\"\n}"
+  /localization/entry/get:
+    post:
+      summary: Get a specific localization entry
+      description: Retrieves a single entry by category, language, and key.
+      operationId: getEntry
+      tags:
+      - Entry
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEntryRequest'
+      responses:
+        '200':
+          description: Entry retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryResponse'
+        '404':
+          description: Category or entry not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEntryRequest\"\
+        ,\n    \"$defs\": {\n        \"GetEntryRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to retrieve a specific localization entry\",\n            \"required\"\
+        : [\n                \"categoryId\",\n                \"key\",\n                \"language\"\n            ],\n   \
+        \         \"properties\": {\n                \"categoryId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"description\": \"Category the entry belongs to\"\n   \
+        \             },\n                \"key\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Entry key (e.g., \\\"direwolf.name\\\
+        \")\"\n                },\n                \"language\": {\n                    \"type\": \"string\",\n          \
+        \          \"minLength\": 2,\n                    \"maxLength\": 35,\n                    \"description\": \"BCP 47
+        language tag\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EntryResponse\"\
+        ,\n    \"$defs\": {\n        \"EntryResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Localization entry details\",\n            \"required\": [\n            \
+        \    \"entryId\",\n                \"categoryId\",\n                \"key\",\n                \"language\",\n    \
+        \            \"text\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n           \
+        \     \"entryId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Unique entry identifier\"\n                },\n                \"categoryId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Category this entry belongs to\"\n                },\n                \"key\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Dot-separated entry key\"\n                },\n            \
+        \    \"language\": {\n                    \"type\": \"string\",\n                    \"description\": \"BCP 47 language
+        tag\"\n                },\n                \"text\": {\n                    \"type\": \"string\",\n              \
+        \      \"description\": \"Translated text value\"\n                },\n                \"pronunciation\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"IPA phoneme transcription\"\n                },\n                \"ruby\": {\n                    \"type\": \"\
+        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/RubyAnnotation\"\n                    },\n                    \"description\": \"CJK ruby text annotations\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When this entry was last modified\"\n  \
+        \              }\n            }\n        },\n        \"RubyAnnotation\": {\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"description\": \"CJK ruby text annotation pairing base
+        text with phonetic reading\",\n            \"required\": [\n                \"base\",\n                \"reading\"\
+        ,\n                \"startIndex\"\n            ],\n            \"properties\": {\n                \"base\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Base text segment being annotated
+        (e.g., kanji characters)\"\n                },\n                \"reading\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Phonetic reading (e.g., hiragana for Japanese, pinyin for Chinese)\"\n \
+        \               },\n                \"startIndex\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 0,\n                    \"description\": \"Character position in the translated text where this
+        annotation begins\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get a specific localization entry\",\n    \"description\": \"Retrieves
+        a single entry by category, language, and key.\",\n    \"tags\": [\n        \"Entry\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"getEntry\"\n}"
+  /localization/entry/list:
+    post:
+      summary: List localization entries
+      description: |
+        Returns a paginated list of entries filtered by category, optional language, and optional key prefix.
+      operationId: listEntries
+      tags:
+      - Entry
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListEntriesRequest'
+      responses:
+        '200':
+          description: Entries retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEntriesResponse'
+        '404':
+          description: Category not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListEntriesRequest\"\
+        ,\n    \"$defs\": {\n        \"ListEntriesRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to list entries with filters\",\n            \"required\": [\n  \
+        \              \"categoryId\"\n            ],\n            \"properties\": {\n                \"categoryId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Category to list entries from\"\n                },\n                \"language\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by language
+        (null returns all languages)\"\n                },\n                \"keyPrefix\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 256,\n                \
+        \    \"description\": \"Filter by key prefix (e.g., \\\"direwolf\\\" matches \\\"direwolf.name\\\", \\\"direwolf.description\\\
+        \")\"\n                },\n                \"page\": {\n                    \"type\": \"integer\",\n             \
+        \       \"default\": 1,\n                    \"minimum\": 1,\n                    \"description\": \"Page number (1-based)\"\
+        \n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n              \
+        \      \"default\": 100,\n                    \"minimum\": 1,\n                    \"maximum\": 1000,\n          \
+        \          \"description\": \"Number of entries per page\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListEntriesResponse\"\
+        ,\n    \"$defs\": {\n        \"ListEntriesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Paginated list of localization entries\",\n            \"required\": [\n\
+        \                \"entries\",\n                \"totalCount\",\n                \"page\",\n                \"pageSize\"\
+        \n            ],\n            \"properties\": {\n                \"entries\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntryResponse\"\n        \
+        \            },\n                    \"description\": \"Entries in the current page\"\n                },\n      \
+        \          \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n  \
+        \                  \"description\": \"Total number of entries matching the filter\"\n                },\n        \
+        \        \"page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Current page
+        number\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n      \
+        \              \"description\": \"Page size used\"\n                }\n            }\n        },\n        \"EntryResponse\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Localization entry details\",\n            \"required\": [\n                \"entryId\",\n                \"categoryId\"\
+        ,\n                \"key\",\n                \"language\",\n                \"text\",\n                \"updatedAt\"\
+        \n            ],\n            \"properties\": {\n                \"entryId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique entry identifier\"\
+        \n                },\n                \"categoryId\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uuid\",\n                    \"description\": \"Category this entry belongs to\"\n         \
+        \       },\n                \"key\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Dot-separated entry key\"\n                },\n                \"language\": {\n                    \"type\":
+        \"string\",\n                    \"description\": \"BCP 47 language tag\"\n                },\n                \"\
+        text\": {\n                    \"type\": \"string\",\n                    \"description\": \"Translated text value\"\
+        \n                },\n                \"pronunciation\": {\n                    \"type\": \"string\",\n          \
+        \          \"nullable\": true,\n                    \"description\": \"IPA phoneme transcription\"\n             \
+        \   },\n                \"ruby\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/RubyAnnotation\"\n                \
+        \    },\n                    \"description\": \"CJK ruby text annotations\"\n                },\n                \"\
+        updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When this entry was last modified\"\n                }\n            }\n        },\n\
+        \        \"RubyAnnotation\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"CJK ruby text annotation pairing base text with phonetic reading\",\n            \"\
+        required\": [\n                \"base\",\n                \"reading\",\n                \"startIndex\"\n         \
+        \   ],\n            \"properties\": {\n                \"base\": {\n                    \"type\": \"string\",\n  \
+        \                  \"description\": \"Base text segment being annotated (e.g., kanji characters)\"\n             \
+        \   },\n                \"reading\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Phonetic reading (e.g., hiragana for Japanese, pinyin for Chinese)\"\n                },\n                \"startIndex\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Character position in the translated text where this annotation begins\"\n                }\n            }\n \
+        \       }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List localization entries\",\n    \"description\": \"Returns a paginated
+        list of entries filtered by category, optional language, and optional key prefix.\\n\",\n    \"tags\": [\n       \
+        \ \"Entry\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listEntries\"\n}"
+  /localization/entry/delete:
+    post:
+      summary: Delete a localization entry
+      description: Deletes a single entry by category, language, and key.
+      operationId: deleteEntry
+      tags:
+      - Entry
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteEntryRequest'
+      responses:
+        '200':
+          description: Entry deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteEntryResponse'
+        '404':
+          description: Category or entry not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteEntryRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteEntryRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to delete a specific localization entry\",\n            \"required\"\
+        : [\n                \"categoryId\",\n                \"key\",\n                \"language\"\n            ],\n   \
+        \         \"properties\": {\n                \"categoryId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"description\": \"Category the entry belongs to\"\n   \
+        \             },\n                \"key\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 256,\n                    \"description\": \"Entry key to delete\"\n    \
+        \            },\n                \"language\": {\n                    \"type\": \"string\",\n                    \"\
+        minLength\": 2,\n                    \"maxLength\": 35,\n                    \"description\": \"BCP 47 language tag
+        of the entry to delete\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteEntryResponse\"\
+        ,\n    \"$defs\": {\n        \"DeleteEntryResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Empty response. HTTP 200 confirms the entry was deleted.\",\n           \
+        \ \"properties\": {}\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete a localization entry\",\n    \"description\": \"Deletes a single
+        entry by category, language, and key.\",\n    \"tags\": [\n        \"Entry\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"deleteEntry\"\n}"
+  /localization/entry/bulk-set:
+    post:
+      summary: Bulk upsert localization entries
+      description: |
+        Upserts multiple entries for a single category and language in one operation.
+        Per-item error isolation — individual failures do not block the entire batch.
+        Publishes a single localization.category.updated event for the entire batch.
+      operationId: bulkSetEntries
+      tags:
+      - Entry
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkSetEntriesRequest'
+      responses:
+        '200':
+          description: Bulk operation completed (partial success possible)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkSetEntriesResponse'
+        '404':
+          description: Category not found
+        '409':
+          description: MaxEntriesPerCategory cap would be exceeded
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkSetEntriesRequest\"\
+        ,\n    \"$defs\": {\n        \"BulkSetEntriesRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to bulk upsert entries for a single category and language\",\n  \
+        \          \"required\": [\n                \"categoryId\",\n                \"language\",\n                \"entries\"\
+        \n            ],\n            \"properties\": {\n                \"categoryId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Category for all entries
+        in this batch\"\n                },\n                \"language\": {\n                    \"type\": \"string\",\n\
+        \                    \"minLength\": 2,\n                    \"maxLength\": 35,\n                    \"description\"\
+        : \"BCP 47 language tag for all entries in this batch\"\n                },\n                \"entries\": {\n    \
+        \                \"type\": \"array\",\n                    \"minItems\": 1,\n                    \"maxItems\": 5000,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/BulkEntryItem\"\n                 \
+        \   },\n                    \"description\": \"Entries to upsert (max 5000 per batch)\"\n                }\n     \
+        \       }\n        },\n        \"BulkEntryItem\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Single entry within a bulk upsert batch\",\n            \"required\": [\n\
+        \                \"key\",\n                \"text\"\n            ],\n            \"properties\": {\n             \
+        \   \"key\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n               \
+        \     \"maxLength\": 256,\n                    \"pattern\": \"^[a-z][a-z0-9._-]*$\",\n                    \"description\"\
+        : \"Dot-separated entry key\"\n                },\n                \"text\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 10000,\n                    \"description\"\
+        : \"Translated text value\"\n                },\n                \"pronunciation\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 500,\n                \
+        \    \"description\": \"IPA phoneme transcription\"\n                },\n                \"ruby\": {\n           \
+        \         \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/RubyAnnotation\"\n                    },\n                    \"description\"\
+        : \"CJK ruby text annotations\"\n                }\n            }\n        },\n        \"RubyAnnotation\": {\n   \
+        \         \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"CJK
+        ruby text annotation pairing base text with phonetic reading\",\n            \"required\": [\n                \"base\"\
+        ,\n                \"reading\",\n                \"startIndex\"\n            ],\n            \"properties\": {\n \
+        \               \"base\": {\n                    \"type\": \"string\",\n                    \"description\": \"Base
+        text segment being annotated (e.g., kanji characters)\"\n                },\n                \"reading\": {\n    \
+        \                \"type\": \"string\",\n                    \"description\": \"Phonetic reading (e.g., hiragana for
+        Japanese, pinyin for Chinese)\"\n                },\n                \"startIndex\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Character position in
+        the translated text where this annotation begins\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkSetEntriesResponse\"\
+        ,\n    \"$defs\": {\n        \"BulkSetEntriesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Result of bulk entry upsert operation\",\n            \"required\": [\n \
+        \               \"succeededCount\",\n                \"failedCount\"\n            ],\n            \"properties\":
+        {\n                \"succeededCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Number of entries successfully upserted\"\n                },\n     \
+        \           \"failedCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Number of entries that failed\"\n                }\n            }\n      \
+        \  }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Bulk upsert localization entries\",\n    \"description\": \"Upserts multiple
+        entries for a single category and language in one operation.\\nPer-item error isolation \\u2014 individual failures
+        do not block the entire batch.\\nPublishes a single localization.category.updated event for the entire batch.\\n\"\
+        ,\n    \"tags\": [\n        \"Entry\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkSetEntries\"\
+        \n}"
+  /localization/export:
+    post:
+      summary: Export compiled localization bundle
+      description: |
+        Returns a compiled JSON bundle of all entries for a language, optionally filtered by category.
+        Results are cached in Redis with configurable TTL. Designed for client-side bulk download (Pattern C).
+      operationId: exportLocalization
+      tags:
+      - Export
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+      responses:
+        '200':
+          description: Compiled bundle returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportResponse'
+        '404':
+          description: Specified category not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExportRequest\"\
+        ,\n    \"$defs\": {\n        \"ExportRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to export a compiled localization bundle\",\n            \"required\"\
+        : [\n                \"language\"\n            ],\n            \"properties\": {\n                \"language\": {\n\
+        \                    \"type\": \"string\",\n                    \"minLength\": 2,\n                    \"maxLength\"\
+        : 35,\n                    \"description\": \"BCP 47 language tag to export\"\n                },\n              \
+        \  \"categoryId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Filter by category (null exports all categories)\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExportResponse\"\
+        ,\n    \"$defs\": {\n        \"ExportResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Compiled localization bundle for client-side caching\",\n            \"required\"\
+        : [\n                \"language\",\n                \"entryCount\",\n                \"entries\"\n            ],\n\
+        \            \"properties\": {\n                \"language\": {\n                    \"type\": \"string\",\n     \
+        \               \"description\": \"Language of this export\"\n                },\n                \"entryCount\":
+        {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Total number of entries in this export\"\n                },\n                \"entries\": {\n               \
+        \     \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExportedEntry\"\
+        \n                    },\n                    \"description\": \"All entries for the requested language and category
+        scope\"\n                }\n            }\n        },\n        \"ExportedEntry\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A single entry in the compiled export
+        bundle\",\n            \"required\": [\n                \"categoryCode\",\n                \"key\",\n            \
+        \    \"text\"\n            ],\n            \"properties\": {\n                \"categoryCode\": {\n              \
+        \      \"type\": \"string\",\n                    \"description\": \"Category code this entry belongs to\"\n     \
+        \           },\n                \"key\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Dot-separated entry key\"\n                },\n                \"text\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Translated text value\"\n                },\n                \"pronunciation\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"IPA phoneme transcription\"\n                },\n                \"ruby\": {\n                    \"type\": \"\
+        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/RubyAnnotation\"\n                    },\n                    \"description\": \"CJK ruby text annotations\"\
+        \n                }\n            }\n        },\n        \"RubyAnnotation\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"CJK ruby text annotation pairing base
+        text with phonetic reading\",\n            \"required\": [\n                \"base\",\n                \"reading\"\
+        ,\n                \"startIndex\"\n            ],\n            \"properties\": {\n                \"base\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Base text segment being annotated
+        (e.g., kanji characters)\"\n                },\n                \"reading\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Phonetic reading (e.g., hiragana for Japanese, pinyin for Chinese)\"\n \
+        \               },\n                \"startIndex\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 0,\n                    \"description\": \"Character position in the translated text where this
+        annotation begins\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Export compiled localization bundle\",\n    \"description\": \"Returns
+        a compiled JSON bundle of all entries for a language, optionally filtered by category.\\nResults are cached in Redis
+        with configurable TTL. Designed for client-side bulk download (Pattern C).\\n\",\n    \"tags\": [\n        \"Export\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"exportLocalization\"\n}"
+  /localization/export-pls:
+    post:
+      summary: Export W3C PLS pronunciation lexicon
+      description: |
+        Compiles pronunciation entries into W3C Pronunciation Lexicon Specification (PLS) XML
+        for consumption by SSML-supporting TTS engines (Azure Cognitive Services, Kokoro SSML mode).
+        Only entries with non-null pronunciation fields are included.
+      operationId: exportPls
+      tags:
+      - Export
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportPlsRequest'
+      responses:
+        '200':
+          description: PLS lexicon compiled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportPlsResponse'
+        '404':
+          description: Specified category not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExportPlsRequest\"\
+        ,\n    \"$defs\": {\n        \"ExportPlsRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to export pronunciation data as W3C PLS XML\",\n            \"required\"\
+        : [\n                \"language\"\n            ],\n            \"properties\": {\n                \"language\": {\n\
+        \                    \"type\": \"string\",\n                    \"minLength\": 2,\n                    \"maxLength\"\
+        : 35,\n                    \"description\": \"BCP 47 language tag to export\"\n                },\n              \
+        \  \"categoryId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Filter by category (null exports all categories)\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExportPlsResponse\"\
+        ,\n    \"$defs\": {\n        \"ExportPlsResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"W3C Pronunciation Lexicon Specification XML document\",\n            \"required\"\
+        : [\n                \"language\",\n                \"entryCount\",\n                \"plsXml\"\n            ],\n\
+        \            \"properties\": {\n                \"language\": {\n                    \"type\": \"string\",\n     \
+        \               \"description\": \"Language of this lexicon\"\n                },\n                \"entryCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of pronunciation entries included\"\n                },\n                \"plsXml\": {\n              \
+        \      \"type\": \"string\",\n                    \"description\": \"Complete W3C PLS XML document as a string\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Export W3C PLS pronunciation lexicon\",\n    \"description\": \"Compiles
+        pronunciation entries into W3C Pronunciation Lexicon Specification (PLS) XML\\nfor consumption by SSML-supporting
+        TTS engines (Azure Cognitive Services, Kokoro SSML mode).\\nOnly entries with non-null pronunciation fields are included.\\\
+        n\",\n    \"tags\": [\n        \"Export\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"exportPls\"\n\
+        }"
+components:
+  schemas:
+    ValidationMode:
+      type: string
+      description: How the ILocalizationKeyValidator behaves for a category
+      enum:
+      - None
+      - WarnOnMissing
+      - RejectOnMissing
+    RubyAnnotation:
+      type: object
+      additionalProperties: false
+      description: CJK ruby text annotation pairing base text with phonetic reading
+      required:
+      - base
+      - reading
+      - startIndex
+      properties:
+        base:
+          type: string
+          description: Base text segment being annotated (e.g., kanji characters)
+        reading:
+          type: string
+          description: Phonetic reading (e.g., hiragana for Japanese, pinyin for Chinese)
+        startIndex:
+          type: integer
+          minimum: 0
+          description: Character position in the translated text where this annotation begins
+    CreateCategoryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a new runtime localization category
+      required:
+      - code
+      - description
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: "^[a-z][a-z0-9._-]*$"
+          description: Unique machine-readable category code (e.g., "items", "quests", "ui")
+        description:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Human-readable description of this category
+        validationMode:
+          $ref: '#/components/schemas/ValidationMode'
+          nullable: true
+          description: Validation mode for key checks (defaults to configuration DefaultValidationMode if omitted)
+        defaultLanguage:
+          type: string
+          nullable: true
+          maxLength: 35
+          description: Default fallback language (BCP 47 tag, defaults to configuration DefaultLanguage if omitted)
+    GetCategoryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a category by ID or code (at least one required)
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique identifier of the category to retrieve (null if using code)
+        code:
+          type: string
+          nullable: true
+          maxLength: 64
+          description: Category code to retrieve (null if using categoryId)
+    ListCategoriesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list localization categories with optional filters
+      properties:
+        includeSchemaDefinitions:
+          type: boolean
+          default: true
+          description: Whether to include schema-defined categories in results
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number (1-based)
+        pageSize:
+          type: integer
+          default: 50
+          minimum: 1
+          maximum: 200
+          description: Number of categories per page
+    UpdateCategoryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update mutable properties of a category (code and isSchemaDefinition are immutable)
+      required:
+      - categoryId
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          description: Category to update
+        description:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Updated description (null to keep unchanged)
+        validationMode:
+          $ref: '#/components/schemas/ValidationMode'
+          nullable: true
+          description: Updated validation mode (null to keep unchanged)
+        defaultLanguage:
+          type: string
+          nullable: true
+          maxLength: 35
+          description: Updated default language (null to keep unchanged)
+    DeleteCategoryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to delete a runtime category (schema-defined categories cannot be deleted)
+      required:
+      - categoryId
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          description: Category to delete
+    CategoryResponse:
+      type: object
+      additionalProperties: false
+      description: Localization category details
+      required:
+      - categoryId
+      - code
+      - description
+      - isSchemaDefinition
+      - validationMode
+      - defaultLanguage
+      - entryCount
+      - createdAt
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          description: Unique category identifier
+        code:
+          type: string
+          description: Machine-readable category code
+        description:
+          type: string
+          description: Human-readable description
+        isSchemaDefinition:
+          type: boolean
+          description: Whether this category was seeded from localization-categories.yaml (cannot be deleted)
+        validationMode:
+          $ref: '#/components/schemas/ValidationMode'
+          description: How the ILocalizationKeyValidator behaves for this category
+        defaultLanguage:
+          type: string
+          description: Fallback language (BCP 47 tag)
+        entryCount:
+          type: integer
+          minimum: 0
+          description: Number of translation entries in this category
+        lastEntryUpdateLanguage:
+          type: string
+          nullable: true
+          description: Language of the most recent entry mutation (null if no entries yet)
+        createdAt:
+          type: string
+          format: date-time
+          description: When this category was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this category was last updated (null if never updated)
+    DeleteCategoryResponse:
+      type: object
+      additionalProperties: false
+      description: Empty response. HTTP 200 confirms the category and all entries were deleted.
+      properties: {}
+    ListCategoriesResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of localization categories
+      required:
+      - categories
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryResponse'
+          description: Categories in the current page
+        totalCount:
+          type: integer
+          minimum: 0
+          description: Total number of categories matching the filter
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Page size used
+    SetEntryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create or replace a single localization entry (upsert)
+      required:
+      - categoryId
+      - key
+      - language
+      - text
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          description: Category this entry belongs to
+        key:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: "^[a-z][a-z0-9._-]*$"
+          description: Dot-separated entry key (e.g., "direwolf.name", "rescue-princess.title")
+        language:
+          type: string
+          minLength: 2
+          maxLength: 35
+          description: BCP 47 language tag (e.g., "en", "ja-JP", "fr-FR")
+        text:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: Translated text value (supports {0} parameter placeholders)
+        pronunciation:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: IPA phoneme transcription for TTS engines (e.g., "ˈdaɪ.ɚ.wʊlf")
+        ruby:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RubyAnnotation'
+          description: CJK ruby text annotations for furigana/pinyin display
+    GetEntryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a specific localization entry
+      required:
+      - categoryId
+      - key
+      - language
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          description: Category the entry belongs to
+        key:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Entry key (e.g., "direwolf.name")
+        language:
+          type: string
+          minLength: 2
+          maxLength: 35
+          description: BCP 47 language tag
+    ListEntriesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list entries with filters
+      required:
+      - categoryId
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          description: Category to list entries from
+        language:
+          type: string
+          nullable: true
+          description: Filter by language (null returns all languages)
+        keyPrefix:
+          type: string
+          nullable: true
+          maxLength: 256
+          description: Filter by key prefix (e.g., "direwolf" matches "direwolf.name", "direwolf.description")
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number (1-based)
+        pageSize:
+          type: integer
+          default: 100
+          minimum: 1
+          maximum: 1000
+          description: Number of entries per page
+    DeleteEntryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to delete a specific localization entry
+      required:
+      - categoryId
+      - key
+      - language
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          description: Category the entry belongs to
+        key:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Entry key to delete
+        language:
+          type: string
+          minLength: 2
+          maxLength: 35
+          description: BCP 47 language tag of the entry to delete
+    BulkSetEntriesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to bulk upsert entries for a single category and language
+      required:
+      - categoryId
+      - language
+      - entries
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          description: Category for all entries in this batch
+        language:
+          type: string
+          minLength: 2
+          maxLength: 35
+          description: BCP 47 language tag for all entries in this batch
+        entries:
+          type: array
+          minItems: 1
+          maxItems: 5000
+          items:
+            $ref: '#/components/schemas/BulkEntryItem'
+          description: Entries to upsert (max 5000 per batch)
+    BulkEntryItem:
+      type: object
+      additionalProperties: false
+      description: Single entry within a bulk upsert batch
+      required:
+      - key
+      - text
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: "^[a-z][a-z0-9._-]*$"
+          description: Dot-separated entry key
+        text:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: Translated text value
+        pronunciation:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: IPA phoneme transcription
+        ruby:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RubyAnnotation'
+          description: CJK ruby text annotations
+    EntryResponse:
+      type: object
+      additionalProperties: false
+      description: Localization entry details
+      required:
+      - entryId
+      - categoryId
+      - key
+      - language
+      - text
+      - updatedAt
+      properties:
+        entryId:
+          type: string
+          format: uuid
+          description: Unique entry identifier
+        categoryId:
+          type: string
+          format: uuid
+          description: Category this entry belongs to
+        key:
+          type: string
+          description: Dot-separated entry key
+        language:
+          type: string
+          description: BCP 47 language tag
+        text:
+          type: string
+          description: Translated text value
+        pronunciation:
+          type: string
+          nullable: true
+          description: IPA phoneme transcription
+        ruby:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RubyAnnotation'
+          description: CJK ruby text annotations
+        updatedAt:
+          type: string
+          format: date-time
+          description: When this entry was last modified
+    DeleteEntryResponse:
+      type: object
+      additionalProperties: false
+      description: Empty response. HTTP 200 confirms the entry was deleted.
+      properties: {}
+    BulkSetEntriesResponse:
+      type: object
+      additionalProperties: false
+      description: Result of bulk entry upsert operation
+      required:
+      - succeededCount
+      - failedCount
+      properties:
+        succeededCount:
+          type: integer
+          minimum: 0
+          description: Number of entries successfully upserted
+        failedCount:
+          type: integer
+          minimum: 0
+          description: Number of entries that failed
+    ListEntriesResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of localization entries
+      required:
+      - entries
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntryResponse'
+          description: Entries in the current page
+        totalCount:
+          type: integer
+          minimum: 0
+          description: Total number of entries matching the filter
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Page size used
+    ExportRequest:
+      type: object
+      additionalProperties: false
+      description: Request to export a compiled localization bundle
+      required:
+      - language
+      properties:
+        language:
+          type: string
+          minLength: 2
+          maxLength: 35
+          description: BCP 47 language tag to export
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by category (null exports all categories)
+    ExportResponse:
+      type: object
+      additionalProperties: false
+      description: Compiled localization bundle for client-side caching
+      required:
+      - language
+      - entryCount
+      - entries
+      properties:
+        language:
+          type: string
+          description: Language of this export
+        entryCount:
+          type: integer
+          minimum: 0
+          description: Total number of entries in this export
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExportedEntry'
+          description: All entries for the requested language and category scope
+    ExportedEntry:
+      type: object
+      additionalProperties: false
+      description: A single entry in the compiled export bundle
+      required:
+      - categoryCode
+      - key
+      - text
+      properties:
+        categoryCode:
+          type: string
+          description: Category code this entry belongs to
+        key:
+          type: string
+          description: Dot-separated entry key
+        text:
+          type: string
+          description: Translated text value
+        pronunciation:
+          type: string
+          nullable: true
+          description: IPA phoneme transcription
+        ruby:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RubyAnnotation'
+          description: CJK ruby text annotations
+    ExportPlsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to export pronunciation data as W3C PLS XML
+      required:
+      - language
+      properties:
+        language:
+          type: string
+          minLength: 2
+          maxLength: 35
+          description: BCP 47 language tag to export
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by category (null exports all categories)
+    ExportPlsResponse:
+      type: object
+      additionalProperties: false
+      description: W3C Pronunciation Lexicon Specification XML document
+      required:
+      - language
+      - entryCount
+      - plsXml
+      properties:
+        language:
+          type: string
+          description: Language of this lexicon
+        entryCount:
+          type: integer
+          minimum: 0
+          description: Number of pronunciation entries included
+        plsXml:
+          type: string
+          description: Complete W3C PLS XML document as a string

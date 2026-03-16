@@ -6,6 +6,7 @@
 > **Layer**: GameFeatures
 > **State Stores**: environment-climate (MySQL), environment-weather (Redis), environment-conditions (Redis), environment-overrides (MySQL), environment-lock (Redis) — all planned
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Implementation Map**: [docs/maps/ENVIRONMENT.md](../maps/ENVIRONMENT.md)
 > **Short**: Weather simulation, temperature modeling, and ecological resources consuming Worldstate temporal data
 
 ---
@@ -345,31 +346,6 @@ ComputeResourceAvailability(location, gameTimeSnapshot):
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-### Hard Dependencies (constructor injection -- crash if missing)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Climate templates (MySQL), weather event overrides (MySQL), condition cache (Redis), distributed locks (Redis) |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for climate template mutations, weather event creation/cancellation |
-| lib-messaging (`IMessageBus`) | Publishing environment events (`environment.conditions.changed`, `environment.weather-event.started`, etc.), error event publication |
-| lib-worldstate (`IWorldstateClient`) | Querying current game time, season, season progress for a realm. The foundational dependency -- Environment cannot compute anything without knowing what time it is. (L2) |
-| lib-location (`ILocationClient`) | Resolving location parent hierarchy for climate binding inheritance, and querying location existence for binding validation. (L2) |
-| lib-game-service (`IGameServiceClient`) | Game service scope validation for climate templates. (L2) |
-| lib-realm (`IRealmClient`) | Realm existence validation for `SetRealmConfig` endpoint. Note: the realm default biome is stored in Environment's own `RealmEnvironmentConfig` table, not queried from Realm. `IRealmClient` validates that the realm exists before creating/updating the config. (L2 hard) |
-| lib-resource (`IResourceClient`) | Reference registration/unregistration for realm, game-service, and location targets (L1). Called during climate template creation, binding creation, and cleanup operations. |
-| lib-character (`ICharacterClient`) | Character-to-location resolution in the `EnvironmentProviderFactory` variable provider. Actors pass entityId (characterId) to the factory; the factory needs the character's locationId and realmId to query the correct condition snapshot. Cached per-character with short TTL. Only used as fallback when Actor runtime context doesn't include locationId. (L2) |
-
-### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
-
-| Dependency | Usage | Behavior When Missing |
-|------------|-------|-----------------------|
-| lib-mapping (`IMappingClient`) | Publishing weather data to Mapping's `weather_effects` spatial layer for spatial weather queries. Resolved via `GetService<IMappingClient>()` + null check. See [Mapping Integration](#mapping-integration) below for the full API pattern, data model, and publication trigger. (L4) | Weather data is not published to the spatial index. Spatial weather queries return nothing. Environmental conditions still resolve correctly for direct API queries and variable provider reads. |
-| lib-analytics (`IAnalyticsClient`) | Publishing environmental statistics (weather distribution accuracy, override frequency, resource availability trends). (L4) | No analytics. Silent skip. |
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -390,53 +366,7 @@ ComputeResourceAvailability(location, gameTimeSnapshot):
 
 ---
 
-## State Storage
-
-### Climate Template Store
-**Store**: `environment-climate` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `climate:{templateId}` | `ClimateTemplateModel` | Primary lookup. Full climate template with all curves, distributions, and baselines. |
-| `climate:biome:{gameServiceId}:{biomeCode}` | `ClimateTemplateModel` | Biome-based lookup within game scope. Primary resolution path for the variable provider. |
-| `climate:game:{gameServiceId}` | `ClimateTemplateModel` | All climate templates for a game service (for listing/admin). |
-
-### Weather Event Store
-**Store**: `environment-overrides` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `event:{eventId}` | `WeatherEventModel` | Primary lookup. Full weather event definition. |
-| `event:scope:{scopeType}:{scopeId}` | `WeatherEventListModel` | Active events for a specific realm/location scope. Used during weather resolution to check for overrides. |
-| `event:source:{sourceType}:{sourceId}` | `WeatherEventListModel` | Events created by a specific source (for cleanup when a divine actor is stopped). |
-
-### Weather Cache
-**Store**: `environment-weather` (Backend: Redis, prefix: `environment:weather`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `resolved:{realmId}:{locationId}:{gameDay}` | `ResolvedWeatherModel` | Cached resolved weather for a location on a game-day. Contains weather code, temperature range, precipitation, visibility, wind, resource availability. Keyed by game-day so the cache self-invalidates on day boundaries. TTL matches Worldstate's day duration in real-time. |
-
-### Condition Cache
-**Store**: `environment-conditions` (Backend: Redis, prefix: `environment:conditions`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `snapshot:{realmId}:{locationId}` | `ConditionSnapshotModel` | Latest computed environmental conditions for a location. Short TTL (default 60 seconds). Used by the variable provider for fast reads during behavior ticks. Contains the full snapshot: temperature, weather, precipitation, wind, humidity, visibility, resource availability. |
-
-### Distributed Locks (via `IDistributedLockProvider`)
-
-Distributed locks use `IDistributedLockProvider` (L0 infrastructure). Requires an `environment-lock` store definition in `schemas/state-stores.yaml` with `backend: redis`, `prefix: environment:lock`, `service: Environment`. Lock keys are documented here for reference:
-
-| Lock Resource ID | Purpose |
-|-----------------|---------|
-| `environment:climate:{gameServiceId}:{biomeCode}` | Climate template mutations |
-| `environment:event:{scopeType}:{scopeId}` | Weather event creation/cancellation for a scope |
-| `environment:refresh:{realmId}` | Per-realm condition refresh cycle (one worker instance per realm) |
-
----
-
-### Type Field Classification
+## Type Field Classification
 
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
@@ -448,48 +378,6 @@ Distributed locks use `IDistributedLockProvider` (L0 infrastructure). Requires a
 | `precipitationType` (PrecipitationType) | C (System State) | Service-specific enum | Finite set of precipitation forms (None, Rain, Snow, Sleet, Hail); system-owned, used for crossover rule computation |
 | `scopeType` (WeatherEventScopeType) | C (System State) | Service-specific enum | Finite set of event scope levels (Realm, Location, LocationSubtree); system-owned, determines override precedence |
 | `sourceType` (WeatherEventSourceType) | C (System State) | Service-specific enum | Finite set of event origin types (Divine, Scheduled, GameEvent, Admin); system-owned tracking of who created the event |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `environment.conditions.changed` | `EnvironmentConditionsChangedEvent` | Weather pattern changed for a location (new weather segment, weather event started/ended). Includes realmId, locationId, previousWeather, currentWeather, temperature, full condition snapshot. Published at weather segment boundaries, not continuously. |
-| `environment.weather-event.started` | `EnvironmentWeatherEventStartedEvent` | Weather event activated. Includes eventId, eventCode, severity, scopeType, scopeId, sourceType, duration. |
-| `environment.weather-event.ended` | `EnvironmentWeatherEventEndedEvent` | Weather event ended (expired or cancelled). Includes eventId, eventCode, scopeType, scopeId, reason ("expired", "cancelled", "superseded"). |
-| `environment.resource-availability.changed` | `EnvironmentResourceAvailabilityChangedEvent` | Seasonal resource availability changed for a realm (on season boundary or weather event). Includes realmId, previousAbundance, currentAbundance, season. |
-| `environment.climate-template.created` | `ClimateTemplateCreatedEvent` | Climate template created. Auto-generated via `x-lifecycle` in `environment-events.yaml` with `topic_prefix: environment`. |
-| `environment.climate-template.updated` | `ClimateTemplateUpdatedEvent` | Climate template updated (including deprecation state changes). Auto-generated via `x-lifecycle` with `changedFields`. Deprecation is communicated via `changedFields` containing `isDeprecated`, `deprecatedAt`, `deprecationReason`. |
-| `environment.climate-template.deleted` | `ClimateTemplateDeletedEvent` | Climate template deleted (via cleanup). Auto-generated via `x-lifecycle` with `deletedReason`. |
-
-**`x-event-publications`**: ALL published events (condition changes, weather events, resource availability, and lifecycle) must be listed in `x-event-publications` in `environment-events.yaml` per SCHEMA-RULES, serving as the authoritative registry of what environment emits.
-
-### Consumed Events
-
-These MUST be declared as `x-event-subscriptions` in `environment-events.yaml` so the event controller is generated. Without schema-level subscription declarations, the handlers won't be wired up.
-
-| Topic | Handler | Event Model Fields | Action |
-|-------|---------|-------------------|--------|
-| `worldstate.period-changed` | `HandlePeriodChangedAsync` | `realmId`, `gameServiceId`, `period` (current period code), `previousPeriod`, `gameHour`, `gameDay`, `season`, `seasonProgress` | Primary trigger for environmental state updates. Acquires realm-scoped distributed lock (`refresh:{realmId}`), then re-computes condition snapshots for locations within the affected realm (scoped by `ConditionRefreshMode` -- all locations or active-only). Publishes `conditions-changed` events where weather or temperature changed meaningfully vs. the previous cached snapshot. Publishes to Mapping weather layer if enabled. |
-| `worldstate.season-changed` | `HandleSeasonChangedAsync` | `realmId`, `gameServiceId`, `season` (new season code), `previousSeason`, `year` | Trigger resource availability recalculation for all locations in the affected realm. Publish `resource-availability.changed`. Invalidate cached weather distributions (new season = new weather probability weights from climate template). Invalidate `ClimateTemplateCache` seasonal lookups. |
-| `worldstate.day-changed` | `HandleDayChangedAsync` | `realmId`, `gameServiceId`, `gameDay` (new day number), `year` | Invalidate day-keyed weather cache entries for the realm (`environment:weather:resolved:{realmId}:*:{previousGameDay}`). Lightweight -- cache invalidation only, no condition recomputation. New weather rolls will be computed lazily on next query or proactively on next worker refresh cycle. |
-| `location.created` | `HandleLocationCreatedAsync` | `locationId`, `realmId`, `parentLocationId` | Check if parent location has a climate binding in Environment's store. If so, create an inherited binding for the new location. Does NOT read Location metadata — biome data is Environment's own domain. Initial condition snapshot is created if the new location resolves a climate template through the inherited binding. |
-| `location.updated` | `HandleLocationUpdatedAsync` | `locationId`, `realmId`, `parentLocationId`, `previousParentLocationId` | If `parentLocationId` changed (location reparented), re-evaluate inherited climate bindings: if the binding was inherited from the old parent's subtree, re-resolve from the new parent's subtree. Explicit (non-inherited) bindings are unaffected. Location reparenting is rare but must not leave stale inherited bindings. |
-
-**Note**: Environment does NOT subscribe to `location.deleted` for cleanup. Per FOUNDATION TENETS (resource-managed cleanup), location cleanup is handled exclusively via lib-resource's `/environment/cleanup-by-location` callback (see Resource Cleanup below). The cleanup endpoint handles weather events, cached conditions, and active location tracking set removal.
-
-### Resource Cleanup (FOUNDATION TENETS)
-
-| Target Resource | Source Type | On Delete | Cleanup Endpoint |
-|----------------|-------------|-----------|-----------------|
-| realm | environment | CASCADE | `/environment/cleanup-by-realm` |
-| game-service | environment | CASCADE | `/environment/cleanup-by-game-service` |
-| location | environment | CASCADE | `/environment/cleanup-by-location` |
-
-**Schema declaration**: These MUST be declared as `x-references` in the `info:` section of `environment-api.yaml` with `target`, `sourceType`, `field`, `onDelete`, `cleanup.endpoint`, and `cleanup.payloadTemplate` — following the same pattern as `divine-api.yaml` and `faction-api.yaml`.
 
 ---
 
@@ -522,168 +410,13 @@ These MUST be declared as `x-event-subscriptions` in `environment-events.yaml` s
 
 ---
 
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ITelemetryProvider` | Span instrumentation for all async helper services per QUALITY TENETS. Required as constructor parameter for `EnvironmentService`, `WeatherResolver`, `TemperatureCalculator`, `ClimateTemplateCache`, `ConditionSnapshotCache`, and both background workers. |
-| `ILogger<EnvironmentService>` | Structured logging |
-| `EnvironmentServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates 4 stores: environment-climate, environment-weather, environment-conditions, environment-overrides) |
-| `IMessageBus` | Event publishing |
-| `IEventConsumer` | Event handler registration for Worldstate boundary events (`period-changed`, `season-changed`, `day-changed`) and Location lifecycle events (`location.created`, `location.updated`) |
-| `IDistributedLockProvider` | Distributed lock acquisition (L0) |
-| `IWorldstateClient` | Game time queries: current time, season, season progress (L2 hard) |
-| `ILocationClient` | Location parent hierarchy for binding inheritance, existence validation (L2 hard) |
-| `IGameServiceClient` | Game service existence validation (L2 hard) |
-| `IRealmClient` | Realm existence validation for `SetRealmConfig` (L2 hard) |
-| `IResourceClient` | Reference registration/unregistration with lib-resource (L1 hard). Called during climate template creation, binding creation, and cleanup. |
-| `ICharacterClient` | Character-to-location resolution for variable provider (L2 hard). Used by `EnvironmentProviderFactory` to resolve entityId → locationId/realmId when the Actor runtime does not provide locationId in context. |
-| `IServiceProvider` | Runtime resolution of soft dependencies (lib-mapping, lib-analytics) |
-| `EnvironmentConditionWorkerService` | Background `HostedService` that refreshes environmental conditions **per-realm** on a periodic cycle. Acquires a distributed lock per realm (`refresh:{realmId}`), iterates locations within that realm, computes condition snapshots, and publishes `conditions-changed` events where weather or temperature changed meaningfully. Each realm's refresh is independently locked for multi-instance safety -- two nodes can refresh different realms concurrently, but only one node processes a given realm at a time. Supports configurable `ConditionRefreshMode` (see Configuration): `AllLocations` (default, refresh every location in the realm) or `ActiveOnly` (refresh only locations with active entities -- actors, game sessions, or recent queries -- skipping dormant locations). **Optimization**: The worker should fetch the `GameTimeSnapshot` from Worldstate once per realm per refresh cycle, then pass it to all location condition computations within that cycle. Worldstate time doesn't change between location iterations within a single refresh — fetching per-location would be wasteful network traffic for identical results. |
-| `EnvironmentEventExpirationWorkerService` | Background `HostedService` that scans for expired weather events and deactivates them. Publishes `weather-event.ended` events. |
-| `EnvironmentProviderFactory` | Implements `IVariableProviderFactory` to provide `${environment.*}` variables to Actor's behavior system. |
-| `EnvironmentTransitCostModifierProvider` | Implements `ITransitCostModifierProvider` (defined in `bannou-service/Providers/`) to provide weather-based travel cost modifiers to Transit (L2). Returns speed multiplier (storms slow travel), risk modifier (blizzards increase danger), and impassability flag (extreme events block routes). Transit discovers via `IEnumerable<ITransitCostModifierProvider>`. |
-| `RegisterWeatherEventActionHandler` | ABML action handler (`register_weather_event`) enabling divine actors to create weather events via behavior expressions. Implements `IActionHandler` (in `bannou-service/Abml/Execution/`) and is discovered by Actor's `IActionHandlerRegistry`. Calls Environment's `CreateWeatherEvent` API internally. Used by Puppetmaster-launched divine actors. |
-| `CancelWeatherEventActionHandler` | ABML action handler (`cancel_weather_event`) implementing `IActionHandler`. Enables divine actors to cancel weather events they created. Validates `sourceId` matches the calling actor. |
-| `ExtendWeatherEventActionHandler` | ABML action handler (`extend_weather_event`) implementing `IActionHandler`. Enables divine actors to extend weather event durations. |
-| `IWeatherResolver` / `WeatherResolver` | Internal helper for deterministic weather computation from climate templates, season, and location. Applies indoor short-circuit for `isIndoor` bindings. |
-| `ITemperatureCalculator` / `TemperatureCalculator` | Internal helper for temperature computation with seasonal curves, altitude, weather modifiers, and noise. Applies indoor short-circuit for `isIndoor` bindings. |
-| `IClimateTemplateCache` / `ClimateTemplateCache` | In-memory TTL cache for climate templates. Templates change rarely; caching avoids MySQL queries on every condition computation. Cross-node invalidation via self-event-subscription: subscribes to `environment.climate-template.updated` and `environment.climate-template.deleted` events via `IEventConsumer` (per Implementation Tenets: multi-instance safety). TTL provides a safety net. |
-| `IConditionSnapshotCache` / `ConditionSnapshotCache` | In-memory TTL cache (5-10s) for condition snapshots, layered on top of the Redis condition cache. Backed by `ConcurrentDictionary<(Guid realmId, Guid locationId), ConditionSnapshotModel>` with `ConditionSnapshotCacheTtlSeconds` expiry. Critical for NPC scale: at 100,000+ actors ticking every 100-500ms, the variable provider would otherwise hit Redis 200K-1M times/second. This cache absorbs that load — actors at the same location within the same TTL window share the same in-memory snapshot. Cross-node invalidation via self-event-subscription: subscribes to `environment.conditions.changed` events via `IEventConsumer` so all nodes invalidate stale entries when conditions change (per Implementation Tenets: multi-instance safety). TTL provides a safety net for missed events. The background worker writes to Redis and publishes events; the event subscription handles in-memory cache invalidation across all nodes. |
-
-### Variable Provider Factory
-
-| Factory | Namespace | Data Source | Registration |
-|---------|-----------|-------------|--------------|
-| `EnvironmentProviderFactory` | `${environment.*}` | Reads from condition snapshot cache (Redis). Resolves character's locationId and realmId via `ICharacterClient` or actor metadata. Provides computed temperature, weather, atmospheric conditions, and resource availability. | `IVariableProviderFactory` (DI singleton) |
-
-### Mapping Integration
+## Mapping Integration
 
 Environment publishes weather condition data to Mapping's `weather_effects` spatial layer (600s TTL) so that game clients and NPC perception can query environmental conditions spatially rather than by location ID.
 
-**Soft dependency pattern**:
-```csharp
-// In EnvironmentConditionWorkerService, after computing a batch of condition snapshots:
-var mappingClient = _serviceProvider.GetService<IMappingClient>();
-if (mappingClient == null)
-{
- _logger.LogDebug("Mapping not enabled, skipping weather layer publication");
- return; // Graceful degradation -- spatial queries unavailable, direct queries still work
-}
-```
+The `EnvironmentConditionWorkerService` publishes to Mapping at the end of each realm's refresh cycle, batched by `MappingPublishBatchSize`. Only locations whose conditions actually changed since the last publication are included. Uses Mapping's spatial ingest endpoint (`/mapping/ingest/batch`) with channel `weather_effects`. The `TtlWeatherEffects` Mapping configuration (600s TTL) auto-expires stale weather data if Environment stops publishing.
 
-**Publication trigger**: The `EnvironmentConditionWorkerService` publishes to Mapping at the end of each realm's refresh cycle, batched by `MappingPublishBatchSize`. Only locations whose conditions actually changed since the last publication are included (compare current snapshot hash to previous).
-
-**Data model published per location**:
-```
-WeatherEffectSpatialData:
- locationId: Guid
- realmId: Guid
- weatherCode: string # Current weather pattern code
- temperature: float # Computed temperature
- precipitationType: PrecipitationType # None, Rain, Snow, Sleet, Hail
- precipitationIntensity: float # 0.0-1.0
- visibility: float # 0.0-1.0
- windSpeed: float # 0.0-1.0 normalized
- windDirection: float # 0.0-360.0 degrees
- resourceAvailability: float # 0.0-1.0
- hasActiveWeatherEvent: bool # Whether a divine/scheduled event is active
- activeEventCode: string? # Event code if applicable
- ttlSeconds: int # Matches ConditionCacheTtlSeconds * 2 (buffer for refresh cycles)
-```
-
-**API call**: Uses Mapping's spatial ingest endpoint (`/mapping/ingest/batch`) with channel `weather_effects` and the location's spatial coordinates queried from Location via `ILocationClient`. The `TtlWeatherEffects` Mapping configuration (600s TTL) auto-expires stale weather data if Environment stops publishing (e.g., during downtime or when `MappingPublishEnabled` is disabled).
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Condition Queries (4 endpoints) — `x-permissions: [{ role: user }]`
-
-- **GetConditions** (`/environment/conditions/get`): Returns the full environmental condition snapshot for a location: temperature, weather code, precipitation type/intensity, wind speed/direction, humidity, visibility, cloud cover, resource availability. Reads from condition cache (hot path). If cache is empty, computes from climate template + Worldstate + weather resolution.
-
-- **GetConditionsByCode** (`/environment/conditions/get-by-code`): Convenience endpoint accepting realm code + location code instead of GUIDs.
-
-- **BatchGetConditions** (`/environment/conditions/batch-get`): Returns condition snapshots for multiple locations in a single call. Optimized to share climate template and Worldstate lookups for locations in the same realm.
-
-- **GetTemperature** (`/environment/conditions/get-temperature`): Lightweight endpoint returning only temperature for a location. Cheaper than full condition computation. Used by services that only need temperature (e.g., crafting weather checks).
-
-### Climate Template Management (8 endpoints) — `x-permissions: [{ role: developer }]`
-
-**Deprecation Lifecycle (Category A)**: Climate templates are Category A entities — world-building definitions referenced by LocationClimateBindings (which are Environment's own internal references). Unlike configuration singletons (calendar templates, realm configs), multiple climate templates exist per game and represent authored biome definitions. Category A means: deprecation with reason, undeprecation allowed, deletion requires prior deprecation, `includeDeprecated` on list endpoints.
-
-- **SeedClimate** (`/environment/climate/seed`): Creates a climate template for a biome within a game service. Validates: game service exists, biome code unique within game scope, temperature curves cover all seasons in the game's calendar, weather distribution weights are positive, seasonal baselines reference valid season codes. Enforces `MaxClimateTemplatesPerGameService`.
-
-- **GetClimate** (`/environment/climate/get`): Returns full climate template by ID or by gameServiceId + biomeCode.
-
-- **ListClimates** (`/environment/climate/list`): Paged list of climate templates within a game service. Accepts `includeDeprecated: boolean (default: false)` filter parameter.
-
-- **UpdateClimate** (`/environment/climate/update`): Acquires distributed lock. Partial update. Validates structural consistency. Invalidates climate cache and all condition caches for locations using this template. Active weather computations use updated template starting next refresh cycle.
-
-- **DeprecateClimate** (`/environment/climate/deprecate`): Marks a climate template as deprecated using triple-field semantics: sets `isDeprecated: true`, records `deprecatedAt` timestamp, and stores the provided `deprecationReason`. Idempotent -- returns OK if already deprecated. Existing locations continue resolving. New location bindings referencing this biome code are **rejected with BadRequest** (Category A instance creation guard).
-
-- **UndeprecateClimate** (`/environment/climate/undeprecate`): Restores a deprecated climate template to active status. Clears `isDeprecated`, `deprecatedAt`, and `deprecationReason`. Idempotent -- returns OK if not deprecated. Category A entities allow undeprecation.
-
-- **DeleteClimate** (`/environment/climate/delete`): Permanently deletes a climate template. Requires `isDeprecated == true` (returns BadRequest if not deprecated). Checks lib-resource for active references. Removes all LocationClimateBindings referencing this template (CASCADE within Environment's own data). Invalidates climate cache. Publishes `climate-template.deleted` lifecycle event via `x-lifecycle`.
-
-- **BulkSeedClimates** (`/environment/climate/bulk-seed`): Bulk creation for world initialization. Idempotent with `updateExisting` flag. Accepts an array of climate template definitions. This is the primary path from "service deployed" to "climates exist" -- called during world initialization alongside Location's bulk seeding. Follows Location's two-pass seeding pattern: first pass creates templates, second pass resolves any cross-references (templates referencing other templates' season codes). Designed for configuration-driven initialization where climate data is defined in YAML seed files and loaded via admin API at deployment time, the same pattern as Species and Location bulk seeding.
-
-### Weather Event Management (6 endpoints) — `x-permissions: [{ role: developer }]`
-
-- **CreateWeatherEvent** (`/environment/weather-event/create`): Creates a time-bounded weather event. Validates: scope exists (realm or location), event code is non-empty, start time is in the future or "now", end time (if set) is after start time. Enforces `MaxActiveEventsPerScope`. Invalidates condition cache for affected scope. Publishes `weather-event.started`. Returns eventId.
-
-- **GetWeatherEvent** (`/environment/weather-event/get`): Returns event by ID.
-
-- **ListWeatherEvents** (`/environment/weather-event/list`): Lists events for a scope. Filterable by active/inactive, event code, source type.
-
-- **CancelWeatherEvent** (`/environment/weather-event/cancel`): Cancels an active event. Invalidates condition cache. Publishes `weather-event.ended` with reason "cancelled".
-
-- **ExtendWeatherEvent** (`/environment/weather-event/extend`): Extends an active event's end time. Cannot shorten (use cancel + create). Useful for divine actors prolonging a storm.
-
-- **CancelWeatherEventsBySource** (`/environment/weather-event/cancel-by-source`): Bulk cancels all active weather events created by a specific source (`sourceType` + `sourceId`). Used by actor cleanup callbacks when a divine actor is stopped — cancels all weather events that actor created, returning affected locations to deterministic weather. Publishes `weather-event.ended` with reason "source_removed" for each cancelled event. This is the primary path for Design Consideration #3 (weather event cleanup after divine actor death).
-
-### Weather Monitoring (2 endpoints) — `x-permissions: [{ role: developer }]`
-
-These endpoints exist for divine actors (via Puppetmaster ABML actions) and regional watchers to observe environmental conditions and decide when to intervene. Without monitoring, divine weather manipulation is one-way (gods can override but can't observe).
-
-- **GetRealmWeatherSummary** (`/environment/weather/realm-summary`): Returns aggregated weather statistics for an entire realm: location count per weather pattern, average temperature, extremes (coldest/hottest location), active weather event count, overall resource availability. Used by divine actors to make realm-level decisions ("is my realm in drought?", "how many locations are experiencing storms?"). Computed by reading cached condition snapshots, not re-computing.
-
-- **GetWeatherByRegion** (`/environment/weather/by-region`): Returns condition snapshots for all locations within a location subtree (a parent location and all descendants). Used by regional watchers monitoring their assigned territory. Accepts a `locationId` (the region root) and returns child location conditions grouped by weather pattern. Enables spatial monitoring patterns like "what percentage of my forest region is on fire/in drought/experiencing storms?"
-
-**Divine monitoring flow**: A storm god's ABML behavior uses `${environment.resource_availability}` and `${environment.weather}` variables for its own location context (via the variable provider), then calls `GetRealmWeatherSummary` or `GetWeatherByRegion` via Puppetmaster ABML actions for broader awareness. The god-actor also subscribes to `environment.conditions.changed` events (via actor event subscriptions in Puppetmaster) to reactively detect weather transitions across its domain. This provides both pull (query endpoints) and push (event subscription) monitoring paths.
-
-### Resource Availability (2 endpoints) — `x-permissions: [{ role: user }]`
-
-- **GetResourceAvailability** (`/environment/resource/get-availability`): Returns the current resource availability for a location, accounting for seasonal baseline, weather event modifiers, and divine overrides. Returns the float abundance level and contributing factors (base seasonal, event modifiers, net result). See [Resource Availability Computation](#resource-availability-computation) below for the algorithm.
-
-- **GetRealmResourceSummary** (`/environment/resource/realm-summary`): Returns aggregate resource availability across all locations in a realm, grouped by biome. Used by Market for realm-wide economic analysis and by regional watchers for ecological assessments.
-
-### Climate Binding Management (5 endpoints) — `x-permissions: [{ role: developer }]`
-
-- **CreateClimateBinding** (`/environment/climate-binding/create`): Creates a binding for a location. Validates location exists via `ILocationClient`, validates biomeCode matches an existing non-deprecated climate template. Rejects if a binding already exists for the locationId (use update instead). Invalidates condition cache for the location.
-
-- **GetClimateBinding** (`/environment/climate-binding/get`): Returns binding for a locationId. Returns 404 if no explicit binding exists (callers should use the resolution hierarchy via `GetConditions` for inherited/fallback resolution).
-
-- **UpdateClimateBinding** (`/environment/climate-binding/update`): Changes the biomeCode or altitude for a location's binding. Validates new biomeCode references an existing non-deprecated climate template. Invalidates condition cache for the location and any inheriting children.
-
-- **DeleteClimateBinding** (`/environment/climate-binding/delete`): Removes a binding. Locations previously inheriting from this binding fall back to their next ancestor or realm default. Invalidates condition caches.
-
-- **BulkSeedBindings** (`/environment/climate-binding/bulk-seed`): Bulk binding creation for world initialization. Idempotent with `updateExisting` flag. Called alongside climate template seeding in Phase 1. Validates all biome codes reference existing climate templates and all locations exist.
-
-### Realm Configuration (2 endpoints) — `x-permissions: [{ role: developer }]`
-
-- **SetRealmConfig** (`/environment/realm-config/set`): Creates or updates the per-realm environment configuration (default biome code). Validates realm exists via `IRealmClient`, validates biome code references an existing non-deprecated climate template. Idempotent — creates if missing, updates if present.
-
-- **GetRealmConfig** (`/environment/realm-config/get`): Returns the realm environment configuration for a realmId. Returns 404 if no config has been set (the global `DefaultBiomeCode` fallback is used in this case, but this endpoint does not return the fallback — it only returns explicitly set realm configs).
-
-### Cleanup (3 endpoints) — `x-permissions: [{ role: developer }]`
-
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
-
-- **CleanupByRealm** (`/environment/cleanup-by-realm`): Removes all weather events, condition caches, location bindings, and the realm's `RealmEnvironmentConfig` for a realm. Climate templates are NOT removed (they are game-scoped, not realm-scoped).
-- **CleanupByGameService** (`/environment/cleanup-by-game-service`): Removes climate templates, weather events, and all derived data for a game service.
-- **CleanupByLocation** (`/environment/cleanup-by-location`): Removes location-scoped weather events, cached conditions, and the location's climate binding for a deleted location.
+Mapping is a soft L4 dependency — resolved via `IServiceProvider.GetService<IMappingClient>()` with graceful skip when absent. When Mapping is not enabled, spatial weather queries return nothing but direct API queries and variable provider reads still function normally.
 
 ---
 
@@ -1071,7 +804,7 @@ Location (where) ─────────────────────
 
 ### Bugs (Fix Immediately)
 
-1. **ConcurrentDictionary cache invalidation must use self-event-subscription**: Both `IConditionSnapshotCache` (ConcurrentDictionary-backed, 5s TTL) and `IClimateTemplateCache` (ConcurrentDictionary-backed, 60min TTL) are described as using inline writes from the background worker or direct invalidation at mutation sites for cache management. Per Implementation Tenets (multi-instance safety): "Services using ConcurrentDictionary caches MUST invalidate via self-event-subscription, not inline method calls. Inline invalidation only reaches the node that processed the request; other nodes serve stale data until TTL expiry." Fix: `IConditionSnapshotCache` must subscribe to the service's own `environment.conditions.changed` event for cross-node invalidation; `IClimateTemplateCache` must subscribe to `environment.climate-template.updated` and `environment.climate-template.deleted` events. TTL remains as a safety net, not the primary cross-node invalidation mechanism. The DI Services section and Intentional Quirk #7 describe the worker writing to both Redis and in-memory cache — the in-memory write is the inline invalidation that T9 prohibits for cross-node consistency.
+1. ~~**ConcurrentDictionary cache invalidation must use self-event-subscription**~~: **FIXED** (2026-03-16) - Implementation map specifies self-event-subscription as the primary cross-node invalidation mechanism for both `IConditionSnapshotCache` and `IClimateTemplateCache`. Map's Events Consumed section includes 3 self-subscriptions. Intentional Quirk #7 updated to describe this pattern. TTL is the safety net, not the primary mechanism.
 
 ### Intentional Quirks (Documented Behavior)
 

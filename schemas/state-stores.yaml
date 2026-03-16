@@ -20,7 +20,7 @@
 #
 # Generated artifacts:
 #   - bannou-service/Generated/StateStoreDefinitions.cs
-#   - docs/GENERATED-STATE-STORES.md
+#   - docs/generated/GENERATED-STATE-STORES.md
 
 openapi: 3.0.4
 info:
@@ -112,6 +112,32 @@ x-state-stores:
     prefix: "chat:lock"
     service: Chat
     purpose: Distributed locks for room and participant modifications
+
+  # ============================================================================
+  # Localization Stores (L1 AppFoundation Service)
+  # ============================================================================
+
+  localization-category-store:
+    backend: mysql
+    service: Localization
+    purpose: Category definitions (schema-defined and runtime-created)
+
+  localization-entry-store:
+    backend: mysql
+    service: Localization
+    purpose: Translation entries queryable by category, language, and key
+
+  localization-compiled-cache:
+    backend: redis
+    prefix: "localization:compiled"
+    service: Localization
+    purpose: Compiled export bundles keyed by language and category (TTL-backed)
+
+  localization-lock:
+    backend: redis
+    prefix: "localization:lock"
+    service: Localization
+    purpose: Distributed locks for category and entry write operations
 
   voice-statestore:
     backend: redis

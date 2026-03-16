@@ -1,0 +1,77 @@
+openapi: 3.0.4
+info:
+  title: Localization Service Configuration
+  description: |
+    Configuration schema for Localization service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    MaxRuntimeCategories:
+      type: integer
+      description: Maximum number of runtime-created categories (schema-defined categories are unlimited)
+      env: LOCALIZATION_MAX_RUNTIME_CATEGORIES
+      default: 100
+      minimum: 1
+      maximum: 10000
+
+    MaxEntriesPerCategory:
+      type: integer
+      description: Maximum translation entries per category (safety cap)
+      env: LOCALIZATION_MAX_ENTRIES_PER_CATEGORY
+      default: 10000
+      minimum: 100
+      maximum: 1000000
+
+    MaxLanguages:
+      type: integer
+      description: Maximum supported language count across all categories
+      env: LOCALIZATION_MAX_LANGUAGES
+      default: 50
+      minimum: 1
+      maximum: 200
+
+    DefaultLanguage:
+      type: string
+      description: Fallback language when requested language has no entry (BCP 47 tag)
+      env: LOCALIZATION_DEFAULT_LANGUAGE
+      default: "en"
+      minLength: 2
+      maxLength: 35
+
+    DefaultValidationMode:
+      $ref: 'localization-api.yaml#/components/schemas/ValidationMode'
+      description: Default validation mode for new runtime categories
+      env: LOCALIZATION_DEFAULT_VALIDATION_MODE
+      default: None
+
+    CacheExpirationMinutes:
+      type: integer
+      description: Redis TTL in minutes for compiled export cache entries
+      env: LOCALIZATION_CACHE_EXPIRATION_MINUTES
+      default: 60
+      minimum: 1
+      maximum: 10080
+
+    LockExpirySeconds:
+      type: integer
+      description: Distributed lock expiry timeout in seconds for write operations
+      env: LOCALIZATION_LOCK_EXPIRY_SECONDS
+      default: 15
+      minimum: 1
+      maximum: 120
+
+    ExportPageSize:
+      type: integer
+      description: Entries per page when building compiled export from MySQL
+      env: LOCALIZATION_EXPORT_PAGE_SIZE
+      default: 5000
+      minimum: 100
+      maximum: 50000

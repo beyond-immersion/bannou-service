@@ -1234,4 +1234,276 @@ public class SchemaValidationTests
             $"Every x-references declaration must specify onDelete: cascade | restrict | detach.\n" +
             $"Violations:\n{report}");
     }
+
+    // =========================================================================
+    // x-constraint-group validation tests
+    // =========================================================================
+
+    /// <summary>
+    /// Validates that every constraint-group reference on a property matches a
+    /// group name defined in x-constraint-groups within the same configuration block.
+    /// Per SCHEMA-RULES.md § x-constraint-groups.
+    /// </summary>
+    [Fact]
+    public void ConstraintGroup_ReferencesExistingGroup()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetConfigSchemaFiles())
+        {
+            foreach (var info in SchemaParser.GetConstraintGroups(file))
+            {
+                var definedGroups = new HashSet<string>(info.Groups.Select(g => g.GroupName), StringComparer.Ordinal);
+
+                foreach (var membership in info.Memberships)
+                {
+                    if (!definedGroups.Contains(membership.GroupName))
+                    {
+                        violations.Add(
+                            $"{info.ServiceName} ({info.BlockName}): property '{membership.PropertyName}' " +
+                            $"references constraint-group '{membership.GroupName}' which is not defined " +
+                            $"in x-constraint-groups");
+                    }
+                }
+            }
+        }
+
+        if (violations.Count == 0) return;
+
+        var report = string.Join("\n", violations.Select(v => $"  - {v}"));
+        Assert.Fail(
+            $"Found {violations.Count} constraint-group reference(s) to undefined groups.\n" +
+            $"Every constraint-group value on a property must match a group in x-constraint-groups.\n" +
+            $"Violations:\n{report}");
+    }
+
+    /// <summary>
+    /// Validates that every defined constraint group has at least 2 member properties.
+    /// A constraint over a single property is a per-property constraint — use ConfigRange
+    /// or nullable instead. Per X-CONSTRAINT-GROUP specification.
+    /// </summary>
+    [Fact]
+    public void ConstraintGroup_HasMinimumTwoMembers()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetConfigSchemaFiles())
+        {
+            foreach (var info in SchemaParser.GetConstraintGroups(file))
+            {
+                foreach (var group in info.Groups)
+                {
+                    var memberCount = info.Memberships.Count(m => m.GroupName == group.GroupName);
+                    if (memberCount < 2)
+                    {
+                        violations.Add(
+                            $"{info.ServiceName} ({info.BlockName}): constraint group '{group.GroupName}' " +
+                            $"has {memberCount} member(s), minimum is 2");
+                    }
+                }
+            }
+        }
+
+        if (violations.Count == 0) return;
+
+        var report = string.Join("\n", violations.Select(v => $"  - {v}"));
+        Assert.Fail(
+            $"Found {violations.Count} constraint group(s) with fewer than 2 members.\n" +
+            $"Violations:\n{report}");
+    }
+
+    /// <summary>
+    /// Validates that sum-type constraint groups (sum-equals, sum-minimum, sum-maximum)
+    /// only contain numeric properties (type: number or type: integer).
+    /// Per X-CONSTRAINT-GROUP specification.
+    /// </summary>
+    [Fact]
+    public void ConstraintGroup_SumConstraintsOnlyOnNumericProperties()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetConfigSchemaFiles())
+        {
+            foreach (var info in SchemaParser.GetConstraintGroups(file))
+            {
+                var sumGroups = new HashSet<string>(
+                    info.Groups.Where(g => SchemaParser.SumConstraintTypes.Contains(g.Constraint))
+                              .Select(g => g.GroupName),
+                    StringComparer.Ordinal);
+
+                foreach (var membership in info.Memberships)
+                {
+                    if (sumGroups.Contains(membership.GroupName) &&
+                        !SchemaParser.NumericPropertyTypes.Contains(membership.PropertyType))
+                    {
+                        violations.Add(
+                            $"{info.ServiceName} ({info.BlockName}): property '{membership.PropertyName}' " +
+                            $"(type: {membership.PropertyType}) is in sum constraint group '{membership.GroupName}' " +
+                            $"but only numeric types (number, integer) are valid for sum constraints");
+                    }
+                }
+            }
+        }
+
+        if (violations.Count == 0) return;
+
+        var report = string.Join("\n", violations.Select(v => $"  - {v}"));
+        Assert.Fail(
+            $"Found {violations.Count} non-numeric property/properties in sum constraint groups.\n" +
+            $"Violations:\n{report}");
+    }
+
+    /// <summary>
+    /// Validates that sum-type constraint groups have a value field and non-sum groups do not.
+    /// Per X-CONSTRAINT-GROUP specification.
+    /// </summary>
+    [Fact]
+    public void ConstraintGroup_ValueRequiredForSumConstraints()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetConfigSchemaFiles())
+        {
+            foreach (var info in SchemaParser.GetConstraintGroups(file))
+            {
+                foreach (var group in info.Groups)
+                {
+                    var isSumConstraint = SchemaParser.SumConstraintTypes.Contains(group.Constraint);
+
+                    if (isSumConstraint && !group.Value.HasValue)
+                    {
+                        violations.Add(
+                            $"{info.ServiceName} ({info.BlockName}): constraint group '{group.GroupName}' " +
+                            $"(constraint: {group.Constraint}) requires a 'value' field");
+                    }
+                    else if (!isSumConstraint && group.Value.HasValue)
+                    {
+                        violations.Add(
+                            $"{info.ServiceName} ({info.BlockName}): constraint group '{group.GroupName}' " +
+                            $"(constraint: {group.Constraint}) must not have a 'value' field");
+                    }
+                }
+            }
+        }
+
+        if (violations.Count == 0) return;
+
+        var report = string.Join("\n", violations.Select(v => $"  - {v}"));
+        Assert.Fail(
+            $"Found {violations.Count} constraint group(s) with incorrect value field usage.\n" +
+            $"Violations:\n{report}");
+    }
+
+    /// <summary>
+    /// Validates that presence-type constraint groups (exactly-one, at-most-one, all-or-none)
+    /// only contain nullable properties. Non-nullable properties are always "set" and defeat
+    /// the constraint. Per X-CONSTRAINT-GROUP specification.
+    /// </summary>
+    [Fact]
+    public void ConstraintGroup_MutualExclusionOnlyOnNullableProperties()
+    {
+        var presenceConstraints = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "exactly-one", "at-most-one", "all-or-none"
+        };
+
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetConfigSchemaFiles())
+        {
+            foreach (var info in SchemaParser.GetConstraintGroups(file))
+            {
+                var presenceGroups = new HashSet<string>(
+                    info.Groups.Where(g => presenceConstraints.Contains(g.Constraint))
+                              .Select(g => g.GroupName),
+                    StringComparer.Ordinal);
+
+                foreach (var membership in info.Memberships)
+                {
+                    if (presenceGroups.Contains(membership.GroupName) && !membership.IsNullable)
+                    {
+                        violations.Add(
+                            $"{info.ServiceName} ({info.BlockName}): property '{membership.PropertyName}' " +
+                            $"is in presence constraint group '{membership.GroupName}' but is not nullable. " +
+                            $"Presence constraints require nullable: true on all member properties");
+                    }
+                }
+            }
+        }
+
+        if (violations.Count == 0) return;
+
+        var report = string.Join("\n", violations.Select(v => $"  - {v}"));
+        Assert.Fail(
+            $"Found {violations.Count} non-nullable property/properties in presence constraint groups.\n" +
+            $"Violations:\n{report}");
+    }
+
+    /// <summary>
+    /// Validates that only sum-equals constraint groups specify a tolerance value.
+    /// Tolerance is meaningless for inequality comparisons and presence constraints.
+    /// Per X-CONSTRAINT-GROUP specification.
+    /// </summary>
+    [Fact]
+    public void ConstraintGroup_ToleranceOnlyOnSumEquals()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetConfigSchemaFiles())
+        {
+            foreach (var info in SchemaParser.GetConstraintGroups(file))
+            {
+                foreach (var group in info.Groups)
+                {
+                    if (group.Tolerance.HasValue && group.Constraint != "sum-equals")
+                    {
+                        violations.Add(
+                            $"{info.ServiceName} ({info.BlockName}): constraint group '{group.GroupName}' " +
+                            $"(constraint: {group.Constraint}) specifies tolerance but only sum-equals " +
+                            $"supports tolerance");
+                    }
+                }
+            }
+        }
+
+        if (violations.Count == 0) return;
+
+        var report = string.Join("\n", violations.Select(v => $"  - {v}"));
+        Assert.Fail(
+            $"Found {violations.Count} constraint group(s) with tolerance on non-sum-equals constraints.\n" +
+            $"Violations:\n{report}");
+    }
+
+    /// <summary>
+    /// Validates that every constraint group definition has a non-empty description.
+    /// Per X-CONSTRAINT-GROUP specification.
+    /// </summary>
+    [Fact]
+    public void ConstraintGroup_DescriptionRequired()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetConfigSchemaFiles())
+        {
+            foreach (var info in SchemaParser.GetConstraintGroups(file))
+            {
+                foreach (var group in info.Groups)
+                {
+                    if (string.IsNullOrWhiteSpace(group.Description))
+                    {
+                        violations.Add(
+                            $"{info.ServiceName} ({info.BlockName}): constraint group '{group.GroupName}' " +
+                            $"is missing a description");
+                    }
+                }
+            }
+        }
+
+        if (violations.Count == 0) return;
+
+        var report = string.Join("\n", violations.Select(v => $"  - {v}"));
+        Assert.Fail(
+            $"Found {violations.Count} constraint group(s) without descriptions.\n" +
+            $"Violations:\n{report}");
+    }
 }

@@ -87,11 +87,12 @@ make down-compose          # Stop and cleanup
 
 - [WebSocket Protocol](docs/WEBSOCKET-PROTOCOL.md) - Binary protocol specification
 - [Schema Rules](docs/reference/SCHEMA-RULES.md) - OpenAPI schema authoring reference
-- [Permissions System](docs/X-PERMISSIONS-SPECIFICATION.md) - Role-based access control schema
-- [Service Details](docs/GENERATED-SERVICE-DETAILS.md) - Service descriptions and API endpoints
-- [Events Reference](docs/GENERATED-EVENTS.md) - Auto-generated event documentation
-- [Configuration Reference](docs/GENERATED-CONFIGURATION.md) - Environment variables
-- [State Stores](docs/GENERATED-STATE-STORES.md) - Redis/MySQL state stores
+- [Permissions System](docs/reference/specifications/X-PERMISSIONS.md) - Role-based access control schema
+- [Extension Attribute Specifications](docs/generated/GENERATED-SPECIFICATIONS-CATALOG.md) - All x-* attribute specifications
+- [Service Details](docs/generated/GENERATED-SERVICE-DETAILS.md) - Service descriptions and API endpoints
+- [Events Reference](docs/generated/GENERATED-EVENTS.md) - Auto-generated event documentation
+- [Configuration Reference](docs/generated/GENERATED-CONFIGURATION.md) - Environment variables
+- [State Stores](docs/generated/GENERATED-STATE-STORES.md) - Redis/MySQL state stores
 
 ## Project Structure
 

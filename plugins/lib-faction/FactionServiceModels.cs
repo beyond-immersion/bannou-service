@@ -51,6 +51,9 @@ internal class FactionModel
     /// <summary>Current operational lifecycle status (orthogonal to deprecation).</summary>
     public FactionStatus Status { get; set; }
 
+    /// <summary>Authority classification for governance power (defaults to Influence).</summary>
+    public AuthorityLevel AuthorityLevel { get; set; }
+
     /// <summary>Current seed growth phase (null if no seed).</summary>
     public string? CurrentPhase { get; set; }
 
@@ -290,6 +293,9 @@ internal class CachedApplicableNorm
     /// <summary>Source of this norm in the resolution hierarchy.</summary>
     public NormSource Source { get; set; }
 
+    /// <summary>Authority level of the faction that defined this norm.</summary>
+    public AuthorityLevel AuthorityLevel { get; set; }
+
     /// <summary>Optional description.</summary>
     public string? Description { get; set; }
 }
@@ -313,4 +319,84 @@ internal class CachedMergedNorm
 
     /// <summary>Severity of the winning norm.</summary>
     public NormSeverity Severity { get; set; }
+
+    /// <summary>Authority level of the faction that defined the winning norm.</summary>
+    public AuthorityLevel AuthorityLevel { get; set; }
+}
+
+// ============================================================================
+// GOVERNANCE STORAGE MODELS
+// ============================================================================
+
+/// <summary>
+/// Governance entry record persisted in faction-governance-statestore (MySQL).
+/// Associates a case type domain with a contract template for a sovereign/delegated faction.
+/// Key: gov:{governanceId}
+/// </summary>
+internal class GovernanceEntryModel
+{
+    /// <summary>Unique governance entry identifier.</summary>
+    public Guid GovernanceId { get; set; }
+
+    /// <summary>Faction that owns this governance entry.</summary>
+    public Guid FactionId { get; set; }
+
+    /// <summary>Case type domain prefix (opaque string, e.g., "dissolution", "trade_dispute").</summary>
+    public string Domain { get; set; } = string.Empty;
+
+    /// <summary>Contract template code in lib-contract for this case type.</summary>
+    public string TemplateCode { get; set; } = string.Empty;
+
+    /// <summary>Opaque governance parameters for the contract template. Stored and returned unchanged.</summary>
+    public object? GovernanceParameters { get; set; }
+
+    /// <summary>When this governance entry was created.</summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>When this governance entry was last updated (null if never).</summary>
+    public DateTimeOffset? UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// Aggregated governance entry list for a faction, persisted in faction-governance-statestore (MySQL).
+/// Key: gov:fac:{factionId}
+/// </summary>
+internal class GovernanceEntryListModel
+{
+    /// <summary>Faction these entries belong to.</summary>
+    public Guid FactionId { get; set; }
+
+    /// <summary>All governance entry IDs for this faction.</summary>
+    public List<Guid> GovernanceIds { get; set; } = new();
+}
+
+/// <summary>
+/// Cached governance resolution result in faction-cache (Redis).
+/// Key: govcache:{locationId}:{domain}
+/// </summary>
+internal class CachedGovernanceResolution
+{
+    /// <summary>Jurisdictional faction ID (null if no governance resolved).</summary>
+    public Guid? JurisdictionalFactionId { get; set; }
+
+    /// <summary>Jurisdictional faction name.</summary>
+    public string? JurisdictionalFactionName { get; set; }
+
+    /// <summary>Authority level of the jurisdictional faction.</summary>
+    public AuthorityLevel? AuthorityLevel { get; set; }
+
+    /// <summary>Contract template code.</summary>
+    public string? TemplateCode { get; set; }
+
+    /// <summary>Opaque governance parameters.</summary>
+    public object? GovernanceParameters { get; set; }
+
+    /// <summary>Ultimate sovereign faction ID.</summary>
+    public Guid? SovereignFactionId { get; set; }
+
+    /// <summary>Whether governance was resolved.</summary>
+    public bool Resolved { get; set; }
+
+    /// <summary>When this cache entry was created.</summary>
+    public DateTimeOffset CachedAt { get; set; }
 }

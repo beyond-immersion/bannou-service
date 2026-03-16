@@ -1,72 +1,164 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.CharacterLifecycle;
 
 /// <summary>
-/// Implementation of the CharacterLifecycle service.
-/// This class contains the business logic for all CharacterLifecycle operations.
+/// Generational cycle orchestration and genetic heritage service.
+/// Manages character aging, marriage, procreation, death processing,
+/// and cross-generational trait inheritance.
 /// </summary>
-/// <remarks>
-/// <para>
-/// <b>FOUNDATION TENETS - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
-/// Generated code (event handlers, permissions) is placed in companion partial classes.
-/// </para>
-/// <para>
-/// <b>IMPLEMENTATION TENETS CHECKLIST:</b>
-/// <list type="bullet">
-///   <item><b>Type Safety:</b> Internal POCOs MUST use proper C# types (enums, Guids, DateTimeOffset) - never string representations. No Enum.Parse in business logic.</item>
-///   <item><b>Configuration:</b> ALL config properties in CharacterLifecycleServiceConfiguration MUST be wired up. No hardcoded magic numbers for tunables.</item>
-///   <item><b>Events:</b> ALL meaningful state changes MUST publish typed events, even without current consumers.</item>
-///   <item><b>Cache Stores:</b> If state-stores.yaml defines cache stores for this service, implement read-through/write-through caching.</item>
-///   <item><b>Concurrency:</b> Use GetWithETagAsync + TrySaveAsync for list/index operations. No non-atomic read-modify-write.</item>
-/// </list>
-/// </para>
-/// <para>
-/// <b>MODELS:</b> Run <c>make print-models PLUGIN="character-lifecycle"</c> to view compact request/response model shapes.
-/// If print-models fails or generation has not been run, DO NOT proceed with implementation.
-/// Generate first (<c>cd scripts &amp;&amp; ./generate-service.sh character-lifecycle</c>) or ask the developer how to continue.
-/// Never guess at model definitions.
-/// </para>
-/// <para>
-/// <b>RELATED FILES:</b>
-/// <list type="bullet">
-///   <item>Internal data models: CharacterLifecycleServiceModels.cs (storage models, cache entries, internal DTOs)</item>
-///   <item>Event handlers: CharacterLifecycleServiceEvents.cs (event consumer registration and handlers)</item>
-///   <item>Configuration: Generated/CharacterLifecycleServiceConfiguration.cs</item>
-/// </list>
-/// </para>
-/// </remarks>
 [BannouService("character-lifecycle", typeof(ICharacterLifecycleService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
 public partial class CharacterLifecycleService : ICharacterLifecycleService
 {
-    private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
-    private readonly IResourceClient _resourceClient;
     private readonly ILogger<CharacterLifecycleService> _logger;
     private readonly CharacterLifecycleServiceConfiguration _configuration;
+    private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IResourceClient _resourceClient;
+    private readonly IServiceProvider _serviceProvider;
 
-    private const string STATE_STORE = "character-lifecycle-statestore";
+    // Constructor-cached state stores (per FOUNDATION TENETS)
+    private readonly IStateStore<LifecycleProfileModel> _profileStore;
+    private readonly IStateStore<PendingPregnancyModel> _pregnancyStore;
+    private readonly IStateStore<LifecycleTemplateModel> _lifecycleTemplateStore;
+    private readonly IStateStore<HeritableTraitTemplateModel> _traitTemplateStore;
+    private readonly IStateStore<HybridTraitTemplateModel> _hybridTemplateStore;
+    private readonly IStateStore<GeneticProfileModel> _geneticStore;
+    private readonly IStateStore<BloodlineModel> _bloodlineStore;
+    private readonly IStateStore<BloodlineMembershipModel> _membershipStore;
+    private readonly IStateStore<BloodlineMemberListModel> _memberListStore;
+    private readonly IStateStore<string> _bloodlineCodeStore;
+    private readonly IStateStore<LifecycleManifestModel> _cacheStore;
+    private readonly IDistributedLockProvider _lockProvider;
+
+    // Hard dependencies (L0/L1/L2 — fail at startup if missing)
+    private readonly ICharacterClient _characterClient;
+    private readonly IRelationshipClient _relationshipClient;
+    private readonly ISpeciesClient _speciesClient;
+    private readonly IWorldstateClient _worldstateClient;
+    private readonly IContractClient _contractClient;
+    private readonly ISeedClient _seedClient;
+    private readonly IGameServiceClient _gameServiceClient;
+    private readonly IInventoryClient _inventoryClient;
+    private readonly ICurrencyClient _currencyClient;
+
+    #region Key Building Helpers
+
+    private const string PROFILE_KEY_PREFIX = "profile:";
+    private const string GENETIC_KEY_PREFIX = "genetic:";
+    private const string TRAIT_TEMPLATE_KEY_PREFIX = "trait-template:";
+    private const string LIFECYCLE_TEMPLATE_KEY_PREFIX = "lifecycle-template:";
+    private const string HYBRID_TEMPLATE_KEY_PREFIX = "hybrid-template:";
+    private const string BLOODLINE_KEY_PREFIX = "bloodline:";
+    private const string BLOODLINE_CODE_KEY_PREFIX = "bloodline:code:";
+    private const string BLOODLINE_MEMBER_KEY_PREFIX = "bloodline:member:";
+    private const string BLOODLINE_MEMBERS_KEY_PREFIX = "bloodline:members:";
+    private const string MANIFEST_KEY_PREFIX = "manifest:";
+    private const string PREGNANCY_KEY_PREFIX = "pregnancy-pending:";
+
+    internal static string BuildProfileKey(Guid characterId)
+        => $"{PROFILE_KEY_PREFIX}{characterId}";
+
+    internal static string BuildGeneticKey(Guid characterId)
+        => $"{GENETIC_KEY_PREFIX}{characterId}";
+
+    internal static string BuildTraitTemplateKey(string speciesCode, Guid gameServiceId)
+        => $"{TRAIT_TEMPLATE_KEY_PREFIX}{speciesCode}:{gameServiceId}";
+
+    internal static string BuildLifecycleTemplateKey(string speciesCode, Guid gameServiceId)
+        => $"{LIFECYCLE_TEMPLATE_KEY_PREFIX}{speciesCode}:{gameServiceId}";
+
+    internal static string BuildHybridTemplateKey(string speciesA, string speciesB, Guid gameServiceId)
+        => $"{HYBRID_TEMPLATE_KEY_PREFIX}{speciesA}:{speciesB}:{gameServiceId}";
+
+    internal static string BuildBloodlineKey(Guid bloodlineId)
+        => $"{BLOODLINE_KEY_PREFIX}{bloodlineId}";
+
+    internal static string BuildBloodlineCodeKey(Guid gameServiceId, string bloodlineCode)
+        => $"{BLOODLINE_CODE_KEY_PREFIX}{gameServiceId}:{bloodlineCode}";
+
+    internal static string BuildBloodlineMemberKey(Guid characterId)
+        => $"{BLOODLINE_MEMBER_KEY_PREFIX}{characterId}";
+
+    internal static string BuildBloodlineMembersKey(Guid bloodlineId)
+        => $"{BLOODLINE_MEMBERS_KEY_PREFIX}{bloodlineId}";
+
+    internal static string BuildManifestKey(Guid characterId)
+        => $"{MANIFEST_KEY_PREFIX}{characterId}";
+
+    #endregion
 
     public CharacterLifecycleService(
-        IMessageBus messageBus,
-        IStateStoreFactory stateStoreFactory,
-        IResourceClient resourceClient,
         ILogger<CharacterLifecycleService> logger,
-        CharacterLifecycleServiceConfiguration configuration)
+        CharacterLifecycleServiceConfiguration configuration,
+        IStateStoreFactory stateStoreFactory,
+        IDistributedLockProvider lockProvider,
+        IMessageBus messageBus,
+        IEventConsumer eventConsumer,
+        ITelemetryProvider telemetryProvider,
+        ICharacterClient characterClient,
+        IRelationshipClient relationshipClient,
+        ISpeciesClient speciesClient,
+        IWorldstateClient worldstateClient,
+        IContractClient contractClient,
+        IResourceClient resourceClient,
+        ISeedClient seedClient,
+        IGameServiceClient gameServiceClient,
+        IInventoryClient inventoryClient,
+        ICurrencyClient currencyClient,
+        IServiceProvider serviceProvider)
     {
-        _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
-        _resourceClient = resourceClient;
         _logger = logger;
         _configuration = configuration;
+        _messageBus = messageBus;
+        _telemetryProvider = telemetryProvider;
+        _resourceClient = resourceClient;
+        _lockProvider = lockProvider;
+        _serviceProvider = serviceProvider;
+
+        // Constructor-cached store references (per FOUNDATION TENETS)
+        _profileStore = stateStoreFactory.GetStore<LifecycleProfileModel>(StateStoreDefinitions.CharacterLifecycleProfiles);
+        _pregnancyStore = stateStoreFactory.GetStore<PendingPregnancyModel>(StateStoreDefinitions.CharacterLifecycleProfiles);
+        _lifecycleTemplateStore = stateStoreFactory.GetStore<LifecycleTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage);
+        _traitTemplateStore = stateStoreFactory.GetStore<HeritableTraitTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage);
+        _hybridTemplateStore = stateStoreFactory.GetStore<HybridTraitTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage);
+        _geneticStore = stateStoreFactory.GetStore<GeneticProfileModel>(StateStoreDefinitions.CharacterLifecycleHeritage);
+        _bloodlineStore = stateStoreFactory.GetStore<BloodlineModel>(StateStoreDefinitions.CharacterLifecycleBloodlines);
+        _membershipStore = stateStoreFactory.GetStore<BloodlineMembershipModel>(StateStoreDefinitions.CharacterLifecycleBloodlines);
+        _memberListStore = stateStoreFactory.GetStore<BloodlineMemberListModel>(StateStoreDefinitions.CharacterLifecycleBloodlines);
+        _bloodlineCodeStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CharacterLifecycleBloodlines);
+        _cacheStore = stateStoreFactory.GetStore<LifecycleManifestModel>(StateStoreDefinitions.CharacterLifecycleCache);
+
+        // Hard dependencies (L1/L2)
+        _characterClient = characterClient;
+        _relationshipClient = relationshipClient;
+        _speciesClient = speciesClient;
+        _worldstateClient = worldstateClient;
+        _contractClient = contractClient;
+        _seedClient = seedClient;
+        _gameServiceClient = gameServiceClient;
+        _inventoryClient = inventoryClient;
+        _currencyClient = currencyClient;
+
+        // Event consumer registration (partial class)
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

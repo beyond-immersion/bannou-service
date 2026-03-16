@@ -21,7 +21,7 @@ Scans docs/guides/*.md and extracts header metadata (Version, Status,
 Last Updated, Key Plugins) and ## Summary sections. Documents missing
 standardized headers are included with whatever metadata exists.
 
-Output: docs/GENERATED-GUIDES-CATALOG.md
+Output: docs/generated/GENERATED-GUIDES-CATALOG.md
 
 Usage:
     python3 scripts/generate-guides-catalog.py
@@ -169,7 +169,7 @@ def generate_markdown(guides: list) -> str:
             meta_parts.append(f"**Last Updated**: {guide['last_updated']}")
         if guide['key_plugins']:
             meta_parts.append(f"**Key Plugins**: {guide['key_plugins']}")
-        meta_parts.append(f"[Full Guide](guides/{guide['filename']})")
+        meta_parts.append(f"[Full Guide](../guides/{guide['filename']})")
 
         lines.append(' | '.join(meta_parts))
         lines.append("")
@@ -185,7 +185,7 @@ def generate_markdown(guides: list) -> str:
         "",
         "---",
         "",
-        "*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "*This file is auto-generated. See [TENETS.md](../reference/TENETS.md) for architectural context.*",
         "",
     ])
 
@@ -204,7 +204,7 @@ def main():
 
     markdown = generate_markdown(guides)
 
-    output_file = repo_root / 'docs' / 'GENERATED-GUIDES-CATALOG.md'
+    output_file = repo_root / 'docs' / 'generated' / 'GENERATED-GUIDES-CATALOG.md'
     with open(output_file, 'w') as f:
         f.write(markdown)
 

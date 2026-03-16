@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,7 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
     private readonly ILogger<ItemService> _logger;
     private readonly ItemServiceConfiguration _configuration;
     private readonly ItemInstanceEventBatcher _instanceEventBatcher;
+    private readonly IReadOnlyList<IItemInstanceDestructionListener> _destructionListeners;
 
     /// <summary>Persistent store for item template models (MySQL-backed).</summary>
     private readonly IStateStore<ItemTemplateModel> _templateStore;
@@ -116,6 +118,7 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Service configuration.</param>
     /// <param name="instanceEventBatcher">Batcher for item instance lifecycle events.</param>
+    /// <param name="destructionListeners">DI-discovered listeners for item instance destruction (high-frequency exception per FOUNDATION TENETS).</param>
     public ItemService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -124,15 +127,22 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
         ITelemetryProvider telemetryProvider,
         ILogger<ItemService> logger,
         ItemServiceConfiguration configuration,
-        ItemInstanceEventBatcher instanceEventBatcher)
+        ItemInstanceEventBatcher instanceEventBatcher,
+        IEnumerable<IItemInstanceDestructionListener> destructionListeners)
     {
         _messageBus = messageBus;
         _lockProvider = lockProvider;
         _contractClient = contractClient;
         _telemetryProvider = telemetryProvider;
         _instanceEventBatcher = instanceEventBatcher;
+        _destructionListeners = destructionListeners.ToList();
         _logger = logger;
         _configuration = configuration;
+
+        _logger.LogInformation(
+            "Item service initialized with {Count} destruction listeners: {Listeners}",
+            _destructionListeners.Count,
+            string.Join(", ", _destructionListeners.Select(l => l.GetType().Name)));
 
         // Constructor-cache all state store references per FOUNDATION TENETS
         _templateStore = stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
@@ -916,6 +926,21 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
             CreatedAt = model.CreatedAt,
             ModifiedAt = now
         });
+
+        // Dispatch to destruction listeners (high-frequency exception per FOUNDATION TENETS)
+        // Listeners clean up their own dependent state (distributed writes, multi-node safe)
+        await ItemInstanceDestructionDispatcher.DispatchInstanceDestroyedAsync(
+            _destructionListeners,
+            new ItemInstanceDestructionNotification(
+                body.InstanceId,
+                model.TemplateId,
+                template?.GameId,
+                model.ContainerId,
+                model.RealmId,
+                now),
+            _telemetryProvider,
+            _logger,
+            cancellationToken);
 
         _logger.LogDebug("Destroyed item instance {InstanceId} reason={Reason}", body.InstanceId, body.Reason);
         return (StatusCodes.OK, new DestroyItemInstanceResponse
