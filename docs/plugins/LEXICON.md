@@ -801,7 +801,7 @@ The system doesn't distinguish between honest teaching and lies at the transmiss
 
 ### Published Events
 
-**Lifecycle events** (entry, category, strategy) MUST use `x-lifecycle` with `topic_prefix: lexicon` in `lexicon-events.yaml` for auto-generation per SCHEMA-RULES. Custom events (trait.added/removed, association.created/deleted, category.reparented) remain manually defined.
+**Lifecycle events** (entry, category, strategy) MUST use `x-lifecycle` with `topic_prefix: lexicon` in `lexicon-service-events.yaml` for auto-generation per SCHEMA-RULES. Custom events (trait.added/removed, association.created/deleted, category.reparented) remain manually defined.
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
@@ -1129,7 +1129,7 @@ flows:
 ### Phase 1: Core Ontology Infrastructure
 
 - Create `lexicon-api.yaml` schema with entry and category management endpoints
-- Create `lexicon-events.yaml` schema
+- Create `lexicon-service-events.yaml` schema
 - Create `lexicon-configuration.yaml` schema
 - Generate service code
 - Implement category tree management (CRUD, reparenting, depth tracking, circular reference prevention)

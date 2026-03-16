@@ -1,0 +1,953 @@
+openapi: 3.0.4
+info:
+  title: Contract Service Events
+  description: |
+    Event models for Contract service RabbitMQ pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+
+    **Categories**:
+    - Lifecycle events (auto-generated): contract.template.created/updated/deleted, contract.instance.created/updated/deleted
+    - Contract flow events: proposed, consented, accepted, activated, milestone events, breach events, fulfillment, termination
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions: []  # Contract service is reactive - no external event subscriptions for v1
+  x-event-publications:
+    # Lifecycle events (auto-generated from x-lifecycle)
+    - topic: contract.template.created
+      event: ContractTemplateCreatedEvent
+      description: Published when a new contract template is created
+    - topic: contract.template.updated
+      event: ContractTemplateUpdatedEvent
+      description: Published when a contract template is updated (including deprecation via changedFields)
+    - topic: contract.template.deleted
+      event: ContractTemplateDeletedEvent
+      description: Unused Category B infrastructure — exists for future safe deletion pattern. Never published today.
+
+    - topic: contract.instance.created
+      event: ContractInstanceCreatedEvent
+      description: Published when a new contract instance is created (draft status)
+    - topic: contract.instance.updated
+      event: ContractInstanceUpdatedEvent
+      description: Published when a contract instance is updated
+    - topic: contract.instance.deleted
+      event: ContractInstanceDeletedEvent
+      description: Published when a contract instance is deleted
+
+    # Custom contract flow events
+    - topic: contract.proposed
+      event: ContractProposedEvent
+      description: Published when a contract is proposed to parties (awaiting consent)
+    - topic: contract.consented
+      event: ContractConsentReceivedEvent
+      description: Published when one party consents to a contract
+    - topic: contract.accepted
+      event: ContractAcceptedEvent
+      description: Published when all required parties have consented
+    - topic: contract.activated
+      event: ContractActivatedEvent
+      description: Published when contract becomes active (effectiveFrom reached)
+    - topic: contract.milestone.completed
+      event: ContractMilestoneCompletedEvent
+      description: Published when a milestone is completed
+    - topic: contract.milestone.failed
+      event: ContractMilestoneFailedEvent
+      description: Published when a milestone fails
+    - topic: contract.breach.detected
+      event: ContractBreachDetectedEvent
+      description: Published when a breach is recorded
+    - topic: contract.breach.cured
+      event: ContractBreachCuredEvent
+      description: Published when a breach is cured within grace period
+    - topic: contract.fulfilled
+      event: ContractFulfilledEvent
+      description: Published when all required milestones are complete
+    - topic: contract.terminated
+      event: ContractTerminatedEvent
+      description: Published when contract is terminated early
+    - topic: contract.expired
+      event: ContractExpiredEvent
+      description: Published when contract reaches natural expiration
+    - topic: contract.payment.due
+      event: ContractPaymentDueEvent
+      description: Published when a recurring or one-time payment is due on an active contract
+
+    # Prebound API execution events (observability)
+    - topic: contract.prebound-api.executed
+      event: ContractPreboundApiExecutedEvent
+      description: Published when a prebound API is successfully called
+    - topic: contract.prebound-api.failed
+      event: ContractPreboundApiFailedEvent
+      description: Published when a prebound API call fails
+    - topic: contract.prebound-api.validation-failed
+      event: ContractPreboundApiValidationFailedEvent
+      description: Published when a prebound API response fails validation
+
+    # Guardian and escrow integration events
+    - topic: contract.locked
+      event: ContractLockedEvent
+      description: Published when contract is locked under guardian custody
+    - topic: contract.unlocked
+      event: ContractUnlockedEvent
+      description: Published when contract is released from guardian custody
+    - topic: contract.party.transferred
+      event: ContractPartyTransferredEvent
+      description: Published when a party role is transferred to new entity
+    - topic: contract.clause-type.registered
+      event: ClauseTypeRegisteredEvent
+      description: Published when a new clause type is registered
+    - topic: contract.template-values.set
+      event: ContractTemplateValuesSetEvent
+      description: Published when template values are set on contract instance
+    - topic: contract.executed
+      event: ContractExecutedEvent
+      description: Published when contract clauses are executed (distributions made)
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/contract-service-lifecycle-events.yaml
+x-lifecycle:
+  topic_prefix: contract
+  ContractTemplate:
+    deprecation: true
+    instanceEntity: ContractInstance
+    model:
+      templateId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the contract template" }
+      code: { type: string, required: true, description: "Unique template code (lowercase, underscores)" }
+      name: { type: string, required: true, description: "Human-readable template name" }
+      description: { type: string, nullable: true, description: "Detailed description of this contract type" }
+      realmId: { type: string, format: uuid, nullable: true, description: "Realm ID if template is realm-specific" }
+      minParties: { type: integer, required: true, description: "Minimum number of parties required" }
+      maxParties: { type: integer, required: true, description: "Maximum number of parties allowed" }
+      defaultEnforcementMode: { $ref: 'contract-api.yaml#/components/schemas/EnforcementMode', required: true, description: "Default enforcement mode for instances" }
+      transferable: { type: boolean, required: true, description: "Whether contracts can be transferred" }
+      isActive: { type: boolean, required: true, description: "Whether template is active" }
+    sensitive: []
+
+  ContractInstance:
+    model:
+      contractId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the contract instance" }
+      templateId: { type: string, format: uuid, required: true, description: "Reference to the source template" }
+      templateCode: { type: string, required: true, description: "Template code for reference" }
+      status: { $ref: 'contract-api.yaml#/components/schemas/ContractStatus', required: true, description: "Current contract status" }
+      proposedAt: { type: string, format: date-time, nullable: true, description: "When contract was proposed to parties" }
+      acceptedAt: { type: string, format: date-time, nullable: true, description: "When all parties consented" }
+      effectiveFrom: { type: string, format: date-time, nullable: true, description: "When contract became active" }
+      effectiveUntil: { type: string, format: date-time, nullable: true, description: "When contract expires" }
+      terminatedAt: { type: string, format: date-time, nullable: true, description: "When contract was terminated early" }
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Contract Flow Events
+    # =========================================================================
+
+    ContractProposedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a contract is proposed to parties
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - templateId
+      - templateCode
+      - parties
+      properties:
+        eventName:
+          type: string
+          default: contract.proposed
+          description: 'Event type identifier: contract.proposed'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Source template ID
+        templateCode:
+          type: string
+          description: Source template code
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+          description: Parties awaiting consent
+
+    ContractConsentReceivedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when one party consents
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - consentingEntityId
+      - consentingEntityType
+      - role
+      - remainingConsentsNeeded
+      properties:
+        eventName:
+          type: string
+          default: contract.consented
+          description: 'Event type identifier: contract.consented'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        consentingEntityId:
+          type: string
+          format: uuid
+          description: Entity that consented
+        consentingEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type
+        role:
+          type: string
+          description: Party's role in the contract
+        remainingConsentsNeeded:
+          type: integer
+          description: How many more consents are needed
+
+    ContractAcceptedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when all required parties consent
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      - parties
+      properties:
+        eventName:
+          type: string
+          default: contract.accepted
+          description: 'Event type identifier: contract.accepted'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+          description: All contract parties
+        effectiveFrom:
+          type: string
+          format: date-time
+          nullable: true
+          description: When contract will become active
+
+    ContractActivatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when contract becomes active
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      - parties
+      properties:
+        eventName:
+          type: string
+          default: contract.activated
+          description: 'Event type identifier: contract.activated'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+          description: All contract parties
+        effectiveUntil:
+          type: string
+          format: date-time
+          nullable: true
+          description: When contract expires
+
+    ContractMilestoneCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a milestone is completed
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - milestoneCode
+      - milestoneName
+      - preboundApisExecuted
+      properties:
+        eventName:
+          type: string
+          default: contract.milestone.completed
+          description: 'Event type identifier: contract.milestone.completed'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        milestoneCode:
+          type: string
+          description: Completed milestone code
+        milestoneName:
+          type: string
+          description: Milestone display name
+        evidence:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: "Client-only completion evidence. No Bannou plugin reads specific keys from this field by convention."
+        preboundApisExecuted:
+          type: integer
+          description: Number of prebound APIs executed
+
+    ContractMilestoneFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a milestone fails
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - milestoneCode
+      - milestoneName
+      - reason
+      - wasRequired
+      - triggeredBreach
+      properties:
+        eventName:
+          type: string
+          default: contract.milestone.failed
+          description: 'Event type identifier: contract.milestone.failed'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        milestoneCode:
+          type: string
+          description: Failed milestone code
+        milestoneName:
+          type: string
+          description: Milestone display name
+        reason:
+          type: string
+          description: Reason for failure
+        wasRequired:
+          type: boolean
+          description: Whether this was a required milestone
+        triggeredBreach:
+          type: boolean
+          description: Whether this failure triggered a breach
+
+    ContractBreachDetectedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a breach is recorded
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - breachId
+      - breachType
+      properties:
+        eventName:
+          type: string
+          default: contract.breach.detected
+          description: 'Event type identifier: contract.breach.detected'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        breachId:
+          type: string
+          format: uuid
+          description: Breach record ID
+        breachingEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Entity that breached (null for system-initiated breaches such as deadline enforcement)
+        breachingEntityType:
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Entity type (null for system-initiated breaches)
+        breachType:
+          $ref: 'contract-api.yaml#/components/schemas/BreachType'
+          description: Type of breach
+        breachedTermOrMilestone:
+          type: string
+          nullable: true
+          description: What was breached
+        cureDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline to cure the breach
+
+    ContractBreachCuredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a breach is cured
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - breachId
+      properties:
+        eventName:
+          type: string
+          default: contract.breach.cured
+          description: 'Event type identifier: contract.breach.cured'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        breachId:
+          type: string
+          format: uuid
+          description: Breach record ID
+        cureEvidence:
+          type: string
+          nullable: true
+          description: Evidence of cure
+
+    ContractFulfilledEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when all required milestones complete
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      - parties
+      - milestonesCompleted
+      properties:
+        eventName:
+          type: string
+          default: contract.fulfilled
+          description: 'Event type identifier: contract.fulfilled'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+          description: All contract parties
+        milestonesCompleted:
+          type: integer
+          description: Number of milestones completed
+
+    ContractTerminatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when contract is terminated early
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - wasBreachRelated
+      properties:
+        eventName:
+          type: string
+          default: contract.terminated
+          description: 'Event type identifier: contract.terminated'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        terminatedByEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Entity that requested termination (null for system-initiated terminations such as breach threshold)
+        terminatedByEntityType:
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Entity type (null for system-initiated terminations)
+        reason:
+          type: string
+          nullable: true
+          description: Reason for termination
+        wasBreachRelated:
+          type: boolean
+          description: Whether termination was due to breach
+
+    ContractExpiredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when contract reaches natural expiration
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      properties:
+        eventName:
+          type: string
+          default: contract.expired
+          description: 'Event type identifier: contract.expired'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        effectiveUntil:
+          type: string
+          format: date-time
+          description: When contract was set to expire
+
+    ContractPaymentDueEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a contract payment is due based on payment schedule terms
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      - paymentSchedule
+      - paymentNumber
+      properties:
+        eventName:
+          type: string
+          default: contract.payment.due
+          description: 'Event type identifier: contract.payment.due'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        paymentSchedule:
+          $ref: 'contract-api.yaml#/components/schemas/PaymentSchedule'
+          description: Payment schedule type (one_time or recurring)
+        paymentFrequency:
+          type: string
+          nullable: true
+          description: Recurring payment frequency (ISO 8601 duration, null for one-time)
+        paymentNumber:
+          type: integer
+          description: Sequential payment number (1-indexed)
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+          nullable: true
+          description: Contract parties
+
+    # =========================================================================
+    # Prebound API Execution Events
+    # =========================================================================
+
+    ContractPreboundApiExecutedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a prebound API is executed
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - trigger
+      - serviceName
+      - endpoint
+      - statusCode
+      properties:
+        eventName:
+          type: string
+          default: contract.prebound-api.executed
+          description: 'Event type identifier: contract.prebound-api.executed'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        trigger:
+          type: string
+          description: What triggered the API call (milestone.completed, breach.detected, etc.)
+        serviceName:
+          type: string
+          description: Target service
+        endpoint:
+          type: string
+          description: Target endpoint
+        statusCode:
+          type: integer
+          description: HTTP status code returned
+
+    ContractPreboundApiFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a prebound API call fails
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - trigger
+      - serviceName
+      - endpoint
+      - errorMessage
+      properties:
+        eventName:
+          type: string
+          default: contract.prebound-api.failed
+          description: 'Event type identifier: contract.prebound-api.failed'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        trigger:
+          type: string
+          description: What triggered the API call
+        serviceName:
+          type: string
+          description: Target service
+        endpoint:
+          type: string
+          description: Target endpoint
+        errorMessage:
+          type: string
+          description: Error message from failure
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code if available
+
+    ContractPreboundApiValidationFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a prebound API response fails validation
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - trigger
+      - serviceName
+      - endpoint
+      - validationOutcome
+      properties:
+        eventName:
+          type: string
+          default: contract.prebound-api.validation-failed
+          description: 'Event type identifier: contract.prebound-api.validation-failed'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        trigger:
+          type: string
+          description: What triggered the API call
+        serviceName:
+          type: string
+          description: Target service
+        endpoint:
+          type: string
+          description: Target endpoint
+        statusCode:
+          type: integer
+          description: HTTP status code from the API response
+        validationOutcome:
+          $ref: 'contract-api.yaml#/components/schemas/ValidationOutcome'
+          description: Validation outcome
+        failureReason:
+          type: string
+          nullable: true
+          description: Description of why validation failed
+
+    # =========================================================================
+    # Guardian & Escrow Integration Events
+    # =========================================================================
+
+    ContractLockedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a contract is locked under guardian custody
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - guardianId
+      - guardianType
+      properties:
+        eventName:
+          type: string
+          default: contract.locked
+          description: 'Event type identifier: contract.locked'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        guardianId:
+          type: string
+          format: uuid
+          description: Guardian entity ID
+        guardianType:
+          type: string
+          description: Guardian entity type identifier (e.g., escrow)
+
+    ContractUnlockedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a contract is released from guardian custody
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      properties:
+        eventName:
+          type: string
+          default: contract.unlocked
+          description: 'Event type identifier: contract.unlocked'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        previousGuardianId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Previous guardian entity ID
+        previousGuardianType:
+          type: string
+          nullable: true
+          description: Previous guardian entity type identifier
+
+    ContractPartyTransferredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a party role is transferred to new entity
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - role
+      - fromEntityId
+      - fromEntityType
+      - toEntityId
+      - toEntityType
+      properties:
+        eventName:
+          type: string
+          default: contract.party.transferred
+          description: 'Event type identifier: contract.party.transferred'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        role:
+          type: string
+          description: Role that was transferred
+        fromEntityId:
+          type: string
+          format: uuid
+          description: Previous entity ID
+        fromEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Previous entity type
+        toEntityId:
+          type: string
+          format: uuid
+          description: New entity ID
+        toEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: New entity type
+
+    ClauseTypeRegisteredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when a new clause type is registered
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - typeCode
+      - description
+      - category
+      - isBuiltIn
+      properties:
+        eventName:
+          type: string
+          default: contract.clause-type.registered
+          description: 'Event type identifier: contract.clause-type.registered'
+        typeCode:
+          type: string
+          description: Clause type code
+        description:
+          type: string
+          description: Clause type description
+        category:
+          $ref: 'contract-api.yaml#/components/schemas/ClauseCategory'
+          description: Clause category
+        isBuiltIn:
+          type: boolean
+          description: Whether this is a built-in type
+
+    ContractTemplateValuesSetEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when template values are set on a contract instance
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - keys
+      - valueCount
+      properties:
+        eventName:
+          type: string
+          default: contract.template-values.set
+          description: 'Event type identifier: contract.template-values.set'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        keys:
+          type: array
+          items:
+            type: string
+          description: Keys that were set
+        valueCount:
+          type: integer
+          description: Total value count after setting
+
+    ContractExecutedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when contract clauses are executed (distributions made), providing per-clause distribution results for escrow verification.
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      - distributionCount
+      - distributionResults
+      properties:
+        eventName:
+          type: string
+          default: contract.executed
+          description: 'Event type identifier: contract.executed'
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        distributionCount:
+          type: integer
+          description: Number of distributions executed
+        distributionResults:
+          type: array
+          description: Per-clause distribution outcomes for escrow verification (escrow correlates via clauseId to template values it set).
+          items:
+            $ref: 'contract-api.yaml#/components/schemas/ClauseDistributionResult'
+
+    # =========================================================================
+    # Shared Event Models
+    # =========================================================================
+
+    PartyInfo:
+      type: object
+      description: Brief party information for events
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - role
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity ID
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type
+        role:
+          type: string
+          description: Role in contract

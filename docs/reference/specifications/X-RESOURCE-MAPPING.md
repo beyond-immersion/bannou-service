@@ -3,7 +3,7 @@
 > **Version**: 1.0
 > **Status**: Implemented
 > **Last Updated**: 2026-03-16
-> **Schema Scope**: `*-events.yaml`
+> **Schema Scope**: `*-service-events.yaml`
 > **Generated Output**: `bannou-service/Generated/ResourceEventMappings.cs` -- static registry of event-to-resource mappings for Puppetmaster watch subscriptions
 > **Related Specifications**: [x-lifecycle](X-LIFECYCLE.md)
 > **Tenet References**: T1 (FOUNDATION), T5 (FOUNDATION)
@@ -81,7 +81,7 @@ This produces three generated events (`TransitConnectionCreatedEvent`, `TransitC
 
 ### File: `bannou-service/Generated/ResourceEventMappings.cs`
 
-The generator scans all `*-events.yaml` files (including generated lifecycle event files in `schemas/Generated/`) for `x-resource-mapping` annotations and produces a single static registry class.
+The generator scans all `*-service-events.yaml` files (including generated lifecycle event files in `schemas/Generated/`) for `x-resource-mapping` annotations and produces a single static registry class.
 
 ```csharp
 /// <summary>
@@ -168,7 +168,7 @@ Explicit `is_deletion` overrides inference in both directions.
 
 ### Example 1: Lifecycle Entity with Resource Mapping (Character)
 
-**Schema** (`character-events.yaml`):
+**Schema** (`character-service-events.yaml`):
 ```yaml
 x-lifecycle:
   Character:
@@ -182,7 +182,7 @@ x-lifecycle:
       source_type: character
 ```
 
-**Generated lifecycle events** (`schemas/Generated/character-lifecycle-events.yaml`) each include:
+**Generated lifecycle events** (`schemas/Generated/character-service-lifecycle-events.yaml`) each include:
 ```yaml
 CharacterCreatedEvent:
   # ... event fields ...
@@ -213,7 +213,7 @@ new("CharacterDeletedEvent", "character.deleted",
 
 ### Example 2: Manually-Defined Event (Character Personality)
 
-**Schema** (`character-personality-events.yaml`):
+**Schema** (`character-personality-service-events.yaml`):
 ```yaml
 components:
   schemas:
@@ -260,12 +260,12 @@ A Puppetmaster watcher watching `resource_type: character` with a specific `char
 | Restriction | Reason |
 |-------------|--------|
 | Adding `x-resource-mapping` to lifecycle events manually | For lifecycle entities, use `resource_mapping` in the x-lifecycle block; the generator handles the rest. Adding it manually to generated events would be overwritten on regeneration. |
-| Using `x-resource-mapping` in non-event schemas | Only valid on event schema definitions in `*-events.yaml` files. API schemas and configuration schemas do not produce events. |
+| Using `x-resource-mapping` in non-event schemas | Only valid on event schema definitions in `*-service-events.yaml` files. API schemas and configuration schemas do not produce events. |
 | Referencing a `resource_id_field` that does not exist in the event | The watch system cannot extract the resource ID; the event silently fails to match any watches |
 
 ### Scoping Rules
 
-- `x-resource-mapping` is scoped to individual event schema definitions within `*-events.yaml` files
+- `x-resource-mapping` is scoped to individual event schema definitions within `*-service-events.yaml` files
 - The generated `ResourceEventMappings.cs` aggregates mappings from ALL event schemas across all services into a single registry
 - Multiple events can map to the same `resource_type` with different `source_type` values -- this is the expected pattern for cross-service resource watches
 

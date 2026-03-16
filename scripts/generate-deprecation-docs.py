@@ -17,7 +17,7 @@
 """
 Generate Deprecation Entities Documentation from Event Schema Files.
 
-This script scans all *-events.yaml files for x-lifecycle entities with
+This script scans all *-service-events.yaml files for x-lifecycle entities with
 deprecation: true and generates a reference document listing every
 deprecatable entity, its service, instanceEntity declaration, and model fields.
 
@@ -47,8 +47,10 @@ def to_title_case(name: str) -> str:
 
 
 def extract_service_name(filename: str) -> str:
-    """Extract service name from events filename (e.g., 'item-events.yaml' -> 'item')."""
+    """Extract service name from events filename (e.g., 'item-service-events.yaml' -> 'item')."""
     name = filename.replace('.yaml', '')
+    if name.endswith('-service-events'):
+        return name[:-len('-service-events')]
     if name.endswith('-events'):
         return name[:-len('-events')]
     return name
@@ -122,7 +124,7 @@ def generate_markdown(all_entities: list) -> str:
     lines = [
         "# Generated Deprecation Entities Reference",
         "",
-        "> **Source**: `schemas/*-events.yaml` (x-lifecycle blocks with `deprecation: true`)",
+        "> **Source**: `schemas/*-service-events.yaml` (x-lifecycle blocks with `deprecation: true`)",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",
         "This document lists every entity with `deprecation: true` in its x-lifecycle definition.",
@@ -191,7 +193,7 @@ def generate_markdown(all_entities: list) -> str:
             f"### {service}: {name}",
             "",
             f"- **Service**: `{entity['service']}`",
-            f"- **Schema**: `schemas/{entity['service']}-events.yaml`",
+            f"- **Schema**: `schemas/{entity['service']}-service-events.yaml`",
             f"- **Topic prefix**: `{prefix}`",
             f"- **Instance entity**: `{ie}`",
             f"- **Model fields**: {', '.join(f'`{f}`' for f in fields) if fields else '*(none)*'}",
@@ -219,9 +221,9 @@ def main():
 
     all_entities = []
 
-    for events_file in sorted(schema_dir.glob('*-events.yaml')):
+    for events_file in sorted(schema_dir.glob('*-service-events.yaml')):
         # Skip generated and client events
-        if '-lifecycle-events' in events_file.name or '-client-events' in events_file.name:
+        if '-service-lifecycle-events' in events_file.name or '-client-events' in events_file.name:
             continue
 
         try:

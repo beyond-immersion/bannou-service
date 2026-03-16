@@ -561,7 +561,7 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 
 ### Published Events
 
-Dungeon is a multi-entity service. Lifecycle events for the primary entity (dungeon core) use `x-lifecycle` with `topic_prefix: dungeon` in `dungeon-events.yaml`. Non-lifecycle events for sub-entities (bond, inhabitant, memory) use Pattern C (`{service}.{entity}.{action}`). Events without a corresponding API entity group use Pattern A (`{service}.{action}`). All events must be declared in `x-event-publications`.
+Dungeon is a multi-entity service. Lifecycle events for the primary entity (dungeon core) use `x-lifecycle` with `topic_prefix: dungeon` in `dungeon-service-events.yaml`. Non-lifecycle events for sub-entities (bond, inhabitant, memory) use Pattern C (`{service}.{entity}.{action}`). Events without a corresponding API entity group use Pattern A (`{service}.{action}`). All events must be declared in `x-event-publications`.
 
 | Topic | Event Type | Trigger | Pattern |
 |-------|-----------|---------|---------|
@@ -941,7 +941,7 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 ### Phase 1: Core Infrastructure (Actor + Seed Integration)
 - Create dungeon-api.yaml schema with all endpoints
-- Create dungeon-events.yaml schema
+- Create dungeon-service-events.yaml schema
 - Create dungeon-configuration.yaml schema
 - Generate service code
 - Implement dungeon core CRUD (create provisions seed + wallet; actor NOT started at creation -- starts at Stirring phase)

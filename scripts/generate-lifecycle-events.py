@@ -22,8 +22,8 @@ separate lifecycle event schema files. Event schemas are NEVER modified.
 
 Architecture:
 - {service}-api.yaml: API definitions (no x-lifecycle, no events)
-- {service}-events.yaml: Event definitions + x-lifecycle (SOURCE OF TRUTH, read-only)
-- schemas/Generated/{service}-lifecycle-events.yaml: Auto-generated lifecycle events (completely overwritten)
+- {service}-service-events.yaml: Event definitions + x-lifecycle (SOURCE OF TRUTH, read-only)
+- schemas/Generated/{service}-service-lifecycle-events.yaml: Auto-generated lifecycle events (completely overwritten)
 
 Event Pattern:
 - All events have: eventId (uuid), timestamp (datetime)
@@ -51,7 +51,7 @@ Resource Mapping (optional):
 Usage:
     python3 scripts/generate-lifecycle-events.py
 
-The script processes all *-events.yaml files in the schemas/ directory.
+The script processes all *-service-events.yaml files in the schemas/ directory.
 """
 
 import sys
@@ -110,8 +110,8 @@ def fix_relative_paths_for_generated(obj: Any) -> Any:
 
 
 def extract_service_name(events_file: Path) -> str:
-    """Extract service name from events file path (e.g., 'account' from 'account-events.yaml')."""
-    return events_file.stem.replace('-events', '')
+    """Extract service name from events file path (e.g., 'account' from 'account-service-events.yaml')."""
+    return events_file.stem.replace('-service-events', '')
 
 
 def read_lifecycle_definitions(events_file: Path) -> Tuple[Dict[str, Any], str]:
@@ -575,7 +575,7 @@ def generate_lifecycle_events_file(
             'description': (
                 f'Auto-generated lifecycle event schemas for {service_name} service.\n'
                 f'DO NOT EDIT - This file is completely overwritten by generate-lifecycle-events.py.\n'
-                f'Source of truth: {service_name}-events.yaml x-lifecycle section.'
+                f'Source of truth: {service_name}-service-events.yaml x-lifecycle section.'
             ),
             'version': '1.0.0'
         },
@@ -684,7 +684,7 @@ def main():
     cs_generated_dir.mkdir(parents=True, exist_ok=True)
 
     # Clean up old lifecycle event files (YAML schemas)
-    for old_file in generated_dir.glob('*-lifecycle-events.yaml'):
+    for old_file in generated_dir.glob('*-service-lifecycle-events.yaml'):
         old_file.unlink()
         print(f"  Cleaned up: {old_file.name}")
 
@@ -694,17 +694,17 @@ def main():
         print(f"  Cleaned up: {old_file.name}")
 
     print("Generating lifecycle events from x-lifecycle definitions...")
-    print("  Reading from: *-events.yaml (source of truth)")
-    print("  Writing to: Generated/*-lifecycle-events.yaml (completely overwritten)")
+    print("  Reading from: *-service-events.yaml (source of truth)")
+    print("  Writing to: Generated/*-service-lifecycle-events.yaml (completely overwritten)")
     print("  Writing to: bannou-service/Generated/Events/*LifecycleEvents.Interfaces.cs (completely overwritten)")
     print()
 
     generated_files = []
     errors = []
 
-    for events_file in sorted(schema_dir.glob('*-events.yaml')):
+    for events_file in sorted(schema_dir.glob('*-service-events.yaml')):
         # Skip lifecycle events files (already in Generated/) and client events
-        if '-lifecycle-events' in events_file.name or '-client-events' in events_file.name:
+        if '-service-lifecycle-events' in events_file.name or '-client-events' in events_file.name:
             continue
 
         try:
@@ -715,7 +715,7 @@ def main():
 
             service_name = extract_service_name(events_file)
             service_pascal = to_pascal_case(service_name)
-            output_file = generated_dir / f'{service_name}-lifecycle-events.yaml'
+            output_file = generated_dir / f'{service_name}-service-lifecycle-events.yaml'
 
             entities, deprecatable, batch = generate_lifecycle_events_file(
                 service_name,

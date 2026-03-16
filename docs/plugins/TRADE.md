@@ -1484,7 +1484,7 @@ Note: Shipment, TariffRecord, and TaxAssessment are instance/record entities —
 #### x-lifecycle
 
 ```yaml
-# schemas/trade-events.yaml
+# schemas/trade-service-events.yaml
 x-lifecycle:
   TradeRoute:
     topic_prefix: trade
@@ -2240,7 +2240,7 @@ The entire Trade service is aspirational. No schema files, generated code, or se
 
 **Before implementation, the following must be created:**
 1. `schemas/trade-api.yaml` -- API schema with all endpoint definitions
-2. `schemas/trade-events.yaml` -- Event schemas with x-lifecycle and x-event-publications
+2. `schemas/trade-service-events.yaml` -- Event schemas with x-lifecycle and x-event-publications
 3. `schemas/trade-configuration.yaml` -- Configuration schema
 4. State store entries in `schemas/state-stores.yaml`
 5. Code generation via `cd scripts && ./generate-service.sh trade`
@@ -2252,7 +2252,7 @@ The entire Trade service is aspirational. No schema files, generated code, or se
 
 ### Schema Creation Requirements
 
-When creating `trade-api.yaml`, `trade-events.yaml`, and `trade-configuration.yaml`:
+When creating `trade-api.yaml`, `trade-service-events.yaml`, and `trade-configuration.yaml`:
 
 1. **x-service-layer**: Set `x-service-layer: GameFeatures` at root level of `trade-api.yaml`
 2. **servers**: Use `servers: [{ url: http://localhost:5012 }]`

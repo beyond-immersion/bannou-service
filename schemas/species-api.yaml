@@ -48,7 +48,7 @@ servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
 
-# NOTE: x-lifecycle moved to species-events.yaml
+# NOTE: x-lifecycle moved to species-service-events.yaml
 
 paths:
   /species/get:

@@ -118,7 +118,7 @@
 | `account.deleted` | `HandleAccountDeletedAsync` | lib-account (L1) | Clean up all account-owned platform links, sessions, broadcasts, tracking IDs. T28 Account Deletion Cleanup Obligation (lib-resource forbidden for account references). |
 | `session.disconnected` | `HandleSessionDisconnectedAsync` | lib-connect (L1) | Cleanup platform session on WebSocket disconnect. Prevents orphaned Redis sessions. compliant: sessions have TTL and would expire naturally; the event accelerates cleanup. |
 
-Consumed events are declared via `x-event-subscriptions` class name references in `broadcast-events.yaml`. The generator resolves event types across all `*-events.yaml` schemas — no inline redefinition or `$ref` to other service event files needed (either would cause duplicate C# types).
+Consumed events are declared via `x-event-subscriptions` class name references in `broadcast-service-events.yaml`. The generator resolves event types across all `*-service-events.yaml` schemas — no inline redefinition or `$ref` to other service event files needed (either would cause duplicate C# types).
 
 ---
 

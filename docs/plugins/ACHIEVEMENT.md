@@ -107,7 +107,7 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Missing `account.deleted` cleanup handler**~~: **FIXED** (2026-03-15) - Added `HandleAccountDeletedAsync` in `AchievementServiceEvents.cs` that subscribes to `account.deleted` and deletes all Account-entity-type progress records and sync tracking records across all game services. Uses per-item error isolation per T7. Also added `account.deleted` to `x-event-subscriptions` in `achievement-events.yaml`.
+1. ~~**Missing `account.deleted` cleanup handler**~~: **FIXED** (2026-03-15) - Added `HandleAccountDeletedAsync` in `AchievementServiceEvents.cs` that subscribes to `account.deleted` and deletes all Account-entity-type progress records and sync tracking records across all game services. Uses per-item error isolation per T7. Also added `account.deleted` to `x-event-subscriptions` in `achievement-service-events.yaml`.
 
 ### Intentional Quirks (Documented Behavior)
 

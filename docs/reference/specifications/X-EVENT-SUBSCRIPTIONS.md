@@ -3,7 +3,7 @@
 > **Version**: 1.0
 > **Status**: Implemented
 > **Last Updated**: 2026-03-16
-> **Schema Scope**: `*-events.yaml`
+> **Schema Scope**: `*-service-events.yaml`
 > **Generated Output**: `{Service}ServiceEvents.cs` (one-time template with `RegisterEventConsumers` method and handler stubs)
 > **Related Specifications**: [x-event-publications](X-EVENT-PUBLICATIONS.md)
 > **Tenet References**: T3 (IMPLEMENTATION-BEHAVIOR), T5 (FOUNDATION)
@@ -55,7 +55,7 @@ info:
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `topic` | string | Yes | -- | RabbitMQ routing key for the event. Must match the topic string used by the publishing service's `x-event-publications` entry. |
-| `event` | string | Yes | -- | Event model class name. This is a class name, not a `$ref`. The generator searches ALL `*-events.yaml` `components/schemas` entries for a matching schema definition at generation time. |
+| `event` | string | Yes | -- | Event model class name. This is a class name, not a `$ref`. The generator searches ALL `*-service-events.yaml` `components/schemas` entries for a matching schema definition at generation time. |
 | `handler` | string | Yes | -- | Handler method name without the `Async` suffix. The generator appends `Async` when producing the method stub. |
 
 ---
@@ -113,9 +113,9 @@ public partial class AuthService
 
 ### Cross-Service Event Resolution
 
-The `event` field is a class name, not a `$ref` path. The generator searches all `*-events.yaml` files' `components/schemas` for a matching entry. This means:
+The `event` field is a class name, not a `$ref` path. The generator searches all `*-service-events.yaml` files' `components/schemas` for a matching entry. This means:
 
-- `AccountDeletedEvent` in auth's subscriptions resolves to the schema defined in `account-events.yaml`
+- `AccountDeletedEvent` in auth's subscriptions resolves to the schema defined in `account-service-events.yaml`
 - The generated C# code uses the event model class from `bannou-service/Generated/Events/AccountEventsModels.cs`
 - No `$ref` or cross-file schema references are needed in the events YAML
 
@@ -172,7 +172,7 @@ When a matching event arrives:
 
 Auth service reacts to account lifecycle events to invalidate sessions and clean up OAuth links.
 
-**Schema** (`auth-events.yaml`):
+**Schema** (`auth-service-events.yaml`):
 ```yaml
 info:
   title: Auth Service Events
@@ -208,7 +208,7 @@ protected void RegisterEventConsumers(IEventConsumer eventConsumer)
 
 Leaderboard ingests score and rating updates from the Analytics service.
 
-**Schema** (`leaderboard-events.yaml`):
+**Schema** (`leaderboard-service-events.yaml`):
 ```yaml
 info:
   title: Leaderboard Service Events
@@ -255,7 +255,7 @@ protected void RegisterEventConsumers(IEventConsumer eventConsumer)
 
 ### Scoping Rules
 
-- **Subscriptions are per-service**: Each service's `*-events.yaml` declares only that service's subscriptions
+- **Subscriptions are per-service**: Each service's `*-service-events.yaml` declares only that service's subscriptions
 - **Cross-schema resolution is read-only**: The generator reads all event schemas to resolve types but does not modify them. No cross-file `$ref` dependencies are created.
 - **One-time generation**: The `*ServiceEvents.cs` file is generated once. Subsequent schema changes to `x-event-subscriptions` require manual updates to the events file. The structural test `Services_WithEventSubscriptions_MustRegisterConsumers` catches drift.
 

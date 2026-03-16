@@ -114,7 +114,7 @@
 | `seed.growth.updated` | `HandleSeedGrowthUpdatedAsync` | Check threshold crossings; if crossed, set debounce key for manifest recomputation |
 | `actor.spirit-nudge.resisted` | `HandleActorSpiritNudgeResistedAsync` | Enrich with Agency context; relay as `agency.influence.resisted` — **Future**: not yet published by Actor |
 | `session.disconnected` | `HandleSessionDisconnectedAsync` | Clear cached manifest for disconnected seed (stale cache prevention) |
-| `disposition.guardian.shifted` | `HandleGuardianShiftedAsync` | Set/reset Redis debounce key for seedId; compliance_base depends on guardian feelings (trust, resentment, familiarity) — **Future**: no disposition-events.yaml exists yet |
+| `disposition.guardian.shifted` | `HandleGuardianShiftedAsync` | Set/reset Redis debounce key for seedId; compliance_base depends on guardian feelings (trust, resentment, familiarity) — **Future**: no disposition-service-events.yaml exists yet |
 
 ---
 

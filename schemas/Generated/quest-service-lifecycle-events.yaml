@@ -1,0 +1,410 @@
+openapi: 3.0.4
+info:
+  title: Quest Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for quest service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: quest-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    QuestDefinitionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to quest.definition.created when a questdefinition is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - contractTemplateId
+      - code
+      - name
+      - category
+      - difficulty
+      - repeatable
+      - maxQuestors
+      - gameServiceId
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: quest.definition.created
+          description: 'Event type identifier: quest.definition.created'
+        definitionId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the quest definition"
+        contractTemplateId: &id002
+          type: string
+          format: uuid
+          description: "Underlying contract template ID"
+        code: &id003
+          type: string
+          description: "Unique quest code within game"
+        name: &id004
+          type: string
+          description: "Human-readable quest name"
+        description: &id005
+          type: string
+          nullable: true
+          description: "Quest description"
+        category: &id006
+          $ref: ../quest-api.yaml#/components/schemas/QuestCategory
+          description: "Quest category for organization"
+        difficulty: &id007
+          $ref: ../quest-api.yaml#/components/schemas/QuestDifficulty
+          description: "Difficulty rating of the quest"
+        levelRequirement: &id008
+          type: integer
+          nullable: true
+          description: "Minimum level required"
+        repeatable: &id009
+          type: boolean
+          description: "Whether repeatable"
+        cooldownSeconds: &id010
+          type: integer
+          nullable: true
+          description: "Cooldown for repeatable quests"
+        deadlineSeconds: &id011
+          type: integer
+          nullable: true
+          description: "Time limit"
+        maxQuestors: &id012
+          type: integer
+          description: "Max party size"
+        gameServiceId: &id013
+          type: string
+          format: uuid
+          description: "Game service this definition belongs to"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this quest definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the quest definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+    QuestDefinitionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to quest.definition.updated when a questdefinition is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - contractTemplateId
+      - code
+      - name
+      - category
+      - difficulty
+      - repeatable
+      - maxQuestors
+      - gameServiceId
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: quest.definition.updated
+          description: 'Event type identifier: quest.definition.updated'
+        definitionId: *id001
+        contractTemplateId: *id002
+        code: *id003
+        name: *id004
+        description: *id005
+        category: *id006
+        difficulty: *id007
+        levelRequirement: *id008
+        repeatable: *id009
+        cooldownSeconds: *id010
+        deadlineSeconds: *id011
+        maxQuestors: *id012
+        gameServiceId: *id013
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this quest definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the quest definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    QuestDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to quest.definition.deleted when a questdefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - contractTemplateId
+      - code
+      - name
+      - category
+      - difficulty
+      - repeatable
+      - maxQuestors
+      - gameServiceId
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: quest.definition.deleted
+          description: 'Event type identifier: quest.definition.deleted'
+        definitionId: *id001
+        contractTemplateId: *id002
+        code: *id003
+        name: *id004
+        description: *id005
+        category: *id006
+        difficulty: *id007
+        levelRequirement: *id008
+        repeatable: *id009
+        cooldownSeconds: *id010
+        deadlineSeconds: *id011
+        maxQuestors: *id012
+        gameServiceId: *id013
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this quest definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the quest definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    QuestInstanceCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to quest.instance.created when a questinstance is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - questInstanceId
+      - definitionId
+      - contractInstanceId
+      - code
+      - name
+      - status
+      - gameServiceId
+      - acceptedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: quest.instance.created
+          description: 'Event type identifier: quest.instance.created'
+        questInstanceId: &id014
+          type: string
+          format: uuid
+          description: "Unique quest instance identifier"
+        definitionId: &id015
+          type: string
+          format: uuid
+          description: "Quest definition this instance was created from"
+        contractInstanceId: &id016
+          type: string
+          format: uuid
+          description: "Underlying contract instance ID"
+        code: &id017
+          type: string
+          description: "Quest code (denormalized from definition)"
+        name: &id018
+          type: string
+          description: "Quest name (denormalized from definition)"
+        status: &id019
+          $ref: ../quest-api.yaml#/components/schemas/QuestStatus
+          description: "Current quest status"
+        questGiverCharacterId: &id020
+          type: string
+          format: uuid
+          nullable: true
+          description: "Quest giver NPC character ID"
+        gameServiceId: &id021
+          type: string
+          format: uuid
+          description: "Game service this instance belongs to"
+        acceptedAt: &id022
+          type: string
+          format: date-time
+          description: "When the quest was accepted"
+        completedAt: &id023
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the quest was completed/failed/abandoned"
+        deadline: &id024
+          type: string
+          format: date-time
+          nullable: true
+          description: "Quest deadline (null if no time limit)"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest instance was last updated (set to createdAt on creation)
+    QuestInstanceUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to quest.instance.updated when a questinstance is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - questInstanceId
+      - definitionId
+      - contractInstanceId
+      - code
+      - name
+      - status
+      - gameServiceId
+      - acceptedAt
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: quest.instance.updated
+          description: 'Event type identifier: quest.instance.updated'
+        questInstanceId: *id014
+        definitionId: *id015
+        contractInstanceId: *id016
+        code: *id017
+        name: *id018
+        status: *id019
+        questGiverCharacterId: *id020
+        gameServiceId: *id021
+        acceptedAt: *id022
+        completedAt: *id023
+        deadline: *id024
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest instance was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    QuestInstanceDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to quest.instance.deleted when a questinstance is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - questInstanceId
+      - definitionId
+      - contractInstanceId
+      - code
+      - name
+      - status
+      - gameServiceId
+      - acceptedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: quest.instance.deleted
+          description: 'Event type identifier: quest.instance.deleted'
+        questInstanceId: *id014
+        definitionId: *id015
+        contractInstanceId: *id016
+        code: *id017
+        name: *id018
+        status: *id019
+        questGiverCharacterId: *id020
+        gameServiceId: *id021
+        acceptedAt: *id022
+        completedAt: *id023
+        deadline: *id024
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest instance was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

@@ -1047,7 +1047,7 @@ Lifecycle identity, aging, and heritage computation are owned here. Marriage cer
 ### Phase 1: Lifecycle Templates and Profiles
 
 - Create `character-lifecycle-api.yaml` schema with all endpoints
-- Create `character-lifecycle-events.yaml` schema
+- Create `character-service-lifecycle-events.yaml` schema
 - Create `character-lifecycle-configuration.yaml` schema
 - Generate service code
 - Implement lifecycle template CRUD (seed, get, list per species)

@@ -97,7 +97,7 @@ Key schema models:
 | `GetActiveCinematicsRequest` | Filters: realm, location, participant |
 | `GetActiveCinematicsResponse` | List of active cinematic instances |
 
-### cinematic-events.yaml
+### cinematic-service-events.yaml
 
 | Event | Published When |
 |-------|---------------|
@@ -241,7 +241,7 @@ TriggerCinematicAsync(request):
 ### Step 1: Create Schemas
 
 1. Create `schemas/cinematic-api.yaml` with all endpoints
-2. Create `schemas/cinematic-events.yaml` with event definitions
+2. Create `schemas/cinematic-service-events.yaml` with event definitions
 3. Create `schemas/cinematic-configuration.yaml` with configuration properties
 4. Add state stores to `schemas/state-stores.yaml`
 5. Verify schema rules compliance (read SCHEMA-RULES.md first)

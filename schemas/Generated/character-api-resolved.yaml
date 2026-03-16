@@ -53,7 +53,7 @@ servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
 
-# NOTE: x-lifecycle moved to character-events.yaml
+# NOTE: x-lifecycle moved to character-service-events.yaml
 
 paths:
   /character/create:

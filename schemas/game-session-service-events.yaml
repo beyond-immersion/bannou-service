@@ -1,0 +1,204 @@
+openapi: 3.0.4
+info:
+  title: Game Session Service Events
+  description: |
+    Event subscription and publication declarations for Game Session service.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle.
+    Custom events (PlayerJoined, PlayerLeft) are manually defined.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Session lifecycle events from Connect service
+    - topic: session.connected
+      event: SessionConnectedEvent
+      handler: HandleSessionConnected
+    - topic: session.disconnected
+      event: SessionDisconnectedEvent
+      handler: HandleSessionDisconnected
+    - topic: session.reconnected
+      event: SessionReconnectedEvent
+      handler: HandleSessionReconnected
+    # Subscription changes from Subscription service
+    - topic: subscription.updated
+      event: SubscriptionUpdatedEvent
+      handler: HandleSubscriptionUpdated
+  x-event-publications:
+    # Game session lifecycle events (auto-generated)
+    - topic: game-session.created
+      event: GameSessionCreatedEvent
+      description: Published when a new game session is created
+    - topic: game-session.updated
+      event: GameSessionUpdatedEvent
+      description: Published when a game session is updated
+    - topic: game-session.deleted
+      event: GameSessionDeletedEvent
+      description: Published when a game session is deleted
+    # Custom player events (manually defined)
+    - topic: game-session.player-joined
+      event: GameSessionPlayerJoinedEvent
+      description: Published when a player joins a game session
+    - topic: game-session.player-left
+      event: GameSessionPlayerLeftEvent
+      description: Published when a player leaves a game session
+    - topic: game-session.cancelled
+      event: GameSessionCancelledEvent
+      description: Published when a matchmade session is cancelled due to reservation expiry
+    - topic: game-session.action.performed
+      event: GameSessionActionPerformedEvent
+      description: Published when a game action is performed in a session
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/game-session-service-lifecycle-events.yaml
+x-lifecycle:
+  GameSession:
+    model:
+      sessionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the game session" }
+      gameType: { type: string, required: true, description: "Game service stub name for this session" }
+      sessionType: { $ref: 'game-session-api.yaml#/components/schemas/SessionType', required: true, description: "Type of session - lobby or matchmade" }
+      sessionName: { type: string, nullable: true, description: "Human-readable name for the session" }
+      status: { $ref: 'game-session-api.yaml#/components/schemas/SessionStatus', required: true, description: "Current status of the game session" }
+      maxPlayers: { type: integer, nullable: true, description: "Maximum number of players allowed in the session" }  # NRT: Optional property MUST be nullable
+      currentPlayers: { type: integer, nullable: true, description: "Current number of players in the session" }  # NRT: Optional property MUST be nullable
+      isPrivate: { type: boolean, nullable: true, description: "Whether the session is private (invite-only)" }  # NRT: Optional property MUST be nullable
+      owner: { type: string, format: uuid, nullable: true, description: "Account ID of the session owner" }  # NRT: Optional property MUST be nullable
+      gameSettings: { type: object, additionalProperties: true, nullable: true, description: "Game-specific configuration settings" }  # NRT: Optional property MUST be nullable
+      reservationExpiresAt: { type: string, format: date-time, nullable: true, description: "For matchmade sessions - when reservations expire" }  # NRT: Optional property MUST be nullable
+
+paths: {}  # Events don't have HTTP paths
+
+# Note: GameSessionCreatedEvent, GameSessionUpdatedEvent, GameSessionDeletedEvent
+# are auto-generated from x-lifecycle. See: schemas/Generated/game-session-service-lifecycle-events.yaml
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Player Participation Events (not lifecycle - manually defined)
+    # =========================================================================
+    GameSessionPlayerJoinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a player joins a game session
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sessionId
+        - accountId
+      properties:
+        eventName:
+          type: string
+          default: game-session.player-joined
+          description: 'Event type identifier: game-session.player-joined'
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the game session
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that joined
+
+    GameSessionPlayerLeftEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a player leaves a game session
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sessionId
+        - accountId
+      properties:
+        eventName:
+          type: string
+          default: game-session.player-left
+          description: 'Event type identifier: game-session.player-left'
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the game session
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that left
+        kicked:
+          type: boolean
+          description: Whether the player was kicked (vs left voluntarily)
+          default: false
+        reason:
+          type: string
+          nullable: true  # NRT: Optional property MUST be nullable
+          description: Reason for leaving/being kicked (if applicable)
+
+    GameSessionCancelledEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a matchmade session is cancelled due to reservation expiry
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sessionId
+        - reason
+      properties:
+        eventName:
+          type: string
+          default: game-session.cancelled
+          description: 'Event type identifier: game-session.cancelled'
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the cancelled game session
+        reason:
+          type: string
+          description: Reason for cancellation
+
+    GameSessionActionPerformedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a game action is performed in a session
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sessionId
+        - webSocketSessionId
+        - actionId
+        - actionType
+      properties:
+        eventName:
+          type: string
+          default: game-session.action.performed
+          description: 'Event type identifier: game-session.action.performed'
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the game session
+        webSocketSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID of the player who performed the action
+        actionId:
+          type: string
+          format: uuid
+          description: Unique identifier for the action
+        actionType:
+          $ref: 'game-session-api.yaml#/components/schemas/GameActionType'
+          description: Type of action performed
+        targetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional target entity ID for the action

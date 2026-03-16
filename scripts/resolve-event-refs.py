@@ -22,8 +22,8 @@ This script inlines such types into the event schema, creating a resolved versio
 that NSwag can process correctly.
 
 Architecture:
-- Input: schemas/{service}-events.yaml (source of truth, never modified)
-- Output: schemas/Generated/{service}-events-resolved.yaml (NSwag processes this)
+- Input: schemas/{service}-service-events.yaml (source of truth, never modified)
+- Output: schemas/Generated/{service}-service-events-resolved.yaml (NSwag processes this)
 
 The script:
 1. Scans event schemas for cross-file $refs to API types
@@ -445,7 +445,7 @@ def resolve_lifecycle_event_schema(lifecycle_path: Path, schema_dir: Path) -> Op
     resolved['x-inlined-types'] = sorted(types_to_inline.keys())
 
     # Write resolved schema (same directory as input, with -resolved suffix)
-    output_name = lifecycle_path.stem.replace('-lifecycle-events', '-lifecycle-events-resolved') + '.yaml'
+    output_name = lifecycle_path.stem.replace('-service-lifecycle-events', '-service-lifecycle-events-resolved') + '.yaml'
     output_path = lifecycle_path.parent / output_name
     save_yaml(output_path, resolved)
 
@@ -467,10 +467,10 @@ def main():
     generated_dir.mkdir(exist_ok=True)
 
     # Clean up old resolved files (both standard events and lifecycle events)
-    for old_file in generated_dir.glob('*-events-resolved.yaml'):
+    for old_file in generated_dir.glob('*-service-events-resolved.yaml'):
         old_file.unlink()
         print(f"  Cleaned up: {old_file.name}")
-    for old_file in generated_dir.glob('*-lifecycle-events-resolved.yaml'):
+    for old_file in generated_dir.glob('*-service-lifecycle-events-resolved.yaml'):
         old_file.unlink()
         print(f"  Cleaned up: {old_file.name}")
 
@@ -480,7 +480,7 @@ def main():
     resolved_files = []
 
     # Process standard event schemas (in schemas/)
-    for events_file in sorted(schema_dir.glob('*-events.yaml')):
+    for events_file in sorted(schema_dir.glob('*-service-events.yaml')):
         # Skip lifecycle events, client events, and common events
         if any(x in events_file.name for x in ['-lifecycle-events', '-client-events', 'common-events']):
             continue
@@ -500,7 +500,7 @@ def main():
     print()
     lifecycle_resolved = []
 
-    for lifecycle_file in sorted(generated_dir.glob('*-lifecycle-events.yaml')):
+    for lifecycle_file in sorted(generated_dir.glob('*-service-lifecycle-events.yaml')):
         print(f"Processing {lifecycle_file.name}...")
 
         output_path = resolve_lifecycle_event_schema(lifecycle_file, schema_dir)

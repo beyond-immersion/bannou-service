@@ -1,0 +1,355 @@
+openapi: 3.0.4
+info:
+  title: Gardener Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for gardener service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: gardener-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ScenarioTemplateCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-template.created when a scenariotemplate is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioTemplateId
+      - code
+      - displayName
+      - description
+      - category
+      - connectivityMode
+      - status
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: scenario-template.created
+          description: 'Event type identifier: scenario-template.created'
+        scenarioTemplateId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the scenario template"
+        code: &id002
+          type: string
+          description: "Unique template code for reference"
+        displayName: &id003
+          type: string
+          description: "Human-readable template name"
+        description: &id004
+          type: string
+          description: "Template description"
+        category: &id005
+          $ref: ../gardener-api.yaml#/components/schemas/ScenarioCategory
+          description: "Primary gameplay category"
+        connectivityMode: &id006
+          $ref: ../gardener-api.yaml#/components/schemas/ConnectivityMode
+          description: "World connectivity mode"
+        status: &id007
+          $ref: ../gardener-api.yaml#/components/schemas/TemplateStatus
+          description: "Current lifecycle status"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+    ScenarioTemplateUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-template.updated when a scenariotemplate is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioTemplateId
+      - code
+      - displayName
+      - description
+      - category
+      - connectivityMode
+      - status
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: scenario-template.updated
+          description: 'Event type identifier: scenario-template.updated'
+        scenarioTemplateId: *id001
+        code: *id002
+        displayName: *id003
+        description: *id004
+        category: *id005
+        connectivityMode: *id006
+        status: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ScenarioTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-template.deleted when a scenariotemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioTemplateId
+      - code
+      - displayName
+      - description
+      - category
+      - connectivityMode
+      - status
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: scenario-template.deleted
+          description: 'Event type identifier: scenario-template.deleted'
+        scenarioTemplateId: *id001
+        code: *id002
+        displayName: *id003
+        description: *id004
+        category: *id005
+        connectivityMode: *id006
+        status: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    ScenarioInstanceCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-instance.created when a scenarioinstance is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioInstanceId
+      - scenarioTemplateId
+      - gameSessionId
+      - webSocketSessionId
+      - seedId
+      - status
+      - chainDepth
+      - startedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: scenario-instance.created
+          description: 'Event type identifier: scenario-instance.created'
+        scenarioInstanceId: &id008
+          type: string
+          format: uuid
+          description: "Unique identifier for this scenario instance"
+        scenarioTemplateId: &id009
+          type: string
+          format: uuid
+          description: "Scenario template this instance was created from"
+        gameSessionId: &id010
+          type: string
+          format: uuid
+          description: "Backing game session ID for this scenario"
+        webSocketSessionId: &id011
+          type: string
+          format: uuid
+          description: "WebSocket session ID of the primary player"
+        seedId: &id012
+          type: string
+          format: uuid
+          description: "Active seed for the entering player"
+        status: &id013
+          $ref: ../gardener-api.yaml#/components/schemas/ScenarioStatus
+          description: "Current scenario lifecycle status"
+        chainDepth: &id014
+          type: integer
+          description: "Current chain depth for sequential scenario chaining"
+        startedAt: &id015
+          type: string
+          format: date-time
+          description: "When the scenario instance was started"
+        completedAt: &id016
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the scenario instance was completed or abandoned"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was last updated (set to createdAt on creation)
+    ScenarioInstanceUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-instance.updated when a scenarioinstance is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioInstanceId
+      - scenarioTemplateId
+      - gameSessionId
+      - webSocketSessionId
+      - seedId
+      - status
+      - chainDepth
+      - startedAt
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: scenario-instance.updated
+          description: 'Event type identifier: scenario-instance.updated'
+        scenarioInstanceId: *id008
+        scenarioTemplateId: *id009
+        gameSessionId: *id010
+        webSocketSessionId: *id011
+        seedId: *id012
+        status: *id013
+        chainDepth: *id014
+        startedAt: *id015
+        completedAt: *id016
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ScenarioInstanceDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-instance.deleted when a scenarioinstance is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioInstanceId
+      - scenarioTemplateId
+      - gameSessionId
+      - webSocketSessionId
+      - seedId
+      - status
+      - chainDepth
+      - startedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: scenario-instance.deleted
+          description: 'Event type identifier: scenario-instance.deleted'
+        scenarioInstanceId: *id008
+        scenarioTemplateId: *id009
+        gameSessionId: *id010
+        webSocketSessionId: *id011
+        seedId: *id012
+        status: *id013
+        chainDepth: *id014
+        startedAt: *id015
+        completedAt: *id016
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

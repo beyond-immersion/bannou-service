@@ -505,7 +505,7 @@ Distributed locks for topology mutations.
 | `utility.maintenance.completed` | `UtilityMaintenanceCompletedEvent` | Maintenance work completed |
 | `utility.maintenance.cancelled` | `UtilityMaintenanceCancelledEvent` | Maintenance request auto-expired or manually cancelled |
 
-**Schema requirements**: The eventual `utility-events.yaml` must declare `x-lifecycle` for all four entity types (NetworkType, Connection, ProductionSource, MaintenanceRequest) with `topic_prefix: utility` to generate Pattern C topics. Without `topic_prefix`, entities like `UtilityConnection` would produce Pattern B topics (`utility-connection.created`) which are forbidden per QUALITY TENETS naming conventions. NetworkType x-lifecycle must include `deprecation: true` for Category B lifecycle event generation.
+**Schema requirements**: The eventual `utility-service-events.yaml` must declare `x-lifecycle` for all four entity types (NetworkType, Connection, ProductionSource, MaintenanceRequest) with `topic_prefix: utility` to generate Pattern C topics. Without `topic_prefix`, entities like `UtilityConnection` would produce Pattern B topics (`utility-connection.created`) which are forbidden per QUALITY TENETS naming conventions. NetworkType x-lifecycle must include `deprecation: true` for Category B lifecycle event generation.
 
 ### Consumed Events
 
@@ -515,7 +515,7 @@ Distributed locks for topology mutations.
 | `worldstate.day-changed` | `HandleWorldstateDayChangedAsync` | Trigger maintenance request expiration check (auto-cancel unassigned requests older than MaintenanceRequestAutoExpireDays game-days) |
 | `environment.conditions-changed` | `HandleEnvironmentConditionsChangedAsync` | Apply weather-based damage modifiers to connections in affected locations (storms, earthquakes) |
 
-**Schema requirements**: All consumed events must be declared in `x-event-subscriptions` in the eventual `utility-events.yaml`. Event types referenced: `WorkshopTaskStatusChangedEvent` (from `workshop-events.yaml`), `WorldstateDayChangedEvent` (from `worldstate-events.yaml`), `EnvironmentConditionsChangedEvent` (from `environment-events.yaml`).
+**Schema requirements**: All consumed events must be declared in `x-event-subscriptions` in the eventual `utility-service-events.yaml`. Event types referenced: `WorkshopTaskStatusChangedEvent` (from `workshop-service-events.yaml`), `WorldstateDayChangedEvent` (from `worldstate-service-events.yaml`), `EnvironmentConditionsChangedEvent` (from `environment-service-events.yaml`).
 
 ### Resource References (x-references)
 

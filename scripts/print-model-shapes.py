@@ -8,9 +8,9 @@ and developers who need to understand model shapes without loading full files.
 
 Parses all schema files for the given service:
   - schemas/{service}-api.yaml           (request/response models)
-  - schemas/{service}-events.yaml        (event models)
+  - schemas/{service}-service-events.yaml        (event models)
   - schemas/{service}-client-events.yaml (WebSocket push event models)
-  - schemas/Generated/{service}-lifecycle-events.yaml (lifecycle events)
+  - schemas/Generated/{service}-service-lifecycle-events.yaml (lifecycle events)
 
 Usage:
     python3 scripts/print-model-shapes.py <service>
@@ -201,7 +201,7 @@ def extract_models_from_file(yaml_file: Path) -> list[str]:
 
 def schema_category_label(filename: str) -> str:
     """Return a display label for the schema category."""
-    if "-lifecycle-events" in filename:
+    if "-service-lifecycle-events" in filename:
         return "Lifecycle Events"
     if "-client-events" in filename:
         return "Client Events"
@@ -235,8 +235,8 @@ def main():
     # Schema files to look for, in display order
     schema_files = [
         (schemas_dir / f"{service}-api.yaml", "API"),
-        (schemas_dir / f"{service}-events.yaml", "Events"),
-        (schemas_dir / "Generated" / f"{service}-lifecycle-events.yaml", "Lifecycle Events"),
+        (schemas_dir / f"{service}-service-events.yaml", "Events"),
+        (schemas_dir / "Generated" / f"{service}-service-lifecycle-events.yaml", "Lifecycle Events"),
         (schemas_dir / f"{service}-client-events.yaml", "Client Events"),
     ]
 

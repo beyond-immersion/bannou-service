@@ -437,7 +437,7 @@ postprocess_enum_pascalcase() {
 # Prerequisites:
 #   - NSWAG_EXE must be set (call require_nswag first)
 #   - Working directory must be scripts/ (relative paths assume ../schemas/, ../bannou-service/)
-#   - schemas/Generated/{service}-lifecycle-events.yaml must exist (from generate-lifecycle-events.py)
+#   - schemas/Generated/{service}-service-lifecycle-events.yaml must exist (from generate-lifecycle-events.py)
 #
 # Usage: generate_lifecycle_event_models "$SERVICE_NAME"
 # Returns: 0 on success (or if no lifecycle file exists), 1 on failure
@@ -446,13 +446,13 @@ generate_lifecycle_event_models() {
     local service_pascal=$(to_pascal_case "$service_name")
     local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-    local lifecycle_events_file="../schemas/Generated/${service_name}-lifecycle-events.yaml"
-    local lifecycle_events_resolved="../schemas/Generated/${service_name}-lifecycle-events-resolved.yaml"
+    local lifecycle_events_file="../schemas/Generated/${service_name}-service-lifecycle-events.yaml"
+    local lifecycle_events_resolved="../schemas/Generated/${service_name}-service-lifecycle-events-resolved.yaml"
     local lifecycle_output_dir="../bannou-service/Generated/Events"
     local lifecycle_output_file="$lifecycle_output_dir/${service_pascal}LifecycleEvents.cs"
 
     if [ ! -f "$lifecycle_events_file" ]; then
-        echo -e "${BLUE}ℹ️  No lifecycle events file found (${service_name}-lifecycle-events.yaml)${NC}"
+        echo -e "${BLUE}ℹ️  No lifecycle events file found (${service_name}-service-lifecycle-events.yaml)${NC}"
         return 0
     fi
 

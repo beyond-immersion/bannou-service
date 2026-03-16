@@ -651,7 +651,7 @@ Every polymorphic "type" or "kind" field in the Market domain falls into one of 
 | `market.npc-economic-profile.updated` | `MarketNpcEconomicProfileUpdatedEvent` | NPC economic profile updated (x-lifecycle auto-generated) |
 | `market.npc-economic-profile.deleted` | `MarketNpcEconomicProfileDeletedEvent` | NPC economic profile deleted (x-lifecycle auto-generated) |
 
-**x-lifecycle entities** (in `market-events.yaml`, with `topic_prefix: market`):
+**x-lifecycle entities** (in `market-service-events.yaml`, with `topic_prefix: market`):
 - **MarketDefinition**: `marketId`, `gameServiceId`, `code`, `name`, `realmId`, `locationId`, `status`, `listingFee`, `transactionFeeRate`, `supportedCurrencies`
 - **VendorCatalog** (as `MarketVendor`): `vendorId`, `characterId`, `gameServiceId`, `realmId`, `catalogType`, `status`, `walletId`
 - **NpcEconomicProfile**: `characterId`, `economicRole`, `homeLocationId`, `estimatedNetWorth`, `dailyRevenue`, `dailyExpenses`, `tradingRadius`
@@ -664,7 +664,7 @@ Listings use custom events (not x-lifecycle) because listing lifecycle transitio
 |-------|---------|--------|
 | `currency.hold.expired` | `HandleHoldExpiredAsync` | If hold was for an active bid, release the bid record and update listing. Currency hold expiration acts as bid timeout. |
 
-**x-event-subscriptions** (for `market-events.yaml`):
+**x-event-subscriptions** (for `market-service-events.yaml`):
 ```yaml
 x-event-subscriptions:
  - topic: currency.hold.expired
@@ -672,7 +672,7 @@ x-event-subscriptions:
  handler: HandleHoldExpired
 ```
 
-**x-event-publications**: All 17 published events above (6 x-lifecycle + 11 custom) must be listed in the `x-event-publications` block in `market-events.yaml`.
+**x-event-publications**: All 17 published events above (6 x-lifecycle + 11 custom) must be listed in the `x-event-publications` block in `market-service-events.yaml`.
 
 ### Resource Cleanup
 
@@ -1057,7 +1057,7 @@ Before lib-market implementation:
 ### Phase 1: Core Infrastructure (Market Definitions + Auction Basics)
 
 - Create market-api.yaml schema with all endpoints
-- Create market-events.yaml schema
+- Create market-service-events.yaml schema
 - Create market-configuration.yaml schema
 - Generate service code
 - Implement market definition CRUD

@@ -1,0 +1,336 @@
+openapi: 3.0.4
+info:
+  title: Leaderboard Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for leaderboard service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: leaderboard-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    LeaderboardDefinitionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to leaderboard.definition.created when a leaderboarddefinition is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - leaderboardId
+      - displayName
+      - sortOrder
+      - updateMode
+      - isSeasonal
+      - isPublic
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: leaderboard.definition.created
+          description: 'Event type identifier: leaderboard.definition.created'
+        gameServiceId: &id001
+          type: string
+          format: uuid
+          description: "ID of the owning game service"
+        leaderboardId: &id002
+          type: string
+          description: "Unique identifier for this leaderboard"
+        displayName: &id003
+          type: string
+          description: "Human-readable name"
+        sortOrder: &id004
+          $ref: ../leaderboard-api.yaml#/components/schemas/SortOrder
+          description: "Score sort order"
+        updateMode: &id005
+          $ref: ../leaderboard-api.yaml#/components/schemas/UpdateMode
+          description: "Score update mode"
+        isSeasonal: &id006
+          type: boolean
+          description: "Whether the leaderboard is seasonal"
+        isPublic: &id007
+          type: boolean
+          description: "Whether the leaderboard is publicly visible"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this leaderboard definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the leaderboard definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+    LeaderboardDefinitionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to leaderboard.definition.updated when a leaderboarddefinition is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - leaderboardId
+      - displayName
+      - sortOrder
+      - updateMode
+      - isSeasonal
+      - isPublic
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: leaderboard.definition.updated
+          description: 'Event type identifier: leaderboard.definition.updated'
+        gameServiceId: *id001
+        leaderboardId: *id002
+        displayName: *id003
+        sortOrder: *id004
+        updateMode: *id005
+        isSeasonal: *id006
+        isPublic: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this leaderboard definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the leaderboard definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    LeaderboardDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to leaderboard.definition.deleted when a leaderboarddefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - leaderboardId
+      - displayName
+      - sortOrder
+      - updateMode
+      - isSeasonal
+      - isPublic
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: leaderboard.definition.deleted
+          description: 'Event type identifier: leaderboard.definition.deleted'
+        gameServiceId: *id001
+        leaderboardId: *id002
+        displayName: *id003
+        sortOrder: *id004
+        updateMode: *id005
+        isSeasonal: *id006
+        isPublic: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this leaderboard definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the leaderboard definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    LeaderboardEntryCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to leaderboard.entry.created when a leaderboardentry is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entryId
+      - gameServiceId
+      - leaderboardId
+      - entityId
+      - entityType
+      - score
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: leaderboard.entry.created
+          description: 'Event type identifier: leaderboard.entry.created'
+        entryId: &id008
+          type: string
+          format: uuid
+          description: "Unique identifier for this leaderboard entry"
+        gameServiceId: &id009
+          type: string
+          format: uuid
+          description: "ID of the owning game service"
+        leaderboardId: &id010
+          type: string
+          description: "Leaderboard this entry belongs to"
+        entityId: &id011
+          type: string
+          format: uuid
+          description: "ID of the ranked entity"
+        entityType: &id012
+          $ref: ../common-api.yaml#/components/schemas/EntityType
+          description: "Type of the ranked entity"
+        score: &id013
+          type: number
+          format: double
+          description: "Current score value"
+        seasonNumber: &id014
+          type: integer
+          nullable: true
+          description: "Season number if this entry is in a seasonal leaderboard"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was last updated (set to createdAt on creation)
+    LeaderboardEntryUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to leaderboard.entry.updated when a leaderboardentry is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entryId
+      - gameServiceId
+      - leaderboardId
+      - entityId
+      - entityType
+      - score
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: leaderboard.entry.updated
+          description: 'Event type identifier: leaderboard.entry.updated'
+        entryId: *id008
+        gameServiceId: *id009
+        leaderboardId: *id010
+        entityId: *id011
+        entityType: *id012
+        score: *id013
+        seasonNumber: *id014
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    LeaderboardEntryDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to leaderboard.entry.deleted when a leaderboardentry is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entryId
+      - gameServiceId
+      - leaderboardId
+      - entityId
+      - entityType
+      - score
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: leaderboard.entry.deleted
+          description: 'Event type identifier: leaderboard.entry.deleted'
+        entryId: *id008
+        gameServiceId: *id009
+        leaderboardId: *id010
+        entityId: *id011
+        entityType: *id012
+        score: *id013
+        seasonNumber: *id014
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

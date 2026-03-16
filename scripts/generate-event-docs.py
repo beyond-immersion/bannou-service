@@ -17,7 +17,7 @@
 """
 Generate Events Documentation from Schema Files.
 
-This script scans *-events.yaml schema files and generates comprehensive
+This script scans *-service-events.yaml schema files and generates comprehensive
 markdown documentation for all events used in Bannou.
 
 Output: docs/generated/GENERATED-EVENTS.md
@@ -50,20 +50,20 @@ def to_kebab_case(name: str) -> str:
 def extract_service_from_filename(filename: str) -> str:
     """Extract service name from event schema filename."""
     # Handle patterns like:
-    # - account-events.yaml -> Account
-    # - account-lifecycle-events.yaml -> Account
+    # - account-service-events.yaml -> Account
+    # - account-service-lifecycle-events.yaml -> Account
     # - common-events.yaml -> Common
     # - common-client-events.yaml -> Common (Client)
 
     name = filename.replace('.yaml', '')
 
     # Check for lifecycle events
-    if '-lifecycle-events' in name:
-        service = name.replace('-lifecycle-events', '')
+    if '-service-lifecycle-events' in name:
+        service = name.replace('-service-lifecycle-events', '')
     elif '-client-events' in name:
         service = name.replace('-client-events', '') + ' (Client)'
     elif '-events' in name:
-        service = name.replace('-events', '')
+        service = name.replace('-service-events', '')
     else:
         service = name
 
@@ -152,8 +152,8 @@ def scan_event_schemas(schemas_dir: Path) -> dict:
     if not schemas_dir.exists():
         return events_by_service
 
-    # Find all *-events.yaml files (includes lifecycle-events)
-    for yaml_file in sorted(schemas_dir.glob('*-events.yaml')):
+    # Find all *-service-events.yaml files (includes lifecycle-events)
+    for yaml_file in sorted(schemas_dir.glob('*-service-events.yaml')):
         try:
             with open(yaml_file) as f:
                 content = yaml.load(f)
@@ -195,7 +195,7 @@ def generate_markdown(events_by_service: dict) -> str:
     lines = [
         "# Generated Events Reference",
         "",
-        "> **Source**: `schemas/*-events.yaml`",
+        "> **Source**: `schemas/*-service-events.yaml`",
         "> **Do not edit manually** - regenerate with `make generate-docs`",
         "",
         "This document lists all events defined in Bannou's event schemas.",

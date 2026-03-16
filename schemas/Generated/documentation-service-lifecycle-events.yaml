@@ -1,0 +1,143 @@
+openapi: 3.0.4
+info:
+  title: Documentation Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for documentation service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: documentation-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    DocumentCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to document.created when a document is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - documentId
+      - namespace
+      - slug
+      - title
+      - category
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: document.created
+          description: 'Event type identifier: document.created'
+        documentId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for the document
+        namespace: &id002
+          type: string
+          description: The namespace this document belongs to
+        slug: &id003
+          type: string
+          description: URL-friendly identifier for the document within its namespace
+        title: &id004
+          type: string
+          description: Human-readable title of the document
+        category: &id005
+          $ref: ../documentation-api.yaml#/components/schemas/DocumentCategory
+          description: Category classification for the document
+        tags: &id006
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: List of tags for categorization and search
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the document was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the document was last updated (set to createdAt on creation)
+    DocumentUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to document.updated when a document is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - documentId
+      - namespace
+      - slug
+      - title
+      - category
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: document.updated
+          description: 'Event type identifier: document.updated'
+        documentId: *id001
+        namespace: *id002
+        slug: *id003
+        title: *id004
+        category: *id005
+        tags: *id006
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the document was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the document was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    DocumentDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to document.deleted when a document is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - documentId
+      - namespace
+      - slug
+      - title
+      - category
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: document.deleted
+          description: 'Event type identifier: document.deleted'
+        documentId: *id001
+        namespace: *id002
+        slug: *id003
+        title: *id004
+        category: *id005
+        tags: *id006
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the document was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the document was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

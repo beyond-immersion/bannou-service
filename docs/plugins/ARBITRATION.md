@@ -178,7 +178,7 @@ Design decisions (resolved 2026-03-16):
 
 Schema changes:
 - `faction-api.yaml`: `AuthorityLevel` enum, governance models, 6 new endpoints, enhanced `FactionResponse` and `ApplicableNormResponse`
-- `faction-events.yaml`: `authorityLevel` in x-lifecycle, 4 new governance events (`faction.governance.defined`, `faction.governance.deleted`, `faction.authority.delegated`, `faction.authority.revoked`)
+- `faction-service-events.yaml`: `authorityLevel` in x-lifecycle, 4 new governance events (`faction.governance.defined`, `faction.governance.deleted`, `faction.authority.delegated`, `faction.authority.revoked`)
 - `faction-configuration.yaml`: `MaxGovernanceEntriesPerFaction`, `GovernanceCacheTtlSeconds`
 - `state-stores.yaml`: `faction-governance-statestore` (MySQL)
 
@@ -191,7 +191,7 @@ Schema changes:
 
 ### Phase 2: Core Arbitration Infrastructure
 - Create `arbitration-api.yaml` schema with all endpoints
-- Create `arbitration-events.yaml` schema
+- Create `arbitration-service-events.yaml` schema
 - Create `arbitration-configuration.yaml` schema
 - Generate service code
 - Implement case management CRUD (file creates contract from procedural template)
@@ -278,7 +278,7 @@ Contract is the engine. Arbitration is the legal system built on that engine.
 
 Arbitration is meaningful only when factions distinguish between legal authority (Sovereign/Delegated) and social influence. Without sovereignty, there is no principled way to determine who has jurisdiction, whose procedures apply, or what weight a ruling carries.
 
-**Status (2026-03-16)**: The sovereignty schema is designed (#601) — `AuthorityLevel` enum, governance data model, 6 governance endpoints, and enhanced `ApplicableNormResponse` with authority level. Schema changes to `faction-api.yaml` and `faction-events.yaml` are planned. Service code implementation is pending. See Phase 0 above for the full design summary.
+**Status (2026-03-16)**: The sovereignty schema is designed (#601) — `AuthorityLevel` enum, governance data model, 6 governance endpoints, and enhanced `ApplicableNormResponse` with authority level. Schema changes to `faction-api.yaml` and `faction-service-events.yaml` are planned. Service code implementation is pending. See Phase 0 above for the full design summary.
 
 This section documents the dependency and what it enables.
 
@@ -613,7 +613,7 @@ External arbiter assignment is never guaranteed. The request is a petition, not 
 
 ## Schema Creation Guidance (L4 Audit Notes, 2026-03-05)
 
-When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitration-configuration.yaml`, follow these requirements identified during the L4 audit:
+When creating `arbitration-api.yaml`, `arbitration-service-events.yaml`, and `arbitration-configuration.yaml`, follow these requirements identified during the L4 audit:
 
 ### API Schema (`arbitration-api.yaml`)
 - `x-service-layer: GameFeatures` at root level
@@ -628,7 +628,7 @@ When creating `arbitration-api.yaml`, `arbitration-events.yaml`, and `arbitratio
 - Evidence `content` field: must be a typed model (per evidence type or discriminated union), NOT `additionalProperties: true`
 - Governance data on case model: `object?` (genuine opaque pass-through)
 
-### Events Schema (`arbitration-events.yaml`)
+### Events Schema (`arbitration-service-events.yaml`)
 - `x-lifecycle` for `ArbitrationCase` entity with `topic_prefix: arbitration` (generates created/updated/deleted lifecycle events with Pattern C topics: `arbitration.case.created`, etc. — without `topic_prefix`, the entity `ArbitrationCase` would produce forbidden Pattern B topics like `arbitration-case.created`)
 - `x-event-subscriptions` for all 6 consumed events (contract milestones, faction territory)
 - `x-event-publications` for all domain-specific events

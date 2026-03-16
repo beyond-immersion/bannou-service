@@ -1,0 +1,172 @@
+openapi: 3.0.4
+info:
+  title: Game Session Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for game-session service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: game-session-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    GameSessionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to game-session.created when a gamesession is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sessionId
+      - gameType
+      - sessionType
+      - status
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: game-session.created
+          description: 'Event type identifier: game-session.created'
+        sessionId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the game session"
+        gameType: &id002
+          type: string
+          description: "Game service stub name for this session"
+        sessionType: &id003
+          $ref: ../game-session-api.yaml#/components/schemas/SessionType
+          description: "Type of session - lobby or matchmade"
+        sessionName: &id004
+          type: string
+          nullable: true
+          description: "Human-readable name for the session"
+        status: &id005
+          $ref: ../game-session-api.yaml#/components/schemas/SessionStatus
+          description: "Current status of the game session"
+        maxPlayers: &id006
+          type: integer
+          nullable: true
+          description: "Maximum number of players allowed in the session"
+        currentPlayers: &id007
+          type: integer
+          nullable: true
+          description: "Current number of players in the session"
+        isPrivate: &id008
+          type: boolean
+          nullable: true
+          description: "Whether the session is private (invite-only)"
+        owner: &id009
+          type: string
+          format: uuid
+          nullable: true
+          description: "Account ID of the session owner"
+        gameSettings: &id010
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: "Game-specific configuration settings"
+        reservationExpiresAt: &id011
+          type: string
+          format: date-time
+          nullable: true
+          description: "For matchmade sessions - when reservations expire"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the game session was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the game session was last updated (set to createdAt on creation)
+    GameSessionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to game-session.updated when a gamesession is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sessionId
+      - gameType
+      - sessionType
+      - status
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: game-session.updated
+          description: 'Event type identifier: game-session.updated'
+        sessionId: *id001
+        gameType: *id002
+        sessionType: *id003
+        sessionName: *id004
+        status: *id005
+        maxPlayers: *id006
+        currentPlayers: *id007
+        isPrivate: *id008
+        owner: *id009
+        gameSettings: *id010
+        reservationExpiresAt: *id011
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the game session was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the game session was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    GameSessionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to game-session.deleted when a gamesession is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sessionId
+      - gameType
+      - sessionType
+      - status
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: game-session.deleted
+          description: 'Event type identifier: game-session.deleted'
+        sessionId: *id001
+        gameType: *id002
+        sessionType: *id003
+        sessionName: *id004
+        status: *id005
+        maxPlayers: *id006
+        currentPlayers: *id007
+        isPrivate: *id008
+        owner: *id009
+        gameSettings: *id010
+        reservationExpiresAt: *id011
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the game session was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the game session was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

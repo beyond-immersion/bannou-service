@@ -638,7 +638,7 @@ Crafting Session Lifecycle (Production)
 
 ### Phase 1: Recipe Infrastructure
 - Create craft-api.yaml schema with all endpoints
-- Create craft-events.yaml schema
+- Create craft-service-events.yaml schema
 - Create craft-configuration.yaml schema (use `x-constraint-group` with `sum-equals: 1.0` for DefaultQuality*Weight properties)
 - Generate service code
 - Implement recipe CRUD (create, get, list, update, deprecate, seed, list-domains)

@@ -347,7 +347,7 @@ Key external documentation for implementers. Houdini provides built-in headless 
 
 ### Phase 2: Bannou Integration (2-3 weeks)
 - Create procedural-api.yaml schema with all endpoints
-- Create procedural-events.yaml schema
+- Create procedural-service-events.yaml schema
 - Create procedural-configuration.yaml schema
 - Generate service code
 - Implement template registration with HDA introspection

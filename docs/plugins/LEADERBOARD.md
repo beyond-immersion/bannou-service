@@ -290,7 +290,7 @@ Season Lifecycle
 - **2026-03-06**: Production hardening pass — 10 definitive fixes applied:
  - Added typed `scoreType`/`ratingType` fields to schema and internal model; replaced `MetadataHelper` metadata bag reads with typed field access in `GetDefinitionForAnalyticsEventAsync`
  - Removed `accepted: true` filler boolean from `SubmitScoreResponse`
- - Added `x-lifecycle` to `leaderboard-events.yaml` for definition entity; lifecycle event publishing (created/updated/deleted) in `CreateLeaderboardDefinitionAsync`, `UpdateLeaderboardDefinitionAsync`, `DeleteLeaderboardDefinitionAsync`
+ - Added `x-lifecycle` to `leaderboard-service-events.yaml` for definition entity; lifecycle event publishing (created/updated/deleted) in `CreateLeaderboardDefinitionAsync`, `UpdateLeaderboardDefinitionAsync`, `DeleteLeaderboardDefinitionAsync`
  - Changed composite sorted set member keys from string-based `EntityType` to integer-based (`{(int)entityType}:{entityId}`) to eliminate `Enum.Parse`
  - **Schema**: NRT compliance (nullable annotations), enum PascalCase defaults, validation constraints (`minLength`, `minimum`/`maximum`, `minItems`), `entryCount`/`percentile`/`rankChange` added to required arrays, configuration bounds
  - 6 design decisions documented with `AUDIT:NEEDS_DESIGN` markers for later resolution

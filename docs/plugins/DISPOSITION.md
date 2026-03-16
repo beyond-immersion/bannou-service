@@ -899,7 +899,7 @@ Disposition does not replace any existing service. Encounter sentiment, personal
 ### Phase 1: Core Feeling Infrastructure
 
 - Create `disposition-api.yaml` schema with feeling management endpoints
-- Create `disposition-events.yaml` schema
+- Create `disposition-service-events.yaml` schema
 - Create `disposition-configuration.yaml` schema
 - Generate service code
 - Implement feeling CRUD (record, record-shock, query, get-manifest, query-about)

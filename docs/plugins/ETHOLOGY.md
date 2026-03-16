@@ -509,7 +509,7 @@ flows:
 
 ### Published Events (via `x-lifecycle`)
 
-Lifecycle events are auto-generated via `x-lifecycle` in `ethology-events.yaml` with `topic_prefix: ethology` (per SCHEMA-RULES and FOUNDATION TENETS). This generates standard Created/Updated/Deleted events for each entity. NEVER manually define these event types.
+Lifecycle events are auto-generated via `x-lifecycle` in `ethology-service-events.yaml` with `topic_prefix: ethology` (per SCHEMA-RULES and FOUNDATION TENETS). This generates standard Created/Updated/Deleted events for each entity. NEVER manually define these event types.
 
 **Archetype lifecycle events** (generated from `x-lifecycle` with `topic_prefix: ethology`):
 
@@ -818,7 +818,7 @@ When a dungeon spawns a creature, the creature needs behavioral defaults. lib-et
 ### Phase 1: Archetype Definitions
 
 - Create `ethology-api.yaml` schema with all endpoints, `additionalProperties: false` on all object schemas, PascalCase enums (`ActivityPattern`, `DietType`, `SocialStructure`, `OverrideScopeType`), `x-permissions` on all endpoints, `x-references` for realm/species/location dependencies
-- Create `ethology-events.yaml` schema with `x-lifecycle` using `topic_prefix: ethology` for Archetype and Override entities, `x-event-subscriptions` for `species.deprecated` (informational only)
+- Create `ethology-service-events.yaml` schema with `x-lifecycle` using `topic_prefix: ethology` for Archetype and Override entities, `x-event-subscriptions` for `species.deprecated` (informational only)
 - Create `ethology-configuration.yaml` schema
 - Add `nature` entry to `schemas/variable-providers.yaml` (service: Ethology, purpose: "Species-level behavioral nature data for ABML expressions (${nature.*})")
 - Add state store entries to `schemas/state-stores.yaml` (ethology-archetypes, ethology-overrides, ethology-cache, ethology-lock)

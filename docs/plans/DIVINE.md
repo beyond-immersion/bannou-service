@@ -163,7 +163,7 @@ info:
 - `FollowerResponse`: characterId (uuid), deityId (uuid), registeredAt (date-time), relationshipId (uuid)
 - `ListFollowersResponse`: followers (array FollowerResponse), totalCount, page, pageSize
 
-#### 1b. `schemas/divine-events.yaml`
+#### 1b. `schemas/divine-service-events.yaml`
 
 **x-lifecycle** for `Deity` entity (generates created/updated/deleted events):
 - Model fields: deityId (primary), gameServiceId, code, displayName, description, status, followerCount, createdAt, updatedAt
@@ -707,7 +707,7 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | File | Action |
 |------|--------|
 | `schemas/divine-api.yaml` | Create (~22 endpoints across 5 groups) |
-| `schemas/divine-events.yaml` | Create (lifecycle + 1 subscription + 8 custom events) |
+| `schemas/divine-service-events.yaml` | Create (lifecycle + 1 subscription + 8 custom events) |
 | `schemas/divine-configuration.yaml` | Create (18 configuration properties) |
 | `schemas/state-stores.yaml` | Modify (add 5 divine stores) |
 | `plugins/lib-divine/DivineService.cs` | Fill in (auto-generated template) |

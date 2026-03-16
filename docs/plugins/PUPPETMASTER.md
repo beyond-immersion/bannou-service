@@ -425,7 +425,7 @@ The `ResourceEventMapping` class maps resource types (e.g., "character", "realm"
 Mappings are declared in event schemas using `x-resource-mapping`:
 
 ```yaml
-# In lifecycle events (character-events.yaml)
+# In lifecycle events (character-service-events.yaml)
 x-lifecycle:
  Character:
  resource_mapping:
@@ -433,7 +433,7 @@ x-lifecycle:
  # resource_id_field defaults to primary key (characterId)
  # source_type defaults to topic base (character)
 
-# In non-lifecycle events (character-personality-events.yaml)
+# In non-lifecycle events (character-personality-service-events.yaml)
 PersonalityUpdatedEvent:
  type: object
  x-resource-mapping:

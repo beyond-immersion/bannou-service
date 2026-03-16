@@ -1,0 +1,574 @@
+openapi: 3.0.4
+info:
+  title: Faction Service Events
+  description: |
+    Event subscription and publication declarations for Faction service.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle
+    for Faction entities. Custom events cover membership changes, territory claims,
+    norm lifecycle, and realm baseline designation.
+
+    **Cross-Service Integration** (per FOUNDATION TENETS):
+    - Implements ISeedEvolutionListener DI provider pattern for growth/phase/capability
+      notifications (in-process, guaranteed delivery, writes to distributed state).
+      This replaces broadcast event subscriptions for seed.growth.updated and
+      seed.phase.changed.
+    - Implements ICollectionUnlockListener DI provider pattern for member activity
+      collection entries feeding faction seed growth (in-process, tag prefix matching,
+      writes to distributed state via lib-seed API).
+    - Resource cleanup handled via x-references cleanup callbacks (per FOUNDATION
+      TENETS, "Resource-Managed Cleanup"), NOT via event subscriptions to
+      character.deleted, realm.deleted, or location.deleted.
+
+    **Topic Naming**: Uses dot-separated format (faction.member.added).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions: []
+  x-event-publications:
+    # Faction lifecycle events (auto-generated from x-lifecycle)
+    - topic: faction.created
+      event: FactionCreatedEvent
+      description: Published when a new faction is created
+    - topic: faction.updated
+      event: FactionUpdatedEvent
+      description: Published when a faction is updated
+    - topic: faction.deleted
+      event: FactionDeletedEvent
+      description: Published when a faction is deleted
+    # Custom events - Membership
+    - topic: faction.member.added
+      event: FactionMemberAddedEvent
+      description: Published when a character joins a faction
+    - topic: faction.member.removed
+      event: FactionMemberRemovedEvent
+      description: Published when a character leaves or is removed from a faction
+    - topic: faction.member.role-changed
+      event: FactionMemberRoleChangedEvent
+      description: Published when a member's role is updated
+    # Custom events - Territory
+    - topic: faction.territory.claimed
+      event: FactionTerritoryClaimedEvent
+      description: Published when a faction claims a location
+    - topic: faction.territory.released
+      event: FactionTerritoryReleasedEvent
+      description: Published when a faction releases a territory claim
+    # Custom events - Norms
+    - topic: faction.norm.defined
+      event: FactionNormDefinedEvent
+      description: Published when a new norm is defined for a faction
+    - topic: faction.norm.updated
+      event: FactionNormUpdatedEvent
+      description: Published when a norm definition is modified
+    - topic: faction.norm.deleted
+      event: FactionNormDeletedEvent
+      description: Published when a norm definition is removed
+    # Custom events - Realm Baseline
+    - topic: faction.realm-baseline.designated
+      event: FactionRealmBaselineDesignatedEvent
+      description: Published when a faction is designated as realm baseline
+    # Custom events - Governance
+    - topic: faction.governance.defined
+      event: FactionGovernanceDefinedEvent
+      description: Published when a governance entry is created or updated (includes changedFields when overwriting existing entry)
+    - topic: faction.governance.deleted
+      event: FactionGovernanceDeletedEvent
+      description: Published when a governance entry is removed
+    - topic: faction.authority.delegated
+      event: FactionAuthorityDelegatedEvent
+      description: Published when a sovereign delegates authority to a child faction
+    - topic: faction.authority.revoked
+      event: FactionAuthorityRevokedEvent
+      description: Published when delegated authority is revoked
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/faction-service-lifecycle-events.yaml
+x-lifecycle:
+  Faction:
+    deprecation: true
+    model:
+      factionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the faction" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this faction belongs to" }
+      name: { type: string, required: true, description: "Display name of the faction" }
+      code: { type: string, required: true, description: "Unique code within game service scope" }
+      realmId: { type: string, format: uuid, required: true, description: "Realm this faction belongs to" }
+      isRealmBaseline: { type: boolean, required: true, description: "Whether this is the realm baseline cultural faction" }
+      parentFactionId: { type: string, format: uuid, nullable: true, description: "Parent faction in hierarchy" }
+      seedId: { type: string, format: uuid, nullable: true, description: "Associated seed for growth tracking" }
+      status: { $ref: 'faction-api.yaml#/components/schemas/FactionStatus', required: true, description: "Current operational lifecycle status" }
+      authorityLevel: { $ref: 'faction-api.yaml#/components/schemas/AuthorityLevel', required: true, description: "Authority classification for governance power" }
+      currentPhase: { type: string, nullable: true, description: "Current seed growth phase" }
+      memberCount: { type: integer, required: true, description: "Current number of members" }
+    sensitive: []
+
+paths: {}  # Events don't have HTTP paths
+
+# Note: FactionCreatedEvent, FactionUpdatedEvent, FactionDeletedEvent
+# are auto-generated from x-lifecycle. See: schemas/Generated/faction-service-lifecycle-events.yaml
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Published Events (non-lifecycle)
+    # =========================================================================
+
+    # --- Membership Events ---
+
+    FactionMemberAddedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a character joins a faction
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - characterId
+        - role
+      properties:
+        eventName:
+          type: string
+          default: faction.member.added
+          description: 'Event type identifier: faction.member.added'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction the character joined
+        characterId:
+          type: string
+          format: uuid
+          description: Character that joined
+        role:
+          $ref: 'faction-api.yaml#/components/schemas/FactionMemberRole'
+          description: Role assigned to the new member
+
+    FactionMemberRemovedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a character leaves or is removed from a faction
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - characterId
+      properties:
+        eventName:
+          type: string
+          default: faction.member.removed
+          description: 'Event type identifier: faction.member.removed'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction the character was removed from
+        characterId:
+          type: string
+          format: uuid
+          description: Character that was removed
+
+    FactionMemberRoleChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a member's role is updated
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - characterId
+        - previousRole
+        - newRole
+      properties:
+        eventName:
+          type: string
+          default: faction.member.role-changed
+          description: 'Event type identifier: faction.member.role-changed'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction containing the membership
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose role changed
+        previousRole:
+          $ref: 'faction-api.yaml#/components/schemas/FactionMemberRole'
+          description: Role before the change
+        newRole:
+          $ref: 'faction-api.yaml#/components/schemas/FactionMemberRole'
+          description: Role after the change
+
+    # --- Territory Events ---
+
+    FactionTerritoryClaimedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a faction claims a location as territory
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - locationId
+        - claimId
+      properties:
+        eventName:
+          type: string
+          default: faction.territory.claimed
+          description: 'Event type identifier: faction.territory.claimed'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that claimed the territory
+        locationId:
+          type: string
+          format: uuid
+          description: Location that was claimed
+        claimId:
+          type: string
+          format: uuid
+          description: Territory claim record ID
+
+    FactionTerritoryReleasedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a faction releases a territory claim
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - locationId
+        - claimId
+      properties:
+        eventName:
+          type: string
+          default: faction.territory.released
+          description: 'Event type identifier: faction.territory.released'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that released the territory
+        locationId:
+          type: string
+          format: uuid
+          description: Location that was released
+        claimId:
+          type: string
+          format: uuid
+          description: Territory claim record ID
+
+    # --- Norm Events ---
+
+    FactionNormDefinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a new behavioral norm is defined for a faction
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - normId
+        - violationType
+        - basePenalty
+        - severity
+        - scope
+      properties:
+        eventName:
+          type: string
+          default: faction.norm.defined
+          description: 'Event type identifier: faction.norm.defined'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that defined the norm
+        normId:
+          type: string
+          format: uuid
+          description: Unique identifier for the norm definition
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code (e.g., "theft", "deception")
+        basePenalty:
+          type: number
+          format: float
+          description: Base GOAP cost penalty
+        severity:
+          $ref: 'faction-api.yaml#/components/schemas/NormSeverity'
+          description: Enforcement intensity level
+        scope:
+          $ref: 'faction-api.yaml#/components/schemas/NormScope'
+          description: Applicability scope
+
+    FactionNormUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a norm definition is modified
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - normId
+        - violationType
+      properties:
+        eventName:
+          type: string
+          default: faction.norm.updated
+          description: 'Event type identifier: faction.norm.updated'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that owns the norm
+        normId:
+          type: string
+          format: uuid
+          description: Norm definition that was updated
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code of the updated norm
+        basePenalty:
+          type: number
+          format: float
+          nullable: true
+          description: Updated base penalty (null if unchanged)
+        severity:
+          $ref: 'faction-api.yaml#/components/schemas/NormSeverity'
+          nullable: true
+          description: Updated severity (null if unchanged)
+        scope:
+          $ref: 'faction-api.yaml#/components/schemas/NormScope'
+          nullable: true
+          description: Updated scope (null if unchanged)
+
+    FactionNormDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a norm definition is removed from a faction
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - normId
+        - violationType
+      properties:
+        eventName:
+          type: string
+          default: faction.norm.deleted
+          description: 'Event type identifier: faction.norm.deleted'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that owned the norm
+        normId:
+          type: string
+          format: uuid
+          description: Norm definition that was deleted
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code of the deleted norm
+
+    # --- Realm Baseline Events ---
+
+    FactionRealmBaselineDesignatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a faction is designated as the realm baseline cultural faction
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - realmId
+      properties:
+        eventName:
+          type: string
+          default: faction.realm-baseline.designated
+          description: 'Event type identifier: faction.realm-baseline.designated'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction designated as realm baseline
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the faction is baseline for
+        previousBaselineFactionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Previous baseline faction that was replaced (null if none existed)
+
+    # --- Governance Events ---
+
+    FactionGovernanceDefinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a governance entry is created or updated (upsert by domain)
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - governanceId
+        - domain
+        - templateCode
+      properties:
+        eventName:
+          type: string
+          default: faction.governance.defined
+          description: 'Event type identifier: faction.governance.defined'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that owns the governance entry
+        governanceId:
+          type: string
+          format: uuid
+          description: Unique identifier for the governance entry
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Case type domain prefix
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Contract template code for this case type
+        changedFields:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Fields that changed when updating an existing governance entry (null when creating a new entry)
+
+    FactionGovernanceDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a governance entry is removed from a faction
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - governanceId
+        - domain
+      properties:
+        eventName:
+          type: string
+          default: faction.governance.deleted
+          description: 'Event type identifier: faction.governance.deleted'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that owned the governance entry
+        governanceId:
+          type: string
+          format: uuid
+          description: Governance entry that was removed
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Case type domain that was removed
+
+    FactionAuthorityDelegatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a sovereign faction delegates authority to a child faction for specific case type domains
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sovereignFactionId
+        - targetFactionId
+        - domains
+      properties:
+        eventName:
+          type: string
+          default: faction.authority.delegated
+          description: 'Event type identifier: faction.authority.delegated'
+        sovereignFactionId:
+          type: string
+          format: uuid
+          description: Sovereign faction that granted delegation
+        targetFactionId:
+          type: string
+          format: uuid
+          description: Child faction that received delegated authority
+        domains:
+          type: array
+          items:
+            type: string
+          description: Case type domains that were delegated
+
+    FactionAuthorityRevokedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when delegated authority is revoked from a faction
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sovereignFactionId
+        - targetFactionId
+      properties:
+        eventName:
+          type: string
+          default: faction.authority.revoked
+          description: 'Event type identifier: faction.authority.revoked'
+        sovereignFactionId:
+          type: string
+          format: uuid
+          description: Sovereign faction that revoked delegation
+        targetFactionId:
+          type: string
+          format: uuid
+          description: Faction whose delegation was revoked
+        revokedDomains:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Specific domains that were revoked (null if all delegation was revoked)
+        resultingAuthorityLevel:
+          $ref: 'faction-api.yaml#/components/schemas/AuthorityLevel'
+          description: Target faction's authority level after revocation (Delegated if some domains remain, Influence if all revoked)

@@ -62,7 +62,7 @@ servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
 
-# NOTE: x-lifecycle moved to character-personality-events.yaml
+# NOTE: x-lifecycle moved to character-personality-service-events.yaml
 
 paths:
   /character-personality/get:

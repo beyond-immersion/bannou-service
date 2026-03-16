@@ -1,0 +1,193 @@
+openapi: 3.0.4
+info:
+  title: Character History Service Events
+  description: |
+    Event models for Character History service RabbitMQ pub/sub via MassTransit.
+    These events are published when historical participation or backstory data changes.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions: []  # Character History doesn't subscribe to external events
+  x-event-publications:
+    # Participation batch lifecycle events (auto-generated from x-lifecycle with batch: true)
+    - topic: character-history.participation.batch-created
+      event: ParticipationBatchCreatedEvent
+      description: Batch event containing accumulated participation recordings
+    - topic: character-history.participation.batch-modified
+      event: ParticipationBatchModifiedEvent
+      description: Batch event containing accumulated participation modifications (participations are immutable; this is unused infrastructure)
+    - topic: character-history.participation.batch-destroyed
+      event: ParticipationBatchDestroyedEvent
+      description: Batch event containing accumulated participation deletions
+
+    # Backstory custom events (non-lifecycle, consumed by self for cache invalidation)
+    - topic: character-history.backstory.created
+      event: CharacterBackstoryCreatedEvent
+      description: Published when a character's backstory is first created
+    - topic: character-history.backstory.updated
+      event: CharacterBackstoryUpdatedEvent
+      description: Published when a character's backstory is updated
+    - topic: character-history.backstory.deleted
+      event: CharacterBackstoryDeletedEvent
+      description: Published when a character's backstory is deleted
+    - topic: character-history.deleted
+      event: CharacterHistoryDeletedEvent
+      description: Published when all history data for a character is deleted
+
+paths: {}  # Events don't have HTTP paths
+
+x-lifecycle:
+  topic_prefix: character-history
+  Participation:
+    batch: true
+    model:
+      participationId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for this participation record" }
+      characterId: { type: string, format: uuid, required: true, description: "Character who participated" }
+      historicalEventId: { type: string, format: uuid, required: true, description: "Historical event the character participated in" }
+      role: { $ref: 'character-history-api.yaml#/components/schemas/ParticipationRole', required: true, description: "Role the character played in the event" }
+      historicalEventName: { type: string, required: true, description: "Name of the historical event" }
+      eventCategory: { $ref: 'character-history-api.yaml#/components/schemas/EventCategory', required: true, description: "Category of the historical event" }
+      significance: { type: number, format: float, required: true, description: "How significant this event was for the character (0.0 to 1.0)" }
+    sensitive: []
+    resource_mapping:
+      resource_type: character
+      resource_id_field: characterId
+      source_type: character-history
+
+components:
+  schemas:
+    # =========================================================================
+    # NOTE: CharacterParticipationRecordedEvent and CharacterParticipationDeletedEvent
+    # were previously defined here as custom lifecycle events. They have been replaced
+    # by batch lifecycle events (ParticipationBatchCreatedEvent, BatchModifiedEvent,
+    # BatchDestroyedEvent) auto-generated from x-lifecycle with batch: true.
+    # The batch entry and event models are in Generated/character-history-service-lifecycle-events.yaml.
+    # =========================================================================
+
+    # =========================================================================
+    # Backstory Events (non-lifecycle, consumed by self for cache invalidation)
+    # =========================================================================
+
+    CharacterBackstoryCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a character's backstory is first created
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-history
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - characterId
+        - elementCount
+      properties:
+        eventName:
+          type: string
+          default: character-history.backstory.created
+          description: 'Event type identifier: character-history.backstory.created'
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose backstory was created
+        elementCount:
+          type: integer
+          description: Number of backstory elements created
+
+    CharacterBackstoryUpdatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a character's backstory is updated
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-history
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - characterId
+        - elementCount
+        - replaceExisting
+      properties:
+        eventName:
+          type: string
+          default: character-history.backstory.updated
+          description: 'Event type identifier: character-history.backstory.updated'
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose backstory was updated
+        elementCount:
+          type: integer
+          description: Current number of backstory elements
+        replaceExisting:
+          type: boolean
+          description: Whether existing elements were replaced
+
+    CharacterBackstoryDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a character's backstory is deleted
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-history
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - characterId
+      properties:
+        eventName:
+          type: string
+          default: character-history.backstory.deleted
+          description: 'Event type identifier: character-history.backstory.deleted'
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose backstory was deleted
+
+    CharacterHistoryDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when all history data for a character is deleted
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-history
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - characterId
+        - participationsDeleted
+        - backstoryDeleted
+      properties:
+        eventName:
+          type: string
+          default: character-history.deleted
+          description: 'Event type identifier: character-history.deleted'
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose history was deleted
+        participationsDeleted:
+          type: integer
+          description: Number of participation records deleted
+        backstoryDeleted:
+          type: boolean
+          description: Whether backstory was deleted

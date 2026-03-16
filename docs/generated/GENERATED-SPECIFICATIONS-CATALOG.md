@@ -31,19 +31,19 @@ Marks individual API endpoints as requiring manual controller implementation, ex
 
 ## x-event-publications {#x-event-publications}
 
-**Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-03-16 | **Schema Scope**: `*-events.yaml` | [Full Specification](../reference/specifications/X-EVENT-PUBLICATIONS.md)
+**Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-03-16 | **Schema Scope**: `*-service-events.yaml` | [Full Specification](../reference/specifications/X-EVENT-PUBLICATIONS.md)
 
 Declares all events a service publishes, serving as the authoritative event catalog for that service. Generates typed topic constants and Publish*Async extension methods on IMessageBus, replacing error-prone inline topic strings with compile-time-safe typed publishers. Supports parameterized topics for dynamic routing keys with typed parameter overloads.
 
 ## x-event-subscriptions {#x-event-subscriptions}
 
-**Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-03-16 | **Schema Scope**: `*-events.yaml` | [Full Specification](../reference/specifications/X-EVENT-SUBSCRIPTIONS.md)
+**Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-03-16 | **Schema Scope**: `*-service-events.yaml` | [Full Specification](../reference/specifications/X-EVENT-SUBSCRIPTIONS.md)
 
 Declares events a service consumes from other services and generates subscription handler scaffolding in the service's event consumer file. The generator resolves event type names across all event schemas at generation time, enabling cross-service event consumption without inline model copies or schema cross-references. Use when a service needs to react to events published by other services.
 
 ## x-event-template {#x-event-template}
 
-**Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-03-16 | **Schema Scope**: `*-events.yaml` | [Full Specification](../reference/specifications/X-EVENT-TEMPLATE.md)
+**Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-03-16 | **Schema Scope**: `*-service-events.yaml` | [Full Specification](../reference/specifications/X-EVENT-TEMPLATE.md)
 
 Declares that a service event should have an auto-generated template for use with emit_event ABML actions, enabling behavior documents to publish typed events. The generator produces EventTemplate instances with pre-built payload templates that map event properties to template substitution placeholders. Use when NPC behaviors or god-actors need to emit service events from ABML documents.
 
@@ -55,7 +55,7 @@ Marks a parameter as extracted from the HTTP Authorization header rather than th
 
 ## x-lifecycle {#x-lifecycle}
 
-**Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-03-16 | **Schema Scope**: `*-events.yaml` | [Full Specification](../reference/specifications/X-LIFECYCLE.md)
+**Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-03-16 | **Schema Scope**: `*-service-events.yaml` | [Full Specification](../reference/specifications/X-LIFECYCLE.md)
 
 Generates CRUD lifecycle events (created, updated, deleted) automatically from entity model definitions in event schemas. Eliminates manual event authoring for standard entity operations by defining the model once and generating three typed events with full entity data, changedFields tracking, and optional deprecation field injection. Supports topic namespacing, sensitive field exclusion, Puppetmaster watch integration, and batch event generation.
 
@@ -73,7 +73,7 @@ Declares resource reference dependencies between services for lifecycle manageme
 
 ## x-resource-mapping {#x-resource-mapping}
 
-**Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-03-16 | **Schema Scope**: `*-events.yaml` | [Full Specification](../reference/specifications/X-RESOURCE-MAPPING.md)
+**Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-03-16 | **Schema Scope**: `*-service-events.yaml` | [Full Specification](../reference/specifications/X-RESOURCE-MAPPING.md)
 
 Declares how a service event relates to a watchable resource for Puppetmaster's watch subscription system. Maps events to resource types and ID fields so watchers can filter event streams by the resources they care about. For lifecycle events, use resource_mapping in x-lifecycle instead of adding x-resource-mapping directly; the lifecycle generator adds x-resource-mapping to generated events automatically.
 

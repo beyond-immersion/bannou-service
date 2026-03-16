@@ -53,7 +53,7 @@ x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
 
-# NOTE: x-lifecycle definitions are in relationship-events.yaml
+# NOTE: x-lifecycle definitions are in relationship-service-events.yaml
 
 paths:
   # ============================================================

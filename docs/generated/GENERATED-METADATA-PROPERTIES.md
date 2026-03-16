@@ -90,7 +90,6 @@ Compliant properties include one of these phrases in their description:
 | `CreateContractTemplateRequest` | `gameMetadata` | `contract-api.yaml` | Y | Client-only game metadata. No Bannou plugin reads specific keys from this fie... |
 | `UpdateContractMetadataRequest` | `data` | `contract-api.yaml` | Y | Client-only metadata payload. No Bannou plugin reads specific keys from this ... |
 | `UpdateContractTemplateRequest` | `gameMetadata` | `contract-api.yaml` | Y | Client-only game metadata. No Bannou plugin reads specific keys from this fie... |
-| `ContractMilestoneCompletedEvent` | `evidence` | `contract-events.yaml` | Y | Client-only completion evidence. No Bannou plugin reads specific keys from th... |
 
 ### Game Foundation (L2)
 
@@ -110,9 +109,6 @@ Compliant properties include one of these phrases in their description:
 | `StartEncounterRequest` | `initialData` | `actor-api.yaml` | Y | Game-specific encounter initialization data passed to ABML behavior scope. No... |
 | `UpdateActorTemplateRequest` | `cognitionOverrides` | `actor-api.yaml` | Y | Updated cognition overrides (polymorphic JSON). Deserialized internally to Co... |
 | `UpdateActorTemplateRequest` | `configuration` | `actor-api.yaml` | Y | Updated game-specific configuration for ABML behavior execution scope. No Ban... |
-| `SendMessageCommand` | `payload` | `actor-events.yaml` | Y | Game-specific message payload passed to ABML behavior scope. No Bannou plugin... |
-| `SpawnActorCommand` | `configuration` | `actor-events.yaml` | Y | Game-specific configuration for ABML behavior execution scope. No Bannou plug... |
-| `SpawnActorCommand` | `initialState` | `actor-events.yaml` | Y | Initial actor state snapshot. No Bannou plugin reads specific keys from this ... |
 
 #### Collection
 
@@ -217,7 +213,6 @@ Compliant properties include one of these phrases in their description:
 |-------------|----------|-------------|-----------|-------------|
 | `CreateBundleRequest` | `metadata` | `asset-api.yaml` | Y | Custom metadata for the bundle (null if none). No Bannou plugin reads specifi... |
 | `CreateMetabundleRequest` | `metadata` | `asset-api.yaml` | Y | Custom metadata for the metabundle. No Bannou plugin reads specific keys from... |
-| `AssetProcessingJobDispatchedEvent` | `processingOptions` | `asset-events.yaml` | **N** | Content-type-specific processing options (opaque pass-through to processor) |
 
 #### Documentation
 
@@ -298,8 +293,6 @@ Compliant properties include one of these phrases in their description:
 | `EscrowAssetInput` | `customAssetData` | `escrow-api.yaml` | Y | Custom asset handler-specific data. No Bannou plugin reads specific keys from... |
 | `ValidationFailure` | `details` | `escrow-api.yaml` | Y | Validation failure diagnostic details. No Bannou plugin reads specific keys f... |
 | `VerifyConditionRequest` | `verificationData` | `escrow-api.yaml` | Y | Caller-provided proof/evidence data for condition verification. No Bannou plu... |
-| `ReleaseAllocationWithConfirmation` | `confirmationShortcut` | `escrow-events.yaml` | Y | Prebound API shortcut for client confirmation (pushed via WebSocket). No Bann... |
-| `ValidationFailureInfo` | `details` | `escrow-events.yaml` | Y | Additional failure details. No Bannou plugin reads specific keys from this fi... |
 
 #### Faction
 
@@ -341,9 +334,6 @@ Compliant properties include one of these phrases in their description:
 | `MapPayload` | `data` | `mapping-api.yaml` | Y | Game-specific spatial object data. lib-mapping stores and returns this as-is.... |
 | `ObjectChange` | `data` | `mapping-api.yaml` | Y | Game-specific object state data. No Bannou plugin reads specific keys from th... |
 | `UpdateDefinitionRequest` | `metadata` | `mapping-api.yaml` | Y | Updated client-provided definition metadata (replaces existing). No Bannou pl... |
-| `IngestPayload` | `data` | `mapping-events.yaml` | **N** | Schema-less object data (publisher-defined) |
-| `MapUpdatedEvent` | `payload` | `mapping-events.yaml` | **N** | Schema-less payload data |
-| `ObjectChangeRecord` | `data` | `mapping-events.yaml` | **N** | Object data (for created/updated) |
 
 #### Realm History
 
@@ -369,8 +359,6 @@ Compliant properties include one of these phrases in their description:
 | `Scene` | `metadata` | `scene-api.yaml` | Y | Client-only scene metadata (author, thumbnail, editor preferences). No Bannou... |
 | `SceneNode` | `annotations` | `scene-api.yaml` | Y | Client-only node annotations for game engines and editors. No Bannou plugin r... |
 | `ValidationError` | `context` | `scene-api.yaml` | Y | Client-only validation error context. No Bannou plugin reads specific keys fr... |
-| `SceneDestroyedEvent` | `metadata` | `scene-events.yaml` | Y | Caller-provided metadata passed through from destruction request. No Bannou p... |
-| `SceneInstantiatedEvent` | `metadata` | `scene-events.yaml` | Y | Caller-provided metadata passed through from instantiation request. No Bannou... |
 
 #### Status
 
@@ -381,11 +369,25 @@ Compliant properties include one of these phrases in their description:
 
 ### Common / Shared Schemas
 
+#### Actor Service
+
+| Schema Type | Property | Schema File | Compliant | Description |
+|-------------|----------|-------------|-----------|-------------|
+| `SendMessageCommand` | `payload` | `actor-service-events.yaml` | Y | Game-specific message payload passed to ABML behavior scope. No Bannou plugin... |
+| `SpawnActorCommand` | `configuration` | `actor-service-events.yaml` | Y | Game-specific configuration for ABML behavior execution scope. No Bannou plug... |
+| `SpawnActorCommand` | `initialState` | `actor-service-events.yaml` | Y | Initial actor state snapshot. No Bannou plugin reads specific keys from this ... |
+
 #### Asset Client
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
 | `AssetReadyClientEvent` | `metadata` | `asset-client-events.yaml` | Y | Asset metadata. No Bannou plugin reads specific keys from this field by conve... |
+
+#### Asset Service
+
+| Schema Type | Property | Schema File | Compliant | Description |
+|-------------|----------|-------------|-----------|-------------|
+| `AssetProcessingJobDispatchedEvent` | `processingOptions` | `asset-service-events.yaml` | **N** | Content-type-specific processing options (opaque pass-through to processor) |
 
 #### Common
 
@@ -405,6 +407,19 @@ Compliant properties include one of these phrases in their description:
 |-------------|----------|-------------|-----------|-------------|
 | `SystemErrorClientEvent` | `details` | `common-client-events.yaml` | Y | Additional error details (service-specific). No Bannou plugin reads specific ... |
 
+#### Contract Service
+
+| Schema Type | Property | Schema File | Compliant | Description |
+|-------------|----------|-------------|-----------|-------------|
+| `ContractMilestoneCompletedEvent` | `evidence` | `contract-service-events.yaml` | Y | Client-only completion evidence. No Bannou plugin reads specific keys from th... |
+
+#### Escrow Service
+
+| Schema Type | Property | Schema File | Compliant | Description |
+|-------------|----------|-------------|-----------|-------------|
+| `ReleaseAllocationWithConfirmation` | `confirmationShortcut` | `escrow-service-events.yaml` | Y | Prebound API shortcut for client confirmation (pushed via WebSocket). No Bann... |
+| `ValidationFailureInfo` | `details` | `escrow-service-events.yaml` | Y | Additional failure details. No Bannou plugin reads specific keys from this fi... |
+
 #### Game Session Client
 
 | Schema Type | Property | Schema File | Compliant | Description |
@@ -413,6 +428,21 @@ Compliant properties include one of these phrases in their description:
 | `GameStateUpdatedClientEvent` | `stateDelta` | `game-session-client-events.yaml` | Y | Partial game state changes. No Bannou plugin reads specific keys from this fi... |
 | `PlayerInfo` | `characterData` | `game-session-client-events.yaml` | Y | Game-specific character data. No Bannou plugin reads specific keys from this ... |
 | `VisibleEffect` | `effectData` | `game-session-client-events.yaml` | Y | Effect-specific parameters. No Bannou plugin reads specific keys from this fi... |
+
+#### Mapping Service
+
+| Schema Type | Property | Schema File | Compliant | Description |
+|-------------|----------|-------------|-----------|-------------|
+| `IngestPayload` | `data` | `mapping-service-events.yaml` | **N** | Schema-less object data (publisher-defined) |
+| `MapUpdatedEvent` | `payload` | `mapping-service-events.yaml` | **N** | Schema-less payload data |
+| `ObjectChangeRecord` | `data` | `mapping-service-events.yaml` | **N** | Object data (for created/updated) |
+
+#### Scene Service
+
+| Schema Type | Property | Schema File | Compliant | Description |
+|-------------|----------|-------------|-----------|-------------|
+| `SceneDestroyedEvent` | `metadata` | `scene-service-events.yaml` | Y | Caller-provided metadata passed through from destruction request. No Bannou p... |
+| `SceneInstantiatedEvent` | `metadata` | `scene-service-events.yaml` | Y | Caller-provided metadata passed through from instantiation request. No Bannou... |
 
 ## Structural Exceptions
 
@@ -459,7 +489,7 @@ or is it being misused as a cross-service data contract?
 
 | Service | Schema Type | Property | Schema File | Description |
 |---------|-------------|----------|-------------|-------------|
-| Asset | `AssetProcessingJobDispatchedEvent` | `processingOptions` | `asset-events.yaml` | Content-type-specific processing options (opaque pass-through to processor) |
+| Asset Service | `AssetProcessingJobDispatchedEvent` | `processingOptions` | `asset-service-events.yaml` | Content-type-specific processing options (opaque pass-through to processor) |
 | Behavior | `GoapPlanRequest` | `worldState` | `behavior-api.yaml` | Planner-owned dynamic world state bag for GOAP A* search. Keys are arbitrary ... |
 | Behavior | `ValidateGoapPlanRequest` | `worldState` | `behavior-api.yaml` | Planner-owned dynamic world state bag for plan validation. Keys are arbitrary... |
 | Common | `ServiceErrorEvent` | `details` | `common-events.yaml` | Redacted structured context (exclude PII/secrets) |
@@ -467,9 +497,9 @@ or is it being misused as a cross-service data contract?
 | Common | `MemoryUpdate` | `memoryValue` | `common-events.yaml` | Memory value (entity ID, context, intensity, etc.) |
 | Connect | `InternalProxyRequest` | `body` | `connect-api.yaml` | Request body to forward to target service (null for no body). Uses additional... |
 | Connect | `GetEndpointMetaResponse` | `data` | `connect-api.yaml` | Metadata payload whose structure varies by metaType (endpoint-info returns su... |
-| Mapping | `IngestPayload` | `data` | `mapping-events.yaml` | Schema-less object data (publisher-defined) |
-| Mapping | `ObjectChangeRecord` | `data` | `mapping-events.yaml` | Object data (for created/updated) |
-| Mapping | `MapUpdatedEvent` | `payload` | `mapping-events.yaml` | Schema-less payload data |
+| Mapping Service | `IngestPayload` | `data` | `mapping-service-events.yaml` | Schema-less object data (publisher-defined) |
+| Mapping Service | `ObjectChangeRecord` | `data` | `mapping-service-events.yaml` | Object data (for created/updated) |
+| Mapping Service | `MapUpdatedEvent` | `payload` | `mapping-service-events.yaml` | Schema-less payload data |
 | Save Load | `RegisterSchemaRequest` | `schema` | `save-load-api.yaml` | JSON Schema definition for validation |
 | Save Load | `SchemaResponse` | `schema` | `save-load-api.yaml` | JSON Schema definition |
 | State | `GetStateResponse` | `value` | `state-api.yaml` | The stored value (null if not found) |

@@ -218,7 +218,7 @@ x-service-configuration:
 
 | Restriction | Reason |
 |---|---|
-| `x-sdk-type` in `*-events.yaml` or `*-client-events.yaml` | SDK type mapping applies only to API schema types; event schemas have separate generation pipelines |
+| `x-sdk-type` in `*-service-events.yaml` or `*-client-events.yaml` | SDK type mapping applies only to API schema types; event schemas have separate generation pipelines |
 | `x-sdk-type` in `*-configuration.yaml` | Configuration schemas reference SDK types via `$ref` to the `*-api.yaml` definition; the marker belongs on the source definition |
 | `x-sdk-type` referencing domain-specific SDK types outside Core | Domain-specific SDKs (e.g., behavior-compiler, storyline-theory) must define their own types and map at the plugin boundary using explicit A2 SDK boundary enum mapping with `EnumMappingValidator` tests |
 | `x-sdk-type` without the full namespace | The value must be fully qualified; a bare type name (`PitchClass`) cannot be resolved to the correct `using` statement |

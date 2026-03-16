@@ -71,7 +71,7 @@ def extract_service_name(filename: str) -> str:
 
     Examples:
         contract-api.yaml -> contract
-        contract-events.yaml -> contract
+        contract-service-events.yaml -> contract
         contract-configuration.yaml -> contract
         contract-client-events.yaml -> contract
         common-events.yaml -> common

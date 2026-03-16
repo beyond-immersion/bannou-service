@@ -1033,7 +1033,7 @@ gh issue list --search "Worldstate:" --state open
 
 L3-hardened with two full audit passes (2026-03-02). The Docker Compose backend is functional and solid: preset-based deployment, live topology updates (add/remove/move/scale/update-env), service-to-app-id routing broadcasts consumed by Mesh, processing pool acquire/release with distributed locks, config versioning with multi-version rollback, health monitoring with source-filtered reports (control plane vs deployed vs all), container management (restart, status, logs), infrastructure health checks, and background lease expiry enforcement. 33 configuration properties all wired. No bugs.
 
-Schema hardened: events moved to orchestrator-events.yaml (schema-first), inline enums extracted to named schemas, NRT compliance (required arrays, nullable: true), filler removal (success booleans, echoed fields, message strings), validation keywords added, health status enums unified in common-api.yaml (ServiceHealthStatus 3-value, InstanceHealthStatus 5-value). Code hardened: telemetry spans on all 27 async methods across 6 files, multi-instance safety (mappings version counter moved to Redis, in-memory routing-changed flag removed), anonymous objects replaced with typed dictionaries, sentinel string.Empty defaults fixed to nullable, DisposeAsync compliance, hardcoded tunables moved to configuration schema. Second audit pass (2026-03-02): lease expiry enforcement via background timer in ServiceHealthMonitor, multi-version rollback (targetVersion field), log timestamp parsing fix (continuation lines inherit preceding timestamp), dead config cleanup (CacheTtlMinutes removed), two design considerations resolved.
+Schema hardened: events moved to orchestrator-service-events.yaml (schema-first), inline enums extracted to named schemas, NRT compliance (required arrays, nullable: true), filler removal (success booleans, echoed fields, message strings), validation keywords added, health status enums unified in common-api.yaml (ServiceHealthStatus 3-value, InstanceHealthStatus 5-value). Code hardened: telemetry spans on all 27 async methods across 6 files, multi-instance safety (mappings version counter moved to Redis, in-memory routing-changed flag removed), anonymous objects replaced with typed dictionaries, sentinel string.Empty defaults fixed to nullable, DisposeAsync compliance, hardcoded tunables moved to configuration schema. Second audit pass (2026-03-02): lease expiry enforcement via background timer in ServiceHealthMonitor, multi-version rollback (targetVersion field), log timestamp parsing fix (continuation lines inherit preceding timestamp), dead config cleanup (CacheTtlMinutes removed), two design considerations resolved.
 
 Remaining functional gaps: 3 of 4 container backends are stubs (Swarm, Kubernetes, Portainer -- only Compose is implemented). Processing pool management is missing auto-scaling and idle timeout enforcement (#550), and queue depth tracking (hardcoded 0). New design extensions tracked: deploy validation (#551), blue-green deployment (#552), canary deployments (#553), priority queue (#554).
 
@@ -1539,7 +1539,7 @@ No implementation exists to have bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Phase 1 - Schema & Generation** | Create `director-api.yaml` (24 endpoints), `director-events.yaml` (9 published, 3 consumed), `director-configuration.yaml` (17 properties), `director-client-events.yaml` (tap data relay, approval requests). Generate service code. | No issue |
+| 1 | **Phase 1 - Schema & Generation** | Create `director-api.yaml` (24 endpoints), `director-service-events.yaml` (9 published, 3 consumed), `director-configuration.yaml` (17 properties), `director-client-events.yaml` (tap data relay, approval requests). Generate service code. | No issue |
 | 2 | **Phase 2 - Director Session & Actor Observation** | Implement session lifecycle (start/get/end), actor tap/untap with RabbitMQ relay, tap data delivery via IClientEventPublisher, session timeout background worker. | No issue |
 | 3 | **Phase 3 - Actor Steering** | Implement perception injection wrapper, `DirectorOverrideProviderFactory` as standard `IVariableProviderFactory`, GOAP override store, action gate mechanism with approval flow. | No issue |
 
@@ -1680,7 +1680,7 @@ No known bugs.
 ### Audit Log
 
 **L4 Production Audit (2026-03-06)**:
-- **Schema (faction-events.yaml)**: Flattened all 9 custom events (removed `allOf` with `BaseServiceEvent`, added inline `eventId`/`timestamp`), added `deprecatedAt`/`deprecationReason` to x-lifecycle Faction model, added `minLength`/`maxLength` to `violationType` in norm events, removed tenet number reference, added `x-event-subscriptions: []`
+- **Schema (faction-service-events.yaml)**: Flattened all 9 custom events (removed `allOf` with `BaseServiceEvent`, added inline `eventId`/`timestamp`), added `deprecatedAt`/`deprecationReason` to x-lifecycle Faction model, added `minLength`/`maxLength` to `violationType` in norm events, removed tenet number reference, added `x-event-subscriptions: []`
 - **Schema (faction-api.yaml)**: filler removed from `QueryApplicableNormsResponse` (characterId, realmId, locationId), `CheckMembershipResponse` (factionId, characterId), `ListMembershipsByCharacterResponse` (characterId), `CleanupByCharacterResponse`/`CleanupByRealmResponse`/`CleanupByLocationResponse` (success boolean), `RestoreFromArchiveResponse` (characterId, success, boolean→count). deprecation fields (`deprecatedAt`, `deprecationReason`) added to `FactionResponse` and `DeprecateFactionRequest`. `includeDeprecated` filter added to `ListFactionsRequest`. Validation added to `CharacterMembershipEntry`, `ApplicableNormEntry`, `RestoreFromArchiveRequest.data`
 - **Schema (faction-configuration.yaml)**: Added `CollectionGrowthAmount` config property, `minLength`/`maxLength` on `SeedTypeCode`
 - **Code (FactionService.cs)**: deprecation lifecycle (deprecatedAt/deprecationReason in model+response, idempotent deprecate/undeprecate with dissolved guard, delete requires deprecation, includeDeprecated filter). filler field assignments removed from 7 response constructions. RestoreFromArchive changed from boolean to count tracking
@@ -2630,7 +2630,7 @@ No implementation exists to have bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Schema creation + code generation** | Create trade-api.yaml, trade-events.yaml, trade-configuration.yaml per hardened deep dive | #427 |
+| 1 | **Schema creation + code generation** | Create trade-api.yaml, trade-service-events.yaml, trade-configuration.yaml per hardened deep dive | #427 |
 | 2 | **Resolve design decisions** | 4 AUDIT:NEEDS_DESIGN items block schema creation | — |
 | 3 | **Escrow integration fix** | Escrow asset transfer broken — blocks custodyMode: Escrow | #153 |
 

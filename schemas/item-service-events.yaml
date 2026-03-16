@@ -1,0 +1,505 @@
+openapi: 3.0.4
+info:
+  title: Item Service Events
+  description: |
+    Event models for Item service RabbitMQ pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+
+    **Categories**:
+    - Template lifecycle: created, updated (deprecation via changedFields)
+    - Instance lifecycle: created, modified, destroyed
+    - Binding events: bound, unbound
+
+    **Topic Naming**: Uses `item.` prefix with dot-separated entity names (item.template, item.instance).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions: []
+  x-event-publications:
+    # Template lifecycle events (auto-generated from x-lifecycle)
+    - topic: item.template.created
+      event: ItemTemplateCreatedEvent
+      description: Published when a new item template is created
+    - topic: item.template.updated
+      event: ItemTemplateUpdatedEvent
+      description: Published when an item template is updated (including deprecation via changedFields)
+    - topic: item.template.deleted
+      event: ItemTemplateDeletedEvent
+      description: "Unused Category B infrastructure — templates are never deleted. Publisher method exists in generated code but is never called."
+
+    # Instance batch lifecycle events (auto-generated from x-lifecycle with batch: true)
+    - topic: item.instance.batch-created
+      event: ItemInstanceBatchCreatedEvent
+      description: Batch event containing accumulated item instance creations
+    - topic: item.instance.batch-modified
+      event: ItemInstanceBatchModifiedEvent
+      description: Batch event containing accumulated item instance modifications
+    - topic: item.instance.batch-destroyed
+      event: ItemInstanceBatchDestroyedEvent
+      description: Batch event containing accumulated item instance destructions
+
+    # Binding events (non-lifecycle)
+    - topic: item.instance.bound
+      event: ItemInstanceBoundEvent
+      description: Published when an item is bound to a character (soulbound)
+    - topic: item.instance.unbound
+      event: ItemInstanceUnboundEvent
+      description: Published when an item binding is removed (admin action, expiration)
+
+    # Item use events (batched with deduplication)
+    - topic: item.used
+      event: ItemUsedEvent
+      description: Published when items are successfully used (batched with deduplication by templateId+userId)
+    - topic: item.use-failed
+      event: ItemUseFailedEvent
+      description: Published when item use attempts fail (batched with deduplication by templateId+userId)
+
+    # Multi-step use events
+    - topic: item.use-step-completed
+      event: ItemUseStepCompletedEvent
+      description: Published when a multi-step item use milestone is completed
+    - topic: item.use-step-failed
+      event: ItemUseStepFailedEvent
+      description: Published when a multi-step item use milestone fails
+
+# Lifecycle events auto-generated from this definition.
+# Note: The generator produces standard Created/Updated/Deleted events for both entities.
+# Item uses custom event names for non-creation lifecycle states:
+#   - ItemTemplate: deprecation published via "updated" with changedFields (per IMPLEMENTATION TENETS)
+#   - ItemInstance: "modified" instead of "updated", "destroyed" instead of "deleted"
+# The custom events are defined in components/schemas below and listed in x-event-publications.
+# The auto-generated Updated/Deleted variants exist in Generated/ but are not published.
+x-lifecycle:
+  topic_prefix: item
+  ItemTemplate:
+    deprecation: true
+    instanceEntity: ItemInstance
+    model:
+      templateId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the item template" }
+      code: { type: string, required: true, description: "Unique item code within game" }
+      gameId: { type: string, required: true, description: "Game service this template belongs to" }
+      name: { type: string, required: true, description: "Human-readable display name" }
+      description: { type: string, nullable: true, description: "Detailed item description" }
+      category: { $ref: 'item-api.yaml#/components/schemas/ItemCategory', required: true, description: "Item classification category" }
+      rarity: { $ref: 'item-api.yaml#/components/schemas/ItemRarity', required: true, description: "Item rarity tier" }
+      quantityModel: { $ref: 'item-api.yaml#/components/schemas/QuantityModel', required: true, description: "How quantities are tracked" }
+      maxStackSize: { type: integer, required: true, description: "Maximum stack size for this item" }
+      scope: { $ref: 'item-api.yaml#/components/schemas/ItemScope', required: true, description: "Realm availability scope" }
+      soulboundType: { $ref: 'item-api.yaml#/components/schemas/SoulboundType', required: true, description: "When item becomes bound to a character" }
+      tradeable: { type: boolean, required: true, description: "Whether item can be traded between characters" }
+      destroyable: { type: boolean, required: true, description: "Whether item can be destroyed by the owner" }
+      hasDurability: { type: boolean, required: true, description: "Whether item has durability system" }
+      maxDurability: { type: integer, nullable: true, description: "Maximum durability value (if hasDurability is true)" }
+      isActive: { type: boolean, required: true, description: "Whether template is currently active" }
+      migrationTargetId: { type: string, format: uuid, nullable: true, description: "Template ID to migrate existing instances to" }
+    sensitive: []
+
+  ItemInstance:
+    batch: true
+    model:
+      instanceId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for this item instance" }
+      templateId: { type: string, format: uuid, required: true, description: "Reference to the item template" }
+      containerId: { type: string, format: uuid, nullable: true, description: "Container holding this item (ownership derived from container). Null when removed from all containers." }
+      realmId: { type: string, format: uuid, required: true, description: "Realm this instance exists in" }
+      quantity: { type: number, format: double, required: true, description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)" }
+      slotIndex: { type: integer, nullable: true, description: "Slot position in slot-based containers" }
+      slotX: { type: integer, nullable: true, description: "X position in grid-based containers" }
+      slotY: { type: integer, nullable: true, description: "Y position in grid-based containers" }
+      rotated: { type: boolean, nullable: true, description: "Whether item is rotated in grid-based containers" }
+      currentDurability: { type: integer, nullable: true, description: "Current durability value" }
+      boundToId: { type: string, format: uuid, nullable: true, description: "Character ID this item is bound to (if soulbound)" }
+      boundAt: { type: string, format: date-time, nullable: true, description: "When the item was bound to a character" }
+      customName: { type: string, nullable: true, description: "Player-assigned custom name for this instance" }
+      originType: { $ref: 'item-api.yaml#/components/schemas/ItemOriginType', required: true, description: "How this item instance was created" }
+      originId: { type: string, format: uuid, nullable: true, description: "Source entity ID for the origin (e.g., crafting recipe, vendor)" }
+      modifiedAt: { type: string, format: date-time, nullable: true, description: "When the instance was last modified" }
+    sensitive: []
+
+paths: {}
+
+components:
+  schemas:
+    # =========================================================================
+    # NOTE: ItemInstanceModifiedEvent and ItemInstanceDestroyedEvent were previously
+    # defined here as custom lifecycle events. They have been replaced by batch
+    # lifecycle events (ItemInstanceBatchCreatedEvent, BatchModifiedEvent,
+    # BatchDestroyedEvent) auto-generated from x-lifecycle with batch: true.
+    # The batch entry and event models are in Generated/item-service-lifecycle-events.yaml.
+    # =========================================================================
+
+    # =========================================================================
+    # Binding Events (non-lifecycle)
+    # =========================================================================
+
+    ItemInstanceBoundEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when an item is bound to a character (soulbound)
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - realmId
+      - characterId
+      - bindType
+      properties:
+        eventName:
+          type: string
+          default: item.instance.bound
+          description: 'Event type identifier: item.instance.bound'
+        instanceId:
+          type: string
+          format: uuid
+          description: Bound item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        templateCode:
+          type: string
+          nullable: true
+          description: Item template code for debugging, null if template not found (data inconsistency)
+        realmId:
+          type: string
+          format: uuid
+          description: Realm where binding occurred
+        characterId:
+          type: string
+          format: uuid
+          description: Character the item is bound to
+        bindType:
+          $ref: 'item-api.yaml#/components/schemas/SoulboundType'
+          description: Type of binding
+
+    ItemInstanceUnboundEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Event published when an item binding is removed (admin action, expiration)
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - realmId
+      - previousCharacterId
+      - reason
+      properties:
+        eventName:
+          type: string
+          default: item.instance.unbound
+          description: 'Event type identifier: item.instance.unbound'
+        instanceId:
+          type: string
+          format: uuid
+          description: Unbound item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        templateCode:
+          type: string
+          nullable: true
+          description: Item template code for debugging, null if template not found (data inconsistency)
+        realmId:
+          type: string
+          format: uuid
+          description: Realm where unbinding occurred
+        previousCharacterId:
+          type: string
+          format: uuid
+          description: Character the item was previously bound to
+        reason:
+          $ref: 'item-api.yaml#/components/schemas/UnbindReason'
+          description: Reason for unbinding
+        unboundBy:
+          type: string
+          format: uuid
+          nullable: true
+          description: Account ID of admin who performed unbinding (if admin action)
+
+    # =========================================================================
+    # Item Use Events (batched with deduplication)
+    # =========================================================================
+
+    ItemUsedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Published when items are successfully used, batched with deduplication by templateId+userId
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - batchId
+      - uses
+      - totalCount
+      properties:
+        eventName:
+          type: string
+          default: item.used
+          description: 'Event type identifier: item.used'
+        batchId:
+          type: string
+          format: uuid
+          description: Unique identifier for this deduplication batch window
+        uses:
+          type: array
+          description: Individual item use records included in this batch
+          items:
+            $ref: '#/components/schemas/ItemUseRecord'
+        totalCount:
+          type: integer
+          description: Total number of uses in this deduplication window including any deduplicated entries
+
+    ItemUseFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Published when item use attempts fail, batched with deduplication by templateId+userId
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - batchId
+      - failures
+      - totalCount
+      properties:
+        eventName:
+          type: string
+          default: item.use-failed
+          description: 'Event type identifier: item.use-failed'
+        batchId:
+          type: string
+          format: uuid
+          description: Unique identifier for this deduplication batch window
+        failures:
+          type: array
+          description: Individual item use failure records included in this batch
+          items:
+            $ref: '#/components/schemas/ItemUseFailureRecord'
+        totalCount:
+          type: integer
+          description: Total number of failures in this deduplication window including any deduplicated entries
+
+    ItemUseRecord:
+      type: object
+      description: Record of a single successful item use within a batched event
+      additionalProperties: false
+      required:
+      - instanceId
+      - templateId
+      - templateCode
+      - userId
+      - userType
+      - usedAt
+      - consumed
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item instance that was used
+        templateId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item template
+        templateCode:
+          type: string
+          description: Human-readable code of the item template for debugging and analytics
+        userId:
+          type: string
+          format: uuid
+          description: Unique identifier of the entity that used the item
+        userType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of user entity
+        targetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique identifier of the target entity if item was used on a target
+        targetType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Type of target entity when targetId is present
+        usedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the item was successfully used
+        consumed:
+          type: boolean
+          description: Whether the item was consumed (quantity decremented or item destroyed)
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique identifier of the contract instance that executed the use behavior
+
+    ItemUseFailureRecord:
+      type: object
+      description: Record of a single failed item use attempt within a batched event
+      additionalProperties: false
+      required:
+      - instanceId
+      - templateId
+      - templateCode
+      - userId
+      - userType
+      - failedAt
+      - reason
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item instance that failed to be used
+        templateId:
+          type: string
+          format: uuid
+          description: Unique identifier of the item template
+        templateCode:
+          type: string
+          description: Human-readable code of the item template for debugging and analytics
+        userId:
+          type: string
+          format: uuid
+          description: Unique identifier of the entity that attempted to use the item
+        userType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of user entity
+        failedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the use attempt failed
+        reason:
+          type: string
+          description: Human-readable reason why the item use failed
+
+    # =========================================================================
+    # Multi-Step Item Use Events
+    # =========================================================================
+
+    ItemUseStepCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Published when a multi-step item use milestone is completed
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - templateCode
+      - userId
+      - userType
+      - contractInstanceId
+      - milestoneCode
+      - isComplete
+      - consumed
+      properties:
+        eventName:
+          type: string
+          default: item.use-step-completed
+          description: 'Event type identifier: item.use-step-completed'
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        templateCode:
+          type: string
+          description: Item template code for debugging
+        userId:
+          type: string
+          format: uuid
+          description: User who completed the step
+        userType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of user entity
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance tracking this use session
+        milestoneCode:
+          type: string
+          description: The milestone that was completed
+        remainingMilestones:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Milestones still to be completed
+        isComplete:
+          type: boolean
+          description: Whether all required milestones are complete
+        consumed:
+          type: boolean
+          description: Whether item was consumed
+
+    ItemUseStepFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      description: Published when a multi-step item use milestone fails
+      additionalProperties: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - instanceId
+      - templateId
+      - templateCode
+      - userId
+      - userType
+      - contractInstanceId
+      - milestoneCode
+      - reason
+      properties:
+        eventName:
+          type: string
+          default: item.use-step-failed
+          description: 'Event type identifier: item.use-step-failed'
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID
+        templateCode:
+          type: string
+          description: Item template code for debugging
+        userId:
+          type: string
+          format: uuid
+          description: User who attempted the step
+        userType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of user entity
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance tracking this use session
+        milestoneCode:
+          type: string
+          description: The milestone that failed
+        reason:
+          type: string
+          description: Human-readable reason for failure

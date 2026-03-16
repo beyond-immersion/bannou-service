@@ -17,7 +17,7 @@
 
 # Event subscription code generator
 # Usage: ./generate-event-subscriptions.sh <service-name> <schema-file>
-# Extracts x-event-subscriptions from {service}-events.yaml (preferred) or
+# Extracts x-event-subscriptions from {service}-service-events.yaml (preferred) or
 # x-subscribes-to from {service}-api.yaml (legacy fallback) and generates:
 # - {Service}ServiceEvents.cs - Partial class with handler stubs (only if doesn't exist)
 #
@@ -42,7 +42,7 @@ SERVICE_NAME="$1"
 SCHEMA_FILE="$2"
 
 # Determine the events yaml file path
-EVENTS_SCHEMA="${SCRIPT_DIR}/../schemas/${SERVICE_NAME}-events.yaml"
+EVENTS_SCHEMA="${SCRIPT_DIR}/../schemas/${SERVICE_NAME}-service-events.yaml"
 
 # Helper function to convert topic to route name (e.g., "session.connected" -> "handle-session-connected")
 topic_to_route() {
@@ -263,7 +263,7 @@ if not schemas_dir or schemas_dir == '/':
     schemas_dir = '${SCRIPT_DIR}/../schemas/'
 
 known_types = set()
-for schema_file in glob.glob(os.path.join(schemas_dir, '*-events.yaml')) + \
+for schema_file in glob.glob(os.path.join(schemas_dir, '*-service-events.yaml')) + \
                    glob.glob(os.path.join(schemas_dir, 'common-events.yaml')):
     try:
         with open(schema_file, 'r') as f:
@@ -274,7 +274,7 @@ for schema_file in glob.glob(os.path.join(schemas_dir, '*-events.yaml')) + \
         continue
 
 # Also check Generated lifecycle events
-for schema_file in glob.glob(os.path.join(schemas_dir, 'Generated', '*-lifecycle-events.yaml')):
+for schema_file in glob.glob(os.path.join(schemas_dir, 'Generated', '*-service-lifecycle-events.yaml')):
     try:
         with open(schema_file, 'r') as f:
             schema = yaml.safe_load(f)
@@ -298,7 +298,7 @@ if errors:
 
 if [ -n "$VALIDATION_ERRORS" ]; then
     echo -e "${RED}❌ Event type validation failed! The following event types in x-event-subscriptions${NC}"
-    echo -e "${RED}   were not found in any *-events.yaml or common-events.yaml schema:${NC}"
+    echo -e "${RED}   were not found in any *-service-events.yaml or common-events.yaml schema:${NC}"
     while IFS= read -r line; do
         echo -e "${RED}   - $line${NC}"
     done <<< "$VALIDATION_ERRORS"

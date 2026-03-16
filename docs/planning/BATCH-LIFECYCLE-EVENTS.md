@@ -25,7 +25,7 @@ Three services independently implement or plan the same high-frequency event acc
 | **Item** | Inline ConcurrentDictionary accumulation with background flush for use events; individual per-operation publishing for instance lifecycle events | `item.used`/`item.use-failed` (batched); `item.instance.created`/`modified`/`destroyed`/`bound`/`unbound` (individual, **zero subscribers**) | None for any item event |
 | **Affix** (planned) | Deep dive specifies `GenerationEventDeduplicationWindowSeconds` and `GenerationEventBatchMaxSize` config; Quirk #10: "Generation events are batched, not per-item" | Generation events (batched); `affix.modifier.applied`/`removed` (individual, lib-market planned consumer) | lib-market for modifier events (functional, but 5s delay acceptable) |
 
-**Key finding**: No service in the entire codebase subscribes to any `item.*` event via `x-event-subscriptions`. The only near-miss is a commented-out `item.expired` in `status-events.yaml` blocked on #407. Item cleanup uses `IItemInstanceDestructionListener` (DI Listener pattern per T28), not events. Inventory container events (`inventory.item.placed`/`removed`/`moved`/`transferred`) handle the functional "items moved around" signaling.
+**Key finding**: No service in the entire codebase subscribes to any `item.*` event via `x-event-subscriptions`. The only near-miss is a commented-out `item.expired` in `status-service-events.yaml` blocked on #407. Item cleanup uses `IItemInstanceDestructionListener` (DI Listener pattern per T28), not events. Inventory container events (`inventory.item.placed`/`removed`/`moved`/`transferred`) handle the functional "items moved around" signaling.
 
 ### The Opportunity
 
@@ -353,7 +353,7 @@ BatchFailureEntry:
 
 ### Step 4: Apply to Item Service
 
-#### 4a. `schemas/item-events.yaml` — Modify x-lifecycle
+#### 4a. `schemas/item-service-events.yaml` — Modify x-lifecycle
 
 ```yaml
 x-lifecycle:
@@ -519,7 +519,7 @@ This is a pure refactor — external behavior is identical. The `permission.serv
 #### 6a. `structural-tests/StructuralTests.cs` — Add batch lifecycle validation (frozen artifact, explicit instruction)
 
 **Test: `BatchLifecycleEntities_HaveBatchEventPublications`**
-- Parse all `*-events.yaml` for x-lifecycle entities with `batch: true`
+- Parse all `*-service-events.yaml` for x-lifecycle entities with `batch: true`
 - Verify that batch event publications exist (`*.batch-created`, `*.batch-modified`, `*.batch-destroyed`)
 - Verify that individual lifecycle publications do NOT exist (`*.created`, `*.updated`, `*.deleted`)
 
@@ -529,7 +529,7 @@ This is a pure refactor — external behavior is identical. The `permission.serv
 
 **Test: `XReferencesServices_WithLifecycleInstances_ShouldConsiderBatchEvents`** (informational)
 - Parse all `*-api.yaml` for `x-references` targeting `character` (or other character-scale entities)
-- Cross-reference against `*-events.yaml` for `x-lifecycle` instance entities in those services
+- Cross-reference against `*-service-events.yaml` for `x-lifecycle` instance entities in those services
 - For each instance entity WITHOUT `batch: true`, emit an informational message: "Service {X} has x-references targeting character and lifecycle entity {Y} — consider batch: true for NPC-scale event volume"
 - Gated by `SkipUnless` (informational tier) — does not block CI, surfaces during explicit informational test runs
 
@@ -595,7 +595,7 @@ Both helpers live in `bannou-service/`, so their tests go in an appropriate test
 | `bannou-service/Services/IFlushable.cs` | Create (shared interface for multi-batcher workers) |
 | `bannou-service/Services/EventBatcherWorker.cs` | Create (canonical worker, flushes IFlushable[]) |
 | `schemas/common-api.yaml` | Modify (add BatchOperationRequest/Response/FailureEntry) |
-| `schemas/item-events.yaml` | Modify (add `batch: true` to ItemInstance, update x-event-publications) |
+| `schemas/item-service-events.yaml` | Modify (add `batch: true` to ItemInstance, update x-event-publications) |
 | `schemas/item-configuration.yaml` | Modify (add batch interval/delay/max config) |
 | `scripts/generate-lifecycle-events.py` | Modify (handle `batch: true` — generate batch events only) |
 | `scripts/generate-event-publishers.py` | Modify (generate batch publishers for `batch: true` entities) |

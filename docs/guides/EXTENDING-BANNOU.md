@@ -1285,7 +1285,7 @@ components:
 
 ### Step 2: Define Events Schema
 
-Create `schemas/reputation-events.yaml`:
+Create `schemas/reputation-service-events.yaml`:
 
 ```yaml
 asyncapi: 2.6.0

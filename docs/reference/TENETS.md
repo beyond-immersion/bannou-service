@@ -52,14 +52,14 @@ Before creating or modifying ANY schema file, you MUST read [SCHEMA-RULES.md](SC
 ```
 schemas/                              # SOURCE OF TRUTH - edit these
 ├── {service}-api.yaml               # API endpoints with x-permissions
-├── {service}-events.yaml            # Service events with x-lifecycle, x-event-subscriptions
+├── {service}-service-events.yaml            # Service events with x-lifecycle, x-event-subscriptions
 ├── {service}-configuration.yaml     # Configuration with x-service-configuration
 ├── {service}-client-events.yaml     # Server→client WebSocket events
 ├── common-api.yaml                  # System-wide shared types
 ├── common-events.yaml               # Base event schemas
 ├── state-stores.yaml                # State store definitions
 └── Generated/                       # NEVER EDIT - auto-generated
-    └── {service}-lifecycle-events.yaml
+    └── {service}-service-lifecycle-events.yaml
 
 plugins/lib-{service}/
 ├── Generated/                       # NEVER EDIT - regenerated on make generate

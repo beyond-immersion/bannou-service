@@ -308,7 +308,7 @@ components:
 
 | Restriction | Reason |
 |---|---|
-| `x-client-event: true` in `*-api.yaml` or `*-events.yaml` | Client events belong exclusively in `*-client-events.yaml` files |
+| `x-client-event: true` in `*-api.yaml` or `*-service-events.yaml` | Client events belong exclusively in `*-client-events.yaml` files |
 | Client event without `allOf` referencing `BaseClientEvent` | All client events must inherit the base fields (`eventName`, `eventId`, `timestamp`) |
 | Client event without `eventName` default value | The default value is used by registries and whitelist generation for routing |
 | Publishing via `IMessageBus` instead of `IClientEventPublisher` | Client events route through per-session queues; `IMessageBus` publishes to service-to-service topics |

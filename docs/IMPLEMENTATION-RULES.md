@@ -80,7 +80,7 @@ All state-changing operations must publish typed events. Use `x-lifecycle` in th
 PUBLISH entity.updated { entityId, changedFields: [...] }
 ```
 
-Event types must be defined in the service's events schema (`*-events.yaml`). No anonymous objects. No publishing to another service's topic namespace.
+Event types must be defined in the service's events schema (`*-service-events.yaml`). No anonymous objects. No publishing to another service's topic namespace.
 
 **See**: FOUNDATION TENETS in `tenets/FOUNDATION.md`
 

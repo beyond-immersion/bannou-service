@@ -106,7 +106,7 @@
 
 ## Events Published
 
-**x-lifecycle schema guidance** (for `affix-events.yaml` when created):
+**x-lifecycle schema guidance** (for `affix-service-events.yaml` when created):
 ```yaml
 x-lifecycle:
   topic_prefix: affix

@@ -1,0 +1,706 @@
+openapi: 3.0.4
+info:
+  title: Character Lifecycle Service Events
+  description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: character-lifecycle-service-events.yaml
+
+    Event models for Character Lifecycle service RabbitMQ pub/sub via lib-messaging.
+    Publishes lifecycle orchestration events (birth, death, marriage, stage transitions)
+    and CRUD lifecycle events for templates and bloodlines.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+  - topic: worldstate.year-changed
+    event: WorldstateYearChangedEvent
+    handler: HandleYearChanged
+  - topic: worldstate.season-changed
+    event: WorldstateSeasonChangedEvent
+    handler: HandleSeasonChanged
+  - topic: contract.terminated
+    event: ContractTerminatedEvent
+    handler: HandleContractTerminated
+  - topic: contract.breach.detected
+    event: ContractBreachDetectedEvent
+    handler: HandleContractBreached
+  - topic: seed.phase.changed
+    event: SeedPhaseChangedEvent
+    handler: HandleSeedPhaseChanged
+  x-event-publications:
+    # Domain events (custom, non-lifecycle)
+  - topic: character-lifecycle.birth
+    event: CharacterLifecycleBirthEvent
+    description: Published when a character is born through procreation
+  - topic: character-lifecycle.stage-changed
+    event: CharacterLifecycleStageChangedEvent
+    description: Published when a character transitions lifecycle stage (aging worker)
+  - topic: character-lifecycle.marriage
+    event: CharacterLifecycleMarriageEvent
+    description: Published when two characters marry
+  - topic: character-lifecycle.divorce
+    event: CharacterLifecycleDivorceEvent
+    description: Published when a marriage ends (contract terminated)
+  - topic: character-lifecycle.dying
+    event: CharacterLifecycleDyingEvent
+    description: Published when a character enters the dying state
+  - topic: character-lifecycle.death
+    event: CharacterLifecycleDeathEvent
+    description: Published when a character dies and death processing completes
+  - topic: character-lifecycle.trait.expressed
+    event: CharacterLifecycleTraitExpressedEvent
+    description: Published when a latent heritage trait activates (e.g., at adolescence)
+  - topic: character-lifecycle.bloodline.formed
+    event: CharacterLifecycleBloodlineFormedEvent
+    description: Published when a new bloodline is identified from consistent trait patterns
+  - topic: character-lifecycle.inheritance.processed
+    event: CharacterLifecycleInheritanceProcessedEvent
+    description: Published when inheritance is distributed after death
+
+    # CRUD lifecycle events (auto-generated from x-lifecycle)
+  - topic: character-lifecycle.lifecycle-template.created
+    event: LifecycleTemplateCreatedEvent
+    description: Published when a lifecycle template is created
+  - topic: character-lifecycle.lifecycle-template.updated
+    event: LifecycleTemplateUpdatedEvent
+    description: Published when a lifecycle template is updated
+  - topic: character-lifecycle.lifecycle-template.deleted
+    event: LifecycleTemplateDeletedEvent
+    description: Published when a lifecycle template is deleted
+  - topic: character-lifecycle.heritable-trait-template.created
+    event: HeritableTraitTemplateCreatedEvent
+    description: Published when a heritable trait template is created
+  - topic: character-lifecycle.heritable-trait-template.updated
+    event: HeritableTraitTemplateUpdatedEvent
+    description: Published when a heritable trait template is updated
+  - topic: character-lifecycle.heritable-trait-template.deleted
+    event: HeritableTraitTemplateDeletedEvent
+    description: Published when a heritable trait template is deleted
+  - topic: character-lifecycle.hybrid-trait-template.created
+    event: HybridTraitTemplateCreatedEvent
+    description: Published when a hybrid trait template is created
+  - topic: character-lifecycle.hybrid-trait-template.updated
+    event: HybridTraitTemplateUpdatedEvent
+    description: Published when a hybrid trait template is updated
+  - topic: character-lifecycle.hybrid-trait-template.deleted
+    event: HybridTraitTemplateDeletedEvent
+    description: Published when a hybrid trait template is deleted
+  - topic: character-lifecycle.bloodline.created
+    event: BloodlineCreatedEvent
+    description: Published when a bloodline is created
+  - topic: character-lifecycle.bloodline.updated
+    event: BloodlineUpdatedEvent
+    description: Published when a bloodline is updated
+  - topic: character-lifecycle.bloodline.deleted
+    event: BloodlineDeletedEvent
+    description: Published when a bloodline is deleted
+
+    # LifecycleProfile and GeneticProfile lifecycle events (auto-generated from x-lifecycle)
+  - topic: character-lifecycle.lifecycle-profile.created
+    event: LifecycleProfileCreatedEvent
+    description: Published when a lifecycle profile is created (seeding or procreation birth)
+  - topic: character-lifecycle.lifecycle-profile.updated
+    event: LifecycleProfileUpdatedEvent
+    description: Published when a lifecycle profile is updated (aging, marriage, death)
+  - topic: character-lifecycle.lifecycle-profile.deleted
+    event: LifecycleProfileDeletedEvent
+    description: Published when a lifecycle profile is deleted (cleanup)
+  - topic: character-lifecycle.genetic-profile.created
+    event: GeneticProfileCreatedEvent
+    description: Published when a genetic profile is created (seeding or procreation birth)
+  - topic: character-lifecycle.genetic-profile.updated
+    event: GeneticProfileUpdatedEvent
+    description: Published when a genetic profile is updated
+  - topic: character-lifecycle.genetic-profile.deleted
+    event: GeneticProfileDeletedEvent
+    description: Published when a genetic profile is deleted (cleanup)
+
+paths: {}
+
+x-lifecycle:
+  topic_prefix: character-lifecycle
+  LifecycleTemplate:
+    deprecation: true
+    instanceEntity: LifecycleProfile
+    model:
+      speciesCode: {type: string, primary: true, required: true, description: "Species code this template defines lifecycle
+          stages for"}
+      gameServiceId: {type: string, format: uuid, required: true, description: "Game service scope"}
+      stages:
+        type: array
+        required: true
+        description: "Lifecycle stage definitions"
+        items:
+          $ref: '../character-lifecycle-api.yaml#/components/schemas/LifecycleStageDefinition'
+      naturalDeathRange:
+        $ref: '#/components/schemas/NaturalDeathRange'
+        required: true
+        description: "Natural death year calculation parameters"
+      fertilityWindow:
+        $ref: '../character-lifecycle-api.yaml#/components/schemas/FertilityWindow'
+        required: true
+        description: "Fertility peak and decline parameters"
+    sensitive: []
+  HeritableTraitTemplate:
+    deprecation: true
+    instanceEntity: GeneticProfile
+    model:
+      speciesCode: {type: string, primary: true, required: true, description: "Species code this template defines traits for"}
+      gameServiceId: {type: string, format: uuid, required: true, description: "Game service scope"}
+      traits:
+        type: array
+        required: true
+        description: "Heritable trait definitions"
+        items:
+          $ref: '#/components/schemas/HeritableTraitDefinition'
+    sensitive: []
+  HybridTraitTemplate:
+    deprecation: true
+    instanceEntity: GeneticProfile
+    model:
+      speciesA: {type: string, primary: true, required: true, description: "First species in the pair"}
+      speciesB: {type: string, required: true, description: "Second species in the pair"}
+      gameServiceId: {type: string, format: uuid, required: true, description: "Game service scope"}
+      traitOverrides:
+        type: array
+        required: true
+        description: "Dominance overrides for specific traits"
+        items:
+          $ref: '#/components/schemas/HybridTraitOverride'
+      hybridFertilityModifier: {type: number, format: float, required: true, description: "Fertility modifier for hybrid offspring"}
+    sensitive: []
+  LifecycleProfile:
+    model:
+      characterId: {type: string, format: uuid, primary: true, required: true, description: "Character being tracked"}
+      gameServiceId: {type: string, format: uuid, required: true, description: "Game service scope"}
+      realmId: {type: string, format: uuid, required: true, description: "Realm for worldstate time queries"}
+      speciesCode: {type: string, required: true, description: "Species code for template resolution"}
+      birthGameYear: {type: integer, required: true, description: "Game year of birth"}
+      currentAge: {type: integer, required: true, description: "Current age in game years"}
+      currentStage: {type: string, required: true, description: "Current lifecycle stage code"}
+      causeOfCreation:
+        $ref: '../character-lifecycle-api.yaml#/components/schemas/CreationCause'
+        required: true
+        description: "How this character was created"
+      status:
+        $ref: '../character-lifecycle-api.yaml#/components/schemas/LifecycleStatus'
+        required: true
+        description: "Current lifecycle status"
+      childCount: {type: integer, required: true, description: "Living children count"}
+      totalChildCount: {type: integer, required: true, description: "All children ever including deceased"}
+      fertilityModifier: {type: number, format: float, required: true, description: "Current fertility modifier"}
+      healthModifier: {type: number, format: float, required: true, description: "Current health modifier"}
+    sensitive: []
+    resource_mapping:
+      resource_type: character
+      resource_id_field: characterId
+      source_type: character-lifecycle
+  GeneticProfile:
+    model:
+      characterId: {type: string, format: uuid, primary: true, required: true, description: "Character this genetic profile
+          belongs to"}
+      speciesCode: {type: string, required: true, description: "Primary species code"}
+      generationDepth: {type: integer, required: true, description: "Generations from earliest tracked ancestor"}
+    sensitive: []
+    resource_mapping:
+      resource_type: character
+      resource_id_field: characterId
+      source_type: character-lifecycle
+  Bloodline:
+    model:
+      bloodlineId: {type: string, format: uuid, primary: true, required: true, description: "Bloodline identifier"}
+      bloodlineCode: {type: string, required: true, description: "Human-readable bloodline code"}
+      gameServiceId: {type: string, format: uuid, required: true, description: "Game service scope"}
+      originCharacterId: {type: string, format: uuid, required: true, description: "Character who founded this bloodline"}
+      originGameYear: {type: integer, required: true, description: "Game year when the bloodline was identified"}
+      traitSignature:
+        type: array
+        required: true
+        description: "Trait codes that characterize this bloodline"
+        items:
+          type: string
+      memberCount: {type: integer, required: true, description: "Number of living members"}
+      generationSpan: {type: integer, required: true, description: "Generations from origin to most recent member"}
+    sensitive: []
+
+components:
+  schemas:
+    # ==========================================================================
+    # Domain Events (custom, non-lifecycle)
+    # ==========================================================================
+
+    CharacterLifecycleBirthEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a character is born through procreation
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-lifecycle
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - parentAId
+      - parentBId
+      - speciesCode
+      - realmId
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.birth
+          description: 'Event type identifier: character-lifecycle.birth'
+        characterId:
+          type: string
+          format: uuid
+          description: Newly born character ID
+        parentAId:
+          type: string
+          format: uuid
+          description: First parent
+        parentBId:
+          type: string
+          format: uuid
+          description: Second parent
+        speciesCode:
+          type: string
+          description: Species of the newborn
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the birth occurred in
+        bloodlineIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+            format: uuid
+          description: Bloodlines the newborn inherited
+
+    CharacterLifecycleStageChangedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a character transitions lifecycle stage
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-lifecycle
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - previousStage
+      - newStage
+      - age
+      - realmId
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.stage-changed
+          description: 'Event type identifier: character-lifecycle.stage-changed'
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose stage changed
+        previousStage:
+          type: string
+          description: Previous lifecycle stage code
+        newStage:
+          type: string
+          description: New lifecycle stage code
+        age:
+          type: integer
+          description: Character age at transition
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the character is in
+
+    CharacterLifecycleMarriageEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when two characters marry
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterAId
+        source_type: character-lifecycle
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterAId
+      - characterBId
+      - contractId
+      - realmId
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.marriage
+          description: 'Event type identifier: character-lifecycle.marriage'
+        characterAId:
+          type: string
+          format: uuid
+          description: First character in the marriage
+        characterBId:
+          type: string
+          format: uuid
+          description: Second character in the marriage
+        contractId:
+          type: string
+          format: uuid
+          description: Marriage contract ID
+        householdOrgId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Household organization ID (null if Organization unavailable)
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the marriage occurred in
+
+    CharacterLifecycleDivorceEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a marriage ends
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterAId
+        source_type: character-lifecycle
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterAId
+      - characterBId
+      - contractId
+      - cause
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.divorce
+          description: 'Event type identifier: character-lifecycle.divorce'
+        characterAId:
+          type: string
+          format: uuid
+          description: First character in the former marriage
+        characterBId:
+          type: string
+          format: uuid
+          description: Second character in the former marriage
+        contractId:
+          type: string
+          format: uuid
+          description: Terminated marriage contract ID
+        cause:
+          type: string
+          description: Cause of the divorce (e.g., contract termination, breach)
+          maxLength: 200
+
+    CharacterLifecycleDyingEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a character enters the dying state
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-lifecycle
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - projectedDeathYear
+      - cause
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.dying
+          description: 'Event type identifier: character-lifecycle.dying'
+        characterId:
+          type: string
+          format: uuid
+          description: Character who is dying
+        projectedDeathYear:
+          type: integer
+          description: Projected game year of death
+        cause:
+          type: string
+          description: Cause of the dying state (e.g., natural, disease)
+          maxLength: 100
+
+    CharacterLifecycleDeathEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a character dies and death processing completes
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-lifecycle
+        is_deletion: false
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - deathCause
+      - fulfillmentScore
+      - afterlifePath
+      - realmId
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.death
+          description: 'Event type identifier: character-lifecycle.death'
+        characterId:
+          type: string
+          format: uuid
+          description: Character who died
+        deathCause:
+          type: string
+          description: Death cause code
+        fulfillmentScore:
+          type: number
+          format: float
+          description: Calculated fulfillment from Disposition drives (0.0-1.0)
+        afterlifePath:
+          type: string
+          description: Determined afterlife pathway code
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the death occurred in
+        guardianSpiritContribution:
+          type: number
+          format: float
+          nullable: true
+          description: Logos contributed to the guardian spirit seed
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Archive ID from compression (null if compression failed)
+
+    CharacterLifecycleTraitExpressedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a latent heritage trait activates (e.g., at adolescence)
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-lifecycle
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - traitCode
+      - phenotypeValue
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.trait.expressed
+          description: 'Event type identifier: character-lifecycle.trait.expressed'
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose trait was expressed
+        traitCode:
+          type: string
+          description: Trait code that was activated
+        phenotypeValue:
+          type: number
+          format: float
+          description: Expressed phenotype value
+
+    CharacterLifecycleBloodlineFormedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a new bloodline is identified from consistent trait patterns across generations
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - bloodlineCode
+      - originCharacterId
+      - traitSignature
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.bloodline.formed
+          description: 'Event type identifier: character-lifecycle.bloodline.formed'
+        bloodlineCode:
+          type: string
+          description: Code of the newly formed bloodline
+        originCharacterId:
+          type: string
+          format: uuid
+          description: Origin character of the bloodline
+        traitSignature:
+          type: array
+          items:
+            type: string
+          description: Trait codes that characterize this bloodline
+
+    CharacterLifecycleInheritanceProcessedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when inheritance is distributed after death
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - deceasedId
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.inheritance.processed
+          description: 'Event type identifier: character-lifecycle.inheritance.processed'
+        deceasedId:
+          type: string
+          format: uuid
+          description: Character who died
+        heirId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Primary heir (null if no heir was determined)
+        assetsTransferred:
+          type: integer
+          nullable: true
+          description: Number of assets transferred to heirs
+    DeathDistribution:
+      type: string
+      description: Statistical distribution model for natural death year calculation
+      enum: [Uniform, Normal, WeightedLate]
+    DominanceModel:
+      type: string
+      description: Genetic dominance model determining how alleles combine to produce phenotype
+      enum: [DominantHigh, DominantLow, Blending, Codominant, Maternal, Random]
+    HeritableTraitDefinition:
+      type: object
+      additionalProperties: false
+      description: Definition of a heritable genetic trait for a species
+      required:
+      - traitCode
+      - displayName
+      - category
+      - dominanceModel
+      - mutationChance
+      - mutationRange
+      properties:
+        traitCode:
+          type: string
+          description: Unique trait identifier within species
+          minLength: 1
+          maxLength: 100
+        displayName:
+          type: string
+          description: Human-readable trait name
+          minLength: 1
+          maxLength: 200
+        category:
+          type: string
+          description: Trait category (physical, mental, magical, social)
+          minLength: 1
+          maxLength: 50
+        dominanceModel:
+          $ref: '#/components/schemas/DominanceModel'
+          description: How alleles combine for this trait
+        mutationChance:
+          type: number
+          format: float
+          description: Probability of mutation per trait during procreation (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+        mutationRange:
+          type: number
+          format: float
+          description: Maximum allele shift on mutation
+          minimum: 0.0
+          maximum: 1.0
+        expressionDelay:
+          type: string
+          nullable: true
+          description: Stage at which trait fully expresses (null for immediate expression at birth)
+          maxLength: 50
+        personalityMapping:
+          type: string
+          nullable: true
+          description: Which personality trait this feeds (e.g., aggression)
+          maxLength: 100
+        aptitudeMapping:
+          type: string
+          nullable: true
+          description: Which aptitude domain this feeds (e.g., smithing)
+          maxLength: 100
+
+    HybridTraitOverride:
+      type: object
+      additionalProperties: false
+      description: Dominance override for a specific trait in cross-species hybridization
+      required:
+      - traitCode
+      - dominanceOverride
+      properties:
+        traitCode:
+          type: string
+          description: Trait being overridden
+          minLength: 1
+          maxLength: 100
+        dominanceOverride:
+          $ref: '#/components/schemas/DominanceModel'
+          description: Dominance model override for this trait in hybrid offspring
+
+    NaturalDeathRange:
+      type: object
+      additionalProperties: false
+      description: Configuration for natural death year calculation
+      required:
+      - minAge
+      - maxAge
+      - distribution
+      properties:
+        minAge:
+          type: integer
+          description: Earliest possible natural death age
+          minimum: 1
+        maxAge:
+          type: integer
+          description: Latest possible natural death age
+          minimum: 1
+        distribution:
+          $ref: '#/components/schemas/DeathDistribution'
+          description: Statistical distribution for death year selection
+
+x-inlined-types:
+- DeathDistribution
+- DominanceModel
+- HeritableTraitDefinition
+- HybridTraitOverride
+- NaturalDeathRange

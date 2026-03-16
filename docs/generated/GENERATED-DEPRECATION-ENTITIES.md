@@ -1,6 +1,6 @@
 # Generated Deprecation Entities Reference
 
-> **Source**: `schemas/*-events.yaml` (x-lifecycle blocks with `deprecation: true`)
+> **Source**: `schemas/*-service-events.yaml` (x-lifecycle blocks with `deprecation: true`)
 > **Do not edit manually** - regenerate with `make generate-docs`
 
 This document lists every entity with `deprecation: true` in its x-lifecycle definition.
@@ -9,8 +9,8 @@ need deprecation marker interfaces, and the current state of Category B complian
 
 ## Summary
 
-- **Total deprecatable entities**: 21
-- **With `instanceEntity` declared**: 13
+- **Total deprecatable entities**: 24
+- **With `instanceEntity` declared**: 16
 - **Missing `instanceEntity`**: 8
 
 ## All Deprecatable Entities
@@ -20,6 +20,9 @@ need deprecation marker interfaces, and the current state of Category B complian
 | Achievement | `AchievementDefinition` | `AchievementProgressRecord` | OK |
 | Affix | `AffixDefinition` | `AffixInstance` | OK |
 | Character Encounter | `EncounterType` | `EncounterRecord` | OK |
+| Character Lifecycle | `HeritableTraitTemplate` | `GeneticProfile` | OK |
+| Character Lifecycle | `HybridTraitTemplate` | `GeneticProfile` | OK |
+| Character Lifecycle | `LifecycleTemplate` | `LifecycleProfile` | OK |
 | Chat | `ChatRoomType` | `ChatRoom` | OK |
 | Collection | `CollectionEntryTemplate` | `Collection` | OK |
 | Contract | `ContractTemplate` | `ContractInstance` | OK |
@@ -44,7 +47,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Achievement: AchievementDefinition
 
 - **Service**: `achievement`
-- **Schema**: `schemas/achievement-events.yaml`
+- **Schema**: `schemas/achievement-service-events.yaml`
 - **Topic prefix**: `achievement`
 - **Instance entity**: `AchievementProgressRecord`
 - **Model fields**: `gameServiceId`, `achievementId`, `displayName`, `description`, `hiddenDescription`, `category`, `achievementType`, `entityTypes`, `progressTarget`, `points`, `iconUrl`, `platforms`, `platformMappings`, `prerequisites`, `scoreType`, `milestoneType`, `milestoneValue`, `milestoneName`, `leaderboardId`, `rankThreshold`, `isActive`, `earnedCount`, `metadata`
@@ -52,7 +55,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Affix: AffixDefinition
 
 - **Service**: `affix`
-- **Schema**: `schemas/affix-events.yaml`
+- **Schema**: `schemas/affix-service-events.yaml`
 - **Topic prefix**: `affix`
 - **Instance entity**: `AffixInstance`
 - **Model fields**: `definitionId`, `gameServiceId`, `code`, `slotType`, `modGroup`, `tier`, `category`, `tags`, `statGrants`, `spawnWeight`, `spawnTagModifiers`, `requiredItemLevel`, `requiredInfluences`, `validItemClasses`, `displayName`, `displayOrder`
@@ -60,15 +63,39 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Character Encounter: EncounterType
 
 - **Service**: `character-encounter`
-- **Schema**: `schemas/character-encounter-events.yaml`
+- **Schema**: `schemas/character-encounter-service-events.yaml`
 - **Topic prefix**: `character-encounter`
 - **Instance entity**: `EncounterRecord`
 - **Model fields**: `typeId`, `code`, `name`, `description`, `isBuiltIn`, `sortOrder`, `isActive`
 
+### Character Lifecycle: HeritableTraitTemplate
+
+- **Service**: `character-lifecycle`
+- **Schema**: `schemas/character-lifecycle-service-events.yaml`
+- **Topic prefix**: `character-lifecycle`
+- **Instance entity**: `GeneticProfile`
+- **Model fields**: `speciesCode`, `gameServiceId`, `traits`
+
+### Character Lifecycle: HybridTraitTemplate
+
+- **Service**: `character-lifecycle`
+- **Schema**: `schemas/character-lifecycle-service-events.yaml`
+- **Topic prefix**: `character-lifecycle`
+- **Instance entity**: `GeneticProfile`
+- **Model fields**: `speciesA`, `speciesB`, `gameServiceId`, `traitOverrides`, `hybridFertilityModifier`
+
+### Character Lifecycle: LifecycleTemplate
+
+- **Service**: `character-lifecycle`
+- **Schema**: `schemas/character-lifecycle-service-events.yaml`
+- **Topic prefix**: `character-lifecycle`
+- **Instance entity**: `LifecycleProfile`
+- **Model fields**: `speciesCode`, `gameServiceId`, `stages`, `naturalDeathRange`, `fertilityWindow`
+
 ### Chat: ChatRoomType
 
 - **Service**: `chat`
-- **Schema**: `schemas/chat-events.yaml`
+- **Schema**: `schemas/chat-service-events.yaml`
 - **Topic prefix**: `chat`
 - **Instance entity**: `ChatRoom`
 - **Model fields**: `code`, `displayName`, `gameServiceId`, `messageFormat`, `persistenceMode`, `allowAnonymousSenders`, `status`
@@ -76,7 +103,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Collection: CollectionEntryTemplate
 
 - **Service**: `collection`
-- **Schema**: `schemas/collection-events.yaml`
+- **Schema**: `schemas/collection-service-events.yaml`
 - **Topic prefix**: `collection`
 - **Instance entity**: `Collection`
 - **Model fields**: `entryTemplateId`, `code`, `collectionType`, `gameServiceId`, `displayName`, `category`, `hideWhenLocked`, `itemTemplateId`
@@ -84,7 +111,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Contract: ContractTemplate
 
 - **Service**: `contract`
-- **Schema**: `schemas/contract-events.yaml`
+- **Schema**: `schemas/contract-service-events.yaml`
 - **Topic prefix**: `contract`
 - **Instance entity**: `ContractInstance`
 - **Model fields**: `templateId`, `code`, `name`, `description`, `realmId`, `minParties`, `maxParties`, `defaultEnforcementMode`, `transferable`, `isActive`
@@ -92,7 +119,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Currency: CurrencyDefinition
 
 - **Service**: `currency`
-- **Schema**: `schemas/currency-events.yaml`
+- **Schema**: `schemas/currency-service-events.yaml`
 - **Topic prefix**: `currency`
 - **Instance entity**: `CurrencyBalance`
 - **Model fields**: `definitionId`, `code`, `name`, `scope`, `precision`, `isActive`, `modifiedAt`
@@ -100,7 +127,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Faction: Faction
 
 - **Service**: `faction`
-- **Schema**: `schemas/faction-events.yaml`
+- **Schema**: `schemas/faction-service-events.yaml`
 - **Topic prefix**: `*(none — Pattern A)*`
 - **Instance entity**: `*(not declared)*`
 - **Model fields**: `factionId`, `gameServiceId`, `name`, `code`, `realmId`, `isRealmBaseline`, `parentFactionId`, `seedId`, `status`, `authorityLevel`, `currentPhase`, `memberCount`
@@ -108,7 +135,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Gardener: ScenarioTemplate
 
 - **Service**: `gardener`
-- **Schema**: `schemas/gardener-events.yaml`
+- **Schema**: `schemas/gardener-service-events.yaml`
 - **Topic prefix**: `*(none — Pattern A)*`
 - **Instance entity**: `ScenarioInstance`
 - **Model fields**: `scenarioTemplateId`, `code`, `displayName`, `description`, `category`, `connectivityMode`, `status`
@@ -116,7 +143,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Item: ItemTemplate
 
 - **Service**: `item`
-- **Schema**: `schemas/item-events.yaml`
+- **Schema**: `schemas/item-service-events.yaml`
 - **Topic prefix**: `item`
 - **Instance entity**: `ItemInstance`
 - **Model fields**: `templateId`, `code`, `gameId`, `name`, `description`, `category`, `rarity`, `quantityModel`, `maxStackSize`, `scope`, `soulboundType`, `tradeable`, `destroyable`, `hasDurability`, `maxDurability`, `isActive`, `migrationTargetId`
@@ -124,7 +151,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Leaderboard: LeaderboardDefinition
 
 - **Service**: `leaderboard`
-- **Schema**: `schemas/leaderboard-events.yaml`
+- **Schema**: `schemas/leaderboard-service-events.yaml`
 - **Topic prefix**: `leaderboard`
 - **Instance entity**: `LeaderboardEntry`
 - **Model fields**: `gameServiceId`, `leaderboardId`, `displayName`, `sortOrder`, `updateMode`, `isSeasonal`, `isPublic`
@@ -132,7 +159,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### License: LicenseBoardTemplate
 
 - **Service**: `license`
-- **Schema**: `schemas/license-events.yaml`
+- **Schema**: `schemas/license-service-events.yaml`
 - **Topic prefix**: `license`
 - **Instance entity**: `LicenseBoard`
 - **Model fields**: `boardTemplateId`, `gameServiceId`, `name`, `gridWidth`, `gridHeight`, `boardContractTemplateId`, `adjacencyMode`, `isActive`
@@ -140,7 +167,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Location: Location
 
 - **Service**: `location`
-- **Schema**: `schemas/location-events.yaml`
+- **Schema**: `schemas/location-service-events.yaml`
 - **Topic prefix**: `*(none — Pattern A)*`
 - **Instance entity**: `*(not declared)*`
 - **Model fields**: `locationId`, `realmId`, `code`, `name`, `description`, `locationType`, `parentLocationId`, `depth`, `bounds`, `boundsPrecision`, `coordinateMode`, `localOrigin`, `metadata`
@@ -148,7 +175,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Quest: QuestDefinition
 
 - **Service**: `quest`
-- **Schema**: `schemas/quest-events.yaml`
+- **Schema**: `schemas/quest-service-events.yaml`
 - **Topic prefix**: `quest`
 - **Instance entity**: `QuestInstance`
 - **Model fields**: `definitionId`, `contractTemplateId`, `code`, `name`, `description`, `category`, `difficulty`, `levelRequirement`, `repeatable`, `cooldownSeconds`, `deadlineSeconds`, `maxQuestors`, `gameServiceId`
@@ -156,7 +183,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Realm: Realm
 
 - **Service**: `realm`
-- **Schema**: `schemas/realm-events.yaml`
+- **Schema**: `schemas/realm-service-events.yaml`
 - **Topic prefix**: `*(none — Pattern A)*`
 - **Instance entity**: `*(not declared)*`
 - **Model fields**: `realmId`, `code`, `name`, `gameServiceId`, `description`, `category`, `isActive`, `isSystemType`, `metadata`
@@ -164,7 +191,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Relationship: RelationshipType
 
 - **Service**: `relationship`
-- **Schema**: `schemas/relationship-events.yaml`
+- **Schema**: `schemas/relationship-service-events.yaml`
 - **Topic prefix**: `relationship`
 - **Instance entity**: `*(not declared)*`
 - **Model fields**: `relationshipTypeId`, `code`, `name`, `description`, `category`, `parentTypeId`, `parentTypeCode`, `inverseTypeId`, `inverseTypeCode`, `isBidirectional`, `depth`, `metadata`
@@ -172,7 +199,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Seed: SeedType
 
 - **Service**: `seed`
-- **Schema**: `schemas/seed-events.yaml`
+- **Schema**: `schemas/seed-service-events.yaml`
 - **Topic prefix**: `seed`
 - **Instance entity**: `*(not declared)*`
 - **Model fields**: `seedTypeCode`, `gameServiceId`, `displayName`, `description`, `maxPerOwner`, `bondCardinality`, `bondPermanent`, `sameOwnerGrowthMultiplier`
@@ -180,7 +207,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Species: Species
 
 - **Service**: `species`
-- **Schema**: `schemas/species-events.yaml`
+- **Schema**: `schemas/species-service-events.yaml`
 - **Topic prefix**: `*(none — Pattern A)*`
 - **Instance entity**: `*(not declared)*`
 - **Model fields**: `speciesId`, `code`, `name`, `description`, `category`, `isPlayable`, `baseLifespan`, `maturityAge`, `traitModifiers`, `realmIds`, `metadata`
@@ -188,7 +215,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Status: StatusTemplate
 
 - **Service**: `status`
-- **Schema**: `schemas/status-events.yaml`
+- **Schema**: `schemas/status-service-events.yaml`
 - **Topic prefix**: `status`
 - **Instance entity**: `*(not declared)*`
 - **Model fields**: `statusTemplateId`, `gameServiceId`, `code`, `displayName`, `category`, `stackable`, `maxStacks`, `stackBehavior`
@@ -196,7 +223,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Storyline: ScenarioDefinition
 
 - **Service**: `storyline`
-- **Schema**: `schemas/storyline-events.yaml`
+- **Schema**: `schemas/storyline-service-events.yaml`
 - **Topic prefix**: `storyline`
 - **Instance entity**: `ScenarioExecution`
 - **Model fields**: `scenarioId`, `code`, `name`, `description`, `priority`, `enabled`, `realmId`, `gameServiceId`
@@ -204,7 +231,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 ### Transit: TransitMode
 
 - **Service**: `transit`
-- **Schema**: `schemas/transit-events.yaml`
+- **Schema**: `schemas/transit-service-events.yaml`
 - **Topic prefix**: `transit`
 - **Instance entity**: `*(not declared)*`
 - **Model fields**: `code`, `name`, `description`, `baseSpeedKmPerGameHour`, `terrainSpeedModifiers`, `passengerCapacity`, `cargoCapacityKg`, `cargoSpeedPenaltyRate`, `compatibleTerrainTypes`, `validEntityTypes`, `requirements`, `fatigueRatePerGameHour`, `noiseLevelNormalized`, `realmRestrictions`, `tags`, `modifiedAt`

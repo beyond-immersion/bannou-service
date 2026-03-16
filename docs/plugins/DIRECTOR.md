@@ -235,7 +235,7 @@ All of these methods are existing service capabilities. Director orchestrates th
 
 ### Phase 1: Schema & Generation
 - Create `director-api.yaml` schema with all endpoints (24 endpoints across 7 groups)
-- Create `director-events.yaml` schema (9 published events: 6 x-lifecycle + 3 custom domain, 3 consumed events)
+- Create `director-service-events.yaml` schema (9 published events: 6 x-lifecycle + 3 custom domain, 3 consumed events)
 - Create `director-configuration.yaml` schema (17 configuration properties)
 - Create `director-client-events.yaml` (tap data relay, approval requests, event status updates)
 - Generate service code

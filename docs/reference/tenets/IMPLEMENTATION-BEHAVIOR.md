@@ -21,7 +21,7 @@ RabbitMQ allows only ONE consumer per queue. When multiple plugins need the same
 
 ### Defining Event Subscriptions
 
-In `{service}-events.yaml`:
+In `{service}-service-events.yaml`:
 
 ```yaml
 info:
@@ -463,7 +463,7 @@ _serverSalt = GuidGenerator.GenerateServerSalt();
 | Type | File | Purpose | Consumers |
 |------|------|---------|-----------|
 | **Client Events** | `{service}-client-events.yaml` | Pushed TO clients via WebSocket | Game clients, SDK |
-| **Service Events** | `{service}-events.yaml` | Service-to-service pub/sub | Other Bannou services |
+| **Service Events** | `{service}-service-events.yaml` | Service-to-service pub/sub | Other Bannou services |
 
 | Exchange | Type | Purpose |
 |----------|------|---------|
@@ -690,7 +690,7 @@ Every Category B entity MUST satisfy ALL of the following. Use `lib-item` (Item 
 | B8 | List endpoint has `includeDeprecated` parameter (boolean, `default: false`) | Deprecated entities excluded by default, accessible when explicitly requested |
 | B9 | Instance creation endpoints reject with `BadRequest` when template is deprecated | Document in endpoint description (e.g., "Rejects with 400 if template is deprecated") |
 
-#### Events Checklist (`{service}-events.yaml`)
+#### Events Checklist (`{service}-service-events.yaml`)
 
 | # | Requirement | Notes |
 |---|-------------|-------|

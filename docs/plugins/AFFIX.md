@@ -470,7 +470,7 @@ Equipment Stat Computation Flow
 
 ### Phase 1: Definition Infrastructure
 - Create affix-api.yaml schema with all endpoints
-- Create affix-events.yaml schema
+- Create affix-service-events.yaml schema
 - Create affix-configuration.yaml schema
 - Generate service code
 - Implement definition CRUD (create, get, list, update, deprecate, seed, list-mod-groups, clean-deprecated)

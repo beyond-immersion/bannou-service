@@ -22,7 +22,7 @@ x-resource-mapping extensions and produces a static registry class that Puppetma
 uses for watch subscriptions.
 
 Architecture:
-- Scans: {service}-events.yaml (manual events) and Generated/{service}-lifecycle-events.yaml
+- Scans: {service}-service-events.yaml (manual events) and Generated/{service}-service-lifecycle-events.yaml
 - Skips: *-client-events.yaml, common-events.yaml
 - Output: bannou-service/Generated/ResourceEventMappings.cs
 
@@ -265,9 +265,9 @@ def main():
 
     # Process manual event schemas (non-lifecycle, non-client)
     print("Scanning manual event schemas:")
-    for events_file in sorted(schema_dir.glob('*-events.yaml')):
+    for events_file in sorted(schema_dir.glob('*-service-events.yaml')):
         # Skip lifecycle, client, and common events
-        if '-lifecycle-events' in events_file.name:
+        if '-service-lifecycle-events' in events_file.name:
             continue
         if '-client-events' in events_file.name:
             continue
@@ -292,7 +292,7 @@ def main():
     if generated_schema_dir.exists():
         print()
         print("Scanning generated lifecycle event schemas:")
-        for lifecycle_file in sorted(generated_schema_dir.glob('*-lifecycle-events.yaml')):
+        for lifecycle_file in sorted(generated_schema_dir.glob('*-service-lifecycle-events.yaml')):
             try:
                 with open(lifecycle_file) as f:
                     schema = yaml.load(f)

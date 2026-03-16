@@ -250,7 +250,7 @@ This scenario should be testable via the HTTP integration test suite (`http-test
 | QTE input routing through WebSocket is complex | Gardener already handles event routing for player experiences. The pattern exists; this adds a specific message type. |
 | ABML behavior documents may need new action types | Existing `service_call` and `goap_evaluate` actions should suffice. If not, the behavior-compiler's action type system is extensible. |
 | Agency service not yet implemented | Graceful degradation: all QTEs active. Progressive agency is additive polish, not blocking. |
-| Content flywheel events need schema coordination | Define events in cinematic-events.yaml. Consuming services (character-encounter, character-history, realm-history) subscribe independently via their own event subscriptions. |
+| Content flywheel events need schema coordination | Define events in cinematic-service-events.yaml. Consuming services (character-encounter, character-history, realm-history) subscribe independently via their own event subscriptions. |
 
 ---
 

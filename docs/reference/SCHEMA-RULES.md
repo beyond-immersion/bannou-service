@@ -32,7 +32,7 @@ Each service can have up to 4 schema files in `/schemas/`:
 | File Pattern | Purpose | Generated Output |
 |--------------|---------|------------------|
 | `{service}-api.yaml` | API endpoints, request/response models | Controllers, models, clients, interfaces |
-| `{service}-events.yaml` | Service-to-service pub/sub events | Event models in `bannou-service/Generated/Events/` |
+| `{service}-service-events.yaml` | Service-to-service pub/sub events | Event models in `bannou-service/Generated/Events/` |
 | `{service}-configuration.yaml` | Service configuration properties | `{Service}ServiceConfiguration.cs` |
 | `{service}-client-events.yaml` | Server→client WebSocket push events | Client event models in plugin `Generated/` |
 
@@ -53,9 +53,9 @@ Run `make generate` or `scripts/generate-all-services.sh` to execute the full pi
 |------|--------|------------------|
 | 1. State Stores | `state-stores.yaml` | `lib-state/Generated/StateStoreDefinitions.cs` |
 | 2. Variable Providers | `variable-providers.yaml` | `bannou-service/Generated/VariableProviderDefinitions.cs` |
-| 3. Lifecycle Events | `x-lifecycle` in events.yaml | `schemas/Generated/{service}-lifecycle-events.yaml` |
+| 3. Lifecycle Events | `x-lifecycle` in events.yaml | `schemas/Generated/{service}-service-lifecycle-events.yaml` |
 | 4. Common Events | `common-events.yaml` | `bannou-service/Generated/Events/CommonEventsModels.cs` |
-| 5. Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
+| 5. Service Events | `{service}-service-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
 | 6. Client Events | `common-client-events.yaml` + `{service}-client-events.yaml` | Common: `bannou-service/Generated/CommonClientEventsModels.cs`; Service: `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
 | 7. Meta Schemas | `{service}-api.yaml` | `schemas/Generated/{service}-api-meta.yaml` |
 | 8. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
@@ -118,7 +118,7 @@ Running `generate-service.sh {service}` bootstraps an entire new plugin from scr
 
 **Prerequisites**: Before running `generate-service.sh`, create the schema files:
 - `schemas/{service}-api.yaml` (required)
-- `schemas/{service}-events.yaml` (required for event publishing/subscription)
+- `schemas/{service}-service-events.yaml` (required for event publishing/subscription)
 - `schemas/{service}-configuration.yaml` (required for config properties)
 - Update `schemas/state-stores.yaml` with service-specific stores
 
@@ -145,7 +145,7 @@ Declares role and state requirements for WebSocket client access. **All endpoint
 
 ### x-lifecycle (Lifecycle Event Generation)
 
-Defined in `{service}-events.yaml`, generates CRUD lifecycle events automatically. **NEVER manually define `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent`** — use `x-lifecycle` instead.
+Defined in `{service}-service-events.yaml`, generates CRUD lifecycle events automatically. **NEVER manually define `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent`** — use `x-lifecycle` instead.
 
 > **Full specification**: [X-LIFECYCLE.md](specifications/X-LIFECYCLE.md) — complete syntax, topic derivation, deprecation, instanceEntity, resource_mapping, batch mode, generated output, and structural tests.
 
@@ -167,7 +167,7 @@ x-lifecycle:
 
 ### x-resource-mapping (Resource Event Mapping)
 
-Defined on **event schema definitions** in `{service}-events.yaml`, declares how the event relates to a watchable resource for Puppetmaster's watch system.
+Defined on **event schema definitions** in `{service}-service-events.yaml`, declares how the event relates to a watchable resource for Puppetmaster's watch system.
 
 > **Full specification**: [X-RESOURCE-MAPPING.md](specifications/X-RESOURCE-MAPPING.md) — complete syntax, field reference, lifecycle vs manual usage, generated output, and examples.
 
@@ -177,17 +177,17 @@ Defined on **event schema definitions** in `{service}-events.yaml`, declares how
 
 ### x-event-subscriptions (Event Handler Generation)
 
-Defined in `{service}-events.yaml` under `info:`, declares events this service consumes and generates subscription handler scaffolding.
+Defined in `{service}-service-events.yaml` under `info:`, declares events this service consumes and generates subscription handler scaffolding.
 
 > **Full specification**: [X-EVENT-SUBSCRIPTIONS.md](specifications/X-EVENT-SUBSCRIPTIONS.md) — complete syntax, cross-service event resolution, generated output, and examples.
 
-Fields: `topic` (RabbitMQ routing key), `event` (class name resolved across all event schemas), `handler` (method name without `Async`). The `event` field is a **class name**, not a `$ref` — the generator resolves it across ALL `*-events.yaml` schemas.
+Fields: `topic` (RabbitMQ routing key), `event` (class name resolved across all event schemas), `handler` (method name without `Async`). The `event` field is a **class name**, not a `$ref` — the generator resolves it across ALL `*-service-events.yaml` schemas.
 
 **Generated output**: `{Service}ServiceEvents.cs` (one-time template; never overwritten if exists).
 
 ### x-event-publications (Event Publication Registry)
 
-Defined in `{service}-events.yaml` under `info:`, declares all events this service publishes. Serves as the authoritative registry of what a service emits. **Both lifecycle and custom events should be listed.**
+Defined in `{service}-service-events.yaml` under `info:`, declares all events this service publishes. Serves as the authoritative registry of what a service emits. **Both lifecycle and custom events should be listed.**
 
 > **Full specification**: [X-EVENT-PUBLICATIONS.md](specifications/X-EVENT-PUBLICATIONS.md) — complete syntax, parameterized topics, generated output, structural tests, and examples.
 
@@ -288,7 +288,7 @@ x-service-configuration:
 
 ### x-event-template (Event Template Generation)
 
-Defined on **individual event schema definitions** in `{service}-events.yaml`, declares that the event should have an auto-generated template for use with `emit_event:` ABML actions.
+Defined on **individual event schema definitions** in `{service}-service-events.yaml`, declares that the event should have an auto-generated template for use with `emit_event:` ABML actions.
 
 > **Full specification**: [X-EVENT-TEMPLATE.md](specifications/X-EVENT-TEMPLATE.md) — complete syntax, payload template generation rules, generated output, and examples.
 
@@ -405,14 +405,14 @@ All `$ref` paths in manually authored schemas (in `schemas/`) are sibling-relati
 | Source Schema | Can Reference | Path Format |
 |--------------|---------------|-------------|
 | `*-api.yaml` | `common-api.yaml` | `common-api.yaml#/...` |
-| `*-events.yaml` | Same service's `-api.yaml`, `common-api.yaml`, `common-events.yaml` | `{service}-api.yaml#/...` |
+| `*-service-events.yaml` | Same service's `-api.yaml`, `common-api.yaml`, `common-events.yaml` | `{service}-api.yaml#/...` |
 | `*-configuration.yaml` | Same service's `-api.yaml`, `common-api.yaml` | `{service}-api.yaml#/...` |
 | `*-client-events.yaml` | Same service's `-api.yaml`, `common-client-events.yaml` | `common-client-events.yaml#/...` |
 
 ### Common Shared Files
 
 - **`common-api.yaml`** - System-wide types like `EntityType` enum. Available to all schemas.
-- **`common-events.yaml`** - Base event schemas like `BaseServiceEvent`. Used by `*-events.yaml` files.
+- **`common-events.yaml`** - Base event schemas like `BaseServiceEvent`. Used by `*-service-events.yaml` files.
 - **`common-client-events.yaml`** - Base client event schemas like `BaseClientEvent`. Used by client-facing events.
 
 ### $ref Examples
@@ -425,7 +425,7 @@ DefaultCompressionType:
   default: Gzip
   description: Default compression algorithm
 
-# Events referencing API type (actor-events.yaml)
+# Events referencing API type (actor-service-events.yaml)
 properties:
   status:
     $ref: 'actor-api.yaml#/components/schemas/ActorStatus'
@@ -586,9 +586,9 @@ All API schemas MUST use `servers: [{ url: http://localhost:5012 }]`. NSwag gene
 
 ### Canonical Definitions Only
 
-Each `{service}-events.yaml` MUST contain ONLY canonical definitions for events that service PUBLISHES. **No `$ref` references to other service event files** (causes duplicate types).
+Each `{service}-service-events.yaml` MUST contain ONLY canonical definitions for events that service PUBLISHES. **No `$ref` references to other service event files** (causes duplicate types).
 
-**This rule applies to `$ref` in schema definitions only — NOT to `x-event-subscriptions`.** The `x-event-subscriptions` mechanism references consumed event types by **class name**, not by `$ref`. The generator resolves these names across all `*-events.yaml` schemas at generation time (see [x-event-subscriptions](#x-event-subscriptions-event-handler-generation)). Consuming a cross-service event requires only a topic and class name entry in `x-event-subscriptions` — never an inline copy of the event model, and never a `$ref` to the producing service's event schema. Inline redefinition of consumed event models causes the exact same duplicate-type problem that `$ref` would.
+**This rule applies to `$ref` in schema definitions only — NOT to `x-event-subscriptions`.** The `x-event-subscriptions` mechanism references consumed event types by **class name**, not by `$ref`. The generator resolves these names across all `*-service-events.yaml` schemas at generation time (see [x-event-subscriptions](#x-event-subscriptions-event-handler-generation)). Consuming a cross-service event requires only a topic and class name entry in `x-event-subscriptions` — never an inline copy of the event model, and never a `$ref` to the producing service's event schema. Inline redefinition of consumed event models causes the exact same duplicate-type problem that `$ref` would.
 
 ### Topic Naming Convention
 
@@ -671,7 +671,7 @@ save.load.save-slot.created            # ← "save" is not a service
 
 | Type | File | Publishing |
 |------|------|------------|
-| Service Events | `{service}-events.yaml` | `IMessageBus.PublishAsync` |
+| Service Events | `{service}-service-events.yaml` | `IMessageBus.PublishAsync` |
 | Client Events | `{service}-client-events.yaml` | `IClientEventPublisher.PublishToSessionAsync` |
 
 **Never use `IMessageBus` for client events** - it uses the wrong RabbitMQ exchange. Use `IClientEventPublisher` instead.
@@ -719,7 +719,7 @@ Client event `eventName` values (the `default:` on the `eventName` property) fol
 Custom service events (events NOT generated by `x-lifecycle`) MUST use `allOf` composition with `BaseServiceEvent` from `common-events.yaml`. This produces C# class inheritance (`: BaseServiceEvent`), which provides `IBannouEvent` interface implementation, `EventName` for message tap forwarding, and integration with generic event processing infrastructure.
 
 ```yaml
-# In {service}-events.yaml — custom event (allOf with BaseServiceEvent)
+# In {service}-service-events.yaml — custom event (allOf with BaseServiceEvent)
 ContractProposedEvent:
   allOf:
     - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
@@ -953,7 +953,7 @@ Every enum mapping in the codebase falls into one of these categories:
 
 - **Consumed event models are NEVER redefined inline.** Use the `event` class name in `x-event-subscriptions`. The producing service's event schema generates the type; the consuming service uses it by name.
 - **Shared response/request shapes are NEVER redefined inline.** If two services need the same model, the type moves to `common-api.yaml`. Cross-service `$ref` between API schemas (e.g., `$ref: 'other-service-api.yaml#/...'`) is not supported — `common-api.yaml` is the only shared API type source.
-- **"Cannot `$ref` other service event files"** (see [Canonical Definitions Only](#canonical-definitions-only)) means you do not put `$ref: 'voice-events.yaml#/...'` in your event schema definitions. It does NOT mean you copy the event model into your own schema. The resolution mechanism for consumed events is name-based, not reference-based.
+- **"Cannot `$ref` other service event files"** (see [Canonical Definitions Only](#canonical-definitions-only)) means you do not put `$ref: 'voice-service-events.yaml#/...'` in your event schema definitions. It does NOT mean you copy the event model into your own schema. The resolution mechanism for consumed events is name-based, not reference-based.
 
 ### Enum Value Casing (PascalCase ONLY)
 
@@ -1029,7 +1029,7 @@ AuthProvider:
   description: Supported authentication providers
   enum: [Email, Google, Discord, Twitch, Steam]
 
-# In account-events.yaml x-lifecycle - REFERENCE via $ref
+# In account-service-events.yaml x-lifecycle - REFERENCE via $ref
 x-lifecycle:
   Account:
     model:

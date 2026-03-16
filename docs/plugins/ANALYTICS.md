@@ -132,7 +132,7 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 1. ~~**`MilestoneThresholds` uses comma-delimited string for structured data**~~: **FIXED** (2026-03-15) - Changed configuration schema from `type: string` with comma-separated default to `type: array` with `items: { type: integer }`. Updated `ParseMilestoneThresholds` to accept `string[]` instead of parsing comma-delimited string. Follows the same pattern as `achievement-configuration.yaml` `ProgressMilestonePercents`.
 
-2. ~~**Missing `account.deleted` cleanup handler**~~: **FIXED** (2026-03-15) - Added `account.deleted` subscription to `analytics-events.yaml`, registered handler in `RegisterEventConsumers`, implemented `HandleAccountDeletedAsync` and `CleanupDataForAccountAsync` following canonical pattern from lib-collection. Cleans up controller history records (MySQL query by $.AccountId) and entity summaries where entityType=Account. Redis skill ratings for entityType=Account are not cleaned (no JSON query available on Redis store; account-typed ratings are expected to be rare and harmless if orphaned).
+2. ~~**Missing `account.deleted` cleanup handler**~~: **FIXED** (2026-03-15) - Added `account.deleted` subscription to `analytics-service-events.yaml`, registered handler in `RegisterEventConsumers`, implemented `HandleAccountDeletedAsync` and `CleanupDataForAccountAsync` following canonical pattern from lib-collection. Cleans up controller history records (MySQL query by $.AccountId) and entity summaries where entityType=Account. Redis skill ratings for entityType=Account are not cleaned (no JSON query available on Redis store; account-typed ratings are expected to be rare and harmless if orphaned).
 
 ### Intentional Quirks (Documented Behavior)
 

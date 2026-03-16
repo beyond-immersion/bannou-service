@@ -872,7 +872,7 @@ Before lib-loot implementation:
 ### Phase 1: Core Infrastructure (Table Definitions + Basic Generation)
 
 - Create loot-api.yaml schema with all endpoints
-- Create loot-events.yaml schema
+- Create loot-service-events.yaml schema
 - Create loot-configuration.yaml schema
 - Generate service code
 - Implement table definition CRUD (create, get, list, update, deprecate, seed, preview)

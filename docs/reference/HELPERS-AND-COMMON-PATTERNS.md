@@ -271,7 +271,7 @@ public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
 | Per-item failures at `Warning` level | Expected/recoverable; `Error` is for infrastructure failures |
 | "Not found" is `Debug`, not `Warning` | Multi-node broadcast means another node may have already cleaned up |
 | Publish `*.deleted` lifecycle events for each cleaned entity | Downstream consumers (lib-resource callbacks, caches) need to react |
-| Add `account-events.yaml` to `x-event-subscriptions` | Schema declares the subscription |
+| Add `account-service-events.yaml` to `x-event-subscriptions` | Schema declares the subscription |
 
 **Multi-node idempotency**: `account.deleted` is a broadcast event — all nodes receive it. State store deletes are naturally idempotent. Handlers must treat "not found" as success, not error.
 
@@ -1109,7 +1109,7 @@ Add to the list/query request model:
           description: Include deprecated templates in results (excluded by default)
 ```
 
-### Events Schema Pattern (`{service}-events.yaml`)
+### Events Schema Pattern (`{service}-service-events.yaml`)
 
 #### x-event-publications
 

@@ -21,7 +21,7 @@ This script reads x-event-template definitions from OpenAPI event schemas and ge
 C# static classes with EventTemplate fields and registration methods.
 
 Architecture:
-- {service}-events.yaml: Contains event schemas with x-event-template declarations
+- {service}-service-events.yaml: Contains event schemas with x-event-template declarations
 - plugins/lib-{service}/Generated/{Service}EventTemplates.cs: Generated code
 
 Generated Code:
@@ -32,7 +32,7 @@ Generated Code:
 Usage:
     python3 scripts/generate-event-templates.py
 
-The script processes all *-events.yaml files in the schemas/ directory.
+The script processes all *-service-events.yaml files in the schemas/ directory.
 """
 
 import json
@@ -89,7 +89,7 @@ def to_camel_case(name: str) -> str:
 
 def extract_service_name(events_file: Path) -> str:
     """Extract service name from events file path."""
-    return events_file.stem.replace('-events', '')
+    return events_file.stem.replace('-service-events', '')
 
 
 def read_events_schema(events_file: Path) -> Optional[Dict[str, Any]]:
@@ -288,18 +288,18 @@ def main():
         sys.exit(1)
 
     print("Generating event template registration code from x-event-template definitions...")
-    print(f"  Reading from: schemas/*-events.yaml")
+    print(f"  Reading from: schemas/*-service-events.yaml")
     print(f"  Writing to: plugins/lib-*/Generated/*EventTemplates.cs")
     print()
 
     generated_files = []
     errors = []
 
-    for events_file in sorted(schema_dir.glob('*-events.yaml')):
+    for events_file in sorted(schema_dir.glob('*-service-events.yaml')):
         # Skip common events and generated lifecycle events
         if events_file.name in ('common-events.yaml',):
             continue
-        if events_file.name.endswith('-lifecycle-events.yaml'):
+        if events_file.name.endswith('-service-lifecycle-events.yaml'):
             continue
 
         service_name = extract_service_name(events_file)

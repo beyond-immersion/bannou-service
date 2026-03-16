@@ -28,7 +28,7 @@ All specification documents MUST use this header format:
   - `Draft` — specification is complete but implementation is in progress
   - `Proposed` — specification is under review, not yet implemented
 - **Last Updated**: Date of last substantive content change (YYYY-MM-DD format)
-- **Schema Scope**: Which schema file types this attribute applies to (e.g., `*-configuration.yaml`, `*-api.yaml`, `*-events.yaml`)
+- **Schema Scope**: Which schema file types this attribute applies to (e.g., `*-configuration.yaml`, `*-api.yaml`, `*-service-events.yaml`)
 - **Generated Output**: One-line summary of what the code generator produces from this attribute
 
 **Optional fields** (add after Generated Output, in this order):

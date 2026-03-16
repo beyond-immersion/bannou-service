@@ -1,0 +1,378 @@
+openapi: 3.0.4
+info:
+  title: Storyline Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for storyline service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: storyline-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ScenarioDefinitionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-definition.created when a scenariodefinition is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioId
+      - code
+      - name
+      - priority
+      - enabled
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-definition.created
+          description: 'Event type identifier: storyline.scenario-definition.created'
+        scenarioId: &id001
+          type: string
+          format: uuid
+          description: "Unique scenario definition identifier"
+        code: &id002
+          type: string
+          description: "Human-readable scenario code"
+        name: &id003
+          type: string
+          description: "Display name for the scenario"
+        description: &id004
+          type: string
+          nullable: true
+          description: "Detailed scenario description"
+        priority: &id005
+          type: integer
+          description: "Higher priority scenarios are checked first"
+        enabled: &id006
+          type: boolean
+          description: "Whether scenario can be triggered"
+        realmId: &id007
+          type: string
+          format: uuid
+          nullable: true
+          description: "Realm scope (null means all realms)"
+        gameServiceId: &id008
+          type: string
+          format: uuid
+          nullable: true
+          description: "Game service scope (null means all games)"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+    ScenarioDefinitionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-definition.updated when a scenariodefinition is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioId
+      - code
+      - name
+      - priority
+      - enabled
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-definition.updated
+          description: 'Event type identifier: storyline.scenario-definition.updated'
+        scenarioId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        priority: *id005
+        enabled: *id006
+        realmId: *id007
+        gameServiceId: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ScenarioDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-definition.deleted when a scenariodefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioId
+      - code
+      - name
+      - priority
+      - enabled
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-definition.deleted
+          description: 'Event type identifier: storyline.scenario-definition.deleted'
+        scenarioId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        priority: *id005
+        enabled: *id006
+        realmId: *id007
+        gameServiceId: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    ScenarioExecutionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-execution.created when a scenarioexecution is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - executionId
+      - scenarioId
+      - scenarioCode
+      - primaryCharacterId
+      - status
+      - currentPhase
+      - totalPhases
+      - triggeredAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-execution.created
+          description: 'Event type identifier: storyline.scenario-execution.created'
+        executionId: &id009
+          type: string
+          format: uuid
+          description: "Unique scenario execution instance identifier"
+        scenarioId: &id010
+          type: string
+          format: uuid
+          description: "Scenario definition this execution was created from"
+        scenarioCode: &id011
+          type: string
+          description: "Code of the scenario definition"
+        primaryCharacterId: &id012
+          type: string
+          format: uuid
+          description: "Character that triggered the scenario"
+        orchestratorId: &id013
+          type: string
+          format: uuid
+          nullable: true
+          description: "God-actor or system that orchestrated the trigger"
+        realmId: &id014
+          type: string
+          format: uuid
+          nullable: true
+          description: "Realm context for this execution"
+        gameServiceId: &id015
+          type: string
+          format: uuid
+          nullable: true
+          description: "Game service context for this execution"
+        status: &id016
+          $ref: ../storyline-api.yaml#/components/schemas/ScenarioStatus
+          description: "Current execution status"
+        currentPhase: &id017
+          type: integer
+          description: "Current phase number (1-based)"
+        totalPhases: &id018
+          type: integer
+          description: "Total number of phases in this execution"
+        triggeredAt: &id019
+          type: string
+          format: date-time
+          description: "When the scenario was triggered"
+        completedAt: &id020
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the scenario completed or failed"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was last updated (set to createdAt on creation)
+    ScenarioExecutionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-execution.updated when a scenarioexecution is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - executionId
+      - scenarioId
+      - scenarioCode
+      - primaryCharacterId
+      - status
+      - currentPhase
+      - totalPhases
+      - triggeredAt
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-execution.updated
+          description: 'Event type identifier: storyline.scenario-execution.updated'
+        executionId: *id009
+        scenarioId: *id010
+        scenarioCode: *id011
+        primaryCharacterId: *id012
+        orchestratorId: *id013
+        realmId: *id014
+        gameServiceId: *id015
+        status: *id016
+        currentPhase: *id017
+        totalPhases: *id018
+        triggeredAt: *id019
+        completedAt: *id020
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ScenarioExecutionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-execution.deleted when a scenarioexecution is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - executionId
+      - scenarioId
+      - scenarioCode
+      - primaryCharacterId
+      - status
+      - currentPhase
+      - totalPhases
+      - triggeredAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-execution.deleted
+          description: 'Event type identifier: storyline.scenario-execution.deleted'
+        executionId: *id009
+        scenarioId: *id010
+        scenarioCode: *id011
+        primaryCharacterId: *id012
+        orchestratorId: *id013
+        realmId: *id014
+        gameServiceId: *id015
+        status: *id016
+        currentPhase: *id017
+        totalPhases: *id018
+        triggeredAt: *id019
+        completedAt: *id020
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

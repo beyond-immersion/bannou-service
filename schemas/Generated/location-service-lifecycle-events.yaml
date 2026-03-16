@@ -1,0 +1,234 @@
+openapi: 3.0.4
+info:
+  title: Location Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for location service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: location-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    LocationCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to location.created when a location is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - locationId
+      - realmId
+      - code
+      - name
+      - locationType
+      - depth
+      - boundsPrecision
+      - coordinateMode
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: location.created
+          description: 'Event type identifier: location.created'
+        locationId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the location"
+        realmId: &id002
+          type: string
+          format: uuid
+          description: "ID of the realm this location belongs to"
+        code: &id003
+          type: string
+          description: "Unique code identifier for the location within its realm"
+        name: &id004
+          type: string
+          description: "Human-readable name of the location"
+        description: &id005
+          type: string
+          nullable: true
+          description: "Detailed description of the location"
+        locationType: &id006
+          $ref: ../location-api.yaml#/components/schemas/LocationType
+          description: "Type classification of the location"
+        parentLocationId: &id007
+          type: string
+          format: uuid
+          nullable: true
+          description: "ID of the parent location for hierarchical structures"
+        depth: &id008
+          type: integer
+          description: "Depth level in the location hierarchy (0 for root locations)"
+        bounds: &id009
+          $ref: ../common-api.yaml#/components/schemas/BoundingBox3D
+          nullable: true
+          description: "Optional spatial extent in world coordinates"
+        boundsPrecision: &id010
+          $ref: ../location-api.yaml#/components/schemas/BoundsPrecision
+          description: "Precision level of spatial bounds"
+        coordinateMode: &id011
+          $ref: ../location-api.yaml#/components/schemas/CoordinateMode
+          description: "How this location's coordinate system relates to its parent"
+        localOrigin: &id012
+          $ref: ../common-api.yaml#/components/schemas/Position3D
+          nullable: true
+          description: "Origin point for local or inherited coordinate systems"
+        metadata: &id013
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the location was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the location was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this location is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the location was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+    LocationUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to location.updated when a location is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - locationId
+      - realmId
+      - code
+      - name
+      - locationType
+      - depth
+      - boundsPrecision
+      - coordinateMode
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: location.updated
+          description: 'Event type identifier: location.updated'
+        locationId: *id001
+        realmId: *id002
+        code: *id003
+        name: *id004
+        description: *id005
+        locationType: *id006
+        parentLocationId: *id007
+        depth: *id008
+        bounds: *id009
+        boundsPrecision: *id010
+        coordinateMode: *id011
+        localOrigin: *id012
+        metadata: *id013
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the location was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the location was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this location is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the location was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    LocationDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to location.deleted when a location is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - locationId
+      - realmId
+      - code
+      - name
+      - locationType
+      - depth
+      - boundsPrecision
+      - coordinateMode
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: location.deleted
+          description: 'Event type identifier: location.deleted'
+        locationId: *id001
+        realmId: *id002
+        code: *id003
+        name: *id004
+        description: *id005
+        locationType: *id006
+        parentLocationId: *id007
+        depth: *id008
+        bounds: *id009
+        boundsPrecision: *id010
+        coordinateMode: *id011
+        localOrigin: *id012
+        metadata: *id013
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the location was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the location was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this location is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the location was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

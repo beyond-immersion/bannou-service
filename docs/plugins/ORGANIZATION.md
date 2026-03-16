@@ -147,7 +147,7 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 | `organization.updated` | `OrganizationUpdatedEvent` | Organization entity updated (includes status transitions) |
 | `organization.deleted` | `OrganizationDeletedEvent` | Organization permanently deleted |
 
-**Custom events** (manually defined in `organization-events.yaml`):
+**Custom events** (manually defined in `organization-service-events.yaml`):
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
@@ -178,9 +178,9 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 ### Schema Declarations
 
-**`x-event-publications`** (in `organization-events.yaml`): All lifecycle events (`organization.created`, `organization.updated`, `organization.deleted` via `x-lifecycle`) and all custom events (`organization.dissolved`, `organization.archived`, `organization.member.added`, `organization.member.removed`, `organization.member.role-changed`, `organization.succession.triggered`, `organization.succession.completed`, `organization.succession.contested`, `organization.legal-status.changed`, `organization.asset.registered`, `organization.asset.deregistered`, `organization.phase.changed`).
+**`x-event-publications`** (in `organization-service-events.yaml`): All lifecycle events (`organization.created`, `organization.updated`, `organization.deleted` via `x-lifecycle`) and all custom events (`organization.dissolved`, `organization.archived`, `organization.member.added`, `organization.member.removed`, `organization.member.role-changed`, `organization.succession.triggered`, `organization.succession.completed`, `organization.succession.contested`, `organization.legal-status.changed`, `organization.asset.registered`, `organization.asset.deregistered`, `organization.phase.changed`).
 
-**`x-event-subscriptions`** (in `organization-events.yaml`): `contract.breached`, `contract.terminated`, `contract.fulfilled` (from lib-contract L1), `faction.territory.claimed`, `faction.territory.released` (from lib-faction L4), `seed.phase.changed`, `seed.capability.updated` (from lib-seed L2). Handlers filter by contract template code or seed owner to process only organization-related events.
+**`x-event-subscriptions`** (in `organization-service-events.yaml`): `contract.breached`, `contract.terminated`, `contract.fulfilled` (from lib-contract L1), `faction.territory.claimed`, `faction.territory.released` (from lib-faction L4), `seed.phase.changed`, `seed.capability.updated` (from lib-seed L2). Handlers filter by contract template code or seed owner to process only organization-related events.
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
@@ -432,7 +432,7 @@ Organization identity and structure are owned here. Treasury is Currency (organi
 
 ### Phase 1: Core Organization Infrastructure
 - Create `organization-api.yaml` schema with all endpoints
-- Create `organization-events.yaml` schema
+- Create `organization-service-events.yaml` schema
 - Create `organization-configuration.yaml` schema
 - Generate service code
 - Implement organization CRUD (create provisions seed + wallet + inventory)

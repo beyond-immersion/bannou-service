@@ -1,0 +1,169 @@
+openapi: 3.0.4
+info:
+  title: Character Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for character service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: character-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    CharacterCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character.created when a character is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - status
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: character.created
+          description: 'Event type identifier: character.created'
+        characterId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for the character
+        name: &id002
+          type: string
+          description: Display name of the character
+        realmId: &id003
+          type: string
+          format: uuid
+          description: Identifier of the realm the character belongs to
+        speciesId: &id004
+          type: string
+          format: uuid
+          description: Identifier of the species this character is
+        birthDate: &id005
+          type: string
+          format: date-time
+          description: In-game birth date of the character (required on creation, always present)
+        deathDate: &id006
+          type: string
+          format: date-time
+          nullable: true
+          description: In-game death timestamp
+        status: &id007
+          allOf:
+          - $ref: '../character-api.yaml#/components/schemas/CharacterStatus'
+          description: Current lifecycle status of the character (alive, dead, dormant)
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the character was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the character was last updated (set to createdAt on creation)
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character
+        is_deletion: false
+    CharacterUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character.updated when a character is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - status
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: character.updated
+          description: 'Event type identifier: character.updated'
+        characterId: *id001
+        name: *id002
+        realmId: *id003
+        speciesId: *id004
+        birthDate: *id005
+        deathDate: *id006
+        status: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the character was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the character was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character
+        is_deletion: false
+    CharacterDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character.deleted when a character is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - status
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: character.deleted
+          description: 'Event type identifier: character.deleted'
+        characterId: *id001
+        name: *id002
+        realmId: *id003
+        speciesId: *id004
+        birthDate: *id005
+        deathDate: *id006
+        status: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the character was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the character was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character
+        is_deletion: true

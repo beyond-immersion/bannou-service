@@ -144,7 +144,7 @@ State Store Layout
 
 ### Bugs (Fix Immediately)
 
-1. ~~**`SpeciesMergedEvent` missing failed entity IDs**~~: **FIXED** (2026-03-15) - Added `failedEntityIds` (nullable uuid array) to `SpeciesMergedEvent` schema in `species-events.yaml`. Updated `PublishSpeciesMergedEventAsync` to accept and propagate the failed IDs list. Null when all migrations succeed, populated with character IDs on partial failure.
+1. ~~**`SpeciesMergedEvent` missing failed entity IDs**~~: **FIXED** (2026-03-15) - Added `failedEntityIds` (nullable uuid array) to `SpeciesMergedEvent` schema in `species-service-events.yaml`. Updated `PublishSpeciesMergedEventAsync` to accept and propagate the failed IDs list. Null when all migrations succeed, populated with character IDs on partial failure.
 
 ### Intentional Quirks (Documented Behavior)
 

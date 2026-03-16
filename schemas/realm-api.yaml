@@ -47,7 +47,7 @@ servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
 
-# NOTE: x-lifecycle moved to realm-events.yaml
+# NOTE: x-lifecycle moved to realm-service-events.yaml
 
 paths:
   /realm/get:

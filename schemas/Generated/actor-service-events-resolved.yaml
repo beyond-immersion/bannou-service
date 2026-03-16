@@ -1,0 +1,940 @@
+openapi: 3.0.4
+info:
+  title: Actor Service Events
+  version: 1.0.0
+  description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: actor-service-events.yaml
+
+    Events published and subscribed to by the Actor service.
+    Includes lifecycle events for templates and instances, plus event subscriptions.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+
+  x-event-publications:
+    # Actor template lifecycle events (auto-generated from x-lifecycle)
+  - topic: actor.template.created
+    event: ActorTemplateCreatedEvent
+    description: Published when an actor template is created
+  - topic: actor.template.updated
+    event: ActorTemplateUpdatedEvent
+    description: Published when an actor template is updated
+  - topic: actor.template.deleted
+    event: ActorTemplateDeletedEvent
+    description: Published when an actor template is deleted
+    # Actor instance lifecycle events (auto-generated from x-lifecycle)
+  - topic: actor.instance.created
+    event: ActorInstanceCreatedEvent
+    description: Published when an actor instance is created (control plane record)
+  - topic: actor.instance.deleted
+    event: ActorInstanceDeletedEvent
+    description: Published when an actor instance is stopped and removed
+    # Custom actor instance events
+  - topic: actor.instance.started
+    event: ActorInstanceStartedEvent
+    description: Published when an actor begins running its behavior loop
+  - topic: actor.instance.state-persisted
+    event: ActorStatePersistedEvent
+    description: Published on periodic state auto-save to Redis
+  - topic: actor.instance.character-bound
+    event: ActorCharacterBoundEvent
+    description: Published when an actor binds to a character (dynamic or at spawn)
+  - topic: actor.instance.status-changed
+    event: ActorStatusChangedEvent
+    description: Published on actor status transitions (running, paused, error, etc.)
+  - topic: actor.instance.completed
+    event: ActorCompletedEvent
+    description: Published when an actor finishes execution (self-terminate or external stop)
+    # Encounter events (from Event Brain actors)
+  - topic: actor.encounter.started
+    event: ActorEncounterStartedEvent
+    description: Published when an Event Brain actor starts an encounter
+  - topic: actor.encounter.phase-changed
+    event: ActorEncounterPhaseChangedEvent
+    description: Published on encounter phase transitions
+  - topic: actor.encounter.ended
+    event: ActorEncounterEndedEvent
+    description: Published when an encounter finishes
+    # Character state update (behavioral output)
+  - topic: character.state-update
+    event: CharacterStateUpdateEvent
+    description: Published per-tick with actor feelings/goals for character display
+    # Pool node events (from pool nodes to control plane)
+  - topic: actor.pool-node.registered
+    event: PoolNodeRegisteredEvent
+    description: Published when a pool node starts and registers with control plane
+  - topic: actor.pool-node.heartbeat
+    event: PoolNodeHeartbeatEvent
+    description: Periodic heartbeat from pool nodes for health monitoring
+  - topic: actor.pool-node.draining
+    event: PoolNodeDrainingEvent
+    description: Published when a pool node begins graceful shutdown
+  - topic: actor.pool-node.unhealthy
+    event: PoolNodeUnhealthyEvent
+    description: Published by PoolHealthMonitor when a pool node exceeds the heartbeat timeout
+
+  x-event-subscriptions:
+  - topic: session.disconnected
+    event: SessionDisconnectedEvent
+    handler: HandleSessionDisconnected
+  - topic: actor.pool-node.registered
+    event: PoolNodeRegisteredEvent
+    handler: HandlePoolNodeRegistered
+  - topic: actor.pool-node.heartbeat
+    event: PoolNodeHeartbeatEvent
+    handler: HandlePoolNodeHeartbeat
+  - topic: actor.pool-node.draining
+    event: PoolNodeDrainingEvent
+    handler: HandlePoolNodeDraining
+  - topic: actor.instance.status-changed
+    event: ActorStatusChangedEvent
+    handler: HandleActorStatusChanged
+  - topic: actor.instance.completed
+    event: ActorCompletedEvent
+    handler: HandleActorCompleted
+  - topic: actor.template.updated
+    event: ActorTemplateUpdatedEvent
+    handler: HandleActorTemplateUpdated
+
+servers: []
+
+paths: {}
+
+x-lifecycle:
+  topic_prefix: actor
+  ActorTemplate:
+    model:
+      templateId:
+        type: string
+        format: uuid
+        primary: true
+        required: true
+        description: Unique identifier for the actor template
+      category:
+        type: string
+        required: true
+        description: Category identifier for the template
+      behaviorRef:
+        type: string
+        required: true
+        description: Reference to behavior in lib-assets
+    events:
+    - created
+    - updated
+    - deleted
+
+  ActorInstance:
+    model:
+      actorId:
+        type: string
+        primary: true
+        required: true
+        description: Unique identifier for the actor instance
+      templateId:
+        type: string
+        format: uuid
+        required: true
+        description: Template this actor was instantiated from
+      characterId:
+        type: string
+        format: uuid
+        nullable: true  # NRT: Optional property MUST be nullable
+        description: Associated character ID for NPC brains
+      nodeId:
+        type: string
+        nullable: true  # NRT: Optional property MUST be nullable
+        description: Pool node running this actor
+      status:
+        $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
+        required: true
+        description: Current actor lifecycle state
+      startedAt:
+        type: string
+        format: date-time
+        required: true
+        description: When the actor started running
+    events:
+    - created
+    - deleted
+
+components:
+  schemas:
+    # === Pool Node Events (from pool nodes to control plane) ===
+    PoolNodeHeartbeatEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Periodic heartbeat from pool nodes to control plane.
+        Used for health monitoring and load balancing decisions.
+      required:
+      - nodeId
+      - currentLoad
+      - capacity
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.heartbeat"
+          description: Event type identifier for pool node heartbeats
+        nodeId:
+          type: string
+          description: Unique identifier for this pool node
+        appId:
+          type: string
+          nullable: true  # NRT: Optional property MUST be nullable
+          description: Pool node's app-id for direct routing
+        currentLoad:
+          type: integer
+          description: Number of actors currently running
+        capacity:
+          type: integer
+          description: Maximum actors this node can run
+        actorSummary:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Map of actorId to status for sync verification
+
+    PoolNodeRegisteredEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a pool node starts and registers with the control plane.
+        Control plane uses this to add the node to the available pool.
+      required:
+      - nodeId
+      - appId
+      - poolType
+      - capacity
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.registered"
+          description: Event type identifier for pool node registration
+        nodeId:
+          type: string
+          description: Unique identifier for this pool node
+        appId:
+          type: string
+          description: Mesh app-id for direct routing to this node
+        poolType:
+          type: string
+          description: Pool type (shared, npc-brain, event-coordinator, or custom category)
+        capacity:
+          type: integer
+          description: Maximum number of actors this node can run
+
+    PoolNodeDrainingEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a pool node begins graceful shutdown.
+        Control plane stops routing new actors to this node.
+      required:
+      - nodeId
+      - remainingActors
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.draining"
+          description: Event type identifier for pool node draining
+        nodeId:
+          type: string
+          description: Unique identifier of the draining pool node
+        remainingActors:
+          type: integer
+          description: Number of actors still running on this node
+        estimatedDrainTimeSeconds:
+          type: integer
+          nullable: true
+          description: Estimated time to complete draining
+
+    PoolNodeUnhealthyEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published by control plane when a pool node is detected as unhealthy.
+        Triggers actor reassignment and alerts.
+      required:
+      - nodeId
+      - reason
+      - lastHeartbeat
+      properties:
+        eventName:
+          type: string
+          default: "actor.pool-node.unhealthy"
+          description: Event type identifier for unhealthy pool node detection
+        nodeId:
+          type: string
+          description: Unique identifier of the unhealthy pool node
+        appId:
+          type: string
+          nullable: true
+          description: Mesh app-id of the unhealthy node
+        reason:
+          type: string
+          description: Reason the node was marked unhealthy
+        lastHeartbeat:
+          type: string
+          format: date-time
+          description: Timestamp of last successful heartbeat
+        actorCount:
+          type: integer
+          nullable: true
+          description: Number of actors that were on the failed node
+
+    ActorStatusChangedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor's status changes.
+        Used to keep control plane registry in sync with pool node state.
+      required:
+      - actorId
+      - nodeId
+      - previousStatus
+      - newStatus
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.status-changed"
+          description: Event type identifier for actor status changes
+        actorId:
+          type: string
+          description: Unique identifier of the actor whose status changed
+        nodeId:
+          type: string
+          description: Pool node where the actor is running
+        previousStatus:
+          $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
+          description: Actor status before the change
+        newStatus:
+          $ref: '../actor-api.yaml#/components/schemas/ActorStatus'
+          description: Actor status after the change
+        reason:
+          type: string
+          nullable: true
+          description: Human-readable reason for status change
+
+    ActorCompletedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor completes execution (self-terminate or external stop).
+        Includes final statistics and exit reason.
+      required:
+      - actorId
+      - nodeId
+      - exitReason
+      - loopIterations
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.completed"
+          description: Event type identifier for actor completion
+        actorId:
+          type: string
+          description: Unique identifier of the completed actor
+        nodeId:
+          type: string
+          description: Pool node where the actor was running
+        exitReason:
+          description: Reason the actor exited
+          $ref: '../actor-api.yaml#/components/schemas/ActorExitReason'
+        exitMessage:
+          type: string
+          nullable: true
+          description: Additional context about the exit
+        loopIterations:
+          type: integer
+          format: int64
+          description: Total behavior loop iterations before exit
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated character ID (for NPC brains)
+
+    # === Instance Runtime Events (from ActorRunner to control plane) ===
+    ActorInstanceStartedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor instance successfully starts and begins running.
+        Distinct from ActorInstanceCreatedEvent (which is control plane creating the record).
+      required:
+      - actorId
+      - nodeId
+      - templateId
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.started"
+          description: Event type identifier for actor instance started
+        actorId:
+          type: string
+          description: Unique identifier of the actor that started
+        nodeId:
+          type: string
+          description: Pool node where the actor is running
+        templateId:
+          type: string
+          format: uuid
+          description: Template this actor was spawned from
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated character ID (for NPC brains)
+        category:
+          type: string
+          nullable: true
+          description: Actor category (npc-brain, event-brain, etc.)
+
+    ActorStatePersistedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when actor state is auto-saved to persistent storage.
+        Useful for monitoring and debugging state persistence.
+      required:
+      - actorId
+      - nodeId
+      - loopIterations
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.state-persisted"
+          description: Event type identifier for actor state persistence
+        actorId:
+          type: string
+          description: Unique identifier of the actor whose state was persisted
+        nodeId:
+          type: string
+          description: Pool node where the actor is running
+        loopIterations:
+          type: integer
+          format: int64
+          description: Loop iterations at time of persistence
+
+    # === Encounter Events (from Event Brain actors) ===
+    ActorEncounterStartedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an Event Brain actor starts managing a new encounter.
+        Other systems can subscribe to track active encounters.
+      required:
+      - actorId
+      - encounterId
+      - encounterType
+      - participants
+      properties:
+        eventName:
+          type: string
+          default: "actor.encounter.started"
+          description: Event type identifier for encounter started
+        actorId:
+          type: string
+          description: Actor managing this encounter
+        encounterId:
+          type: string
+          format: uuid
+          description: Unique identifier for the encounter
+        encounterType:
+          type: string
+          description: Type of encounter (combat, conversation, etc.)
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Character IDs participating in the encounter
+
+    ActorEncounterEndedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an Event Brain actor ends an encounter.
+        Includes duration and final phase for analytics.
+      required:
+      - actorId
+      - encounterId
+      properties:
+        eventName:
+          type: string
+          default: "actor.encounter.ended"
+          description: Event type identifier for encounter ended
+        actorId:
+          type: string
+          description: Actor that was managing this encounter
+        encounterId:
+          type: string
+          format: uuid
+          description: Unique identifier for the encounter
+        durationSeconds:
+          type: number
+          format: float
+          nullable: true
+          description: Duration of the encounter in seconds
+        finalPhase:
+          type: string
+          nullable: true
+          description: Phase the encounter was in when it ended
+
+    ActorEncounterPhaseChangedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an encounter transitions to a new phase.
+        Useful for game servers to react to encounter state changes.
+      required:
+      - actorId
+      - encounterId
+      - previousPhase
+      - newPhase
+      properties:
+        eventName:
+          type: string
+          default: "actor.encounter.phase-changed"
+          description: Event type identifier for encounter phase change
+        actorId:
+          type: string
+          description: Actor managing this encounter
+        encounterId:
+          type: string
+          format: uuid
+          description: Unique identifier for the encounter
+        previousPhase:
+          type: string
+          description: Phase before the change
+        newPhase:
+          type: string
+          description: Phase after the change
+
+    ActorCharacterBoundEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor binds to a character, either via hot-swap
+        (BindActorCharacter API) or on startup when spawned with a characterId.
+        Published to topic: actor.instance.character-bound
+      required:
+      - actorId
+      - characterId
+      - realmId
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.character-bound"
+          description: Event type identifier for character binding
+        actorId:
+          type: string
+          description: Unique identifier of the actor that bound
+        characterId:
+          type: string
+          format: uuid
+          description: Character the actor is now bound to
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the actor operates in
+        previousCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Previous character ID if this is a re-bind (null for first bind,
+            including actors spawned with a characterId)
+
+    # === Internal Commands (control plane to pool nodes) ===
+    SpawnActorCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command sent from control plane to pool node to spawn an actor.
+        Published to topic: actor.node.{poolAppId}.spawn
+      required:
+      - actorId
+      - templateId
+      - behaviorRef
+      - tickIntervalMs
+      - autoSaveIntervalSeconds
+      properties:
+        actorId:
+          type: string
+          description: Unique identifier for the actor to spawn
+        templateId:
+          type: string
+          format: uuid
+          description: Template ID to instantiate from
+        behaviorRef:
+          type: string
+          description: Asset reference to fetch behavior from lib-assets
+        configuration:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Game-specific configuration for ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+        initialState:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Initial actor state snapshot. No Bannou plugin reads specific keys
+            from this field by convention.
+        tickIntervalMs:
+          type: integer
+          description: Behavior loop interval in milliseconds
+        autoSaveIntervalSeconds:
+          type: integer
+          description: State persistence interval (0 to disable)
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Character ID for NPC brain actors
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm the actor operates in (resolved by control plane)
+
+    StopActorCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command sent from control plane to pool node to stop an actor.
+        Published to topic: actor.node.{poolAppId}.stop
+      required:
+      - actorId
+      properties:
+        actorId:
+          type: string
+          description: Unique identifier of the actor to stop
+        graceful:
+          type: boolean
+          default: true
+          description: If true, allows current tick to complete
+
+    SendMessageCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command to deliver a message to an actor's message queue.
+        Published to topic: actor.node.{poolAppId}.message
+      required:
+      - actorId
+      - messageType
+      properties:
+        actorId:
+          type: string
+          description: Unique identifier of the target actor
+        messageType:
+          type: string
+          description: Message type identifier (behavior decides handling)
+        payload:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Game-specific message payload passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
+        urgency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: |
+            Optional urgency level (0-1) for the message perception.
+            If not provided, defaults to 0.5.
+
+    ReloadBehaviorCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command to reload behavior for an actor (hot-reload support).
+        Published to topic: actor.node.{poolAppId}.reload-behavior
+      required:
+      - actorId
+      - newBehaviorRef
+      properties:
+        actorId:
+          type: string
+          description: Unique identifier of the actor to reload
+        newBehaviorRef:
+          type: string
+          description: New asset reference to fetch
+
+    BindActorCharacterCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command sent from control plane to pool node to bind an actor to a character.
+        Published to topic: actor.node.{poolAppId}.bind-character
+      required:
+      - actorId
+      - characterId
+      properties:
+        actorId:
+          type: string
+          description: Unique identifier of the actor to bind
+        characterId:
+          type: string
+          format: uuid
+          description: Character ID to bind the actor to
+
+    # === Character Perception Events (game servers to actors) ===
+    CharacterPerceptionEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Perception event published by game servers for characters they manage.
+        Actors subscribe to character.{characterId}.perceptions to receive these.
+        sourceAppId used to route state updates back to originating game server.
+      required:
+      - characterId
+      - sourceAppId
+      - perception
+      properties:
+        eventName:
+          type: string
+          default: "character.perception"
+          description: Event type identifier for character perception events
+        characterId:
+          type: string
+          format: uuid
+          description: Character this perception applies to
+        sourceAppId:
+          type: string
+          description: App-id of game server (for routing state updates back)
+        perception:
+          $ref: '#/components/schemas/PerceptionData'
+          description: The perception data to deliver to the actor
+    HazardInfo:
+      type: object
+      additionalProperties: true
+      description: >-
+        Information about a hazard in range.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        hazard data. No Bannou plugin reads specific extension keys by convention.
+      required:
+      - hazardType
+      - distance
+      - severity
+      properties:
+        hazardType:
+          type: string
+          description: Type of hazard (fire, poison, radiation, deep_water, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance to hazard edge
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Hazard severity (0-1)
+        direction:
+          type: string
+          nullable: true
+          description: Direction to hazard center
+
+    NearbyObject:
+      type: object
+      additionalProperties: true
+      description: >-
+        Information about a nearby object perceived by the character.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        object data. No Bannou plugin reads specific extension keys by convention.
+      required:
+      - objectId
+      - objectType
+      - distance
+      - direction
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: Unique identifier of the object
+        objectType:
+          type: string
+          description: Type of object (boulder_cluster, tree, building, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance from character in game units
+        direction:
+          type: string
+          description: Relative direction (north, south, east, west, above, below, etc.)
+        position:
+          allOf:
+          - $ref: '../common-api.yaml#/components/schemas/Position3D'
+          nullable: true
+          description: Optional absolute position
+
+    PerceptionData:
+      type: object
+      additionalProperties: false
+      description: |
+        Data representing a perception event for an actor.
+
+        Spatial context can be provided in two ways (hybrid approach):
+        1. Typed: Use the optional spatialContext field for structured spatial data
+        2. Schema-less: Use perceptionType="spatial" with data containing spatial info
+
+        The typed approach is recommended when game server has structured spatial data.
+        The schema-less approach allows flexibility for game-specific spatial formats.
+      required:
+      - perceptionType
+      - sourceId
+      properties:
+        perceptionType:
+          type: string
+          minLength: 1
+          description: |
+            Perception type. Common values: visual, auditory, tactile, olfactory,
+            proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
+        sourceId:
+          type: string
+          minLength: 1
+          description: ID of the entity causing this perception
+        sourceType:
+          allOf:
+          - $ref: '#/components/schemas/PerceptionSourceType'
+          nullable: true
+          description: Type of source (character, npc, object, environment, coordinator, scheduled, message)
+        data:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Game-specific perception payload passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different perception types carry different data structures defined by the game.
+        urgency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.5
+          description: How urgent this perception is (0-1)
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Current location ID of the entity sending this perception.
+            Used by ActorRunner to track the actor's current location for
+            location-aware variable providers. Updated on each perception
+            event that carries this field.
+        spatialContext:
+          allOf:
+          - $ref: '#/components/schemas/SpatialContext'
+          nullable: true
+          description: |
+            Optional typed spatial context from game server's local spatial state.
+            Provides structured information about terrain, nearby objects, hazards, etc.
+            Alternative to using perceptionType="spatial" with schema-less data.
+
+    PerceptionSourceType:
+      type: string
+      description: Type of source generating a perception event
+      enum:
+      - Character
+      - Npc
+      - Object
+      - Environment
+      - Coordinator
+      - Scheduled
+      - Message
+      - Service
+      - System
+
+    SpatialContext:
+      type: object
+      additionalProperties: true
+      description: >-
+        Spatial context derived from game server's authoritative spatial state.
+        Included in perception events to give NPC actors awareness of their environment.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        spatial extensions. No Bannou plugin reads specific extension keys by convention.
+      properties:
+        terrainType:
+          type: string
+          nullable: true
+          description: Terrain type at character position (grass, stone, water, etc.)
+        elevation:
+          type: number
+          format: float
+          nullable: true
+          description: Elevation at character position
+        nearbyObjects:
+          type: array
+          nullable: true
+          description: Objects within perception radius
+          items:
+            $ref: '#/components/schemas/NearbyObject'
+        hazardsInRange:
+          type: array
+          nullable: true
+          description: Active hazards within detection range
+          items:
+            $ref: '#/components/schemas/HazardInfo'
+        pathableDirections:
+          type: array
+          nullable: true
+          description: Directions the character can move (for navigation awareness)
+          items:
+            type: string
+            description: Cardinal or relative direction (north, south, east, west, forward, etc.)
+        coverNearby:
+          type: boolean
+          nullable: true
+          description: Whether cover is available within close range
+        indoors:
+          type: boolean
+          nullable: true
+          description: Whether character is currently indoors/under roof
+
+x-inlined-types:
+- HazardInfo
+- NearbyObject
+- PerceptionData
+- PerceptionSourceType
+- SpatialContext

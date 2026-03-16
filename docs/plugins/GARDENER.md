@@ -581,7 +581,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 11. **Director-driven player targeting APIs**: Director needs to externally influence Gardener's scenario selection and POI spawning for directed events. Options: (A) Director calls Gardener APIs directly (spawn POI, create temporary template, boost scoring weights per-player) -- simpler but tighter coupling; (B) Director publishes targeting intents and Gardener has a consumer that implements them -- cleaner but requires Gardener to understand Director targeting concepts. Either approach requires new endpoints or event handlers beyond what Gardener currently exposes. The `GardenerAmplificationMultiplier` configuration in Director provides the scoring weight boost factor. See [DIRECTOR.md](DIRECTOR.md).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/499 -->
 <!-- AUDIT:DESIGN_DECISIONS:2026-03-06:L4-audit -->
-<!-- S2: Event schemas use flat structure (eventId + timestamp only, no eventName) matching location-events.yaml pattern -->
+<!-- S2: Event schemas use flat structure (eventId + timestamp only, no eventName) matching location-service-events.yaml pattern -->
 <!-- C1: Hardcoded prompt choices ["Enter","Decline"] are presentation hints, not tenet violations -->
 <!-- C2: No per-template MaxConcurrentInstances enforcement -- feature gap, not tenet violation -->
 <!-- C3: Prerequisites not validated during scenario entry -- feature gap, not tenet violation -->

@@ -961,7 +961,7 @@ Belief identity and propagation are owned here. Actual norm data comes from Fact
 - Add hearsay stores to `schemas/state-stores.yaml` (hearsay-beliefs, hearsay-propagation, hearsay-cache, hearsay-lock)
 - Add hearsay provider to `schemas/variable-providers.yaml`
 - Create `hearsay-api.yaml` schema with belief management endpoints (include `BeliefDomain` and `SourceChannel` enums, `x-service-layer: GameFeatures`)
-- Create `hearsay-events.yaml` schema (include `x-event-publications` for all 8 custom events, `x-event-subscriptions` for all 8 consumed events)
+- Create `hearsay-service-events.yaml` schema (include `x-event-publications` for all 8 custom events, `x-event-subscriptions` for all 8 consumed events)
 - Create `hearsay-configuration.yaml` schema
 - Generate service code
 - Implement belief CRUD (record, correct, query, get-manifest)

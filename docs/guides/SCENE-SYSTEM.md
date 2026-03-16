@@ -752,6 +752,6 @@ A `voxel` node type referencing `.bvox` assets from the Voxel Builder SDK. Voxel
 - **Guide**: [SDK-OVERVIEW.md](SDK-OVERVIEW.md) — All Bannou SDKs with decision tree
 - **FAQ**: [WHY-IS-THERE-NO-PLAYER-HOUSING-PLUGIN.md](../faqs/WHY-IS-THERE-NO-PLAYER-HOUSING-PLUGIN.md) — Housing as composed garden
 - **FAQ**: [WHY-DOESNT-ASSET-ROUTE-THROUGH-WEBSOCKET.md](../faqs/WHY-DOESNT-ASSET-ROUTE-THROUGH-WEBSOCKET.md) — Pre-signed URL pattern
-- **Schema**: `schemas/scene-api.yaml`, `schemas/scene-events.yaml`, `schemas/scene-configuration.yaml`
+- **Schema**: `schemas/scene-api.yaml`, `schemas/scene-service-events.yaml`, `schemas/scene-configuration.yaml`
 - **Issue**: [#159](https://github.com/beyond-immersion/bannou-service/issues/159) — Spatial coordinate system contract
 - **Issue**: [#432](https://github.com/beyond-immersion/bannou-service/issues/432) — Player housing as composed garden behavior

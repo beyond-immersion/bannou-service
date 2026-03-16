@@ -3,8 +3,8 @@
 > **Version**: 1.0
 > **Status**: Implemented
 > **Last Updated**: 2026-03-16
-> **Schema Scope**: `*-events.yaml`
-> **Generated Output**: `schemas/Generated/{service}-lifecycle-events.yaml` (event schemas), `{Service}LifecycleEvents.Interfaces.cs` (lifecycle interfaces)
+> **Schema Scope**: `*-service-events.yaml`
+> **Generated Output**: `schemas/Generated/{service}-service-lifecycle-events.yaml` (event schemas), `{Service}LifecycleEvents.Interfaces.cs` (lifecycle interfaces)
 > **Related Specifications**: [x-resource-mapping](X-RESOURCE-MAPPING.md), [x-permissions](X-PERMISSIONS.md)
 > **Tenet References**: T1 (FOUNDATION), T5 (FOUNDATION), T31 (IMPLEMENTATION-BEHAVIOR)
 
@@ -117,7 +117,7 @@ x-lifecycle:
 
 ### Generated Event Schema
 
-Location: `schemas/Generated/{service}-lifecycle-events.yaml`
+Location: `schemas/Generated/{service}-service-lifecycle-events.yaml`
 
 For each entity, three events are generated:
 
@@ -290,7 +290,7 @@ The `topic_prefix` field controls topic naming:
 
 ### Hyphenated Service Names
 
-When a service has a hyphenated name (e.g., `save-load`), the `topic_prefix` must use the full hyphenated name: `topic_prefix: save-load`, NOT `save.load`. Without `topic_prefix`, the lifecycle generator derives the prefix from the filename (minus `-events.yaml`), automatically preserving hyphens.
+When a service has a hyphenated name (e.g., `save-load`), the `topic_prefix` must use the full hyphenated name: `topic_prefix: save-load`, NOT `save.load`. Without `topic_prefix`, the lifecycle generator derives the prefix from the filename (minus `-service-events.yaml`), automatically preserving hyphens.
 
 ### changedFields Convention
 
@@ -315,7 +315,7 @@ When `batch: true`, the generator produces additional batch event types (e.g., `
 
 ### Example 1: Single-Entity Service (Account)
 
-**Schema** (`account-events.yaml`):
+**Schema** (`account-service-events.yaml`):
 ```yaml
 x-lifecycle:
   Account:
@@ -333,7 +333,7 @@ x-lifecycle:
 
 ### Example 2: Multi-Entity Service with Deprecation (Item)
 
-**Schema** (`item-events.yaml`):
+**Schema** (`item-service-events.yaml`):
 ```yaml
 x-lifecycle:
   topic_prefix: item
@@ -384,7 +384,7 @@ x-lifecycle:
 
 ### Scoping Rules
 
-- `x-lifecycle` is defined per events schema file (`{service}-events.yaml`)
+- `x-lifecycle` is defined per events schema file (`{service}-service-events.yaml`)
 - `topic_prefix` applies to all entities within that file
 - Entity names must be unique within a single `x-lifecycle` block
 - `$ref` in model fields can reference the service's own `-api.yaml` or `common-api.yaml`

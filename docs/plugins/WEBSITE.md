@@ -67,7 +67,7 @@ No domain-specific events are published (all endpoints are stubs).
 
 This plugin does not consume external events. The `RegisterEventConsumers` call in the constructor is a no-op (no event handlers are registered).
 
-**Note**: No `schemas/website-events.yaml` file exists. When implemented, the service may publish events like `website.contact-submitted`, `website.page-created`, `website.page-updated`, `website.page-deleted`.
+**Note**: No `schemas/website-service-events.yaml` file exists. When implemented, the service may publish events like `website.contact-submitted`, `website.page-created`, `website.page-updated`, `website.page-deleted`.
 
 ---
 
@@ -271,7 +271,7 @@ Generated Model Hierarchy
 
 5. **Dead error handling**: The catch blocks in every method call `TryPublishErrorAsync` but can never be reached -- the preceding try block contains only a log statement and a return. The pattern (`LogDebug` then return) cannot throw.
 
-6. **No event publishing for domain actions**: When implemented, CMS page creation/update/deletion should publish domain events. No events schema exists (`schemas/website-events.yaml` is missing).
+6. **No event publishing for domain actions**: When implemented, CMS page creation/update/deletion should publish domain events. No events schema exists (`schemas/website-service-events.yaml` is missing).
 
 7. **No rate limiting for contact form**: The schema defines a 429 response for `/website/contact`, but no rate limiting mechanism is implemented.
 
@@ -291,7 +291,7 @@ Generated Model Hierarchy
 
 4. **Rate limiting**: Implement contact form rate limiting per IP/session using Redis-backed counters or a dedicated rate-limit state store.
 
-5. **Events schema**: Create `schemas/website-events.yaml` with events for page lifecycle, contact submissions, and settings changes.
+5. **Events schema**: Create `schemas/website-service-events.yaml` with events for page lifecycle, contact submissions, and settings changes.
 
 6. **Configuration properties**: Add pagination defaults, maintenance mode control, CMS content size limits, allowed HTML tags (sanitization), and contact form rate limit thresholds.
 

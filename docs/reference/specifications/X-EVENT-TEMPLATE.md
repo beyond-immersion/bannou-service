@@ -3,7 +3,7 @@
 > **Version**: 1.0
 > **Status**: Implemented
 > **Last Updated**: 2026-03-16
-> **Schema Scope**: `*-events.yaml`
+> **Schema Scope**: `*-service-events.yaml`
 > **Generated Output**: `{Service}EventTemplates.cs` — static class with `EventTemplate` fields and `RegisterAll(IEventTemplateRegistry)` method
 
 ---
@@ -16,7 +16,7 @@ Declares that a service event should have an auto-generated template for use wit
 
 ## Schema Syntax
 
-The `x-event-template` attribute is defined on individual event schema definitions within `*-events.yaml` files, as a sibling of `required`, `properties`, and `description`:
+The `x-event-template` attribute is defined on individual event schema definitions within `*-service-events.yaml` files, as a sibling of `required`, `properties`, and `description`:
 
 ```yaml
 components:
@@ -189,7 +189,7 @@ No structural tests currently enforce this specification. The generator (`genera
 
 A quest service event emitted by ABML behaviors when an NPC observes a player completing an objective.
 
-**Schema** (`quest-events.yaml`):
+**Schema** (`quest-service-events.yaml`):
 ```yaml
 QuestObjectiveProgressedEvent:
   allOf:
@@ -247,7 +247,7 @@ QuestObjectiveProgressedEvent:
 
 An encounter service event emitted when an NPC records meeting another character.
 
-**Schema** (`character-encounter-events.yaml`):
+**Schema** (`character-encounter-service-events.yaml`):
 ```yaml
 EncounterRecordedEvent:
   allOf:
@@ -270,7 +270,7 @@ EncounterRecordedEvent:
 
 | Restriction | Reason |
 |---|---|
-| `x-event-template` on a non-event schema | Only event definitions (in `*-events.yaml`) support this attribute |
+| `x-event-template` on a non-event schema | Only event definitions (in `*-service-events.yaml`) support this attribute |
 | Duplicate `name` values across the same service | Template names must be unique within a service's `RegisterAll` method |
 | `name` with spaces or special characters | Template names are identifiers used in ABML; use snake_case |
 

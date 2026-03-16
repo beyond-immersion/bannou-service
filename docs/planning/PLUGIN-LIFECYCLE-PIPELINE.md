@@ -101,7 +101,7 @@ Each stage has a clear input, output, and quality gate. Existing skills handle s
 ### Stage 4: Schema Creation
 
 **Input**: Deep dive (post-audit) + implementation map.
-**Output**: `schemas/{service}-api.yaml`, `{service}-events.yaml`, `{service}-configuration.yaml`, `{service}-client-events.yaml` (if applicable), state store entries in `schemas/state-stores.yaml`.
+**Output**: `schemas/{service}-api.yaml`, `{service}-service-events.yaml`, `{service}-configuration.yaml`, `{service}-client-events.yaml` (if applicable), state store entries in `schemas/state-stores.yaml`.
 
 **Gate**: All schemas pass validation; `x-service-layer`, `x-permissions`, `x-lifecycle`, `x-event-subscriptions`, `x-references` all present; SCHEMA-RULES.md compliance verified.
 

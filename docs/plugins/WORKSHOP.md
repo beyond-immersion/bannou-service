@@ -468,10 +468,10 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 
 ### Event Schema Requirements
 
-`workshop-events.yaml` must include `x-event-subscriptions` declaring both consumed events:
+`workshop-service-events.yaml` must include `x-event-subscriptions` declaring both consumed events:
 
-1. `worldstate.day-changed` — references `worldstate-events.yaml` event type. Handler: `HandleDayChanged`. Registered via `IEventConsumer` in `WorkshopServiceEvents.cs`.
-2. `account.deleted` — references `account-events.yaml` event type. Handler: `HandleAccountDeleted`. Registered via `IEventConsumer` in `WorkshopServiceEvents.cs`. Privacy obligation per FOUNDATION TENETS.
+1. `worldstate.day-changed` — references `worldstate-service-events.yaml` event type. Handler: `HandleDayChanged`. Registered via `IEventConsumer` in `WorkshopServiceEvents.cs`.
+2. `account.deleted` — references `account-service-events.yaml` event type. Handler: `HandleAccountDeleted`. Registered via `IEventConsumer` in `WorkshopServiceEvents.cs`. Privacy obligation per FOUNDATION TENETS.
 
 Both handlers are registered in `RegisterEventConsumers` using the `IEventConsumer` pattern.
 
@@ -564,7 +564,7 @@ The `x-references` `target` values must match the `resourceType` declared in the
 
 - **CleanDeprecatedBlueprints** (`/workshop/blueprint/clean-deprecated`): Category B clean-deprecated sweep per IMPLEMENTATION TENETS. Deletes deprecated blueprints that have zero active (non-terminal) tasks referencing them. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. Uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` for standardized sweep logic. `x-permissions: [role: admin]` — cleanup deletes data.
 
-**Category B lifecycle notes**: Blueprints are Category B (templates whose instances persist with the template's ID). No delete endpoint (blueprints persist until clean-deprecated sweep). No undeprecate endpoint (deprecation is one-way). `DeprecateBlueprint` is idempotent (returns OK if already deprecated). Blueprint lifecycle events are generated via `x-lifecycle` in `workshop-events.yaml` with `topic_prefix: workshop` and `deprecation: true`. Do NOT manually define lifecycle events or deprecation fields — they are auto-injected by the generator. Implements `ICleanDeprecatedEntity` marker interface for structural test compliance.
+**Category B lifecycle notes**: Blueprints are Category B (templates whose instances persist with the template's ID). No delete endpoint (blueprints persist until clean-deprecated sweep). No undeprecate endpoint (deprecation is one-way). `DeprecateBlueprint` is idempotent (returns OK if already deprecated). Blueprint lifecycle events are generated via `x-lifecycle` in `workshop-service-events.yaml` with `topic_prefix: workshop` and `deprecation: true`. Do NOT manually define lifecycle events or deprecation fields — they are auto-injected by the generator. Implements `ICleanDeprecatedEntity` marker interface for structural test compliance.
 
 ### Task Management (7 endpoints)
 
@@ -688,7 +688,7 @@ Blueprints are owned here. Item creation and destruction are lib-item (L2). Cont
 
 ### Phase 1: Blueprint Infrastructure
 - Create `workshop-api.yaml` schema with all endpoints
-- Create `workshop-events.yaml` schema
+- Create `workshop-service-events.yaml` schema
 - Create `workshop-configuration.yaml` schema
 - Generate service code
 - Implement blueprint CRUD (create, get, list, update, deprecate, seed)

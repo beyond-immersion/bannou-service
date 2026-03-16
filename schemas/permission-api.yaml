@@ -14,7 +14,7 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 3.0.0
-  # NOTE: Event subscriptions moved to permission-events.yaml (x-event-subscriptions)
+  # NOTE: Event subscriptions moved to permission-service-events.yaml (x-event-subscriptions)
 x-service-layer: AppFoundation
 servers:
 - url: http://localhost:5012
@@ -527,7 +527,7 @@ components:
           minimum: 0
           description: Number of API endpoints registered by this service
 
-# NOTE: CapabilityUpdateType and CapabilityUpdateReason moved to common-api.yaml (shared with common-client-events.yaml)
+# NOTE: CapabilityUpdateType and CapabilityUpdateReason moved to common-api.yaml (shared with common-client-service-events.yaml)
 
-# NOTE: Event subscriptions are defined in permission-events.yaml
+# NOTE: Event subscriptions are defined in permission-service-events.yaml
 # They are processed by generate-event-subscriptions.sh to generate PermissionsEventsController.cs

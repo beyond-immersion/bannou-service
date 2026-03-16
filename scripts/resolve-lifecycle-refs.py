@@ -23,8 +23,8 @@ via ../service-api.yaml paths. When those API types contain nested cross-file $r
 transitive chain. This script inlines such types and their full dependency trees.
 
 Architecture:
-- Input: schemas/Generated/{service}-lifecycle-events.yaml
-- Output: schemas/Generated/{service}-lifecycle-events-resolved.yaml
+- Input: schemas/Generated/{service}-service-lifecycle-events.yaml
+- Output: schemas/Generated/{service}-service-lifecycle-events-resolved.yaml
 
 The script:
 1. Loads the lifecycle event schema from Generated/
@@ -284,7 +284,7 @@ def resolve_lifecycle_schema(lifecycle_path: Path, schema_dir: Path) -> Optional
 
     # Write resolved schema (same directory as input, with -resolved suffix)
     output_name = lifecycle_path.stem.replace(
-        '-lifecycle-events', '-lifecycle-events-resolved'
+        '-service-lifecycle-events', '-service-lifecycle-events-resolved'
     ) + '.yaml'
     output_path = lifecycle_path.parent / output_name
     save_yaml(output_path, resolved)
@@ -310,13 +310,13 @@ def main():
         print(f"ERROR: Schema directory not found: {schema_dir}")
         sys.exit(1)
 
-    lifecycle_path = generated_dir / f"{service_name}-lifecycle-events.yaml"
+    lifecycle_path = generated_dir / f"{service_name}-service-lifecycle-events.yaml"
     if not lifecycle_path.exists():
         # No lifecycle events for this service, nothing to do
         return
 
     # Clean up old resolved file for this service
-    old_resolved = generated_dir / f"{service_name}-lifecycle-events-resolved.yaml"
+    old_resolved = generated_dir / f"{service_name}-service-lifecycle-events-resolved.yaml"
     if old_resolved.exists():
         old_resolved.unlink()
 

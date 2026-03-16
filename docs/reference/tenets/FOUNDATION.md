@@ -192,7 +192,7 @@ await _messageBus.PublishAsync("account.created", new { AccountId = id });
 
 | Event Type | Schema File | Generated Output |
 |------------|-------------|------------------|
-| Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
+| Service Events | `{service}-service-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
 | Client Events | `{service}-client-events.yaml` | `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
 | Common Client Events | `common-client-events.yaml` | `bannou-service/Generated/CommonClientEventsModels.cs` |
 
@@ -314,7 +314,7 @@ For atomically consistent state across instances, include complete state + monot
 
 ### Canonical Event Definitions (CRITICAL)
 
-Each `{service}-events.yaml` MUST contain ONLY canonical definitions for events that service PUBLISHES. No `$ref` references to other service event files - NSwag follows `$ref` and generates ALL types it encounters, causing duplicate type definitions.
+Each `{service}-service-events.yaml` MUST contain ONLY canonical definitions for events that service PUBLISHES. No `$ref` references to other service event files - NSwag follows `$ref` and generates ALL types it encounters, causing duplicate type definitions.
 
 > **Helpers**: See [Helpers & Common Patterns § Event & Messaging](../HELPERS-AND-COMMON-PATTERNS.md#2-event--messaging-helpers) for generated publishers, `IEventConsumer`, error event publishing, and topic constants.
 
@@ -719,7 +719,7 @@ await _messageBus.PublishAsync("seed.phase.changed", phaseChangedEvent);
 
 ```csharp
 // ANTI-PATTERN: L2 defines event, L4 publishes to it — this is just a bad API call
-// In seed-events.yaml: defines seed.growth.contributed
+// In seed-service-events.yaml: defines seed.growth.contributed
 // In lib-collection: await _messageBus.PublishAsync("seed.growth.contributed", ...)
 // In lib-seed: subscribes to seed.growth.contributed and processes growth
 
@@ -735,7 +735,7 @@ When a lower-layer service uses DI Provider interfaces (`IVariableProviderFactor
 
 ```csharp
 // FORBIDDEN: Actor (L2) subscribing to CharacterPersonality (L4) events
-// In actor-events.yaml: x-event-subscriptions for personality.evolved
+// In actor-service-events.yaml: x-event-subscriptions for personality.evolved
 // Actor invalidates cache when personality changes
 
 // CORRECT: PersonalityProviderFactory (L4) manages its own cache internally
@@ -983,7 +983,7 @@ When adding a new service that accepts `ownerType: Account` (or stores data keye
 
 1. **MANDATORY**: Add `HandleAccountDeletedAsync` in `*ServiceEvents.cs`
 2. **MANDATORY**: Register the handler via `IEventConsumer` in `RegisterEventConsumers`
-3. **MANDATORY**: Add `account-events.yaml` to `x-event-subscriptions` in the service's events schema
+3. **MANDATORY**: Add `account-service-events.yaml` to `x-event-subscriptions` in the service's events schema
 4. **Structural test**: The `Service_CallsAllGeneratedEventPublishers` test pattern should be extended to verify account-deletion handler existence for services with account ownership
 
 **Detection**: Any service whose API schema includes an `ownerType` enum containing `Account`, or whose models include an `accountId` field used as an ownership key, MUST have a corresponding `account.deleted` event handler. Absence of this handler is a data hygiene violation.

@@ -32,7 +32,7 @@ This is the foundational growth primitive described in the [Seed System Guide](.
 - Ensure all properties have `description` fields (CS1591 compliance)
 - Ensure NRT compliance: optional ref types have `nullable: true`, required fields in `required` arrays
 
-#### 1b. `schemas/seed-events.yaml`
+#### 1b. `schemas/seed-service-events.yaml`
 - **x-lifecycle** for `Seed` entity (generates created/updated/deleted events):
   - Model fields: seedId (primary), ownerId, ownerType, seedTypeCode, gameServiceId, growthPhase, totalGrowth, displayName, status
   - Sensitive: metadata (exclude from lifecycle events - it's opaque type-specific data)
@@ -300,7 +300,7 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | File | Action |
 |------|--------|
 | `schemas/seed-api.yaml` | Create (from planning doc draft, fix x-permissions) |
-| `schemas/seed-events.yaml` | Create (lifecycle + subscriptions + custom events) |
+| `schemas/seed-service-events.yaml` | Create (lifecycle + subscriptions + custom events) |
 | `schemas/seed-configuration.yaml` | Create |
 | `schemas/state-stores.yaml` | Modify (add 6 seed stores) |
 | `plugins/lib-seed/SeedService.cs` | Fill in (auto-generated template) |

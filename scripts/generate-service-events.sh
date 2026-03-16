@@ -15,9 +15,9 @@
 # NSwag parameters, post-processing steps, and file naming conventions.
 # ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
 
-# Generate service-specific event models from {service}-events.yaml files
+# Generate service-specific event models from {service}-service-events.yaml files
 # These models are placed in bannou-service/Generated/Events/ so all services can reference them
-# Also generates lifecycle event models (from x-lifecycle in *-events.yaml)
+# Also generates lifecycle event models (from x-lifecycle in *-service-events.yaml)
 # Excludes: *-client-events.yaml, common-events.yaml
 #
 # Usage: ./generate-service-events.sh [service-name]
@@ -47,7 +47,7 @@ require_nswag
 ensure_dotnet_root
 
 # Pre-process: Generate lifecycle event YAML schemas from x-lifecycle definitions
-# This reads x-lifecycle from *-events.yaml and produces schemas/Generated/*-lifecycle-events.yaml
+# This reads x-lifecycle from *-service-events.yaml and produces schemas/Generated/*-service-lifecycle-events.yaml
 # Must run before NSwag so the lifecycle YAML files exist for model generation
 log_info "Pre-processing: Generating lifecycle event schemas from x-lifecycle..."
 if python3 "$SCRIPT_DIR/generate-lifecycle-events.py"; then
@@ -78,9 +78,9 @@ GENERATED_COUNT=0
 FAILED_COUNT=0
 
 # Process each service-specific events yaml file
-for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
+for EVENTS_SCHEMA in ../schemas/*-service-events.yaml; do
     # Skip lifecycle events (auto-generated from x-lifecycle)
-    if [[ "$EVENTS_SCHEMA" == *"-lifecycle-events.yaml" ]]; then
+    if [[ "$EVENTS_SCHEMA" == *"-service-lifecycle-events.yaml" ]]; then
         continue
     fi
 
@@ -96,7 +96,7 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
 
     # Extract service name from filename
     FILENAME=$(basename "$EVENTS_SCHEMA")
-    SERVICE_NAME="${FILENAME%-events.yaml}"
+    SERVICE_NAME="${FILENAME%-service-events.yaml}"
 
     # Skip if a specific service was requested and this isn't it
     if [ -n "$REQUESTED_SERVICE" ] && [ "$SERVICE_NAME" != "$REQUESTED_SERVICE" ]; then
@@ -108,7 +108,7 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
     OUTPUT_FILE="${TARGET_DIR}/${SERVICE_PASCAL}EventsModels.cs"
 
     # Check if a resolved version exists (for schemas with complex cross-file refs)
-    RESOLVED_SCHEMA="../schemas/Generated/${SERVICE_NAME}-events-resolved.yaml"
+    RESOLVED_SCHEMA="../schemas/Generated/${SERVICE_NAME}-service-events-resolved.yaml"
     if [ -f "$RESOLVED_SCHEMA" ]; then
         SCHEMA_TO_PROCESS="$RESOLVED_SCHEMA"
         echo -e "${YELLOW}Generating ${SERVICE_PASCAL} events from ${FILENAME} (using resolved version)...${NC}"
@@ -197,7 +197,7 @@ for EVENTS_SCHEMA in ../schemas/*-events.yaml; do
     fi
 done
 
-# Generate lifecycle event C# models from schemas/Generated/*-lifecycle-events.yaml
+# Generate lifecycle event C# models from schemas/Generated/*-service-lifecycle-events.yaml
 # These were produced by generate-lifecycle-events.py in the pre-processing step above
 echo ""
 log_info "📡 Generating lifecycle event C# models"
@@ -205,13 +205,13 @@ log_info "📡 Generating lifecycle event C# models"
 LIFECYCLE_GENERATED_COUNT=0
 LIFECYCLE_FAILED_COUNT=0
 
-for LIFECYCLE_SCHEMA in ../schemas/Generated/*-lifecycle-events.yaml; do
+for LIFECYCLE_SCHEMA in ../schemas/Generated/*-service-lifecycle-events.yaml; do
     # Guard against no matches (glob returns literal pattern)
     [ -f "$LIFECYCLE_SCHEMA" ] || continue
 
-    # Extract service name from filename (e.g., "account-lifecycle-events.yaml" -> "account")
+    # Extract service name from filename (e.g., "account-service-lifecycle-events.yaml" -> "account")
     LIFECYCLE_FILENAME=$(basename "$LIFECYCLE_SCHEMA")
-    LIFECYCLE_SERVICE_NAME="${LIFECYCLE_FILENAME%-lifecycle-events.yaml}"
+    LIFECYCLE_SERVICE_NAME="${LIFECYCLE_FILENAME%-service-lifecycle-events.yaml}"
 
     # Skip if a specific service was requested and this isn't it
     if [ -n "$REQUESTED_SERVICE" ] && [ "$LIFECYCLE_SERVICE_NAME" != "$REQUESTED_SERVICE" ]; then

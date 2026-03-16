@@ -16,7 +16,7 @@
 # ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
 
 # Generate models (DTOs) from OpenAPI schema
-# Also generates lifecycle event models from {service}-lifecycle-events.yaml if present
+# Also generates lifecycle event models from {service}-service-lifecycle-events.yaml if present
 # Usage: ./generate-models.sh <service-name> [schema-file]
 
 set -e  # Exit on any error
@@ -156,7 +156,7 @@ else
 fi
 
 # Generate lifecycle event C# models if lifecycle events YAML exists
-# The YAML is produced by generate-lifecycle-events.py (from x-lifecycle in *-events.yaml)
+# The YAML is produced by generate-lifecycle-events.py (from x-lifecycle in *-service-events.yaml)
 # The shared function handles ref resolution, NSwag invocation, and post-processing
 if ! generate_lifecycle_event_models "$SERVICE_NAME"; then
     exit 1

@@ -19,7 +19,7 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 4.0.0
-  # NOTE: Event subscriptions and publications are in auth-events.yaml
+  # NOTE: Event subscriptions and publications are in auth-service-events.yaml
 x-service-layer: AppFoundation
 servers:
 - url: http://localhost:5012
@@ -1268,5 +1268,5 @@ components:
           type: string
           description: Revocation reason for audit trail
 
-    # NOTE: Event models (SessionInvalidatedEvent, SessionUpdatedEvent) are defined in auth-events.yaml
+    # NOTE: Event models (SessionInvalidatedEvent, SessionUpdatedEvent) are defined in auth-service-events.yaml
     # and generated separately. They are NOT part of the HTTP API.

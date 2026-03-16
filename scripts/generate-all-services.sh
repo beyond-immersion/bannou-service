@@ -120,7 +120,7 @@ else
 fi
 echo ""
 
-# Generate service-specific events ({service}-events.yaml files)
+# Generate service-specific events ({service}-service-events.yaml files)
 echo -e "${BLUE}📡 Generating service-specific events...${NC}"
 if ./generate-service-events.sh; then
     echo -e "${GREEN}✅ Service-specific events generated successfully${NC}"

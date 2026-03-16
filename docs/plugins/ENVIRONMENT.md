@@ -674,7 +674,7 @@ flows:
 ### Phase 1: Climate Template Infrastructure
 
 - Create `environment-api.yaml` schema with all endpoints
-- Create `environment-events.yaml` schema with `x-event-subscriptions` for all consumed events (worldstate.period-changed, worldstate.season-changed, worldstate.day-changed, location.created, location.updated). Note: `location.deleted` is NOT subscribed — cleanup is handled exclusively via lib-resource callbacks per FOUNDATION TENETS
+- Create `environment-service-events.yaml` schema with `x-event-subscriptions` for all consumed events (worldstate.period-changed, worldstate.season-changed, worldstate.day-changed, location.created, location.updated). Note: `location.deleted` is NOT subscribed — cleanup is handled exclusively via lib-resource callbacks per FOUNDATION TENETS
 - Create `environment-configuration.yaml` schema
 - Generate service code
 - Implement climate template CRUD (seed, get, list, update, deprecate, undeprecate, delete, bulk-seed)
