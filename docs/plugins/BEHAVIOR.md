@@ -5,8 +5,8 @@
 > **Version**: 3.0.0
 > **Layer**: GameFeatures
 > **State Store**: behavior-statestore (Redis), agent-memories (Redis, shared with lib-actor)
-> **Short**: ABML compiler (YAML to bytecode), A*-based GOAP planner, and 5-stage cognition pipeline
 > **Implementation Map**: [docs/maps/BEHAVIOR.md](../maps/BEHAVIOR.md)
+> **Short**: ABML compiler (YAML to bytecode), A*-based GOAP planner, and 5-stage cognition pipeline
 
 ---
 
@@ -471,26 +471,18 @@ Memory Relevance Scoring (Keyword-Based)
 
 ## Stubs & Unimplemented Features
 
-1. ~~**Bundle management partial**~~: **FIXED** (2026-03-08) - `BehaviorBundleManager` is fully implemented with 9 methods covering behavior recording, bundle membership tracking, asset bundle creation via lib-asset (L3 soft dependency), GOAP metadata caching, and all 3 bundle lifecycle event publications (created/updated/deleted). What remains unimplemented: no dedicated HTTP endpoints for bundle querying/listing, no bundle versioning, and no metabundle (merged super-bundle) support. These are tracked as Potential Extensions, not stubs.
-
-2. **Cinematic extension delivery**: The `CinematicExtensionAvailableEvent` schema and event model are defined but no code in lib-behavior actually publishes this event. The event model exists in generated code and `CinematicInterpreterTests.cs` references it, but the publishing path and the actual extension attachment to a running interpreter (matching `continuationPointName` to an active `ContinuationPoint` opcode) are not yet implemented.
+1. **Cinematic extension delivery**: The `CinematicExtensionAvailableEvent` schema and event model are defined but no code in lib-behavior actually publishes this event. The event model exists in generated code and `CinematicInterpreterTests.cs` references it, but the publishing path and the actual extension attachment to a running interpreter (matching `continuationPointName` to an active `ContinuationPoint` opcode) are not yet implemented.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/603 -->
 
-3. **Embedding-based memory store**: `IMemoryStore` interface is designed for swappable implementations. Only `ActorLocalMemoryStore` (keyword-based) exists. The embedding-based implementation for semantic similarity matching is documented as a future migration path in BEHAVIOR-SYSTEM.md section 7.5.
+2. **Embedding-based memory store**: `IMemoryStore` interface is designed for swappable implementations. Only `ActorLocalMemoryStore` (keyword-based) exists. The embedding-based implementation for semantic similarity matching is documented as a future migration path in BEHAVIOR-SYSTEM.md section 7.5.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/606 -->
 
-4. **GOAP plan persistence**: GOAP metadata (goals/actions) is stored per behavior in state (`goap-metadata:{behaviorId}` prefix) and used internally by `GenerateGoapPlanAsync`, but there is no external retrieval endpoint or plan result history query. The `GoapPlanGeneratedEvent` provides the analytics trail for generated plans.
+3. **GOAP plan persistence**: GOAP metadata (goals/actions) is stored per behavior in state (`goap-metadata:{behaviorId}` prefix) and used internally by `GenerateGoapPlanAsync`, but there is no external retrieval endpoint or plan result history query. The `GoapPlanGeneratedEvent` provides the analytics trail for generated plans.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/608 -->
 
-5. ~~**Compiler optimizations not wired**~~: **FIXED** (2026-03-08) - `BytecodeOptimizer` (3 peephole passes: push-pop elimination, duplicate constant optimization, constant folding) was fully implemented in `Codegen/BytecodeOptimizer.cs` but never called. Wired into `CompilationContext.Finalize()` — when `EnableOptimizations` is true, optimizer runs on emitted bytecode before model building. The `CompilationOptions.Release` preset now produces optimized bytecode as intended.
+4. ~~**Behavior Stack system (not DI-registered)**~~: **FIXED** (2026-03-15) - Investigation confirmed all three (`IIntentStackMerger`, `IBehaviorStackRegistry`, `ISituationalTriggerManager`) are auto-registered via `[BannouHelperService]` attributes with non-null `InterfaceType`, discovered by PluginLoader. Manual registration in `ConfigureServices()` was incorrectly added and then reverted — it would violate the `Plugins_ShouldNotManuallyRegisterAutoDiscoverableHelpers` structural test. The original stub was a documentation error — these classes were always DI-discoverable.
 
-6. ~~**Bundle lifecycle events not published**~~: **FIXED** (2026-03-08) - `BehaviorBundleManager` DOES publish all 3 bundle lifecycle events via generated `PublishBehaviorBundle*Async` extension methods: created in `AddToBundleAsync` (line 167), updated in `AddToBundleAsync`/`CreateAssetBundleAsync`/`RemoveBehaviorAsync`, deleted in `RemoveBehaviorAsync` when bundle becomes empty (line 360). The previous documentation was factually incorrect.
-
-7. ~~**Behavior Stack system (not DI-registered)**~~: **FIXED** (2026-03-08) - Registered `IIntentStackMerger`, `IBehaviorStackRegistry`, and `ISituationalTriggerManager` as Singletons in `BehaviorServicePlugin.ConfigureServices()`. The behavior stack subsystem (multi-layer intent composition with category-based priority merging) is now discoverable by the Actor runtime via DI.
-
-8. ~~**Cutscene Coordination system (not DI-registered)**~~: **FIXED** (2026-03-08) - Registered `ICutsceneCoordinator` as Singleton in `BehaviorServicePlugin.ConfigureServices()` with `ILoggerFactory` and `ITelemetryProvider` injection. `SyncPointManager` and `InputWindowManager` are per-session (created internally by `CutsceneSession`) and do not need DI registration. Note: coordinator uses in-memory `ConcurrentDictionary` for session state — Design Consideration #4 tracks the future requirement for Redis-backed distributed state when cinematics become active.
-
-9. ~~**Document Merger (not DI-registered)**~~: **FIXED** (2026-03-08) - Extracted `IDocumentMerger` interface, registered `DocumentMerger` as Singleton in `BehaviorServicePlugin.ConfigureServices()`. The class is stateless and thread-safe, making it suitable for Singleton lifetime. Consumers can now inject `IDocumentMerger` for compile-time behavior composition.
+5. ~~**Document Merger (not DI-registered)**~~: **FIXED** (2026-03-15) - Investigation confirmed `DocumentMerger` IS registered via `[BannouHelperService("document", typeof(IBehaviorService), typeof(IDocumentMerger), lifetime: ServiceLifetime.Singleton)]` auto-discovery by PluginLoader. Manual registration in `ConfigureServices()` is unnecessary and would violate the `Plugins_ShouldNotManuallyRegisterAutoDiscoverableHelpers` structural test. The original stub was a documentation error — the class was always DI-discoverable.
 
 ---
 
@@ -532,7 +524,10 @@ Memory Relevance Scoring (Keyword-Based)
 
 ### Bugs (Fix Immediately)
 
-1. ~~**violation: Bundle event topics use Pattern B (forbidden)**~~: **FIXED** — Changed 3 bundle topics in `behavior-events.yaml` from Pattern B (`behavior-bundle.{action}`) to Pattern C (`behavior.bundle.{action}`). Regeneration needed to update generated publisher.
+1. **State store key prefixes are configurable instead of const (Foundation Tenets)**: The configuration schema defines 5 key prefix properties (`BundleMembershipKeyPrefix`, `BehaviorMetadataKeyPrefix`, `GoapMetadataKeyPrefix`, `MemoryKeyPrefix`, `MemoryIndexKeyPrefix`) as runtime-configurable values. Per Foundation Tenets, state store key prefixes MUST be `private const string` fields — they are structural identifiers, not tunables. Changing a prefix at runtime orphans all existing stored data with no migration path. These should be hardcoded `const` strings in the service class with `Build*Key()` methods, not configuration properties. Remove from `behavior-configuration.yaml` and define as `private const string` fields per the canonical pattern.
+<!-- AUDIT:IN_PROGRESS:2026-03-16 -->
+
+2. **ContentHash field in BehaviorCompilationFailedEvent never populated**: The `ContentHash` field is defined in the `BehaviorCompilationFailedEvent` schema but is never populated by the code that publishes the event (in `CompileAbmlBehaviorAsync`). This is either dead schema (remove the field) or a missing implementation (populate with the SHA256 hash of the input ABML content). Either way, an event field that is always null/default violates schema-first expectations — the schema says the field exists, but consumers will never receive data in it.
 
 ### Intentional Quirks
 
@@ -576,23 +571,13 @@ Memory Relevance Scoring (Keyword-Based)
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Memory store loads up to DefaultMemoryLimit memories for relevance scoring**~~: **FIXED** (2026-03-08) - The original concern stated "older memories beyond the limit are never scored for relevance." This was misleading: eviction in `AddToMemoryIndexAsync` permanently deletes memories beyond `DefaultMemoryLimit` (both from the index and from the state store), so those "older memories" don't exist — they've been evicted (see Intentional Quirk #4). `FindRelevantAsync` actually loads ALL stored memories because the index is always capped at `DefaultMemoryLimit`. The real observation is that `DefaultMemoryLimit` serves as both storage cap and retrieval window — if someone wants to store 500 memories but only score the top 200 for performance, they cannot (both are the same config). This coupling is acceptable for the MVP keyword-based store; a future implementation could introduce a separate `MemoryRelevanceScanLimit` config property if needed.
-
-2. ~~**No plan cost upper bound**~~: **FIXED** (2026-03-08) - Added `MaxCostBound` property to `PlanningOptions` (nullable float, default null = no limit) and corresponding cost bound pruning in `GoapPlanner.PlanAsync()`. Nodes whose accumulated gCost exceeds the bound are skipped during A* expansion. Added `maxCostBound` to `GoapPlanningOptions` in the API schema and wired through `BehaviorService.GenerateGoapPlanAsync()`. Backward compatible — existing callers with no `maxCostBound` see no behavior change.
-
-3. **ValidateAbml runs full compilation pipeline**: The `/validate` endpoint calls `_compiler.CompileYaml()` which executes the entire pipeline including flow compilation and bytecode emission. The generated bytecode is discarded. This wastes CPU for validation-only requests - could use a validation-specific compiler path that stops after semantic analysis.
+1. **ValidateAbml runs full compilation pipeline**: The `/validate` endpoint calls `_compiler.CompileYaml()` which executes the entire pipeline including flow compilation and bytecode emission. The generated bytecode is discarded. This wastes CPU for validation-only requests - could use a validation-specific compiler path that stops after semantic analysis.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/624 -->
 
-4. ~~**ControlGateManager uses in-memory-only state**~~: **FIXED** (2026-03-08) - Reclassified as Intentional Quirk #15. Investigation confirmed the in-memory state is deliberately chosen: the cinematic coordination system has no API endpoints, so node-local state has no observable consequences. The migration path (Redis-backed `IControlGateRegistry`) is clear and straightforward when cinematics are exposed via API.
-
-5. ~~**VmConfig hardcoded limits not configurable**~~: **FIXED** (2026-03-08) - Investigation found no violation. Of the 5 listed constants: MaxRegisters (256) is a bytecode format constraint (byte-indexed register file, architectural maximum like "bits per byte" — exempt per IMPLEMENTATION TENETS mathematical constants exception); MaxJumpOffset (65535) is a 16-bit instruction encoding constraint (same exemption); MaxInstructions, MaxFunctionArgs, and MaxNestingDepth are dead code (defined in VmConfig but never referenced by any code). DefaultCacheSize (10000, used by behavior-expressions SDK) is in the exempt standalone SDK layer per FOUNDATION TENETS schema-first exceptions. MaxConstants and MaxStrings are already configurable via BehaviorServiceConfiguration.
-
-6. **GOAP planner returns null silently for multiple failure modes**: `PlanAsync` returns `null` without indicating cause when: (a) no actions available, (b) timeout exceeded, (c) cancellation requested, (d) node limit reached without finding goal. Callers cannot distinguish between "no valid plan exists" and "ran out of resources."
+2. **GOAP planner returns null silently for multiple failure modes**: `PlanAsync` returns `null` without indicating cause when: (a) no actions available, (b) timeout exceeded, (c) cancellation requested, (d) node limit reached without finding goal. Callers cannot distinguish between "no valid plan exists" and "ran out of resources."
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/625 -->
 
-7. ~~**Memory index update forces save after retry exhaustion**~~: **FIXED** (2026-03-09) - Reclassified as Intentional Quirk #17. Investigation confirmed the unconditional save fallback is an intentional safety valve: actor behavior loops are single-threaded (Quirk #13), making concurrent writes to the same entity's memory index extremely unlikely. In the rare case of contention (multi-node failover), losing one concurrent index entry is less harmful than silently dropping the memory entirely. Orphaned memory records have no functional impact (unreachable but bounded by memory limit eviction).
-
-8. **GOAP failure response discards actual search effort**: In `GenerateGoapPlanAsync`, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up." *(Same root cause as DC #6 — tracked together.)*
+3. **GOAP failure response discards actual search effort**: In `GenerateGoapPlanAsync`, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up." *(Same root cause as DC #2 — tracked together.)*
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/625 -->
 
 ---
@@ -1071,23 +1056,14 @@ flows:
 
 ### Completed
 
-- **2026-03-08**: Fixed stale documentation for Stub #1 (Bundle management partial) and Stub #6 (Bundle lifecycle events not published). Both were factually incorrect — `BehaviorBundleManager` is fully implemented with event publishing. Updated Published Events table to remove incorrect "not yet published" annotations. Fixed GOAP topic typo (`behavior.goap.plan-generated` → `behavior.goap-plan-generated`). Added bug for Pattern B topic naming in bundle events.
-- **2026-03-08**: Wired `BytecodeOptimizer` into `CompilationContext.Finalize()` (Stub #5). The optimizer was fully implemented but never called — added conditional invocation when `EnableOptimizations` is true. Updated Potential Extension #1 to reflect that 3 peephole passes already exist.
-- **2026-03-08**: Registered Behavior Stack subsystem in DI (Stub #7). Added `IIntentStackMerger`, `IBehaviorStackRegistry`, and `ISituationalTriggerManager` as Singletons in `BehaviorServicePlugin.ConfigureServices()`. The subsystem was complete but inactive due to missing DI registrations.
-- **2026-03-08**: Registered `ICutsceneCoordinator` as Singleton in DI (Stub #8). The cutscene coordination subsystem was complete but undiscoverable due to missing DI registration. `SyncPointManager` and `InputWindowManager` are per-session and don't need DI registration.
-- **2026-03-08**: Extracted `IDocumentMerger` interface and registered `DocumentMerger` as Singleton in DI (Stub #9). The document merger was complete but had no interface and no DI registration, making it undiscoverable for compile-time behavior composition.
-- **2026-03-08**: Audit pass — added AUDIT:NEEDS_DESIGN markers to Potential Extensions #7-#10 (bytecode version contract, GOAP WorldState external data, ABML template inheritance, ABML economic action handlers). All reference existing open GitHub issues. Enriched PE #7 description with investigation findings: header infrastructure already exists (`BehaviorModelHeader` with magic bytes and `CurrentVersion = 1`) but interpreter performs no version validation.
-- **2026-03-08**: Fixed misleading Design Consideration #1 (memory store relevance scoring). The original text implied "older memories beyond the limit are never scored" — investigation confirmed those memories don't exist (eviction permanently deletes them per Quirk #4). Reframed to accurately describe the storage/retrieval limit coupling.
-- **2026-03-08**: Added `MaxCostBound` to GOAP planner (Design Consideration #2). Added nullable float property to `PlanningOptions`, cost bound pruning in `GoapPlanner.PlanAsync()`, `maxCostBound` field to `GoapPlanningOptions` API schema, and wired through `BehaviorService.GenerateGoapPlanAsync()`. Backward compatible.
-- **2026-03-08**: Reclassified Design Consideration #4 (ControlGateManager in-memory state) as Intentional Quirk #15. Investigation confirmed the in-memory state is deliberate: cinematic coordination has no API endpoints, so node-local state has no observable consequences. Migration path (Redis-backed `IControlGateRegistry`) is clear for when cinematics are externally exposed.
-- **2026-03-08**: Resolved Design Consideration #5 (VmConfig hardcoded limits). Investigation found no violation: MaxRegisters and MaxJumpOffset are bytecode format architectural constraints (exempt as mathematical constants); MaxInstructions, MaxFunctionArgs, MaxNestingDepth are dead code (defined but never referenced); DefaultCacheSize is in the exempt SDK layer; MaxConstants and MaxStrings are already configurable.
-- **2026-03-09**: Reclassified Design Consideration #7 (memory index unconditional save fallback) as Intentional Quirk #17. Investigation of `ActorLocalMemoryStore.AddToMemoryIndexAsync` (lines 271-352) confirmed the unconditional save fallback is an intentional safety valve: actor behavior loops are single-threaded (Quirk #13), making concurrent writes extremely unlikely; losing one concurrent index entry on fallback is less harmful than dropping the memory entirely.
+- **2026-03-15**: Maintenance pass — processed 12 strikethrough FIXED items via code verification agent. Confirmed 10 of 12; restored 2 as active stubs (Behavior Stack DI registration and Document Merger DI registration are NOT present in BehaviorServicePlugin.cs despite prior FIXED claims). Deleted all confirmed items. Added 2 new bugs: configurable key prefixes (Foundation Tenets violation) and unpopulated ContentHash field. Verified all 14 linked GitHub issues — all remain OPEN.
+- **2026-03-15**: Audit pass — investigated Stub #4 (Behavior Stack) and Stub #5 (Document Merger). Both were false gaps: all four classes (`IntentStackMerger`, `BehaviorStackRegistry`, `SituationalTriggerManager`, `DocumentMerger`) have `[BannouHelperService]` attributes with non-null `InterfaceType`, making them auto-registered by PluginLoader. Reverted incorrectly-added manual registrations from the previous audit (would have violated `Plugins_ShouldNotManuallyRegisterAutoDiscoverableHelpers` structural test).
 
 ### AUDIT Markers
 
-- **Stub #2**: Cinematic extension delivery — NEEDS_DESIGN (#603)
-- **Stub #3**: Embedding-based memory store — NEEDS_DESIGN (#606)
-- **Stub #4**: GOAP plan persistence — NEEDS_DESIGN (#608)
+- **Stub #1**: Cinematic extension delivery — NEEDS_DESIGN (#603)
+- **Stub #2**: Embedding-based memory store — NEEDS_DESIGN (#606)
+- **Stub #3**: GOAP plan persistence — NEEDS_DESIGN (#608)
 - **PE #1**: Additional optimizer passes — NEEDS_DESIGN (#617)
 - **PE #2**: Hot-reload — NEEDS_DESIGN (#618)
 - **PE #3**: Plan visualization endpoint — NEEDS_DESIGN (#619)
@@ -1098,8 +1074,8 @@ flows:
 - **PE #8**: GOAP WorldState external data — NEEDS_DESIGN (#148)
 - **PE #9**: ABML template inheritance — NEEDS_DESIGN (#384)
 - **PE #10**: ABML economic action handlers — NEEDS_DESIGN (#428)
-- **DC #3**: ValidateAbml runs full compilation pipeline — NEEDS_DESIGN (#624)
-- **DC #6 + DC #8**: GOAP planner silent failure modes + discarded search effort — NEEDS_DESIGN (#625)
+- **DC #1**: ValidateAbml runs full compilation pipeline — NEEDS_DESIGN (#624)
+- **DC #2 + DC #3**: GOAP planner silent failure modes + discarded search effort — NEEDS_DESIGN (#625)
 
 ### Implementation Gaps
 

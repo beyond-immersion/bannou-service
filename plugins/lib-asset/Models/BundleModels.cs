@@ -95,7 +95,7 @@ public sealed class BundleMetadata
     /// <summary>
     /// Informational field recording who created this bundle. Not used for access control.
     /// </summary>
-    public string? CreatedBy { get; init; }
+    public required string CreatedBy { get; init; }
 
     /// <summary>
     /// Provenance data for metabundles - tracks which source bundles were composed.
@@ -388,7 +388,7 @@ public sealed class BundleUploadSession
     /// <summary>
     /// Informational field recording who initiated this upload. Not used for access control.
     /// </summary>
-    public string? CreatedBy { get; init; }
+    public required string CreatedBy { get; init; }
 
     /// <summary>
     /// When the session was created.

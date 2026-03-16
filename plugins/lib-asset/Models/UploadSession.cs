@@ -34,7 +34,7 @@ public sealed class UploadSession
     /// <summary>
     /// Informational field recording who initiated this upload. Not used for access control.
     /// </summary>
-    public string? CreatedBy { get; set; }
+    public required string CreatedBy { get; set; }
 
     /// <summary>
     /// Storage key where the file will be stored in MinIO.

@@ -16,7 +16,7 @@
 | Endpoints | 9 (9 generated) |
 | State Stores | analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history-data (MySQL) |
 | Events Published | 4 (`analytics.score.updated`, `analytics.rating.updated`, `analytics.milestone.reached`, `analytics.controller.recorded`) |
-| Events Consumed | 11 |
+| Events Consumed | 12 |
 | Client Events | 0 |
 | Background Services | 1 (ControllerHistoryCleanupWorker) |
 
@@ -39,19 +39,19 @@
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `{gameServiceId}:{entityType}:{entityId}` | `EntitySummaryData` | Entity summary aggregations (event counts, aggregates, timestamps) |
+| `analytics-entity:{gameServiceId}:{entityType}:{entityId}` | `EntitySummaryData` | Entity summary aggregations (event counts, aggregates, timestamps) |
 
 **Store**: `analytics-rating` (Backend: Redis)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `{gameServiceId}:{ratingType}:{entityType}:{entityId}` | `SkillRatingData` | Glicko-2 skill rating data per entity per rating type |
+| `analytics-rating:{gameServiceId}:{ratingType}:{entityType}:{entityId}` | `SkillRatingData` | Glicko-2 skill rating data per entity per rating type |
 
 **Store**: `analytics-history-data` (Backend: MySQL)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `{gameServiceId}:controller:{accountId}:{timestamp:o}` | `ControllerHistoryData` | Individual controller possession/release history events |
+| `analytics-controller:{gameServiceId}:{accountId}:{timestamp:o}` | `ControllerHistoryData` | Individual controller possession/release history events |
 
 ---
 
@@ -90,7 +90,7 @@
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `game-session.action.performed` | `HandleGameActionPerformedAsync` | Resolves session→gameService, buffers event as EntityType.Custom with Value=1 |
+| `game-session.action.performed` | `HandleGameActionPerformedAsync` | Resolves session→gameService, buffers event as EntityType.Other with Value=1 |
 | `game-session.created` | `HandleGameSessionCreatedAsync` | Resolves gameType→gameService, saves session mapping, buffers "session.created" event |
 | `game-session.deleted` | `HandleGameSessionDeletedAsync` | Removes session mapping, resolves gameType→gameService, buffers "session.deleted" event |
 | `character-history.participation.recorded` | `HandleCharacterParticipationRecordedAsync` | Resolves character→realm→gameService (two-hop, cached), buffers event with Value=1 |
@@ -101,6 +101,7 @@
 | `realm-history.lore.updated` | `HandleRealmLoreUpdatedAsync` | Resolves realm→gameService, buffers event with Value=ElementCount |
 | `character.updated` | `HandleCharacterUpdatedForCacheInvalidationAsync` | Deletes character-to-realm cache entry (best-effort, exceptions swallowed) |
 | `realm.updated` | `HandleRealmUpdatedForCacheInvalidationAsync` | Deletes realm-to-gameService cache entry (best-effort, exceptions swallowed) |
+| `account.deleted` | `HandleAccountDeletedAsync` | Deletes controller history records for the account (query by $.AccountId), deletes entity summaries where entityType=Account. Redis skill ratings explicitly skipped (no partial-key query available; account-typed ratings are rare and harmless if orphaned). Per-item error isolation, telemetry span, error event publishing. |
 
 All history event handlers follow fail-fast: if game service resolution fails, the event is dropped permanently with error event publication. Incorrect GameServiceId is considered worse than missing data.
 
@@ -118,7 +119,7 @@ All history event handlers follow fail-fast: if game service resolution fails, t
 | `IDistributedLockProvider` | Buffer flush lock and rating update lock |
 | `IMessageBus` | Event publishing and error reporting |
 | `ITelemetryProvider` | Span instrumentation |
-| `IEventConsumer` | Registers 11 event subscriptions (not stored as field) |
+| `IEventConsumer` | Registers 12 event subscriptions (not stored as field) |
 | `IGameServiceClient` | Game type stub→ID resolution |
 | `IGameSessionClient` | Session→game type fallback resolution |
 | `IRealmClient` | Realm→game service ID resolution |
@@ -179,7 +180,7 @@ RETURN (200, IngestEventBatchResponse { Accepted, Rejected, Errors })
 POST /analytics/summary/get | Roles: [admin]
 
 ```
-READ summary-data:{gameServiceId}:{entityType}:{entityId}       -> 404 if null
+READ summary-data:analytics-entity:{gameServiceId}:{entityType}:{entityId}  -> 404 if null
 RETURN (200, EntitySummaryResponse)
 ```
 
@@ -204,7 +205,7 @@ RETURN (200, QueryEntitySummariesResponse { Summaries, Total })
 POST /analytics/rating/get | Roles: [admin]
 
 ```
-READ rating:{gameServiceId}:{ratingType}:{entityType}:{entityId}
+READ rating:analytics-rating:{gameServiceId}:{ratingType}:{entityType}:{entityId}
 IF null
   // Returns 200 with defaults, never 404
   RETURN (200, SkillRatingResponse { defaults from config, MatchesPlayed=0 })
@@ -221,7 +222,7 @@ LOCK analytics-rating:"rating-update:{gameServiceId}:{ratingType}"
 
   // Pass 1: load all current ratings (or synthesize defaults)
   FOREACH result IN request.Results
-    READ rating:{gameServiceId}:{ratingType}:{entityType}:{entityId}
+    READ rating:analytics-rating:{gameServiceId}:{ratingType}:{entityType}:{entityId}
     // If null, create default from config
 
   // Snapshot pre-match values for opponent lookups
@@ -235,7 +236,7 @@ LOCK analytics-rating:"rating-update:{gameServiceId}:{ratingType}"
 
   // Pass 3: save all updated ratings
   FOREACH calculated result
-    WRITE rating:{gameServiceId}:{ratingType}:{entityType}:{entityId} <- updated SkillRatingData
+    WRITE rating:analytics-rating:{gameServiceId}:{ratingType}:{entityType}:{entityId} <- updated SkillRatingData
 
   // Pass 4: publish events (still under lock)
   FOREACH calculated result
@@ -248,7 +249,7 @@ RETURN (200, UpdateSkillRatingResponse { UpdatedRatings })
 POST /analytics/controller-history/record | Roles: []
 
 ```
-WRITE history-data:{gameServiceId}:controller:{accountId}:{timestamp:o} <- ControllerHistoryData from request
+WRITE history-data:analytics-controller:{gameServiceId}:{accountId}:{timestamp:o} <- ControllerHistoryData from request
 PUBLISH analytics.controller.recorded { GameServiceId, AccountId, TargetEntityId, TargetEntityType, Action, SessionId }
 RETURN (200, null)
 ```
@@ -289,7 +290,7 @@ WHILE totalDeleted < config.ControllerHistoryCleanupBatchSize
   QUERY history-data WHERE conditions PAGED(0, config.ControllerHistoryCleanupSubBatchSize)
   IF batch empty: BREAK
   FOREACH item IN batch
-    DELETE history-data:{item.Key}
+    DELETE history-data:analytics-controller:{item.Key}
     totalDeleted++
 RETURN (200, CleanupControllerHistoryResponse { RecordsDeleted=totalDeleted })
 ```
@@ -310,11 +311,11 @@ LOOP
     READ buffer-entry:{entryKey}
   // Group events by entity key ({gameServiceId}:{entityType}:{entityId})
   FOREACH entityGroup
-    READ summary-data:{entityKey} [with ETag]
+    READ summary-data:analytics-entity:{entityKey} [with ETag]
     // Accumulate all events into summary (counts, aggregates, timestamps)
     FOREACH evt IN group with Value
       // Record score update for later event publication
-    ETAG-WRITE summary-data:{entityKey} <- updated summary
+    ETAG-WRITE summary-data:analytics-entity:{entityKey} <- updated summary
       -> IF ETag mismatch (409): skip entire entity batch (retry next flush)
     // On successful save:
     FOREACH score event in group
@@ -357,7 +358,7 @@ ExecuteAsync:
         batch = QUERY historyDataQueryStore WHERE conditions PAGED(0, config.ControllerHistoryCleanupSubBatchSize)
         IF batch empty: BREAK
         FOREACH item IN batch:
-          DELETE historyDataStore:{item.Key}
+          DELETE historyDataStore:analytics-controller:{item.Key}
           totalDeleted++
       LOG Information "Cleanup completed: {DeletedCount} records deleted"
     CATCH OperationCanceledException when stopping: BREAK

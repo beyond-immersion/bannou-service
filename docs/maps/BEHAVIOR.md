@@ -39,7 +39,7 @@
 | `memory:{entityId}:{memoryId}` | `Memory` | Individual memory entries per actor |
 | `memory-index:{entityId}` | `List<string>` | Memory ID index for per-entity retrieval and eviction |
 
-Key prefixes are configurable via `BehaviorServiceConfiguration` properties (`BehaviorMetadataKeyPrefix`, `BundleMembershipKeyPrefix`, `GoapMetadataKeyPrefix`, `MemoryKeyPrefix`, `MemoryIndexKeyPrefix`). All five stores in `BehaviorBundleManager` resolve from `StateStoreDefinitions.Behavior`; the two stores in `ActorLocalMemoryStore` resolve from `StateStoreDefinitions.AgentMemories`.
+Key prefixes are `private const string` fields with `internal static Build*Key()` methods per Foundation Tenets. `BehaviorBundleManager` owns 3 prefixes (`BEHAVIOR_METADATA_PREFIX`, `BUNDLE_MEMBERSHIP_PREFIX`, `GOAP_METADATA_PREFIX`) for `StateStoreDefinitions.Behavior`. `ActorLocalMemoryStore` owns 2 prefixes (`MEMORY_PREFIX`, `MEMORY_INDEX_PREFIX`) for `StateStoreDefinitions.AgentMemories`.
 
 ---
 
@@ -91,7 +91,7 @@ This plugin does not consume external events.
 | Service | Role |
 |---------|------|
 | `ILogger<BehaviorService>` | Structured logging |
-| `BehaviorServiceConfiguration` | All 34 config properties (urgency, attention, memory, compiler, key prefixes) |
+| `BehaviorServiceConfiguration` | All 29 config properties (urgency, attention, memory, compiler — key prefixes removed, now const fields in BehaviorBundleManager/ActorLocalMemoryStore) |
 | `IMessageBus` | Event publishing |
 | `IEventConsumer` | Event consumer registration (no handlers registered — empty body) |
 | `IGoapPlanner` | A* GOAP planning and plan validation (Singleton, stateless) |

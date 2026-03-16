@@ -430,7 +430,7 @@ public sealed class AssetProcessingWorker : BackgroundService
             using var scope = _serviceProvider.CreateScope();
             var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
             var assetStore = stateStoreFactory.GetStore<AssetMetadata>(StateStoreDefinitions.Asset);
-            var orchestratorClient = scope.ServiceProvider.GetRequiredService<IOrchestratorClient>();
+            var orchestratorClient = scope.ServiceProvider.GetService<IOrchestratorClient>();
 
             // Create processing context from dispatched event
             var context = new AssetProcessingContext
@@ -440,8 +440,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 ContentType = job.ContentType,
                 SizeBytes = job.SizeBytes,
                 Filename = job.Filename ?? job.AssetId,
-                OwnerType = job.OwnerType,
-                OwnerId = job.OwnerId,
+                CreatedBy = job.CreatedBy,
                 RealmId = job.RealmId,
                 Tags = job.Tags as IReadOnlyDictionary<string, string>
                     ?? job.Tags?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
@@ -454,8 +453,8 @@ public sealed class AssetProcessingWorker : BackgroundService
             // Update asset metadata with processing results
             await UpdateAssetMetadataAsync(assetStore, job.AssetId, result, cancellationToken);
 
-            // Release the processor lease
-            if (job.LeaseId.HasValue)
+            // Release the processor lease (L3 soft dependency — Orchestrator may not be enabled)
+            if (job.LeaseId.HasValue && orchestratorClient != null)
             {
                 await ReleaseProcessorLeaseAsync(orchestratorClient, job.LeaseId.Value, result.Success, cancellationToken);
             }
@@ -492,8 +491,9 @@ public sealed class AssetProcessingWorker : BackgroundService
                 // Resolve a fresh scope for the error path since the original scope
                 // may have been disposed if the exception occurred during processing
                 using var errorScope = _serviceProvider.CreateScope();
-                var orchestratorClient = errorScope.ServiceProvider.GetRequiredService<IOrchestratorClient>();
-                await ReleaseProcessorLeaseAsync(orchestratorClient, job.LeaseId.Value, false, cancellationToken);
+                var orchestratorClient = errorScope.ServiceProvider.GetService<IOrchestratorClient>();
+                if (orchestratorClient != null)
+                    await ReleaseProcessorLeaseAsync(orchestratorClient, job.LeaseId.Value, false, cancellationToken);
             }
 
             // Emit failure event

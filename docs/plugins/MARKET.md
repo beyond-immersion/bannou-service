@@ -391,6 +391,75 @@ The SupplyDemandSnapshotWorker optionally queries Disposition's `FindByDrive` en
 
 ---
 
+## Item Data Provider Pattern (Trade-Site Search)
+
+### The Problem
+
+Trade-site-style queries ("find all items with +90 life and +30 fire res") require searchable item property data that lives in multiple L4 services. Affix data is in lib-affix. Socket data would be in lib-socket. Active enchantment data could be in lib-status. Building a denormalized copy of each service's data in lib-market violates the ownership principle and creates synchronization burdens.
+
+### The Solution: `IMarketItemDataProvider`
+
+lib-market defines an `IMarketItemDataProvider` DI provider interface in `bannou-service/Providers/`. Any L4 service that has searchable item data implements and registers it. Market discovers all implementations via `IEnumerable<IMarketItemDataProvider>` constructor injection.
+
+This follows the established Variable Provider Factory pattern (IVariableProviderFactory for Actor, IPrerequisiteProviderFactory for Quest, ITransitCostModifierProvider for Transit) but applied to L4→L4 peer communication. The L4→L4 precedent exists: lib-obligation (L4) already uses `IVariableProviderFactory` to pull character-personality (L4) data without injecting `ICharacterPersonalityClient`.
+
+### How It Works
+
+**Interface** (in `bannou-service/Providers/`):
+```
+IMarketItemDataProvider:
+  ProviderName: string        # Data domain (e.g., "affix", "socket", "status")
+  GetItemDataAsync(itemInstanceId, ct) -> MarketItemData?
+  FilterItemsAsync(filterCriteria, itemInstanceIds, ct) -> filteredIds
+  GetSearchableProperties() -> PropertyDescriptor[]  # Advertises what fields are filterable
+```
+
+**Registration** (by implementing services):
+```
+// In lib-affix plugin registration
+services.AddSingleton<IMarketItemDataProvider, AffixMarketDataProvider>();
+```
+
+**Consumption** (by lib-market):
+```
+// In Market's auction search
+var providers = _itemDataProviders;  // IEnumerable<IMarketItemDataProvider> from constructor
+foreach (var provider in providers)
+{
+    // Ask each provider to filter the candidate set by stat criteria
+    candidateIds = await provider.FilterItemsAsync(statFilters, candidateIds, ct);
+}
+```
+
+### Co-location Guarantee
+
+When both lib-affix and lib-market are enabled, they run in the same process on every node (Bannou monoservice architecture). The provider call is **in-process** — no network hop, no serialization. The provider implementation reads from lib-affix's own state stores (MySQL + Redis cache), which are distributed state. This is "eventual consistency via state store" — Market never maintains a copy of affix data; it reads affix's authoritative stores through the provider on demand.
+
+### Cache Ownership
+
+Cache ownership stays with the implementing service:
+- lib-affix's `AffixMarketDataProvider` uses `VariableProviderCacheBucket` with data loaded from affix's own Redis/MySQL stores
+- Cache invalidation happens via lib-affix's own event subscription (`affix.modifier.applied/removed` events via `IEventConsumer`)
+- lib-market never stores, caches, or indexes affix data — it calls the provider per search request
+
+### Graceful Degradation
+
+If lib-affix is not loaded (deployment without affix support), no `IMarketItemDataProvider` with `ProviderName: "affix"` is registered. Market's auction search still works — items are searchable by template category, price, rarity, and any other non-affix properties. Stat-based filtering simply isn't available. This is identical to how Actor handles missing variable providers.
+
+### Future Data Providers
+
+The interface is designed for multiple contributors:
+
+| Provider | Service | Data Domain | Filterable Properties |
+|----------|---------|-------------|----------------------|
+| `AffixMarketDataProvider` | lib-affix (L4) | `"affix"` | Stat codes, stat values, slot types, mod groups, effective rarity, tier |
+| `SocketMarketDataProvider` | lib-socket (L4, future) | `"socket"` | Socket count, linked socket groups, gem types |
+| `StatusMarketDataProvider` | lib-status (L4, future) | `"status"` | Active enchantments, temporary effects |
+
+Each provider independently advertises its filterable properties via `GetSearchableProperties()`, and Market's search API dynamically supports whatever data providers are registered — no schema changes needed when a new provider is added.
+
+---
+
 ## Dependencies (What This Plugin Relies On)
 
 ### Hard Dependencies (constructor injection -- crash if missing)
@@ -418,6 +487,12 @@ The SupplyDemandSnapshotWorker optionally queries Disposition's `FindByDrive` en
 | lib-hearsay (`IHearsayClient`) | Belief saturation as demand reducer for information items (queries `GetBeliefSaturation` to assess whether knowledge is already known locally) | Information items valued equally regardless of local knowledge saturation |
 | lib-trade (`ITradeClient`) | Shipment flow data for supply/demand snapshots (inbound/outbound rates) | Shipment rates are 0.0; supply/demand uses only local production/consumption |
 | lib-worldstate (`IWorldstateClient`) | Game-time queries for rolling average computation and seasonal production pattern detection | Rolling averages use real-time approximation instead of game-time windows |
+
+### DI Provider Dependencies (discovered via `IEnumerable<T>`)
+
+| Interface | Direction | Purpose | Behavior When No Implementations |
+|-----------|-----------|---------|----------------------------------|
+| `IMarketItemDataProvider` | L4→L4 (pull) | Market discovers item data providers that contribute searchable/filterable item properties for trade-site-style queries. Each provider serves a named data domain (e.g., `"affix"`, `"socket"`, `"status"`). See "Item Data Provider Pattern" section below. | Auction search works but without stat-based filtering — items are searchable by template category, price, and rarity only. |
 
 ---
 
@@ -1126,5 +1201,8 @@ Before lib-market implementation:
 | [#428](https://github.com/beyond-immersion/bannou-service/issues/428) | ABML Economic Action Handlers | Open | Prerequisite -- NPC brains need ABML action handlers to interact with economy |
 | [#429](https://github.com/beyond-immersion/bannou-service/issues/429) | Analytics: Economic Velocity & Distribution Extensions | Open | Extension -- analytics integration for economic health metrics |
 | [#147](https://github.com/beyond-immersion/bannou-service/issues/147) | Implement Phase 2 Variable Providers (Currency, Inventory, Relationship) | Open | Required for NPC social bond awareness in vendor GOAP |
+
+**Audit History**:
+- **2026-03-16**: Issue #589: Trade index ownership resolved — lib-market owns. Added `IMarketItemDataProvider` DI provider pattern section. lib-affix implements the provider, reading from its own state stores (co-located, no network hop). Market never stores affix data. Graceful degradation when lib-affix absent.
 
 See also [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.

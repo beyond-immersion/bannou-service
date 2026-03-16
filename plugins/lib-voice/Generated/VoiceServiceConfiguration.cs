@@ -85,10 +85,10 @@ public class VoiceServiceConfiguration : BaseServiceConfiguration
     public int ScaledMaxParticipants { get; set; } = 100;
 
     /// <summary>
-    /// Comma-separated list of STUN server URLs for WebRTC
+    /// List of STUN server URLs for WebRTC (comma-separated in env var)
     /// Environment variable: VOICE_STUN_SERVERS
     /// </summary>
-    public string StunServers { get; set; } = "stun:stun.l.google.com:19302";
+    public string[] StunServers { get; set; } = ["stun:stun.l.google.com:19302"];
 
     /// <summary>
     /// Salt for SIP password generation. Required only when ScaledTierEnabled=true - service fails fast if missing when scaled tier is enabled.

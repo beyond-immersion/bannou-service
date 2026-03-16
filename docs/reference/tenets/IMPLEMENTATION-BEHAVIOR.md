@@ -694,7 +694,7 @@ Every Category B entity MUST satisfy ALL of the following. Use `lib-item` (Item 
 | # | Requirement | Notes |
 |---|-------------|-------|
 | B10 | `x-lifecycle` block defines the entity model with `deprecation: true` | Include all event-relevant fields; deprecation fields are auto-injected |
-| B10a | `instanceEntity` declared on the deprecatable entity | Names the x-lifecycle entity (in the same file) representing instances of this template. Required for clean-deprecated instance count checks. Structural test: `DeprecatableEntities_MustDeclareInstanceEntity` |
+| B10a | `instanceEntity` declared on the deprecatable entity | Names the x-lifecycle entity (in the same file) representing instances of this template. Required for clean-deprecated instance count checks. Structural test: `DeprecatableEntities_MustDeclareInstanceEntity`. **Does not require 1:many** — for many:many relationships (e.g., instance records with embedded slots referencing multiple templates), name the lifecycle entity containing the references, not the embedded sub-entity. See SCHEMA-RULES.md § `instanceEntity` |
 | B10b | The named instance entity is itself an x-lifecycle entity in the same events file | Guarantees the instance type has full CRUD lifecycle events including `*.deleted`, which is required for reverse-index instance tracking |
 | B11 | `x-event-publications` lists `{service}.{entity}.created`, `{service}.{entity}.updated`, and `{service}.{entity}.deleted` | Use dot-separated Pattern C topic naming (T16). The `*.deleted` entry is unused infrastructure — note this in the description |
 | B12 | `*.updated` description mentions "including deprecation via changedFields" | Deprecation is a field change on the updated event, not a separate event |

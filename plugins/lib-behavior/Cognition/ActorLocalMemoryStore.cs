@@ -50,7 +50,8 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     private readonly ILogger<ActorLocalMemoryStore> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
 
-    // Store name and key prefixes now come from configuration
+    private const string MEMORY_PREFIX = "memory:";
+    private const string MEMORY_INDEX_PREFIX = "memory-index:";
 
     /// <summary>
     /// Creates a new actor-local memory store.
@@ -263,11 +264,11 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
 
     #region Helper Methods
 
-    private string BuildMemoryKey(string entityId, string memoryId)
-        => $"{_configuration.MemoryKeyPrefix}{entityId}:{memoryId}";
+    internal static string BuildMemoryKey(string entityId, string memoryId)
+        => $"{MEMORY_PREFIX}{entityId}:{memoryId}";
 
-    private string BuildMemoryIndexKey(string entityId)
-        => $"{_configuration.MemoryIndexKeyPrefix}{entityId}";
+    internal static string BuildMemoryIndexKey(string entityId)
+        => $"{MEMORY_INDEX_PREFIX}{entityId}";
 
     /// <summary>
     /// Adds a memory ID to the entity's memory index with optimistic concurrency.

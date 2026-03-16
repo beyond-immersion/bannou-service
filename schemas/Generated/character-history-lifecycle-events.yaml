@@ -1,0 +1,211 @@
+openapi: 3.0.4
+info:
+  title: Character History Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for character-history service.\nDO NOT EDIT - This file is completely
+    overwritten by generate-lifecycle-events.py.\nSource of truth: character-history-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ParticipationBatchEntry:
+      type: object
+      description: Single participation creation record within a batch event
+      additionalProperties: false
+      required: &id010
+      - participationId
+      - characterId
+      - historicalEventId
+      - role
+      - historicalEventName
+      - eventCategory
+      - significance
+      - createdAt
+      - updatedAt
+      properties:
+        participationId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for this participation record"
+        characterId: &id002
+          type: string
+          format: uuid
+          description: "Character who participated"
+        historicalEventId: &id003
+          type: string
+          format: uuid
+          description: "Historical event the character participated in"
+        role: &id004
+          $ref: ../character-history-api.yaml#/components/schemas/ParticipationRole
+          description: "Role the character played in the event"
+        historicalEventName: &id005
+          type: string
+          description: "Name of the historical event"
+        eventCategory: &id006
+          $ref: ../character-history-api.yaml#/components/schemas/EventCategory
+          description: "Category of the historical event"
+        significance: &id007
+          type: number
+          format: float
+          description: "How significant this event was for the character (0.0 to 1.0)"
+        createdAt: &id008
+          type: string
+          format: date-time
+          description: Timestamp when the participation was created
+        updatedAt: &id009
+          type: string
+          format: date-time
+          description: Timestamp when the participation was last updated
+    ParticipationBatchModifiedEntry:
+      type: object
+      description: Single participation modification record within a batch event
+      additionalProperties: false
+      required:
+      - participationId
+      - characterId
+      - historicalEventId
+      - role
+      - historicalEventName
+      - eventCategory
+      - significance
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        participationId: *id001
+        characterId: *id002
+        historicalEventId: *id003
+        role: *id004
+        historicalEventName: *id005
+        eventCategory: *id006
+        significance: *id007
+        createdAt: *id008
+        updatedAt: *id009
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ParticipationBatchDestroyedEntry:
+      type: object
+      description: Single participation destruction record within a batch event
+      additionalProperties: false
+      required: *id010
+      properties:
+        participationId: *id001
+        characterId: *id002
+        historicalEventId: *id003
+        role: *id004
+        historicalEventName: *id005
+        eventCategory: *id006
+        significance: *id007
+        createdAt: *id008
+        updatedAt: *id009
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for destruction
+    ParticipationBatchCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated participation created records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: character-history.participation.batch-created
+          description: 'Event type identifier: character-history.participation.batch-created'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipationBatchEntry'
+          description: Individual created records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-history
+        is_deletion: false
+    ParticipationBatchModifiedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated participation modified records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: character-history.participation.batch-modified
+          description: 'Event type identifier: character-history.participation.batch-modified'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipationBatchModifiedEntry'
+          description: Individual modified records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-history
+        is_deletion: false
+    ParticipationBatchDestroyedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated participation destroyed records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: character-history.participation.batch-destroyed
+          description: 'Event type identifier: character-history.participation.batch-destroyed'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipationBatchDestroyedEntry'
+          description: Individual destroyed records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-history
+        is_deletion: true

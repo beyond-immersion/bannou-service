@@ -14,10 +14,10 @@
 |-------|-------|
 | Plugin | lib-affix |
 | Layer | L4 GameFeatures |
-| Endpoints | 27 |
+| Endpoints | 28 |
 | State Stores | affix-definitions (MySQL), affix-implicit-mappings (MySQL), affix-instances (MySQL), affix-definition-cache (Redis), affix-instance-cache (Redis), affix-pool-cache (Redis), affix-lock (Redis) |
-| Events Published | 10 (affix.definition.created, affix.definition.updated, affix.instance.initialized, affix.modifier.applied, affix.modifier.removed, affix.modifier.rerolled, affix.instance.state-changed, affix.influence.changed, affix.batch.generated, affix.rarity.changed) |
-| Events Consumed | 2 (item.template.created, item.template.updated) |
+| Events Published | 13 (affix.definition.created, affix.definition.updated, affix.definition.deleted, affix.instance.batch-created, affix.instance.batch-modified, affix.instance.batch-destroyed, affix.modifier.applied, affix.modifier.removed, affix.modifier.rerolled, affix.instance.state-changed, affix.influence.changed, affix.batch.generated, affix.rarity.changed) |
+| Events Consumed | 3 (item.template.created, item.template.updated, seed.capability.updated) |
 | Client Events | 0 |
 | Background Services | 1 (OrphanReconciliationWorker) |
 
@@ -45,6 +45,7 @@
 |-------------|-----------|---------|
 | `inst:{itemInstanceId}` | `AffixInstanceModel` | Per-item affix state (slots, rolled values, states, influences, quality) |
 | `inst-game:{gameServiceId}` | `List<string>` | Index of all affix instance item IDs for a game service (cleanup) |
+| `inst-def:{definitionId}` | `List<string>` | Reverse index: itemInstanceIds referencing this definition (for clean-deprecated sweep instance check). Maintained by ApplyAffix (add) and RemoveAffix (remove). Many:many — see Design Consideration #1 in deep dive. |
 
 **Store**: `affix-definition-cache` (Backend: Redis)
 
@@ -91,27 +92,48 @@
 | lib-item (IItemClient) | L2 | Hard | Item existence validation, template lookups for base stats and item class resolution |
 | lib-game-service (IGameServiceClient) | L2 | Hard | Game service existence validation for definition scoping |
 | lib-inventory (IInventoryClient) | L2 | Hard | Equipment container queries for stat computation, socket container detection |
+| lib-seed (ISeedClient) | L2 | Hard | Seed type registration (OnRunningAsync), seed creation at InitializeItemAffixes, growth recording on affix operations |
 | lib-analytics (IAnalyticsClient) | L4 | Soft | Affix generation statistics for economy monitoring (graceful degradation if absent) |
 
 **DI Provider/Listener Interfaces**:
 - Implements `IItemInstanceDestructionListener` — receives in-process cleanup from lib-item (L2) when item instances are destroyed. High-frequency exception: deletes from MySQL and invalidates Redis cache (distributed state, multi-node safe). Orphan reconciliation worker provides durability guarantee.
+- Implements `ISeedEvolutionListener` — receives seed phase/capability change notifications for `"item-traits"` seeds. Filtered via `InterestedSeedTypes = { "item-traits" }`. On `OnCapabilitiesChangedAsync`: eagerly denormalizes new capability state into `AffixInstanceModel` (slot limits, effective rarity). Writes to distributed state (MySQL + Redis), so single-node dispatch is safe. Also subscribes to `seed.capability.updated` broadcast event via `IEventConsumer` for cross-node cache invalidation.
 - Implements `IVariableProviderFactory` — provides `${affix.*}` variable namespace to Actor (L2) behavior system for NPC item evaluation.
+- Implements `IMarketItemDataProvider` — provides searchable affix stat data to Market (L4) for trade-site-style queries. Reads from affix's own state stores (co-located, in-process). Cache invalidation via self-event-subscription on `affix.modifier.applied/removed`. `ProviderName: "affix"`. See MARKET.md § Item Data Provider Pattern.
 - Implements `ISeededResourceProvider` — `SourceType => "affix"` for game-service deletion cleanup via lib-resource (L1).
 
 ---
 
 ## Events Published
 
+**x-lifecycle schema guidance** (for `affix-events.yaml` when created):
+```yaml
+x-lifecycle:
+  topic_prefix: affix
+  AffixDefinition:
+    deprecation: true
+    instanceEntity: AffixInstance    # Category B: AffixInstance is the lifecycle entity
+    model: { definitionId, gameServiceId, code, slotType, modGroup, tier, ... }
+  AffixInstance:
+    batch: true                      # High-frequency: IItemInstanceDestructionListener cleanup
+    model: { itemInstanceId, gameServiceId, effectiveRarity, itemLevel, ... }
+```
+
+`AffixInstance` uses `batch: true` (same as `ItemInstance` — high-frequency entity with DI-listener cleanup at loot/combat/trading scale). Custom events below (`affix.modifier.applied`, etc.) are non-lifecycle domain events published alongside the batch lifecycle events.
+
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `affix.definition.created` | `AffixDefinitionCreatedEvent` | CreateDefinition (lifecycle) |
 | `affix.definition.updated` | `AffixDefinitionUpdatedEvent` | UpdateDefinition, DeprecateDefinition (lifecycle; changedFields includes deprecation fields) |
-| `affix.instance.initialized` | `AffixInstanceInitializedEvent` | InitializeItemAffixes |
-| `affix.modifier.applied` | `AffixModifierAppliedEvent` | ApplyAffix |
-| `affix.modifier.removed` | `AffixModifierRemovedEvent` | RemoveAffix |
-| `affix.modifier.rerolled` | `AffixModifierRerolledEvent` | RerollValues |
-| `affix.instance.state-changed` | `AffixInstanceStateChangedEvent` | SetItemState |
-| `affix.influence.changed` | `AffixInfluenceChangedEvent` | SetInfluence (meaningful state change must publish event) |
+| `affix.definition.deleted` | `AffixDefinitionDeletedEvent` | CleanDeprecatedDefinitions (lifecycle; published when clean-deprecated sweep permanently removes a deprecated definition with zero applied instances) |
+| `affix.instance.batch-created` | `AffixInstanceBatchCreatedEvent` | InitializeItemAffixes (batch lifecycle from `batch: true`) |
+| `affix.instance.batch-modified` | `AffixInstanceBatchModifiedEvent` | ApplyAffix, RemoveAffix, RerollValues, SetItemState, SetInfluence (batch lifecycle) |
+| `affix.instance.batch-destroyed` | `AffixInstanceBatchDestroyedEvent` | IItemInstanceDestructionListener cleanup (batch lifecycle) |
+| `affix.modifier.applied` | `AffixModifierAppliedEvent` | ApplyAffix (domain event, non-lifecycle) |
+| `affix.modifier.removed` | `AffixModifierRemovedEvent` | RemoveAffix (domain event, non-lifecycle) |
+| `affix.modifier.rerolled` | `AffixModifierRerolledEvent` | RerollValues (domain event, non-lifecycle) |
+| `affix.instance.state-changed` | `AffixInstanceStateChangedEvent` | SetItemState (domain event, non-lifecycle) |
+| `affix.influence.changed` | `AffixInfluenceChangedEvent` | SetInfluence (domain event, non-lifecycle) |
 | `affix.batch.generated` | `AffixBatchGeneratedEvent` | BatchGenerateAffixSets (deduped by source within configurable window) |
 | `affix.rarity.changed` | `AffixRarityChangedEvent` | ApplyAffix, RemoveAffix (only when effective rarity transitions) |
 
@@ -123,6 +145,7 @@
 |-------|---------|--------|
 | `item.template.created` | `HandleItemTemplateCreated` | Check if new template has implicit mappings; warm pool cache for template's category |
 | `item.template.updated` | `HandleItemTemplateUpdated` | Filter for changedFields containing isDeprecated; invalidate pool cache entries for deprecated template's category |
+| `seed.capability.updated` | `HandleSeedCapabilityUpdated` | Cross-node cache invalidation for affix instances whose seed capabilities changed. Complements the `ISeedEvolutionListener` (which only fires on the processing node). Invalidates `_instanceCache` for the affected item. |
 
 ---
 
@@ -145,7 +168,10 @@
 | `AffixPoolBuilder` | Internal helper: pool cache construction, weight computation |
 | `AffixStatComputer` | Internal helper: stat aggregation (base + affixes + quality + sockets) |
 | `AffixItemDestructionListener` | DI Listener: IItemInstanceDestructionListener implementation |
+| `ISeedClient` | Seed type registration (OnRunningAsync), seed creation, growth recording (L2) |
+| `AffixSeedEvolutionListener` | DI Listener: ISeedEvolutionListener for `"item-traits"` seed capability denormalization |
 | `AffixItemEvaluationProviderFactory` | DI Provider: IVariableProviderFactory for ${affix.*} namespace |
+| `AffixMarketDataProvider` | DI Provider: IMarketItemDataProvider for trade-site stat search (reads own stores, co-located) |
 
 ---
 
@@ -164,7 +190,7 @@
 | GetImplicitMapping | POST /affix/implicit/get | developer | - | - |
 | SeedImplicitMappings | POST /affix/implicit/seed | developer | implicit-mapping | - |
 | RollImplicits | POST /affix/implicit/roll | developer | - | - |
-| InitializeItemAffixes | POST /affix/initialize | [] | instance, instance-cache, instance-game-index | affix.instance.initialized |
+| InitializeItemAffixes | POST /affix/initialize | [] | instance, instance-cache, instance-game-index | (batch lifecycle) |
 | GetAffixInstance | POST /affix/instance/get | [] | - | - |
 | ApplyAffix | POST /affix/apply | [] | instance, instance-cache, stats-cache | affix.modifier.applied, affix.rarity.changed |
 | RemoveAffix | POST /affix/remove | [] | instance, instance-cache, stats-cache | affix.modifier.removed, affix.rarity.changed |
@@ -179,6 +205,7 @@
 | ComputeEquipmentStats | POST /affix/equipment/compute | [] | equip-cache | - |
 | CompareItems | POST /affix/item/compare | [] | - | - |
 | EstimateItemValue | POST /affix/item/estimate-value | [] | - | - |
+| CleanDeprecatedDefinitions | POST /affix/definition/clean-deprecated | admin | definition, def-code, def-cache, pool-cache | affix.definition.deleted |
 | CleanupByGameService | POST /affix/cleanup-by-game-service | [] | all stores | - |
 
 ---
@@ -358,10 +385,20 @@ POST /affix/initialize | Roles: []
 CALL IItemClient.GetItemInstanceAsync(itemInstanceId) -> 400 if not found
 READ _instanceStore:"inst:{itemInstanceId}" -> 409 if non-null (already initialized)
 // Construct AffixInstanceModel from request.affixSetData
+// Create "item-traits" seed for this item (deferred creation — no seed until first affix init)
+CALL ISeedClient.CreateSeedAsync({
+  seedTypeCode: configuration.ItemTraitsSeedTypeCode,  // default: "item-traits"
+  ownerType: Item,
+  ownerId: itemInstanceId,
+  gameServiceId: gameServiceId
+}) -> store seedId on AffixInstanceModel
+// Compute initial capability manifest from seed (new seed = base phase = minimal capabilities)
+// Derive effectiveRarity from capabilities
 WRITE _instanceStore:"inst:{itemInstanceId}" <- AffixInstanceModel
 WRITE _instanceCache:"inst:{itemInstanceId}" <- AffixInstanceModel (TTL: InstanceCacheTtlSeconds)
 WRITE _instanceStore:"inst-game:{gameServiceId}" <- append itemInstanceId to index
-PUBLISH affix.instance.initialized { itemInstanceId, gameServiceId, effectiveRarity, itemLevel }
+// Feed batch lifecycle event to EventBatcher (batch: true — no inline lifecycle publish)
+// affix.instance.batch-created accumulated by EventBatcher, flushed by EventBatcherWorker
 RETURN (200, AffixInstanceResponse)
 
 ---
@@ -394,13 +431,21 @@ LOCK _lockStore:"item:{itemInstanceId}" -> 409 if fails
  // Validate: slot type has capacity -> 400 if full
  // Validate: modGroup not occupied -> 409 if occupied
  // Validate: requiredInfluences subset of instance.influences -> 400 if not met
- // Roll values for each statGrant
+ // Roll values for each statGrant:
+ //   IF request.valuePercentileTarget provided (0-1 float, optional):
+ //     Bias roll toward percentile target within [minValue, maxValue]
+ //     E.g., 0.8 target biases toward 80th percentile of the range
+ //   ELSE: uniform random between minValue and maxValue
  // Append AffixSlotModel to appropriate slot array
- // Recompute effectiveRarity
+ // Recompute effectiveRarity (from current seed capabilities — local field read)
  ETAG-WRITE _instanceStore:"inst:{itemInstanceId}" <- updatedInstance -> 409 if ETag mismatch
  DELETE _instanceCache:"inst:{itemInstanceId}"
  DELETE _instanceCache:"stats:{itemInstanceId}"
+ // Record growth on the item's "item-traits" seed (enchantment domain)
+ CALL ISeedClient.RecordGrowthAsync({ seedId: instance.SeedId, domain: "enchantment", amount: definition.tier })
  PUBLISH affix.modifier.applied { itemInstanceId, definitionId, definitionCode, slotType, rolledValues, modGroup }
+ // Reverse index maintenance for Category B clean-deprecated sweep
+ CALL _instanceStringStore.AddToStringListAsync("inst-def:{definitionId}", itemInstanceId, ...)
  IF effectiveRarity changed
  PUBLISH affix.rarity.changed { itemInstanceId, previousRarity, newRarity }
 RETURN (200, ApplyAffixResponse)
@@ -421,6 +466,8 @@ LOCK _lockStore:"item:{itemInstanceId}" -> 409 if fails
  DELETE _instanceCache:"inst:{itemInstanceId}"
  DELETE _instanceCache:"stats:{itemInstanceId}"
  PUBLISH affix.modifier.removed { itemInstanceId, definitionId, definitionCode, slotType, modGroup }
+ // Reverse index maintenance for Category B clean-deprecated sweep
+ CALL _instanceStringStore.RemoveFromStringListAsync("inst-def:{definitionId}", itemInstanceId, ...)
  IF effectiveRarity changed
  PUBLISH affix.rarity.changed { itemInstanceId, previousRarity, newRarity }
 RETURN (200, RemoveAffixResponse)
@@ -512,11 +559,16 @@ POST /affix/generate/set | Roles: []
 READ _implicitMappingStore:"impl-tpl:{gameServiceId}:{itemTemplateCode}"
 IF mapping exists
  // Roll implicits (same as RollImplicits logic)
-// Determine target prefix/suffix counts from targetRarity and config defaults
+// Determine target prefix/suffix counts from targetRarity:
+// Look up capability mapping for targetRarity (e.g., "rare" -> prefix:3, suffix:3)
+// Falls back to config.DefaultMaxPrefixes / config.DefaultMaxSuffixes if no mapping found
 FOREACH slot to fill (prefix, suffix)
  // Invoke GenerateAffixPool internal logic (pool cache + in-memory filter)
+ // Apply request.weightModifiers to pool entries (optional, caller-provided tier bias)
  // Weighted random select one definition
- // Roll values for selected definition
+ // Roll values for selected definition:
+ //   IF request.valuePercentileTarget provided: bias roll toward percentile target
+ //   ELSE: uniform random between minValue and maxValue
  // Add selected modGroup to exclusion list for subsequent selections
 // Pure computation -- no state is persisted
 RETURN (200, AffixSetDataResponse { implicitSlots, prefixSlots, suffixSlots, effectiveRarity, itemLevel })
@@ -630,6 +682,40 @@ RETURN (200, ItemValueEstimateResponse { normalizedScore, suggestedCurrencyValue
 
 ---
 
+### CleanDeprecatedDefinitions
+POST /affix/definition/clean-deprecated | Roles: [admin]
+
+// Category B cleanup sweep (per IMPLEMENTATION TENETS B17-B22)
+// Uses shared CleanDeprecatedRequest/CleanDeprecatedResponse from common-api.yaml
+// Uses DeprecationCleanupHelper.ExecuteCleanupSweepAsync for standardized sweep
+QUERY _definitionStore WHERE $.isDeprecated = true
+CALL DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+  deprecated,
+  getEntityId: d => d.DefinitionId,
+  getDeprecatedAt: d => d.DeprecatedAt,
+  hasInstancesAsync: (d, ct) => // Check if any AffixInstanceModel contains a slot referencing this definitionId
+    _instanceStringStore.HasStringListEntriesAsync(BuildInstancesByDefinitionKey(d.DefinitionId), ct),
+  deleteAndPublishAsync: (d, ct) =>
+    DELETE _definitionStore:"def:{d.DefinitionId}"
+    DELETE _definitionStore:"def-code:{d.GameServiceId}:{d.Code}"
+    DELETE _definitionCache:"def:{d.DefinitionId}"
+    DELETE _definitionCache:"def-group:{d.GameServiceId}:{d.ModGroup}"
+    FOREACH itemClass in d.ValidItemClasses
+      DELETE _poolCache:"pool:{d.GameServiceId}:{itemClass}:*"
+    PUBLISH affix.definition.deleted { definitionId, gameServiceId, code, ... },
+  body.GracePeriodDays,
+  body.DryRun,
+  _logger,
+  _telemetryProvider,
+  ct)
+RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
+
+// Reverse index inst-def:{definitionId} maintained by ApplyAffix (add) and RemoveAffix (remove).
+// Instance destruction cleans all referenced definition indexes (load instance, enumerate slots).
+// Many:many relationship — standard AddToStringListAsync/RemoveFromStringListAsync pattern.
+
+---
+
 ### CleanupByGameService
 POST /affix/cleanup-by-game-service | Roles: []
 
@@ -673,3 +759,67 @@ FOREACH page of affix instances
  DELETE _instanceCache:"stats:{itemInstanceId}"
 // IF IItemClient unavailable: skip batch, retry next interval
 // Does NOT publish events for orphan deletions (internal maintenance)
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### OnRunningAsync
+
+```
+// Seed type registration (must complete before service accepts traffic)
+CALL ISeedClient.RegisterSeedTypeAsync({
+  code: config.ItemTraitsSeedTypeCode,   // default: "item-traits"
+  growthDecayEnabled: false,             // item traits accumulate, never erode
+  phases: [                              // game-configurable capability tiers
+    { threshold, capabilities: ["prefix:1", "suffix:1"] },   // magic
+    { threshold, capabilities: ["prefix:3", "suffix:3"] },   // rare
+    ...
+  ]
+})
+// Idempotent — returns OK if seed type already registered
+
+// Resource cleanup callback registration (lib-resource integration)
+CALL RegisterResourceCleanupCallbacksAsync()
+// Generated helper: registers /affix/cleanup-by-game-service callback for game-service deletion
+
+// EventBatcher initialization for batch lifecycle events (AffixInstance uses batch: true)
+// Registers EventBatcherWorker as IHostedService with:
+//   interval: config.GenerationEventDeduplicationWindowSeconds
+//   startup delay: configurable
+//   flushables: [createdBatcher (accumulating), modifiedBatcher (deduplicating), destroyedBatcher (accumulating)]
+```
+
+#### AffixItemDestructionListener (IItemInstanceDestructionListener)
+
+```
+// Called in-process by lib-item (L2) after item instance destruction
+// Registered as Singleton at plugin startup
+OnItemInstanceDestroyedAsync(itemInstanceId, gameServiceId, ct):
+  READ _instanceStore:"inst:{itemInstanceId}"
+  IF instance exists
+    // Clean reverse index entries for all slots referencing definitions
+    FOREACH slot in (implicitSlots + prefixSlots + suffixSlots + enchantSlots)
+      CALL _instanceStringStore.RemoveFromStringListAsync("inst-def:{slot.definitionId}", itemInstanceId, ...)
+    DELETE _instanceStore:"inst:{itemInstanceId}"
+    DELETE _instanceCache:"inst:{itemInstanceId}"
+    DELETE _instanceCache:"stats:{itemInstanceId}"
+    // Feed batch lifecycle destruction event to EventBatcher
+```
+
+#### AffixSeedEvolutionListener (ISeedEvolutionListener)
+
+```
+// Called in-process by lib-seed (L2) after seed phase/capability change
+// Registered as Singleton; InterestedSeedTypes = { config.ItemTraitsSeedTypeCode }
+OnCapabilitiesChangedAsync(notification, ct):
+  // notification contains: seedId, ownerType, ownerId (= itemInstanceId), newCapabilities
+  READ _instanceStore:"inst:{ownerId}" [with ETag]
+  IF instance exists
+    // Recompute slotLimits from newCapabilities
+    // Recompute effectiveRarity from capability set
+    ETAG-WRITE _instanceStore:"inst:{ownerId}" <- updatedInstance
+    DELETE _instanceCache:"inst:{ownerId}"
+    DELETE _instanceCache:"stats:{ownerId}"
+    DELETE _instanceCache:"equip:{...}"  // invalidate any cached equipment stats
+```

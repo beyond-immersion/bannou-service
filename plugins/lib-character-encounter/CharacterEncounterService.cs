@@ -182,6 +182,26 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
         // Add to custom type index for enumeration
         await AddToCustomTypeIndexAsync(body.Code.ToUpperInvariant(), cancellationToken);
 
+        // Publish lifecycle event per FOUNDATION TENETS (Event-Driven Architecture)
+        var createdAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix);
+        await _messageBus.PublishEncounterTypeCreatedAsync(new EncounterTypeCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = createdAt,
+            TypeId = data.TypeId,
+            Code = data.Code,
+            Name = data.Name,
+            Description = data.Description,
+            IsBuiltIn = data.IsBuiltIn,
+            SortOrder = data.SortOrder,
+            IsActive = data.IsActive,
+            IsDeprecated = false,
+            DeprecatedAt = null,
+            DeprecationReason = null,
+            CreatedAt = createdAt,
+            UpdatedAt = createdAt
+        }, cancellationToken);
+
         _logger.LogInformation("Created encounter type {Code} with ID {TypeId}", body.Code, typeId);
         return (StatusCodes.OK, MapToEncounterTypeResponse(data));
     }
@@ -280,13 +300,35 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
             }
         }
 
-        // Apply updates
-        if (body.Name != null) data.Name = body.Name;
-        if (body.Description != null) data.Description = body.Description;
-        if (body.DefaultEmotionalImpact != null) data.DefaultEmotionalImpact = body.DefaultEmotionalImpact.Value;
-        if (body.SortOrder != null) data.SortOrder = body.SortOrder.Value;
+        // Track changed fields for lifecycle event
+        var changedFields = new List<string>();
+        if (body.Name != null) { data.Name = body.Name; changedFields.Add("name"); }
+        if (body.Description != null) { data.Description = body.Description; changedFields.Add("description"); }
+        if (body.DefaultEmotionalImpact != null) { data.DefaultEmotionalImpact = body.DefaultEmotionalImpact.Value; changedFields.Add("defaultEmotionalImpact"); }
+        if (body.SortOrder != null) { data.SortOrder = body.SortOrder.Value; changedFields.Add("sortOrder"); }
 
+        var now = DateTimeOffset.UtcNow;
         await store.SaveAsync(key, data, cancellationToken: cancellationToken);
+
+        // Publish lifecycle event per FOUNDATION TENETS (Event-Driven Architecture)
+        await _messageBus.PublishEncounterTypeUpdatedAsync(new EncounterTypeUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            TypeId = data.TypeId,
+            Code = data.Code,
+            Name = data.Name,
+            Description = data.Description,
+            IsBuiltIn = data.IsBuiltIn,
+            SortOrder = data.SortOrder,
+            IsActive = data.IsActive,
+            IsDeprecated = data.IsDeprecated,
+            DeprecatedAt = data.DeprecatedAt,
+            DeprecationReason = data.DeprecationReason,
+            CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix),
+            UpdatedAt = now,
+            ChangedFields = changedFields
+        }, cancellationToken);
 
         _logger.LogInformation("Updated encounter type {Code}", body.Code);
         return (StatusCodes.OK, MapToEncounterTypeResponse(data));

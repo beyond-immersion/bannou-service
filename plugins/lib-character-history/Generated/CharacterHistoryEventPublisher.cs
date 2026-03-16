@@ -20,19 +20,26 @@ namespace BeyondImmersion.BannouService.CharacterHistory;
 /// </remarks>
 public static class CharacterHistoryEventPublisher
 {
-    /// <summary>Published when a character's participation in a historical event is recorded.</summary>
-    public static Task<bool> PublishCharacterParticipationRecordedAsync(
+    /// <summary>Batch event containing accumulated participation recordings.</summary>
+    public static Task<bool> PublishParticipationBatchCreatedAsync(
         this IMessageBus messageBus,
-        CharacterParticipationRecordedEvent eventData,
+        ParticipationBatchCreatedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(CharacterHistoryPublishedTopics.CharacterParticipationRecorded, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(CharacterHistoryPublishedTopics.ParticipationBatchCreated, eventData, cancellationToken);
 
-    /// <summary>Published when a character's participation record is deleted.</summary>
-    public static Task<bool> PublishCharacterParticipationDeletedAsync(
+    /// <summary>Batch event containing accumulated participation modifications (participations are immutable; this is unused infrastructure).</summary>
+    public static Task<bool> PublishParticipationBatchModifiedAsync(
         this IMessageBus messageBus,
-        CharacterParticipationDeletedEvent eventData,
+        ParticipationBatchModifiedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(CharacterHistoryPublishedTopics.CharacterParticipationDeleted, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(CharacterHistoryPublishedTopics.ParticipationBatchModified, eventData, cancellationToken);
+
+    /// <summary>Batch event containing accumulated participation deletions.</summary>
+    public static Task<bool> PublishParticipationBatchDestroyedAsync(
+        this IMessageBus messageBus,
+        ParticipationBatchDestroyedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(CharacterHistoryPublishedTopics.ParticipationBatchDestroyed, eventData, cancellationToken);
 
     /// <summary>Published when a character's backstory is first created.</summary>
     public static Task<bool> PublishCharacterBackstoryCreatedAsync(

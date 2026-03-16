@@ -3,7 +3,9 @@ using BeyondImmersion.BannouService.CharacterHistory.Providers;
 using BeyondImmersion.BannouService.Generated.ResourceTemplates;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.CharacterHistory;
@@ -15,6 +17,30 @@ public class CharacterHistoryServicePlugin : StandardServicePlugin<ICharacterHis
 {
     public override string PluginName => "character-history";
     public override string DisplayName => "Character History Service";
+
+    /// <inheritdoc />
+    public override void ConfigureServices(IServiceCollection services)
+    {
+        base.ConfigureServices(services);
+
+        // Register participation event batcher (Singleton — accumulates entries from Scoped service methods)
+        services.AddSingleton<ParticipationEventBatcher>();
+
+        // Register EventBatcherWorker to flush batched participation events periodically
+        services.AddSingleton<IHostedService>(sp =>
+        {
+            var batcher = sp.GetRequiredService<ParticipationEventBatcher>();
+            var config = sp.GetRequiredService<CharacterHistoryServiceConfiguration>();
+            var logger = sp.GetRequiredService<ILogger<EventBatcherWorker>>();
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            return new EventBatcherWorker(
+                batcher.AllFlushables,
+                sp, logger, telemetryProvider,
+                config.ParticipationEventBatchIntervalSeconds,
+                config.ParticipationEventBatchStartupDelaySeconds,
+                "character-history", "ParticipationEventBatcher");
+        });
+    }
 
     /// <inheritdoc />
     protected override async Task OnRunningAsync()

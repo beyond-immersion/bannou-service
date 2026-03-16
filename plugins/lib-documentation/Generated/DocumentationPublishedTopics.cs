@@ -46,4 +46,7 @@ public static class DocumentationPublishedTopics
 
     /// <summary>Published when a documentation archive is created.</summary>
     public const string DocumentationArchiveCreated = "documentation-archive.created";
+
+    /// <summary>Published when a documentation archive is deleted.</summary>
+    public const string DocumentationArchiveDeleted = "documentation-archive.deleted";
 }

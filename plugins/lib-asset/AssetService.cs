@@ -34,7 +34,7 @@ public partial class AssetService : IAssetService
     private readonly AssetServiceConfiguration _configuration;
     private readonly IAssetEventEmitter _eventEmitter;
     private readonly StorageModels.IAssetStorageProvider _storageProvider;
-    private readonly IOrchestratorClient _orchestratorClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IAssetProcessorPoolManager _processorPoolManager;
     private readonly IBundleConverter _bundleConverter;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -96,7 +96,7 @@ public partial class AssetService : IAssetService
     /// <param name="errorEventEmitter">Error event emitter for unexpected failures.</param>
     /// <param name="eventEmitter">Client event emitter for WebSocket notifications.</param>
     /// <param name="storageProvider">Storage provider abstraction for S3/MinIO.</param>
-    /// <param name="orchestratorClient">Orchestrator client for processor pool management.</param>
+    /// <param name="serviceProvider">Service provider for optional L3 dependency resolution.</param>
     /// <param name="processorPoolManager">Pool manager for tracking processor node state.</param>
     /// <param name="bundleConverter">Bundle format converter (.bannou ↔ .zip).</param>
     /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
@@ -108,7 +108,7 @@ public partial class AssetService : IAssetService
         AssetServiceConfiguration configuration,
         IAssetEventEmitter eventEmitter,
         StorageModels.IAssetStorageProvider storageProvider,
-        IOrchestratorClient orchestratorClient,
+        IServiceProvider serviceProvider,
         IAssetProcessorPoolManager processorPoolManager,
         IBundleConverter bundleConverter,
         ITelemetryProvider telemetryProvider,
@@ -119,7 +119,7 @@ public partial class AssetService : IAssetService
         _configuration = configuration;
         _eventEmitter = eventEmitter;
         _storageProvider = storageProvider;
-        _orchestratorClient = orchestratorClient;
+        _serviceProvider = serviceProvider;
         _processorPoolManager = processorPoolManager;
         _bundleConverter = bundleConverter;
         _telemetryProvider = telemetryProvider;
@@ -2488,7 +2488,14 @@ public partial class AssetService : IAssetService
                 return true;
             }
 
-            // No processors available - spawn one via orchestrator
+            // No processors available - spawn one via orchestrator (L3 soft dependency)
+            var orchestratorClient = _serviceProvider.GetService<IOrchestratorClient>();
+            if (orchestratorClient == null)
+            {
+                _logger.LogDebug("EnsureProcessorAvailable: Orchestrator not enabled, cannot scale pool {PoolType}", poolType);
+                return false;
+            }
+
             _logger.LogInformation(
                 "EnsureProcessorAvailable: No processors available in pool {PoolType}, spawning new instance",
                 poolType);
@@ -2497,7 +2504,7 @@ public partial class AssetService : IAssetService
             var totalCount = await _processorPoolManager.GetTotalNodeCountAsync(poolType, cancellationToken);
 
             // Request orchestrator to scale up by 1
-            var scaleResponse = await _orchestratorClient.ScalePoolAsync(
+            var scaleResponse = await orchestratorClient.ScalePoolAsync(
                 new ScalePoolRequest
                 {
                     PoolType = poolType,
@@ -2586,8 +2593,15 @@ public partial class AssetService : IAssetService
                 "DelegateToProcessingPool: Acquiring processor from pool {PoolType} for asset {AssetId}",
                 poolType, assetId);
 
-            // Try to acquire a processor from the pool
-            var processorResponse = await _orchestratorClient.AcquireProcessorAsync(
+            // Try to acquire a processor from the pool (L3 soft dependency)
+            var orchestratorClient = _serviceProvider.GetService<IOrchestratorClient>();
+            if (orchestratorClient == null)
+            {
+                _logger.LogWarning("DelegateToProcessingPool: Orchestrator not enabled, cannot acquire processor for asset {AssetId}", assetId);
+                return;
+            }
+
+            var processorResponse = await orchestratorClient.AcquireProcessorAsync(
                 new AcquireProcessorRequest
                 {
                     PoolType = poolType,
@@ -2765,7 +2779,7 @@ public partial class AssetService : IAssetService
             BundleId = body.BundleId,
             Version = bundle.MetadataVersion,
             CreatedAt = bundle.UpdatedAt.Value,
-            CreatedBy = bundle.CreatedBy ?? "system",
+            CreatedBy = bundle.CreatedBy,
             Changes = changes,
             Reason = body.Reason
         };
@@ -2797,7 +2811,7 @@ public partial class AssetService : IAssetService
             PreviousVersion = previousVersion,
             Changes = changes,
             Reason = body.Reason,
-            UpdatedBy = bundle.CreatedBy ?? "system",
+            UpdatedBy = bundle.CreatedBy,
             Realm = bundle.Realm
         });
 
@@ -2873,7 +2887,7 @@ public partial class AssetService : IAssetService
             Timestamp = DateTimeOffset.UtcNow,
             BundleId = body.BundleId,
             Reason = body.Reason,
-            DeletedBy = bundle.CreatedBy ?? "system",
+            DeletedBy = bundle.CreatedBy,
             Realm = bundle.Realm
         });
 
@@ -3016,7 +3030,7 @@ public partial class AssetService : IAssetService
             .Select(b => b.ToApiMetadata())
             .ToList();
 
-        _logger.LogInformation("QueryBundles: Found {TotalCount} bundles for owner {OwnerId}, returning {Count}",
+        _logger.LogInformation("QueryBundles: Found {TotalCount} bundles for creator {CreatedBy}, returning {Count}",
             totalCount, body.CreatedBy, pagedBundles.Count);
 
         return (StatusCodes.OK, new QueryBundlesResponse

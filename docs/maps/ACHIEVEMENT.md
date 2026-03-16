@@ -15,8 +15,8 @@
 | Layer | L4 GameFeatures |
 | Endpoints | 13 |
 | State Stores | achievement-definition (Redis), achievement-progress (Redis), achievement-sync (Redis), achievement-lock (Redis) |
-| Events Published | 5 (achievement.definition.created, achievement.definition.updated, achievement.progress.unlocked, achievement.progress.updated, achievement.platform.synced) |
-| Events Consumed | 3 (analytics.score.updated, analytics.milestone.reached, leaderboard.rank.changed) |
+| Events Published | 6 (achievement.definition.created, achievement.definition.updated, achievement.definition.deleted, achievement.progress.unlocked, achievement.progress.updated, achievement.platform.synced) |
+| Events Consumed | 4 (analytics.score.updated, analytics.milestone.reached, leaderboard.rank.changed, account.deleted) |
 | Client Events | 2 (achievement.progress.unlocked, achievement.progress.milestone-reached) |
 | Background Services | 1 (RarityCalculationService) |
 
@@ -28,27 +28,27 @@
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `{gameServiceId}:{achievementId}` | `AchievementDefinitionData` | Achievement definition including type, points, platforms, prerequisites, earned count, rarity stats |
+| `achievement-def:{gameServiceId}:{achievementId}` | `AchievementDefinitionData` | Achievement definition including type, points, platforms, prerequisites, earned count, rarity stats |
 | `achievement-definitions:{gameServiceId}` | `Set<string>` | Index of all achievement IDs for a game service |
-| `achievement-game-services` | `Set<string>` | Index of all game service IDs with definitions (for rarity worker) |
+| `achievement-game-services` | `Set<string>` | Index of all game service IDs with definitions (for rarity worker and cleanup) |
 
 **Store**: `achievement-progress` (Backend: Redis, IStateStore)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `{gameServiceId}:{entityType}:{entityId}` | `EntityProgressData` | All achievement progress for an entity — dictionary of achievementId to progress data, plus total points |
+| `achievement-progress:{gameServiceId}:{entityType}:{entityId}` | `EntityProgressData` | All achievement progress for an entity — dictionary of achievementId to progress data, plus total points |
 
 **Store**: `achievement-sync` (Backend: Redis, IStateStore)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `{gameServiceId}:{entityId}:{platform}` | `PlatformSyncTrackingData` | Per-entity per-platform sync outcome tracking (synced count, failed count, last sync timestamp, last error) |
+| `achievement-sync:{gameServiceId}:{entityId}:{platform}` | `PlatformSyncTrackingData` | Per-entity per-platform sync outcome tracking (synced count, failed count, last sync timestamp, last error) |
 
 **Store**: `achievement-lock` (Backend: Redis) — used via `IDistributedLockProvider` only
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `{gameServiceId}:{entityType}:{entityId}` | lock | Mutual exclusion for compound progress/unlock operations |
+| `achievement-progress:{gameServiceId}:{entityType}:{entityId}` | lock | Mutual exclusion for compound progress/unlock operations |
 
 ---
 
@@ -56,20 +56,19 @@
 
 | Dependency | Layer | Type | Usage |
 |------------|-------|------|-------|
-| lib-state (IStateStoreFactory) | L0 | Hard | Persistence for definitions (ICacheableStateStore) and progress (IStateStore) |
+| lib-state (IStateStoreFactory) | L0 | Hard | Persistence for definitions (ICacheableStateStore) and progress/sync (IStateStore) |
 | lib-state (IDistributedLockProvider) | L0 | Hard | Distributed locks on progress keys for progress/unlock operations |
 | lib-messaging (IMessageBus) | L0 | Hard | Publishing service events (definition CRUD, unlock, progress, platform sync) |
-| lib-messaging (IEventConsumer) | L0 | Hard | Subscribing to analytics and leaderboard events for auto-unlock |
+| lib-messaging (IEventConsumer) | L0 | Hard | Subscribing to analytics, leaderboard, and account events for auto-unlock and cleanup |
 | lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation on async helpers and event handlers |
 | lib-connect (IEntitySessionRegistry) | L1 | Hard | Push client events (unlock, progress milestone) to entity WebSocket sessions |
 | lib-resource (IResourceClient) | L1 | Hard | Reference tracking for character entities; cleanup callback registration |
-| lib-account (IAccountClient) | L1 | Hard | SteamAchievementSync queries account auth methods for Steam external IDs |
 
 **Notes**:
-- `IAccountClient` is injected into `SteamAchievementSync` (not directly into `AchievementService`). DI resolution fails at startup if missing.
 - Achievement participates in Quest's prerequisite system via `AchievementPrerequisiteProviderFactory` (`IPrerequisiteProviderFactory`), discovered by Quest via DI collection.
 - Achievement registers `x-references` targeting `character` with sourceType `achievement-progress`. Cleanup endpoint `/achievement/cleanup-by-character` deletes progress across all game services when a character is deleted.
 - `IEnumerable<IPlatformAchievementSync>` is an achievement-internal collection pattern (Internal, Steam, Xbox stub, PlayStation stub), not a `bannou-service/Providers/` interface.
+- `SteamAchievementSync` injects `IAccountClient` (L1) and `IHttpClientFactory` for external Steam API calls. DI resolution fails at startup if missing.
 
 ---
 
@@ -79,9 +78,12 @@
 |-------|-----------|---------|
 | `achievement.definition.created` | `AchievementDefinitionCreatedEvent` | CreateAchievementDefinition — full definition snapshot |
 | `achievement.definition.updated` | `AchievementDefinitionUpdatedEvent` | UpdateAchievementDefinition, DeprecateAchievementDefinition — includes `changedFields` array |
+| `achievement.definition.deleted` | `AchievementDefinitionDeletedEvent` | CleanDeprecatedAchievementDefinitions — published for each permanently removed deprecated definition |
 | `achievement.progress.unlocked` | `AchievementUnlockedEvent` | UpdateAchievementProgress (on auto-unlock at target), UnlockAchievement — includes isRare, rarity% |
 | `achievement.progress.updated` | `AchievementProgressUpdatedEvent` | UpdateAchievementProgress — includes previous/new/target progress, percent complete |
 | `achievement.platform.synced` | `AchievementPlatformSyncedEvent` | UnlockAchievement (auto-sync), SyncPlatformAchievements — includes platform, success, errorMessage |
+
+**Note**: Lifecycle events `achievement.progress-record.{created|updated|deleted}` have generated publishers from `x-lifecycle` but are not actively called from service code. These are Category B instance lifecycle infrastructure.
 
 ---
 
@@ -92,46 +94,59 @@
 | `analytics.score.updated` | `HandleScoreUpdatedAsync` | Loads all definitions for gameServiceId, filters to Progressive with matching scoreType, calls UpdateAchievementProgress with delta as increment |
 | `analytics.milestone.reached` | `HandleMilestoneReachedAsync` | Loads all definitions for gameServiceId, filters to non-Progressive with matching milestoneType/value/name, calls UnlockAchievement for each match |
 | `leaderboard.rank.changed` | `HandleRankChangedAsync` | Loads all definitions for gameServiceId, filters to non-Progressive with matching leaderboardId and newRank <= rankThreshold, calls UnlockAchievement for each match |
+| `account.deleted` | `HandleAccountDeletedAsync` | Iterates all game services, deletes Account-entity-type progress records and sync tracking records for the deleted account. Per-item error isolation. Account Deletion Cleanup Obligation per FOUNDATION TENETS |
 
 ---
 
 ## DI Services
 
+#### Constructor Dependencies
+
 | Service | Role |
 |---------|------|
 | `ILogger<AchievementService>` | Structured logging |
 | `AchievementServiceConfiguration` | All configurable thresholds, credentials, feature flags |
-| `IStateStoreFactory` | Constructor-consumed to acquire `_definitionStore` and `_progressStore` |
+| `IStateStoreFactory` | Constructor-consumed to acquire `_definitionStore`, `_progressStore`, `_syncStore` |
 | `IMessageBus` | Service event and error event publishing |
-| `IEventConsumer` | Registers handlers for analytics/leaderboard events |
+| `IEventConsumer` | Registers handlers for analytics/leaderboard/account events |
 | `IDistributedLockProvider` | Distributed locks on progress keys |
 | `ITelemetryProvider` | Telemetry spans |
 | `IEntitySessionRegistry` | Client event push to entity WebSocket sessions |
 | `IEnumerable<IPlatformAchievementSync>` | Platform sync providers (Internal, Steam, Xbox stub, PlayStation stub) |
-| `RarityCalculationService` | Background worker for periodic rarity recalculation |
-| `AchievementPrerequisiteProviderFactory` | `IPrerequisiteProviderFactory` singleton — enables Quest (L2) to validate achievement-based prerequisites via DI collection |
+| `IResourceClient` | Character reference tracking and cleanup callback registration |
+
+#### Collection-Injected Providers
+
+| Interface | Injection | Source | Role |
+|-----------|-----------|--------|------|
+| `IEnumerable<IPlatformAchievementSync>` | Collection | Internal (this plugin registers 4 implementations) | Platform sync adapter dispatch for Steam, Xbox, PlayStation, Internal |
+
+#### DI Interfaces Implemented by This Plugin
+
+| Interface | Registered As | Direction | Consumer |
+|-----------|---------------|-----------|----------|
+| `IPrerequisiteProviderFactory` (via `AchievementPrerequisiteProviderFactory`) | Singleton | L4→L2 pull | Quest (L2) validates achievement-based prerequisites via DI collection |
+| `ICleanDeprecatedEntity` | Scoped (service class) | Internal marker | Structural tests validate clean-deprecated sweep implementation |
 
 ---
 
 ## Method Index
 
-> **Roles column**: `[]` = service-to-service only (not exposed via WebSocket). See SCHEMA-RULES.md § x-permissions.
-
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| CreateAchievementDefinition | POST /achievement/definition/create | [developer] | definition, definition-index, game-service-index | achievement.definition.created |
-| GetAchievementDefinition | POST /achievement/definition/get | [] | - | - |
-| ListAchievementDefinitions | POST /achievement/definition/list | [user] | - | - |
-| UpdateAchievementDefinition | POST /achievement/definition/update | [developer] | definition | achievement.definition.updated |
-| DeprecateAchievementDefinition | POST /achievement/definition/deprecate | [developer] | definition | achievement.definition.updated |
-| GetAchievementProgress | POST /achievement/progress/get | [user] | - | - |
-| UpdateAchievementProgress | POST /achievement/progress/update | [] | progress, definition (earned count) | achievement.progress.updated, achievement.progress.unlocked |
-| UnlockAchievement | POST /achievement/unlock | [] | progress, definition (earned count) | achievement.progress.unlocked, achievement.platform.synced |
-| ListUnlockedAchievements | POST /achievement/list-unlocked | [user] | - | - |
-| SyncPlatformAchievements | POST /achievement/platform/sync | [admin] | - | achievement.platform.synced |
-| GetPlatformSyncStatus | POST /achievement/platform/status | [] | - | - |
-| CleanDeprecatedAchievementDefinitions | POST /achievement/definition/clean-deprecated | [admin] | definition, definition-index | achievement.definition.deleted |
-| CleanupByCharacter | POST /achievement/cleanup-by-character | [] | progress | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| CreateAchievementDefinition | POST /achievement/definition/create | generated | developer | definition, definition-index, game-service-index | achievement.definition.created |
+| GetAchievementDefinition | POST /achievement/definition/get | generated | [] | - | - |
+| ListAchievementDefinitions | POST /achievement/definition/list | generated | user | - | - |
+| UpdateAchievementDefinition | POST /achievement/definition/update | generated | developer | definition | achievement.definition.updated |
+| DeprecateAchievementDefinition | POST /achievement/definition/deprecate | generated | developer | definition | achievement.definition.updated |
+| CleanDeprecatedAchievementDefinitions | POST /achievement/definition/clean-deprecated | generated | admin | definition, definition-index | achievement.definition.deleted |
+| GetAchievementProgress | POST /achievement/progress/get | generated | user | - | - |
+| UpdateAchievementProgress | POST /achievement/progress/update | generated | [] | progress, definition (earned count) | achievement.progress.updated, achievement.progress.unlocked |
+| UnlockAchievement | POST /achievement/unlock | generated | [] | progress, definition (earned count) | achievement.progress.unlocked, achievement.platform.synced |
+| ListUnlockedAchievements | POST /achievement/list-unlocked | generated | user | - | - |
+| SyncPlatformAchievements | POST /achievement/platform/sync | generated | admin | sync-tracking | achievement.platform.synced |
+| GetPlatformSyncStatus | POST /achievement/platform/status | generated | [] | - | - |
+| CleanupByCharacter | POST /achievement/cleanup-by-character | generated | [] | progress | - |
 
 ---
 
@@ -141,12 +156,12 @@
 POST /achievement/definition/create | Roles: [developer]
 
 ```
-READ _definitionStore:{gameServiceId}:{achievementId}          -> 409 if exists
-WRITE _definitionStore:{gameServiceId}:{achievementId}         <- AchievementDefinitionData from request
+READ _definitionStore:achievement-def:{gameServiceId}:{achievementId}    -> 409 if exists
+WRITE _definitionStore:achievement-def:{gameServiceId}:{achievementId}   <- AchievementDefinitionData from request
   // EntityTypes defaults to [Account] if not provided
   // Platforms defaults to [Internal] if not provided
-WRITE _definitionStore (set):achievement-definitions:{gameServiceId} <- achievementId
-WRITE _definitionStore (set):achievement-game-services         <- gameServiceId
+WRITE _definitionStore (set):achievement-definitions:{gameServiceId}     <- achievementId
+WRITE _definitionStore (set):achievement-game-services                   <- gameServiceId
 PUBLISH achievement.definition.created { full definition snapshot }
 RETURN (200, AchievementDefinitionResponse)
 ```
@@ -155,7 +170,7 @@ RETURN (200, AchievementDefinitionResponse)
 POST /achievement/definition/get | Roles: []
 
 ```
-READ _definitionStore:{gameServiceId}:{achievementId}          -> 404 if null
+READ _definitionStore:achievement-def:{gameServiceId}:{achievementId}    -> 404 if null
 RETURN (200, AchievementDefinitionResponse)
 ```
 
@@ -166,7 +181,7 @@ POST /achievement/definition/list | Roles: [user]
 READ _definitionStore (set):achievement-definitions:{gameServiceId}
   // Returns empty list (not 404) if set is empty
 FOREACH achievementId in set
-  READ _definitionStore:{gameServiceId}:{achievementId}
+  READ _definitionStore:achievement-def:{gameServiceId}:{achievementId}
     // Skip if null (orphaned index entry)
   IF body.Category set AND definition.Category != it -> skip
   IF body.Platform set AND definition.Platforms !contains it -> skip
@@ -182,13 +197,13 @@ RETURN (200, ListAchievementDefinitionsResponse)
 POST /achievement/definition/update | Roles: [developer]
 
 ```
-READ _definitionStore:{gameServiceId}:{achievementId} [with ETag]  -> 404 if null
+READ _definitionStore:achievement-def:{gameServiceId}:{achievementId} [with ETag]  -> 404 if null
 // Updateable: DisplayName, Description, Category, IsActive, PlatformMappings,
 //   ScoreType, MilestoneType, MilestoneValue, MilestoneName, LeaderboardId, RankThreshold
 // Dirty-tracking: only apply fields that differ from current values
 IF changedFields is empty
   RETURN (200, AchievementDefinitionResponse)  // no-op, no write
-ETAG-WRITE _definitionStore:{gameServiceId}:{achievementId}    -> 409 if conflict
+ETAG-WRITE _definitionStore:achievement-def:{gameServiceId}:{achievementId}  -> 409 if conflict
 PUBLISH achievement.definition.updated { definition snapshot, changedFields }
 RETURN (200, AchievementDefinitionResponse)
 ```
@@ -197,29 +212,52 @@ RETURN (200, AchievementDefinitionResponse)
 POST /achievement/definition/deprecate | Roles: [developer]
 
 ```
-READ _definitionStore:{gameServiceId}:{achievementId} [with ETag]  -> 404 if null
+READ _definitionStore:achievement-def:{gameServiceId}:{achievementId} [with ETag]  -> 404 if null
 IF definition.IsDeprecated
   RETURN (200, AchievementDefinitionResponse)  // idempotent, no write
 // Set IsDeprecated=true, DeprecatedAt=now, DeprecationReason from request
-ETAG-WRITE _definitionStore:{gameServiceId}:{achievementId}    -> 409 if conflict
+ETAG-WRITE _definitionStore:achievement-def:{gameServiceId}:{achievementId}  -> 409 if conflict
 PUBLISH achievement.definition.updated { changedFields: [isDeprecated, deprecatedAt, deprecationReason] }
 RETURN (200, AchievementDefinitionResponse)
+```
+
+### CleanDeprecatedAchievementDefinitions
+POST /achievement/definition/clean-deprecated | Roles: [admin]
+
+```
+// Uses shared CleanDeprecatedRequest (gracePeriodDays, dryRun) / CleanDeprecatedStringKeyResponse
+READ _definitionStore (set):achievement-game-services
+FOREACH gameServiceId in set
+  READ _definitionStore (set):achievement-definitions:{gameServiceId}
+  FOREACH achievementId in set
+    READ _definitionStore:achievement-def:{gameServiceId}:{achievementId}
+    IF deprecated -> add to candidates list
+// Delegate to DeprecationCleanupHelper.ExecuteCleanupSweepAsync
+FOREACH candidate in deprecatedDefinitions
+  // hasInstancesAsync: EarnedCount > 0 means instances still exist
+  IF EarnedCount > 0 -> skip (still has earned instances)
+  IF gracePeriodDays > 0 AND DeprecatedAt + gracePeriodDays > now -> skip
+  IF dryRun -> count only, don't delete
+  DELETE _definitionStore:achievement-def:{gameServiceId}:{achievementId}
+  DELETE _definitionStore (set remove):achievement-definitions:{gameServiceId} <- achievementId
+  PUBLISH achievement.definition.deleted { full definition snapshot, deletedReason }
+RETURN (200, CleanDeprecatedStringKeyResponse { cleaned, remaining, errors, cleanedIds })
 ```
 
 ### GetAchievementProgress
 POST /achievement/progress/get | Roles: [user]
 
 ```
-READ _progressStore:{gameServiceId}:{entityType}:{entityId}
+READ _progressStore:achievement-progress:{gameServiceId}:{entityType}:{entityId}
   // Null-coalesces to empty EntityProgressData (returns 200, not 404)
 IF body.AchievementId specified
   // Single achievement lookup
-  READ _definitionStore:{gameServiceId}:{achievementId}
+  READ _definitionStore:achievement-def:{gameServiceId}:{achievementId}
     // Skip if definition missing
 ELSE
   // All achievements for entity
   FOREACH achievementId in entityProgress.Achievements
-    READ _definitionStore:{gameServiceId}:{achievementId}
+    READ _definitionStore:achievement-def:{gameServiceId}:{achievementId}
       // Skip entries where definition is missing (orphan cleanup)
 RETURN (200, AchievementProgressResponse { progress, totalPoints, unlockedCount })
 ```
@@ -228,26 +266,27 @@ RETURN (200, AchievementProgressResponse { progress, totalPoints, unlockedCount 
 POST /achievement/progress/update | Roles: []
 
 ```
-READ _definitionStore:{gameServiceId}:{achievementId}          -> 404 if null
-IF definition.IsDeprecated                                     -> 400
-IF body.EntityType not in definition.EntityTypes               -> 400
-IF definition.AchievementType != Progressive OR !ProgressTarget -> 400
-LOCK achievement-lock:{gameServiceId}:{entityType}:{entityId}  -> 409 if fails
-  READ _progressStore:{gameServiceId}:{entityType}:{entityId}
+READ _definitionStore:achievement-def:{gameServiceId}:{achievementId}    -> 404 if null
+IF definition.IsDeprecated                                               -> 400
+IF body.EntityType not in definition.EntityTypes                         -> 400
+IF definition.AchievementType != Progressive OR !ProgressTarget          -> 400
+LOCK achievement-lock:achievement-progress:{gameServiceId}:{entityType}:{entityId}  -> 409 if fails
+  READ _progressStore:achievement-progress:{gameServiceId}:{entityType}:{entityId}
     // Null-coalesces to empty EntityProgressData
   IF achievement already unlocked
-    RETURN (200, UpdateAchievementProgressResponse { unlocked=false })  // short-circuit
+    RETURN (200, UpdateAchievementProgressResponse { unlocked=false })    // short-circuit
   // Increment progress, clamp to ProgressTarget
   IF newProgress >= targetProgress
     // Auto-unlock: set UnlockedAt, IsUnlocked, clamp progress
-    WRITE _progressStore:{gameServiceId}:{entityType}:{entityId} <- updated progress [with TTL if configured]
+    WRITE _progressStore:achievement-progress:{gameServiceId}:{entityType}:{entityId} <- updated progress [with TTL if configured]
     // IncrementEarnedCountAsync: ETag-retry loop (config.EarnedCountRetryAttempts)
-    READ _definitionStore:{gameServiceId}:{achievementId} [with ETag]
-    ETAG-WRITE _definitionStore:{gameServiceId}:{achievementId}  // EarnedCount++
+    READ _definitionStore:achievement-def:{gameServiceId}:{achievementId} [with ETag]
+    ETAG-WRITE _definitionStore:achievement-def:{gameServiceId}:{achievementId}  // EarnedCount++
+    // RegisterCharacterReferenceAsync if EntityType == Character and ProgressTtlSeconds == 0 (first creation)
     PUBLISH achievement.progress.unlocked { gameServiceId, achievementId, entityId, entityType, points, totalPoints, isRare, rarity }
     PUSH achievement.progress.unlocked -> entity sessions
   ELSE
-    WRITE _progressStore:{gameServiceId}:{entityType}:{entityId} <- updated progress [with TTL if configured]
+    WRITE _progressStore:achievement-progress:{gameServiceId}:{entityType}:{entityId} <- updated progress [with TTL if configured]
   PUBLISH achievement.progress.updated { previousProgress, newProgress, targetProgress, percentComplete }
   // Milestone client events at configurable thresholds (default: 25%, 50%, 75%)
   FOREACH milestone threshold crossed by this increment
@@ -259,24 +298,25 @@ RETURN (200, UpdateAchievementProgressResponse { previousProgress, newProgress, 
 POST /achievement/unlock | Roles: []
 
 ```
-READ _definitionStore:{gameServiceId}:{achievementId}          -> 404 if null
-IF definition.IsDeprecated                                     -> 400
-IF body.EntityType not in definition.EntityTypes               -> 400
+READ _definitionStore:achievement-def:{gameServiceId}:{achievementId}    -> 404 if null
+IF definition.IsDeprecated                                               -> 400
+IF body.EntityType not in definition.EntityTypes                         -> 400
 // Prerequisite check (before lock)
 IF definition.Prerequisites not empty
-  READ _progressStore:{gameServiceId}:{entityType}:{entityId}
+  READ _progressStore:achievement-progress:{gameServiceId}:{entityType}:{entityId}
   FOREACH prerequisite in definition.Prerequisites
-    IF not unlocked in progress                                -> 400 "prerequisites not met"
-LOCK achievement-lock:{gameServiceId}:{entityType}:{entityId}  -> 409 if fails
-  READ _progressStore:{gameServiceId}:{entityType}:{entityId}
+    IF not unlocked in progress                                          -> 400 "prerequisites not met"
+LOCK achievement-lock:achievement-progress:{gameServiceId}:{entityType}:{entityId}  -> 409 if fails
+  READ _progressStore:achievement-progress:{gameServiceId}:{entityType}:{entityId}
     // Null-coalesces to empty EntityProgressData
   IF achievement already unlocked
-    RETURN (200, UnlockAchievementResponse { unlockedAt })     // idempotent
+    RETURN (200, UnlockAchievementResponse { unlockedAt })               // idempotent
   // Set IsUnlocked, UnlockedAt, CurrentProgress = ProgressTarget ?? 1
-  WRITE _progressStore:{gameServiceId}:{entityType}:{entityId} <- updated progress [with TTL if configured]
+  WRITE _progressStore:achievement-progress:{gameServiceId}:{entityType}:{entityId} <- updated progress [with TTL if configured]
   // IncrementEarnedCountAsync: ETag-retry loop
-  READ _definitionStore:{gameServiceId}:{achievementId} [with ETag]
-  ETAG-WRITE _definitionStore:{gameServiceId}:{achievementId}  // EarnedCount++
+  READ _definitionStore:achievement-def:{gameServiceId}:{achievementId} [with ETag]
+  ETAG-WRITE _definitionStore:achievement-def:{gameServiceId}:{achievementId}  // EarnedCount++
+  // RegisterCharacterReferenceAsync if EntityType == Character and ProgressTtlSeconds == 0 (first unlock)
   PUBLISH achievement.progress.unlocked { gameServiceId, achievementId, entityId, entityType, points, totalPoints, isRare, rarity }
   PUSH achievement.progress.unlocked -> entity sessions
   // Platform sync (if AutoSyncOnUnlock AND !body.SkipPlatformSync)
@@ -297,11 +337,11 @@ RETURN (200, UnlockAchievementResponse { unlockedAt, platformSyncStatus })
 POST /achievement/list-unlocked | Roles: [user]
 
 ```
-READ _progressStore:{gameServiceId}:{entityType}:{entityId}
+READ _progressStore:achievement-progress:{gameServiceId}:{entityType}:{entityId}
   // Returns 200 with empty list (not 404) if null
 FOREACH achievement in entityProgress.Achievements WHERE IsUnlocked
   IF UnlockedAt is null -> skip (data inconsistency, logged as error)
-  READ _definitionStore:{gameServiceId}:{achievementId}
+  READ _definitionStore:achievement-def:{gameServiceId}:{achievementId}
     // Skip if definition missing (orphan)
   IF !body.IncludeDeprecated AND definition.IsDeprecated -> skip
   IF body.Platform set AND definition.Platforms !contains it -> skip
@@ -313,23 +353,25 @@ RETURN (200, ListUnlockedAchievementsResponse { achievements, totalPoints })
 POST /achievement/platform/sync | Roles: [admin]
 
 ```
-IF body.EntityType != Account                                  -> 400
+IF body.EntityType != Account                                            -> 400
 // Find sync provider for requested platform
-IF no provider registered for body.Platform                    -> 400
-IF !syncProvider.IsConfigured                                  -> 400
+IF no provider registered for body.Platform                              -> 400
+IF !syncProvider.IsConfigured                                            -> 400
 CALL syncProvider.IsLinkedAsync(body.EntityId)
 IF not linked
   RETURN (200, SyncPlatformAchievementsResponse { synced=0, failed=0 })
 CALL syncProvider.GetExternalIdAsync(body.EntityId)
 IF externalId is null/empty
   RETURN (200, SyncPlatformAchievementsResponse { synced=0, failed=0 })
-READ _progressStore:{gameServiceId}:{entityType}:{entityId}
+READ _progressStore:achievement-progress:{gameServiceId}:{entityType}:{entityId}
   // Returns synced=0 if null or empty
 FOREACH achievement in entityProgress.Achievements WHERE IsUnlocked
-  READ _definitionStore:{gameServiceId}:{achievementId}
+  READ _definitionStore:achievement-def:{gameServiceId}:{achievementId}
   // Look up platformAchievementId from definition.PlatformMappings
   // ExecutePlatformUnlockWithRetriesAsync with configurable retries
   CALL syncProvider.UnlockAsync(externalId, platformAchievementId)
+  // RecordSyncOutcomeAsync: ETag-based write to sync store
+  WRITE _syncStore:achievement-sync:{gameServiceId}:{entityId}:{platform} <- PlatformSyncTrackingData [with TTL if configured]
   PUBLISH achievement.platform.synced { platform, success, errorMessage }
 RETURN (200, SyncPlatformAchievementsResponse { platform, synced, failed, errors })
 ```
@@ -338,30 +380,17 @@ RETURN (200, SyncPlatformAchievementsResponse { platform, synced, failed, errors
 POST /achievement/platform/status | Roles: []
 
 ```
-IF body.EntityType != Account                                  -> 400
+IF body.EntityType != Account                                            -> 400
 FOREACH syncProvider in _platformSyncs
   IF body.Platform set AND doesn't match -> skip
   IF !syncProvider.IsConfigured -> skip
   CALL syncProvider.IsLinkedAsync(body.EntityId)
   IF linked
     CALL syncProvider.GetExternalIdAsync(body.EntityId)
-  READ _syncStore:{gameServiceId}:{entityId}:{platform}
+  READ _syncStore:achievement-sync:{gameServiceId}:{entityId}:{platform}
   // SyncedCount, FailedCount, LastSyncAt, LastError from PlatformSyncTrackingData
   // PendingCount is null (sync is synchronous, no queue)
 RETURN (200, PlatformSyncStatusResponse { entityId, entityType, platforms })
-```
-
-### CleanDeprecatedAchievementDefinitions
-POST /achievement/definition/clean-deprecated | Roles: [admin]
-
-**NOT IMPLEMENTED** — `NotImplementedException` stub. Implementation should use `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` per T31 B20-B22.
-
-```
-// Uses shared CleanDeprecatedRequest (gracePeriodDays, dryRun) / CleanDeprecatedResponse
-// Should iterate all game services, find deprecated definitions with zero progress records,
-// and delete those that have been deprecated longer than gracePeriodDays.
-// Uses DeprecationCleanupHelper.ExecuteCleanupSweepAsync for standardized sweep logic.
-THROW NotImplementedException
 ```
 
 ### CleanupByCharacter
@@ -371,9 +400,9 @@ POST /achievement/cleanup-by-character | Roles: []
 // Called by lib-resource during character deletion cleanup
 READ _definitionStore (set):achievement-game-services
 FOREACH gameServiceId in set
-  READ _progressStore:{gameServiceId}:Character:{characterId}
+  READ _progressStore:achievement-progress:{gameServiceId}:Character:{characterId}
   IF exists
-    DELETE _progressStore:{gameServiceId}:Character:{characterId}
+    DELETE _progressStore:achievement-progress:{gameServiceId}:Character:{characterId}
     progressRecordsDeleted++
 RETURN (200, CleanupByCharacterResponse { progressRecordsDeleted })
 ```
@@ -393,11 +422,25 @@ READ _definitionStore (set):achievement-game-services
 FOREACH gameServiceId in set
   READ _definitionStore (set):achievement-definitions:{gameServiceId}
   FOREACH achievementId in set
-    READ _definitionStore:{gameServiceId}:{achievementId} [with ETag]
+    READ _definitionStore:achievement-def:{gameServiceId}:{achievementId} [with ETag]
     IF definition.TotalEligibleEntities > 0 AND definition.EarnedCount >= 0
       // RarityPercent = EarnedCount / TotalEligibleEntities * 100.0
-      ETAG-WRITE _definitionStore:{gameServiceId}:{achievementId}
+      ETAG-WRITE _definitionStore:achievement-def:{gameServiceId}:{achievementId}
         // Silently skip on ETag conflict (retries next interval)
 ```
 
-**Note**: `TotalEligibleEntities` is never populated by any service endpoint. The rarity calculation branch (`TotalEligibleEntities > 0`) will never execute until this field is manually set or an automation is implemented.
+**Note**: `TotalEligibleEntities` is never populated by any service endpoint. The rarity calculation branch (`TotalEligibleEntities > 0`) will never execute until this field is manually set or an automation is implemented. Additionally, the background service constructs keys using inline `$"{gameServiceId}:{achievementId}"` instead of calling `BuildDefinitionKey()`, missing the `achievement-def:` prefix — every store read returns null and rarity is never actually recalculated.
+
+---
+
+## Non-Standard Implementation Patterns
+
+### Plugin Lifecycle (OnRunningAsync)
+
+```
+// Registers lib-resource cleanup callback after startup
+CALL RegisterResourceCleanupCallbacksAsync(resourceClient)
+  // CASCADE cleanup: character -> achievement-progress
+  // Callback endpoint: /achievement/cleanup-by-character
+  // Logs Warning if registration fails (does not throw)
+```

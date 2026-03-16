@@ -297,6 +297,12 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         return _localCache.Keys.ToList().AsReadOnly();
     }
 
+    /// <inheritdoc />
+    public void InvalidateRoomCache(Guid roomId)
+    {
+        _localCache.TryRemove(roomId, out _);
+    }
+
     /// <summary>
     /// Persists room participants to state store.
     /// </summary>

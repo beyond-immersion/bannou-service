@@ -101,7 +101,6 @@ components:
           description: Upload session identifier
         createdBy:
           type: string
-          nullable: true
           description: Informational field recording who initiated this upload. Not used for access control.
         filename:
           type: string
@@ -156,7 +155,6 @@ components:
           description: Upload session identifier
         createdBy:
           type: string
-          nullable: true
           description: Informational field recording who completed this upload. Not used for access control.
         bucket:
           type: string
@@ -364,7 +362,6 @@ components:
           description: Compression algorithm used for the bundle
         createdBy:
           type: string
-          nullable: true
           description: Informational field recording who created this bundle. Not used for access control.
 
     MetabundleCreatedEvent:
@@ -428,7 +425,6 @@ components:
           description: Metabundle file size in bytes
         createdBy:
           type: string
-          nullable: true
           description: Informational field recording who created this metabundle. Not used for access control.
 
     BundleUpdatedEvent:
@@ -564,7 +560,6 @@ components:
           description: Original filename
         createdBy:
           type: string
-          nullable: true
           description: Informational field recording who initiated this processing. Not used for access control.
         realmId:
           type: string

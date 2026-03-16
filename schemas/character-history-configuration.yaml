@@ -41,6 +41,19 @@ x-service-configuration:
       description: Maximum number of life events to include in compression archive summaries. Controls narrative fidelity vs archive size during character archival.
       default: 10
       env: CHARACTER_HISTORY_MAX_COMPRESS_LIFE_EVENTS
+    # Batch Event Configuration
+    ParticipationEventBatchIntervalSeconds:
+      type: integer
+      minimum: 1
+      description: Interval in seconds between participation batch event flushes. Controls how frequently accumulated participation recordings and deletions are published as batch events.
+      default: 5
+      env: CHARACTER_HISTORY_PARTICIPATION_EVENT_BATCH_INTERVAL_SECONDS
+    ParticipationEventBatchStartupDelaySeconds:
+      type: integer
+      minimum: 0
+      description: Delay in seconds before the participation event batcher starts its first flush cycle after startup.
+      default: 10
+      env: CHARACTER_HISTORY_PARTICIPATION_EVENT_BATCH_STARTUP_DELAY_SECONDS
     # Concurrency Control
     IndexLockTimeoutSeconds:
       type: integer

@@ -29,7 +29,7 @@ Three subsystems:
 
 **Cross-generational persistence**: Guardian seed growth persists across character lifetimes because seeds are account-owned, not character-owned. When a character dies, the spirit's accumulated capabilities (and therefore its UX manifest) are unaffected. The spirit carries its full agency into whatever character it possesses next.
 
-**Reactive manifest recomputation**: In addition to seed capability changes, manifests must also recompute when `disposition.guardian.shifted` fires, because `${spirit.compliance_base}` depends on Disposition's guardian feelings (trust, resentment, familiarity). Without this subscription, compliance variables would go stale until the next seed growth event. Note: the implementation map's Events Consumed section should include this trigger.
+**Reactive manifest recomputation**: In addition to seed capability changes, manifests must also recompute when `disposition.guardian.shifted` fires, because `${spirit.compliance_base}` depends on Disposition's guardian feelings (trust, resentment, familiarity). Without this subscription, compliance variables would go stale until the next seed growth event.
 
 **What Agency is NOT**:
 - **Not a permission system.** Permission (L1) gates API endpoint access based on roles and states. Agency gates UX module visibility based on spirit growth. They use similar push mechanisms but serve orthogonal purposes.
@@ -291,7 +291,7 @@ perception_handler:
 
 ### Bugs (Fix Immediately)
 
-1. **Modules and Influences incorrectly classified as Category A deprecation.** Per IMPLEMENTATION TENETS (T31 decision tree): "Does persistent data in OTHER services/entities store this entity's ID?" For modules and influences, no other persistent entity references moduleCode or influenceCode — manifests are computed Redis cache with TTL, not persistent entities. The tenet states: "Entities that are never referenced by ID MUST NOT have deprecation — use immediate deletion." Domains correctly remain Category A because modules and influences (other entity types within Agency) persistently store domainCode. Modules and influences should use immediate hard delete.
+1. ~~**Modules and Influences incorrectly classified as Category A deprecation.**~~: **FIXED** (2026-03-15) - Implementation map updated to remove all Category A deprecation guards from Module and Influence methods (DeleteModule, DeleteInfluence, ListModules, ListInfluences, EvaluateInfluence, ExecuteInfluence, CreateModule count, CreateInfluence count, ListDomains module/influence counts, GetManifest/RecomputeManifest queries). Modules and influences now use immediate hard delete. Domains correctly remain Category A. This is a pre-implementation doc-only fix; no code or schemas exist yet.
 
 ### Pre-Implementation Audit Findings (2026-03-03)
 
@@ -334,7 +334,7 @@ perception_handler:
 
 2. **Realm-specific module sets.** Game-service scoping is sufficient for now. Realm-specific scoping would require a RealmId field on module definitions.
 
-3. **Map inconsistency: missing `disposition.guardian.shifted` event subscription.** The deep dive describes `disposition.guardian.shifted` as a trigger for manifest recomputation (see Architecture § Reactive manifest recomputation), but the implementation map's Events Consumed table omits this event. The map should be updated to include it.
+3. ~~**Map inconsistency: missing `disposition.guardian.shifted` event subscription.**~~: **FIXED** (2026-03-15) - Implementation map updated: added `disposition.guardian.shifted` to Events Consumed table with `HandleGuardianShiftedAsync` handler, updated ManifestRecomputeWorker trigger description, fixed stale `$.IsDeprecated == false` filter on modules/influences in worker pseudocode (residual from Bug #1 fix).
 
 ---
 
@@ -356,6 +356,13 @@ No Agency-specific issues exist yet (pre-implementation). The following cross-cu
 | [#410](https://github.com/beyond-immersion/bannou-service/issues/410) | Second Thoughts (lib-obligation) | Open | Compliance interacts with obligation cost modifiers — potential cross-pollination between `${spirit.compliance_base}` and `${obligations.*}`. |
 | [#386](https://github.com/beyond-immersion/bannou-service/issues/386) | Gardener: Bond communication via Chat | Open | Alternative spirit-character communication channel alongside influence system. |
 | [#375](https://github.com/beyond-immersion/bannou-service/issues/375) | Collection→Seed→Status pipeline | **Closed** | Foundational growth pipeline that feeds Agency's capability reads. |
+
+### Completed
+
+| Date | Action | Details |
+|------|--------|---------|
+| 2026-03-15 | Bug fix: Module/Influence deprecation reclassification | Implementation map updated to remove all Category A deprecation guards from Module and Influence entities. Modules and influences now use immediate hard delete per T31 decision tree. |
+| 2026-03-15 | Doc fix: Map inconsistency — disposition.guardian.shifted | Added missing event to implementation map Events Consumed table, updated ManifestRecomputeWorker trigger, fixed stale IsDeprecated filters in worker pseudocode. |
 
 ### Planned Issues (Pre-Implementation)
 

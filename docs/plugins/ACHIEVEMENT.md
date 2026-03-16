@@ -107,7 +107,7 @@ The Achievement plugin is primarily a leaf service — it reacts to external eve
 
 ### Bugs (Fix Immediately)
 
-1. **Missing `account.deleted` cleanup handler**: Achievement progress data is keyed by `{gameServiceId}:{entityType}:{entityId}` where `entityType` defaults to `Account`. When an account is deleted, progress records with `entityType=Account` are never cleaned up. Per Foundation Tenets (T28 Account Deletion Cleanup Obligation), Achievement MUST subscribe to `account.deleted` and implement `HandleAccountDeletedAsync` in `AchievementServiceEvents.cs` to delete all account-keyed progress records across all game services. Character cleanup is correctly handled via lib-resource (`x-references` with `/achievement/cleanup-by-character`), but lib-resource registration for accounts is forbidden (privacy) — account cleanup requires the event-based pattern. The handler should iterate all game services (same pattern as `CleanupByCharacterAsync`) deleting `{gameServiceId}:Account:{accountId}` progress entries.
+1. ~~**Missing `account.deleted` cleanup handler**~~: **FIXED** (2026-03-15) - Added `HandleAccountDeletedAsync` in `AchievementServiceEvents.cs` that subscribes to `account.deleted` and deletes all Account-entity-type progress records and sync tracking records across all game services. Uses per-item error isolation per T7. Also added `account.deleted` to `x-event-subscriptions` in `achievement-events.yaml`.
 
 ### Intentional Quirks (Documented Behavior)
 

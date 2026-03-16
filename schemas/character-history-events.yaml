@@ -13,12 +13,18 @@ info:
   version: 1.0.0
   x-event-subscriptions: []  # Character History doesn't subscribe to external events
   x-event-publications:
-    - topic: character-history.participation.recorded
-      event: CharacterParticipationRecordedEvent
-      description: Published when a character's participation in a historical event is recorded
-    - topic: character-history.participation.deleted
-      event: CharacterParticipationDeletedEvent
-      description: Published when a character's participation record is deleted
+    # Participation batch lifecycle events (auto-generated from x-lifecycle with batch: true)
+    - topic: character-history.participation.batch-created
+      event: ParticipationBatchCreatedEvent
+      description: Batch event containing accumulated participation recordings
+    - topic: character-history.participation.batch-modified
+      event: ParticipationBatchModifiedEvent
+      description: Batch event containing accumulated participation modifications (participations are immutable; this is unused infrastructure)
+    - topic: character-history.participation.batch-destroyed
+      event: ParticipationBatchDestroyedEvent
+      description: Batch event containing accumulated participation deletions
+
+    # Backstory custom events (non-lifecycle, consumed by self for cache invalidation)
     - topic: character-history.backstory.created
       event: CharacterBackstoryCreatedEvent
       description: Published when a character's backstory is first created
@@ -34,94 +40,37 @@ info:
 
 paths: {}  # Events don't have HTTP paths
 
+x-lifecycle:
+  topic_prefix: character-history
+  Participation:
+    batch: true
+    model:
+      participationId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for this participation record" }
+      characterId: { type: string, format: uuid, required: true, description: "Character who participated" }
+      historicalEventId: { type: string, format: uuid, required: true, description: "Historical event the character participated in" }
+      role: { $ref: 'character-history-api.yaml#/components/schemas/ParticipationRole', required: true, description: "Role the character played in the event" }
+      historicalEventName: { type: string, required: true, description: "Name of the historical event" }
+      eventCategory: { $ref: 'character-history-api.yaml#/components/schemas/EventCategory', required: true, description: "Category of the historical event" }
+      significance: { type: number, format: float, required: true, description: "How significant this event was for the character (0.0 to 1.0)" }
+    sensitive: []
+    resource_mapping:
+      resource_type: character
+      resource_id_field: characterId
+      source_type: character-history
+
 components:
   schemas:
-    CharacterParticipationRecordedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-      type: object
-      additionalProperties: false
-      description: Published when a character's participation in a historical event is recorded
-      x-resource-mapping:
-        resource_type: character
-        resource_id_field: characterId
-        source_type: character-history
-      required:
-        - eventName
-        - eventId
-        - timestamp
-        - characterId
-        - historicalEventId
-        - participationId
-        - role
-        - historicalEventName
-        - eventCategory
-        - significance
-      properties:
-        eventName:
-          type: string
-          default: character-history.participation.recorded
-          description: 'Event type identifier: character-history.participation.recorded'
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character that participated
-        historicalEventId:
-          type: string
-          format: uuid
-          description: ID of the historical event
-        participationId:
-          type: string
-          format: uuid
-          description: ID of the participation record
-        role:
-          $ref: 'character-history-api.yaml#/components/schemas/ParticipationRole'
-          description: Role the character played in the event
-        historicalEventName:
-          type: string
-          description: Name of the historical event
-        eventCategory:
-          $ref: 'character-history-api.yaml#/components/schemas/EventCategory'
-          description: Category of the historical event
-        significance:
-          type: number
-          format: float
-          description: How significant this event was for the character (0.0 to 1.0)
+    # =========================================================================
+    # NOTE: CharacterParticipationRecordedEvent and CharacterParticipationDeletedEvent
+    # were previously defined here as custom lifecycle events. They have been replaced
+    # by batch lifecycle events (ParticipationBatchCreatedEvent, BatchModifiedEvent,
+    # BatchDestroyedEvent) auto-generated from x-lifecycle with batch: true.
+    # The batch entry and event models are in Generated/character-history-lifecycle-events.yaml.
+    # =========================================================================
 
-    CharacterParticipationDeletedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
-      type: object
-      additionalProperties: false
-      description: Published when a character's participation record is deleted
-      x-resource-mapping:
-        resource_type: character
-        resource_id_field: characterId
-        source_type: character-history
-      required:
-        - eventName
-        - eventId
-        - timestamp
-        - participationId
-        - characterId
-        - historicalEventId
-      properties:
-        eventName:
-          type: string
-          default: character-history.participation.deleted
-          description: 'Event type identifier: character-history.participation.deleted'
-        participationId:
-          type: string
-          format: uuid
-          description: ID of the deleted participation record
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the character
-        historicalEventId:
-          type: string
-          format: uuid
-          description: ID of the historical event
+    # =========================================================================
+    # Backstory Events (non-lifecycle, consumed by self for cache invalidation)
+    # =========================================================================
 
     CharacterBackstoryCreatedEvent:
       allOf:

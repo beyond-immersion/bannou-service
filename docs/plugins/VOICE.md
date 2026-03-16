@@ -175,7 +175,7 @@ Each participant calls /voice/room/broadcast/consent
 | `TierUpgradeMigrationDeadlineMs` | `VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS` | `30000` | Migration window in ms for clients to switch tiers |
 | `P2PMaxParticipants` | `VOICE_P2P_MAX_PARTICIPANTS` | `8` | Max P2P mesh size (schema allows 2-16) |
 | `ScaledMaxParticipants` | `VOICE_SCALED_MAX_PARTICIPANTS` | `100` | Max SFU room size (schema allows 1-500) |
-| `StunServers` | `VOICE_STUN_SERVERS` | `"stun:stun.l.google.com:19302"` | Comma-separated STUN URLs for WebRTC |
+| `StunServers` | `VOICE_STUN_SERVERS` | `["stun:stun.l.google.com:19302"]` | STUN server URLs for WebRTC (array; comma-separated in env var) |
 | `SipPasswordSalt` | `VOICE_SIP_PASSWORD_SALT` | `null` (nullable) | Required if ScaledTierEnabled; shared across all instances |
 | `SipDomain` | `VOICE_SIP_DOMAIN` | `"voice.bannou.local"` | SIP registration domain |
 | `KamailioHost` | `VOICE_KAMAILIO_HOST` | `"localhost"` | Kamailio server address |
@@ -353,7 +353,7 @@ SHOWTIME_SERVICE_ENABLED=true
 1. **RTPEngine cookie mismatch correctness bug**: The RTPEngine UDP client uses raw UDP with bencode encoding. Cookie mismatch responses (stale data from previous timed-out requests) are logged but used anyway, meaning the service can act on wrong response data. The triage on #404 confirms this is a correctness bug requiring a loop-receive until the correct cookie arrives or timeout expires, discarding mismatched responses.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/404 -->
 
-2. **SipEndpointRegistry local cache uses inline invalidation (IMPLEMENTATION TENETS — Multi-Instance Safety)**: `SipEndpointRegistry` maintains a local `ConcurrentDictionary` cache synchronized with Redis on every mutation. Per IMPLEMENTATION TENETS, services using `ConcurrentDictionary` caches MUST invalidate via self-event-subscription, not inline method calls. Inline invalidation only reaches the node that processed the request — other nodes' local caches serve stale participant data until they next read from Redis. Voice publishes `voice.peer.joined` and `voice.peer.left` events but does not subscribe to its own events for cache invalidation. Fix: SipEndpointRegistry should subscribe to Voice's own peer lifecycle events via `IEventConsumer` for cross-node cache invalidation.
+2. ~~**SipEndpointRegistry local cache uses inline invalidation (IMPLEMENTATION TENETS — Multi-Instance Safety)**~~: **FIXED** (2026-03-15) - Added `InvalidateRoomCache` method to `ISipEndpointRegistry`/`SipEndpointRegistry` and self-event-subscriptions for `voice.peer.joined`, `voice.peer.left`, and `voice.room.deleted` in `VoiceServiceEvents.cs`. All nodes now invalidate their local ConcurrentDictionary cache when any node mutates participant state, forcing the next read to reload from Redis.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -379,7 +379,7 @@ SHOWTIME_SERVICE_ENABLED=true
 2. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/405 -->
 
-3. **StunServers comma-delimited string configuration**: `StunServers` is documented as "Comma-separated STUN URLs for WebRTC" with a string default. Per IMPLEMENTATION TENETS (Configuration-First), comma-delimited strings parsed at runtime bypass schema validation and type safety. If the configuration schema defines this as a plain string, it should be an array type instead. However, STUN URLs are inherently string values (not enums), so this is at the boundary of the rule — the concern is structural (array vs. parseable string), not type-narrowing. Verify the schema definition and consider migrating to an array type if it is indeed a single string field.
+3. ~~**StunServers comma-delimited string configuration**~~: **FIXED** (2026-03-15) - Migrated `StunServers` from `type: string` (comma-delimited) to `type: array` with `items: { type: string }` in the configuration schema. Generated config now provides `string[]` directly. Removed `.Split(',')` parsing from 3 call sites (VoiceService, VoiceServiceEvents, ScaledTierCoordinator). Env var still accepts comma-separated values (handled by the config generator).
 
 ---
 
@@ -404,4 +404,7 @@ SHOWTIME_SERVICE_ENABLED=true
 
 ### Completed
 
-(None — all processed items have been removed from the document.)
+| Date | Gap | Fix |
+|------|-----|-----|
+| 2026-03-15 | SipEndpointRegistry inline cache invalidation (T9 violation) | Added self-event-subscription for `voice.peer.joined`, `voice.peer.left`, `voice.room.deleted` |
+| 2026-03-15 | StunServers comma-delimited string (T21 violation) | Migrated to `type: array` in config schema; removed `.Split(',')` from 3 call sites |

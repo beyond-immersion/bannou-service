@@ -146,26 +146,25 @@ public partial class AnalyticsService : IAnalyticsService
         _eventBufferIndexStore = stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.AnalyticsSummary);
         _summaryStoreIsRedis = stateStoreFactory.GetBackendType(StateStoreDefinitions.AnalyticsSummary) == StateBackend.Redis;
 
-        // Parse milestone thresholds from configuration
+        // Parse milestone thresholds from configuration array
         _milestoneThresholds = ParseMilestoneThresholds(configuration.MilestoneThresholds);
 
         RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>
-    /// Parses comma-separated milestone thresholds from configuration string.
+    /// Parses milestone thresholds from configuration array.
     /// </summary>
-    private static int[] ParseMilestoneThresholds(string thresholdsConfig)
+    private static int[] ParseMilestoneThresholds(string[] thresholdsConfig)
     {
-        if (string.IsNullOrWhiteSpace(thresholdsConfig))
+        if (thresholdsConfig.Length == 0)
         {
             return Array.Empty<int>();
         }
 
         return thresholdsConfig
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(s => int.TryParse(s, out var v) ? v : (int?)null)
-            .OfType<int>()  // Filters nulls and unwraps to int in one operation
+            .OfType<int>()
             .OrderBy(v => v)
             .ToArray();
     }

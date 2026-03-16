@@ -4,8 +4,9 @@
 > **Schema**: schemas/character-encounter-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
-> **State Stores**: character-encounter-statestore (MySQL)
+> **State Store**: character-encounter-statestore (MySQL)
 > **Short**: NPC encounter memory with per-participant perspectives, time-decay, and sentiment aggregation
+> **Implementation Map**: [docs/maps/CHARACTER-ENCOUNTER.md](../maps/CHARACTER-ENCOUNTER.md)
 
 ---
 
@@ -30,7 +31,7 @@ Character encounter tracking service (L4 GameFeatures) for memorable interaction
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-actor (`IEncounterCache`, `EncountersProvider`) | Uses `ICharacterEncounterClient` for encounter queries, sentiment lookups, has-met checks, and between-character queries; provides `${encounters.*}` ABML variable paths for NPC behavior decisions |
+| lib-actor (via `IVariableProviderFactory`) | `EncountersProviderFactory` (L4, registered in character-encounter plugin) implements `IVariableProviderFactory` to provide `${encounters.*}` ABML variable paths for NPC behavior decisions. Internally uses `IEncounterDataCache` and `ICharacterEncounterClient` for encounter queries, sentiment lookups, has-met checks, and between-character queries. Actor (L2) discovers the provider via DI `IEnumerable<IVariableProviderFactory>` — no direct L2→L4 client dependency. |
 
 ---
 
@@ -132,7 +133,7 @@ None. Character deletion cleanup is handled via lib-resource cleanup callbacks (
 | `EncountersProviderFactory` | Singleton | `IVariableProviderFactory` implementation for Actor's `${encounters.*}` ABML variables |
 | `MemoryDecaySchedulerService` | Hosted | Background service for scheduled memory decay (only active when MemoryDecayMode is 'scheduled') |
 
-Service lifetime is **Scoped** (per-request). One background service: `MemoryDecaySchedulerService` (conditionally active). Three singleton helpers: configuration, encounter cache (reads TTL and max results from configuration), and variable provider factory. No distributed locks used. Cache invalidation is both TTL-based and explicit: the service calls `Invalidate(characterId)` after all write operations (RecordEncounter, UpdatePerspective, RefreshMemory, DeleteEncounter, DeleteByCharacter) to ensure Actor behavior sees fresh data immediately.
+Service lifetime is **Scoped** (per-request). One background service: `MemoryDecaySchedulerService` (conditionally active). Three singleton helpers: configuration, encounter cache (reads TTL and max results from configuration), and variable provider factory. No distributed locks used. Cache invalidation uses self-event-subscription via `IEventConsumer` (per Foundation Tenets — Multi-Instance Safety): the service subscribes to its own encounter events (`encounter.recorded`, `encounter.perspective.updated`, `encounter.memory.refreshed`, `encounter.memory.faded`, `encounter.deleted`) and invalidates cache entries in the handlers, ensuring cross-node cache consistency. TTL serves as a secondary safety net.
 
 ---
 
@@ -140,10 +141,10 @@ Service lifetime is **Scoped** (per-request). One background service: `MemoryDec
 
 ### Encounter Type Management (6 endpoints)
 
-- **CreateEncounterType** (`/character-encounter/type/create`): Validates code is not a reserved built-in type (COMBAT, DIALOGUE, TRADE, QUEST, SOCIAL, CEREMONY). Uppercases code. Checks for existing type with same code (returns Conflict). Creates `EncounterTypeData` with new GUID. Adds to custom type index for enumeration. No event published.
+- **CreateEncounterType** (`/character-encounter/type/create`): Validates code is not a reserved built-in type (COMBAT, DIALOGUE, TRADE, QUEST, SOCIAL, CEREMONY). Uppercases code. Checks for existing type with same code (returns Conflict). Creates `EncounterTypeData` with new GUID. Adds to custom type index for enumeration. Publishes `EncounterTypeCreatedEvent` lifecycle event.
 - **GetEncounterType** (`/character-encounter/type/get`): Looks up by uppercased code. If not found, checks if it is a built-in type and auto-seeds it on demand (lazy seeding pattern). Returns NotFound for truly unknown codes.
 - **ListEncounterTypes** (`/character-encounter/type/list`): Ensures built-in types are seeded first. Builds key list from built-in codes plus custom type index. Loads each type individually. Applies filters: `includeDeprecated` (default false, per IMPLEMENTATION TENETS), `builtInOnly`, `customOnly`. Sorts by sortOrder then code.
-- **UpdateEncounterType** (`/character-encounter/type/update`): Partial update semantics (null fields unchanged). Built-in types can only have description and defaultEmotionalImpact updated; rejects name or sortOrder changes. No event published.
+- **UpdateEncounterType** (`/character-encounter/type/update`): Partial update semantics (null fields unchanged). Built-in types can only have description and defaultEmotionalImpact updated; rejects name or sortOrder changes. Publishes `EncounterTypeUpdatedEvent` lifecycle event with `changedFields` tracking actual modifications.
 - **DeprecateEncounterType** (`/character-encounter/type/deprecate`): Marks encounter type as deprecated (idempotent — returns OK if already deprecated). Publishes `character-encounter.encounter-type.updated` event with `changedFields` containing deprecation fields. No delete endpoint — encounter types are Category B entities (encounters persist independently referencing `encounterTypeCode`).
 - **SeedEncounterTypes** (`/character-encounter/type/seed`): Idempotent operation. Iterates built-in types. Creates if missing. If `forceReset=true`, overwrites existing built-in types with default values. Reports created/updated/skipped counts.
 
@@ -362,7 +363,7 @@ Index Architecture
 
 ## Stubs & Unimplemented Features
 
-1. ~~**`CleanDeprecatedEncounterTypesAsync` not implemented**~~: **FIXED** (2026-03-11) - Fully implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`. Loads all deprecated encounter types, checks `type-enc-idx-{CODE}` for active encounters, deletes eligible types and cleans up custom type index and type-encounter index entries, publishes `EncounterTypeDeletedEvent` lifecycle event. Class implements `ICleanDeprecatedEntity` marker interface. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse`.
+None. All stubs have been implemented.
 
 ---
 
@@ -372,10 +373,6 @@ Index Architecture
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/312 -->
 2. **Location-based encounter proximity**: Integrate with location hierarchy to find encounters "near" a location (ancestor/descendant queries).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/313 -->
-3. **Memory decay curves**: Support non-linear decay (exponential, logarithmic) via configurable decay function, allowing traumatic encounters to persist longer than casual ones.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/314 -->
-4. **Encounter archival**: Instead of hard-deleting pruned encounters, move them to a compressed archive format for historical queries.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/315 -->
 
 ---
 
@@ -383,11 +380,7 @@ Index Architecture
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Dead configuration: `ServerSalt` defined but never used (IMPLEMENTATION TENETS -)**~~: **FIXED** (2026-02-09) - Removed `ServerSalt` from `character-encounter-configuration.yaml` and regenerated. The service uses `Guid.NewGuid()` for all GUID generation and relies on timestamp-based duplicate detection via `DuplicateTimestampToleranceMinutes`, making salted GUIDs unnecessary.
-
-2. ~~**Hardcoded cache TTL in EncounterDataCache (IMPLEMENTATION TENETS -)**~~: **FIXED** (2026-02-09) - Added `EncounterCacheTtlMinutes` (default 5) and `EncounterCacheMaxResultsPerQuery` (default 50) to configuration schema. `EncounterDataCache` now reads both from injected `CharacterEncounterServiceConfiguration` instead of hardcoded constants.
-
-3. ~~**EncounterDataCache never explicitly invalidated**~~: **FIXED** (2026-02-09) - Injected `IEncounterDataCache` into `CharacterEncounterService` constructor and added `Invalidate(characterId)` calls after all write operations: RecordEncounter (all participants), UpdatePerspective, RefreshMemory, DeleteEncounter (all participants), and DeleteByCharacter (all affected characters including other participants of deleted encounters). Cache is now invalidated immediately on writes so Actor behavior sees fresh data.
+1. ~~**CreateEncounterType and UpdateEncounterType do not publish lifecycle events (FOUNDATION TENETS)**~~: **FIXED** (2026-03-15) - Added `PublishEncounterTypeCreatedAsync` call to `CreateEncounterTypeAsync` and `PublishEncounterTypeUpdatedAsync` call to `UpdateEncounterTypeAsync` with proper `changedFields` tracking. Both follow the same event construction pattern established by `DeprecateEncounterTypeAsync`.
 
 ### Intentional Quirks
 
@@ -399,7 +392,7 @@ Index Architecture
 
 4. **Lazy decay has write side effects**: When loading perspectives for queries (QueryByCharacter, QueryBetween, QueryByLocation), lazy decay is applied to each perspective. This means read-only queries have write side effects (updating MemoryStrength and LastDecayedAtUnix in the store).
 
-5. **Index updates use 3-attempt ETag retry loops**: All index update methods (character index, pair index, location index, custom type index) use `GetWithETagAsync` + `TrySaveAsync` with a 3-attempt retry pattern. Concurrent modifications are detected via ETag mismatch and retried. Individual retries are logged at Debug level. After 3 failures, the operation continues silently (best-effort index consistency) - there is no escalation to Warning level on final failure, which could hide index corruption under high contention.
+5. **Index updates use 3-attempt ETag retry loops**: All index update methods (character index, pair index, location index, custom type index) use `GetWithETagAsync` + `TrySaveAsync` with a 3-attempt retry pattern. Concurrent modifications are detected via ETag mismatch and retried. Individual retries are logged at Debug level. After 3 failures, the operation logs at Warning level and continues (best-effort index consistency).
 
 6. **Lazy decay concurrent modifications silently skipped**: During bulk lazy decay in queries, if a perspective's ETag has changed between read and write (concurrent modification), the decay update is silently skipped with no logging. The perspective will be decayed on the next access instead.
 
@@ -407,16 +400,10 @@ Index Architecture
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**No pagination for GetAllPerspectiveIdsAsync**~~: **FIXED** (2026-02-09) - Refactored `DecayMemoriesAsync` to iterate per-character instead of collecting all perspective IDs into a single list. Memory is now bounded to one character's perspectives at a time. Removed the dead `GetAllPerspectiveIdsAsync` method. Pattern matches `MemoryDecaySchedulerService` which already iterated per-character.
-
-2. ~~**Pair index combinatorial explosion**~~: **FIXED** (2026-02-09) - Added `MaxParticipantsPerEncounter` config property (default: 20, range 2-100) and server-side validation in `RecordEncounterAsync` rejecting requests exceeding the limit. With 20 participants, max pair indexes per encounter is 190, which is a reasonable upper bound. Also added `maxItems: 100` to schema `participantIds` as a hard ceiling. The O(N^2) behavior is inherent to the pair index design but is now bounded.
-
-3. **No transactionality**: Recording an encounter involves multiple sequential writes (encounter, perspectives, character indexes, pair indexes, location index). If the service crashes mid-operation, indexes can become inconsistent with actual data.
+1. **No transactionality**: Recording an encounter involves multiple sequential writes (encounter, perspectives, character indexes, pair indexes, location index). If the service crashes mid-operation, indexes can become inconsistent with actual data.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/600 -->
 
-4. ~~**Lazy decay write amplification**~~: **FIXED** (2026-03-08) - Moved to Intentional Quirks (#7). Write amplification is inherent to lazy evaluation mode; scheduled mode already exists as the alternative. No code changes needed — this is a documented operational trade-off with a configurable mitigation.
-
-5. **Global character index unbounded growth**: The `global-char-idx` list grows without bound as new characters encounter each other. Even after `DeleteByCharacter` removes a character, the global index is cleaned up, but during active operation this list could contain tens of thousands of character IDs.
+2. **Global character index unbounded growth**: The `global-char-idx` list grows without bound as new characters encounter each other. Even after `DeleteByCharacter` removes a character, the global index is cleaned up, but during active operation this list could contain tens of thousands of character IDs.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/604 -->
 
 ---
@@ -424,17 +411,6 @@ Index Architecture
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
-
-### Completed
-
-- **Bug #1 - Dead `ServerSalt` config**: Removed from schema (2026-02-09). Service uses random GUIDs, not salted.
-- **Bug #2 - Hardcoded cache TTL and max results**: Added `EncounterCacheTtlMinutes` and `EncounterCacheMaxResultsPerQuery` config properties (2026-02-09). Cache now reads from configuration.
-- **Bug #3 - EncounterDataCache never explicitly invalidated**: Injected `IEncounterDataCache` into service constructor and added `Invalidate()` calls in all write methods (2026-02-09). Actor behavior now sees fresh data immediately after writes.
-- **Design #1 - No pagination for GetAllPerspectiveIdsAsync**: Refactored `DecayMemoriesAsync` to iterate per-character (2026-02-09). Memory bounded to one character's perspectives at a time. Removed dead `GetAllPerspectiveIdsAsync` method.
-- **Design #2 - Pair index combinatorial explosion**: Added `MaxParticipantsPerEncounter` config property (default: 20) and server-side validation (2026-02-09). O(N^2) pair index creation now bounded by configurable limit.
-- **Issue #379 - Migrate cleanup from character.deleted event to lib-resource**: Removed redundant `character.deleted` event subscription (2026-02-11). Cleanup now exclusively via lib-resource cleanup callbacks registered at startup. Removed `IEventConsumer` dependency and `CharacterEncounterServiceEvents.cs`.
-- **Design #4 - Lazy decay write amplification**: Moved to Intentional Quirks (#7) (2026-03-08). Write amplification is inherent to lazy evaluation mode; `MemoryDecayMode=scheduled` already exists as the alternative via `MemoryDecaySchedulerService`.
-- **Stub #1 - CleanDeprecatedEncounterTypesAsync not implemented**: Documentation updated (2026-03-11). Method was already fully implemented using `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` with `ICleanDeprecatedEntity` marker interface. Deep dive stub section was stale.
 
 ### Active
 

@@ -34,6 +34,11 @@ public partial class AchievementService
             "leaderboard.rank.changed",
             async (svc, evt) => await ((AchievementService)svc).HandleRankChangedAsync(evt));
 
+        // Account Deletion Cleanup Obligation per FOUNDATION TENETS
+        eventConsumer.RegisterHandler<IAchievementService, AccountDeletedEvent>(
+            "account.deleted",
+            async (svc, evt) => await ((AchievementService)svc).HandleAccountDeletedAsync(evt));
+
     }
 
     /// <summary>
@@ -403,6 +408,82 @@ public partial class AchievementService
                 dependency: null,
                 endpoint: "event:leaderboard.rank.changed",
                 details: $"leaderboardId:{evt.LeaderboardId}",
+                stack: ex.StackTrace,
+                cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles account.deleted events by cleaning up all account-keyed achievement progress
+    /// and sync tracking records across all game services.
+    /// Account Deletion Cleanup Obligation per FOUNDATION TENETS.
+    /// </summary>
+    /// <param name="evt">The account deleted event.</param>
+    public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.achievement", "AchievementService.HandleAccountDeleted");
+        _logger.LogInformation("Handling account.deleted for account {AccountId}", evt.AccountId);
+
+        try
+        {
+            var gameServiceIds = await _definitionStore.GetSetAsync<string>(GAME_SERVICE_INDEX_KEY, CancellationToken.None);
+            var progressDeleted = 0;
+            var syncDeleted = 0;
+
+            foreach (var gameServiceIdStr in gameServiceIds)
+            {
+                if (!Guid.TryParse(gameServiceIdStr, out var gameServiceId))
+                {
+                    _logger.LogWarning("Invalid game service ID in achievement index: {Value}", gameServiceIdStr);
+                    continue;
+                }
+
+                try
+                {
+                    // Delete account-keyed progress record
+                    var progressKey = BuildEntityProgressKey(gameServiceId, EntityType.Account, evt.AccountId);
+                    var existing = await _progressStore.GetAsync(progressKey, CancellationToken.None);
+                    if (existing != null)
+                    {
+                        await _progressStore.DeleteAsync(progressKey, CancellationToken.None);
+                        progressDeleted++;
+                    }
+
+                    // Delete sync tracking records for each platform
+                    foreach (var platform in new[] { Platform.Steam, Platform.Xbox, Platform.PlayStation, Platform.Internal })
+                    {
+                        var syncKey = BuildSyncTrackingKey(gameServiceId, evt.AccountId, platform);
+                        var syncData = await _syncStore.GetAsync(syncKey, CancellationToken.None);
+                        if (syncData != null)
+                        {
+                            await _syncStore.DeleteAsync(syncKey, CancellationToken.None);
+                            syncDeleted++;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Failed to clean up achievement data for account {AccountId} in game service {GameServiceId}, continuing",
+                        evt.AccountId, gameServiceId);
+                }
+            }
+
+            _logger.LogInformation(
+                "Account cleanup complete for {AccountId}: {ProgressDeleted} progress records, {SyncDeleted} sync records deleted",
+                evt.AccountId, progressDeleted, syncDeleted);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to clean up achievement data for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "achievement",
+                "HandleAccountDeleted",
+                ex.GetType().Name,
+                ex.Message,
+                endpoint: "account.deleted",
+                details: $"accountId={evt.AccountId}",
                 stack: ex.StackTrace,
                 cancellationToken: CancellationToken.None);
         }

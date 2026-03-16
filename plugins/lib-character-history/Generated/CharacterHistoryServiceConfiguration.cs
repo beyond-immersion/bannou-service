@@ -80,6 +80,20 @@ public class CharacterHistoryServiceConfiguration : BaseServiceConfiguration
     public int MaxCompressLifeEvents { get; set; } = 10;
 
     /// <summary>
+    /// Interval in seconds between participation batch event flushes. Controls how frequently accumulated participation recordings and deletions are published as batch events.
+    /// Environment variable: CHARACTER_HISTORY_PARTICIPATION_EVENT_BATCH_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int ParticipationEventBatchIntervalSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Delay in seconds before the participation event batcher starts its first flush cycle after startup.
+    /// Environment variable: CHARACTER_HISTORY_PARTICIPATION_EVENT_BATCH_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0)]
+    public int ParticipationEventBatchStartupDelaySeconds { get; set; } = 10;
+
+    /// <summary>
     /// Timeout in seconds for distributed locks during index and backstory write operations. Matches established patterns in Currency, Inventory, and Contract services.
     /// Environment variable: CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS
     /// </summary>

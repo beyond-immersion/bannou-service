@@ -430,21 +430,27 @@ x-service-configuration:
 
     # === Content Type Extensions (Tier 3) ===
     AdditionalProcessableContentTypes:
-      type: string
-      nullable: true  # NRT: Optional config MUST be nullable (extends defaults)
-      description: Comma-separated list of additional processable content types beyond defaults
+      type: array
+      items:
+        type: string
+      nullable: true
+      description: Additional processable MIME content types beyond built-in defaults (e.g., "image/ktx", "model/step")
       env: ASSET_ADDITIONAL_PROCESSABLE_CONTENT_TYPES
 
     AdditionalExtensionMappings:
-      type: string
-      nullable: true  # NRT: Optional config MUST be nullable (extends defaults)
-      description: Comma-separated ext=type pairs for additional extension mappings (e.g., ".ktx=image/ktx")
+      type: array
+      items:
+        type: string
+      nullable: true
+      description: Additional file extension to MIME type mappings as "ext=type" pairs (e.g., ".ktx=image/ktx", ".step=model/step")
       env: ASSET_ADDITIONAL_EXTENSION_MAPPINGS
 
     AdditionalForbiddenContentTypes:
-      type: string
-      nullable: true  # NRT: Optional config MUST be nullable (extends defaults)
-      description: Comma-separated list of additional forbidden content types
+      type: array
+      items:
+        type: string
+      nullable: true
+      description: Additional MIME content types to reject on upload (e.g., "application/x-msdownload")
       env: ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES
 
     # === Index Optimistic Retry Configuration ===

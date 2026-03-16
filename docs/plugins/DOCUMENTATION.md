@@ -256,13 +256,13 @@ Archive System
 
 ### Bugs (Fix Immediately)
 
-1. **BulkUpdate/BulkDelete skip repository binding check**: Individual Create/Update/Delete operations check for repository bindings and reject mutations on bound namespaces (403). Bulk operations (`BulkUpdateDocuments`, `BulkDeleteDocuments`) skip this check entirely, allowing mutations on repo-bound namespaces that should be git-controlled. The Overview states "git-bound namespaces reject mutations, enforcing git as single source of truth" — bulk operations violate this design invariant.
+1. ~~**BulkUpdate/BulkDelete skip repository binding check**~~: **FIXED** (2026-03-15) - Added repository binding check at the start of both `BulkUpdateDocumentsAsync` and `BulkDeleteDocumentsAsync`, matching the existing pattern in Create/Update/Delete. Returns 403 Forbidden when the namespace is bound to a repository with non-Disabled status.
 
-2. **UnbindRepository deleteDocuments suppresses deletion events**: When `UnbindRepository` is called with the `deleteDocuments` flag, all namespace documents are hard-deleted without publishing `document.deleted` events. Per Foundation Tenets (event-driven architecture), all meaningful state changes must publish events. Consumers tracking document state have no signal that these documents were removed.
+2. ~~**UnbindRepository deleteDocuments suppresses deletion events**~~: **FIXED** (2026-03-15) - `DeleteAllNamespaceDocumentsAsync` now publishes `document.deleted` events for each document removed, with per-item try-catch for error isolation. Also added search index removal per document. The archive restore path (`RestoreDocumentationArchive`) also calls this method; deletion events will now fire there too, which is correct behavior — the old documents are genuinely being deleted before replacement.
 
-3. **DeleteDocumentationArchive publishes no deletion event**: Archive deletion removes the archive metadata but publishes no event. `documentation-archive.created` exists but there is no corresponding deletion event. Per Foundation Tenets (event-driven architecture), archive deletion is a meaningful state change that should be observable.
+3. ~~**DeleteDocumentationArchive publishes no deletion event**~~: **FIXED** (2026-03-15) - Added `DocumentationArchiveDeletedEvent` to events schema, regenerated, and added `TryPublishArchiveDeletedEventAsync` in service. `DeleteDocumentationArchiveAsync` now publishes `documentation-archive.deleted` with namespace and archiveId.
 
-4. **GetDocument uses Guid.Empty as sentinel for absent documentId**: The `GetDocument` endpoint accepts either a `documentId` or a `slug`. When both are optional, `documentId` should be nullable (`Guid?`). Instead, the implementation checks `Guid.Empty` as a sentinel for "not provided." Per Implementation Tenets (no sentinel values), nullable types should represent absence.
+4. ~~**GetDocument uses Guid.Empty as sentinel for absent documentId**~~: **FIXED** (2026-03-15) - Investigation found the deep dive description was inaccurate. The schema already declares `documentId` as `nullable: true` (`Guid?`), and the implementation correctly uses `.HasValue` for absence detection. The `Guid.Empty` check is valid input validation (rejecting an explicitly-passed zero GUID within the "has value" branch), not a sentinel value pattern. No code change needed — T26 compliant as-is.
 
 ### Intentional Quirks
 
@@ -287,8 +287,9 @@ Archive System
 ### Design Considerations
 
 1. **Trashcan provides entity-level undo/restore**: The trashcan mechanism moves deleted documents to a separate key space with TTL-based expiry and explicit recovery. Foundation Tenets (deletion finality) state that entity-level undo/restore is "not supported" and Account is the "sole exception" to time-limited soft-delete. However, the prescribed alternative (save-load service) is for game state snapshots and does not apply to content management. Documentation's trashcan serves a legitimate knowledge base workflow (accidental deletion recovery with configurable grace period). Needs human judgment on whether this content management use case warrants a formal exception to the deletion finality rule.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-15:https://github.com/beyond-immersion/bannou-service/issues/662 -->
 
-2. **Archive deletion does not clean up Asset Service bundles**: `DeleteDocumentationArchive` removes archive metadata from Redis but does not delete the associated binary bundle in the Asset Service. The deep dive's Intentional Quirk states this "relies on Asset Service retention policies" but no specific retention policy is documented or verified. If no retention mechanism exists, bundle data accumulates indefinitely as orphaned artifacts. Options: (a) add `IAssetClient.DeleteBundleAsync()` call in the delete flow with graceful degradation if Asset Service is absent, (b) document the specific Asset Service retention policy that handles cleanup, or (c) add a background reconciliation worker that identifies orphaned bundles.
+2. ~~**Archive deletion does not clean up Asset Service bundles**~~: **FIXED** (2026-03-15) - `DeleteDocumentationArchiveAsync` now calls `IAssetClient.DeleteBundleAsync()` when the archive has a `BundleAssetId`. Uses the established L3 soft-dependency pattern (resolve via `_serviceProvider.GetService<IAssetClient>()`, graceful degradation if Asset Service is absent or call fails). Bundle cleanup is best-effort — a warning is logged on failure but archive deletion still succeeds.
 
 ---
 
@@ -296,4 +297,10 @@ Archive System
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-(No completed items)
+### Completed
+
+- **BulkUpdate/BulkDelete binding check** — Fixed 2026-03-15. Added missing repository binding check to both bulk mutation methods.
+- **UnbindRepository deletion events** — Fixed 2026-03-15. `DeleteAllNamespaceDocumentsAsync` now publishes `document.deleted` events per document with per-item error isolation.
+- **Archive deletion event** — Fixed 2026-03-15. Added `DocumentationArchiveDeletedEvent` schema + publishing in `DeleteDocumentationArchiveAsync`.
+- **GetDocument Guid.Empty sentinel** — Resolved 2026-03-15. Investigation found code already uses `Guid?` with `.HasValue` correctly (T26 compliant). Deep dive description was inaccurate — corrected.
+- **Archive bundle cleanup** — Fixed 2026-03-15. `DeleteDocumentationArchiveAsync` now calls `IAssetClient.DeleteBundleAsync()` with graceful degradation.

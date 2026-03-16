@@ -13,9 +13,9 @@
 |-------|-------|
 | Plugin | lib-asset |
 | Layer | L3 AppFeatures |
-| Endpoints | 18 |
+| Endpoints | 19 |
 | State Stores | asset-statestore (Redis), asset-processor-pool (Redis) |
-| Events Published | 12 (`asset.upload.requested`, `asset.upload.completed`, `asset.ready`, `asset.processing.queued`, `asset.processing.job.{poolType}`, `asset.processing.retry`, `asset.processing.completed`, `asset.bundle.create`, `asset.bundle.created`, `asset.bundle.updated`, `asset.bundle.deleted`, `asset.metabundle.created`, `asset.metabundle.job.queued`) |
+| Events Published | 13 (`asset.upload.requested`, `asset.upload.completed`, `asset.ready`, `asset.processing.queued`, `asset.processing.job.{poolType}`, `asset.processing.retry`, `asset.processing.completed`, `asset.bundle.create`, `asset.bundle.created`, `asset.bundle.updated`, `asset.bundle.deleted`, `asset.metabundle.created`, `asset.metabundle.job.queued`) |
 | Events Consumed | 1 (`asset.metabundle.job.queued` — self-consumption) |
 | Client Events | 8 |
 | Background Services | 2 |
@@ -31,12 +31,16 @@
 | `{AssetKeyPrefix}{assetId}` | `InternalAssetRecord` | Core asset metadata (filename, contentType, size, hash, version, processing status, tags, realm, storage key) |
 | `{UploadSessionKeyPrefix}{uploadId}` | `UploadSession` | In-progress upload tracking (target path, content type, multipart state); saved with TTL |
 | `{BundleUploadSessionKeyPrefix}{uploadId}` | `BundleUploadSession` | Pre-made bundle upload sessions; saved with TTL |
-| `{BundleKeyPrefix}{bundleId}` | `BundleMetadata` | Bundle manifest (asset list, owner, version, compression, lifecycle status, provenance) |
+| `{BundleKeyPrefix}{bundleId}` | `BundleMetadata` | Bundle manifest (asset list, createdBy, version, compression, lifecycle status, provenance) |
 | `{BundleKeyPrefix}bundles-index:{realm}` | `List<string>` | Per-realm bundle ID index; realm falls back to `"_global"` when null |
-| `{AssetIndexKeyPrefix}{realm}:{contentType}` | `List<string>` | Asset IDs indexed by realm and content type |
+| `{AssetIndexKeyPrefix}type:{assetType}` | `List<string>` | Asset IDs indexed by asset type |
+| `{AssetIndexKeyPrefix}realm:{realm}` | `List<string>` | Asset IDs indexed by realm |
+| `{AssetIndexKeyPrefix}tag:{tag}` | `List<string>` | Asset IDs indexed by tag |
 | `{AssetBundleIndexKeyPrefix}{assetId}` | `AssetBundleIndex` | Reverse index: which bundles contain this asset |
 | `{MetabundleJobKeyPrefix}{jobId}` | `MetabundleJob` | Async metabundle job state (status, progress, result) |
-| `{BundleVersionKeyPrefix}{bundleId}` | Sorted set (`ICacheableStateStore`) | Version history entries sorted by version number; capped at MaxBundleVersions |
+| `bundle-version:{bundleId}:{versionNumber}` | `StoredBundleVersionRecord` | Individual version history entry |
+| `bundle-version-index:{bundleId}` | `Set<int>` (`ICacheableStateStore`) | Version number set for a bundle |
+| `bundle-owner-index:{createdBy}` | `Set<string>` (`ICacheableStateStore`) | Bundle IDs owned by a creator (used by QueryBundles) |
 | `{DownloadTokenKeyPrefix}{token}` | `BundleDownloadToken` | Short-lived download authorization tokens; saved with TTL |
 | `{BundleCreationJobKeyPrefix}{jobId}` | `BundleCreationJob` | Bundle creation job state for pool delegation |
 
@@ -54,10 +58,10 @@
 | Dependency | Layer | Type | Usage |
 |------------|-------|------|-------|
 | lib-state (`IStateStoreFactory`) | L0 | Hard | Persistence for uploads, assets, bundles, jobs, indexes, processor pool state |
-| lib-messaging (`IMessageBus`) | L0 | Hard | Publishing 14 event topics |
+| lib-messaging (`IMessageBus`) | L0 | Hard | Publishing 13 event topics |
 | lib-messaging (`IEventConsumer`) | L0 | Hard | Self-subscription to `asset.metabundle.job.queued` |
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Distributed tracing spans |
-| lib-orchestrator (`IOrchestratorClient`) | L3 | Hard | Processor pool scaling: `AcquireProcessorAsync`, `ReleaseProcessorAsync` |
+| lib-orchestrator (`IOrchestratorClient`) | L3 | Soft | Processor pool scaling: `ScalePoolAsync`, `AcquireProcessorAsync` — resolved via `IServiceProvider.GetService<T>()` with graceful degradation |
 
 **Internal abstractions** (not cross-service dependencies):
 - `IAssetStorageProvider` / `MinioStorageProvider` — MinIO/S3 object storage (presigned URLs, streaming, multipart)
@@ -69,7 +73,7 @@
 - `IFFmpegService` / `FFmpegService` — Audio/video transcoding via FFmpeg subprocess
 
 **Notes**:
-- `IOrchestratorClient` is constructor-injected (hard dependency) despite being a peer L3 service. Asset will fail to start if Orchestrator is not registered.
+- `IOrchestratorClient` is resolved via `IServiceProvider.GetService<T>()` (soft dependency) per SERVICE HIERARCHY L3 rules. Asset degrades gracefully when Orchestrator is absent by skipping pool-based processing.
 - No lib-resource integration (no `x-references`). Asset is a leaf node — no external services consume its events.
 - MinIO/S3 SDK usage is the documented exception: lib-asset IS the storage infrastructure lib.
 
@@ -108,44 +112,42 @@
 | Service | Role |
 |---------|------|
 | `ILogger<AssetService>` | Structured logging |
-| `AssetServiceConfiguration` | Typed configuration access (79 properties) |
-| `IStateStoreFactory` | State store access (12+ typed stores from 2 definitions) |
-| `IMessageBus` | Event publishing |
-| `IEventConsumer` | Self-subscription for async job processing |
+| `AssetServiceConfiguration` | Typed configuration access |
+| `IStateStoreFactory` | State store access (13 typed stores from 2 definitions); not stored as field |
+| `IMessageBus` | Event publishing (13 event topics) |
+| `IEventConsumer` | Self-subscription for `asset.metabundle.job.queued`; not stored as field |
 | `ITelemetryProvider` | Distributed tracing spans |
-| `IAssetEventEmitter` | WebSocket client event push (8 event methods) |
-| `IAssetStorageProvider` | MinIO/S3 storage operations |
-| `IOrchestratorClient` | Processor pool scaling |
+| `IAssetEventEmitter` | WebSocket client event push (8 client event types) |
+| `IAssetStorageProvider` | MinIO/S3 storage operations (presigned URLs, streaming, multipart) |
+| `IServiceProvider` | Soft resolution of `IOrchestratorClient` |
 | `IAssetProcessorPoolManager` | Processor node state tracking |
 | `IBundleConverter` | `.bannou` / `.zip` format conversion |
-| `AssetProcessingWorker` | Background job consumer with heartbeat and graceful drain |
-| `ZipCacheCleanupWorker` | Background purge of expired ZIP cache entries |
 
 ---
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| RequestUpload | POST /assets/upload/request | user | upload-session | asset.upload.requested |
-| CompleteUpload | POST /assets/upload/complete | user | asset, upload-session, indexes | asset.upload.completed, asset.ready, asset.processing.queued |
-| GetAsset | POST /assets/get | user | - | - |
-| DeleteAsset | POST /assets/delete | admin | asset, indexes | - |
-| ListAssetVersions | POST /assets/list-versions | user | - | - |
-| SearchAssets | POST /assets/search | user | - | - |
-| BulkGetAssets | POST /assets/bulk-get | user | - | - |
-| CreateBundle | POST /bundles/create | user | bundle, indexes | asset.bundle.created, asset.bundle.create |
-| GetBundle | POST /bundles/get | user | download-token | - |
-| RequestBundleUpload | POST /bundles/upload/request | user | bundle-upload-session | - |
-| CreateMetabundle | POST /bundles/metabundle/create | user | bundle, metabundle-job, indexes | asset.metabundle.created, asset.metabundle.job.queued |
-| GetJobStatus | POST /bundles/job/status | user | - | - |
-| CancelJob | POST /bundles/job/cancel | user | metabundle-job | - |
-| ResolveBundles | POST /bundles/resolve | user | - | - |
-| QueryBundlesByAsset | POST /bundles/query/by-asset | user | - | - |
-| UpdateBundle | POST /bundles/update | user | bundle, version-history | asset.bundle.updated |
-| DeleteBundle | POST /bundles/delete | user | bundle, indexes, version-history | asset.bundle.deleted |
-| QueryBundles | POST /bundles/query | user | - | - |
-| ListBundleVersions | POST /bundles/list-versions | user | - | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| RequestUpload | POST /assets/upload/request | generated | user | upload-session | asset.upload.requested |
+| CompleteUpload | POST /assets/upload/complete | generated | user | asset, upload-session, indexes | asset.upload.completed, asset.ready, asset.processing.queued |
+| GetAsset | POST /assets/get | generated | user | - | - |
+| DeleteAsset | POST /assets/delete | generated | admin | asset, indexes | - |
+| ListAssetVersions | POST /assets/list-versions | generated | user | - | - |
+| SearchAssets | POST /assets/search | generated | user | - | - |
+| BulkGetAssets | POST /assets/bulk-get | generated | user | - | - |
+| CreateBundle | POST /bundles/create | generated | user | bundle, indexes | asset.bundle.created, asset.bundle.create |
+| GetBundle | POST /bundles/get | generated | user | download-token | - |
+| RequestBundleUpload | POST /bundles/upload/request | generated | user | bundle-upload-session | - |
+| CreateMetabundle | POST /bundles/metabundle/create | generated | user | bundle, metabundle-job, indexes | asset.metabundle.created, asset.metabundle.job.queued |
+| GetJobStatus | POST /bundles/job/status | generated | user | - | - |
+| CancelJob | POST /bundles/job/cancel | generated | user | metabundle-job | - |
+| ResolveBundles | POST /bundles/resolve | generated | user | - | - |
+| QueryBundlesByAsset | POST /bundles/query/by-asset | generated | user | - | - |
+| UpdateBundle | POST /bundles/update | generated | user | bundle, version-history | asset.bundle.updated |
+| DeleteBundle | POST /bundles/delete | generated | user | bundle, indexes, version-history | asset.bundle.deleted |
+| QueryBundles | POST /bundles/query | generated | user | - | - |
+| ListBundleVersions | POST /bundles/list-versions | generated | user | - | - |
 
 ---
 
@@ -166,7 +168,7 @@ ELSE
  // Single upload path
  CALL _storageProvider.GenerateUploadUrlAsync(bucket, tempPath, ttl)
 WRITE _uploadSessionStore:{UploadSessionKeyPrefix}{uploadId} <- UploadSession from request // with TTL
-PUBLISH asset.upload.requested { uploadId, owner, filename, size, contentType, isMultipart }
+PUBLISH asset.upload.requested { uploadId, createdBy, filename, size, contentType, isMultipart }
 RETURN (200, UploadResponse)
 ```
 
@@ -191,10 +193,10 @@ CALL _storageProvider.DeleteObjectAsync(bucket, tempKey)
 // Check deduplication — same content hash = same asset ID
 READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
 WRITE _internalAssetRecordStore:{AssetKeyPrefix}{assetId} <- InternalAssetRecord
-// Index by realm + content type (optimistic concurrency retry loop)
-READ _stringListIndexStore:{AssetIndexKeyPrefix}{realm}:{contentType} [with ETag]
-ETAG-WRITE _stringListIndexStore:{AssetIndexKeyPrefix}{realm}:{contentType} <- updated list
- // retries up to IndexOptimisticRetryMaxAttempts on ETag mismatch
+// Index by type, realm, and tags (optimistic concurrency retry loop per dimension)
+// IndexAssetAsync writes to _stringListIndexStore:
+//   asset-index:type:{assetType}, asset-index:realm:{realm}, asset-index:tag:{tag}
+// Each index write retries up to IndexOptimisticRetryMaxAttempts on ETag mismatch
 IF size > LargeFileThresholdMb AND contentType is processable
  PUBLISH asset.processing.queued { assetId, processingType }
  // see DelegateToProcessingPoolAsync helper
@@ -206,7 +208,7 @@ IF size > LargeFileThresholdMb AND contentType is processable
  PUBLISH asset.processing.retry { assetId, retryCount, maxRetries }
 ELSE
  PUBLISH asset.ready { assetId, bucket, key, contentHash }
-PUBLISH asset.upload.completed { assetId, uploadId, owner, bucket, key, size, contentHash }
+PUBLISH asset.upload.completed { assetId, uploadId, createdBy, bucket, key, size, contentHash }
 DELETE _uploadSessionStore:{UploadSessionKeyPrefix}{uploadId}
 RETURN (200, AssetMetadata)
 ```
@@ -227,23 +229,19 @@ POST /assets/delete | Roles: [admin]
 READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId} -> 404 if null
 CALL _storageProvider.DeleteObjectAsync(bucket, storageKey)
 DELETE _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
-// Remove from realm+contentType index (optimistic concurrency retry loop)
-READ _stringListIndexStore:{AssetIndexKeyPrefix}{realm}:{contentType} [with ETag]
-ETAG-WRITE _stringListIndexStore:{AssetIndexKeyPrefix}{realm}:{contentType} <- updated list
+// Remove from type/realm/tag indexes (optimistic concurrency retry per index)
 RETURN (200, DeleteAssetResponse)
-// NOTE: Does NOT clean up asset-bundle-index:{assetId} — stale reverse index entries persist
+// NOTE: Does NOT publish any event. Does NOT clean up asset-bundle-index — stale entries persist
 ```
 
 ### ListAssetVersions
 POST /assets/list-versions | Roles: [user]
 
 ```
-READ _stringListIndexStore:{AssetIndexKeyPrefix}{realm}:{contentType}
-IF null OR empty
- RETURN (404, null)
-// Paginate results from index
-FOREACH assetId in page
- READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
+READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId} -> 404 if null
+// List object versions from storage provider
+CALL _storageProvider.ListVersionsAsync(bucket, storageKey)
+// Paginate in-memory
 RETURN (200, AssetVersionList)
 ```
 
@@ -253,13 +251,14 @@ POST /assets/search | Roles: [user]
 ```
 IF _assetMetadataSearchStore is available
  // RedisSearch full-text query path
- CALL _assetMetadataSearchStore.SearchAsync(query, filters)
+ CALL _assetMetadataSearchStore.SearchAsync("assetMetadataIndex", query, filters)
+ // Over-fetches then filters tags in-memory
 ELSE
- // Fallback: load realm+contentType index, filter in-memory
- READ _stringListIndexStore:{AssetIndexKeyPrefix}{realm}:{contentType}
+ // Fallback: load type index, filter in-memory
+ READ _stringListIndexStore:{AssetIndexKeyPrefix}type:{assetType}
  FOREACH assetId in index
  READ _internalAssetRecordStore:{AssetKeyPrefix}{assetId}
- // Filter by tags, content type in memory; paginate
+ // Filter by realm, tags, content type in memory; paginate
 RETURN (200, AssetSearchResult)
 ```
 
@@ -304,7 +303,7 @@ ETAG-WRITE _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm} <- updat
 FOREACH assetId in request.assetIds
  READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} [with ETag]
  ETAG-WRITE _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} <- updated index
-PUBLISH asset.bundle.created { bundleId, version, bucket, key, size, assetCount, compression, owner }
+PUBLISH asset.bundle.created { bundleId, version, bucket, key, size, assetCount, compression, createdBy }
 RETURN (200, CreateBundleResponse)
 ```
 
@@ -313,8 +312,6 @@ POST /bundles/get | Roles: [user]
 
 ```
 READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId} -> 404 if null
-IF bundle.LifecycleStatus == Deleted
- RETURN (404, null)
 IF request.format == Zip
  // Check or generate ZIP conversion cache
  CALL _storageProvider.ObjectExistsAsync(bucket, zipCachePath)
@@ -434,10 +431,9 @@ IF bundle.LifecycleStatus == Deleted
  RETURN (400, null)
 // Apply updates: name, description, tags (replace/add/remove)
 // Increment MetadataVersion
-// Append version record to history sorted set
-WRITE _bundleVersionRecordCacheStore:{BundleVersionKeyPrefix}{bundleId}
- <- AddToSortedSetAsync(version, StoredBundleVersionRecord)
-// Trim history to MaxBundleVersions
+// Save individual version record and add version number to set index
+WRITE _bundleVersionRecordCacheStore:bundle-version:{bundleId}:{versionNumber} <- StoredBundleVersionRecord
+WRITE _bundleVersionRecordCacheStore:bundle-version-index:{bundleId} <- AddToSetAsync(versionNumber)
 ETAG-WRITE _bundleMetadataStore:{BundleKeyPrefix}{bundleId} <- updated bundle
 PUBLISH asset.bundle.updated { bundleId, version, previousVersion, changes, updatedBy }
 RETURN (200, UpdateBundleResponse)
@@ -448,33 +444,35 @@ POST /bundles/delete | Roles: [user]
 
 ```
 READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId} -> 404 if null
-// Permanent hard delete per FOUNDATION TENETS (no soft-delete)
-CALL _storageProvider.DeleteObjectAsync(bucket, storageKey)
+// Immediate hard delete per FOUNDATION TENETS (no soft-delete)
+CALL _storageProvider.DeleteObjectAsync(bucket, storageKey) // swallows failure, logs warning
 DELETE _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
 // Clean up per-asset reverse indexes
 FOREACH assetId in bundle.AssetIds
  READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId}
  WRITE _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} <- remove bundleId
 // Delete version history entries
-READ _bundleVersionRecordCacheStore:bundle-version-index:{bundleId}
+READ _bundleVersionRecordCacheStore:bundle-version-index:{bundleId} <- GetSetAsync
 FOREACH version in versionNumbers
  DELETE _bundleVersionRecordCacheStore:bundle-version:{bundleId}:{version}
 DELETE _bundleVersionRecordCacheStore:bundle-version-index:{bundleId}
 PUBLISH asset.bundle.deleted { bundleId, reason, deletedBy, realm }
-RETURN 200
+RETURN (200, null) // bare StatusCodes return
 ```
 
 ### QueryBundles
 POST /bundles/query | Roles: [user]
 
 ```
-READ _stringListIndexStore:{BundleKeyPrefix}bundles-index:{realm}
-FOREACH bundleId in index
- READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
+// Requires createdBy filter — returns empty if absent
+IF createdBy is empty
+ RETURN (200, QueryBundlesResponse) // empty
+READ _bundleMetadataCacheStore:bundle-owner-index:{createdBy} <- GetSetAsync
+READ _bundleMetadataCacheStore <- GetBulkAsync(bundle keys for all IDs in set)
 // Filter by: lifecycle status, tags, tagExists/tagNotExists, createdAfter/Before,
-// nameContains, owner, bundleType
+// nameContains, bundleType
 // Sort by sortField (CreatedAt/UpdatedAt/Name/Size) in sortOrder (Asc/Desc)
-// Paginate by limit/offset
+// Paginate by limit/offset (capped at MaxQueryLimit)
 RETURN (200, QueryBundlesResponse)
 ```
 
@@ -483,43 +481,16 @@ POST /bundles/list-versions | Roles: [user]
 
 ```
 READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId} -> 404 if null
-// Load version history from sorted set
-READ _bundleVersionRecordCacheStore:{BundleVersionKeyPrefix}{bundleId}
- <- GetSortedSetRangeByScoreAsync(offset, limit)
-COUNT _bundleVersionRecordCacheStore:{BundleVersionKeyPrefix}{bundleId}
- <- GetSortedSetCountAsync()
+// Load version numbers from set index, then bulk-load version records
+READ _bundleVersionRecordCacheStore:bundle-version-index:{bundleId} <- GetSetAsync
+// Paginate version numbers, then bulk-load the page
+READ _bundleVersionRecordCacheStore <- GetBulkAsync(bundle-version:{bundleId}:{version} for each in page)
 RETURN (200, ListBundleVersionsResponse)
 ```
 
 ---
 
 ## Background Services
-
-### BundleCleanupWorker
-**Interval**: `BundleCleanupIntervalMinutes` (default: 60 min)
-**Startup Delay**: `BundleCleanupStartupDelaySeconds` (default: 30s)
-**Purpose**: Permanently deletes bundles that have been soft-deleted past the retention period
-
-```
-// Query deleted-bundles-index for entries older than DeletedBundleRetentionDays
-READ _bundleMetadataCacheStore:{BundleKeyPrefix}deleted-bundles-index
- <- GetSortedSetRangeByScoreAsync(0, cutoffTimestamp)
-FOREACH bundleId in expired entries
- READ _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
- IF found
- CALL _storageProvider.DeleteObjectAsync(bucket, storageKey)
- DELETE _bundleMetadataStore:{BundleKeyPrefix}{bundleId}
- // Clean up per-asset reverse indexes
- FOREACH assetId in bundle.AssetIds
- READ _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} [with ETag]
- ETAG-WRITE _assetBundleIndexStore:{AssetBundleIndexKeyPrefix}{assetId} <- remove bundleId
- // Delete version history
- DELETE _bundleVersionRecordCacheStore:{BundleVersionKeyPrefix}{bundleId}
- PUBLISH asset.bundle.deleted { bundleId, permanent: true }
- // Remove from deleted-bundles-index
- WRITE _bundleMetadataCacheStore:{BundleKeyPrefix}deleted-bundles-index
- <- RemoveFromSortedSetAsync(bundleId)
-```
 
 ### ZipCacheCleanupWorker
 **Interval**: `ZipCacheCleanupIntervalMinutes` (default: 120 min)
@@ -566,3 +537,29 @@ IF ProcessorNodeId is set
  // Wait up to ShutdownDrainTimeoutMinutes for active jobs
  CALL _processorPoolManager.RemoveNodeAsync(poolType, nodeId)
 ```
+
+---
+
+## Non-Standard Implementation Patterns
+
+### Plugin Lifecycle (OnStartAsync)
+
+MinIO connectivity check with exponential backoff — the plugin will fail to start if MinIO is unreachable:
+
+```
+LOOP up to MinioStartupMaxRetries (default: 30)
+ CALL _minioClient.BucketExistsAsync(StorageBucket)
+ IF success
+   IF bucket does not exist
+     CALL _minioClient.MakeBucketAsync(StorageBucket)
+   RETURN true
+ ELSE
+   // Delay scales up: retryDelayMs * min(attempt, 5), max 10s default
+   await Task.Delay(scaledDelay)
+IF all retries exhausted
+ RETURN false // service will not start
+```
+
+### MinioWebhookHandler (Orphaned)
+
+`Webhooks/MinioWebhookHandler.cs` contains a webhook handler for MinIO S3 event notifications but has no visible route registration in the plugin. The class exists with DI constructor parameters but is not registered as a service and has no `MapPost`/`MapGet` binding. This may be dead code or may be registered externally.

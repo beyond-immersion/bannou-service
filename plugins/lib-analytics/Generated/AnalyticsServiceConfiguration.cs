@@ -192,10 +192,9 @@ public class AnalyticsServiceConfiguration : BaseServiceConfiguration
     public int ControllerHistoryCleanupIntervalSeconds { get; set; } = 3600;
 
     /// <summary>
-    /// Comma-separated list of score thresholds that trigger milestone events (e.g., "10,25,50,100")
+    /// Score thresholds that trigger milestone events (comma-separated in env var)
     /// Environment variable: ANALYTICS_MILESTONE_THRESHOLDS
     /// </summary>
-    [ConfigStringLength(MinLength = 1, MaxLength = 1024)]
-    public string MilestoneThresholds { get; set; } = "10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000";
+    public string[] MilestoneThresholds { get; set; } = ["10", "25", "50", "100", "250", "500", "1000", "2500", "5000", "10000", "25000", "50000", "100000"];
 
 }

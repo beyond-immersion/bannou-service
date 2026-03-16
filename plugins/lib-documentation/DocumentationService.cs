@@ -70,6 +70,7 @@ public partial class DocumentationService : IDocumentationService
     private const string SYNC_STARTED_TOPIC = "documentation-sync.started";
     private const string SYNC_COMPLETED_TOPIC = "documentation-sync.completed";
     private const string ARCHIVE_CREATED_TOPIC = "documentation-archive.created";
+    private const string ARCHIVE_DELETED_TOPIC = "documentation-archive.deleted";
 
     // State store key prefixes per plan specification
     // NOTE: DOC_KEY_PREFIX is empty because the store already prefixes with "doc:" via KeyPrefix
@@ -1139,6 +1140,15 @@ public partial class DocumentationService : IDocumentationService
     {
         _logger.LogDebug("BulkUpdateDocuments: namespace={Namespace}, count={Count}", body.Namespace, body.DocumentIds.Count);
         var namespaceId = body.Namespace;
+
+        // Check if namespace is bound to a repository (403 for manual modifications)
+        var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
+        if (binding != null && binding.Status != BindingStatus.Disabled)
+        {
+            _logger.LogWarning("BulkUpdateDocuments rejected: namespace {Namespace} is bound to repository", namespaceId);
+            return (StatusCodes.Forbidden, null);
+        }
+
         var succeeded = new List<Guid>();
         var failed = new List<BulkOperationFailure>();
         var now = DateTimeOffset.UtcNow;
@@ -1241,6 +1251,15 @@ public partial class DocumentationService : IDocumentationService
     {
         _logger.LogDebug("BulkDeleteDocuments: namespace={Namespace}, count={Count}", body.Namespace, body.DocumentIds.Count);
         var namespaceId = body.Namespace;
+
+        // Check if namespace is bound to a repository (403 for manual modifications)
+        var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
+        if (binding != null && binding.Status != BindingStatus.Disabled)
+        {
+            _logger.LogWarning("BulkDeleteDocuments rejected: namespace {Namespace} is bound to repository", namespaceId);
+            return (StatusCodes.Forbidden, null);
+        }
+
         var succeeded = new List<Guid>();
         var failed = new List<BulkOperationFailure>();
         var now = DateTimeOffset.UtcNow;
@@ -2594,8 +2613,31 @@ public partial class DocumentationService : IDocumentationService
         // Delete archive record from state store
         await DeleteArchiveAsync(archive, cancellationToken);
 
-        // Note: We don't delete the bundle from Asset Service as it may be used for other purposes
-        // or the Asset Service may have its own retention policies
+        // Clean up bundle from Asset Service (L3 soft dependency, graceful degradation)
+        if (archive.BundleAssetId.HasValue)
+        {
+            var assetClient = _serviceProvider.GetService<IAssetClient>();
+            if (assetClient == null)
+            {
+                _logger.LogDebug("Asset service not enabled, skipping bundle cleanup for archive {ArchiveId}", archive.ArchiveId);
+            }
+            else try
+            {
+                await assetClient.DeleteBundleAsync(new DeleteBundleRequest
+                {
+                    BundleId = archive.BundleAssetId.Value.ToString(),
+                    Reason = "Documentation archive deleted"
+                }, cancellationToken);
+                _logger.LogInformation("Deleted archive bundle {BundleId} from Asset Service", archive.BundleAssetId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete archive bundle {BundleId} from Asset Service, bundle may be orphaned", archive.BundleAssetId);
+            }
+        }
+
+        // Publish archive deleted event per FOUNDATION TENETS (event-driven architecture)
+        await TryPublishArchiveDeletedEventAsync(archive, cancellationToken);
 
         return (StatusCodes.OK, new DeleteArchiveResponse());
     }
@@ -2655,18 +2697,32 @@ public partial class DocumentationService : IDocumentationService
 
         foreach (var docId in docIds)
         {
-            var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
-            var doc = await _docStore.GetAsync(docKey, cancellationToken);
-
-            if (doc != null)
+            try
             {
-                // Delete slug index
-                var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{doc.Slug}";
-                await _stringStore.DeleteAsync(slugKey, cancellationToken);
+                var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
+                var doc = await _docStore.GetAsync(docKey, cancellationToken);
 
-                // Delete document
-                await _docStore.DeleteAsync(docKey, cancellationToken);
-                deletedCount++;
+                if (doc != null)
+                {
+                    // Delete slug index
+                    var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{doc.Slug}";
+                    await _stringStore.DeleteAsync(slugKey, cancellationToken);
+
+                    // Remove from search index
+                    _searchIndexService.RemoveDocument(namespaceId, docId);
+
+                    // Delete document
+                    await _docStore.DeleteAsync(docKey, cancellationToken);
+
+                    // Publish deletion event per FOUNDATION TENETS (event-driven architecture)
+                    await PublishDocumentDeletedEventAsync(doc, "Namespace documents deleted during repository unbind", cancellationToken);
+
+                    deletedCount++;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete document {DocumentId} during namespace cleanup for {Namespace}", docId, namespaceId);
             }
         }
 
@@ -3543,6 +3599,29 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish archive created event");
+        }
+    }
+
+    /// <summary>
+    /// Publishes an archive deleted event.
+    /// </summary>
+    private async Task TryPublishArchiveDeletedEventAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishArchiveDeletedEventAsync");
+        try
+        {
+            var eventModel = new DocumentationArchiveDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Namespace = archive.Namespace,
+                ArchiveId = archive.ArchiveId
+            };
+            await _messageBus.PublishDocumentationArchiveDeletedAsync(eventModel, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish archive deleted event");
         }
     }
 

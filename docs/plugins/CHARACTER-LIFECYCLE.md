@@ -6,6 +6,7 @@
 > **State Store**: character-lifecycle-profiles (MySQL), character-lifecycle-heritage (MySQL), character-lifecycle-bloodlines (MySQL), character-lifecycle-cache (Redis), character-lifecycle-lock (Redis) — all planned
 > **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Implementation Map**: [docs/maps/CHARACTER-LIFECYCLE.md](../maps/CHARACTER-LIFECYCLE.md)
 > **Short**: Generational cycle orchestration (aging, marriage, procreation, death, genetic inheritance)
 
 ## Overview
@@ -166,6 +167,21 @@ Marriage Flow:
  6. Publish character-lifecycle.marriage event
 ```
 
+#### T7 Compensation Strategy: Self-Healing with Degraded Success
+
+Organization is an L4 soft dependency — marriage can succeed without household integration.
+
+| Step | Operation | Classification | Failure Handling |
+|------|-----------|---------------|------------------|
+| 1 | Validate eligibility | Read-only | Return BadRequest; no side effects to undo |
+| 2 | Create marriage contract (IContractClient) | Compensable | Contract has TTL; expires naturally via ContractExpirationService if abandoned |
+| 3 | Create SPOUSE relationship (IRelationshipClient) | Compensable | Can be deleted via IRelationshipClient if step 4 requires rollback |
+| 4 | Household resolution (Organization, L4 soft dep) | Self-healing | If Organization is unavailable or rejects: marriage proceeds without household integration. Log at Warning. A background reconciliation or manual seeding can complete household integration later. Marriage is valid with Contract + Relationship alone. |
+| 5 | Seed Disposition feelings (L4 soft dep) | Self-healing | If Disposition is unavailable: marriage proceeds without feeling seeds. Feelings form organically through subsequent interactions. Log at Warning. |
+| 6 | Publish marriage event | Fire-and-forget | If publishing fails: log via TryPublishErrorAsync. Marriage state is consistent regardless. |
+
+**Strategy**: Steps 2-3 are the critical durable artifacts (legal bond + social bond). If step 3 fails after step 2 succeeds, the orphaned contract expires naturally via ContractExpirationService (self-healing). Steps 4-6 are L4 soft dependencies or fire-and-forget — their failure degrades richness but does not invalidate the marriage. No explicit catch-block compensation is needed because: (a) Contract→Relationship failure self-heals via TTL expiration, and (b) all post-Relationship steps are independently optional.
+
 ### Procreation
 
 The most complex orchestration flow in the service. Creates a new character entity with inherited traits:
@@ -227,6 +243,25 @@ Procreation Flow:
  - Includes characterId, parentIds, speciesCode, realmId, bloodlines
  - Consumed by: Disposition (family drive seeds), Analytics, Storyline
 ```
+
+#### T7 Compensation Strategy: Hybrid (Compensate Critical, Self-Heal Enrichment)
+
+Character creation (step 3) is the point of no return — a character entity exists in the system. Parent bonds (step 4) are critical because without them the searchable path back to the character's origin is lost. All subsequent steps are progressive enrichment that can be completed later.
+
+| Step | Operation | Classification | Failure Handling |
+|------|-----------|---------------|------------------|
+| 1 | Validate eligibility | Read-only | Return BadRequest; no side effects to undo |
+| 2 | Heritage computation | Pure computation | No side effects; safe to retry |
+| 3 | Create character (ICharacterClient) | Point of no return | Character exists. If step 4 fails, compensate by deleting this character. |
+| 4 | Create relationships (IRelationshipClient) | Critical — compensate on failure | If Relationship creation fails: **compensate by deleting the child character** (step 3). Without parent bonds, the character is an orphan with no searchable path to its origin — the heritage data, household membership, and backstory all depend on knowing who the parents are. Log error, return failure. |
+| 5 | Create lifecycle profile | Self-healing | If fails after step 4 succeeds: character exists with parent bonds but no lifecycle tracking. A manual SeedLifecycleProfile call or reconciliation worker can complete this. Log at Warning. |
+| 6 | Store genetic profile | Self-healing | If fails: character exists without heritage data. SeedGeneticProfile can complete this later. Heritage variable provider returns null (graceful degradation in ABML). Log at Warning. |
+| 7 | Add to household (Organization, L4 soft dep) | Self-healing | If Organization unavailable or rejects: child exists without household membership. Household integration can be completed manually or via reconciliation. Log at Warning. |
+| 8 | Seed backstory (ICharacterHistoryClient, L4 soft dep) | Self-healing | If unavailable: character starts with blank history. Backstory can be seeded later. Log at Warning. |
+| 9 | Register with Resource (IResourceClient) | Self-healing | If fails: character exists without resource tracking. Registration can be completed later. Cleanup would need manual intervention until registered. Log at Warning. |
+| 10 | Publish birth event | Fire-and-forget | If publishing fails: log via TryPublishErrorAsync. Character state is consistent regardless. |
+
+**Strategy**: The compensation boundary is between steps 3 and 4. If character creation succeeds but parent bond creation fails, the child character is deleted (compensation) because without parent bonds the character's heritage context is unreachable — no service can discover who the parents were to reconstruct the missing data. Once parent bonds exist (step 4 succeeds), all remaining steps are self-healing: the character has a viable identity and missing enrichment data (lifecycle profile, genetic profile, household, backstory) can be filled in by background reconciliation, manual seeding endpoints, or retry.
 
 ### Death Processing
 
@@ -302,6 +337,24 @@ Death Processing Pipeline:
  - Regional watchers evaluate the death for narrative opportunity
  - The archive becomes a permanent story seed in the world's history
 ```
+
+#### T7 Compensation Strategy: Idempotent Retry (Self-Healing)
+
+RecordDeath is idempotent (Intentional Quirk #6). The entire pipeline can be retried on failure. The distributed lock prevents concurrent processing of the same death.
+
+| Step | Operation | Classification | Idempotency Guarantee |
+|------|-----------|---------------|----------------------|
+| 1 | Determine cause of death | Read-only (input parameter) | No side effects |
+| 2 | Calculate fulfillment (Disposition query) | Read-only computation | No side effects; same drives produce same score |
+| 3 | Calculate guardian spirit contribution | Pure computation from step 2 | No side effects |
+| 4 | Trigger archive compression (IResourceClient) | Idempotent | Compressing the same character twice produces the same archive. Resource deduplicates by characterId. |
+| 5 | Process inheritance | Idempotent with guards | Succession: check if already executed (new head already assigned → skip). Testament: check contract status (already executed → skip). Heirloom transfer: check if items already moved (already in heir's inventory → skip). |
+| 6 | Determine afterlife pathway | Pure computation | No side effects; same inputs produce same pathway |
+| 7 | Update lifecycle profile (status → Dead) | Idempotent | Writing Dead over Dead is a no-op. Profile already stores fulfillment, cause, pathway. |
+| 8 | Publish death event | Idempotent guard | Check `status == Dead` before publishing. If already Dead on entry (retry case), skip event publishing — consumers already received it. |
+| 9 | Content flywheel activation | Downstream, not controlled by lifecycle | Storyline and watchers handle duplicate events gracefully (archive already exists → skip). |
+
+**Strategy**: On any step failure, the caller retries RecordDeath. The idempotency check at entry (`status == Dead` → return existing result) prevents re-execution of the full pipeline on successful completions. For partial failures (e.g., step 5 failed but step 4 succeeded), the retry re-enters the pipeline: steps 1-4 are idempotent and produce the same results, step 5 retries with guards that skip already-completed transfers, steps 6-8 complete normally. No catch-block compensation is needed because every step is individually safe to re-execute.
 
 ### The Fulfillment Principle (Visual)
 
@@ -735,9 +788,11 @@ All template entities follow **Category B** deprecation (instances persist indep
 | `LifecycleTemplate` | B | Yes (one-way) | No | No | Active characters reference their species' lifecycle template for aging. Template must persist for stage computation. |
 | `HeritableTraitTemplate` | B | Yes (one-way) | No | No | Existing genetic profiles reference trait codes defined in these templates. Template must persist for phenotype resolution. |
 | `HybridTraitTemplate` | B | Yes (one-way) | No | No | Existing hybrid characters reference species-pair templates. Template must persist for heritage queries. |
-| `Bloodline` | B | Yes (one-way) | No | No | Living characters reference bloodline memberships. Bloodline must persist for heritage queries and ABML variable resolution. |
+| `Bloodline` | None | No | N/A | Yes (immediate hard delete) | No external service stores `bloodlineId` persistently — heritage queries use `${heritage.has_bloodline.*}` variable providers at runtime. Membership is immutable (set at birth in `GeneticProfile.bloodlines`), not a joinable/leavable association. Clan/guild join/leave semantics belong in Organization (L2). Deletion uses lib-resource CASCADE cleanup of membership indexes; variable provider filters against live definitions post-deletion. |
 
-**Deprecation behavior**: Deprecated templates/bloodlines are excluded from list/query results by default (`includeDeprecated: false`). Creating new instances referencing a deprecated template is rejected with `BadRequest`. Existing instances continue to function normally. Deprecation uses the triple-field model: `IsDeprecated`, `DeprecatedAt`, `DeprecationReason`. Deprecation events are published via `*.updated` with `changedFields` containing the deprecation fields (no dedicated `*.deprecated` events).
+**Deprecation behavior**: Deprecated templates are excluded from list/query results by default (`includeDeprecated: false`). Creating new instances referencing a deprecated template is rejected with `BadRequest`. Existing instances continue to function normally. Deprecation uses the triple-field model: `IsDeprecated`, `DeprecatedAt`, `DeprecationReason`. Deprecation events are published via `*.updated` with `changedFields` containing the deprecation fields (no dedicated `*.deprecated` events).
+
+**Bloodline deletion behavior**: Bloodline uses immediate hard delete (no deprecation). Deletion triggers lib-resource CASCADE cleanup of membership indexes (`bloodline:member:{characterId}`, `bloodline:members:{bloodlineId}`). Immutable `GeneticProfile.bloodlines` arrays in existing characters are unaffected — they retain the historical `BloodlineEntry` record. The `HeritageProviderFactory` variable provider filters `${heritage.has_bloodline.*}` results against live bloodline definitions, so deleted bloodlines no longer appear in ABML variable resolution. The `bloodline/list` endpoint supports `includeDeleted` is unnecessary — deleted bloodlines are gone. The `bloodline/query-members` endpoint returns empty for a deleted bloodline (membership indexes were cleaned up).
 
 ---
 
@@ -761,7 +816,7 @@ All template entities follow **Category B** deprecation (instances persist indep
 
 **CRUD lifecycle events** (generated via `x-lifecycle` in events schema):
 
-Templates (`LifecycleTemplate`, `HeritableTraitTemplate`, `HybridTraitTemplate`) and `Bloodline` entities use `x-lifecycle` with `topic_prefix: character-lifecycle` for standard created/updated/deleted events (e.g., `character-lifecycle.lifecycle-template.created`, `character-lifecycle.bloodline.deleted`).
+Templates (`LifecycleTemplate`, `HeritableTraitTemplate`, `HybridTraitTemplate`) use `x-lifecycle` with `topic_prefix: character-lifecycle` and `deprecation: true` for standard created/updated/deleted events (e.g., `character-lifecycle.lifecycle-template.created`). `Bloodline` uses `x-lifecycle` with `topic_prefix: character-lifecycle` but WITHOUT `deprecation: true` — Bloodline uses immediate hard delete, not deprecation (see Deprecation Lifecycle table above). Standard CRUD lifecycle events (`character-lifecycle.bloodline.created`, `character-lifecycle.bloodline.updated`, `character-lifecycle.bloodline.deleted`) are generated normally.
 
 **Note**: The former `lifecycle.adult-reached` convenience event has been removed. Consumers should subscribe to `character-lifecycle.stage-changed` and filter by `newStage` to detect specific stage transitions.
 
@@ -916,15 +971,17 @@ Seed/write endpoints (`SeedLifecycleTemplate`, `SeedHeritableTraitTemplate`, `Se
 
 - **ListTemplates** (`/character-lifecycle/template/list`): Returns all lifecycle and heritage templates for a game service. Supports `includeDeprecated` parameter (default: `false`) per tenets.
 
-### Bloodline Management (4 endpoints)
+### Bloodline Management (5 endpoints)
 
-Read endpoints (`GetBloodline`, `ListBloodlines`, `QueryBloodlineMembers`) use `x-permissions: [user]`. `EstablishBloodline` requires `developer` role (noted below).
+Read endpoints (`GetBloodline`, `ListBloodlines`, `QueryBloodlineMembers`) use `x-permissions: [user]`. `EstablishBloodline` and `DeleteBloodline` require `developer` role.
 
 - **GetBloodline** (`/character-lifecycle/bloodline/get`): Returns bloodline definition: origin, trait signature, member count, generation span.
 
-- **ListBloodlines** (`/character-lifecycle/bloodline/list`): Paged list of bloodlines within a game service. Filterable by trait signature, minimum generation depth, minimum member count. Supports `includeDeprecated` parameter (default: `false`) per tenets.
+- **ListBloodlines** (`/character-lifecycle/bloodline/list`): Paged list of bloodlines within a game service. Filterable by trait signature, minimum generation depth, minimum member count.
 
 - **EstablishBloodline** (`/character-lifecycle/bloodline/establish`): Manually establishes a bloodline (divine intervention, noble declaration). Creates bloodline record and assigns to specified character and their ancestors (retroactive). Publishes `character-lifecycle.bloodline.formed`. Requires `developer` role.
+
+- **DeleteBloodline** (`/character-lifecycle/bloodline/delete`): Immediate hard delete (no deprecation). Calls `ExecuteCleanupAsync` via lib-resource to CASCADE-clean membership indexes (`bloodline:member:{characterId}`, `bloodline:members:{bloodlineId}`). Immutable `GeneticProfile.bloodlines` arrays are unaffected. Publishes `character-lifecycle.bloodline.deleted`. Requires `developer` role. The `HeritageProviderFactory` filters `${heritage.has_bloodline.*}` against live definitions — deleted bloodlines stop appearing in variable resolution.
 
 - **QueryBloodlineMembers** (`/character-lifecycle/bloodline/query-members`): Returns living members of a bloodline with their generation depth and trait expression.
 
@@ -1330,7 +1387,8 @@ Lifecycle identity, aging, and heritage computation are owned here. Marriage cer
 - Implement bloodline storage and queries
 - Implement bloodline formation worker (automatic detection from generational trait patterns)
 - Implement manual bloodline establishment (EstablishBloodline endpoint)
-- Implement bloodline variable provider (`${heritage.has_bloodline.*}`)
+- Implement bloodline deletion (immediate hard delete with lib-resource CASCADE cleanup of membership indexes)
+- Implement bloodline variable provider (`${heritage.has_bloodline.*}`) with live-definition filtering (deleted bloodlines excluded)
 - Implement family tree query endpoint
 
 ### Phase 7: Species Hybridization
@@ -1420,7 +1478,7 @@ Heritage provides the NATURE. Personality/Disposition/History provide the NURTUR
 
 ### Bugs (Fix Immediately)
 
-*No bugs identified. Plugin is pre-implementation.*
+1. ~~**Multi-service orchestration flows lack T7 compensation strategy**~~: **FIXED** (2026-03-16) - T7 compensation strategies specified for all three orchestration flows. Marriage uses self-healing with degraded success (Organization is L4 soft dependency; contract TTL provides safety net). Procreation uses hybrid compensation (delete child character if parent bond creation fails; self-heal all enrichment steps). Death processing uses idempotent retry (RecordDeath is already idempotent; each step has individual idempotency guarantees). See the "T7 Compensation Strategy" sections under each flow description.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -1452,11 +1510,11 @@ Heritage provides the NATURE. Personality/Disposition/History provide the NURTUR
 
 3. **Heritage-to-Personality pipeline**: When heritage phenotype is used to seed initial personality traits (Phase 3), the mapping between heritage traits and personality axes needs to be data-driven and configurable. The trait template's `personalityMapping` field handles this, but the actual computation (how `patience: 0.65` translates to `conscientiousness: 0.6`) needs design.
 
-4. **Death processing atomicity**: The death pipeline involves multiple service calls (Disposition query, Resource trigger, Organization succession, Inventory transfer, Seed growth). If any step fails, the character should not be left in an inconsistent state. Need a saga pattern or compensating transactions. The distributed lock prevents concurrent processing, but individual step failures need graceful handling.
+4. **Death processing atomicity**: ~~The T7 compensation requirement for this flow was tracked as Bug #1.~~ **Resolved**: The death processing pipeline uses idempotent retry as its T7 strategy (see "T7 Compensation Strategy" under Death Processing). Every step is individually idempotent — steps 1-3 and 6 are pure computation, step 4 (archive compression) deduplicates by characterId, step 5 (inheritance) uses guards that skip already-completed transfers, and steps 7-8 are idempotent writes. The distributed lock prevents concurrent processing, and RecordDeath's entry-level idempotency check (`status == Dead` → return existing result) prevents full re-execution after successful completion. The remaining design consideration is measuring total pipeline execution time against `DeathProcessingTimeoutSeconds` under load.
 
 5. **Archive format for content flywheel**: The lifecycle archive (get-compress-data) must produce data that Storyline can consume for narrative generation. The format needs to include not just raw data but narrative-ready summaries: "achieved mastery through dedication," "died with unfulfilled ambitions," "founded a dynasty of enchanter-smiths." The summary generation is a lifecycle concern (it has all the data), not a Storyline concern.
 
-6. **Household-Lifecycle-Organization triangle**: Marriage and procreation involve three services (Lifecycle orchestrates, Organization manages household structure, Relationship tracks bonds). The ordering and failure handling of these three-way interactions needs careful design. Who is the authority if Organization rejects a household change that Lifecycle initiated?
+6. **Household-Lifecycle-Organization triangle**: Marriage and procreation involve three services (Lifecycle orchestrates, Organization manages household structure, Relationship tracks bonds). ~~The T7 compensation requirement for these flows was tracked as Bug #1.~~ **Partially resolved**: T7 strategies are now specified (see "T7 Compensation Strategy" under Marriage and Procreation). Organization is treated as an L4 soft dependency — if it rejects or is unavailable, marriage/procreation proceed without household integration (degraded success). The remaining design consideration is the authority question: Organization is the source of truth for household state, and Lifecycle is a consumer. If Organization rejects a household change (e.g., household at capacity), Lifecycle logs the rejection and proceeds without household integration. Lifecycle does NOT override Organization's validation — it degrades gracefully.
 
 7. **Guardian spirit seed growth integration**: The fulfillment → logos → guardian spirit seed growth pipeline requires that the account's guardian seed type and growth domain are defined. This is a Seed configuration concern that must be established before death processing can contribute to spirit evolution.
 
@@ -1466,19 +1524,19 @@ Heritage provides the NATURE. Personality/Disposition/History provide the NURTUR
 
 10. **Guardian spirit seed resolution (compliance)**: Death processing must resolve `characterId → household Organization → account owner → guardian spirit seed` without accepting `accountId` in the request. The resolution chain is: query Organization for the character's household, query the household's account owner, then record growth on the account's guardian seed via `ISeedClient`. This respects the account identity boundary — lifecycle never receives or stores accountId directly.
 
+11. ~~**Bloodline Category B instanceEntity requirement**~~: **RESOLVED** (2026-03-16, [#665](https://github.com/beyond-immersion/bannou-service/issues/665)) — Bloodline reclassified from Category B to no deprecation (immediate hard delete). Rationale: (1) No external service stores `bloodlineId` persistently — all consumers query via `${heritage.has_bloodline.*}` variable providers at runtime, not stored foreign keys. (2) Bloodline membership is immutable heritage data set at birth in `GeneticProfile.bloodlines`, not a joinable/leavable association — the `instanceEntity` concept (entities created against a template) doesn't fit. (3) Organization (L2) is the correct service for clan/guild join/leave lifecycle semantics with full broadcast events, not Bloodline. Deletion uses lib-resource CASCADE cleanup of membership indexes; the `HeritageProviderFactory` filters `${heritage.has_bloodline.*}` against live definitions post-deletion. No schema blocker remains.
+
 ---
 
 ## Work Tracking
-
-*No active work items. Plugin is in pre-implementation phase.*
-
-### Completed
-
-- ~~**Dependency table: lib-inventory and lib-currency misclassified as soft**~~: **FIXED** (2026-03-08) - Moved lib-inventory (L2) and lib-currency (L2) from soft dependencies to hard dependencies per tenets/SERVICE-HIERARCHY.md. L4 services MUST use constructor injection for L0/L1/L2 deps. Also added `IInventoryClient` and `ICurrencyClient` to DI Services table.
 
 ### Active
 
 - **#436**: Character-Lifecycle service implementation (tracks all phases)
 - **#385**: Organization Phase 5 — household pattern (prerequisite for marriage/procreation)
+### Completed
+
+- **2026-03-16**: [#665](https://github.com/beyond-immersion/bannou-service/issues/665) — Resolved Bloodline deprecation category. Reclassified from Category B to no deprecation (immediate hard delete). No external service stores bloodlineId persistently; membership is immutable heritage, not joinable. Organization (L2) handles clan join/leave semantics.
+- **2026-03-16**: [#663](https://github.com/beyond-immersion/bannou-service/issues/663) — T7 compensation strategies specified for all three orchestration flows (marriage: self-healing with degraded success; procreation: hybrid compensation; death: idempotent retry)
 
 Worldstate is the primary prerequisite (Phase 0) — lifecycle cannot function without the game clock. Organization's household pattern (Phase 5 of Organization) is the secondary prerequisite for full marriage/procreation flows but not for basic aging (Phase 1). Disposition enhances death processing but is not a blocker (fulfillment defaults to neutral without it). Phase 1 (templates and aging) is self-contained once Worldstate exists. Phase 2 (heritage engine) is self-contained. Phases 3-5 progressively integrate with more services.

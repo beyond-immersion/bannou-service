@@ -17,11 +17,14 @@ namespace BeyondImmersion.BannouService.CharacterHistory;
 /// </remarks>
 public static class CharacterHistoryPublishedTopics
 {
-    /// <summary>Published when a character's participation in a historical event is recorded.</summary>
-    public const string CharacterParticipationRecorded = "character-history.participation.recorded";
+    /// <summary>Batch event containing accumulated participation recordings.</summary>
+    public const string ParticipationBatchCreated = "character-history.participation.batch-created";
 
-    /// <summary>Published when a character's participation record is deleted.</summary>
-    public const string CharacterParticipationDeleted = "character-history.participation.deleted";
+    /// <summary>Batch event containing accumulated participation modifications (participations are immutable; this is unused infrastructure).</summary>
+    public const string ParticipationBatchModified = "character-history.participation.batch-modified";
+
+    /// <summary>Batch event containing accumulated participation deletions.</summary>
+    public const string ParticipationBatchDestroyed = "character-history.participation.batch-destroyed";
 
     /// <summary>Published when a character's backstory is first created.</summary>
     public const string CharacterBackstoryCreated = "character-history.backstory.created";

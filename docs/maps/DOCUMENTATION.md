@@ -13,9 +13,9 @@
 |-------|-------|
 | Plugin | lib-documentation |
 | Layer | L3 AppFeatures |
-| Endpoints | 27 (25 POST + 2 GET browser) |
+| Endpoints | 27 (25 generated + 2 x-manual GET browser) |
 | State Stores | documentation-statestore (Redis) |
-| Events Published | 10 (document.created, document.updated, document.deleted, documentation.queried, documentation.searched, documentation-binding.created, documentation-binding.removed, documentation-sync.started, documentation-sync.completed, documentation-archive.created) |
+| Events Published | 11 (document.created, document.updated, document.deleted, documentation.queried, documentation.searched, documentation-binding.created, documentation-binding.removed, documentation-sync.started, documentation-sync.completed, documentation-archive.created, documentation-archive.deleted) |
 | Events Consumed | 0 |
 | Client Events | 0 |
 | Background Services | 3 |
@@ -61,9 +61,9 @@ Documentation is a **leaf node** — no other plugin injects `IDocumentationClie
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `document.created` | `DocumentCreatedEvent` | CreateDocument, ImportDocumentation (new), sync (new file) |
-| `document.updated` | `DocumentUpdatedEvent` | UpdateDocument, BulkUpdateDocuments, ImportDocumentation (update), sync (changed file) |
-| `document.deleted` | `DocumentDeletedEvent` | DeleteDocument, BulkDeleteDocuments |
+| `document.created` | `DocumentCreatedEvent` | CreateDocument, ImportDocumentation (new) |
+| `document.updated` | `DocumentUpdatedEvent` | UpdateDocument, BulkUpdateDocuments, ImportDocumentation (update) |
+| `document.deleted` | `DocumentDeletedEvent` | DeleteDocument, BulkDeleteDocuments, UnbindRepository (deleteDocuments), RestoreArchive (wipe) |
 | `documentation.queried` | `DocumentationQueriedEvent` | QueryDocumentation (fire-and-forget analytics) |
 | `documentation.searched` | `DocumentationSearchedEvent` | SearchDocumentation (fire-and-forget analytics) |
 | `documentation-binding.created` | `DocumentationBindingCreatedEvent` | BindRepository |
@@ -71,6 +71,7 @@ Documentation is a **leaf node** — no other plugin injects `IDocumentationClie
 | `documentation-sync.started` | `DocumentationSyncStartedEvent` | ExecuteSyncAsync (internal) |
 | `documentation-sync.completed` | `DocumentationSyncCompletedEvent` | ExecuteSyncAsync (all exit paths) |
 | `documentation-archive.created` | `DocumentationArchiveCreatedEvent` | CreateDocumentationArchive |
+| `documentation-archive.deleted` | `DocumentationArchiveDeletedEvent` | DeleteDocumentationArchive |
 
 ---
 
@@ -101,35 +102,35 @@ This plugin does not consume external events. `RegisterEventConsumers` is a no-o
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| ViewDocumentBySlug | GET /documentation/view/{slug} | [] | - | - |
-| RawDocumentBySlug | GET /documentation/raw/{slug} | [] | - | - |
-| QueryDocumentation | POST /documentation/query | [] | - | documentation.queried |
-| GetDocument | POST /documentation/get | [] | - | - |
-| SearchDocumentation | POST /documentation/search | [] | - | documentation.searched |
-| ListDocuments | POST /documentation/list | [] | - | - |
-| SuggestRelatedTopics | POST /documentation/suggest | [] | - | - |
-| CreateDocument | POST /documentation/create | [developer] | doc, slug-idx, ns-docs, all-namespaces, ns-last-updated | document.created |
-| UpdateDocument | POST /documentation/update | [developer] | doc, slug-idx, ns-last-updated | document.updated |
-| DeleteDocument | POST /documentation/delete | [developer] | doc, slug-idx, ns-docs, ns-trash, trash | document.deleted |
-| RecoverDocument | POST /documentation/recover | [developer] | doc, slug-idx, ns-docs, ns-trash, trash, ns-last-updated | - |
-| BulkUpdateDocuments | POST /documentation/bulk-update | [developer] | doc, ns-last-updated | document.updated |
-| BulkDeleteDocuments | POST /documentation/bulk-delete | [developer] | doc, slug-idx, ns-docs, ns-trash, trash | document.deleted |
-| ImportDocumentation | POST /documentation/import | [developer] | doc, slug-idx, ns-docs, all-namespaces, ns-last-updated | document.created, document.updated |
-| ListTrashcan | POST /documentation/trashcan | [developer] | ns-trash, trash (lazy cleanup) | - |
-| PurgeTrashcan | POST /documentation/purge | [developer] | ns-trash, trash | - |
-| GetNamespaceStats | POST /documentation/stats | [developer] | - | - |
-| BindRepository | POST /documentation/repo/bind | [developer] | repo-binding, repo-bindings | documentation-binding.created |
-| UnbindRepository | POST /documentation/repo/unbind | [developer] | repo-binding, repo-bindings, (docs if flag) | documentation-binding.removed |
-| SyncRepository | POST /documentation/repo/sync | [developer] | doc, slug-idx, ns-docs, repo-binding, ns-last-updated | documentation-sync.started, documentation-sync.completed |
-| GetRepositoryStatus | POST /documentation/repo/status | [developer] | - | - |
-| ListRepositoryBindings | POST /documentation/repo/list | [developer] | - | - |
-| UpdateRepositoryBinding | POST /documentation/repo/update | [developer] | repo-binding, repo-bindings | - |
-| CreateDocumentationArchive | POST /documentation/repo/archive/create | [developer] | archive, archive:list | documentation-archive.created |
-| ListDocumentationArchives | POST /documentation/repo/archive/list | [developer] | - | - |
-| RestoreDocumentationArchive | POST /documentation/repo/archive/restore | [developer] | doc, slug-idx, ns-docs, ns-last-updated | - |
-| DeleteDocumentationArchive | POST /documentation/repo/archive/delete | [developer] | archive, archive:list | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| ViewDocumentBySlug | GET /documentation/view/{slug} | x-manual | [] | - | - |
+| RawDocumentBySlug | GET /documentation/raw/{slug} | x-manual | [] | - | - |
+| QueryDocumentation | POST /documentation/query | generated | [] | - | documentation.queried |
+| GetDocument | POST /documentation/get | generated | [] | - | - |
+| SearchDocumentation | POST /documentation/search | generated | [] | - | documentation.searched |
+| ListDocuments | POST /documentation/list | generated | [] | - | - |
+| SuggestRelatedTopics | POST /documentation/suggest | generated | [] | - | - |
+| CreateDocument | POST /documentation/create | generated | [developer] | doc, slug-idx, ns-docs, all-namespaces, ns-last-updated | document.created |
+| UpdateDocument | POST /documentation/update | generated | [developer] | doc, slug-idx, ns-last-updated | document.updated |
+| DeleteDocument | POST /documentation/delete | generated | [developer] | doc, slug-idx, ns-docs, ns-trash, trash | document.deleted |
+| RecoverDocument | POST /documentation/recover | generated | [developer] | doc, slug-idx, ns-docs, ns-trash, trash, ns-last-updated | - |
+| BulkUpdateDocuments | POST /documentation/bulk-update | generated | [developer] | doc, ns-last-updated | document.updated |
+| BulkDeleteDocuments | POST /documentation/bulk-delete | generated | [developer] | doc, slug-idx, ns-docs, ns-trash, trash | document.deleted |
+| ImportDocumentation | POST /documentation/import | generated | [developer] | doc, slug-idx, ns-docs, all-namespaces, ns-last-updated | document.created, document.updated |
+| ListTrashcan | POST /documentation/trashcan | generated | [developer] | ns-trash, trash (lazy cleanup) | - |
+| PurgeTrashcan | POST /documentation/purge | generated | [developer] | ns-trash, trash | - |
+| GetNamespaceStats | POST /documentation/stats | generated | [developer] | - | - |
+| BindRepository | POST /documentation/repo/bind | generated | [developer] | repo-binding, repo-bindings | documentation-binding.created |
+| UnbindRepository | POST /documentation/repo/unbind | generated | [developer] | repo-binding, repo-bindings, (docs if flag) | documentation-binding.removed, document.deleted |
+| SyncRepository | POST /documentation/repo/sync | generated | [developer] | doc, slug-idx, ns-docs, repo-binding, ns-last-updated | documentation-sync.started, documentation-sync.completed |
+| GetRepositoryStatus | POST /documentation/repo/status | generated | [developer] | - | - |
+| ListRepositoryBindings | POST /documentation/repo/list | generated | [developer] | - | - |
+| UpdateRepositoryBinding | POST /documentation/repo/update | generated | [developer] | repo-binding, repo-bindings | - |
+| CreateDocumentationArchive | POST /documentation/repo/archive/create | generated | [developer] | archive, archive:list | documentation-archive.created |
+| ListDocumentationArchives | POST /documentation/repo/archive/list | generated | [developer] | - | - |
+| RestoreDocumentationArchive | POST /documentation/repo/archive/restore | generated | [developer] | doc, slug-idx, ns-docs, ns-last-updated | document.deleted |
+| DeleteDocumentationArchive | POST /documentation/repo/archive/delete | generated | [developer] | archive, archive:list | documentation-archive.deleted |
 
 ---
 
@@ -347,7 +348,8 @@ RETURN (200, RecoverDocumentResponse { DocumentId, RecoveredAt })
 POST /documentation/bulk-update | Roles: [developer]
 
 ```
-// No repository binding check
+READ _bindingStore:"repo-binding:{namespace}"
+IF binding exists and status != Disabled              -> 403
 FOREACH documentId in request.DocumentIds
   // try/catch per document — failures recorded, do not abort batch
   READ _docStore:"{namespace}:{documentId}"
@@ -367,7 +369,8 @@ RETURN (200, BulkUpdateResponse { Succeeded, Failed })
 POST /documentation/bulk-delete | Roles: [developer]
 
 ```
-// No repository binding check
+READ _bindingStore:"repo-binding:{namespace}"
+IF binding exists and status != Disabled              -> 403
 FOREACH documentId in request.DocumentIds
   // try/catch per document — failures recorded, do not abort batch
   READ _docStore:"{namespace}:{documentId}"
@@ -487,11 +490,14 @@ POST /documentation/repo/unbind | Roles: [developer]
 ```
 READ _bindingStore:"repo-binding:{namespace}"         -> 404 if null
 IF deleteDocuments flag
-  // DeleteAllNamespaceDocumentsAsync: hard-deletes all docs (no trashcan, no events)
+  // DeleteAllNamespaceDocumentsAsync: hard-deletes all docs (no trashcan), publishes events
   READ _guidSetStore:"ns-docs:{namespace}"
-  FOREACH docId
+  FOREACH docId (per-item try/catch)
+    READ _docStore:"{namespace}:{docId}"
+    DELETE _stringStore:"slug-idx:{namespace}:{slug}"
+    CALL _searchIndexService.RemoveDocument(namespace, docId)
     DELETE _docStore:"{namespace}:{docId}"
-    // Also deletes slug indexes, removes from search index
+    PUBLISH "document.deleted" { ..., deletedReason: "Namespace documents deleted during repository unbind" }
   DELETE _guidSetStore:"ns-docs:{namespace}"
 DELETE _bindingStore:"repo-binding:{namespace}"
 // Remove from repo-bindings registry (non-atomic read-write)
@@ -516,14 +522,18 @@ LOCK _lockProvider:"repo-sync:{namespace}" (TTL: config.SyncLockTtlSeconds)
   IF !force && commitHash unchanged -> skip (return Success with 0 counts)
   CALL _gitSyncService.GetMatchingFilesAsync(localPath, filePatterns, excludePatterns)
   // Apply MaxDocumentsPerSync limit
-  FOREACH file in matchingFiles
+  FOREACH file in matchingFiles (per-file try/catch)
     CALL _gitSyncService.ReadFileContentAsync(file)
     CALL _contentTransformService.TransformFile(content, filePath, binding)
     IF draft -> skip
-    // CreateDocumentFromTransformAsync or UpdateDocumentFromTransformAsync
-    // Writes doc, slug index, namespace index; publishes document.created/updated
+    IF slug exists -> UpdateDocumentFromTransformAsync
+      // Incremental: compares ContentHash + all fields, skips write if unchanged
+      // Writes doc store + re-indexes. Does NOT publish document.updated
+    ELSE -> CreateDocumentFromTransformAsync
+      // Writes doc, slug index, namespace index + re-indexes. Does NOT publish document.created
   IF file list not truncated
-    // Delete orphan documents (slugs not in processed set)
+    // DeleteOrphanDocumentsAsync: deletes docs not in processed slugs
+    // Does NOT publish document.deleted events for orphans
   WRITE _bindingStore <- status=Synced, LastSyncAt, LastCommitHash, NextSyncAt
   PUBLISH "documentation-sync.completed" { status, commitHash, counts, durationMs }
 RETURN (200, SyncRepositoryResponse { SyncId, Status, CommitHash, DocumentsCreated/Updated/Deleted, DurationMs })
@@ -635,7 +645,12 @@ DELETE _archiveStore:"archive:{archiveId}"
 READ _guidListStore:"archive:list:{namespace}"
   // Remove archiveId from list (non-atomic, no ETag)
 WRITE _guidListStore:"archive:list:{namespace}" <- updated list
-// Note: bundle file in Asset Service is NOT deleted
+IF archive.BundleAssetId has value
+  RESOLVE IAssetClient (L3 soft dependency, graceful degradation)
+  IF assetClient available
+    CALL assetClient.DeleteBundleAsync({ bundleId, reason: "Archive deleted" })
+    // Failure: log warning, continue (non-critical)
+PUBLISH "documentation-archive.deleted" { namespace, archiveId }
 RETURN (200, DeleteArchiveResponse {})
 ```
 

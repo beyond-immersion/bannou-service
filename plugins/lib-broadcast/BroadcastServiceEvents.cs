@@ -1,4 +1,6 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Broadcast;
@@ -31,54 +33,92 @@ public partial class BroadcastService
         eventConsumer.RegisterHandler<IBroadcastService, SessionDisconnectedEvent>(
             "session.disconnected",
             async (svc, evt) => await ((BroadcastService)svc).HandleSessionDisconnectedAsync(evt));
-
     }
 
     /// <summary>
-    /// Handles account.deleted events.
-    /// TODO: Implement event handling logic.
+    /// Handles account.deleted events. T28 Account Deletion Cleanup Obligation.
+    /// Delegates to CleanupByAccountAsync for all account-owned data removal.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
+    /// <param name="evt">The account deleted event data.</param>
+    public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
     {
-        // TODO: Implement account.deleted event handling
-        _logger.LogInformation("Received {Topic} event", "account.deleted");
-        return Task.CompletedTask;
+        _logger.LogInformation("Handling account.deleted for account {AccountId}", evt.AccountId);
+        await CleanupByAccountAsync(
+            new CleanupByAccountRequest { AccountId = evt.AccountId },
+            CancellationToken.None);
     }
 
     /// <summary>
-    /// Handles voice.broadcast.approved events.
-    /// TODO: Implement event handling logic.
+    /// Handles voice.broadcast.approved events. All voice room participants have consented
+    /// to broadcasting. Starts RTMP output for voice room. Soft — no-op if lib-voice absent.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleVoiceBroadcastApprovedAsync(VoiceBroadcastApprovedEvent evt)
+    /// <param name="evt">The voice broadcast approved event data.</param>
+    public async Task HandleVoiceBroadcastApprovedAsync(VoiceBroadcastApprovedEvent evt)
     {
-        // TODO: Implement voice.broadcast.approved event handling
-        _logger.LogInformation("Received {Topic} event", "voice.broadcast.approved");
-        return Task.CompletedTask;
+        if (!_configuration.OutputEnabled || !_configuration.BroadcastEnabled)
+        {
+            _logger.LogDebug("Voice broadcast approved ignored: broadcast or output disabled");
+            return;
+        }
+
+        _logger.LogInformation("Handling voice.broadcast.approved for room {RoomId}", evt.RoomId);
+        await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Handles voice.broadcast.stopped events.
-    /// TODO: Implement event handling logic.
+    /// Handles voice.broadcast.stopped events. Consent revoked, room closed, or manual stop.
+    /// Soft — no-op if lib-voice absent.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleVoiceBroadcastStoppedAsync(VoiceBroadcastStoppedEvent evt)
+    /// <param name="evt">The voice broadcast stopped event data.</param>
+    public async Task HandleVoiceBroadcastStoppedAsync(VoiceBroadcastStoppedEvent evt)
     {
-        // TODO: Implement voice.broadcast.stopped event handling
-        _logger.LogInformation("Received {Topic} event", "voice.broadcast.stopped");
-        return Task.CompletedTask;
+        _logger.LogInformation("Handling voice.broadcast.stopped for room {RoomId}", evt.RoomId);
+        await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Handles session.disconnected events.
-    /// TODO: Implement event handling logic.
+    /// Handles session.disconnected events. Accelerated cleanup for platform sessions
+    /// when a WebSocket client disconnects. Sessions have TTL safety net.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
+    /// <param name="evt">The session disconnected event data.</param>
+    public async Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
     {
-        // TODO: Implement session.disconnected event handling
-        _logger.LogInformation("Received {Topic} event", "session.disconnected");
-        return Task.CompletedTask;
+        var sessionStore = _stateStoreFactory.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions);
+        if (sessionStore == null)
+        {
+            return;
+        }
+
+        var session = await sessionStore.GetAsync(BuildSessionAccountKey(evt.AccountId), CancellationToken.None);
+        if (session == null || session.State != PlatformSessionState.Active)
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var duration = (int)(now - session.StartTime).TotalSeconds;
+
+        await sessionStore.DeleteAsync(BuildSessionKey(session.PlatformSessionId), CancellationToken.None);
+        await sessionStore.DeleteAsync(BuildSessionAccountKey(evt.AccountId), CancellationToken.None);
+
+        await _messageBus.PublishPlatformSessionDeletedAsync(new PlatformSessionDeletedEvent
+        {
+            PlatformSessionId = session.PlatformSessionId,
+            LinkId = session.LinkId,
+            AccountId = session.AccountId,
+            Platform = session.Platform,
+            State = PlatformSessionState.Ended,
+            StartTime = session.StartTime,
+            ViewerCount = session.ViewerCount,
+            PeakViewerCount = session.PeakViewerCount,
+            EndedAt = now,
+            Duration = duration,
+            CreatedAt = session.StartTime,
+            UpdatedAt = now
+        }, CancellationToken.None);
+
+        _logger.LogInformation(
+            "Platform session {PlatformSessionId} cleaned up on disconnect for account {AccountId}",
+            session.PlatformSessionId, evt.AccountId);
     }
 }

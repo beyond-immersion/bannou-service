@@ -441,22 +441,22 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     public string DefaultProcessorPoolType { get; set; } = "asset-processor";
 
     /// <summary>
-    /// Comma-separated list of additional processable content types beyond defaults
+    /// Additional processable MIME content types beyond built-in defaults (e.g., "image/ktx", "model/step")
     /// Environment variable: ASSET_ADDITIONAL_PROCESSABLE_CONTENT_TYPES
     /// </summary>
-    public string? AdditionalProcessableContentTypes { get; set; }
+    public string[]? AdditionalProcessableContentTypes { get; set; }
 
     /// <summary>
-    /// Comma-separated ext=type pairs for additional extension mappings (e.g., ".ktx=image/ktx")
+    /// Additional file extension to MIME type mappings as "ext=type" pairs (e.g., ".ktx=image/ktx", ".step=model/step")
     /// Environment variable: ASSET_ADDITIONAL_EXTENSION_MAPPINGS
     /// </summary>
-    public string? AdditionalExtensionMappings { get; set; }
+    public string[]? AdditionalExtensionMappings { get; set; }
 
     /// <summary>
-    /// Comma-separated list of additional forbidden content types
+    /// Additional MIME content types to reject on upload (e.g., "application/x-msdownload")
     /// Environment variable: ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES
     /// </summary>
-    public string? AdditionalForbiddenContentTypes { get; set; }
+    public string[]? AdditionalForbiddenContentTypes { get; set; }
 
     /// <summary>
     /// Maximum retry attempts for optimistic concurrency index updates

@@ -49,6 +49,9 @@ info:
     - topic: documentation-archive.created
       event: DocumentationArchiveCreatedEvent
       description: Published when a documentation archive is created
+    - topic: documentation-archive.deleted
+      event: DocumentationArchiveDeletedEvent
+      description: Published when a documentation archive is deleted
 
 paths: {}  # Events don't have HTTP paths
 
@@ -370,3 +373,28 @@ components:
           type: string
           nullable: true
           description: Git commit hash the archive was created from, if applicable
+
+    DocumentationArchiveDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a documentation archive is deleted
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - namespace
+        - archiveId
+      properties:
+        eventName:
+          type: string
+          default: documentation-archive.deleted
+          description: 'Event type identifier: documentation-archive.deleted'
+        namespace:
+          type: string
+          description: The namespace the archive belonged to
+        archiveId:
+          type: string
+          format: uuid
+          description: Unique identifier for the deleted archive

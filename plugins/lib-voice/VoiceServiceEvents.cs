@@ -17,6 +17,9 @@ namespace BeyondImmersion.BannouService.Voice;
 /// Subscribes to Connect (L1) session lifecycle events for participant cleanup
 /// and state restoration. L3 subscribing to L1 events is correct hierarchy direction
 /// per FOUNDATION TENETS.
+///
+/// Self-subscribes to own peer lifecycle and room deletion events for cross-node
+/// cache invalidation per IMPLEMENTATION TENETS (Multi-Instance Safety).
 /// </remarks>
 public partial class VoiceService
 {
@@ -34,6 +37,22 @@ public partial class VoiceService
         eventConsumer.RegisterHandler<IVoiceService, SessionReconnectedEvent>(
             "session.reconnected",
             async (svc, evt) => await ((VoiceService)svc).HandleSessionReconnectedAsync(evt));
+
+        // Self-event-subscription for cross-node SipEndpointRegistry cache invalidation
+        // per IMPLEMENTATION TENETS (Multi-Instance Safety). Inline cache updates only
+        // reach the processing node; these subscriptions ensure all nodes invalidate
+        // their local cache when any node mutates participant state.
+        eventConsumer.RegisterHandler<IVoiceService, VoicePeerJoinedEvent>(
+            VoicePublishedTopics.VoicePeerJoined,
+            async (svc, evt) => { ((VoiceService)svc)._endpointRegistry.InvalidateRoomCache(evt.RoomId); await Task.CompletedTask; });
+
+        eventConsumer.RegisterHandler<IVoiceService, VoicePeerLeftEvent>(
+            VoicePublishedTopics.VoicePeerLeft,
+            async (svc, evt) => { ((VoiceService)svc)._endpointRegistry.InvalidateRoomCache(evt.RoomId); await Task.CompletedTask; });
+
+        eventConsumer.RegisterHandler<IVoiceService, VoiceRoomDeletedEvent>(
+            VoicePublishedTopics.VoiceRoomDeleted,
+            async (svc, evt) => { ((VoiceService)svc)._endpointRegistry.InvalidateRoomCache(evt.RoomId); await Task.CompletedTask; });
     }
 
     /// <summary>
@@ -216,11 +235,7 @@ public partial class VoiceService
             })
             .ToList();
 
-        // Parse STUN servers from config (StunServers has a schema default; null means infrastructure failure)
-        var stunServers = _configuration.StunServers?
-            .Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => s.Trim())
-            .ToList() ?? throw new InvalidOperationException("StunServers configuration is required but was null");
+        var stunServers = _configuration.StunServers.ToList();
 
         // Publish VoiceRoomStateClientEvent to restore client voice state
         await _clientEventPublisher.PublishToSessionAsync(evt.SessionId.ToString(), new VoiceRoomStateClientEvent

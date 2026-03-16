@@ -173,9 +173,10 @@ x-service-configuration:
       env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_INTERVAL_SECONDS
     # Milestone Configuration
     MilestoneThresholds:
-      type: string
-      minLength: 1
-      maxLength: 1024
-      description: Comma-separated list of score thresholds that trigger milestone events (e.g., "10,25,50,100")
-      default: "10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000"
+      type: array
+      items:
+        type: integer
+        minimum: 1
+      default: [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000]
+      description: Score thresholds that trigger milestone events (comma-separated in env var)
       env: ANALYTICS_MILESTONE_THRESHOLDS

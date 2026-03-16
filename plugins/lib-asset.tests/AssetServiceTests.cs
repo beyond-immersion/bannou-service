@@ -42,6 +42,7 @@ public class AssetServiceTests
     private readonly Mock<IAssetEventEmitter> _mockAssetEventEmitter = new();
     private readonly Mock<IAssetStorageProvider> _mockStorageProvider = new();
     private readonly Mock<IOrchestratorClient> _mockOrchestratorClient = new();
+    private readonly Mock<IServiceProvider> _mockServiceProvider = new();
     private readonly Mock<IAssetProcessorPoolManager> _mockProcessorPoolManager = new();
     private readonly Mock<IBundleConverter> _mockBundleConverter = new();
     private readonly Mock<IEventConsumer> _mockEventConsumer = new();
@@ -63,6 +64,9 @@ public class AssetServiceTests
         _mockStateStoreFactory.Setup(f => f.SupportsSearch(STATE_STORE)).Returns(false);
         _mockStateStoreFactory.Setup(f => f.GetCacheableStore<StoredBundleVersionRecord>(STATE_STORE)).Returns(_mockVersionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetCacheableStore<BundleMetadata>(STATE_STORE)).Returns(_mockCacheableBundleStore.Object);
+
+        // Setup service provider to return orchestrator client (L3 soft dependency)
+        _mockServiceProvider.Setup(sp => sp.GetService(typeof(IOrchestratorClient))).Returns(_mockOrchestratorClient.Object);
 
         // Default SaveAsync returns for stores used in async job paths
         _mockBundleCreationJobStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BundleCreationJob>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
@@ -361,8 +365,7 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-account",
+            CreatedBy = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
             ExpiresAt = DateTimeOffset.UtcNow.AddHours(-1) // Already expired
@@ -398,8 +401,7 @@ public class AssetServiceTests
             Filename = "large.glb",
             Size = 100 * 1024 * 1024,
             ContentType = "model/gltf-binary",
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-account",
+            CreatedBy = "test-account",
             StorageKey = $"temp/{uploadId:N}/large.glb",
             IsMultipart = true,
             PartCount = 5, // Expects 5 parts
@@ -434,8 +436,7 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-account",
+            CreatedBy = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -474,8 +475,7 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-account",
+            CreatedBy = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             Metadata = new AssetMetadataInput
@@ -562,8 +562,7 @@ public class AssetServiceTests
             Filename = "model.glb",
             Size = 50 * 1024 * 1024,
             ContentType = "model/gltf-binary",
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-account",
+            CreatedBy = "test-account",
             StorageKey = $"temp/{uploadId:N}/model.glb",
             IsMultipart = true,
             PartCount = 2,
@@ -1081,7 +1080,8 @@ public class AssetServiceTests
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Ready
+            Status = BundleStatus.Ready,
+            CreatedBy = "test-creator"
         };
 
         _mockBundleStore
@@ -1253,7 +1253,8 @@ public class AssetServiceTests
             StorageKey = "bundles/current/pending-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Processing // Not ready
+            Status = BundleStatus.Processing, // Not ready
+            CreatedBy = "test-creator"
         };
 
         _mockBundleStore
@@ -1553,7 +1554,8 @@ public class AssetServiceTests
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Ready
+            Status = BundleStatus.Ready,
+            CreatedBy = "test-creator"
         };
 
         _mockBundleStore
@@ -1584,8 +1586,7 @@ public class AssetServiceTests
         {
             MetabundleId = "",
             SourceBundleIds = new List<string> { "bundle-1" },
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1607,8 +1608,7 @@ public class AssetServiceTests
             MetabundleId = "test-metabundle",
             SourceBundleIds = null,
             StandaloneAssetIds = null,
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1630,8 +1630,7 @@ public class AssetServiceTests
             MetabundleId = "test-metabundle",
             SourceBundleIds = new List<string>(),
             StandaloneAssetIds = new List<string>(),
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1652,8 +1651,7 @@ public class AssetServiceTests
         {
             MetabundleId = "existing-metabundle",
             SourceBundleIds = new List<string> { "bundle-1" },
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1667,7 +1665,8 @@ public class AssetServiceTests
             StorageKey = "bundles/current/existing-metabundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Ready
+            Status = BundleStatus.Ready,
+            CreatedBy = "test-creator"
         };
 
         _mockBundleStore
@@ -1691,8 +1690,7 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "nonexistent-bundle" },
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1723,8 +1721,7 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             StandaloneAssetIds = new List<string> { "nonexistent-asset" },
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1755,8 +1752,7 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "pending-bundle" },
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1775,7 +1771,8 @@ public class AssetServiceTests
             StorageKey = "bundles/current/pending-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Processing // Not ready
+            Status = BundleStatus.Processing, // Not ready
+            CreatedBy = "test-creator"
         };
 
         _mockBundleStore
@@ -1799,8 +1796,7 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             StandaloneAssetIds = new List<string> { "pending-asset" },
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1846,8 +1842,7 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "wrong-realm-bundle" },
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             Realm = "test-realm" // Request is for test-realm
         };
 
@@ -1867,7 +1862,8 @@ public class AssetServiceTests
             StorageKey = "bundles/current/wrong-realm-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Ready
+            Status = BundleStatus.Ready,
+            CreatedBy = "test-creator"
         };
 
         _mockBundleStore
@@ -1892,8 +1888,7 @@ public class AssetServiceTests
         {
             MetabundleId = "conflict-test-metabundle",
             SourceBundleIds = new List<string> { "bundle-1", "bundle-2" },
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             Realm = "test-realm"
         };
 
@@ -1920,7 +1915,8 @@ public class AssetServiceTests
                     Size = 100
                 }
             },
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = "test-creator"
         };
 
         // Bundle 2 has same asset "shared-asset" but with different hash "hash-b"
@@ -1946,7 +1942,8 @@ public class AssetServiceTests
                     Size = 150
                 }
             },
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = "test-creator"
         };
 
         // Setup: Use a single catch-all setup that returns the right bundle based on key
@@ -2026,7 +2023,8 @@ public class AssetServiceTests
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "hash-1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
             },
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = "test-creator"
         };
 
         var metabundle = new BundleMetadata
@@ -2044,7 +2042,8 @@ public class AssetServiceTests
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "hash-1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
             },
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = "test-creator"
         };
 
         // Setup mocks
@@ -2117,7 +2116,8 @@ public class AssetServiceTests
                 new StoredBundleAssetEntry { AssetId = "asset-2", ContentHash = "h2", Filename = "a2.json", ContentType = "application/json", Size = 100 },
                 new StoredBundleAssetEntry { AssetId = "asset-3", ContentHash = "h3", Filename = "a3.json", ContentType = "application/json", Size = 100 }
             },
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = "test-creator"
         };
 
         // Small bundles contain only 1 asset each
@@ -2136,7 +2136,8 @@ public class AssetServiceTests
             {
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "h1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
             },
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = "test-creator"
         };
 
         var smallBundle2 = new BundleMetadata
@@ -2154,7 +2155,8 @@ public class AssetServiceTests
             {
                 new StoredBundleAssetEntry { AssetId = "asset-3", ContentHash = "h3", Filename = "a3.json", ContentType = "application/json", Size = 100 }
             },
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = "test-creator"
         };
 
         // Setup index lookups
@@ -2251,7 +2253,8 @@ public class AssetServiceTests
             SizeBytes = 500,
             Status = BundleStatus.Ready,
             Realm = "test-realm",
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = "test-creator"
         };
 
         var bundle2 = new BundleMetadata
@@ -2265,7 +2268,8 @@ public class AssetServiceTests
             SizeBytes = 300,
             Status = BundleStatus.Ready,
             Realm = "test-realm",
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = "test-creator"
         };
 
         _mockAssetBundleIndexStore
@@ -3158,7 +3162,7 @@ public class AssetServiceTests
     {
         // Arrange
         var service = CreateService();
-        var request = new QueryBundlesRequest { OwnerId = null };
+        var request = new QueryBundlesRequest { CreatedBy = null };
 
         // Act
         var (status, result) = await service.QueryBundlesAsync(request, cancellationToken: TestContext.Current.CancellationToken);
@@ -3175,7 +3179,7 @@ public class AssetServiceTests
     {
         // Arrange
         var service = CreateService();
-        var request = new QueryBundlesRequest { OwnerId = "test-owner" };
+        var request = new QueryBundlesRequest { CreatedBy = "test-owner" };
 
         _mockCacheableBundleStore
             .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -3205,7 +3209,7 @@ public class AssetServiceTests
 
         var request = new QueryBundlesRequest
         {
-            OwnerId = "test-owner"
+            CreatedBy = "test-owner"
         };
 
         _mockCacheableBundleStore
@@ -3244,7 +3248,7 @@ public class AssetServiceTests
 
         var request = new QueryBundlesRequest
         {
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             NameContains = "Adventure"
         };
 
@@ -3286,7 +3290,7 @@ public class AssetServiceTests
 
         var request = new QueryBundlesRequest
         {
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             SortField = BundleSortField.Name,
             SortOrder = SortOrder.Asc
         };
@@ -3662,8 +3666,7 @@ public class AssetServiceTests
         {
             MetabundleId = "new-metabundle",
             SourceBundleIds = new List<string> { "source-1" },
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             Realm = "test-realm"
         };
 
@@ -3688,7 +3691,8 @@ public class AssetServiceTests
                 new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "h1", Filename = "a1.json", ContentType = "application/json", Size = 200 },
                 new StoredBundleAssetEntry { AssetId = "asset-2", ContentHash = "h2", Filename = "a2.json", ContentType = "application/json", Size = 300 }
             },
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = "test-creator"
         };
 
         _mockBundleStore
@@ -3755,8 +3759,7 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-account",
+            CreatedBy = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -3807,8 +3810,7 @@ public class AssetServiceTests
             CreatedAt = createdAt ?? DateTimeOffset.UtcNow,
             Status = BundleStatus.Ready,
             LifecycleStatus = lifecycleStatus,
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-owner",
+            CreatedBy = "test-owner",
             MetadataVersion = 1
         };
     }
@@ -3822,7 +3824,7 @@ public class AssetServiceTests
             _configuration,
             _mockAssetEventEmitter.Object,
             _mockStorageProvider.Object,
-            _mockOrchestratorClient.Object,
+            _mockServiceProvider.Object,
             _mockProcessorPoolManager.Object,
             _mockBundleConverter.Object,
             _mockTelemetryProvider.Object,
@@ -4030,8 +4032,7 @@ public class MinioWebhookHandlerTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
-            OwnerType = AssetOwnerType.Session,
-            OwnerId = "test-account",
+            CreatedBy = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             CreatedAt = DateTimeOffset.UtcNow,

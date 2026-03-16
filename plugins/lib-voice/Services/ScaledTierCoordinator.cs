@@ -205,9 +205,6 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
 
     private List<string> GetStunServers()
     {
-        return _configuration.StunServers
-            .Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => s.Trim())
-            .ToList();
+        return _configuration.StunServers.ToList();
     }
 }

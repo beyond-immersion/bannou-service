@@ -1342,6 +1342,43 @@ The reverse index is maintained via the shared `AddToStringListAsync` and `Remov
 
 Reference implementations: `lib-item` (`inst-template:{templateId}`), `lib-currency` (`balance-currency:{definitionId}`), `lib-contract` (`template-idx:{templateId}`).
 
+#### Many:Many Reverse Indexes
+
+The standard 1:many pattern (one instance references one template) maintains the reverse index at instance creation and deletion. When the relationship is many:many — an instance record contains embedded sub-entities each referencing a different template — the reverse index is maintained at the **operation that creates or removes the reference**, not at instance lifecycle boundaries.
+
+**Trigger-point difference**:
+
+| Relationship | Add to index | Remove from index | Instance destruction |
+|---|---|---|---|
+| 1:many (standard) | Instance created | Instance deleted | Remove one entry from one template index |
+| Many:many (embedded refs) | Reference added (e.g., `ApplyAffix`) | Reference removed (e.g., `RemoveAffix`) | Load instance, enumerate embedded refs, remove from each template's index |
+
+**Example** (lib-affix — `AffixDefinition` → `AffixInstance` via embedded `AffixSlotModel`):
+
+```csharp
+// ApplyAffix: add instanceId to the applied definition's reverse index
+await _instanceStringStore.AddToStringListAsync(
+    BuildInstancesByDefinitionKey(body.DefinitionId),
+    body.ItemInstanceId.ToString(), maxRetries, _logger, ct);
+
+// RemoveAffix: remove instanceId from the removed definition's reverse index
+await _instanceStringStore.RemoveFromStringListAsync(
+    BuildInstancesByDefinitionKey(existingSlot.DefinitionId),
+    body.ItemInstanceId.ToString(), maxRetries, _logger, ct);
+
+// Instance destruction (IItemInstanceDestructionListener): clean ALL referenced indexes
+var instance = await _instanceStore.GetAsync(BuildInstanceKey(itemInstanceId), ct);
+if (instance != null)
+{
+    foreach (var slot in instance.AllSlots())  // implicit + prefix + suffix + enchant
+        await _instanceStringStore.RemoveFromStringListAsync(
+            BuildInstancesByDefinitionKey(slot.DefinitionId),
+            itemInstanceId.ToString(), maxRetries, _logger, ct);
+}
+```
+
+The `hasInstancesAsync` delegate and `DeprecationCleanupHelper` are completely agnostic to the relationship shape — they check `HasStringListEntriesAsync` on a key, which returns `true`/`false` regardless of how entries were added. The `instanceEntity` names the lifecycle entity containing the references (`AffixInstance`), not the embedded sub-entity (`AffixSlotModel`). See [SCHEMA-RULES.md § instanceEntity](../SCHEMA-RULES.md#x-lifecycle-lifecycle-event-generation) for the schema-level rule.
+
 ### What NOT to Include
 
 | Anti-Pattern | Why |

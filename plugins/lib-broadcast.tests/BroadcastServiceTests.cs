@@ -1,26 +1,10 @@
-using BeyondImmersion.BannouService.Broadcast;
-using BeyondImmersion.BannouService.TestUtilities;
-
-namespace BeyondImmersion.BannouService.Broadcast.Tests;
-
-/// <summary>
-/// Plugin-specific unit tests for BroadcastService.
-///
-/// NOTE: Constructor validation, configuration instantiation, key builder patterns,
-/// hierarchy compliance, and other structural checks are handled centrally by
-/// structural-tests/ (auto-discovered via [BannouService] attribute).
-/// Only add plugin-specific business logic tests here.
-///
-/// See: docs/reference/tenets/TESTING-PATTERNS.md
-/// </summary>
-public class BroadcastServiceTests
-{
-    // TODO: Add service-specific tests based on schema operations
-    // Schema file: ../schemas/broadcast-api.yaml
-    //
-    // Guidelines:
-    // - Use the Capture Pattern for event/state verification (see TESTING-PATTERNS.md)
-    // - Verify side effects (saves, events, indices), not just response structure
-    // - Keep Arrange < 50% of test code; extract helpers if needed
-    // - Use EnumMappingValidator for any SDK boundary enum mappings
-}
+// This file intentionally left as a marker. All broadcast service tests have been
+// organized into domain-specific test classes:
+//
+// - BroadcastServiceConstructorTests.cs  — Constructor validation
+// - BroadcastServicePlatformTests.cs     — Platform linking (LinkPlatform, UnlinkPlatform, ListPlatforms, PlatformCallback)
+// - BroadcastServiceSessionTests.cs      — Sessions (StartSession, StopSession, AssociateSession, GetSessionStatus, ListSessions)
+// - BroadcastServiceOutputTests.cs       — Camera + Output (AnnounceCamera, RetireCamera, StartOutput, StopOutput, UpdateOutput, GetOutputStatus, ListOutputs)
+// - BroadcastServiceAdminTests.cs        — Admin + Cleanup (GetLatestPulse, TestSentiment, CleanupByAccount)
+//
+// See: docs/reference/tenets/TESTING-PATTERNS.md

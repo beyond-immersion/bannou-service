@@ -246,38 +246,3 @@ x-service-configuration:
       minimum: 1
       description: Maximum strings in behavior string table
 
-    # === Key Prefix Configuration (Tier 3) ===
-    BundleMembershipKeyPrefix:
-      type: string
-      env: BEHAVIOR_BUNDLE_MEMBERSHIP_KEY_PREFIX
-      default: "bundle-membership:"
-      minLength: 1
-      description: Key prefix for bundle membership entries
-
-    BehaviorMetadataKeyPrefix:
-      type: string
-      env: BEHAVIOR_METADATA_KEY_PREFIX
-      default: "behavior-metadata:"
-      minLength: 1
-      description: Key prefix for behavior metadata entries
-
-    GoapMetadataKeyPrefix:
-      type: string
-      env: BEHAVIOR_GOAP_METADATA_KEY_PREFIX
-      default: "goap-metadata:"
-      minLength: 1
-      description: Key prefix for GOAP metadata entries
-
-    MemoryKeyPrefix:
-      type: string
-      env: BEHAVIOR_MEMORY_KEY_PREFIX
-      default: "memory:"
-      minLength: 1
-      description: Key prefix for memory entries
-
-    MemoryIndexKeyPrefix:
-      type: string
-      env: BEHAVIOR_MEMORY_INDEX_KEY_PREFIX
-      default: "memory-index:"
-      minLength: 1
-      description: Key prefix for memory index entries

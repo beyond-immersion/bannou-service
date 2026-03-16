@@ -17,7 +17,7 @@
 | Endpoints | 22 |
 | State Stores | agency-domains (MySQL), agency-modules (MySQL), agency-influences (MySQL), agency-manifest-cache (Redis), agency-manifest-history (MySQL), agency-seed-config (Redis), agency-lock (Redis) |
 | Events Published | 13 (9 lifecycle + 4 custom: manifest.updated, influence.executed, influence.resisted, influence.rejected) |
-| Events Consumed | 4 (seed.capability.updated, seed.growth.recorded, actor.spirit-nudge.resisted, connect.session.disconnected) |
+| Events Consumed | 5 (seed.capability.updated, seed.growth.updated, actor.spirit-nudge.resisted, session.disconnected, disposition.guardian.shifted) |
 | Client Events | 0 (manifest updates routed through Gardener) |
 | Background Services | 2 (ManifestRecomputeWorker, ManifestHistoryRetentionWorker) |
 
@@ -111,9 +111,10 @@
 | Topic | Handler | Action |
 |-------|---------|--------|
 | `seed.capability.updated` | `HandleSeedCapabilityUpdatedAsync` | Set/reset Redis debounce key for seedId; ManifestRecomputeWorker processes after debounce |
-| `seed.growth.recorded` | `HandleSeedGrowthRecordedAsync` | Check threshold crossings; if crossed, set debounce key for manifest recomputation |
-| `actor.spirit-nudge.resisted` | `HandleActorSpiritNudgeResistedAsync` | Enrich with Agency context; relay as `agency.influence.resisted` |
-| `connect.session.disconnected` | `HandleSessionDisconnectedAsync` | Clear cached manifest for disconnected seed (stale cache prevention) |
+| `seed.growth.updated` | `HandleSeedGrowthUpdatedAsync` | Check threshold crossings; if crossed, set debounce key for manifest recomputation |
+| `actor.spirit-nudge.resisted` | `HandleActorSpiritNudgeResistedAsync` | Enrich with Agency context; relay as `agency.influence.resisted` — **Future**: not yet published by Actor |
+| `session.disconnected` | `HandleSessionDisconnectedAsync` | Clear cached manifest for disconnected seed (stale cache prevention) |
+| `disposition.guardian.shifted` | `HandleGuardianShiftedAsync` | Set/reset Redis debounce key for seedId; compliance_base depends on guardian feelings (trust, resentment, familiarity) — **Future**: no disposition-events.yaml exists yet |
 
 ---
 
@@ -199,8 +200,8 @@ QUERY _domainsStore WHERE $.GameServiceId == request.GameServiceId (if provided)
  [PAGED(request.Page, request.PageSize)]
 // Module/influence counts per domain require additional COUNT queries
 FOREACH domain in results
- COUNT _modulesStore WHERE $.DomainCode == domain.DomainCode AND $.IsDeprecated == false
- COUNT _influencesStore WHERE $.DomainCode == domain.DomainCode AND $.IsDeprecated == false
+ COUNT _modulesStore WHERE $.DomainCode == domain.DomainCode
+ COUNT _influencesStore WHERE $.DomainCode == domain.DomainCode
 RETURN (200, ListDomainsResponse { domains, totalCount })
 ```
 
@@ -238,7 +239,7 @@ POST /agency/module/create | Roles: [developer]
 READ _domainsStore:domain:{request.DomainCode} -> 404 if null
 IF domain.IsDeprecated == true
  -> 400 // Cannot add modules to deprecated domain
-COUNT _modulesStore WHERE $.DomainCode == request.DomainCode AND $.IsDeprecated == false
+COUNT _modulesStore WHERE $.DomainCode == request.DomainCode
 IF count >= config.MaxModulesPerDomain
  -> 400 // Module limit reached
 LOCK agency-lock:module:{request.ModuleCode} -> 409 if lock fails
@@ -279,11 +280,11 @@ POST /agency/module/list | Roles: [developer]
 
 ```
 QUERY _modulesStore WHERE $.DomainCode == request.DomainCode (if provided)
- AND $.IsDeprecated == false (unless request.IncludeDeprecated)
  AND $.GameServiceId == request.GameServiceId (if provided)
  [ORDER BY $.SortOrder ASC]
  [PAGED(request.Page, request.PageSize)]
 RETURN (200, ListModulesResponse { modules, totalCount })
+// No includeDeprecated filter — modules use immediate hard delete, not deprecation
 ```
 
 ---
@@ -293,11 +294,10 @@ POST /agency/module/delete | Roles: [developer]
 
 ```
 READ _modulesStore:module:{request.ModuleCode} -> 404 if null
-IF existing.IsDeprecated == false
- -> 400 // Category A: must deprecate before delete
 DELETE _modulesStore:module:{request.ModuleCode}
 PUBLISH agency.module.deleted { moduleCode }
 RETURN (200, null)
+// No deprecation guard — modules use immediate hard delete (no persistent external references)
 ```
 
 ---
@@ -309,7 +309,7 @@ POST /agency/influence/create | Roles: [developer]
 READ _domainsStore:domain:{request.DomainCode} -> 404 if null
 IF domain.IsDeprecated == true
  -> 400 // Cannot add influences to deprecated domain
-COUNT _influencesStore WHERE $.DomainCode == request.DomainCode AND $.IsDeprecated == false
+COUNT _influencesStore WHERE $.DomainCode == request.DomainCode
 IF count >= config.MaxInfluencesPerDomain
  -> 400 // Influence limit reached
 LOCK agency-lock:influence:{request.InfluenceCode} -> 409 if lock fails
@@ -351,10 +351,10 @@ POST /agency/influence/list | Roles: [developer]
 
 ```
 QUERY _influencesStore WHERE $.DomainCode == request.DomainCode (if provided)
- AND $.IsDeprecated == false (unless request.IncludeDeprecated)
  AND $.GameServiceId == request.GameServiceId (if provided)
  [PAGED(request.Page, request.PageSize)]
 RETURN (200, ListInfluencesResponse { influences, totalCount })
+// No includeDeprecated filter — influences use immediate hard delete, not deprecation
 ```
 
 ---
@@ -364,11 +364,10 @@ POST /agency/influence/delete | Roles: [developer]
 
 ```
 READ _influencesStore:influence:{request.InfluenceCode} -> 404 if null
-IF existing.IsDeprecated == false
- -> 400 // Category A: must deprecate before delete
 DELETE _influencesStore:influence:{request.InfluenceCode}
 PUBLISH agency.influence.deleted { influenceCode }
 RETURN (200, null)
+// No deprecation guard — influences use immediate hard delete (no persistent external references)
 ```
 
 ---
@@ -387,8 +386,8 @@ IF config.CrossSeedPollinationEnabled
  // Apply CrossSeedPollinationFactor to cross-seed depths
  // Merge: max(primary, crossSeed * factor) per capability path
 // see helper: ManifestComputeHelper
-QUERY _modulesStore WHERE $.IsDeprecated == false [ORDER BY $.SortOrder ASC]
-QUERY _influencesStore WHERE $.IsDeprecated == false
+QUERY _modulesStore [ORDER BY $.SortOrder ASC]
+QUERY _influencesStore
 // For each module: if seedDepth >= depthThreshold, enabled; compute fidelity from curve
 // For each influence: if seedDepth >= depthThreshold, available
 WRITE _manifestCacheStore:manifest:{request.SeedId} <- manifest with TTL(config.ManifestCacheTtlMinutes)
@@ -406,8 +405,8 @@ IF config.CrossSeedPollinationEnabled
  CALL ISeedClient.GetAccountSeedsAsync(seed.AccountId)
  // Apply CrossSeedPollinationFactor; merge capabilities
 // see helper: ManifestComputeHelper
-QUERY _modulesStore WHERE $.IsDeprecated == false [ORDER BY $.SortOrder ASC]
-QUERY _influencesStore WHERE $.IsDeprecated == false
+QUERY _modulesStore [ORDER BY $.SortOrder ASC]
+QUERY _influencesStore
 READ _manifestCacheStore:manifest:{request.SeedId} // Previous manifest for diff
 WRITE _manifestCacheStore:manifest:{request.SeedId} <- newManifest with TTL
 WRITE _manifestHistoryStore:history:{request.SeedId}:{now} <- AgencyManifestHistoryModel { previous, new, delta }
@@ -449,8 +448,6 @@ POST /agency/influence/evaluate | Roles: []
 
 ```
 READ _influencesStore:influence:{request.InfluenceCode} -> 404 if null
-IF influence.IsDeprecated == true
- -> 400
 READ _manifestCacheStore:manifest:{request.SeedId} -> 404 if null
 // Check influence availability in manifest
 IF influence not available in manifest
@@ -473,8 +470,6 @@ POST /agency/influence/execute | Roles: []
 
 ```
 READ _influencesStore:influence:{request.InfluenceCode} -> 404 if null
-IF influence.IsDeprecated == true
- -> 400
 // Rate limit check (Redis atomic INCR with 1-second TTL)
 READ _manifestCacheStore:rate:{request.SeedId}
 IF rate >= config.InfluenceRateLimitPerSecond
@@ -530,8 +525,8 @@ RETURN (200, SeedConfigResponse { seedTypeCode, isDefault: false })
 ## Background Services
 
 ### ManifestRecomputeWorker
-**Trigger**: Event-driven via `seed.capability.updated` and `seed.growth.recorded`; debounced per seed via Redis TTL key
-**Purpose**: Recompute manifests when seed capabilities change
+**Trigger**: Event-driven via `seed.capability.updated`, `seed.growth.updated`, and `disposition.guardian.shifted`; debounced per seed via Redis TTL key
+**Purpose**: Recompute manifests when seed capabilities or guardian feelings change
 
 ```
 // Event handlers set Redis debounce key:
@@ -542,8 +537,8 @@ IF config.CrossSeedPollinationEnabled
  CALL ISeedClient.GetAccountSeedsAsync(accountId)
  // Apply CrossSeedPollinationFactor; merge capabilities
 // see helper: ManifestComputeHelper
-QUERY _modulesStore WHERE $.IsDeprecated == false [ORDER BY $.SortOrder ASC]
-QUERY _influencesStore WHERE $.IsDeprecated == false
+QUERY _modulesStore [ORDER BY $.SortOrder ASC]
+QUERY _influencesStore
 READ _manifestCacheStore:manifest:{seedId} // Previous for diff
 WRITE _manifestCacheStore:manifest:{seedId} <- newManifest with TTL
 WRITE _manifestHistoryStore:history:{seedId}:{now} <- history entry

@@ -26,10 +26,10 @@ info:
     - topic: game-session.deleted
       event: GameSessionDeletedEvent
       handler: HandleGameSessionDeleted
-    # Character history events for historical analytics
-    - topic: character-history.participation.recorded
-      event: CharacterParticipationRecordedEvent
-      handler: HandleCharacterParticipationRecorded
+    # Character history events for historical analytics (batch lifecycle events)
+    - topic: character-history.participation.batch-created
+      event: ParticipationBatchCreatedEvent
+      handler: HandleCharacterParticipationBatchCreated
     - topic: character-history.backstory.created
       event: CharacterBackstoryCreatedEvent
       handler: HandleCharacterBackstoryCreated
@@ -46,6 +46,10 @@ info:
     - topic: realm-history.lore.updated
       event: RealmLoreUpdatedEvent
       handler: HandleRealmLoreUpdated
+    # Account deletion cleanup (per FOUNDATION TENETS: Account Deletion Cleanup Obligation)
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      handler: HandleAccountDeleted
     # Cache invalidation events
     - topic: character.updated
       event: CharacterUpdatedEvent

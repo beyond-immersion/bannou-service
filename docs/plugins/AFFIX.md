@@ -144,7 +144,9 @@ Each item managed by lib-affix has a corresponding record in Affix's own instanc
 AffixInstanceModel:
  itemInstanceId: Guid # Foreign key to lib-item (NOT a Guid owned by Affix)
  gameServiceId: Guid
- effectiveRarity: string # Opaque string (Category B per tenets -- game-configurable rarity codes; defaults: "normal", "magic", "rare", "unique")
+ seedId: Guid # Foreign key to lib-seed "item-traits" seed (created at InitializeItemAffixes time)
+ effectiveRarity: string # Derived from seed capabilities (opaque string, game-configurable; defaults: "normal", "magic", "rare", "unique")
+ slotLimits: SlotLimitsModel # Denormalized from seed capabilities by ISeedEvolutionListener
  itemLevel: int # Set at creation time (from source level)
 
  implicitSlots: [AffixSlotModel]
@@ -176,20 +178,30 @@ AffixStatesModel:
 - **Modified** by `ApplyAffix`, `RemoveAffix`, `RerollValues`, and state-change operations
 - **Destroyed** when lib-affix's `IItemInstanceDestructionListener` receives in-process cleanup notification from lib-item (high-frequency exception; orphan reconciliation worker as durability guarantee)
 
-**Why this matters for compliance**: Every service that needs affix data calls lib-affix's API. lib-craft calls `/affix/apply` to add modifiers during crafting. lib-loot calls `/affix/generate/set` then `/affix/initialize` to create affixed items. lib-market subscribes to `affix.modifier.applied` events to maintain its trade index. No service parses metadata blobs. No service knows affix key names by convention. If Affix restructures its internal model, no other service breaks.
+**Why this matters for compliance**: Every service that needs affix data calls lib-affix's API. lib-craft calls `/affix/apply` with optional `weightModifiers` (tier selection bias) and `valuePercentileTarget` (value roll bias) translated from its quality score — lib-affix never sees a "quality" concept, only generic parameters. lib-loot calls `/affix/generate/set` then `/affix/initialize` to create affixed items. lib-market subscribes to `affix.modifier.applied` events to maintain its trade index. No service parses metadata blobs. No service knows affix key names by convention. If Affix restructures its internal model, no other service breaks.
 
-### Affix Slots and Limits
+### Affix Slots and Limits (Seed-Driven)
 
-Each item has a fixed number of slots per slot type, determined by its **effective rarity**:
+Each item managed by lib-affix has an associated **Seed** (L2) of type `"item-traits"` that tracks the item's progressive growth. Slot limits are derived from the seed's **capability manifest**, not static configuration. lib-affix registers the `"item-traits"` seed type at startup with phases and capabilities that map to affix-domain semantics.
 
-| Effective Rarity | Implicit | Prefix | Suffix | Total Explicit |
-|-----------------|----------|--------|--------|---------------|
-| normal | Template-defined | 0 | 0 | 0 |
-| magic | Template-defined | 0-1 | 0-1 | 1-2 |
-| rare | Template-defined | 1-3 | 1-3 | 3-6 |
-| unique | Template-defined | Fixed | Fixed | Predetermined |
+**How it works**: When `InitializeItemAffixes` creates an affix instance for an item, it also creates a seed of type `"item-traits"` owned by that item (`ownerType: Item`, `ownerId: itemInstanceId`). As the item accumulates experience (crafting operations, enchanting, quality improvements), lib-affix calls `ISeedClient.RecordGrowthAsync` to contribute growth. Phase transitions unlock capabilities like `"prefix:1"`, `"prefix:2"`, `"suffix:3"`, etc. lib-affix implements `ISeedEvolutionListener` to eagerly denormalize capability changes into its own `AffixInstanceModel`, making slot limit checks a local field read.
 
-**Slot limits are configurable per game** via `RaritySlotLimits` definitions. The table above is the PoE-inspired default. A game might define "common/uncommon/rare/legendary" with different slot counts, or skip rarity entirely and use a flat affix cap.
+**Default capability mapping** (PoE-inspired conventions — games define their own via the seed type's capability rules):
+
+| Effective Rarity | Capabilities Unlocked | Implicit | Prefix | Suffix | Total Explicit |
+|-----------------|----------------------|----------|--------|--------|---------------|
+| normal | (none) | Template-defined | 0 | 0 | 0 |
+| magic | `prefix:1`, `suffix:1` | Template-defined | 0-1 | 0-1 | 1-2 |
+| rare | `prefix:3`, `suffix:3` | Template-defined | 1-3 | 1-3 | 3-6 |
+| unique | (predetermined set) | Template-defined | Fixed | Fixed | Predetermined |
+
+**Effective rarity is derived from capabilities.** When seed capabilities change, lib-affix checks the highest unlocked tier for each slot type and computes `effectiveRarity` from the capability set. The opaque rarity string is stored on the affix instance for fast reads, but it is *computed from* seed state, not independently tracked.
+
+**Seed creation is deferred.** Items with no affixes have no affix instance and no seed. The seed is created at `InitializeItemAffixes` time. This keeps seed volume proportional to "items lib-affix manages," not "all items in the world." Seed decay is disabled per-type (`GrowthDecayEnabled: false`) since item traits accumulate through operations and should not erode.
+
+**The seed is invisible to consumers.** lib-craft calls `/affix/apply`, lib-loot calls `/affix/initialize` — they never know a seed exists. Growth contribution is an internal concern of lib-affix. This follows the Genesis pattern where Seed is used under-the-hood for all progression operations.
+
+**Game-configurable rarity tiers**: Since the seed type definition (phases, capabilities, growth thresholds) is registered via API at startup, games define their own rarity progression. A game could define "common/uncommon/rare/legendary" with different capability unlocks and growth thresholds, or skip rarity entirely and use a flat affix cap with a single capability tier.
 
 ### Mod Groups and Exclusivity
 
@@ -321,8 +333,10 @@ Sockets are purely a stat computation concern for lib-affix. The physical contai
 | `ItemLevelBucketSize` | `AFFIX_ITEM_LEVEL_BUCKET_SIZE` | `10` | Item level range per cache bucket |
 | `MaxItemLevel` | `AFFIX_MAX_ITEM_LEVEL` | `100` | Maximum supported item level (determines bucket count) |
 | `DefaultSpawnWeight` | `AFFIX_DEFAULT_SPAWN_WEIGHT` | `1000` | Default spawn weight for new definitions |
-| `DefaultMaxPrefixes` | `AFFIX_DEFAULT_MAX_PREFIXES` | `3` | Default max prefix slots for rare rarity |
-| `DefaultMaxSuffixes` | `AFFIX_DEFAULT_MAX_SUFFIXES` | `3` | Default max suffix slots for rare rarity |
+| `DefaultMaxPrefixes` | `AFFIX_DEFAULT_MAX_PREFIXES` | `3` | Fallback max prefix slots when no seed capability mapping matches |
+| `DefaultMaxSuffixes` | `AFFIX_DEFAULT_MAX_SUFFIXES` | `3` | Fallback max suffix slots when no seed capability mapping matches |
+| `ItemTraitsSeedTypeCode` | `AFFIX_ITEM_TRAITS_SEED_TYPE_CODE` | `item-traits` | Seed type code registered at startup for item trait progression |
+| `SeedGrowthDomainEnchantment` | `AFFIX_SEED_GROWTH_DOMAIN_ENCHANTMENT` | `enchantment` | Growth domain name for affix application operations |
 | `GenerationEventDeduplicationWindowSeconds` | `AFFIX_GENERATION_EVENT_DEDUPLICATION_WINDOW_SECONDS` | `60` | Deduplication window for batched generation events |
 | `GenerationEventBatchMaxSize` | `AFFIX_GENERATION_EVENT_BATCH_MAX_SIZE` | `100` | Max records per batched generation event |
 | `LockTimeoutSeconds` | `AFFIX_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout |
@@ -508,11 +522,9 @@ Equipment Stat Computation Flow
 
 ## Potential Extensions
 
-1. **Rarity slot limit definitions as configurable entities**: Instead of hardcoded slot counts per rarity, expose a `RaritySlotLimit` definition API that games use to define their own rarity tiers with custom slot counts. A game could define "Legendary" rarity with 4 prefixes and 4 suffixes, or "Mythic" with unlimited slots but exponentially increasing generation cost.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/588 -->
+1. ~~**Rarity slot limit definitions as configurable entities**~~: **RESOLVED** (2026-03-15, #588) — Rarity slot limits are derived from Seed (L2) capabilities, not static configuration or CRUD entities. lib-affix registers a seed type `"item-traits"` at startup with phases and capabilities that map to slot limits (e.g., `"prefix:3"` = 3 prefix slots). Seed creation is deferred to `InitializeItemAffixes` (items without affixes have no seed). lib-affix implements `ISeedEvolutionListener` (Faction-style eager denormalization) to write capability changes into its own `AffixInstanceModel`. Effective rarity is computed from the capability set. Games configure their own rarity tiers by defining the seed type's phases, capabilities, and growth thresholds at startup. See "Affix Slots and Limits (Seed-Driven)" in Core Concepts above.
 
-2. **Affix trade index (materialized view)**: A denormalized MySQL store that indexes `(gameServiceId, statCode, statValue, itemInstanceId)` for fast trade-site-style queries ("find all items with +90 life and +30 fire res"). Built asynchronously from `affix.modifier.applied` and `affix.modifier.removed` events. Used by lib-market for search.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/589 -->
+2. ~~**Affix trade index (materialized view)**~~: **RESOLVED** (2026-03-16, #589) — Ownership moved to lib-market. lib-market defines an `IMarketItemDataProvider` DI provider interface in `bannou-service/Providers/` that any L4 service can implement to contribute searchable item data. lib-affix implements this interface, reading from its own state stores (co-located, in-process). No denormalized index in lib-affix. See MARKET.md for the full design.
 
 3. **Unique item definitions**: A `UniqueItemDefinition` entity that maps an item template code to a fixed set of affix definitions with predetermined roll ranges. When a unique item drops, its affixes come from the unique definition (not weighted random). The unique definition is owned by lib-affix, not lib-item.
 
@@ -544,7 +556,7 @@ None. Plugin is aspirational -- no code exists to have bugs.
 
 4. **Computed stats are cached, not stored**: `ComputeItemStats` and `ComputeEquipmentStats` results are cached in Redis with short TTL. They're derived data that changes when definitions change (e.g., a definition tier value update should be reflected immediately) or when equipment changes. Consumers must not treat cached stats as authoritative for critical decisions -- they should call the compute endpoints for fresh values when precision matters.
 
-5. **Effective rarity is advisory, not enforced by lib-item**: The `effectiveRarity` field in the affix instance is maintained by lib-affix during apply/remove operations. lib-item doesn't know about it and doesn't enforce it.
+5. **Effective rarity is seed-derived and advisory, not enforced by lib-item**: The `effectiveRarity` field in the affix instance is computed from the item's `"item-traits"` seed capability manifest (see "Affix Slots and Limits (Seed-Driven)" above). When seed capabilities change, lib-affix's `ISeedEvolutionListener` eagerly denormalizes the new capability state and recomputes `effectiveRarity`. lib-item doesn't know about rarity and doesn't enforce it.
 
 6. **Pool cache uses item level bucketing**: To keep the number of cached pools manageable, item levels are bucketed (e.g., levels 71-80 share a pool). The cached pool contains all definitions valid for the bucket's upper bound. When generating for a specific level (e.g., 75), the cached pool is filtered in-memory to exclude definitions requiring a higher level. This means the cache is slightly larger than necessary but the in-memory filter is fast.
 
@@ -570,23 +582,22 @@ None. Plugin is aspirational -- no code exists to have bugs.
 
 17. **Orphan reconciliation provides durability guarantee**: The `IItemInstanceDestructionListener` provides guaranteed in-process delivery on the node that processes the deletion, but if deletion occurs on a node where lib-affix is not loaded (unusual but possible in partitioned deployments), or if the listener throws, affix instances become orphaned. The orphan reconciliation background worker periodically scans affix instances, batch-checks item existence via `IItemClient`, and deletes orphaned records. This is the durability guarantee required by FOUNDATION TENETS (High-Frequency Instance Lifecycle Exception). Configuration: `OrphanReconciliationIntervalMinutes` (default: 60), `OrphanReconciliationBatchSize` (default: 500).
 
-18. **Socket detection uses container type convention**: Equipment stat computation identifies socket child containers by the `"socket"` container type string in lib-inventory. This is a shared naming convention between lib-affix and the socket creation flow (orchestrated by the caller). If lib-inventory changes container type naming, socket detection breaks -- mitigated by both sides agreeing on the convention string.
+18. **Seed volume is proportional to managed items, not all items**: Only items that go through `InitializeItemAffixes` get a seed. Common items with no affixes have no affix instance and no seed. At 100K NPC scale, the seed count equals the number of items with modifiers — typically a fraction of total items (NPCs with fixed loadouts never call `InitializeItemAffixes`). Seed decay is disabled per-type to avoid the decay worker scanning item-trait seeds.
+
+19. **Socket detection uses container type convention**: Equipment stat computation identifies socket child containers by the `"socket"` container type string in lib-inventory. This is a shared naming convention between lib-affix and the socket creation flow (orchestrated by the caller). If lib-inventory changes container type naming, socket detection breaks -- mitigated by both sides agreeing on the convention string.
 
 ### Design Considerations (Requires Planning)
 
-1. **Category B `instanceEntity` pattern does not directly fit affix definitions**: The standard Category B pattern (B10a-B10b) requires `instanceEntity` naming an x-lifecycle entity representing instances of the template, with a simple 1:many reverse index (template→instance list) for the clean-deprecated sweep. For most Category B entities this is straightforward (ItemTemplate→ItemInstance, QuestDefinition→QuestInstance). For affix definitions, the relationship is many:many: each `AffixInstanceModel` contains multiple `AffixSlotModel` entries, each referencing a different `definitionId`, and conversely a single definition appears as slot entries across many instance records. This creates three challenges: (a) the reverse index must track which `AffixInstanceModel` records contain a slot referencing a given `definitionId`, updated on every `ApplyAffix` and `RemoveAffix`; (b) the `instanceEntity` structural test expects a named x-lifecycle entity in the same events file, but affix slot entries are sub-entities within `AffixInstanceModel`, not standalone lifecycle entities; (c) the clean-deprecated sweep checks "has instances" but the definition isn't a 1:many parent — it's one of potentially many definitions referenced by a single instance record. Options include modeling a lightweight "applied-modifier" instance entity with x-lifecycle, maintaining a definitionId→itemInstanceId reverse index despite the non-standard relationship shape, or seeking a tenet clarification for Category B entities with embedded-reference patterns.
+1. ~~**Category B `instanceEntity` pattern does not directly fit affix definitions**~~: **FIXED** (2026-03-15) - The standard pattern applies without modification. The original concern confused `AffixSlotModel` (embedded sub-entity) with `AffixInstance` (the lifecycle entity). Resolution: `instanceEntity: AffixInstance`. `AffixInstance` is a proper lifecycle entity with full CRUD (created by `InitializeItemAffixes`, modified by `ApplyAffix`/`RemoveAffix`/`RerollValues`, destroyed via `IItemInstanceDestructionListener`) and should use `batch: true` in x-lifecycle (same as `ItemInstance` — high-frequency, DI-listener cleanup). The many:many relationship (one instance contains slots referencing multiple definitions) does not affect the pattern: the reverse index `inst-def:{definitionId}` is maintained via standard `AddToStringListAsync`/`RemoveFromStringListAsync` at `ApplyAffix` (add) and `RemoveAffix` (remove) time, with instance destruction cleaning all referenced definition indexes. The `hasInstancesAsync` delegate is a black box — it checks `HasStringListEntriesAsync` on the reverse index regardless of relationship cardinality. Updated implementation map with reverse index key pattern and clean-deprecated pseudocode reflecting this resolution.
 
-2. **Implementation map missing `CleanDeprecatedDefinitions` endpoint**: The deep dive Stubs Phase 1 lists "clean-deprecated" as part of definition CRUD, and Core Concepts item 5 explicitly states the B17-B22 clean-deprecated sweep endpoint exists. However, the implementation map's Method Index (27 endpoints) does not include this endpoint. The map needs to be updated to include the clean-deprecated endpoint specification when it is next maintained.
+2. ~~**Implementation map missing `CleanDeprecatedDefinitions` endpoint**~~: **FIXED** (2026-03-15) - Added `CleanDeprecatedDefinitions` endpoint to implementation map Method Index, Events Published, Summary Table, and method pseudocode. Endpoint count updated from 27 to 28.
 
 ---
 
 ## Work Tracking
 
 ### Active
-- [#490](https://github.com/beyond-immersion/bannou-service/issues/490) — Full implementation of lib-affix (all 6 phases). Open questions include item level sourcing, equipment query semantics, pool cache invalidation strategy, and socket integration prerequisites.
-- [#588](https://github.com/beyond-immersion/bannou-service/issues/588) — Decide scope for rarity slot limit definitions: static configuration vs dynamic API entities.
-- [#589](https://github.com/beyond-immersion/bannou-service/issues/589) — Affix trade index ownership: lib-affix vs lib-market.
-- [#607](https://github.com/beyond-immersion/bannou-service/issues/607) — Design: quality-to-affix tier mapping contract between lib-craft and lib-affix.
+*(No active issues)*
 
 ### Related / Dependencies
 - [#430](https://github.com/beyond-immersion/bannou-service/issues/430) — lib-socket: Phase 5 (Socket Integration) is blocked until lib-socket's state ownership and container conventions are designed.
@@ -597,5 +608,11 @@ None. Plugin is aspirational -- no code exists to have bugs.
 - (2026-03-08) Audit: created #589 for trade index ownership design question (Potential Extension #2).
 - (2026-03-08) Audit: reclassified all 7 Design Considerations as Intentional Quirks #12-#18 — all were already-decided behaviors, not open questions requiring planning.
 - (2026-03-08) Review: added #607 to Active tracking (cross-service design question with lib-craft). Added #430 and #559 as Related/Dependencies. Added `x-references` declaration to Phase 6. Updated Phase 5 to reference lib-socket (#430) coordination.
+- (2026-03-15) Audit: added CleanDeprecatedDefinitions endpoint to implementation map (Method Index, Events Published, Summary Table, method pseudocode). Added `inst-def:{definitionId}` reverse index key pattern. Fixed Design Consideration #2.
+- (2026-03-16) Moved #490 from Active to Related (already closed).
+- (2026-03-16) Issue #589: Resolved trade index ownership — moved to lib-market. lib-market defines `IMarketItemDataProvider` DI interface; lib-affix implements it reading from its own state stores. No denormalized index in lib-affix. Removed Potential Extension #2. Updated MARKET.md with full design.
+- (2026-03-15) Issue #607: Resolved quality-to-affix tier mapping — lib-craft owns the quality→affix-param translation. lib-affix accepts generic `weightModifiers` (tier selection bias) and `valuePercentileTarget` (value roll bias) on `/affix/apply` and `/affix/generate/set`. No crafting knowledge in lib-affix. Updated ApplyAffix and GenerateAffixSet pseudocode in implementation map. Updated Craft deep dive Design Consideration #1.
+- (2026-03-15) Issue #588: Resolved rarity slot limit scope — seed-driven approach using Seed (L2) under-the-hood. lib-affix registers `"item-traits"` seed type, creates seeds at `InitializeItemAffixes` time, implements `ISeedEvolutionListener` for capability denormalization. Effective rarity derived from seed capabilities. No separate CRUD entities, no static config — games define rarity tiers via seed type registration at startup.
+- (2026-03-15) Audit: resolved Design Consideration #1 — Category B `instanceEntity` pattern applies without modification. `AffixInstance` IS the lifecycle entity (not `AffixSlotModel`), uses `batch: true` like `ItemInstance`. Many:many relationship handled by standard reverse index at `ApplyAffix`/`RemoveAffix` trigger points. Updated implementation map with x-lifecycle schema guidance and batch lifecycle events.
 
 *Plugin is in pre-implementation phase. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.*

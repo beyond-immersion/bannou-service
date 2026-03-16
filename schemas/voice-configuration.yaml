@@ -49,12 +49,15 @@ x-service-configuration:
       minimum: 1
       maximum: 500
 
-    # STUN/TURN Servers (comma-separated)
+    # STUN/TURN Servers
     StunServers:
-      type: string
-      description: Comma-separated list of STUN server URLs for WebRTC
+      type: array
+      items:
+        type: string
+        minLength: 1
+      description: List of STUN server URLs for WebRTC (comma-separated in env var)
       env: VOICE_STUN_SERVERS
-      default: "stun:stun.l.google.com:19302"
+      default: ["stun:stun.l.google.com:19302"]
 
     # SIP Configuration
     SipPasswordSalt:

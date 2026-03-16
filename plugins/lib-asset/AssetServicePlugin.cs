@@ -193,60 +193,51 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             "Waiting for MinIO connectivity at {Endpoint} (max {MaxRetries} attempts, {Delay}ms between retries)",
             options.Endpoint, maxRetries, retryDelayMs);
 
-        // MinioClient fluent API: all methods return 'this', Build() returns same instance as IMinioClient
-        // Declare disposable before try, dispose unconditionally in finally
-        MinioClient? minioClient = null;
-        try
+        // MinioClient fluent API returns 'this' from Build() — using disposes correctly
+        using var minioClient = new MinioClient()
+            .WithEndpoint(options.Endpoint)
+            .WithCredentials(options.AccessKey, options.SecretKey)
+            .WithRegion(options.Region);
+
+        if (options.UseSSL)
         {
-            minioClient = new MinioClient();
-            minioClient.WithEndpoint(options.Endpoint)
-                .WithCredentials(options.AccessKey, options.SecretKey)
-                .WithRegion(options.Region);
+            minioClient.WithSSL();
+        }
 
-            if (options.UseSSL)
+        var client = minioClient.Build();
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
             {
-                minioClient.WithSSL();
-            }
+                var bucketExists = await client.BucketExistsAsync(
+                    new Minio.DataModel.Args.BucketExistsArgs().WithBucket(options.DefaultBucket));
 
-            var client = minioClient.Build();
-
-            for (int attempt = 1; attempt <= maxRetries; attempt++)
-            {
-                try
+                if (!bucketExists)
                 {
-                    var bucketExists = await client.BucketExistsAsync(
-                        new Minio.DataModel.Args.BucketExistsArgs().WithBucket(options.DefaultBucket));
-
-                    if (!bucketExists)
-                    {
-                        Logger?.LogInformation("MinIO reachable, creating default bucket: {Bucket}", options.DefaultBucket);
-                        await client.MakeBucketAsync(
-                            new Minio.DataModel.Args.MakeBucketArgs().WithBucket(options.DefaultBucket));
-                    }
-
-                    Logger?.LogInformation("MinIO connectivity confirmed on attempt {Attempt}", attempt);
-                    return true;
+                    Logger?.LogInformation("MinIO reachable, creating default bucket: {Bucket}", options.DefaultBucket);
+                    await client.MakeBucketAsync(
+                        new Minio.DataModel.Args.MakeBucketArgs().WithBucket(options.DefaultBucket));
                 }
-                catch (Exception ex)
-                {
-                    Logger?.LogWarning(
-                        "MinIO connectivity check failed on attempt {Attempt}/{MaxRetries}: {Message}",
-                        attempt, maxRetries, ex.Message);
 
-                    if (attempt < maxRetries)
-                    {
-                        var delay = retryDelayMs * Math.Min(attempt, 5);
-                        await Task.Delay(delay);
-                    }
+                Logger?.LogInformation("MinIO connectivity confirmed on attempt {Attempt}", attempt);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogWarning(
+                    "MinIO connectivity check failed on attempt {Attempt}/{MaxRetries}: {Message}",
+                    attempt, maxRetries, ex.Message);
+
+                if (attempt < maxRetries)
+                {
+                    var delay = retryDelayMs * Math.Min(attempt, 5);
+                    await Task.Delay(delay);
                 }
             }
+        }
 
-            Logger?.LogError("MinIO connectivity check failed after {MaxRetries} attempts", maxRetries);
-            return false;
-        }
-        finally
-        {
-            minioClient?.Dispose();
-        }
+        Logger?.LogError("MinIO connectivity check failed after {MaxRetries} attempts", maxRetries);
+        return false;
     }
 }

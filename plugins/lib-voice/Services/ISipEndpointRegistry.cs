@@ -110,4 +110,12 @@ public interface ISipEndpointRegistry
     /// </summary>
     /// <returns>Collection of tracked room IDs.</returns>
     IReadOnlyCollection<Guid> GetAllTrackedRoomIds();
+
+    /// <summary>
+    /// Invalidates the local cache for a room, forcing the next read to load from Redis.
+    /// Called from self-event-subscription handlers for cross-node cache invalidation
+    /// per IMPLEMENTATION TENETS (Multi-Instance Safety).
+    /// </summary>
+    /// <param name="roomId">The voice room ID to invalidate.</param>
+    void InvalidateRoomCache(Guid roomId);
 }

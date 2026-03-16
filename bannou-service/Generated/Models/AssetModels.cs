@@ -470,7 +470,9 @@ public partial class UploadRequest
     /// Informational field recording who initiated this upload. Not used for access control.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
-    public string? CreatedBy { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CreatedBy { get; set; } = default!;
 
     /// <summary>
     /// Original filename with extension
@@ -1126,7 +1128,9 @@ public partial class CreateBundleRequest
     /// Informational field recording who created this bundle. Not used for access control.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
-    public string? CreatedBy { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CreatedBy { get; set; } = default!;
 
     /// <summary>
     /// Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
@@ -1312,7 +1316,9 @@ public partial class BundleUploadRequest
     /// Informational field recording who uploaded this bundle. Not used for access control.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
-    public string? CreatedBy { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CreatedBy { get; set; } = default!;
 
     /// <summary>
     /// Must end with .bannou or .zip
@@ -1503,7 +1509,9 @@ public partial class CreateMetabundleRequest
     /// Informational field recording who created this metabundle. Not used for access control.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
-    public string? CreatedBy { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CreatedBy { get; set; } = default!;
 
     /// <summary>
     /// Game realm for this metabundle
@@ -2311,7 +2319,9 @@ public partial class BundleInfo
     /// Informational field recording who created this bundle. Not used for access control.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
-    public string? CreatedBy { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CreatedBy { get; set; } = default!;
 
     /// <summary>
     /// Game realm this bundle belongs to. Null for cross-realm bundles.

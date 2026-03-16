@@ -13,7 +13,7 @@
 | Layer | L3 AppFeatures |
 | Endpoints | 23 |
 | State Stores | orchestrator-heartbeats (Redis), orchestrator-routings (Redis), orchestrator-config (Redis), orchestrator-statestore (Redis) |
-| Events Published | 6 (`orchestrator.health-ping`, `bannou.full-service-mappings`, `bannou.deployment-events`, `bannou.service-lifecycle`, `orchestrator.processor.released`, `bannou.configuration-events`) |
+| Events Published | 5 via IMessageBus (`orchestrator.health-ping`, `bannou.deployment-events`, `bannou.service-lifecycle`, `bannou.configuration-events`, `orchestrator.processor.released`) + 1 via DI push (`FullServiceMappingsEvent` → `IServiceMappingReceiver`) |
 | Events Consumed | 1 (`bannou.service-heartbeat`) |
 | Client Events | 0 |
 | Background Services | 2 (FullMappingsTimer, LeaseCleanupTimer) |
@@ -86,11 +86,16 @@ No Bannou service client dependencies (`I{Service}Client`). All external I/O is 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `orchestrator.health-ping` | `OrchestratorHealthPingEvent` | GetInfrastructureHealth verifies pub/sub path |
-| `bannou.full-service-mappings` | `FullServiceMappingsEvent` | Periodic timer (30s), routing changes from heartbeats/deploy/teardown/topology |
 | `bannou.deployment-events` | `DeploymentEvent` | Deploy started/completed/failed, teardown completed/failed |
 | `bannou.service-lifecycle` | `ServiceRestartEvent` | After SmartRestartManager completes a restart |
+| `bannou.configuration-events` | `ConfigurationChangedEvent` | RollbackConfiguration and NotifyConfigChange publish for self-service restart pattern |
 | `orchestrator.processor.released` | `ProcessorReleasedEvent` | ReleaseProcessor returns a processor to the pool |
-| `bannou.configuration-events` | `ConfigurationChangedEvent` | NotifyConfigChange publishes for external systems to trigger self-service restarts |
+
+**DI Push (not IMessageBus):**
+
+| Target | Event Type | Trigger |
+|--------|-----------|---------|
+| `IServiceMappingReceiver` | `FullServiceMappingsEvent` | Periodic timer (30s) and every routing change — pushed via `IEnumerable<IServiceMappingReceiver>` DI interface to lib-mesh, which handles cross-node broadcast |
 
 ---
 
@@ -104,54 +109,67 @@ No Bannou service client dependencies (`I{Service}Client`). All external I/O is 
 
 ## DI Services
 
+#### Constructor Dependencies
+
 | Service | Role |
 |---------|------|
 | `ILogger<OrchestratorService>` | Structured logging |
-| `OrchestratorServiceConfiguration` | All 33 config properties |
-| `AppConfiguration` | Global app identity |
-| `IStateStoreFactory` | State store access (via `IOrchestratorStateManager`) |
-| `IDistributedLockProvider` | Pool and mappings locking |
-| `IMessageBus` | Event publishing |
-| `IEventConsumer` | Event subscription registration |
-| `IHttpClientFactory` | OpenResty HTTP calls |
+| `ILoggerFactory` | Creates logger for `PresetLoader` (instantiated via `new`) |
+| `OrchestratorServiceConfiguration` | All 35 config properties |
+| `AppConfiguration` | Global app identity (`EffectiveAppId`) |
+| `IDistributedLockProvider` | Pool-level distributed locks |
+| `IMessageBus` | Event publishing (health-ping, config-events, processor.released) |
+| `IEventConsumer` | Heartbeat event subscription registration |
+| `IHttpClientFactory` | OpenResty cache invalidation and Portainer API calls |
 | `ITelemetryProvider` | Span instrumentation |
-| `IControlPlaneServiceProvider` | In-process plugin enumeration |
-| `IOrchestratorStateManager` | All Redis state CRUD |
-| `IOrchestratorEventManager` | Event publishing + heartbeat relay |
-| `IServiceHealthMonitor` | Routing table, heartbeat evaluation, timers |
-| `ISmartRestartManager` | Docker-based container restart |
+| `IOrchestratorStateManager` | All Redis state CRUD (wraps `IStateStoreFactory` internally) |
+| `IOrchestratorEventManager` | Event publishing delegation + heartbeat relay + DI push to mesh |
+| `IServiceHealthMonitor` | Routing table, heartbeat evaluation, background timers |
+| `ISmartRestartManager` | Docker-based container restart via Docker.DotNet |
 | `IBackendDetector` | Backend detection + `IContainerOrchestrator` factory |
-| `PresetLoader` | YAML preset file loading (not DI — instantiated in constructor) |
+| `PresetLoader` | YAML preset file loading (not DI — instantiated with `new` in constructor) |
+
+#### Collection-Injected Providers
+
+| Interface | Injection | Source | Role |
+|-----------|-----------|--------|------|
+| `IEnumerable<IServiceMappingReceiver>` | Collection | External (lib-mesh registers `MeshServiceMappingReceiver`) | Receives full service-to-appId routing maps for local resolver update |
+
+#### DI Interfaces Consumed by Helper Services
+
+| Interface | Consumed By | Direction | Purpose |
+|-----------|-------------|-----------|---------|
+| `IControlPlaneServiceProvider` | `ServiceHealthMonitor` | Framework→L3 pull | Lists plugins loaded in-process for control-plane health reporting |
 
 ---
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| GetInfrastructureHealth | POST /orchestrator/health/infrastructure | [] | - | orchestrator.health-ping |
-| GetServicesHealth | POST /orchestrator/health/services | [] | - | - |
-| RestartService | POST /orchestrator/services/restart | [] | - | bannou.service-lifecycle |
-| ShouldRestartService | POST /orchestrator/services/should-restart | [] | - | - |
-| GetBackends | POST /orchestrator/backends/list | [] | - | - |
-| GetPresets | POST /orchestrator/presets/list | [] | - | - |
-| Deploy | POST /orchestrator/deploy | [] | routings, config | bannou.deployment-events, bannou.full-service-mappings |
-| GetServiceRouting | POST /orchestrator/service-routing | [] | - | - |
-| GetStatus | POST /orchestrator/status | [] | - | - |
-| Teardown | POST /orchestrator/teardown | [] | routings | bannou.deployment-events, bannou.full-service-mappings |
-| Clean | POST /orchestrator/clean | [] | - | - |
-| GetLogs | POST /orchestrator/logs | [] | - | - |
-| UpdateTopology | POST /orchestrator/topology | [] | routings, config | bannou.full-service-mappings |
-| RequestContainerRestart | POST /orchestrator/containers/request-restart | [] | - | - |
-| GetContainerStatus | POST /orchestrator/containers/status | [] | - | - |
-| RollbackConfiguration | POST /orchestrator/config/rollback | [] | config | - |
-| GetConfigVersion | POST /orchestrator/config/version | [] | - | - |
-| NotifyConfigChange | POST /orchestrator/config/notify-change | [] | - | bannou.configuration-events |
-| AcquireProcessor | POST /orchestrator/processing-pool/acquire | [] | pool leases, pool available, pool metrics | - |
-| ReleaseProcessor | POST /orchestrator/processing-pool/release | [] | pool leases, pool available, pool metrics | orchestrator.processor.released |
-| GetPoolStatus | POST /orchestrator/processing-pool/status | [] | - | - |
-| ScalePool | POST /orchestrator/processing-pool/scale | [] | pool instances, pool available, pool metrics | - |
-| CleanupPool | POST /orchestrator/processing-pool/cleanup | [] | pool leases, pool available, pool instances, pool metrics | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| GetInfrastructureHealth | POST /orchestrator/health/infrastructure | generated | [] | - | orchestrator.health-ping |
+| GetServicesHealth | POST /orchestrator/health/services | generated | [] | - | - |
+| RestartService | POST /orchestrator/services/restart | generated | [] | - | bannou.service-lifecycle |
+| ShouldRestartService | POST /orchestrator/services/should-restart | generated | [] | - | - |
+| GetBackends | POST /orchestrator/backends/list | generated | [] | - | - |
+| GetPresets | POST /orchestrator/presets/list | generated | [] | - | - |
+| Deploy | POST /orchestrator/deploy | generated | [] | routings, config | bannou.deployment-events, DI push (FullServiceMappingsEvent) |
+| GetServiceRouting | POST /orchestrator/service-routing | generated | [] | - | - |
+| GetStatus | POST /orchestrator/status | generated | [] | - | - |
+| Teardown | POST /orchestrator/teardown | generated | [] | routings | bannou.deployment-events, DI push (FullServiceMappingsEvent) |
+| Clean | POST /orchestrator/clean | generated | [] | - | - |
+| GetLogs | POST /orchestrator/logs | generated | [] | - | - |
+| UpdateTopology | POST /orchestrator/topology | generated | [] | routings, config | DI push (FullServiceMappingsEvent) |
+| RequestContainerRestart | POST /orchestrator/containers/request-restart | generated | [] | - | - |
+| GetContainerStatus | POST /orchestrator/containers/status | generated | [] | - | - |
+| RollbackConfiguration | POST /orchestrator/config/rollback | generated | [] | config | bannou.configuration-events |
+| GetConfigVersion | POST /orchestrator/config/version | generated | [] | - | - |
+| NotifyConfigChange | POST /orchestrator/config/notify-change | generated | [] | - | bannou.configuration-events |
+| AcquireProcessor | POST /orchestrator/processing-pool/acquire | generated | [] | pool leases, pool available, pool metrics | - |
+| ReleaseProcessor | POST /orchestrator/processing-pool/release | generated | [] | pool leases, pool available, pool metrics | orchestrator.processor.released |
+| GetPoolStatus | POST /orchestrator/processing-pool/status | generated | [] | - | - |
+| ScalePool | POST /orchestrator/processing-pool/scale | generated | [] | pool instances, pool available, pool metrics | - |
+| CleanupPool | POST /orchestrator/processing-pool/cleanup | generated | [] | pool leases, pool available, pool instances, pool metrics | - |
 
 ---
 
@@ -460,6 +478,7 @@ WRITE config:history:{newVersion} <- copy of target config with new timestamp (T
 WRITE config:current <- restored config
 WRITE config:version <- newVersion
 // Original history entry preserved (audit trail)
+PUBLISH bannou.configuration-events { configVersion, changedKeys }
 RETURN (200, ConfigRollbackResponse { previousVersion, currentVersion, changedKeys })
 ```
 
@@ -627,7 +646,9 @@ FOREACH serviceName in index.ServiceNames
 LOCK config:mappings-version [with ETag retry]
   // Increment mappings version counter
   WRITE config:mappings-version <- version + 1
-PUBLISH bannou.full-service-mappings { mappings, version, defaultAppId, totalServices }
+// DI push via IServiceMappingReceiver (not IMessageBus)
+FOREACH receiver in IEnumerable<IServiceMappingReceiver>
+  CALL receiver.UpdateMappingsAsync(mappings, defaultAppId, version)
 ```
 
 ### LeaseCleanupTimer (in ServiceHealthMonitor)
@@ -644,3 +665,49 @@ FOREACH poolType in known
     WRITE pool:{type}:leases <- updated leases
     WRITE pool:{type}:available <- updated available list
 ```
+
+---
+
+## Non-Standard Implementation Patterns
+
+#### OnValidatePlugin (control-plane restriction)
+
+```
+IF currentAppId != "bannou"
+  LOG Error "Orchestrator can only run on the control-plane node"
+  RETURN PluginDisabled
+```
+
+The orchestrator refuses to load on any node that is not the primary control-plane (`EffectiveAppId == "bannou"`). This prevents accidental deployment to managed worker nodes.
+
+#### OnStartAsync (route initialization)
+
+```
+CALL _stateManager.InitializeAsync()
+  // Connects to Redis, acquires all 4 stores
+  // If fails -> throw InvalidOperationException (hard startup failure)
+
+// Initialize default routes for 20 known routable services
+FOREACH serviceName in KnownRoutableServices
+  READ routings:{serviceName}
+  IF null
+    WRITE routings:{serviceName} <- ServiceRouting { appId: EffectiveAppId } (TTL: RoutingTtlSeconds)
+    // Update routings index via ETag retry loop
+```
+
+`KnownRoutableServices` is a hardcoded array of 20 service names (auth, account, connect, etc.). Services not in this list rely on fallback routing behavior.
+
+#### RegisterServicePermissionsAsync (override)
+
+```
+// Explicit IBannouService interface implementation — overrides generated permission registration
+IF _configuration.SecureWebsocket
+  CALL registry.RegisterServiceAsync(serviceId, version, emptyMatrix)
+  // Empty matrix → no endpoints exposed via WebSocket → service-to-service only
+ELSE
+  CALL base permission registration (standard generated matrix)
+```
+
+#### Full Service Mappings via DI Push (not IMessageBus)
+
+The `bannou.full-service-mappings` routing broadcast uses `IEnumerable<IServiceMappingReceiver>` DI push instead of `IMessageBus.PublishAsync`. Per FOUNDATION TENETS (Cross-Service Communication Discipline): Orchestrator (L3) pushes into Mesh (L0) via DI interface. Mesh's implementation updates the local resolver and broadcasts `mesh.mappings.updated` (L0→L0) for cross-node sync.

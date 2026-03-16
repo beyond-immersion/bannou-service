@@ -429,11 +429,7 @@ public partial class VoiceService : IVoiceService
             CurrentCount = newCount
         });
 
-        // Parse STUN servers from config (StunServers has a schema default; null means infrastructure failure)
-        var stunServers = _configuration.StunServers?
-            .Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => s.Trim())
-            .ToList() ?? throw new InvalidOperationException("StunServers configuration is required but was null");
+        var stunServers = _configuration.StunServers.ToList();
 
         // Handle based on current tier
         if (isScaledTier)

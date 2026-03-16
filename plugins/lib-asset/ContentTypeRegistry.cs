@@ -141,29 +141,24 @@ public sealed class ContentTypeRegistry : IContentTypeRegistry
     private void ApplyConfigurationExtensions(AssetServiceConfiguration configuration)
     {
         // Add additional processable content types
-        if (!string.IsNullOrWhiteSpace(configuration.AdditionalProcessableContentTypes))
+        if (configuration.AdditionalProcessableContentTypes is { Length: > 0 })
         {
-            var additionalTypes = configuration.AdditionalProcessableContentTypes
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            foreach (var type in additionalTypes)
+            foreach (var type in configuration.AdditionalProcessableContentTypes)
             {
                 _processableTypes.Add(type);
             }
         }
 
-        // Add additional extension mappings
-        if (!string.IsNullOrWhiteSpace(configuration.AdditionalExtensionMappings))
+        // Add additional extension mappings (each entry is "ext=type" format)
+        if (configuration.AdditionalExtensionMappings is { Length: > 0 })
         {
-            var mappings = configuration.AdditionalExtensionMappings
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            foreach (var mapping in mappings)
+            foreach (var mapping in configuration.AdditionalExtensionMappings)
             {
                 var parts = mapping.Split('=', 2);
                 if (parts.Length == 2)
                 {
                     var ext = parts[0].Trim();
                     var contentType = parts[1].Trim();
-                    // Ensure extension has leading dot
                     if (!ext.StartsWith('.'))
                     {
                         ext = "." + ext;
@@ -174,11 +169,9 @@ public sealed class ContentTypeRegistry : IContentTypeRegistry
         }
 
         // Add additional forbidden content types
-        if (!string.IsNullOrWhiteSpace(configuration.AdditionalForbiddenContentTypes))
+        if (configuration.AdditionalForbiddenContentTypes is { Length: > 0 })
         {
-            var additionalForbidden = configuration.AdditionalForbiddenContentTypes
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            foreach (var type in additionalForbidden)
+            foreach (var type in configuration.AdditionalForbiddenContentTypes)
             {
                 _forbiddenTypes.Add(type);
             }

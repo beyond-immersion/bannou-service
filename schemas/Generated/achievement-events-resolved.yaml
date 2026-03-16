@@ -31,6 +31,10 @@ info:
   - topic: leaderboard.rank.changed
     event: LeaderboardRankChangedEvent
     handler: HandleRankChanged
+    # Account deletion cleanup obligation (FOUNDATION TENETS T28)
+  - topic: account.deleted
+    event: AccountDeletedEvent
+    handler: HandleAccountDeleted
   x-event-publications:
     # Achievement definition lifecycle events (auto-generated from x-lifecycle)
   - topic: achievement.definition.created

@@ -834,10 +834,11 @@ components:
       - filename
       - size
       - contentType
+      - createdBy
       properties:
         createdBy:
           type: string
-          nullable: true
+          minLength: 1
           description: Informational field recording who initiated this upload. Not used for access control.
         filename:
           type: string
@@ -1314,10 +1315,11 @@ components:
       required:
       - bundleId
       - assetIds
+      - createdBy
       properties:
         createdBy:
           type: string
-          nullable: true
+          minLength: 1
           description: Informational field recording who created this bundle. Not used for access control.
         bundleId:
           type: string
@@ -1437,10 +1439,11 @@ components:
       required:
       - filename
       - size
+      - createdBy
       properties:
         createdBy:
           type: string
-          nullable: true
+          minLength: 1
           description: Informational field recording who uploaded this bundle. Not used for access control.
         filename:
           type: string
@@ -1546,6 +1549,7 @@ components:
       required:
       - metabundleId
       - realm
+      - createdBy
       properties:
         metabundleId:
           type: string
@@ -1573,7 +1577,7 @@ components:
           description: Metabundle version string
         createdBy:
           type: string
-          nullable: true
+          minLength: 1
           description: Informational field recording who created this metabundle. Not used for access control.
         realm:
           $ref: '#/components/schemas/GameRealm'
@@ -2124,6 +2128,7 @@ components:
       - status
       - assetCount
       - createdAt
+      - createdBy
       properties:
         bundleId:
           type: string
@@ -2147,7 +2152,7 @@ components:
           description: Bundle description
         createdBy:
           type: string
-          nullable: true
+          minLength: 1
           description: Informational field recording who created this bundle. Not used for access control.
         realm:
           allOf:

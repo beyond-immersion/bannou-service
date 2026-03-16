@@ -33,6 +33,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     private readonly IResourceClient _resourceClient;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IBackstoryCache _backstoryCache;
+    private readonly ParticipationEventBatcher _participationEventBatcher;
 
     private const string PARTICIPATION_KEY_PREFIX = "participation-";
     private const string PARTICIPATION_BY_EVENT_KEY_PREFIX = "participation-event-";
@@ -68,12 +69,14 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         IDistributedLockProvider lockProvider,
         IResourceClient resourceClient,
         ITelemetryProvider telemetryProvider,
-        IBackstoryCache backstoryCache)
+        IBackstoryCache backstoryCache,
+        ParticipationEventBatcher participationEventBatcher)
     {
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
         _resourceClient = resourceClient;
+        _participationEventBatcher = participationEventBatcher;
         _participationQueryStore = stateStoreFactory.GetJsonQueryableStore<ParticipationData>(
             StateStoreDefinitions.CharacterHistory);
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
@@ -189,19 +192,18 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             return (StatusCodes.Conflict, null);
         }
 
-        // Publish typed event per FOUNDATION TENETS
-        await _messageBus.PublishCharacterParticipationRecordedAsync(new CharacterParticipationRecordedEvent
+        // Batch event per FOUNDATION TENETS — accumulate for periodic flush
+        _participationEventBatcher.AddCreated(new ParticipationBatchEntry
         {
-            EventId = Guid.NewGuid(),
-            Timestamp = now,
+            ParticipationId = participationId,
             CharacterId = body.CharacterId,
             HistoricalEventId = body.EventId,
-            ParticipationId = participationId,
             Role = body.Role,
             HistoricalEventName = body.EventName,
             EventCategory = body.EventCategory,
-            Significance = body.Significance
-        }, cancellationToken);
+            Significance = body.Significance,
+            CreatedAt = now
+        });
 
         // Register character reference with lib-resource for cleanup coordination
         await RegisterCharacterReferenceAsync(participationId.ToString(), body.CharacterId, cancellationToken);
@@ -324,15 +326,14 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             return StatusCodes.Conflict;
         }
 
-        // Publish typed event per FOUNDATION TENETS
-        await _messageBus.PublishCharacterParticipationDeletedAsync(new CharacterParticipationDeletedEvent
+        // Batch event per FOUNDATION TENETS — accumulate for periodic flush
+        _participationEventBatcher.AddDestroyed(new ParticipationBatchDestroyedEntry
         {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
             ParticipationId = body.ParticipationId,
             CharacterId = data.CharacterId,
-            HistoricalEventId = data.EventId
-        }, cancellationToken);
+            HistoricalEventId = data.EventId,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
 
         _logger.LogInformation("Deleted participation {ParticipationId}", body.ParticipationId);
         return StatusCodes.OK;

@@ -61,7 +61,6 @@ public class BehaviorBundleManagerTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockServiceProvider.Object,
-            _configuration,
             _mockLogger.Object,
             _mockTelemetryProvider.Object);
 

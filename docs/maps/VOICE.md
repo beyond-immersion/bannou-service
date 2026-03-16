@@ -16,7 +16,7 @@
 | Endpoints | 11 |
 | State Stores | voice-statestore (Redis), voice-lock (Redis) |
 | Events Published | 8 (`voice.room.created`, `voice.room.deleted`, `voice.room.tier-upgraded`, `voice.peer.joined`, `voice.peer.left`, `voice.broadcast.approved`, `voice.broadcast.declined`, `voice.broadcast.stopped`) |
-| Events Consumed | 2 (`session.disconnected`, `session.reconnected`) |
+| Events Consumed | 5 (2 external: `session.disconnected`, `session.reconnected`; 3 self: `voice.peer.joined`, `voice.peer.left`, `voice.room.deleted`) |
 | Client Events | 8 |
 | Background Services | 1 (ParticipantEvictionWorker) |
 
@@ -81,6 +81,9 @@
 |-------|---------|--------|
 | `session.disconnected` | `HandleSessionDisconnectedAsync` | Unregister participant, clear permission, notify peers, stop broadcast if active, set grace period if empty |
 | `session.reconnected` | `HandleSessionReconnectedAsync` | Verify participant still registered, re-set `in_room` permission, push VoiceRoomStateClientEvent with current state |
+| `voice.peer.joined` (self) | inline lambda | `_endpointRegistry.InvalidateRoomCache(evt.RoomId)` — cross-node cache invalidation |
+| `voice.peer.left` (self) | inline lambda | `_endpointRegistry.InvalidateRoomCache(evt.RoomId)` — cross-node cache invalidation |
+| `voice.room.deleted` (self) | inline lambda | `_endpointRegistry.InvalidateRoomCache(evt.RoomId)` — cross-node cache invalidation |
 
 ---
 
@@ -105,19 +108,19 @@
 
 ## Method Index
 
-| Method | Route | Roles | Mutates | Publishes |
-|--------|-------|-------|---------|-----------|
-| CreateVoiceRoom | POST /voice/room/create | [] | room, session-room | voice.room.created |
-| GetVoiceRoom | POST /voice/room/get | [] | - | - |
-| JoinVoiceRoom | POST /voice/room/join | [user] | room (ad-hoc), session-room (ad-hoc), participants | voice.room.created (ad-hoc), voice.peer.joined |
-| LeaveVoiceRoom | POST /voice/room/leave | [user; state: voice=in_room] | room (grace period), participants | voice.peer.left, voice.broadcast.stopped (if active) |
-| DeleteVoiceRoom | POST /voice/room/delete | [] | room, session-room, participants | voice.room.deleted, voice.broadcast.stopped (if active) |
-| PeerHeartbeat | POST /voice/peer/heartbeat | [] | participants (heartbeat) | - |
-| AnswerPeer | POST /voice/peer/answer | [user; state: voice=ringing] | - | - |
-| RequestBroadcastConsent | POST /voice/room/broadcast/request | [user; state: voice=in_room] | room | - |
-| RespondBroadcastConsent | POST /voice/room/broadcast/consent | [user; state: voice=consent_pending] | room | voice.broadcast.approved or voice.broadcast.declined |
-| StopBroadcast | POST /voice/room/broadcast/stop | [user; state: voice=in_room] | room | voice.broadcast.stopped |
-| GetBroadcastStatus | POST /voice/room/broadcast/status | [user; state: voice=in_room] | - | - |
+| Method | Route | Source | Roles | Mutates | Publishes |
+|--------|-------|--------|-------|---------|-----------|
+| CreateVoiceRoom | POST /voice/room/create | generated | [] | room, session-room | voice.room.created |
+| GetVoiceRoom | POST /voice/room/get | generated | [] | - | - |
+| JoinVoiceRoom | POST /voice/room/join | generated | [user] | room (ad-hoc), session-room (ad-hoc), participants | voice.room.created (ad-hoc), voice.peer.joined |
+| LeaveVoiceRoom | POST /voice/room/leave | generated | [user; state: voice=in_room] | room (grace period), participants | voice.peer.left, voice.broadcast.stopped (if active) |
+| DeleteVoiceRoom | POST /voice/room/delete | generated | [] | room, session-room, participants | voice.room.deleted, voice.broadcast.stopped (if active) |
+| PeerHeartbeat | POST /voice/peer/heartbeat | generated | [] | participants (heartbeat) | - |
+| AnswerPeer | POST /voice/peer/answer | generated | [user; state: voice=ringing] | - | - |
+| RequestBroadcastConsent | POST /voice/room/broadcast/request | generated | [user; state: voice=in_room] | room | - |
+| RespondBroadcastConsent | POST /voice/room/broadcast/consent | generated | [user; state: voice=consent_pending] | room | voice.broadcast.approved or voice.broadcast.declined |
+| StopBroadcast | POST /voice/room/broadcast/stop | generated | [user; state: voice=in_room] | room | voice.broadcast.stopped |
+| GetBroadcastStatus | POST /voice/room/broadcast/status | generated | [user; state: voice=in_room] | - | - |
 
 ---
 
@@ -408,3 +411,9 @@ FOREACH roomId in _endpointRegistry.GetAllTrackedRoomIds()
  PUBLISH voice.broadcast.declined { declinedBySessionId: null }
  PUSH VoiceBroadcastConsentUpdateClientEvent (state: Inactive)
 ```
+
+---
+
+## Non-Standard Implementation Patterns
+
+No non-standard patterns. All 11 endpoints are standard generated-interface methods. No `x-controller-only`, `x-manual-implementation`, manual route registrations, or custom generated-code overrides. Plugin lifecycle (`ConfigureServices`) registers `IRtpEngineClient` (Singleton) and `ParticipantEvictionWorker` (HostedService) — standard DI registration only.

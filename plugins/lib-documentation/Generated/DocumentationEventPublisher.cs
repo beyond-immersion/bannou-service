@@ -89,4 +89,11 @@ public static class DocumentationEventPublisher
         DocumentationArchiveCreatedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(DocumentationPublishedTopics.DocumentationArchiveCreated, eventData, cancellationToken);
+
+    /// <summary>Published when a documentation archive is deleted.</summary>
+    public static Task<bool> PublishDocumentationArchiveDeletedAsync(
+        this IMessageBus messageBus,
+        DocumentationArchiveDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(DocumentationPublishedTopics.DocumentationArchiveDeleted, eventData, cancellationToken);
 }

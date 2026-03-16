@@ -261,39 +261,4 @@ public class BehaviorServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 1)]
     public int CompilerMaxStrings { get; set; } = 65536;
 
-    /// <summary>
-    /// Key prefix for bundle membership entries
-    /// Environment variable: BEHAVIOR_BUNDLE_MEMBERSHIP_KEY_PREFIX
-    /// </summary>
-    [ConfigStringLength(MinLength = 1)]
-    public string BundleMembershipKeyPrefix { get; set; } = "bundle-membership:";
-
-    /// <summary>
-    /// Key prefix for behavior metadata entries
-    /// Environment variable: BEHAVIOR_METADATA_KEY_PREFIX
-    /// </summary>
-    [ConfigStringLength(MinLength = 1)]
-    public string BehaviorMetadataKeyPrefix { get; set; } = "behavior-metadata:";
-
-    /// <summary>
-    /// Key prefix for GOAP metadata entries
-    /// Environment variable: BEHAVIOR_GOAP_METADATA_KEY_PREFIX
-    /// </summary>
-    [ConfigStringLength(MinLength = 1)]
-    public string GoapMetadataKeyPrefix { get; set; } = "goap-metadata:";
-
-    /// <summary>
-    /// Key prefix for memory entries
-    /// Environment variable: BEHAVIOR_MEMORY_KEY_PREFIX
-    /// </summary>
-    [ConfigStringLength(MinLength = 1)]
-    public string MemoryKeyPrefix { get; set; } = "memory:";
-
-    /// <summary>
-    /// Key prefix for memory index entries
-    /// Environment variable: BEHAVIOR_MEMORY_INDEX_KEY_PREFIX
-    /// </summary>
-    [ConfigStringLength(MinLength = 1)]
-    public string MemoryIndexKeyPrefix { get; set; } = "memory-index:";
-
 }
