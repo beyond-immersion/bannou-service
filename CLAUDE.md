@@ -219,7 +219,7 @@ make inspect-list PKG="RabbitMQ.Client"
 **⚠️ Generation Script Selection Guide**:
 - Changed `schemas/foo-configuration.yaml` → run `cd scripts && ./generate-config.sh foo`
 - Changed `schemas/foo-events.yaml` (events, x-lifecycle, or both) → run `scripts/generate-service-events.sh foo` (handles both service events and lifecycle events)
-- Changed `x-event-publications` in `schemas/foo-events.yaml` → also run `python3 scripts/generate-published-topics.py` (topic constants)
+- Changed `x-event-publications` in `schemas/foo-events.yaml` → also run `python3 scripts/generate-published-topics.py` (topic constants) AND `python3 scripts/generate-event-publishers.py` (typed `Publish*Async` extension methods)
 - Changed `schemas/foo-api.yaml` (models only) → run `cd scripts && ./generate-models.sh foo`
 - Changed `schemas/foo-client-events.yaml` → run `scripts/generate-client-events.sh foo`
 - Changed multiple schema files for `foo` → run `cd scripts && ./generate-service.sh foo`

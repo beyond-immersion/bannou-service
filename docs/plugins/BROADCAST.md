@@ -1,11 +1,10 @@
 # Broadcast Plugin Deep Dive
 
-> **Plugin**: lib-broadcast (not yet created)
-> **Schema**: `schemas/broadcast-api.yaml` (not yet created)
-> **Version**: N/A (Pre-Implementation)
-> **State Store**: broadcast-platforms (MySQL), broadcast-sessions (Redis), broadcast-sentiment-buffer (Redis), broadcast-outputs (Redis), broadcast-cameras (Redis), broadcast-lock (Redis) — all planned
+> **Plugin**: lib-broadcast
+> **Schema**: schemas/broadcast-api.yaml
+> **Version**: 1.0.0
+> **State Store**: broadcast-platforms (MySQL), broadcast-sessions (Redis), broadcast-sentiment-buffer (Redis), broadcast-outputs (Redis), broadcast-cameras (Redis), broadcast-lock (Redis)
 > **Layer**: L3 AppFeatures
-> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Implementation Map**: [docs/maps/BROADCAST.md](../maps/BROADCAST.md)
 > **Short**: Streaming platform integration for live content broadcasting
 
@@ -250,55 +249,18 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 
 ## Stubs & Unimplemented Features
 
-**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
+Service implementation is complete for all 19 generated endpoints plus 3 x-controller-only webhook endpoints. The following features have interfaces defined but no concrete implementations yet:
 
-### Phase 1: Schema & Generation
-- Create broadcast-api.yaml schema with all endpoints (22 endpoints across 6 groups -- includes 2 camera endpoints)
-- **MANDATORY**: All user-facing endpoints (`x-permissions: [user]`) must NOT accept `accountId` in request bodies. Use `webSocketSessionId` and resolve account server-side. This applies to: link, unlink, list, start, stop, associate, status, list sessions. The implementation map pseudo-code currently uses `body.accountId` — the schema must use session-resolved identity instead.
-- Declare `x-service-layer: AppFeatures` at schema root (default is GameFeatures -- wrong layer without this)
-- Declare `x-references` block for lib-resource cleanup of non-account entity references; for account-owned data, subscribe to `account.deleted` per tenets's Account Deletion Cleanup Obligation
-- Create broadcast-events.yaml schema using `x-lifecycle` with `topic_prefix: broadcast` for PlatformLink, PlatformSession, and Output entities; plus 1 custom event (`broadcast.audience.pulse`)
-- Declare `x-event-subscriptions` in `broadcast-events.yaml` for consumed events (voice broadcast/mute events, account.deleted, session.disconnected) using class name references -- the generator resolves event types across all `*-events.yaml` schemas at generation time. Do NOT redefine consumed event models inline (causes duplicate C# types, same problem as `$ref` to other event files)
-- Create broadcast-configuration.yaml schema (36 configuration properties with validation ranges)
-- Create broadcast-client-events.yaml (5 client events: output started/stopped/source-changed, session started/ended)
-- Define `AudioCodec` and `VideoCodec` enums in configuration schema (LGPL-compliant codecs only per tenets)
-- Generate service code
-- Verify build succeeds
+1. **IBroadcastCoordinator concrete implementation**: Interface defined in `Services/IBroadcastCoordinator.cs` with methods for FFmpeg process lifecycle (start/stop/restart, RTMP validation, health monitoring). Concrete class implementing FFmpeg process supervision, startup reconciliation, and fallback cascade not yet written.
 
-### Phase 2: Platform Account Linking
-- Implement OAuth flow for Twitch (client ID, client secret, authorization code exchange)
-- Implement OAuth flow for YouTube
-- Implement custom RTMP link storage (no OAuth, just URL)
-- Implement token encryption/decryption (validate `TokenEncryptionKey` non-null and >= 32 chars at startup when platform linking is enabled)
-- Implement token refresh background worker with per-link distributed locking
-- Implement platform unlink with token revocation and session record cascade cleanup
+2. **ISentimentProcessor concrete implementation**: Interface defined in `Services/ISentimentProcessor.cs` with methods for text classification, chat/subscription/super-chat processing, and session tracking cleanup via reverse index. Concrete class implementing keyword/emoji-based classification and Redis-backed tracked viewer mapping not yet written.
 
-### Phase 3: Platform Session Management
-- Implement session start with platform live-status verification
-- Implement Twitch EventSub webhook handler (HMAC signature validation, event routing, `x-controller-only`)
-- Implement YouTube webhook handler (verification token, push notifications, `x-controller-only`)
-- Implement sentiment processor (text → category + intensity via keyword/emoji matching)
-- Implement sentiment batch publisher (buffer drain → pulse events)
-- Implement tracked viewer management (Redis-backed mapping with session-scoped TTL)
+3. **IPlatformWebhookHandler concrete implementation**: Interface defined in `Services/IPlatformWebhookHandler.cs` with HMAC/token validation methods. Concrete class implementing Twitch HMAC-SHA256, YouTube verification token, and custom HMAC validation not yet written. The x-controller-only webhook endpoints in `BroadcastController.cs` are stubbed pending this implementation.
+
+4. **Background workers**: 6 background services defined in the implementation map (TokenRefreshWorker, WebhookSubscriptionManager, SentimentBatchPublisher, SessionCleanupWorker, BroadcastHealthMonitor, AutoBroadcastStarter) are not yet implemented as `BackgroundService` classes.
 
 <!-- AUDIT:NEEDS_DESIGN:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/577 -->
-### Phase 4: Output Management
-- Implement BroadcastCoordinator as per-instance process supervisor (Redis is authoritative, coordinator is local cache)
-- Implement startup reconciliation (read Redis, mark stale broadcasts from crashed instances as failed)
-- Implement RTMP URL validation via FFprobe
-- Implement fallback cascade
-- Implement voice room broadcast via consent event subscription
-- Implement voice participant mute event subscription for audio mixing
-- Implement camera announce/retire API endpoints
-- Implement broadcast health monitor background worker with stale record detection
-- Implement auto-broadcast from config (null check, not empty-string check)
-
-**Spec gaps** ([#577](https://github.com/beyond-immersion/bannou-service/issues/577)): Implementation map is missing (1) `IBroadcastCoordinator` formal interface definition with complete method signatures, (2) `BroadcastModel`/`BroadcastContext` field-level schemas, (3) FFprobe command/success-criteria specification. *(Event handler pseudo-code and startup reconciliation pseudo-code were added to the map and are no longer gaps.)*
-
-### Phase 5: Webhook Subscription Management
-- Implement Twitch EventSub subscription lifecycle (create, renew, delete)
-- Implement YouTube webhook subscription lifecycle
-- Implement webhook subscription manager background worker with singleton lock and configurable TTL
+5. **Spec gaps** ([#577](https://github.com/beyond-immersion/bannou-service/issues/577)): Implementation map is missing (1) `BroadcastModel`/`BroadcastContext` field-level schemas, (2) FFprobe command/success-criteria specification. *(IBroadcastCoordinator interface, event handler pseudo-code, and startup reconciliation pseudo-code have been added.)*
 
 ---
 
@@ -355,9 +317,11 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 
 10. **Platform link deletion cascades session records**: When a platform link is hard-deleted (unlink), all `PlatformSessionModel` records in Redis referencing that link are also deleted. Session records are instance data with no cross-service references, so cascade delete is appropriate per IMPLEMENTATION TENETS (-- no deprecation for instance data).
 
-11. **Sentiment processing starts with keyword/emoji matching**: The v1 `ISentimentProcessor` implementation uses keyword matching and emoji-to-category mapping rather than NLP. This is intentionally simple -- fast, no external dependencies, and sufficient for the 8 fixed sentiment categories. The `ISentimentProcessor` interface allows swapping to a lightweight NLP model in the future without changing the rest of the pipeline (see Potential Extensions #1). The 15-second batching window provides latency tolerance if a more expensive classifier is used later.
+11. **Tracking ID cleanup uses reverse index, not prefix scan**: Session-scoped tracking entries (`sess-tracking:{platformSessionId}:{hashedPlatformUserId}`) are cleaned up via `ISentimentProcessor.CleanupSessionTrackingAsync`, which maintains a reverse index using the established `AddToStringListAsync`/`RemoveFromStringListAsync` pattern (see HELPERS-AND-COMMON-PATTERNS.md). This avoids Redis `KEYS` or `SCAN` commands, which are O(N) across the entire keyspace. Called on all 4 session cleanup paths (UnlinkPlatform, StopSession, CleanupByAccount, HandleSessionDisconnectedAsync).
 
-12. **Webhook burst resilience is architectural, not rate-limit-dependent**: The sentiment buffer is inherently resilient to webhook bursts (raids, sub trains). Three layers provide protection: (a) buffer entries have TTL = 2x pulse interval (30s default), so entries self-expire even without consumption; (b) `SentimentBatchPublisher` caps published entries at `SentimentMaxBatchSize` (200 default), dropping lowest-intensity overflow; (c) individual `BufferedSentimentEntry` values are tiny (enum + float + optional GUID), so even thousands in Redis are negligible. Defense-in-depth rate limiting is added at the webhook handler level via `WebhookMaxEventsPerSessionPerMinute` (default 600, Redis atomic counter with 60s TTL per platform session, following the established Chat/Save-Load pattern). Events exceeding the limit are dropped silently (logged at Debug). This is a safety net, not the primary burst protection -- the architecture handles bursts by design.
+12. **Sentiment processing starts with keyword/emoji matching**: The v1 `ISentimentProcessor` implementation uses keyword matching and emoji-to-category mapping rather than NLP. This is intentionally simple -- fast, no external dependencies, and sufficient for the 8 fixed sentiment categories. The `ISentimentProcessor` interface allows swapping to a lightweight NLP model in the future without changing the rest of the pipeline (see Potential Extensions #1). The 15-second batching window provides latency tolerance if a more expensive classifier is used later.
+
+13. **Webhook burst resilience is architectural, not rate-limit-dependent**: The sentiment buffer is inherently resilient to webhook bursts (raids, sub trains). Three layers provide protection: (a) buffer entries have TTL = 2x pulse interval (30s default), so entries self-expire even without consumption; (b) `SentimentBatchPublisher` caps published entries at `SentimentMaxBatchSize` (200 default), dropping lowest-intensity overflow; (c) individual `BufferedSentimentEntry` values are tiny (enum + float + optional GUID), so even thousands in Redis are negligible. Defense-in-depth rate limiting is added at the webhook handler level via `WebhookMaxEventsPerSessionPerMinute` (default 600, Redis atomic counter with 60s TTL per platform session, following the established Chat/Save-Load pattern). Events exceeding the limit are dropped silently (logged at Debug). This is a safety net, not the primary burst protection -- the architecture handles bursts by design.
 
 ### Design Considerations (Requires Planning)
 

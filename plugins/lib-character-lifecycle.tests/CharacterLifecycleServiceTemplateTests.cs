@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterLifecycle;
@@ -13,7 +14,6 @@ using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.Logging;

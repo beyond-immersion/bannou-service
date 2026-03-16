@@ -38,6 +38,9 @@ public static class SeedPublishedTopics
     /// <summary>Published when growth domain values change for a seed.</summary>
     public const string SeedGrowthUpdated = "seed.growth.updated";
 
+    /// <summary>Published when growth is transferred between seeds (e.g., household split).</summary>
+    public const string SeedGrowthTransferred = "seed.growth.transferred";
+
     /// <summary>Published when a seed transitions to a new growth phase.</summary>
     public const string SeedPhaseChanged = "seed.phase.changed";
 

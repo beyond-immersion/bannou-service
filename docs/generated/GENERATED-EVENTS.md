@@ -647,6 +647,7 @@ This document lists all events defined in Bannou's event schemas.
 | `SeedArchivedEvent` | Custom | `seed-archived` | Published when a seed is archived |
 | `SeedBondFormedEvent` | Custom | `seed-bond-formed` | Published when a bond between seeds becomes active... |
 | `SeedCapabilityUpdatedEvent` | Lifecycle (Updated) | `seed-capability.updated` | Published when a seed's capability manifest is rec... |
+| `SeedGrowthTransferredEvent` | Custom | `seed-growth-transferred` | Published when growth is transferred between seeds... |
 | `SeedGrowthUpdatedEvent` | Lifecycle (Updated) | `seed-growth.updated` | Published when growth domain values change for a s... |
 | `SeedPhaseChangedEvent` | Custom | `seed-phase-changed` | Published when a seed transitions to a new growth ... |
 

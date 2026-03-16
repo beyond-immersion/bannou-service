@@ -97,6 +97,80 @@ public partial class SeedGrowthUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published when growth is transferred between seeds (e.g., household dissolution)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SeedGrowthTransferredEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: seed.growth.transferred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "seed.growth.transferred";
+
+    /// <summary>
+    /// The seed growth was transferred from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceSeedId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceSeedId { get; set; } = default!;
+
+    /// <summary>
+    /// The seed growth was transferred to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetSeedId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetSeedId { get; set; } = default!;
+
+    /// <summary>
+    /// Seed type code shared by both seeds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SeedTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Fraction of growth that was transferred (0.0–1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("proportion")]
+    public float Proportion { get; set; } = default!;
+
+    /// <summary>
+    /// Number of domains that had non-zero transfer amounts
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domainsTransferred")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int DomainsTransferred { get; set; } = default!;
+
+    /// <summary>
+    /// Caller-provided idempotency key for this transfer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transferReferenceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransferReferenceId { get; set; } = default!;
+
+    /// <summary>
+    /// Source seed's total growth after transfer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceTotalGrowth")]
+    public float SourceTotalGrowth { get; set; } = default!;
+
+    /// <summary>
+    /// Target seed's total growth after transfer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetTotalGrowth")]
+    public float TargetTotalGrowth { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published when a seed transitions to a new growth phase
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

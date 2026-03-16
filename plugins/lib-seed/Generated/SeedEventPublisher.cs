@@ -69,6 +69,13 @@ public static class SeedEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(SeedPublishedTopics.SeedGrowthUpdated, eventData, cancellationToken);
 
+    /// <summary>Published when growth is transferred between seeds (e.g., household split).</summary>
+    public static Task<bool> PublishSeedGrowthTransferredAsync(
+        this IMessageBus messageBus,
+        SeedGrowthTransferredEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(SeedPublishedTopics.SeedGrowthTransferred, eventData, cancellationToken);
+
     /// <summary>Published when a seed transitions to a new growth phase.</summary>
     public static Task<bool> PublishSeedPhaseChangedAsync(
         this IMessageBus messageBus,

@@ -662,6 +662,68 @@ paths:
         : \"Records growth across multiple domains in a single atomic operation. Useful when a single game event contributes
         to multiple domains simultaneously.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"\
         RecordGrowthBatch\"\n}"
+  /seed/growth/transfer:
+    post:
+      operationId: TransferGrowth
+      summary: Transfer proportional growth between seeds
+      description: >
+        Transfers a proportion of accumulated growth from one seed to another.
+        Both seeds must be active and of the same type within the same game
+        service. Growth is deducted from the source across all domains and
+        added to the target. Phase transitions are evaluated for both seeds
+        after the transfer. Idempotent via transferReferenceId.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferGrowthRequest'
+      responses:
+        '200':
+          description: Growth transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferGrowthResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferGrowthRequest\"\
+        ,\n    \"$defs\": {\n        \"TransferGrowthRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to transfer a proportion of growth from one seed to another. Called
+        by Arbitration's SeedGrowthTransfer consequence during household dissolution enforcement. Idempotent via transferReferenceId.\\\
+        n\",\n            \"required\": [\n                \"sourceSeedId\",\n                \"targetSeedId\",\n        \
+        \        \"proportion\",\n                \"transferReferenceId\"\n            ],\n            \"properties\": {\n\
+        \                \"sourceSeedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"The seed to transfer growth FROM (growth is deducted).\"\n       \
+        \         },\n                \"targetSeedId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"uuid\",\n                    \"description\": \"The seed to transfer growth TO (growth is added).\"\
+        \n                },\n                \"proportion\": {\n                    \"type\": \"number\",\n             \
+        \       \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"exclusiveMinimum\": true,\n\
+        \                    \"maximum\": 1,\n                    \"description\": \"Fraction of growth to transfer (0.0\\
+        u20131.0 exclusive-inclusive). Applied to each domain's current depth independently.\\n\"\n                },\n  \
+        \              \"transferReferenceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Caller-provided idempotency key. If a transfer with this reference
+        ID has already been processed, the endpoint returns the previous result without re-executing.\\n\"\n             \
+        \   }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferGrowthResponse\"\
+        ,\n    \"$defs\": {\n        \"TransferGrowthResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Result of a growth transfer between seeds.\",\n            \"required\":
+        [\n                \"sourceSeedId\",\n                \"targetSeedId\",\n                \"domainsTransferred\"\n\
+        \            ],\n            \"properties\": {\n                \"sourceSeedId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"The seed growth was
+        transferred from.\"\n                },\n                \"targetSeedId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"The seed growth was transferred
+        to.\"\n                },\n                \"domainsTransferred\": {\n                    \"type\": \"integer\",\n\
+        \                    \"minimum\": 0,\n                    \"description\": \"Number of growth domains that had non-zero
+        transfer amounts.\"\n                },\n                \"sourceTotalGrowth\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"float\",\n                    \"description\": \"Source seed's total
+        growth after transfer.\"\n                },\n                \"targetTotalGrowth\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Target seed's total
+        growth after transfer.\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Transfer proportional growth between seeds\",\n    \"description\": \"\
+        Transfers a proportion of accumulated growth from one seed to another. Both seeds must be active and of the same type
+        within the same game service. Growth is deducted from the source across all domains and added to the target. Phase
+        transitions are evaluated for both seeds after the transfer. Idempotent via transferReferenceId.\\n\",\n    \"tags\"\
+        : [],\n    \"deprecated\": false,\n    \"operationId\": \"TransferGrowth\"\n}"
   /seed/growth/get-phase:
     post:
       operationId: GetGrowthPhase
@@ -2376,6 +2438,43 @@ components:
           minimum: 0
           exclusiveMinimum: true
           description: Growth amount to add.
+    TransferGrowthRequest:
+      type: object
+      additionalProperties: false
+      description: >
+        Request to transfer a proportion of growth from one seed to another.
+        Called by Arbitration's SeedGrowthTransfer consequence during household
+        dissolution enforcement. Idempotent via transferReferenceId.
+      required:
+      - sourceSeedId
+      - targetSeedId
+      - proportion
+      - transferReferenceId
+      properties:
+        sourceSeedId:
+          type: string
+          format: uuid
+          description: The seed to transfer growth FROM (growth is deducted).
+        targetSeedId:
+          type: string
+          format: uuid
+          description: The seed to transfer growth TO (growth is added).
+        proportion:
+          type: number
+          format: float
+          minimum: 0
+          exclusiveMinimum: true
+          maximum: 1
+          description: >
+            Fraction of growth to transfer (0.0–1.0 exclusive-inclusive).
+            Applied to each domain's current depth independently.
+        transferReferenceId:
+          type: string
+          format: uuid
+          description: >
+            Caller-provided idempotency key. If a transfer with this reference
+            ID has already been processed, the endpoint returns the previous
+            result without re-executing.
     GetGrowthPhaseRequest:
       type: object
       additionalProperties: false
@@ -2851,6 +2950,35 @@ components:
           format: float
           nullable: true
           description: Growth needed for next phase, null if at maximum.
+    TransferGrowthResponse:
+      type: object
+      additionalProperties: false
+      description: Result of a growth transfer between seeds.
+      required:
+      - sourceSeedId
+      - targetSeedId
+      - domainsTransferred
+      properties:
+        sourceSeedId:
+          type: string
+          format: uuid
+          description: The seed growth was transferred from.
+        targetSeedId:
+          type: string
+          format: uuid
+          description: The seed growth was transferred to.
+        domainsTransferred:
+          type: integer
+          minimum: 0
+          description: Number of growth domains that had non-zero transfer amounts.
+        sourceTotalGrowth:
+          type: number
+          format: float
+          description: Source seed's total growth after transfer.
+        targetTotalGrowth:
+          type: number
+          format: float
+          description: Target seed's total growth after transfer.
     CapabilityManifestResponse:
       type: object
       additionalProperties: false

@@ -44,6 +44,7 @@ public partial class BannouClient
     private ItemProxy? _item;
     private LeaderboardProxy? _leaderboard;
     private LicenseProxy? _license;
+    private LocalizationProxy? _localization;
     private LocationProxy? _location;
     private MappingProxy? _mapping;
     private MatchmakingProxy? _matchmaking;
@@ -252,6 +253,12 @@ public partial class BannouClient
     /// </summary>
     public LicenseProxy License =>
         _license ??= new LicenseProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Localization Service API operations.
+    /// </summary>
+    public LocalizationProxy Localization =>
+        _localization ??= new LocalizationProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Location Service API operations.

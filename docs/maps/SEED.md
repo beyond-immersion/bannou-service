@@ -13,9 +13,9 @@
 |-------|-------|
 | Plugin | lib-seed |
 | Layer | L2 GameFoundation |
-| Endpoints | 24 |
-| State Stores | seed (MySQL), seed-growth (MySQL), seed-type-definitions (MySQL), seed-bonds (MySQL), seed-capabilities-cache (Redis), seed-lock (Redis) |
-| Events Published | 11 (seed.created, seed.updated, seed.activated, seed.archived, seed.growth.updated, seed.phase.changed, seed.capability.updated, seed.bond.formed, seed.type.created, seed.type.updated, seed.type.deleted) |
+| Endpoints | 25 |
+| State Stores | seed (MySQL), seed-growth (MySQL), seed-type-definitions (MySQL), seed-bonds (MySQL), seed-capabilities-cache (Redis), seed-lock (Redis), seed-idempotency (Redis) |
+| Events Published | 12 (seed.created, seed.updated, seed.activated, seed.archived, seed.growth.updated, seed.growth.transferred, seed.phase.changed, seed.capability.updated, seed.bond.formed, seed.type.created, seed.type.updated, seed.type.deleted) |
 | Events Consumed | 0 |
 | Client Events | 0 |
 | Background Services | 1 (SeedDecayWorkerService) |
@@ -61,10 +61,16 @@
 
 | Key Pattern | Purpose |
 |-------------|---------|
-| `{seedId}` | Growth recording, seed updates, bond initiation (ordered dual-lock) |
+| `{seedId}` | Growth recording, seed updates, bond initiation (ordered dual-lock), growth transfer (ordered dual-lock) |
 | `bond:{bondId}` | Bond confirmation serialization |
 | `owner:{ownerId}:{seedTypeCode}` | Activation exclusivity (one active seed per type per owner) |
 | `type:{gameServiceId}:{seedTypeCode}` | Type definition update serialization |
+
+**Store**: `seed-idempotency` (Backend: Redis)
+
+| Key Pattern | Data Type | Purpose |
+|-------------|-----------|---------|
+| `{transferReferenceId}` | `string` (JSON) | Growth transfer idempotency deduplication with configurable TTL |
 
 ---
 
@@ -95,7 +101,8 @@
 | `seed.activated` | `SeedActivatedEvent` | ActivateSeed |
 | `seed.archived` | `SeedArchivedEvent` | ArchiveSeed |
 | `seed.growth.updated` | `SeedGrowthUpdatedEvent` | RecordGrowthInternal (per domain), ApplyCrossPollination |
-| `seed.phase.changed` | `SeedPhaseChangedEvent` | RecordGrowthInternal, ApplyCrossPollination, RecomputeSeedsForType, SeedDecayWorkerService |
+| `seed.growth.transferred` | `SeedGrowthTransferredEvent` | TransferGrowth |
+| `seed.phase.changed` | `SeedPhaseChangedEvent` | RecordGrowthInternal, ApplyCrossPollination, RecomputeSeedsForType, SeedDecayWorkerService, TransferGrowth |
 | `seed.capability.updated` | `SeedCapabilityUpdatedEvent` | ComputeAndCacheManifest (on cache miss/stale) |
 | `seed.bond.formed` | `SeedBondFormedEvent` | ConfirmBond (when all participants confirmed) |
 | `seed.type.created` | `SeedTypeCreatedEvent` | RegisterSeedType |
@@ -145,6 +152,7 @@ This plugin does not consume external events. The Collection-to-Seed growth pipe
 | GetGrowth | POST /seed/growth/get | generated | user | - | - |
 | RecordGrowth | POST /seed/growth/record | generated | [] | growth, seed, bond, cap (delete) | seed.growth.updated, seed.phase.changed |
 | RecordGrowthBatch | POST /seed/growth/record-batch | generated | [] | growth, seed, bond, cap (delete) | seed.growth.updated, seed.phase.changed |
+| TransferGrowth | POST /seed/growth/transfer | generated | [] | growth (×2), seed (×2), cap (delete ×2) | seed.growth.transferred, seed.growth.updated, seed.phase.changed |
 | GetGrowthPhase | POST /seed/growth/get-phase | generated | user | - | - |
 | GetCapabilityManifest | POST /seed/capability/get-manifest | generated | user | cap (write-through) | seed.capability.updated |
 | RegisterSeedType | POST /seed/type/register | generated | developer | type | seed.type.created |
@@ -325,6 +333,55 @@ LOCK seed-lock:{seedId}                                    -> 409 if fails
       // Full processing: phase transitions, cap invalidation, event publication
       // CrossPollinated = true on events
 RETURN (200, GrowthResponse)
+```
+
+### TransferGrowth
+POST /seed/growth/transfer | Roles: []
+
+```
+// Idempotency: check if transferReferenceId already processed
+// Ordered dual-lock to prevent deadlocks (smaller GUID first)
+orderedIds = sort([sourceSeedId, targetSeedId])
+LOCK seed-lock:{orderedIds[0]}                                -> 409 if fails
+  LOCK seed-lock:{orderedIds[1]}                              -> 409 if fails
+    READ seed-store:"seed:{sourceSeedId}"                     -> 404 if null
+    READ seed-store:"seed:{targetSeedId}"                     -> 404 if null
+    IF source.Status != Active                                -> 400 (source must be active)
+    IF target.Status != Active                                -> 400 (target must be active)
+    IF source.SeedTypeCode != target.SeedTypeCode             -> 400 (must be same type)
+    IF source.GameServiceId != target.GameServiceId           -> 400 (must be same game)
+    IF proportion <= 0.0 or proportion > 1.0                  -> 400 (invalid proportion)
+    READ growth-store:"growth:{sourceSeedId}"                 -> 404 if null
+    READ growth-store:"growth:{targetSeedId}"
+    // Initialize target growth if null
+    FOREACH (domain, entry) in sourceGrowth.Domains
+      transferAmount = entry.Depth * proportion
+      entry.Depth -= transferAmount                           // Deduct from source
+      // Add to target domain: Depth += transferAmount, PeakDepth = max, LastActivityAt = now
+      PUBLISH seed.growth.updated { seedId: target, domain, previousDepth, newDepth, crossPollinated: false }
+    WRITE growth-store:"growth:{sourceSeedId}" <- updated
+    WRITE growth-store:"growth:{targetSeedId}" <- updated
+    // Recompute source totals and phase
+    source.TotalGrowth = sum of source domain depths
+    READ type-store for phase computation
+    IF source phase changed (regression)
+      source.GrowthPhase = newPhase
+      PUBLISH seed.phase.changed { source, direction: Regressed }
+      DISPATCH ISeedEvolutionListener.OnPhaseChangedAsync(source)
+    WRITE seed-store:"seed:{sourceSeedId}" <- updated
+    DELETE cap-store:"cap:{sourceSeedId}"
+    DISPATCH ISeedEvolutionListener.OnGrowthRecordedAsync(source)
+    // Recompute target totals and phase
+    target.TotalGrowth = sum of target domain depths
+    IF target phase changed (progression)
+      target.GrowthPhase = newPhase
+      PUBLISH seed.phase.changed { target, direction: Progressed }
+      DISPATCH ISeedEvolutionListener.OnPhaseChangedAsync(target)
+    WRITE seed-store:"seed:{targetSeedId}" <- updated
+    DELETE cap-store:"cap:{targetSeedId}"
+    DISPATCH ISeedEvolutionListener.OnGrowthRecordedAsync(target)
+    PUBLISH seed.growth.transferred { sourceSeedId, targetSeedId, proportion, transferReferenceId, domainTransfers }
+RETURN (200, TransferGrowthResponse { sourceSeedId, targetSeedId, domainsTransferred })
 ```
 
 ### GetGrowthPhase

@@ -1251,6 +1251,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SEED_DEFAULT_QUERY_PAGE_SIZE` | int | `100` | Default page size for queries that do not expose pagination ... |
 | `SEED_GROWTH_DECAY_ENABLED` | bool | `false` | Global toggle for growth domain decay. Per-type overrides ca... |
 | `SEED_GROWTH_DECAY_RATE_PER_DAY` | double | `0.01` | Global daily decay rate applied to unused growth domains. Pe... |
+| `SEED_IDEMPOTENCY_TTL_SECONDS` | int | `3600` | TTL in seconds for growth transfer idempotency keys in Redis |
 | `SEED_MAX_SEED_TYPES_PER_GAME_SERVICE` | int | `50` | Maximum number of seed types that can be registered per game... |
 | `SEED_SEED_DATA_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for the seed data cache used by the variable ... |
 
@@ -1418,9 +1419,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1119
+- **Total properties**: 1120
 - **Required (no default)**: 67
-- **Optional (has default)**: 1052
+- **Optional (has default)**: 1053
 
 ## Environment Variable Naming Convention
 

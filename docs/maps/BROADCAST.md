@@ -4,7 +4,7 @@
 > **Schema**: schemas/broadcast-api.yaml
 > **Layer**: AppFeatures
 > **Deep Dive**: [docs/plugins/BROADCAST.md](../plugins/BROADCAST.md)
-> **Status**: Aspirational -- pseudo-code represents intended behavior, not verified implementation
+> **Status**: Implemented -- pseudo-code verified against service implementation
 
 ---
 
@@ -81,6 +81,7 @@
 | lib-messaging (IMessageBus) | L0 | Hard | Publishing lifecycle events, audience pulse events |
 | lib-messaging (IEventConsumer) | L0 | Hard | Consuming voice broadcast and session disconnect events |
 | lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation |
+| lib-mesh (IMeshInstanceIdentifier) | L0 | Hard | Process-stable instance identity for broadcast output ownership |
 | lib-account (IAccountClient) | L1 | Hard | Validate account existence before platform linking |
 | lib-auth (IAuthClient) | L1 | Hard | OAuth token validation for platform callbacks |
 | lib-voice (IVoiceClient) | L3 | Soft | Query voice room RTP audio endpoint for broadcast source (voice room broadcasting unavailable when absent) |
@@ -137,8 +138,9 @@ Consumed events are declared via `x-event-subscriptions` class name references i
 | `IAuthClient` | OAuth validation (L1 hard) |
 | `IServiceProvider` | Runtime resolution of soft L3 dependencies |
 | `ITelemetryProvider` | Span instrumentation |
+| `IMeshInstanceIdentifier` | Process-stable mesh node identity for broadcast ownership tracking (L0 hard) |
 | `IBroadcastCoordinator` | FFmpeg process supervision -- local process cache, NOT authoritative (Redis is truth). Startup reconciliation, fallback cascade, RTMP validation via FFprobe. |
-| `ISentimentProcessor` | Raw platform events to sentiment category + intensity. Manages tracked viewer mapping in Redis. |
+| `ISentimentProcessor` | Raw platform events to sentiment category + intensity. Manages tracked viewer mapping in Redis. Owns reverse index for session-scoped tracking ID cleanup via `CleanupSessionTrackingAsync`. |
 | `IPlatformWebhookHandler` | Platform-specific webhook HMAC/token validation and event routing |
 | `IClientEventPublisher` | WebSocket client event publishing (5 client events: output started/stopped/source-changed, session started/ended) |
 
@@ -231,7 +233,7 @@ LOCK lockStore:broadcast:lock:link:{accountId}:{platform}
  IF session exists AND session.linkId == linkId
  DELETE sessionStore:sess:{platformSessionId}
  DELETE sessionStore:sess-account:{accountId}
- // Delete all tracking ID mappings for session (prefix scan)
+ CALL _sentimentProcessor.CleanupSessionTrackingAsync(platformSessionId) // reverse-index cleanup
  PUBLISH broadcast.platform-session.deleted { platformSessionId, duration, peakViewerCount }
 
  // Revoke OAuth tokens on platform (external HTTP call, best-effort)
@@ -279,7 +281,7 @@ IF session.accountId != body.accountId -> 403
 LOCK lockStore:broadcast:lock:session:{platformSessionId}
  -> 409 if fails
  // Stop platform event ingestion
- // Delete all tracking ID mappings (prefix scan sess-tracking:{platformSessionId}:*)
+ CALL _sentimentProcessor.CleanupSessionTrackingAsync(platformSessionId) // reverse-index cleanup
  DELETE sessionStore:sess:{platformSessionId}
  DELETE sessionStore:sess-account:{accountId}
 PUBLISH broadcast.platform-session.deleted { platformSessionId, duration, peakViewerCount }
@@ -627,7 +629,7 @@ READ sessionStore:sess-account:{accountId}
 IF null -> no-op (no platform session for this account)
 IF session.state != Active -> no-op
 
-// Delete all tracking ID mappings (prefix scan sess-tracking:{platformSessionId}:*)
+CALL _sentimentProcessor.CleanupSessionTrackingAsync(platformSessionId) // reverse-index cleanup
 DELETE sessionStore:sess:{platformSessionId}
 DELETE sessionStore:sess-account:{accountId}
 PUBLISH broadcast.platform-session.deleted { platformSessionId, duration, peakViewerCount }

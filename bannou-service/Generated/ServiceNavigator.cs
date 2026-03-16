@@ -39,6 +39,7 @@ using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
 using BeyondImmersion.BannouService.License;
+using BeyondImmersion.BannouService.Localization;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Mapping;
 using BeyondImmersion.BannouService.Matchmaking;
@@ -122,6 +123,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IItemClient _item;
     private readonly ILeaderboardClient _leaderboard;
     private readonly ILicenseClient _license;
+    private readonly ILocalizationClient _localization;
     private readonly ILocationClient _location;
     private readonly IMappingClient _mapping;
     private readonly IMatchmakingClient _matchmaking;
@@ -190,6 +192,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IItemClient item,
         ILeaderboardClient leaderboard,
         ILicenseClient license,
+        ILocalizationClient localization,
         ILocationClient location,
         IMappingClient mapping,
         IMatchmakingClient matchmaking,
@@ -254,6 +257,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _item = item;
         _leaderboard = leaderboard;
         _license = license;
+        _localization = localization;
         _location = location;
         _mapping = mapping;
         _matchmaking = matchmaking;
@@ -424,6 +428,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public ILicenseClient License => _license;
+
+    /// <inheritdoc />
+    public ILocalizationClient Localization => _localization;
 
     /// <inheritdoc />
     public ILocationClient Location => _location;

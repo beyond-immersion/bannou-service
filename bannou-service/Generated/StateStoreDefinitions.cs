@@ -468,6 +468,8 @@ public static class StateStoreDefinitions
     public const string SeedCapabilitiesCache = "seed-capabilities-cache";
     /// <summary>Growth domain records per seed (durable, queryable)</summary>
     public const string SeedGrowth = "seed-growth-statestore";
+    /// <summary>Idempotency key deduplication for growth transfers</summary>
+    public const string SeedIdempotency = "seed-idempotency";
     /// <summary>Distributed locks for seed modifications</summary>
     public const string SeedLock = "seed-lock";
     /// <summary>Seed entity records (durable, queryable by owner/type)</summary>
@@ -746,6 +748,7 @@ public static class StateStoreDefinitions
             [SeedBonds] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_bonds_statestore" },
             [SeedCapabilitiesCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "seed:cap" },
             [SeedGrowth] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_growth_statestore" },
+            [SeedIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "seed:idemp" },
             [SeedLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "seed:lock" },
             [Seed] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_statestore" },
             [SeedTypeDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_type_definitions_statestore" },
@@ -971,6 +974,7 @@ public static class StateStoreDefinitions
             [SeedBonds] = new StoreMetadata("Seed", "Bond records between seeds (durable)", "mysql", false),
             [SeedCapabilitiesCache] = new StoreMetadata("Seed", "Computed capability manifests (cached, frequently read)", "redis", false),
             [SeedGrowth] = new StoreMetadata("Seed", "Growth domain records per seed (durable, queryable)", "mysql", false),
+            [SeedIdempotency] = new StoreMetadata("Seed", "Idempotency key deduplication for growth transfers", "redis", false),
             [SeedLock] = new StoreMetadata("Seed", "Distributed locks for seed modifications", "redis", false),
             [Seed] = new StoreMetadata("Seed", "Seed entity records (durable, queryable by owner/type)", "mysql", false),
             [SeedTypeDefinitions] = new StoreMetadata("Seed", "Registered seed type definitions (durable, admin-managed)", "mysql", false),

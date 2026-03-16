@@ -127,4 +127,11 @@ public class SeedServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 5, Maximum = 3600)]
     public int SeedDataCacheTtlSeconds { get; set; } = 60;
 
+    /// <summary>
+    /// TTL in seconds for growth transfer idempotency keys in Redis
+    /// Environment variable: SEED_IDEMPOTENCY_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 86400)]
+    public int IdempotencyTtlSeconds { get; set; } = 3600;
+
 }

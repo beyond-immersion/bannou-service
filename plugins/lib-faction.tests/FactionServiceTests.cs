@@ -158,7 +158,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var model = CreateTestFactionModel(factionId, FactionStatus.Active);
 
         _mockFactionStore
-            .Setup(s => s.GetAsync(FactionService.FactionKey(factionId), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(FactionService.BuildFactionKey(factionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         var request = new DeprecateFactionRequest
@@ -191,7 +191,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         model.DeprecationReason = "Previously deprecated";
 
         _mockFactionStore
-            .Setup(s => s.GetAsync(FactionService.FactionKey(factionId), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(FactionService.BuildFactionKey(factionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         var request = new DeprecateFactionRequest
@@ -222,7 +222,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var factionId = Guid.NewGuid();
 
         _mockFactionStore
-            .Setup(s => s.GetAsync(FactionService.FactionKey(factionId), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(FactionService.BuildFactionKey(factionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync((FactionModel?)null);
 
         var request = new DeprecateFactionRequest { FactionId = factionId };
@@ -244,7 +244,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var model = CreateTestFactionModel(factionId, FactionStatus.Dissolved);
 
         _mockFactionStore
-            .Setup(s => s.GetAsync(FactionService.FactionKey(factionId), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(FactionService.BuildFactionKey(factionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         var request = new DeprecateFactionRequest { FactionId = factionId };
@@ -269,7 +269,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         model.DeprecationReason = "Was deprecated";
 
         _mockFactionStore
-            .Setup(s => s.GetAsync(FactionService.FactionKey(factionId), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(FactionService.BuildFactionKey(factionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         var request = new UndeprecateFactionRequest { FactionId = factionId };
@@ -294,7 +294,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var model = CreateTestFactionModel(factionId, FactionStatus.Active);
 
         _mockFactionStore
-            .Setup(s => s.GetAsync(FactionService.FactionKey(factionId), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(FactionService.BuildFactionKey(factionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         var request = new UndeprecateFactionRequest { FactionId = factionId };
@@ -321,7 +321,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var factionId = Guid.NewGuid();
 
         _mockFactionStore
-            .Setup(s => s.GetAsync(FactionService.FactionKey(factionId), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(FactionService.BuildFactionKey(factionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync((FactionModel?)null);
 
         var request = new UndeprecateFactionRequest { FactionId = factionId };
@@ -343,7 +343,7 @@ public class FactionServiceTests : ServiceTestBase<FactionServiceConfiguration>
         var model = CreateTestFactionModel(factionId, FactionStatus.Dissolved);
 
         _mockFactionStore
-            .Setup(s => s.GetAsync(FactionService.FactionKey(factionId), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(FactionService.BuildFactionKey(factionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
         var request = new UndeprecateFactionRequest { FactionId = factionId };

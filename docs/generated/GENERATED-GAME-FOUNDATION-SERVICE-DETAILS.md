@@ -105,7 +105,7 @@ The `${relationship.*}` ABML variable namespace is implemented via `Relationship
 
 ## Seed {#seed}
 
-**Version**: 1.0.0 | **Schema**: `schemas/seed-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/SEED.md](../plugins/SEED.md) | **Map**: [docs/maps/SEED.md](../maps/SEED.md)
+**Version**: 1.0.0 | **Schema**: `schemas/seed-api.yaml` | **Endpoints**: 25 | **Deep Dive**: [docs/plugins/SEED.md](../plugins/SEED.md) | **Map**: [docs/maps/SEED.md](../maps/SEED.md)
 
 Generic progressive growth primitive (L2 GameFoundation) for game entities. Seeds start empty and grow by accumulating metadata across named domains, progressively gaining capabilities at configurable thresholds. Seeds are polymorphically owned (accounts, actors, realms, characters, relationships) and agnostic to what they represent -- guardian spirits, dungeon cores, combat archetypes, crafting specializations, and governance roles are all equally valid seed types. Seed types are string codes (not enums), allowing new types without schema changes. Each seed type defines its own growth phase labels, capability computation rules, and bond semantics. Consumers register seed types via API, contribute growth via the record API or DI provider listeners (e.g., Collection→Seed pipeline), and query capability manifests to gate actions.
 
@@ -138,7 +138,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Services in layer**: 18
-- **Endpoints in layer**: 313
+- **Endpoints in layer**: 314
 
 ---
 

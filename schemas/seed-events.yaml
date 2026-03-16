@@ -53,6 +53,9 @@ info:
     - topic: seed.growth.updated
       event: SeedGrowthUpdatedEvent
       description: Published when growth domain values change for a seed
+    - topic: seed.growth.transferred
+      event: SeedGrowthTransferredEvent
+      description: Published when growth is transferred between seeds (e.g., household split)
     - topic: seed.phase.changed
       event: SeedPhaseChangedEvent
       description: Published when a seed transitions to a new growth phase
@@ -164,6 +167,60 @@ components:
           type: boolean
           default: false
           description: Whether this growth was applied via cross-seed pollination rather than direct recording
+
+    SeedGrowthTransferredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when growth is transferred between seeds (e.g., household dissolution)
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sourceSeedId
+        - targetSeedId
+        - seedTypeCode
+        - proportion
+        - domainsTransferred
+        - transferReferenceId
+      properties:
+        eventName:
+          type: string
+          default: seed.growth.transferred
+          description: 'Event type identifier: seed.growth.transferred'
+        sourceSeedId:
+          type: string
+          format: uuid
+          description: The seed growth was transferred from
+        targetSeedId:
+          type: string
+          format: uuid
+          description: The seed growth was transferred to
+        seedTypeCode:
+          type: string
+          minLength: 1
+          description: Seed type code shared by both seeds
+        proportion:
+          type: number
+          format: float
+          description: Fraction of growth that was transferred (0.0–1.0)
+        domainsTransferred:
+          type: integer
+          minimum: 0
+          description: Number of domains that had non-zero transfer amounts
+        transferReferenceId:
+          type: string
+          format: uuid
+          description: Caller-provided idempotency key for this transfer
+        sourceTotalGrowth:
+          type: number
+          format: float
+          description: Source seed's total growth after transfer
+        targetTotalGrowth:
+          type: number
+          format: float
+          description: Target seed's total growth after transfer
 
     SeedPhaseChangedEvent:
       allOf:

@@ -185,6 +185,7 @@ This document lists all state store components used in Bannou.
 | `seed-bonds-statestore` | MySQL | Seed | Bond records between seeds (durable) |
 | `seed-capabilities-cache` | Redis | Seed | Computed capability manifests (cached, frequently read) |
 | `seed-growth-statestore` | MySQL | Seed | Growth domain records per seed (durable, queryable) |
+| `seed-idempotency` | Redis | Seed | Idempotency key deduplication for growth transfers |
 | `seed-lock` | Redis | Seed | Distributed locks for seed modifications |
 | `seed-statestore` | MySQL | Seed | Seed entity records (durable, queryable by owner/type) |
 | `seed-type-definitions-statestore` | MySQL | Seed | Registered seed type definitions (durable, admin-managed) |
@@ -223,7 +224,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 213 stores (132 Redis, 81 MySQL)
+**Total**: 214 stores (133 Redis, 81 MySQL)
 
 ## Naming Conventions
 

@@ -1070,6 +1070,12 @@ x-state-stores:
     service: Seed
     purpose: Distributed locks for seed modifications
 
+  seed-idempotency:
+    backend: redis
+    prefix: "seed:idemp"
+    service: Seed
+    purpose: Idempotency key deduplication for growth transfers
+
   # ============================================================================
   # Faction Stores (L4 GameFeatures Service)
   # ============================================================================

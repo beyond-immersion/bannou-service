@@ -1328,7 +1328,7 @@ public class SchemaValidationTests
             {
                 var sumGroups = new HashSet<string>(
                     info.Groups.Where(g => SchemaParser.SumConstraintTypes.Contains(g.Constraint))
-                              .Select(g => g.GroupName),
+                            .Select(g => g.GroupName),
                     StringComparer.Ordinal);
 
                 foreach (var membership in info.Memberships)
@@ -1415,7 +1415,7 @@ public class SchemaValidationTests
             {
                 var presenceGroups = new HashSet<string>(
                     info.Groups.Where(g => presenceConstraints.Contains(g.Constraint))
-                              .Select(g => g.GroupName),
+                            .Select(g => g.GroupName),
                     StringComparer.Ordinal);
 
                 foreach (var membership in info.Memberships)

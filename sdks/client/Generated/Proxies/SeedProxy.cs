@@ -207,6 +207,24 @@ public sealed class SeedProxy
     }
 
     /// <summary>
+    /// Transfer proportional growth between seeds
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing TransferGrowthResponse on success.</returns>
+    public Task<ApiResponse<TransferGrowthResponse>> TransferGrowthAsync(
+        TransferGrowthRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<TransferGrowthRequest, TransferGrowthResponse>(
+            "/seed/growth/transfer", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get current growth phase
     /// </summary>
     /// <param name="request">The request payload.</param>

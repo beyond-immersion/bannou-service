@@ -411,8 +411,7 @@ When a clause execution fails:
 
 ### Bugs (Fix Immediately)
 
-1. **Organization not supported as contract party entity type**: Contract currently supports Character and Account as party entity types. Organization must be added as a valid party type to support household dissolution contracts and organizational charter contracts. Affects party validation in CreateContract and consent flows (how does an Organization consent — head of household, quorum?). Design decision made in #436; implementation tracked in #672.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/672 -->
+1. ~~**Organization not supported as contract party entity type**~~: **FIXED** (2026-03-16) - Organization is already supported. The schema uses `EntityType` from `common-api.yaml` (which includes Organization), and the service implementation has no entity-type-specific restrictions — party handling is fully generic via `EntityType`+`EntityId` pairs. The consent mechanism is entity-type-agnostic. The "how does an Organization consent" question (leader vs quorum) is a future enhancement for Organization service, not a Contract bug.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -449,4 +448,5 @@ This section tracks active development work using AUDIT markers.
 
 ### Completed
 
+- **Organization party entity type support verified** (2026-03-16): Investigation confirmed Organization is already supported as a contract party entity type — schema uses generic EntityType enum, implementation has no entity-type restrictions. Closed #672.
 - **Implementation map party-idx inaccuracy** (2026-03-14): Fixed map pseudocode for `TerminateContractInstance` and `CompleteMilestone` — removed incorrect `party-idx` removal. Only `DeleteContractInstance` removes party-idx entries.

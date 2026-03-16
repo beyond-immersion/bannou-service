@@ -161,18 +161,6 @@ All of these methods are existing service capabilities. Director orchestrates th
 
 ---
 
-## Type Field Classification
-
-| Field | Category | Type | Rationale |
-|---|---|---|---|
-| `DirectedEventStatus` | C (System State) | Service-specific enum (`Planned`, `Active`, `Climax`, `WindDown`, `Completed`, `Cancelled`) | Directed event lifecycle state machine; system-owned transitions |
-| `ControlTier` | C (System State) | Service-specific enum (`Observe`, `Steer`, `Drive`) | Developer's control relationship to an actor; system-owned |
-| `TargetMethod` | C (System State) | Service-specific enum (`PoiInjection`, `ScenarioOffering`, `RumorSeeding`, `NpcBehavior`, `ShortcutPublishing`, `QuestHook`, `EconomicIncentive`) | How players are drawn to events; maps to specific service APIs |
-| `TargetType` | C (System State) | Service-specific enum (`Region`, `Location`, `Session`) | Scope of player targeting; determines which identifiers are valid |
-| `DirectorSessionStatus` | C (System State) | Service-specific enum (`Active`, `Suspended`, `Ended`) | Developer session lifecycle; system-owned |
-| `actorRole` | B (Content Code) | Opaque string | Role an actor plays in a directed event (e.g., `"primary_deity"`, `"supporting_npc"`, `"environmental"`). Game-configurable, extensible without schema changes. |
-| `eventCategory` | B (Content Code) | Opaque string | Category of directed event (e.g., `"world_event"`, `"regional_crisis"`, `"divine_intervention"`, `"economic_disruption"`). Game-configurable, extensible without schema changes. |
-
 ## Visual Aid
 
 ```
@@ -322,6 +310,20 @@ All of these methods are existing service capabilities. Director orchestrates th
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|---|---|---|---|
+| `DirectedEventStatus` | C (System State) | Service-specific enum (`Planned`, `Active`, `Climax`, `WindDown`, `Completed`, `Cancelled`) | Directed event lifecycle state machine; system-owned transitions |
+| `ControlTier` | C (System State) | Service-specific enum (`Observe`, `Steer`, `Drive`) | Developer's control relationship to an actor; system-owned |
+| `TargetMethod` | C (System State) | Service-specific enum (`PoiInjection`, `ScenarioOffering`, `RumorSeeding`, `NpcBehavior`, `ShortcutPublishing`, `QuestHook`, `EconomicIncentive`) | How players are drawn to events; maps to specific service APIs |
+| `TargetType` | C (System State) | Service-specific enum (`Region`, `Location`, `Session`) | Scope of player targeting; determines which identifiers are valid |
+| `DirectorSessionStatus` | C (System State) | Service-specific enum (`Active`, `Suspended`, `Ended`) | Developer session lifecycle; system-owned |
+| `actorRole` | B (Content Code) | Opaque string | Role an actor plays in a directed event (e.g., `"primary_deity"`, `"supporting_npc"`, `"environmental"`). Game-configurable, extensible without schema changes. |
+| `eventCategory` | B (Content Code) | Opaque string | Category of directed event (e.g., `"world_event"`, `"regional_crisis"`, `"divine_intervention"`, `"economic_disruption"`). Game-configurable, extensible without schema changes. |
+
+---
+
 ## Composability Map
 
 Director session and event management are owned here. Actor observation and control routing is owned here. All other capabilities are composed from existing services:
@@ -388,9 +390,7 @@ This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hy
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Event-based cleanup of persistent data for actor deletion**~~: **FIXED** (2026-03-16) - Corrected design: `actor.instance.deleted` event handler now only cleans up Redis-ephemeral state (taps, overrides, drives) as live session management. MySQL `DirectedEventModel` actor removal is handled by the `x-references` cleanup callback (`/director/cleanup-by-actor`) via lib-resource with `onDelete: detach` policy, added to the Resource Cleanup table.
-
-2. ~~**Missing lib-resource declaration for realm references**~~: **FIXED** (2026-03-16) - Added `x-references` entry targeting `realm` with `onDelete: detach` policy and cleanup callback endpoint (`/director/cleanup-by-realm`) to the Resource Cleanup table.
+*(No active bugs)*
 
 ### Intentional Quirks (Documented Behavior)
 

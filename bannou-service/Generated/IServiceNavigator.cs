@@ -35,6 +35,7 @@ using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
 using BeyondImmersion.BannouService.License;
+using BeyondImmersion.BannouService.Localization;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Mapping;
 using BeyondImmersion.BannouService.Matchmaking;
@@ -220,6 +221,11 @@ public partial interface IServiceNavigator
     /// Gets the License service client.
     /// </summary>
     ILicenseClient License { get; }
+
+    /// <summary>
+    /// Gets the Localization service client.
+    /// </summary>
+    ILocalizationClient Localization { get; }
 
     /// <summary>
     /// Gets the Location service client.

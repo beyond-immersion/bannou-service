@@ -29,6 +29,7 @@ public partial class SeedService : ISeedService, IDeprecateAndMergeEntity
     private readonly IStateStore<SeedBondModel> _bondStore;
     private readonly IStateStore<SeedTypeDefinitionModel> _typeStore;
     private readonly IJsonQueryableStateStore<SeedTypeDefinitionModel> _typeQueryStore;
+    private readonly IStateStore<string> _idempotencyStore;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<SeedService> _logger;
     private readonly SeedServiceConfiguration _configuration;
@@ -59,6 +60,7 @@ public partial class SeedService : ISeedService, IDeprecateAndMergeEntity
         _bondStore = stateStoreFactory.GetStore<SeedBondModel>(StateStoreDefinitions.SeedBonds);
         _typeStore = stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
         _typeQueryStore = stateStoreFactory.GetJsonQueryableStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        _idempotencyStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.SeedIdempotency);
         _lockProvider = lockProvider;
         _logger = logger;
         _telemetryProvider = telemetryProvider;
@@ -522,6 +524,12 @@ public partial class SeedService : ISeedService, IDeprecateAndMergeEntity
     {
         var entries = body.Entries.Select(e => (e.Domain, e.Amount)).ToArray();
         return await RecordGrowthInternalAsync(body.SeedId, entries, body.Source, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, TransferGrowthResponse?)> TransferGrowthAsync(TransferGrowthRequest body, CancellationToken cancellationToken)
+    {
+        return await TransferGrowthInternalAsync(body, cancellationToken);
     }
 
     /// <summary>
@@ -1676,6 +1684,269 @@ public partial class SeedService : ISeedService, IDeprecateAndMergeEntity
         var enabled = seedType?.GrowthDecayEnabled ?? configuration.GrowthDecayEnabled;
         var rate = seedType?.GrowthDecayRatePerDay ?? (float)configuration.GrowthDecayRatePerDay;
         return (enabled, rate);
+    }
+
+    /// <summary>
+    /// Internal implementation for transferring a proportion of growth from one seed to another.
+    /// Both seeds must be active and of the same type. Uses ordered dual-lock and Redis idempotency.
+    /// </summary>
+    private async Task<(StatusCodes, TransferGrowthResponse?)> TransferGrowthInternalAsync(
+        TransferGrowthRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.seed", "SeedService.TransferGrowthInternal");
+
+        if (body.SourceSeedId == body.TargetSeedId)
+        {
+            _logger.LogWarning("Cannot transfer growth from seed {SeedId} to itself", body.SourceSeedId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Idempotency check
+        var existingResult = await _idempotencyStore.GetAsync(body.TransferReferenceId.ToString(), cancellationToken);
+        if (!string.IsNullOrEmpty(existingResult))
+        {
+            _logger.LogDebug("Transfer reference {ReferenceId} already processed, returning idempotent OK",
+                body.TransferReferenceId);
+            return (StatusCodes.OK, BannouJson.Deserialize<TransferGrowthResponse>(existingResult));
+        }
+
+        // Ordered dual-lock to prevent deadlocks (smaller GUID first)
+        var orderedIds = new[] { body.SourceSeedId, body.TargetSeedId }.OrderBy(id => id).ToArray();
+        var lockOwner = $"transfer-{Guid.NewGuid():N}";
+
+        await using var lock1 = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SeedLock, orderedIds[0].ToString(), lockOwner, 10, cancellationToken);
+        if (!lock1.Success)
+            return (StatusCodes.Conflict, null);
+
+        await using var lock2 = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SeedLock, orderedIds[1].ToString(), lockOwner, 10, cancellationToken);
+        if (!lock2.Success)
+            return (StatusCodes.Conflict, null);
+
+        // Read both seeds
+        var source = await _seedStore.GetAsync($"seed:{body.SourceSeedId}", cancellationToken);
+        if (source == null)
+            return (StatusCodes.NotFound, null);
+
+        var target = await _seedStore.GetAsync($"seed:{body.TargetSeedId}", cancellationToken);
+        if (target == null)
+            return (StatusCodes.NotFound, null);
+
+        // Validate both seeds
+        if (source.Status != SeedStatus.Active)
+        {
+            _logger.LogWarning("Cannot transfer from non-active source seed {SeedId} (status: {Status})",
+                body.SourceSeedId, source.Status);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (target.Status != SeedStatus.Active)
+        {
+            _logger.LogWarning("Cannot transfer to non-active target seed {SeedId} (status: {Status})",
+                body.TargetSeedId, target.Status);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (source.SeedTypeCode != target.SeedTypeCode)
+        {
+            _logger.LogWarning("Cannot transfer between different seed types: {SourceType} vs {TargetType}",
+                source.SeedTypeCode, target.SeedTypeCode);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (source.GameServiceId != target.GameServiceId)
+        {
+            _logger.LogWarning("Cannot transfer between seeds in different game services");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Read growth data
+        var sourceGrowth = await _growthStore.GetAsync($"growth:{body.SourceSeedId}", cancellationToken);
+        if (sourceGrowth == null)
+            return (StatusCodes.NotFound, null);
+
+        var targetGrowth = await _growthStore.GetAsync($"growth:{body.TargetSeedId}", cancellationToken);
+        targetGrowth ??= new SeedGrowthModel { SeedId = body.TargetSeedId, Domains = new() };
+
+        // Transfer growth across all domains
+        var now = DateTimeOffset.UtcNow;
+        var domainsTransferred = 0;
+        var targetDomainChanges = new List<DomainChange>();
+
+        foreach (var (domain, sourceEntry) in sourceGrowth.Domains)
+        {
+            var transferAmount = sourceEntry.Depth * (float)body.Proportion;
+            if (transferAmount <= 0f)
+                continue;
+
+            domainsTransferred++;
+
+            // Deduct from source
+            sourceEntry.Depth -= transferAmount;
+
+            // Add to target
+            var targetEntry = targetGrowth.Domains.GetValueOrDefault(domain);
+            var targetPreviousDepth = targetEntry?.Depth ?? 0f;
+            var targetNewDepth = targetPreviousDepth + transferAmount;
+
+            targetGrowth.Domains[domain] = new DomainGrowthEntry
+            {
+                Depth = targetNewDepth,
+                LastActivityAt = now,
+                PeakDepth = Math.Max(targetEntry?.PeakDepth ?? 0f, targetNewDepth)
+            };
+
+            targetDomainChanges.Add(new DomainChange(domain, targetPreviousDepth, targetNewDepth));
+
+            await _messageBus.PublishSeedGrowthUpdatedAsync(new SeedGrowthUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                SeedId = body.TargetSeedId,
+                SeedTypeCode = target.SeedTypeCode,
+                Domain = domain,
+                PreviousDepth = targetPreviousDepth,
+                NewDepth = targetNewDepth,
+                TotalGrowth = targetGrowth.Domains.Values.Sum(d => d.Depth),
+                CrossPollinated = false
+            }, cancellationToken);
+        }
+
+        // Save growth data
+        await _growthStore.SaveAsync($"growth:{body.SourceSeedId}", sourceGrowth, cancellationToken: cancellationToken);
+        await _growthStore.SaveAsync($"growth:{body.TargetSeedId}", targetGrowth, cancellationToken: cancellationToken);
+
+        // Recompute source totals and phase
+        var sourceTotalGrowth = sourceGrowth.Domains.Values.Sum(d => d.Depth);
+        var sourcePreviousPhase = source.GrowthPhase;
+        source.TotalGrowth = sourceTotalGrowth;
+
+        var seedType = await _typeStore.GetAsync(TypeKey(source.GameServiceId, source.SeedTypeCode), cancellationToken);
+
+        if (seedType != null)
+        {
+            var (sourcePhase, _) = ComputePhaseInfo(seedType.GrowthPhases, sourceTotalGrowth);
+            source.GrowthPhase = sourcePhase.PhaseCode;
+        }
+
+        await _seedStore.SaveAsync($"seed:{body.SourceSeedId}", source, cancellationToken: cancellationToken);
+
+        if (sourcePreviousPhase != source.GrowthPhase)
+        {
+            _logger.LogInformation("Source seed {SeedId} regressed from phase {OldPhase} to {NewPhase} after transfer",
+                body.SourceSeedId, sourcePreviousPhase, source.GrowthPhase);
+
+            await _messageBus.PublishSeedPhaseChangedAsync(new SeedPhaseChangedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                SeedId = body.SourceSeedId,
+                SeedTypeCode = source.SeedTypeCode,
+                PreviousPhase = sourcePreviousPhase,
+                NewPhase = source.GrowthPhase,
+                TotalGrowth = sourceTotalGrowth,
+                Direction = PhaseChangeDirection.Regressed
+            }, cancellationToken);
+
+            await SeedEvolutionDispatcher.DispatchPhaseChangedAsync(
+                _evolutionListeners, source.SeedTypeCode,
+                new SeedPhaseNotification(
+                    source.SeedId, source.SeedTypeCode, source.OwnerId, source.OwnerType,
+                    sourcePreviousPhase, source.GrowthPhase, sourceTotalGrowth, Progressed: false),
+                _telemetryProvider, _logger, cancellationToken);
+        }
+
+        await _capabilityCacheStore.DeleteAsync($"cap:{body.SourceSeedId}", cancellationToken);
+
+        // Recompute target totals and phase
+        var targetTotalGrowth = targetGrowth.Domains.Values.Sum(d => d.Depth);
+        var targetPreviousPhase = target.GrowthPhase;
+        target.TotalGrowth = targetTotalGrowth;
+
+        if (seedType != null)
+        {
+            var (targetPhase, _) = ComputePhaseInfo(seedType.GrowthPhases, targetTotalGrowth);
+            target.GrowthPhase = targetPhase.PhaseCode;
+        }
+
+        await _seedStore.SaveAsync($"seed:{body.TargetSeedId}", target, cancellationToken: cancellationToken);
+
+        if (targetPreviousPhase != target.GrowthPhase)
+        {
+            _logger.LogInformation("Target seed {SeedId} progressed from phase {OldPhase} to {NewPhase} after transfer",
+                body.TargetSeedId, targetPreviousPhase, target.GrowthPhase);
+
+            await _messageBus.PublishSeedPhaseChangedAsync(new SeedPhaseChangedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                SeedId = body.TargetSeedId,
+                SeedTypeCode = target.SeedTypeCode,
+                PreviousPhase = targetPreviousPhase,
+                NewPhase = target.GrowthPhase,
+                TotalGrowth = targetTotalGrowth,
+                Direction = PhaseChangeDirection.Progressed
+            }, cancellationToken);
+
+            await SeedEvolutionDispatcher.DispatchPhaseChangedAsync(
+                _evolutionListeners, target.SeedTypeCode,
+                new SeedPhaseNotification(
+                    target.SeedId, target.SeedTypeCode, target.OwnerId, target.OwnerType,
+                    targetPreviousPhase, target.GrowthPhase, targetTotalGrowth, Progressed: true),
+                _telemetryProvider, _logger, cancellationToken);
+        }
+
+        await _capabilityCacheStore.DeleteAsync($"cap:{body.TargetSeedId}", cancellationToken);
+
+        // Dispatch growth notifications for target
+        if (targetDomainChanges.Count > 0)
+        {
+            await SeedEvolutionDispatcher.DispatchGrowthRecordedAsync(
+                _evolutionListeners, target.SeedTypeCode,
+                new SeedGrowthNotification(
+                    target.SeedId, target.SeedTypeCode, target.OwnerId, target.OwnerType,
+                    targetDomainChanges, targetTotalGrowth,
+                    CrossPollinated: false, Source: "transfer"),
+                _telemetryProvider, _logger, cancellationToken);
+        }
+
+        // Publish transfer event
+        await _messageBus.PublishSeedGrowthTransferredAsync(new SeedGrowthTransferredEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            SourceSeedId = body.SourceSeedId,
+            TargetSeedId = body.TargetSeedId,
+            SeedTypeCode = source.SeedTypeCode,
+            Proportion = (float)body.Proportion,
+            DomainsTransferred = domainsTransferred,
+            TransferReferenceId = body.TransferReferenceId,
+            SourceTotalGrowth = sourceTotalGrowth,
+            TargetTotalGrowth = targetTotalGrowth
+        }, cancellationToken);
+
+        var response = new TransferGrowthResponse
+        {
+            SourceSeedId = body.SourceSeedId,
+            TargetSeedId = body.TargetSeedId,
+            DomainsTransferred = domainsTransferred,
+            SourceTotalGrowth = sourceTotalGrowth,
+            TargetTotalGrowth = targetTotalGrowth
+        };
+
+        // Record idempotency key with TTL
+        await _idempotencyStore.SaveAsync(
+            body.TransferReferenceId.ToString(),
+            BannouJson.Serialize(response),
+            new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds },
+            cancellationToken);
+
+        _logger.LogInformation(
+            "Transferred growth from seed {SourceSeedId} to {TargetSeedId} (proportion: {Proportion}, domains: {Domains})",
+            body.SourceSeedId, body.TargetSeedId, body.Proportion, domainsTransferred);
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>

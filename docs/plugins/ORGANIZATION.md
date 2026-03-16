@@ -1094,7 +1094,7 @@ How organizations participate in the NPC-driven economy through GOAP-based econo
 
 ### Design Considerations (Requires Planning)
 
-1. **Contract party entity types**: lib-contract currently supports character and account entity types as parties. Organizations and factions as contract parties requires extending the party model. This is a prerequisite for charter contracts, organizational trade agreements, and employment contracts.
+1. ~~**Contract party entity types**~~: **FIXED** (2026-03-16) - lib-contract's `partyEntityType` already uses `$ref: EntityType` which includes `Organization` and `Faction`. No party model extension is needed — the schema already supports organizations and factions as contract parties.
 
 2. **Wallet ownership model**: lib-currency's wallet ownership model needs to support organization entity type. Currently wallets are scoped to character/account. Organizational wallets require `ownerType: "organization"` + `ownerId: organizationId`. This is the same polymorphic ownership pattern used by Seed (`AllowedOwnerTypes`).
 
@@ -1160,7 +1160,7 @@ Plugin is in pre-implementation phase. This is the largest of the three changes 
 
 The following DCs have no dedicated GitHub issue and should have one created when work begins:
 
-- **DC#1**: Contract party entity types (organization/faction as parties) — prerequisite for Phase 1
+- ~~**DC#1**: Contract party entity types~~ — resolved: `EntityType` already includes Organization and Faction
 - **DC#2**: Currency wallet ownership for organizations — prerequisite for Phase 1
 - **DC#3**: Inventory ownership for organizations — prerequisite for Phase 1
 - **DC#6**: Role permission enforcement at API level — Phase 1

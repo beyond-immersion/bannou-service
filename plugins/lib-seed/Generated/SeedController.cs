@@ -182,6 +182,21 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
 
 
     /// <summary>
+    /// Transfer proportional growth between seeds
+    /// </summary>
+
+    /// <remarks>
+    /// Transfers a proportion of accumulated growth from one seed to another. Both seeds must be active and of the same type within the same game service. Growth is deducted from the source across all domains and added to the target. Phase transitions are evaluated for both seeds after the transfer. Idempotent via transferReferenceId.
+    /// </remarks>
+
+
+
+    /// <returns>Growth transferred successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferGrowthResponse>> TransferGrowth(TransferGrowthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
     /// Get current growth phase
     /// </summary>
 
@@ -915,6 +930,54 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase, I
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:seed/growth/record-batch",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Transfer proportional growth between seeds
+    /// </summary>
+    /// <remarks>
+    /// Transfers a proportion of accumulated growth from one seed to another. Both seeds must be active and of the same type within the same game service. Growth is deducted from the source across all domains and added to the target. Phase transitions are evaluated for both seeds after the transfer. Idempotent via transferReferenceId.
+    /// </remarks>
+    /// <returns>Growth transferred successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("seed/growth/transfer")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferGrowthResponse>> TransferGrowth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TransferGrowthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.TransferGrowth",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/growth/transfer");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.TransferGrowthAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/growth/transfer");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:seed/growth/transfer");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "seed",
+                "TransferGrowth",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:seed/growth/transfer",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

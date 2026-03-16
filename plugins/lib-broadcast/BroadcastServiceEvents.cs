@@ -266,6 +266,7 @@ public partial class BroadcastService
         var now = DateTimeOffset.UtcNow;
         var duration = (int)(now - session.StartTime).TotalSeconds;
 
+        await _sentimentProcessor.CleanupSessionTrackingAsync(session.PlatformSessionId, CancellationToken.None);
         await _sessionStore.DeleteAsync(BuildSessionKey(session.PlatformSessionId), CancellationToken.None);
         await _sessionStore.DeleteAsync(BuildSessionAccountKey(evt.AccountId.Value), CancellationToken.None);
 

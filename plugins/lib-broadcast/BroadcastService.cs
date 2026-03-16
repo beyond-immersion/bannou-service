@@ -322,6 +322,7 @@ public partial class BroadcastService : IBroadcastService
         if (session != null && session.LinkId == body.LinkId)
         {
             var duration = (int)(DateTimeOffset.UtcNow - session.StartTime).TotalSeconds;
+            await _sentimentProcessor.CleanupSessionTrackingAsync(session.PlatformSessionId, cancellationToken);
             await _sessionStore.DeleteAsync(BuildSessionKey(session.PlatformSessionId), cancellationToken);
             await _sessionStore.DeleteAsync(BuildSessionAccountKey(link.AccountId), cancellationToken);
 
@@ -503,6 +504,7 @@ public partial class BroadcastService : IBroadcastService
         var now = DateTimeOffset.UtcNow;
         var duration = (int)(now - session.StartTime).TotalSeconds;
 
+        await _sentimentProcessor.CleanupSessionTrackingAsync(body.PlatformSessionId, cancellationToken);
         await _sessionStore.DeleteAsync(BuildSessionKey(body.PlatformSessionId), cancellationToken);
         await _sessionStore.DeleteAsync(BuildSessionAccountKey(session.AccountId), cancellationToken);
 
@@ -1172,6 +1174,7 @@ public partial class BroadcastService : IBroadcastService
                 var now = DateTimeOffset.UtcNow;
                 var duration = (int)(now - session.StartTime).TotalSeconds;
 
+                await _sentimentProcessor.CleanupSessionTrackingAsync(session.PlatformSessionId, cancellationToken);
                 await _sessionStore.DeleteAsync(BuildSessionKey(session.PlatformSessionId), cancellationToken);
                 await _sessionStore.DeleteAsync(BuildSessionAccountKey(body.AccountId), cancellationToken);
 

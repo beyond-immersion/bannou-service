@@ -101,7 +101,7 @@ public class FactionCollectionUnlockListener : ICollectionUnlockListener
 
         // Look up the character's faction memberships
         var membershipList = await _memberListStore.GetAsync(
-            FactionService.CharacterMembershipsKey(notification.OwnerId), ct);
+            FactionService.BuildCharacterMembershipsKey(notification.OwnerId), ct);
 
         if (membershipList == null || membershipList.Memberships.Count == 0)
         {
@@ -114,7 +114,7 @@ public class FactionCollectionUnlockListener : ICollectionUnlockListener
         // For each faction the character belongs to, record growth from the collection unlock
         foreach (var membership in membershipList.Memberships)
         {
-            var faction = await _factionStore.GetAsync(FactionService.FactionKey(membership.FactionId), ct);
+            var faction = await _factionStore.GetAsync(FactionService.BuildFactionKey(membership.FactionId), ct);
             if (faction == null || faction.SeedId == null)
             {
                 continue;

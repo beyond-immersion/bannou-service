@@ -1,5 +1,5 @@
-using System.Text.RegularExpressions;
 using BeyondImmersion.BannouService.Services;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.StructuralTests;

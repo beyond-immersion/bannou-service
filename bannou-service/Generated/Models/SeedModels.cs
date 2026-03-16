@@ -565,6 +565,49 @@ public partial class GrowthEntry
 }
 
 /// <summary>
+/// Request to transfer a proportion of growth from one seed to another. Called by Arbitration's SeedGrowthTransfer consequence during household dissolution enforcement. Idempotent via transferReferenceId.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TransferGrowthRequest
+{
+
+    /// <summary>
+    /// The seed to transfer growth FROM (growth is deducted).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceSeedId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceSeedId { get; set; } = default!;
+
+    /// <summary>
+    /// The seed to transfer growth TO (growth is added).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetSeedId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetSeedId { get; set; } = default!;
+
+    /// <summary>
+    /// Fraction of growth to transfer (0.0–1.0 exclusive-inclusive). Applied to each domain's current depth independently.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("proportion")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float Proportion { get; set; } = default!;
+
+    /// <summary>
+    /// Caller-provided idempotency key. If a transfer with this reference ID has already been processed, the endpoint returns the previous result without re-executing.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transferReferenceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransferReferenceId { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to get the current growth phase.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1209,6 +1252,50 @@ public partial class GrowthPhaseResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nextPhaseThreshold")]
     public float? NextPhaseThreshold { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of a growth transfer between seeds.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TransferGrowthResponse
+{
+
+    /// <summary>
+    /// The seed growth was transferred from.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceSeedId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceSeedId { get; set; } = default!;
+
+    /// <summary>
+    /// The seed growth was transferred to.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetSeedId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetSeedId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of growth domains that had non-zero transfer amounts.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domainsTransferred")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int DomainsTransferred { get; set; } = default!;
+
+    /// <summary>
+    /// Source seed's total growth after transfer.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceTotalGrowth")]
+    public float SourceTotalGrowth { get; set; } = default!;
+
+    /// <summary>
+    /// Target seed's total growth after transfer.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetTotalGrowth")]
+    public float TargetTotalGrowth { get; set; } = default!;
 
 }
 

@@ -80,6 +80,11 @@ public partial interface ISeedService : IBannouService
         Task<(StatusCodes, GrowthResponse?)> RecordGrowthBatchAsync(RecordGrowthBatchRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// TransferGrowth operation
+        /// </summary>
+        Task<(StatusCodes, TransferGrowthResponse?)> TransferGrowthAsync(TransferGrowthRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GetGrowthPhase operation
         /// </summary>
         Task<(StatusCodes, GrowthPhaseResponse?)> GetGrowthPhaseAsync(GetGrowthPhaseRequest body, CancellationToken cancellationToken = default(CancellationToken));

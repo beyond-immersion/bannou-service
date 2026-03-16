@@ -57,7 +57,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Resource Lifecycle API](#resource) | `client.Resource` | 20 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
-| [Seed Service API](#seed) | `client.Seed` | 24 | Generic progressive growth entity service (L2 GameFoundation... |
+| [Seed Service API](#seed) | `client.Seed` | 25 | Generic progressive growth entity service (L2 GameFoundation... |
 | [Bannou Species Service API](#species) | `client.Species` | 14 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 12 | Repository pattern state management with Redis and MySQL bac... |
 | [Status Service API](#status) | `client.Status` | 19 | Unified entity effects query layer for temporary contract-ma... |
@@ -2412,6 +2412,7 @@ Generic progressive growth entity service (L2 GameFoundation). Seeds are entitie
 | `GetGrowthAsync` | `GetGrowthRequest` | `GrowthResponse` | Get full growth domain map |
 | `RecordgrowthAsync` | `RecordGrowthRequest` | `GrowthResponse` | Record growth in a domain |
 | `RecordgrowthbatchAsync` | `RecordGrowthBatchRequest` | `GrowthResponse` | Record growth across multiple domains atomically |
+| `TransfergrowthAsync` | `TransferGrowthRequest` | `TransferGrowthResponse` | Transfer proportional growth between seeds |
 | `GetGrowthphaseAsync` | `GetGrowthPhaseRequest` | `GrowthPhaseResponse` | Get current growth phase |
 | `GetCapabilitymanifestAsync` | `GetCapabilityManifestRequest` | `CapabilityManifestResponse` | Get current capability manifest |
 | `RegisterSeedtypeAsync` | `RegisterSeedTypeRequest` | `SeedTypeResponse` | Register a new seed type definition |
@@ -2816,7 +2817,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 59
-- **Total methods**: 1002
+- **Total methods**: 1003
 
 ---
 

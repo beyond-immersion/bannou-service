@@ -400,7 +400,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Quest | L2 | Objective-based progression as thin orchestration over Contract with prerequisite provider extensibility | 20 |
 | Realm | L2 | Top-level persistent world management with deprecation lifecycle and seed-from-configuration | 13 |
 | Relationship | L2 | Entity-to-entity relationships with type taxonomy, bidirectional uniqueness, and ABML variable provider | 21 |
-| Seed | L2 | Generic progressive growth primitive with polymorphic ownership and phase-gated capabilities | 24 |
+| Seed | L2 | Generic progressive growth primitive with polymorphic ownership and phase-gated capabilities | 25 |
 | Species | L2 | Realm-scoped species definitions with trait modifiers and deprecation lifecycle | 14 |
 | Subscription | L2 | Account-to-game access mapping with time-limited subscriptions and expiration worker | 7 |
 | Transit | L2 | Geographic connectivity graph, transit modes, and game-time journey tracking | 33 |
@@ -454,7 +454,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**78 services, 1022 endpoints**
+**78 services, 1023 endpoints**
 
 For full per-service details: `docs/generated/GENERATED-*-SERVICE-DETAILS.md`
 

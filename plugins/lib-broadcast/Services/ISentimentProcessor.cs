@@ -49,4 +49,14 @@ public interface ISentimentProcessor
     /// <param name="payload">The raw webhook payload.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task ProcessGenericWebhookAsync(Guid platformSessionId, object payload, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cleans up all tracking ID mappings for a platform session.
+    /// Uses the reverse index (maintained via AddToStringListAsync during tracking writes)
+    /// to enumerate and delete individual tracking entries, then removes the index key.
+    /// Session-scoped TTL provides a safety net, but this accelerates cleanup.
+    /// </summary>
+    /// <param name="platformSessionId">The platform session to clean up tracking for.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task CleanupSessionTrackingAsync(Guid platformSessionId, CancellationToken cancellationToken = default);
 }

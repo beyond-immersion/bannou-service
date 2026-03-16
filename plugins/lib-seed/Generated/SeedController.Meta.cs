@@ -1761,6 +1761,151 @@ public partial class SeedController
 
     #endregion
 
+    #region Meta Endpoints for TransferGrowth
+
+    private static readonly string _TransferGrowth_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TransferGrowthRequest",
+    "$defs": {
+        "TransferGrowthRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to transfer a proportion of growth from one seed to another. Called by Arbitration's SeedGrowthTransfer consequence during household dissolution enforcement. Idempotent via transferReferenceId.\n",
+            "required": [
+                "sourceSeedId",
+                "targetSeedId",
+                "proportion",
+                "transferReferenceId"
+            ],
+            "properties": {
+                "sourceSeedId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The seed to transfer growth FROM (growth is deducted)."
+                },
+                "targetSeedId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The seed to transfer growth TO (growth is added)."
+                },
+                "proportion": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 1,
+                    "description": "Fraction of growth to transfer (0.0\ u20131.0 exclusive-inclusive). Applied to each domain's current depth independently.\n"
+                },
+                "transferReferenceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Caller-provided idempotency key. If a transfer with this reference ID has already been processed, the endpoint returns the previous result without re-executing.\n"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferGrowth_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TransferGrowthResponse",
+    "$defs": {
+        "TransferGrowthResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of a growth transfer between seeds.",
+            "required": [
+                "sourceSeedId",
+                "targetSeedId",
+                "domainsTransferred"
+            ],
+            "properties": {
+                "sourceSeedId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The seed growth was transferred from."
+                },
+                "targetSeedId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The seed growth was transferred to."
+                },
+                "domainsTransferred": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of growth domains that had non-zero transfer amounts."
+                },
+                "sourceTotalGrowth": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Source seed's total growth after transfer."
+                },
+                "targetTotalGrowth": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Target seed's total growth after transfer."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferGrowth_Info = """
+{
+    "summary": "Transfer proportional growth between seeds",
+    "description": "Transfers a proportion of accumulated growth from one seed to another. Both seeds must be active and of the same type within the same game service. Growth is deducted from the source across all domains and added to the target. Phase transitions are evaluated for both seeds after the transfer. Idempotent via transferReferenceId.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "TransferGrowth"
+}
+""";
+
+    /// <summary>Returns endpoint information for TransferGrowth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/growth/transfer/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferGrowth_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Seed",
+            "POST",
+            "/seed/growth/transfer",
+            _TransferGrowth_Info));
+
+    /// <summary>Returns request schema for TransferGrowth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/growth/transfer/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferGrowth_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/growth/transfer",
+            "request-schema",
+            _TransferGrowth_RequestSchema));
+
+    /// <summary>Returns response schema for TransferGrowth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/growth/transfer/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferGrowth_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/growth/transfer",
+            "response-schema",
+            _TransferGrowth_ResponseSchema));
+
+    /// <summary>Returns full schema for TransferGrowth</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/seed/growth/transfer/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferGrowth_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Seed",
+            "POST",
+            "/seed/growth/transfer",
+            _TransferGrowth_Info,
+            _TransferGrowth_RequestSchema,
+            _TransferGrowth_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GetGrowthPhase
 
     private static readonly string _GetGrowthPhase_RequestSchema = """
