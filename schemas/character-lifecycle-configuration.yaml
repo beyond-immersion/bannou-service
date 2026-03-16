@@ -1,0 +1,178 @@
+openapi: 3.0.4
+info:
+  title: Character Lifecycle Service Configuration
+  description: |
+    Configuration schema for Character Lifecycle service.
+    Properties are bound to environment variables with CHARACTER_LIFECYCLE_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Aging Worker
+    AgingBatchSize:
+      type: integer
+      minimum: 50
+      maximum: 1000
+      default: 200
+      description: Characters per batch in aging worker processing
+      env: CHARACTER_LIFECYCLE_AGING_BATCH_SIZE
+    AgingStartupDelaySeconds:
+      type: integer
+      minimum: 0
+      maximum: 120
+      default: 30
+      description: Delay before aging responds to first year-changed event, allowing worldstate to stabilize
+      env: CHARACTER_LIFECYCLE_AGING_STARTUP_DELAY_SECONDS
+    # Heritage Engine
+    DefaultMutationChance:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 0.2
+      default: 0.02
+      description: Default probability of mutation per trait during procreation
+      env: CHARACTER_LIFECYCLE_DEFAULT_MUTATION_CHANCE
+    DefaultMutationRange:
+      type: number
+      format: float
+      minimum: 0.01
+      maximum: 0.3
+      default: 0.1
+      description: Maximum allele shift on mutation
+      env: CHARACTER_LIFECYCLE_DEFAULT_MUTATION_RANGE
+    # Bloodline Formation
+    BloodlineFormationGenerations:
+      type: integer
+      minimum: 2
+      maximum: 5
+      default: 3
+      description: Consecutive generations with signature traits required to form a bloodline
+      env: CHARACTER_LIFECYCLE_BLOODLINE_FORMATION_GENERATIONS
+    BloodlineFormationTraitThreshold:
+      type: number
+      format: float
+      minimum: 0.5
+      maximum: 0.95
+      default: 0.7
+      description: Minimum trait value consistency across generations to qualify as signature
+      env: CHARACTER_LIFECYCLE_BLOODLINE_FORMATION_TRAIT_THRESHOLD
+    # Fulfillment
+    FulfillmentNeutralDefault:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 0.5
+      default: 0.3
+      description: Fulfillment score for characters with no drives (drifters)
+      env: CHARACTER_LIFECYCLE_FULFILLMENT_NEUTRAL_DEFAULT
+    FulfillmentFrustrationWeight:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.5
+      description: How much drive frustration reduces fulfillment contribution
+      env: CHARACTER_LIFECYCLE_FULFILLMENT_FRUSTRATION_WEIGHT
+    # Guardian Spirit
+    GuardianSpiritBaseMultiplier:
+      type: number
+      format: float
+      minimum: 0.1
+      maximum: 10.0
+      default: 1.0
+      description: Base multiplier for fulfillment to guardian spirit logos conversion
+      env: CHARACTER_LIFECYCLE_GUARDIAN_SPIRIT_BASE_MULTIPLIER
+    GuardianTrustBonusWeight:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.3
+      description: How much guardian trust modifies spirit contribution
+      env: CHARACTER_LIFECYCLE_GUARDIAN_TRUST_BONUS_WEIGHT
+    # Contract Templates
+    MarriageContractTemplateCode:
+      type: string
+      default: marriage-standard
+      description: Default contract template code for marriage ceremonies
+      env: CHARACTER_LIFECYCLE_MARRIAGE_CONTRACT_TEMPLATE_CODE
+    TestamentContractTemplateCode:
+      type: string
+      default: testament-standard
+      description: Default contract template code for last-will testaments
+      env: CHARACTER_LIFECYCLE_TESTAMENT_CONTRACT_TEMPLATE_CODE
+    # Procreation
+    PregnancyDurationGameDays:
+      type: integer
+      minimum: 1
+      maximum: 730
+      default: 270
+      description: Game-days between procreation initiation and birth
+      env: CHARACTER_LIFECYCLE_PREGNANCY_DURATION_GAME_DAYS
+    MaxChildrenPerPair:
+      type: integer
+      minimum: 1
+      maximum: 20
+      default: 12
+      description: Maximum children from a single parent pair
+      env: CHARACTER_LIFECYCLE_MAX_CHILDREN_PER_PAIR
+    MaxChildrenPerCharacter:
+      type: integer
+      minimum: 1
+      maximum: 50
+      default: 20
+      description: Maximum total children for a single character across all partners
+      env: CHARACTER_LIFECYCLE_MAX_CHILDREN_PER_CHARACTER
+    # Inheritance
+    InheritanceHeirloomSlots:
+      type: integer
+      minimum: 0
+      maximum: 10
+      default: 3
+      description: Maximum designated heirloom items transferable on death
+      env: CHARACTER_LIFECYCLE_INHERITANCE_HEIRLOOM_SLOTS
+    # Death Processing
+    DeathProcessingTimeoutSeconds:
+      type: integer
+      minimum: 10
+      maximum: 300
+      default: 60
+      description: Timeout for the full death processing pipeline
+      env: CHARACTER_LIFECYCLE_DEATH_PROCESSING_TIMEOUT_SECONDS
+    NaturalDeathCheckBatchSize:
+      type: integer
+      minimum: 10
+      maximum: 500
+      default: 100
+      description: Characters per batch in natural death checking
+      env: CHARACTER_LIFECYCLE_NATURAL_DEATH_CHECK_BATCH_SIZE
+    # Cache
+    CacheTtlMinutes:
+      type: integer
+      minimum: 1
+      maximum: 60
+      default: 5
+      description: TTL for cached lifecycle manifests per character
+      env: CHARACTER_LIFECYCLE_CACHE_TTL_MINUTES
+    # Concurrency
+    DistributedLockTimeoutSeconds:
+      type: integer
+      minimum: 5
+      maximum: 120
+      default: 30
+      description: Timeout for distributed lock acquisition
+      env: CHARACTER_LIFECYCLE_DISTRIBUTED_LOCK_TIMEOUT_SECONDS
+    # Queries
+    QueryPageSize:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 20
+      description: Default page size for paged queries
+      env: CHARACTER_LIFECYCLE_QUERY_PAGE_SIZE

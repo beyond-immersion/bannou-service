@@ -113,7 +113,6 @@ This single command bootstraps the entire plugin. It auto-creates:
 - `SeedController.Meta.cs` - runtime schema introspection
 - `SeedServiceConfiguration.cs` - typed config class
 - `SeedPermissionRegistration.cs` - permissions
-- `SeedEventsController.cs` - event subscription handlers (from x-event-subscriptions)
 
 **Generated code** (in `bannou-service/Generated/`):
 - `Models/SeedModels.cs` - request/response models

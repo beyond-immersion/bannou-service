@@ -129,7 +129,7 @@ Self-subscription pattern: the plugin publishes and subscribes to its own evolut
 | DeleteCombatPreferences | POST /character-personality/delete-combat | generated | [] | combat | combat-preferences.deleted |
 | CleanupByCharacter | POST /character-personality/cleanup-by-character | generated | [] | personality, combat | personality.deleted, combat-preferences.deleted |
 | GetCompressData | POST /character-personality/get-compress-data | generated | [] | - | - |
-| RestoreFromArchive | POST /character-personality/restore-from-archive | generated | [] | personality, combat | - |
+| RestoreFromArchive | POST /character-personality/restore-from-archive | generated | [] | personality, combat | personality.created, combat-preferences.created |
 
 ---
 
@@ -345,13 +345,15 @@ POST /character-personality/restore-from-archive | Roles: []
 IF archiveData.HasPersonality AND archiveData.Personality != null
   WRITE personalityStore:personality-{characterId} <- PersonalityData from archive { version + 1, preserving createdAtUnix }
   CALL IResourceClient.RegisterReferenceAsync(sourceId: characterId)
+  PUBLISH personality.created { characterId, version }
 IF archiveData.HasCombatPreferences AND archiveData.CombatPreferences != null
   WRITE combatPreferencesStore:combat-{characterId} <- CombatPreferencesData from archive { version + 1, preserving createdAtUnix }
   CALL IResourceClient.RegisterReferenceAsync(sourceId: "combat-{characterId}")
+  PUBLISH combat-preferences.created { characterId, version }
 RETURN (200, RestoreFromArchiveResponse { personalityRestored, combatPreferencesRestored })
 ```
 
-**Notes**: Does NOT publish created events on restore — this is a system operation, not a lifecycle event. Version is bumped (+1) on restore. Uses `CompressionHelper.DecompressJsonData` and `BannouJson.Deserialize`.
+**Notes**: Publishes `personality.created` and `combat-preferences.created` events on restore per Foundation Tenets (Event-Driven Architecture). Version is bumped (+1) on restore. Uses `CompressionHelper.DecompressJsonData` and `BannouJson.Deserialize`.
 
 ---
 

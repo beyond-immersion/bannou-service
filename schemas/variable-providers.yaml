@@ -64,6 +64,10 @@ x-variable-providers:
   # L4 Game Features Providers
   # ============================================================================
 
+  affix:
+    service: Affix
+    purpose: "Item affix data for NPC GOAP evaluation of equipment quality (${affix.*})"
+
   backstory:
     service: CharacterHistory
     purpose: "Character backstory elements for ABML expressions (${backstory.*})"
@@ -79,6 +83,14 @@ x-variable-providers:
   faction:
     service: Faction
     purpose: "Faction membership and status data for ABML expressions (${faction.*})"
+
+  heritage:
+    service: CharacterLifecycle
+    purpose: "Genetic heritage data — phenotype traits, aptitudes, bloodline membership, species, generation depth (${heritage.*})"
+
+  lifecycle:
+    service: CharacterLifecycle
+    purpose: "Lifecycle state data — age, stage, fertility, health modifier, marriage status, child count, fulfillment (${lifecycle.*})"
 
   obligations:
     service: Obligation

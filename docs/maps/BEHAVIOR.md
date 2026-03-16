@@ -137,7 +137,8 @@ compilationResult = _compiler.CompileYaml(abmlContent, compilationOptions)
   // CulturalAdaptations, GoapIntegration, MaxConstants, MaxStrings (from config)
 
 IF !compilationResult.Success
-  PUBLISH behavior.compilation-failed { behaviorName, errorCount, errors }
+  contentHash = SHA256(UTF8(body.AbmlContent)) as lowercase hex
+  PUBLISH behavior.compilation-failed { behaviorName, errorCount, errors, contentHash }
   RETURN (400, null)
 
 behaviorId = SHA256(bytecode)[0..16] prefixed "behavior-"

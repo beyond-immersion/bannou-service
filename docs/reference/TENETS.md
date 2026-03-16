@@ -68,10 +68,9 @@ plugins/lib-{service}/
 │   ├── I{Service}Service.cs         # Service interface
 │   ├── {Service}ServiceConfiguration.cs  # Configuration class
 │   ├── {Service}PermissionRegistration.cs
-│   ├── {Service}EventsController.cs # Event subscription handlers
 │   └── {Service}ClientEventsModels.cs    # Client event models (if applicable)
 ├── {Service}Service.cs              # MANUAL - business logic only
-├── {Service}ServiceEvents.cs        # MANUAL - event handler implementations
+├── {Service}ServiceEvents.cs        # MANUAL - event handler implementations (generated once, then manual)
 └── Services/                        # MANUAL - optional helper services
 
 bannou-service/Generated/

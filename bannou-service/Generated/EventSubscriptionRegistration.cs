@@ -37,6 +37,11 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<ActorCompletedEvent>("actor.instance.completed");
         EventSubscriptionRegistry.Register<ActorTemplateUpdatedEvent>("actor.template.updated");
 
+        // From affix-events.yaml
+        EventSubscriptionRegistry.Register<ItemTemplateCreatedEvent>("item.template.created");
+        EventSubscriptionRegistry.Register<ItemTemplateUpdatedEvent>("item.template.updated");
+        EventSubscriptionRegistry.Register<SeedCapabilityUpdatedEvent>("seed.capability.updated");
+
         // From analytics-events.yaml
         EventSubscriptionRegistry.Register<GameSessionActionPerformedEvent>("game-session.action.performed");
         EventSubscriptionRegistry.Register<GameSessionCreatedEvent>("game-session.created");
@@ -63,6 +68,13 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<VoiceBroadcastApprovedEvent>("voice.broadcast.approved");
         EventSubscriptionRegistry.Register<VoiceBroadcastStoppedEvent>("voice.broadcast.stopped");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
+
+        // From character-lifecycle-events.yaml
+        EventSubscriptionRegistry.Register<WorldstateYearChangedEvent>("worldstate.year-changed");
+        EventSubscriptionRegistry.Register<WorldstateSeasonChangedEvent>("worldstate.season-changed");
+        EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
+        EventSubscriptionRegistry.Register<ContractBreachDetectedEvent>("contract.breach.detected");
+        EventSubscriptionRegistry.Register<SeedPhaseChangedEvent>("seed.phase.changed");
 
         // From chat-events.yaml
         EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");

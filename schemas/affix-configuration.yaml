@@ -1,0 +1,197 @@
+openapi: 3.0.4
+info:
+  title: Affix Service Configuration
+  description: |
+    Configuration schema for Affix service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Cache TTL Configuration
+    DefinitionCacheTtlSeconds:
+      type: integer
+      minimum: 60
+      maximum: 86400
+      default: 3600
+      description: Definition cache TTL in seconds (1 hour default)
+      env: AFFIX_DEFINITION_CACHE_TTL_SECONDS
+    InstanceCacheTtlSeconds:
+      type: integer
+      minimum: 30
+      maximum: 3600
+      default: 300
+      description: Affix instance cache TTL in seconds (5 minutes default)
+      env: AFFIX_INSTANCE_CACHE_TTL_SECONDS
+    PoolCacheTtlSeconds:
+      type: integer
+      minimum: 60
+      maximum: 86400
+      default: 3600
+      description: Pre-computed pool cache TTL in seconds (1 hour default)
+      env: AFFIX_POOL_CACHE_TTL_SECONDS
+    ComputedStatsCacheTtlSeconds:
+      type: integer
+      minimum: 10
+      maximum: 600
+      default: 60
+      description: Cached computed item stats TTL in seconds (1 minute default, affixes change frequently)
+      env: AFFIX_COMPUTED_STATS_CACHE_TTL_SECONDS
+    EquipmentStatsCacheTtlSeconds:
+      type: integer
+      minimum: 10
+      maximum: 300
+      default: 30
+      description: Cached aggregate equipment stats TTL in seconds (30s default, equip/unequip is frequent)
+      env: AFFIX_EQUIPMENT_STATS_CACHE_TTL_SECONDS
+    # Generation Configuration
+    ItemLevelBucketSize:
+      type: integer
+      minimum: 1
+      maximum: 50
+      default: 10
+      description: Item level range per cache bucket (levels 71-80 share a pool with bucket size 10)
+      env: AFFIX_ITEM_LEVEL_BUCKET_SIZE
+    MaxItemLevel:
+      type: integer
+      minimum: 1
+      maximum: 999
+      default: 100
+      description: Maximum supported item level (determines bucket count for pool caching)
+      env: AFFIX_MAX_ITEM_LEVEL
+    DefaultSpawnWeight:
+      type: integer
+      minimum: 1
+      default: 1000
+      description: Default spawn weight for new definitions when not explicitly set
+      env: AFFIX_DEFAULT_SPAWN_WEIGHT
+    DefaultMaxPrefixes:
+      type: integer
+      minimum: 0
+      maximum: 10
+      default: 3
+      description: Default max prefix slots for rare rarity when no capability mapping exists
+      env: AFFIX_DEFAULT_MAX_PREFIXES
+    DefaultMaxSuffixes:
+      type: integer
+      minimum: 0
+      maximum: 10
+      default: 3
+      description: Default max suffix slots for rare rarity when no capability mapping exists
+      env: AFFIX_DEFAULT_MAX_SUFFIXES
+    # Event Batching Configuration
+    GenerationEventDeduplicationWindowSeconds:
+      type: integer
+      minimum: 5
+      maximum: 300
+      default: 60
+      description: Deduplication window for batched generation events in seconds
+      env: AFFIX_GENERATION_EVENT_DEDUPLICATION_WINDOW_SECONDS
+    GenerationEventBatchMaxSize:
+      type: integer
+      minimum: 10
+      maximum: 10000
+      default: 100
+      description: Maximum records per batched generation event
+      env: AFFIX_GENERATION_EVENT_BATCH_MAX_SIZE
+    # Lock Configuration
+    LockTimeoutSeconds:
+      type: integer
+      minimum: 5
+      maximum: 120
+      default: 30
+      description: Distributed lock timeout in seconds for definition and item mutations
+      env: AFFIX_LOCK_TIMEOUT_SECONDS
+    # Safety Limits
+    MaxDefinitionsPerGameService:
+      type: integer
+      minimum: 100
+      maximum: 100000
+      default: 5000
+      description: Safety limit for definition count per game service
+      env: AFFIX_MAX_DEFINITIONS_PER_GAME_SERVICE
+    MaxAffixesPerItem:
+      type: integer
+      minimum: 1
+      maximum: 50
+      default: 12
+      description: Hard cap on total affixes per item across all slot types
+      env: AFFIX_MAX_AFFIXES_PER_ITEM
+    # Socket Integration
+    IncludeSocketStatsInEquipment:
+      type: boolean
+      default: true
+      description: Whether equipment stat computation includes socketed gem contributions
+      env: AFFIX_INCLUDE_SOCKET_STATS_IN_EQUIPMENT
+    # Background Worker Configuration
+    OrphanReconciliationIntervalMinutes:
+      type: integer
+      minimum: 5
+      maximum: 1440
+      default: 60
+      description: Interval for background orphan instance cleanup worker in minutes
+      env: AFFIX_ORPHAN_RECONCILIATION_INTERVAL_MINUTES
+    OrphanReconciliationBatchSize:
+      type: integer
+      minimum: 50
+      maximum: 5000
+      default: 500
+      description: Items checked per orphan reconciliation cycle
+      env: AFFIX_ORPHAN_RECONCILIATION_BATCH_SIZE
+    # Seed Integration
+    ItemTraitsSeedTypeCode:
+      type: string
+      default: item-traits
+      description: Seed type code for item trait progression (registered at startup via ISeedClient)
+      env: AFFIX_ITEM_TRAITS_SEED_TYPE_CODE
+    # Concurrency
+    MaxConcurrencyRetries:
+      type: integer
+      minimum: 1
+      maximum: 10
+      default: 3
+      description: Maximum retry attempts for ETag conflicts during optimistic concurrency updates
+      env: AFFIX_MAX_CONCURRENCY_RETRIES
+    ListOperationMaxRetries:
+      type: integer
+      minimum: 1
+      maximum: 10
+      default: 3
+      description: Maximum retry attempts for string list index operations (reverse index maintenance)
+      env: AFFIX_LIST_OPERATION_MAX_RETRIES
+    # Batch Lifecycle Events
+    InstanceEventBatchIntervalSeconds:
+      type: integer
+      minimum: 1
+      maximum: 60
+      default: 5
+      description: Flush interval for batched instance lifecycle events in seconds
+      env: AFFIX_INSTANCE_EVENT_BATCH_INTERVAL_SECONDS
+    InstanceEventBatchStartupDelaySeconds:
+      type: integer
+      minimum: 1
+      maximum: 60
+      default: 10
+      description: Startup delay before first batch lifecycle event flush in seconds
+      env: AFFIX_INSTANCE_EVENT_BATCH_STARTUP_DELAY_SECONDS
+    InstanceEventBatchMaxSize:
+      type: integer
+      minimum: 50
+      maximum: 5000
+      default: 500
+      description: Maximum entries per batch lifecycle event flush
+      env: AFFIX_INSTANCE_EVENT_BATCH_MAX_SIZE
+    # Orphan Worker Startup
+    OrphanReconciliationStartupDelaySeconds:
+      type: integer
+      minimum: 10
+      maximum: 300
+      default: 30
+      description: Startup delay before first orphan reconciliation cycle in seconds
+      env: AFFIX_ORPHAN_RECONCILIATION_STARTUP_DELAY_SECONDS

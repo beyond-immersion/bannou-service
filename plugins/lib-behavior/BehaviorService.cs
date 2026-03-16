@@ -129,13 +129,16 @@ public partial class BehaviorService : IBehaviorService
                 string.Join("; ", result.Errors.Select(e => e.Message)));
 
             // Publish compilation failed event for monitoring (contains error details for debugging)
+            var contentHash = Convert.ToHexString(
+                SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(body.AbmlContent))).ToLowerInvariant();
             await _messageBus.PublishBehaviorCompilationFailedAsync(new BehaviorCompilationFailedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 BehaviorName = body.BehaviorName,
                 ErrorCount = result.Errors.Count,
-                Errors = result.Errors.Select(e => e.Message).ToList()
+                Errors = result.Errors.Select(e => e.Message).ToList(),
+                ContentHash = contentHash
             }, cancellationToken);
 
             return (StatusCodes.BadRequest, null);

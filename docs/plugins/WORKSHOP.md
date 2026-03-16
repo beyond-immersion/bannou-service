@@ -473,7 +473,7 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 1. `worldstate.day-changed` — references `worldstate-events.yaml` event type. Handler: `HandleDayChanged`. Registered via `IEventConsumer` in `WorkshopServiceEvents.cs`.
 2. `account.deleted` — references `account-events.yaml` event type. Handler: `HandleAccountDeleted`. Registered via `IEventConsumer` in `WorkshopServiceEvents.cs`. Privacy obligation per FOUNDATION TENETS.
 
-Both handlers are registered in `RegisterEventConsumers` using the `IEventConsumer` pattern. The generated `WorkshopEventsController.cs` dispatches events to these handlers.
+Both handlers are registered in `RegisterEventConsumers` using the `IEventConsumer` pattern.
 
 ### Resource Cleanup (FOUNDATION TENETS)
 

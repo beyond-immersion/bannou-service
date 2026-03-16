@@ -463,7 +463,6 @@ This single command bootstraps the entire plugin. It auto-creates:
 - `DivineController.Meta.cs` - runtime schema introspection
 - `DivineServiceConfiguration.cs` - typed config class
 - `DivinePermissionRegistration.cs` - permissions
-- `DivineEventsController.cs` - event subscription handlers (from x-event-subscriptions)
 
 **Generated code** (in `bannou-service/Generated/`):
 - `Models/DivineModels.cs` - request/response models
@@ -518,9 +517,9 @@ All models use proper types (enums, Guids, DateTimeOffset). Nullable for optiona
 
 #### 5a. `plugins/lib-divine/DivineServiceEvents.cs` (manual - not auto-generated)
 
-Partial class of DivineService. The generated `DivineEventsController.cs` handles event subscription registration from `x-event-subscriptions` -- do NOT manually register events via `IEventConsumer` or add `IEventConsumer` as a constructor dependency.
+Partial class of DivineService. Event subscriptions are registered via `IEventConsumer` in `RegisterEventConsumers()`, generated once from `x-event-subscriptions` by `generate-event-subscriptions.sh`.
 
-**Handler implementations** (methods called by generated `DivineEventsController`):
+**Handler implementations** (methods called via `IEventConsumer` dispatch):
 
 - `HandleAnalyticsScoreUpdatedAsync(AnalyticsScoreUpdatedEvent evt)`:
   1. Determine which domain(s) the score update relates to (map analytics category -> domain code)
@@ -580,7 +579,7 @@ Partial class with `[BannouService("divine", typeof(IDivineService), lifetime: S
 - `ICollectionClient` - permanent blessing grants via lib-collection (#286) (L2 hard dependency)
 - `IServiceProvider` - for optional L4 soft dependencies
 
-> **Note**: `IEventConsumer` is NOT a constructor dependency. Event subscriptions declared via `x-event-subscriptions` in the events schema are handled by the generated `DivineEventsController.cs`, which calls methods on the service class directly.
+> **Note**: `IEventConsumer` IS a constructor dependency. Event subscriptions declared via `x-event-subscriptions` are registered in `RegisterEventConsumers()` using `IEventConsumer`, which dispatches events to handler methods on the service class.
 
 **Soft dependencies** (resolved at runtime via `IServiceProvider`, null-checked):
 - `IStatusClient` - temporary blessing grants via Status Inventory (#282) (L4)
@@ -864,7 +863,7 @@ These are smaller questions that should be resolved during implementation, not b
 3. Verify no CS1591 warnings (all schema properties have descriptions)
 4. Verify `StateStoreDefinitions.cs` contains all 5 Divine constants after generation
 5. Verify `DivineClient.cs` generated in `bannou-service/Generated/Clients/` for other services to call Divine
-6. Verify event subscription handlers generated in `DivineEventsController.cs` for consumed events
+6. Verify `DivineServiceEvents.cs` generated with `RegisterEventConsumers` and handler stubs for consumed events
 7. Verify the `IDivineService` interface has methods for all ~22 endpoints
 8. Manual verification: confirm `ICurrencyClient`, `ICollectionClient`, `ISeedClient`, `IRelationshipClient`, `ICharacterClient`, `IGameServiceClient` are available via constructor injection (L2 loads before L4)
 9. Verify blessing grant flow end-to-end in unit tests: debit divinity -> grant via Collection (#286) or Status Inventory (#282) based on tier -> record BlessingModel -> publish event

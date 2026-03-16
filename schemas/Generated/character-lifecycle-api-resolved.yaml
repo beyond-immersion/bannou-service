@@ -1,0 +1,2795 @@
+openapi: 3.0.4
+info:
+  title: Bannou Character Lifecycle Service API
+  description: |
+    Generational cycle orchestration and genetic heritage service (L4 GameFeatures).
+    Manages character aging, marriage, procreation, death processing, and cross-generational
+    trait inheritance. The temporal engine that drives the content flywheel by ensuring
+    characters are born, live, age, reproduce, and die -- producing archives that feed
+    future content generation.
+
+    Internal-only: never internet-facing. Called by god-actors via ABML action handlers,
+    behavior systems, and other L4 services.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-references:
+  - target: character
+    sourceType: lifecycle
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /character-lifecycle/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
+  - target: realm
+    sourceType: lifecycle
+    field: realmId
+    onDelete: cascade
+    cleanup:
+      endpoint: /character-lifecycle/cleanup-by-realm
+      payloadTemplate: '{"realmId": "{{resourceId}}"}'
+  x-compression-callback:
+    resourceType: character
+    sourceType: character-lifecycle
+    compressEndpoint: /character-lifecycle/get-compress-data
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+    priority: 25
+    templateNamespace: lifecycle
+    description: Lifecycle summary (stages, marriages, children, fulfillment) and heritage profile (genetics, 
+      bloodlines, aptitudes)
+    decompressEndpoint: /character-lifecycle/restore-from-archive
+    decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'
+x-service-layer: GameFeatures
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # ==========================================================================
+  # Lifecycle Management (8 endpoints)
+  # ==========================================================================
+
+  /character-lifecycle/marriage/initiate:
+    post:
+      summary: Initiate marriage between two characters
+      description: |
+        Validates eligibility, creates marriage contract, SPOUSE relationship,
+        household integration (if Organization available), and Disposition feeling seeds.
+        Self-healing with degraded success for L4 soft dependencies.
+      operationId: initiateMarriage
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateMarriageRequest'
+      responses:
+        '200':
+          description: Marriage successfully initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitiateMarriageResponse'
+        '400':
+          description: Characters not eligible for marriage (wrong stage, prohibited relationship, species 
+            incompatibility)
+        '404':
+          description: One or both character lifecycle profiles not found
+        '409':
+          description: Could not acquire marriage lock (concurrent operation)
+
+  /character-lifecycle/procreation/initiate:
+    post:
+      summary: Initiate procreation between two characters
+      description: |
+        Validates eligibility, fertility check, creates pending pregnancy record.
+        Actual birth occurs when pregnancy worker detects due date via worldstate.day-changed.
+      operationId: initiateProcreation
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateProcreationRequest'
+      responses:
+        '200':
+          description: Pregnancy successfully initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitiateProcreationResponse'
+        '400':
+          description: Characters not eligible for procreation (wrong stage, fertility failure, child limits exceeded)
+        '404':
+          description: One or both character lifecycle profiles not found
+        '409':
+          description: Could not acquire procreation lock (concurrent operation)
+
+  /character-lifecycle/death/record:
+    post:
+      summary: Record a character death and execute the death processing pipeline
+      description: |
+        External death reporting. Executes full death pipeline: fulfillment calculation,
+        guardian spirit contribution, archive compression, inheritance processing,
+        afterlife pathway determination. Idempotent (returns existing result if already dead).
+      operationId: recordDeath
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordDeathRequest'
+      responses:
+        '200':
+          description: Death recorded and processed (or already processed, idempotent return)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordDeathResponse'
+        '404':
+          description: Character lifecycle profile not found
+        '409':
+          description: Could not acquire death processing lock (concurrent operation)
+
+  /character-lifecycle/profile/get:
+    post:
+      summary: Get lifecycle profile for a character
+      description: Returns full lifecycle profile including age, stage, heritage summary, marriage status, children, 
+        fulfillment (if dead).
+      operationId: getLifecycleProfile
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLifecycleProfileRequest'
+      responses:
+        '200':
+          description: Lifecycle profile found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLifecycleProfileResponse'
+        '404':
+          description: Character lifecycle profile not found
+
+  /character-lifecycle/profile/query-by-stage:
+    post:
+      summary: Query characters by lifecycle stage within a realm
+      description: |
+        Paged query for characters in a specific lifecycle stage within a realm.
+        Used by behavior systems to find eligible marriage partners, by storyline to find
+        elders nearing death, etc.
+      operationId: queryByStage
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryByStageRequest'
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryByStageResponse'
+
+  /character-lifecycle/profile/query-by-bloodline:
+    post:
+      summary: Query living characters with a specific bloodline
+      description: Returns all living characters with a specific bloodline membership. Used by Quest prerequisites, 
+        Divine targeting, Storyline scenario matching.
+      operationId: queryByBloodline
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryByBloodlineRequest'
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryByBloodlineResponse'
+        '404':
+          description: Bloodline not found
+
+  /character-lifecycle/profile/set-death-year:
+    post:
+      summary: Override a character's projected natural death year
+      description: |
+        Administrative override for divine intervention (extending/shortening lifespan)
+        or testing. Publishes no event (silent adjustment).
+      operationId: setNaturalDeathYear
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetNaturalDeathYearRequest'
+      responses:
+        '200':
+          description: Natural death year updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetNaturalDeathYearResponse'
+        '404':
+          description: Character lifecycle profile not found
+        '409':
+          description: ETag conflict (concurrent modification)
+
+  /character-lifecycle/profile/seed:
+    post:
+      summary: Bulk seed lifecycle profiles for first-generation characters
+      description: |
+        Creates lifecycle profiles for seeded (first-generation) characters.
+        Accepts character IDs with birth years, stages, and optional heritage data.
+        Per-item error isolation. Used during world initialization.
+      operationId: seedLifecycleProfile
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedLifecycleProfileRequest'
+      responses:
+        '200':
+          description: Seed operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedLifecycleProfileResponse'
+
+  # ==========================================================================
+  # Heritage Management (6 endpoints)
+  # ==========================================================================
+
+  /character-lifecycle/heritage/get-genetic-profile:
+    post:
+      summary: Get full genetic profile for a character
+      description: Returns full genetic profile including genotype, phenotype, aptitudes, bloodlines, mutations, parent 
+        references.
+      operationId: getGeneticProfile
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetGeneticProfileRequest'
+      responses:
+        '200':
+          description: Genetic profile found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGeneticProfileResponse'
+        '404':
+          description: Genetic profile not found
+
+  /character-lifecycle/heritage/get-phenotype:
+    post:
+      summary: Get expressed phenotype traits and aptitudes for a character
+      description: Lightweight version of GetGeneticProfile returning only expressed phenotype traits and derived 
+        aptitudes.
+      operationId: getPhenotype
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPhenotypeRequest'
+      responses:
+        '200':
+          description: Phenotype data found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPhenotypeResponse'
+        '404':
+          description: Genetic profile not found
+
+  /character-lifecycle/heritage/query-by-aptitude:
+    post:
+      summary: Find characters with a specific aptitude above a threshold
+      description: Used by Storyline and Quest to find characters with natural talent in specific domains.
+      operationId: queryByAptitude
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryByAptitudeRequest'
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryByAptitudeResponse'
+
+  /character-lifecycle/heritage/seed-genetic-profile:
+    post:
+      summary: Create genetic profile for a first-generation character
+      description: |
+        Accepts explicit phenotype values or generates from species defaults with random variation.
+        First-gen characters have genotype equal to phenotype (both alleles equal expressed value).
+        Immutable after creation (returns 409 if profile already exists).
+      operationId: seedGeneticProfile
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedGeneticProfileRequest'
+      responses:
+        '200':
+          description: Genetic profile created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedGeneticProfileResponse'
+        '404':
+          description: Heritable trait template not found for species
+        '409':
+          description: Genetic profile already exists (immutable)
+
+  /character-lifecycle/heritage/simulate-offspring:
+    post:
+      summary: Simulate potential offspring traits without creating a character
+      description: |
+        Given two parent character IDs, simulates what a child's genetic profile would look like.
+        Returns probable phenotype ranges with variation. Pure computation, no writes.
+      operationId: simulateOffspring
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateOffspringRequest'
+      responses:
+        '200':
+          description: Simulation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulateOffspringResponse'
+        '404':
+          description: One or both parent genetic profiles not found
+
+  /character-lifecycle/heritage/get-family-tree:
+    post:
+      summary: Get multi-generational family tree rooted at a character
+      description: |
+        Returns parents, grandparents, siblings, children, grandchildren with heritage
+        trait summaries per generation. Depth configurable.
+      operationId: getFamilyTree
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFamilyTreeRequest'
+      responses:
+        '200':
+          description: Family tree assembled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFamilyTreeResponse'
+        '404':
+          description: Character lifecycle profile not found
+
+  # ==========================================================================
+  # Template Management (6 endpoints)
+  # ==========================================================================
+
+  /character-lifecycle/template/seed-lifecycle:
+    post:
+      summary: Create lifecycle stage definitions for a species
+      description: Validates stage boundaries are contiguous (no age gaps or overlaps). Returns 409 if template already 
+        exists for this species/game.
+      operationId: seedLifecycleTemplate
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedLifecycleTemplateRequest'
+      responses:
+        '200':
+          description: Lifecycle template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedLifecycleTemplateResponse'
+        '400':
+          description: Invalid game service ID or non-contiguous stage boundaries
+        '409':
+          description: Lifecycle template already exists for this species/game
+
+  /character-lifecycle/template/seed-heritable-traits:
+    post:
+      summary: Create heritable trait definitions for a species
+      description: Defines which traits exist, their dominance models, mutation parameters, expression delays, and 
+        personality/aptitude mappings.
+      operationId: seedHeritableTraitTemplate
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedHeritableTraitTemplateRequest'
+      responses:
+        '200':
+          description: Heritable trait template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedHeritableTraitTemplateResponse'
+        '400':
+          description: Invalid game service ID
+        '409':
+          description: Heritable trait template already exists for this species/game
+
+  /character-lifecycle/template/seed-hybrid:
+    post:
+      summary: Create cross-species hybridization rules for a species pair
+      description: Defines trait dominance overrides, fertility modifiers, and hybrid-specific traits for a 
+        cross-species combination.
+      operationId: seedHybridTemplate
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedHybridTemplateRequest'
+      responses:
+        '200':
+          description: Hybrid trait template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedHybridTemplateResponse'
+        '400':
+          description: Invalid game service ID
+        '409':
+          description: Hybrid template already exists for this species pair/game
+
+  /character-lifecycle/template/get-lifecycle:
+    post:
+      summary: Get lifecycle template for a species
+      description: Returns lifecycle stage definitions for a species within a game service.
+      operationId: getLifecycleTemplate
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLifecycleTemplateRequest'
+      responses:
+        '200':
+          description: Lifecycle template found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLifecycleTemplateResponse'
+        '404':
+          description: Lifecycle template not found
+
+  /character-lifecycle/template/get-heritable-traits:
+    post:
+      summary: Get heritable trait template for a species
+      description: Returns heritable trait definitions for a species within a game service.
+      operationId: getHeritableTraitTemplate
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetHeritableTraitTemplateRequest'
+      responses:
+        '200':
+          description: Heritable trait template found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetHeritableTraitTemplateResponse'
+        '404':
+          description: Heritable trait template not found
+
+  /character-lifecycle/template/list:
+    post:
+      summary: List all lifecycle and heritage templates for a game service
+      description: Returns all lifecycle templates, heritable trait templates, and hybrid templates. Supports 
+        includeDeprecated for Category B deprecation.
+      operationId: listTemplates
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListTemplatesRequest'
+      responses:
+        '200':
+          description: Template listing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTemplatesResponse'
+
+  # ==========================================================================
+  # Bloodline Management (5 endpoints)
+  # ==========================================================================
+
+  /character-lifecycle/bloodline/get:
+    post:
+      summary: Get bloodline definition
+      description: Returns bloodline definition including origin, trait signature, member count, generation span.
+      operationId: getBloodline
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBloodlineRequest'
+      responses:
+        '200':
+          description: Bloodline found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBloodlineResponse'
+        '404':
+          description: Bloodline not found
+
+  /character-lifecycle/bloodline/list:
+    post:
+      summary: List bloodlines within a game service
+      description: Paged list filterable by trait signature, minimum generation depth, and minimum member count.
+      operationId: listBloodlines
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListBloodlinesRequest'
+      responses:
+        '200':
+          description: Bloodline listing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBloodlinesResponse'
+
+  /character-lifecycle/bloodline/establish:
+    post:
+      summary: Manually establish a bloodline
+      description: |
+        Creates bloodline (divine intervention, noble declaration). Assigns to origin character
+        and specified ancestors retroactively. Publishes bloodline.formed and bloodline.created events.
+      operationId: establishBloodline
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstablishBloodlineRequest'
+      responses:
+        '200':
+          description: Bloodline established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstablishBloodlineResponse'
+        '409':
+          description: Bloodline code already exists for this game service
+
+  /character-lifecycle/bloodline/delete:
+    post:
+      summary: Delete a bloodline (immediate hard delete)
+      description: |
+        Immediate hard delete. Calls ExecuteCleanupAsync via lib-resource to CASCADE-clean
+        membership indexes. Immutable GeneticProfile.bloodlines arrays are unaffected.
+        HeritageProviderFactory filters deleted bloodlines from variable resolution.
+      operationId: deleteBloodline
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteBloodlineRequest'
+      responses:
+        '200':
+          description: Bloodline deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteBloodlineResponse'
+        '404':
+          description: Bloodline not found
+
+  /character-lifecycle/bloodline/query-members:
+    post:
+      summary: Query living members of a bloodline
+      description: Returns living members with their generation depth and trait expression.
+      operationId: queryBloodlineMembers
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryBloodlineMembersRequest'
+      responses:
+        '200':
+          description: Member listing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryBloodlineMembersResponse'
+        '404':
+          description: Bloodline not found
+
+  # ==========================================================================
+  # Cleanup Endpoints (2 endpoints)
+  # ==========================================================================
+
+  /character-lifecycle/cleanup-by-character:
+    post:
+      summary: Clean up all lifecycle data for a character
+      description: |
+        Resource-managed cleanup via lib-resource. Removes lifecycle profile, genetic profile,
+        and bloodline memberships. Updates parent child counts. Does NOT cascade-delete children.
+      operationId: cleanupByCharacter
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+
+  /character-lifecycle/cleanup-by-realm:
+    post:
+      summary: Clean up all lifecycle data for a realm
+      description: Removes all lifecycle profiles, genetic profiles, and bloodline memberships for characters in the 
+        realm.
+      operationId: cleanupByRealm
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByRealmRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByRealmResponse'
+
+  # ==========================================================================
+  # Compression Endpoints (2 endpoints)
+  # ==========================================================================
+
+  /character-lifecycle/get-compress-data:
+    post:
+      summary: Get lifecycle and heritage data for character archive compression
+      description: |
+        Returns LifecycleArchive containing lifecycle summary (stages, marriages, children,
+        fulfillment) and heritage profile (genetics, bloodlines, aptitudes). Key content
+        flywheel material. Called by lib-resource during character compression.
+      operationId: getCompressData
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Archive data assembled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifecycleArchive'
+        '404':
+          description: Character lifecycle profile not found
+
+  /character-lifecycle/restore-from-archive:
+    post:
+      summary: Restore lifecycle and heritage data from archive
+      description: Restores lifecycle profile and genetic data from archive. Heritage is restored as-is (immutable). 
+        Lifecycle stage set to archived stage.
+      operationId: restoreFromArchive
+      tags:
+      - CharacterLifecycle
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Data restored from archive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+
+components:
+  schemas:
+    # ==========================================================================
+    # Enums
+    # ==========================================================================
+
+    LifecycleStatus:
+      type: string
+      description: Current lifecycle status of a character
+      enum: [Alive, Dying, Dead, Archived]
+
+    CreationCause:
+      type: string
+      description: How a character was created in the lifecycle system
+      enum: [Procreation, Seeded, Divine, Spawned]
+
+    DominanceModel:
+      type: string
+      description: Genetic dominance model determining how alleles combine to produce phenotype
+      enum: [DominantHigh, DominantLow, Blending, Codominant, Maternal, Random]
+
+    DeathDistribution:
+      type: string
+      description: Statistical distribution model for natural death year calculation
+      enum: [Uniform, Normal, WeightedLate]
+
+    # ==========================================================================
+    # Shared Domain Models
+    # ==========================================================================
+
+    LifecycleProfileSummary:
+      type: object
+      additionalProperties: false
+      description: Lifecycle profile data returned by get and query endpoints
+      required:
+      - characterId
+      - gameServiceId
+      - realmId
+      - speciesCode
+      - birthGameYear
+      - currentAge
+      - currentStage
+      - causeOfCreation
+      - childCount
+      - totalChildCount
+      - fertilityModifier
+      - healthModifier
+      - status
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: The character being tracked
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        realmId:
+          type: string
+          format: uuid
+          description: Realm for worldstate time queries
+        speciesCode:
+          type: string
+          description: Species determines stage thresholds and longevity
+          minLength: 1
+          maxLength: 100
+        birthGameYear:
+          type: integer
+          description: Game year of birth (from worldstate)
+        birthSeason:
+          type: string
+          nullable: true
+          description: Season of birth (game-configurable from Worldstate calendar)
+          maxLength: 50
+        currentAge:
+          type: integer
+          description: Current age in game years
+          minimum: 0
+        currentStage:
+          type: string
+          description: Current lifecycle stage code (species-configurable)
+          minLength: 1
+          maxLength: 50
+        causeOfCreation:
+          $ref: '#/components/schemas/CreationCause'
+          description: How this character was created
+        parentAId:
+          type: string
+          format: uuid
+          nullable: true
+          description: First parent (null for seeded/spawned characters)
+        parentBId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Second parent (null for seeded/spawned characters)
+        householdOrgId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Organization ID of household
+        marriageContractIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Active marriage contract IDs (empty if unmarried; array for polygamous cultures)
+        spouseCharacterIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Current spouse character IDs (from Relationship, cached)
+        childCount:
+          type: integer
+          description: Living children count
+          minimum: 0
+        totalChildCount:
+          type: integer
+          description: All children ever (including deceased)
+          minimum: 0
+        fertilityModifier:
+          type: number
+          format: float
+          description: Species + age + heritage fertility modifier
+          minimum: 0.0
+          maximum: 2.0
+        healthModifier:
+          type: number
+          format: float
+          description: Age-based health decline modifier
+          minimum: 0.0
+          maximum: 2.0
+        naturalDeathYear:
+          type: integer
+          nullable: true
+          description: Projected natural death year (null if not yet calculated)
+        fulfillmentScore:
+          type: number
+          format: float
+          nullable: true
+          description: Calculated at death from Disposition drives (0.0-1.0, null if alive)
+          minimum: 0.0
+          maximum: 1.0
+        deathGameYear:
+          type: integer
+          nullable: true
+          description: Game year of death (null if alive)
+        deathCause:
+          type: string
+          nullable: true
+          description: Game-extensible death cause code (e.g., natural, combat, disease)
+          maxLength: 100
+        afterlifePath:
+          type: string
+          nullable: true
+          description: Determined at death processing (game-configurable pathway code)
+          maxLength: 100
+        status:
+          $ref: '#/components/schemas/LifecycleStatus'
+          description: Current lifecycle status
+
+    GenotypeEntry:
+      type: object
+      additionalProperties: false
+      description: Inherited allele pair for a single genetic trait
+      required:
+      - traitCode
+      - alleleA
+      - alleleB
+      - dominance
+      properties:
+        traitCode:
+          type: string
+          description: Game-configurable genetic trait identifier
+          minLength: 1
+          maxLength: 100
+        alleleA:
+          type: number
+          format: float
+          description: Value from parent A (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+        alleleB:
+          type: number
+          format: float
+          description: Value from parent B (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+        dominance:
+          $ref: '#/components/schemas/DominanceModel'
+          description: How alleles combine to produce phenotype
+
+    PhenotypeEntry:
+      type: object
+      additionalProperties: false
+      description: Expressed phenotype value for a single genetic trait
+      required:
+      - traitCode
+      - value
+      - expressionRule
+      properties:
+        traitCode:
+          type: string
+          description: Same code as genotype
+          minLength: 1
+          maxLength: 100
+        value:
+          type: number
+          format: float
+          description: The expressed phenotype value
+          minimum: 0.0
+          maximum: 1.0
+        expressionRule:
+          $ref: '#/components/schemas/DominanceModel'
+          description: Which dominance model produced this value
+
+    AptitudeEntry:
+      type: object
+      additionalProperties: false
+      description: Derived skill aptitude from phenotype traits
+      required:
+      - domain
+      - value
+      properties:
+        domain:
+          type: string
+          description: Skill domain code (e.g., smithing, enchanting)
+          minLength: 1
+          maxLength: 100
+        value:
+          type: number
+          format: float
+          description: Inherited aptitude value representing innate potential (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+
+    MutationEntry:
+      type: object
+      additionalProperties: false
+      description: Random mutation applied during recombination
+      required:
+      - traitCode
+      - shift
+      properties:
+        traitCode:
+          type: string
+          description: Trait that was mutated
+          minLength: 1
+          maxLength: 100
+        shift:
+          type: number
+          format: float
+          description: Amount the allele value was shifted
+        originalValue:
+          type: number
+          format: float
+          nullable: true
+          description: Value before mutation (null if unavailable)
+
+    BloodlineEntry:
+      type: object
+      additionalProperties: false
+      description: Bloodline membership record for a character
+      required:
+      - bloodlineId
+      - bloodlineCode
+      - originCharacterId
+      - originGameYear
+      - traitSignature
+      - generationFrom
+      properties:
+        bloodlineId:
+          type: string
+          format: uuid
+          description: Bloodline identifier
+        bloodlineCode:
+          type: string
+          description: Human-readable bloodline code
+          minLength: 1
+          maxLength: 100
+        originCharacterId:
+          type: string
+          format: uuid
+          description: Character who founded or was first tracked member
+        originGameYear:
+          type: integer
+          description: When the bloodline was first identified
+        traitSignature:
+          type: array
+          items:
+            type: string
+          description: Trait codes that characterize this bloodline
+        generationFrom:
+          type: integer
+          description: Generations from origin to this character
+          minimum: 0
+
+    LifecycleStageDefinition:
+      type: object
+      additionalProperties: false
+      description: Definition of a single lifecycle stage within a species template
+      required:
+      - code
+      - minAge
+      - healthModifier
+      - fertilityBase
+      - canMarry
+      - canProcreate
+      - canOwnOrg
+      - canBePossessed
+      properties:
+        code:
+          type: string
+          description: Stage code (species-configurable, e.g., infant, child, adult)
+          minLength: 1
+          maxLength: 50
+        minAge:
+          type: integer
+          description: Minimum age in game years for this stage
+          minimum: 0
+        maxAge:
+          type: integer
+          nullable: true
+          description: Maximum age for this stage (null for open-ended stages like dying)
+        healthModifier:
+          type: number
+          format: float
+          description: Multiplier applied to character health at this stage
+          minimum: 0.0
+          maximum: 2.0
+        fertilityBase:
+          type: number
+          format: float
+          description: Base fertility at this stage (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+        canMarry:
+          type: boolean
+          description: Whether marriage is permitted at this stage
+        canProcreate:
+          type: boolean
+          description: Whether procreation is permitted at this stage
+        canOwnOrg:
+          type: boolean
+          description: Whether character can own organizations at this stage
+        canBePossessed:
+          type: boolean
+          description: Whether guardian spirit can possess character at this stage
+
+    NaturalDeathRange:
+      type: object
+      additionalProperties: false
+      description: Configuration for natural death year calculation
+      required:
+      - minAge
+      - maxAge
+      - distribution
+      properties:
+        minAge:
+          type: integer
+          description: Earliest possible natural death age
+          minimum: 1
+        maxAge:
+          type: integer
+          description: Latest possible natural death age
+          minimum: 1
+        distribution:
+          $ref: '#/components/schemas/DeathDistribution'
+          description: Statistical distribution for death year selection
+
+    FertilityWindow:
+      type: object
+      additionalProperties: false
+      description: Species fertility peak and decline configuration
+      required:
+      - peakStartAge
+      - peakEndAge
+      - declineRate
+      properties:
+        peakStartAge:
+          type: integer
+          description: Age when fertility peaks
+          minimum: 0
+        peakEndAge:
+          type: integer
+          description: Age when peak ends
+          minimum: 0
+        declineRate:
+          type: number
+          format: float
+          description: How fast fertility drops after peak (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+
+    HeritableTraitDefinition:
+      type: object
+      additionalProperties: false
+      description: Definition of a heritable genetic trait for a species
+      required:
+      - traitCode
+      - displayName
+      - category
+      - dominanceModel
+      - mutationChance
+      - mutationRange
+      properties:
+        traitCode:
+          type: string
+          description: Unique trait identifier within species
+          minLength: 1
+          maxLength: 100
+        displayName:
+          type: string
+          description: Human-readable trait name
+          minLength: 1
+          maxLength: 200
+        category:
+          type: string
+          description: Trait category (physical, mental, magical, social)
+          minLength: 1
+          maxLength: 50
+        dominanceModel:
+          $ref: '#/components/schemas/DominanceModel'
+          description: How alleles combine for this trait
+        mutationChance:
+          type: number
+          format: float
+          description: Probability of mutation per trait during procreation (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+        mutationRange:
+          type: number
+          format: float
+          description: Maximum allele shift on mutation
+          minimum: 0.0
+          maximum: 1.0
+        expressionDelay:
+          type: string
+          nullable: true
+          description: Stage at which trait fully expresses (null for immediate expression at birth)
+          maxLength: 50
+        personalityMapping:
+          type: string
+          nullable: true
+          description: Which personality trait this feeds (e.g., aggression)
+          maxLength: 100
+        aptitudeMapping:
+          type: string
+          nullable: true
+          description: Which aptitude domain this feeds (e.g., smithing)
+          maxLength: 100
+
+    HybridTraitOverride:
+      type: object
+      additionalProperties: false
+      description: Dominance override for a specific trait in cross-species hybridization
+      required:
+      - traitCode
+      - dominanceOverride
+      properties:
+        traitCode:
+          type: string
+          description: Trait being overridden
+          minLength: 1
+          maxLength: 100
+        dominanceOverride:
+          $ref: '#/components/schemas/DominanceModel'
+          description: Dominance model override for this trait in hybrid offspring
+
+    FamilyTreeNode:
+      type: object
+      additionalProperties: false
+      description: A node in a multi-generational family tree
+      required:
+      - characterId
+      - generation
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character at this tree node
+        speciesCode:
+          type: string
+          nullable: true
+          description: Species code of this character
+          maxLength: 100
+        generation:
+          type: integer
+          description: Generation relative to root (negative for ancestors, positive for descendants)
+        relationship:
+          type: string
+          nullable: true
+          description: Relationship to the root character (parent, grandparent, child, sibling, etc.)
+          maxLength: 50
+        phenotypeSummary:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/PhenotypeEntry'
+          description: Key phenotype traits for this character (summarized)
+        bloodlineCodes:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Bloodline codes this character belongs to
+
+    TraitRange:
+      type: object
+      additionalProperties: false
+      description: Probable range of a trait value in simulated offspring
+      required:
+      - traitCode
+      - minValue
+      - maxValue
+      - meanValue
+      properties:
+        traitCode:
+          type: string
+          description: Trait identifier
+          minLength: 1
+          maxLength: 100
+        minValue:
+          type: number
+          format: float
+          description: Minimum probable value
+          minimum: 0.0
+          maximum: 1.0
+        maxValue:
+          type: number
+          format: float
+          description: Maximum probable value
+          minimum: 0.0
+          maximum: 1.0
+        meanValue:
+          type: number
+          format: float
+          description: Average expected value
+          minimum: 0.0
+          maximum: 1.0
+
+    BloodlineSummary:
+      type: object
+      additionalProperties: false
+      description: Bloodline definition data returned by get and list endpoints
+      required:
+      - bloodlineId
+      - bloodlineCode
+      - gameServiceId
+      - originCharacterId
+      - originGameYear
+      - traitSignature
+      - memberCount
+      - generationSpan
+      properties:
+        bloodlineId:
+          type: string
+          format: uuid
+          description: Bloodline identifier
+        bloodlineCode:
+          type: string
+          description: Human-readable bloodline code
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        originCharacterId:
+          type: string
+          format: uuid
+          description: Character who founded or was first tracked member
+        originGameYear:
+          type: integer
+          description: Game year when the bloodline was first identified
+        traitSignature:
+          type: array
+          items:
+            type: string
+          description: Trait codes that characterize this bloodline
+        memberCount:
+          type: integer
+          description: Number of living members
+          minimum: 0
+        generationSpan:
+          type: integer
+          description: Number of generations from origin to most recent member
+          minimum: 0
+
+    BloodlineMemberSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a bloodline member with generation and trait data
+      required:
+      - characterId
+      - generationFrom
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character who is a member of this bloodline
+        generationFrom:
+          type: integer
+          description: Generations from bloodline origin to this character
+          minimum: 0
+        traitExpression:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/PhenotypeEntry'
+          description: Expressed signature traits for this member
+
+    SeedCharacterEntry:
+      type: object
+      additionalProperties: false
+      description: Individual character entry for bulk lifecycle profile seeding
+      required:
+      - characterId
+      - gameServiceId
+      - realmId
+      - speciesCode
+      - birthGameYear
+      - currentAge
+      - currentStage
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to seed lifecycle profile for
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        realmId:
+          type: string
+          format: uuid
+          description: Realm for worldstate time queries
+        speciesCode:
+          type: string
+          description: Species code for template resolution
+          minLength: 1
+          maxLength: 100
+        birthGameYear:
+          type: integer
+          description: Game year of birth
+        birthSeason:
+          type: string
+          nullable: true
+          description: Season of birth
+          maxLength: 50
+        currentAge:
+          type: integer
+          description: Current age in game years
+          minimum: 0
+        currentStage:
+          type: string
+          description: Current lifecycle stage code
+          minLength: 1
+          maxLength: 50
+        heritageData:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/PhenotypeEntry'
+          description: Optional explicit phenotype values for seeded first-generation characters
+
+    SeedItemError:
+      type: object
+      additionalProperties: false
+      description: Error encountered during per-item processing in a bulk seed operation
+      required:
+      - characterId
+      - error
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character that failed seeding
+        error:
+          type: string
+          description: Error description
+          maxLength: 500
+
+    # ==========================================================================
+    # Archive Models
+    # ==========================================================================
+
+    LifecycleArchive:
+      type: object
+      additionalProperties: false
+      x-archive-type: true
+      description: Compressed archive of lifecycle and heritage data for character archival
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this archive belongs to
+        lifecycleSummary:
+          $ref: '#/components/schemas/LifecycleProfileSummary'
+          nullable: true
+          description: Lifecycle profile snapshot at time of archival
+        phenotype:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/PhenotypeEntry'
+          description: Expressed phenotype traits
+        aptitudes:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/AptitudeEntry'
+          description: Derived skill aptitudes
+        bloodlines:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/BloodlineEntry'
+          description: Bloodline memberships at time of archival
+
+    # ==========================================================================
+    # Request/Response Models
+    # ==========================================================================
+
+    # -- Lifecycle Management --
+
+    InitiateMarriageRequest:
+      type: object
+      additionalProperties: false
+      description: Request to initiate marriage between two characters
+      required:
+      - characterAId
+      - characterBId
+      - gameServiceId
+      properties:
+        characterAId:
+          type: string
+          format: uuid
+          description: First character in the marriage
+        characterBId:
+          type: string
+          format: uuid
+          description: Second character in the marriage
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope for template resolution
+        householdResolution:
+          type: string
+          nullable: true
+          description: How to resolve household (join_a, join_b, create_new). Null uses default from cultural norms.
+          maxLength: 50
+
+    InitiateMarriageResponse:
+      type: object
+      additionalProperties: false
+      description: Result of marriage initiation
+      required:
+      - contractId
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: Marriage contract ID created via IContractClient
+        householdOrgId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Household organization ID (null if Organization was unavailable)
+
+    InitiateProcreationRequest:
+      type: object
+      additionalProperties: false
+      description: Request to initiate procreation between two characters
+      required:
+      - parentAId
+      - parentBId
+      - gameServiceId
+      properties:
+        parentAId:
+          type: string
+          format: uuid
+          description: "First parent (convention: birth parent for Maternal dominance)"
+        parentBId:
+          type: string
+          format: uuid
+          description: Second parent
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope for template resolution
+
+    InitiateProcreationResponse:
+      type: object
+      additionalProperties: false
+      description: Result of procreation initiation
+      required:
+      - pregnancyId
+      - expectedBirthDate
+      properties:
+        pregnancyId:
+          type: string
+          format: uuid
+          description: Identifier for the pending pregnancy
+        expectedBirthDate:
+          type: integer
+          description: Expected birth date as game day number
+
+    RecordDeathRequest:
+      type: object
+      additionalProperties: false
+      description: Request to record a character death
+      required:
+      - characterId
+      - deathCause
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character who died
+        deathCause:
+          type: string
+          description: Game-extensible death cause code (e.g., natural, combat, disease)
+          minLength: 1
+          maxLength: 100
+
+    RecordDeathResponse:
+      type: object
+      additionalProperties: false
+      description: Result of death processing
+      required:
+      - fulfillmentScore
+      - afterlifePath
+      properties:
+        fulfillmentScore:
+          type: number
+          format: float
+          description: Calculated fulfillment from Disposition drives (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+        afterlifePath:
+          type: string
+          description: Determined afterlife pathway code
+          maxLength: 100
+
+    GetLifecycleProfileRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a lifecycle profile
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to retrieve profile for
+
+    GetLifecycleProfileResponse:
+      type: object
+      additionalProperties: false
+      description: Lifecycle profile for a character
+      required:
+      - profile
+      properties:
+        profile:
+          $ref: '#/components/schemas/LifecycleProfileSummary'
+          description: Full lifecycle profile data
+
+    QueryByStageRequest:
+      type: object
+      additionalProperties: false
+      description: Request to query characters by lifecycle stage within a realm
+      required:
+      - realmId
+      - stageCode
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to query within
+        stageCode:
+          type: string
+          description: Lifecycle stage code to filter by
+          minLength: 1
+          maxLength: 50
+        includeArchived:
+          type: boolean
+          default: false
+          description: Whether to include characters with Archived status
+        page:
+          type: integer
+          default: 1
+          description: Page number for pagination
+          minimum: 1
+        pageSize:
+          type: integer
+          default: 20
+          description: Number of results per page
+          minimum: 1
+          maximum: 100
+
+    QueryByStageResponse:
+      type: object
+      additionalProperties: false
+      description: Paged list of characters in a lifecycle stage
+      required:
+      - profiles
+      - totalCount
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/LifecycleProfileSummary'
+          description: Matching lifecycle profiles
+        totalCount:
+          type: integer
+          description: Total number of matching profiles
+          minimum: 0
+
+    QueryByBloodlineRequest:
+      type: object
+      additionalProperties: false
+      description: Request to query living characters with a specific bloodline
+      required:
+      - bloodlineId
+      properties:
+        bloodlineId:
+          type: string
+          format: uuid
+          description: Bloodline to query members of
+        page:
+          type: integer
+          default: 1
+          description: Page number for pagination
+          minimum: 1
+        pageSize:
+          type: integer
+          default: 20
+          description: Number of results per page
+          minimum: 1
+          maximum: 100
+
+    QueryByBloodlineResponse:
+      type: object
+      additionalProperties: false
+      description: Paged list of living characters with a specific bloodline
+      required:
+      - profiles
+      - totalCount
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/LifecycleProfileSummary'
+          description: Matching lifecycle profiles
+        totalCount:
+          type: integer
+          description: Total number of matching profiles
+          minimum: 0
+
+    SetNaturalDeathYearRequest:
+      type: object
+      additionalProperties: false
+      description: Request to override a character's natural death year
+      required:
+      - characterId
+      - naturalDeathYear
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to update
+        naturalDeathYear:
+          type: integer
+          description: New projected natural death year
+          minimum: 0
+
+    SetNaturalDeathYearResponse:
+      type: object
+      description: Empty response. HTTP 200 confirms the update succeeded.
+      additionalProperties: false
+      properties: {}
+
+    SeedLifecycleProfileRequest:
+      type: object
+      additionalProperties: false
+      description: Request to bulk seed lifecycle profiles for first-generation characters
+      required:
+      - characters
+      properties:
+        characters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedCharacterEntry'
+          description: Characters to seed lifecycle profiles for
+
+    SeedLifecycleProfileResponse:
+      type: object
+      additionalProperties: false
+      description: Result of bulk lifecycle profile seeding
+      required:
+      - createdCount
+      properties:
+        createdCount:
+          type: integer
+          description: Number of profiles successfully created
+          minimum: 0
+        errors:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/SeedItemError'
+          description: Per-item errors encountered during seeding
+
+    # -- Heritage Management --
+
+    GetGeneticProfileRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a genetic profile
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to retrieve genetic profile for
+
+    GetGeneticProfileResponse:
+      type: object
+      additionalProperties: false
+      description: Full genetic profile for a character
+      required:
+      - characterId
+      - speciesCode
+      - generationDepth
+      - genotype
+      - phenotype
+      - aptitudes
+      - bloodlines
+      - mutations
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this profile belongs to
+        speciesCode:
+          type: string
+          description: Primary species code
+          maxLength: 100
+        secondarySpecies:
+          type: string
+          nullable: true
+          description: Secondary species code (non-null for hybrids)
+          maxLength: 100
+        parentAId:
+          type: string
+          format: uuid
+          nullable: true
+          description: First parent (null for seeded/first-generation)
+        parentBId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Second parent (null for seeded/first-generation)
+        generationDepth:
+          type: integer
+          description: Generations from earliest tracked ancestor
+          minimum: 0
+        genotype:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenotypeEntry'
+          description: Inherited allele pairs
+        phenotype:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhenotypeEntry'
+          description: Expressed trait values
+        aptitudes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AptitudeEntry'
+          description: Derived skill aptitudes
+        bloodlines:
+          type: array
+          items:
+            $ref: '#/components/schemas/BloodlineEntry'
+          description: Bloodline memberships
+        mutations:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationEntry'
+          description: Random mutations applied during creation
+
+    GetPhenotypeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get phenotype data
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to retrieve phenotype for
+
+    GetPhenotypeResponse:
+      type: object
+      additionalProperties: false
+      description: Expressed phenotype traits and aptitudes
+      required:
+      - characterId
+      - phenotype
+      - aptitudes
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to
+        phenotype:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhenotypeEntry'
+          description: Expressed phenotype traits
+        aptitudes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AptitudeEntry'
+          description: Derived skill aptitudes
+
+    QueryByAptitudeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to find characters by aptitude threshold
+      required:
+      - domain
+      - threshold
+      - gameServiceId
+      properties:
+        domain:
+          type: string
+          description: Aptitude domain code to filter by
+          minLength: 1
+          maxLength: 100
+        threshold:
+          type: number
+          format: float
+          description: Minimum aptitude value
+          minimum: 0.0
+          maximum: 1.0
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        page:
+          type: integer
+          default: 1
+          description: Page number
+          minimum: 1
+        pageSize:
+          type: integer
+          default: 20
+          description: Results per page
+          minimum: 1
+          maximum: 100
+
+    QueryByAptitudeResponse:
+      type: object
+      additionalProperties: false
+      description: Characters with aptitude above threshold
+      required:
+      - results
+      - totalCount
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AptitudeQueryResult'
+          description: Matching characters with aptitude values
+        totalCount:
+          type: integer
+          description: Total matching count
+          minimum: 0
+
+    AptitudeQueryResult:
+      type: object
+      additionalProperties: false
+      description: Character with a specific aptitude value
+      required:
+      - characterId
+      - aptitudeValue
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character with this aptitude
+        aptitudeValue:
+          type: number
+          format: float
+          description: Aptitude value for the queried domain
+          minimum: 0.0
+          maximum: 1.0
+
+    SeedGeneticProfileRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a genetic profile for a first-generation character
+      required:
+      - characterId
+      - speciesCode
+      - gameServiceId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to create genetic profile for
+        speciesCode:
+          type: string
+          description: Species code for trait template resolution
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        phenotypeValues:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/PhenotypeEntry'
+          description: Explicit phenotype values (null to generate from species defaults with random variation)
+
+    SeedGeneticProfileResponse:
+      type: object
+      description: Empty response. HTTP 200 confirms the genetic profile was created.
+      additionalProperties: false
+      properties: {}
+
+    SimulateOffspringRequest:
+      type: object
+      additionalProperties: false
+      description: Request to simulate potential offspring traits
+      required:
+      - parentAId
+      - parentBId
+      properties:
+        parentAId:
+          type: string
+          format: uuid
+          description: First parent character ID
+        parentBId:
+          type: string
+          format: uuid
+          description: Second parent character ID
+
+    SimulateOffspringResponse:
+      type: object
+      additionalProperties: false
+      description: Simulated offspring trait probability ranges
+      required:
+      - traitRanges
+      - aptitudeRanges
+      properties:
+        traitRanges:
+          type: array
+          items:
+            $ref: '#/components/schemas/TraitRange'
+          description: Probable phenotype trait ranges
+        aptitudeRanges:
+          type: array
+          items:
+            $ref: '#/components/schemas/TraitRange'
+          description: Probable aptitude ranges
+        bloodlineComposition:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Bloodline codes the offspring would inherit
+
+    GetFamilyTreeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a multi-generational family tree
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Root character of the family tree
+        ancestorDepth:
+          type: integer
+          default: 3
+          description: Generations to traverse upward
+          minimum: 0
+          maximum: 10
+        descendantDepth:
+          type: integer
+          default: 2
+          description: Generations to traverse downward
+          minimum: 0
+          maximum: 10
+
+    GetFamilyTreeResponse:
+      type: object
+      additionalProperties: false
+      description: Multi-generational family tree
+      required:
+      - rootCharacterId
+      - nodes
+      properties:
+        rootCharacterId:
+          type: string
+          format: uuid
+          description: Character at the root of the tree
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyTreeNode'
+          description: All nodes in the family tree
+
+    # -- Template Management --
+
+    SeedLifecycleTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create lifecycle stage definitions for a species
+      required:
+      - speciesCode
+      - gameServiceId
+      - stages
+      - naturalDeathRange
+      - fertilityWindow
+      properties:
+        speciesCode:
+          type: string
+          description: Species code this template applies to
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LifecycleStageDefinition'
+          description: Lifecycle stage definitions (must be contiguous)
+        naturalDeathRange:
+          $ref: '#/components/schemas/NaturalDeathRange'
+          description: Configuration for natural death year calculation
+        fertilityWindow:
+          $ref: '#/components/schemas/FertilityWindow'
+          description: Species fertility peak and decline configuration
+
+    SeedLifecycleTemplateResponse:
+      type: object
+      description: Empty response. HTTP 200 confirms the template was created.
+      additionalProperties: false
+      properties: {}
+
+    SeedHeritableTraitTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create heritable trait definitions for a species
+      required:
+      - speciesCode
+      - gameServiceId
+      - traits
+      properties:
+        speciesCode:
+          type: string
+          description: Species code this template applies to
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        traits:
+          type: array
+          items:
+            $ref: '#/components/schemas/HeritableTraitDefinition'
+          description: Heritable trait definitions
+
+    SeedHeritableTraitTemplateResponse:
+      type: object
+      description: Empty response. HTTP 200 confirms the template was created.
+      additionalProperties: false
+      properties: {}
+
+    SeedHybridTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create cross-species hybridization rules
+      required:
+      - speciesA
+      - speciesB
+      - gameServiceId
+      - traitOverrides
+      - hybridFertilityModifier
+      properties:
+        speciesA:
+          type: string
+          description: First species in the pair
+          minLength: 1
+          maxLength: 100
+        speciesB:
+          type: string
+          description: Second species in the pair
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        traitOverrides:
+          type: array
+          items:
+            $ref: '#/components/schemas/HybridTraitOverride'
+          description: Dominance overrides for specific traits in hybrid offspring
+        hybridFertilityModifier:
+          type: number
+          format: float
+          description: Fertility modifier for hybrid offspring (0.0 = sterile, 1.0 = normal)
+          minimum: 0.0
+          maximum: 2.0
+
+    SeedHybridTemplateResponse:
+      type: object
+      description: Empty response. HTTP 200 confirms the template was created.
+      additionalProperties: false
+      properties: {}
+
+    GetLifecycleTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a lifecycle template
+      required:
+      - speciesCode
+      - gameServiceId
+      properties:
+        speciesCode:
+          type: string
+          description: Species code
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+
+    GetLifecycleTemplateResponse:
+      type: object
+      additionalProperties: false
+      description: Lifecycle template for a species
+      required:
+      - speciesCode
+      - gameServiceId
+      - stages
+      - naturalDeathRange
+      - fertilityWindow
+      properties:
+        speciesCode:
+          type: string
+          description: Species code
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LifecycleStageDefinition'
+          description: Lifecycle stage definitions
+        naturalDeathRange:
+          $ref: '#/components/schemas/NaturalDeathRange'
+          description: Natural death year calculation parameters
+        fertilityWindow:
+          $ref: '#/components/schemas/FertilityWindow'
+          description: Fertility peak and decline parameters
+        isDeprecated:
+          type: boolean
+          description: Whether this template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Why the template was deprecated (null if not deprecated)
+          maxLength: 500
+
+    GetHeritableTraitTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a heritable trait template
+      required:
+      - speciesCode
+      - gameServiceId
+      properties:
+        speciesCode:
+          type: string
+          description: Species code
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+
+    GetHeritableTraitTemplateResponse:
+      type: object
+      additionalProperties: false
+      description: Heritable trait template for a species
+      required:
+      - speciesCode
+      - gameServiceId
+      - traits
+      properties:
+        speciesCode:
+          type: string
+          description: Species code
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        traits:
+          type: array
+          items:
+            $ref: '#/components/schemas/HeritableTraitDefinition'
+          description: Heritable trait definitions
+        isDeprecated:
+          type: boolean
+          description: Whether this template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Why the template was deprecated (null if not deprecated)
+          maxLength: 500
+
+    GetHybridTraitTemplateResponse:
+      type: object
+      additionalProperties: false
+      description: Hybrid trait template for a species pair
+      required:
+      - speciesA
+      - speciesB
+      - gameServiceId
+      - traitOverrides
+      - hybridFertilityModifier
+      properties:
+        speciesA:
+          type: string
+          description: First species in the pair
+          maxLength: 100
+        speciesB:
+          type: string
+          description: Second species in the pair
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        traitOverrides:
+          type: array
+          items:
+            $ref: '#/components/schemas/HybridTraitOverride'
+          description: Dominance overrides for specific traits in hybrid offspring
+        hybridFertilityModifier:
+          type: number
+          format: float
+          description: Fertility modifier for hybrid offspring (0.0 = sterile, 1.0 = normal)
+          minimum: 0.0
+          maximum: 2.0
+        isDeprecated:
+          type: boolean
+          description: Whether this template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Why the template was deprecated (null if not deprecated)
+          maxLength: 500
+
+    ListTemplatesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list all templates for a game service
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated templates in results
+
+    ListTemplatesResponse:
+      type: object
+      additionalProperties: false
+      description: All lifecycle and heritage templates for a game service
+      required:
+      - lifecycleTemplates
+      - heritableTraitTemplates
+      - hybridTemplates
+      properties:
+        lifecycleTemplates:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetLifecycleTemplateResponse'
+          description: All lifecycle stage templates
+        heritableTraitTemplates:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetHeritableTraitTemplateResponse'
+          description: All heritable trait templates
+        hybridTemplates:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetHybridTraitTemplateResponse'
+          description: All hybrid trait templates
+
+    # -- Bloodline Management --
+
+    GetBloodlineRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a bloodline definition
+      required:
+      - bloodlineId
+      properties:
+        bloodlineId:
+          type: string
+          format: uuid
+          description: Bloodline to retrieve
+
+    GetBloodlineResponse:
+      type: object
+      additionalProperties: false
+      description: Bloodline definition
+      required:
+      - bloodline
+      properties:
+        bloodline:
+          $ref: '#/components/schemas/BloodlineSummary'
+          description: Bloodline definition data
+
+    ListBloodlinesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list bloodlines within a game service
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        traitSignatureFilter:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Filter by bloodlines containing these trait codes
+        minGenerationDepth:
+          type: integer
+          nullable: true
+          description: Minimum generation span filter
+          minimum: 1
+        minMemberCount:
+          type: integer
+          nullable: true
+          description: Minimum living member count filter
+          minimum: 1
+        page:
+          type: integer
+          default: 1
+          description: Page number
+          minimum: 1
+        pageSize:
+          type: integer
+          default: 20
+          description: Results per page
+          minimum: 1
+          maximum: 100
+
+    ListBloodlinesResponse:
+      type: object
+      additionalProperties: false
+      description: Paged list of bloodlines
+      required:
+      - bloodlines
+      - totalCount
+      properties:
+        bloodlines:
+          type: array
+          items:
+            $ref: '#/components/schemas/BloodlineSummary'
+          description: Matching bloodlines
+        totalCount:
+          type: integer
+          description: Total matching count
+          minimum: 0
+
+    EstablishBloodlineRequest:
+      type: object
+      additionalProperties: false
+      description: Request to manually establish a bloodline
+      required:
+      - bloodlineCode
+      - gameServiceId
+      - originCharacterId
+      - traitSignature
+      properties:
+        bloodlineCode:
+          type: string
+          description: Human-readable bloodline code
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        originCharacterId:
+          type: string
+          format: uuid
+          description: Character who founded or is the first tracked member
+        traitSignature:
+          type: array
+          items:
+            type: string
+          description: Trait codes that characterize this bloodline
+        ancestorCharacterIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+            format: uuid
+          description: Additional ancestor characters to retroactively assign to this bloodline
+
+    EstablishBloodlineResponse:
+      type: object
+      additionalProperties: false
+      description: Result of bloodline establishment
+      required:
+      - bloodlineId
+      properties:
+        bloodlineId:
+          type: string
+          format: uuid
+          description: Identifier of the newly created bloodline
+
+    DeleteBloodlineRequest:
+      type: object
+      additionalProperties: false
+      description: Request to delete a bloodline
+      required:
+      - bloodlineId
+      properties:
+        bloodlineId:
+          type: string
+          format: uuid
+          description: Bloodline to delete
+
+    DeleteBloodlineResponse:
+      type: object
+      description: Empty response. HTTP 200 confirms the bloodline was deleted.
+      additionalProperties: false
+      properties: {}
+
+    QueryBloodlineMembersRequest:
+      type: object
+      additionalProperties: false
+      description: Request to query living members of a bloodline
+      required:
+      - bloodlineId
+      properties:
+        bloodlineId:
+          type: string
+          format: uuid
+          description: Bloodline to query members of
+        page:
+          type: integer
+          default: 1
+          description: Page number
+          minimum: 1
+        pageSize:
+          type: integer
+          default: 20
+          description: Results per page
+          minimum: 1
+          maximum: 100
+
+    QueryBloodlineMembersResponse:
+      type: object
+      additionalProperties: false
+      description: Living members of a bloodline with generation and trait data
+      required:
+      - members
+      - totalCount
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/BloodlineMemberSummary'
+          description: Matching bloodline members
+        totalCount:
+          type: integer
+          description: Total matching count
+          minimum: 0
+
+    # -- Cleanup --
+
+    CleanupByCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to clean up all lifecycle data for a character
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to clean up
+
+    CleanupByCharacterResponse:
+      type: object
+      description: Empty response. HTTP 200 confirms the cleanup completed.
+      additionalProperties: false
+      properties: {}
+
+    CleanupByRealmRequest:
+      type: object
+      additionalProperties: false
+      description: Request to clean up all lifecycle data for a realm
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to clean up
+
+    CleanupByRealmResponse:
+      type: object
+      additionalProperties: false
+      description: Result of realm cleanup
+      required:
+      - cleanedCount
+      properties:
+        cleanedCount:
+          type: integer
+          description: Number of lifecycle profiles cleaned
+          minimum: 0
+
+    # -- Compression --
+
+    GetCompressDataRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get lifecycle and heritage data for archive compression
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to get archive data for
+
+    RestoreFromArchiveRequest:
+      type: object
+      additionalProperties: false
+      description: Request to restore lifecycle and heritage data from archive
+      required:
+      - characterId
+      - data
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to restore data for
+        data:
+          $ref: '#/components/schemas/LifecycleArchive'
+          description: Archive data to restore from
+
+    RestoreFromArchiveResponse:
+      type: object
+      description: Empty response. HTTP 200 confirms the restoration completed.
+      additionalProperties: false
+      properties: {}
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+      - resourceId
+      - resourceType
+      - archivedAt
+      - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'
+
+    # ==========================================================================
+    # Deprecation Fields
+    # ==========================================================================
+
+x-inlined-types:
+- ResourceArchiveBase

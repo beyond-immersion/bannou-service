@@ -1,0 +1,2581 @@
+openapi: 3.0.4
+info:
+  title: Bannou Affix Service API
+  description: |
+    Item modifier definition, instance management, and stat computation service.
+    Owns two layers of data: definitions (modifier templates with tiers, mod groups,
+    spawn weights, stat grants) and instances (per-item applied modifier state).
+    Game-agnostic — PoE-style prefix/suffix tiers, Diablo-style legendary affixes,
+    or simple "quality stars" are all valid configurations. Internal-only, never internet-facing.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU-DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-references:
+    - target: game-service
+      sourceType: affix-definition
+      field: gameServiceId
+      onDelete: cascade
+      cleanup:
+        endpoint: /affix/cleanup-by-game-service
+        payloadTemplate: '{"gameServiceId": "{{resourceId}}"}'
+servers:
+  - url: http://localhost:5012
+    description: Bannou service endpoint (internal only)
+
+x-service-layer: GameFeatures
+
+paths:
+  # === Definition Management ===
+  /affix/definition/create:
+    post:
+      summary: Create a new affix definition
+      description: |
+        Creates a modifier template with stat grants, spawn weights, and classification.
+        Definitions are scoped to a game service. Code must be unique within game service.
+      operationId: createDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDefinitionRequest'
+      responses:
+        '200':
+          description: Definition created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffixDefinitionResponse'
+        '400':
+          description: Invalid request (game service not found, empty stat grants, limit exceeded)
+        '409':
+          description: Definition with this code already exists in game service
+
+  /affix/definition/get:
+    post:
+      summary: Get an affix definition
+      description: Retrieve a definition by ID or by gameServiceId + code. Supports cache read-through.
+      operationId: getDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDefinitionRequest'
+      responses:
+        '200':
+          description: Definition retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffixDefinitionResponse'
+        '404':
+          description: Definition not found
+
+  /affix/definition/list:
+    post:
+      summary: List affix definitions
+      description: Query definitions for a game service with optional filtering by slot type, mod group, category, tags, tier range, influence, and deprecation status.
+      operationId: listDefinitions
+      tags:
+      - Definition
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListDefinitionsRequest'
+      responses:
+        '200':
+          description: Definitions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDefinitionsResponse'
+
+  /affix/definition/update:
+    post:
+      summary: Update an affix definition
+      description: |
+        Partial update of a definition. Identity fields (code, gameServiceId, slotType, modGroup)
+        cannot be changed. Generation-relevant field changes invalidate pool caches.
+      operationId: updateDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDefinitionRequest'
+      responses:
+        '200':
+          description: Definition updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffixDefinitionResponse'
+        '400':
+          description: Invalid request (attempted identity field change)
+        '404':
+          description: Definition not found
+        '409':
+          description: Concurrent modification conflict
+
+  /affix/definition/deprecate:
+    post:
+      summary: Deprecate an affix definition
+      description: |
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated. Deprecated definitions
+        cannot be applied to new items. Pool caches are invalidated.
+      operationId: deprecateDefinition
+      tags:
+      - Definition
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateDefinitionRequest'
+      responses:
+        '200':
+          description: Definition deprecated successfully (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffixDefinitionResponse'
+        '404':
+          description: Definition not found
+
+  /affix/definition/seed:
+    post:
+      summary: Bulk seed affix definitions
+      description: |
+        Creates multiple definitions in a single call, skipping any that already exist
+        (by code within game service). Used for initial game setup.
+      operationId: seedDefinitions
+      tags:
+      - Definition
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedDefinitionsRequest'
+      responses:
+        '200':
+          description: Seed operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedDefinitionsResponse'
+        '400':
+          description: Game service not found
+
+  /affix/definition/list-mod-groups:
+    post:
+      summary: List mod groups for a game service
+      description: Returns all unique mod groups with definition counts. Filters by deprecation status.
+      operationId: listModGroups
+      tags:
+      - Definition
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListModGroupsRequest'
+      responses:
+        '200':
+          description: Mod groups retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModGroupsResponse'
+
+  /affix/definition/clean-deprecated:
+    post:
+      summary: Clean deprecated definitions with zero remaining applied instances
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        definitions and permanently removes those with zero remaining applied instances,
+        subject to an optional grace period. Publishes definition.deleted events for
+        each removed definition. Idempotent and safe to call at any frequency.
+        Supports dry-run mode for admin panel preview.
+      operationId: cleanDeprecatedDefinitions
+      tags:
+      - Definition
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedResponse'
+
+  # === Implicit Mappings ===
+  /affix/implicit/create:
+    post:
+      summary: Create an implicit mapping for an item template
+      description: |
+        Maps an item template code to a set of implicit affix definitions.
+        Items created from this template automatically receive these implicits.
+      operationId: createImplicitMapping
+      tags:
+      - Implicit
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateImplicitMappingRequest'
+      responses:
+        '200':
+          description: Implicit mapping created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImplicitMappingResponse'
+        '400':
+          description: Referenced definition not found or not implicit slot type
+        '409':
+          description: Mapping already exists for this template code in game service
+
+  /affix/implicit/get:
+    post:
+      summary: Get implicit mapping for an item template
+      description: Retrieves the implicit affix definitions mapped to an item template code.
+      operationId: getImplicitMapping
+      tags:
+      - Implicit
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetImplicitMappingRequest'
+      responses:
+        '200':
+          description: Mapping retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImplicitMappingResponse'
+        '404':
+          description: No implicit mapping for this template code
+
+  /affix/implicit/seed:
+    post:
+      summary: Bulk seed implicit mappings
+      description: Creates multiple implicit mappings, skipping any that already exist.
+      operationId: seedImplicitMappings
+      tags:
+      - Implicit
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedImplicitMappingsRequest'
+      responses:
+        '200':
+          description: Seed operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedImplicitMappingsResponse'
+
+  /affix/implicit/roll:
+    post:
+      summary: Roll implicit values for an item template
+      description: |
+        Pure computation endpoint — rolls random values for the implicit definitions
+        mapped to an item template. Does not persist state. Used by loot generation
+        to preview implicit rolls before item creation.
+      operationId: rollImplicits
+      tags:
+      - Implicit
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollImplicitsRequest'
+      responses:
+        '200':
+          description: Implicit values rolled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RollImplicitsResponse'
+        '404':
+          description: No implicit mapping for this template code
+
+  # === Instance Management ===
+  /affix/initialize:
+    post:
+      summary: Initialize affix state for an item instance
+      description: |
+        Creates the affix instance record for an item. Called by lib-loot after creating
+        the item instance. Registers an item-traits seed for progressive capability unlocking.
+      operationId: initializeItemAffixes
+      tags:
+      - Instance
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitializeItemAffixesRequest'
+      responses:
+        '200':
+          description: Affix instance initialized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffixInstanceResponse'
+        '400':
+          description: Item instance not found
+        '409':
+          description: Affix instance already initialized for this item
+
+  /affix/instance/get:
+    post:
+      summary: Get affix instance for an item
+      description: Retrieves the raw affix state for an item instance with cache read-through.
+      operationId: getAffixInstance
+      tags:
+      - Instance
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAffixInstanceRequest'
+      responses:
+        '200':
+          description: Affix instance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffixInstanceResponse'
+        '404':
+          description: No affix instance for this item
+
+  # === Modification Operations ===
+  /affix/apply:
+    post:
+      summary: Apply an affix to an item
+      description: |
+        Applies a specific affix definition to an item instance. Validates slot capacity,
+        mod group exclusivity, item level requirements, influence prerequisites, and item
+        state flags. Rejects with 400 if definition is deprecated (Category B guard).
+        Records growth on the item's seed. Maintains reverse index for clean-deprecated.
+      operationId: applyAffix
+      tags:
+      - Modification
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyAffixRequest'
+      responses:
+        '200':
+          description: Affix applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplyAffixResponse'
+        '400':
+          description: Validation failed (deprecated, wrong class, insufficient level, corrupted, mirrored, full, influence not met)
+        '404':
+          description: Item or definition not found
+        '409':
+          description: Mod group already occupied or concurrent modification conflict
+
+  /affix/remove:
+    post:
+      summary: Remove an affix from an item
+      description: |
+        Removes a specific affix (by definition ID) from an item instance.
+        Rejects if item is corrupted, mirrored, or the target affix is fractured.
+        Maintains reverse index for clean-deprecated.
+      operationId: removeAffix
+      tags:
+      - Modification
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveAffixRequest'
+      responses:
+        '200':
+          description: Affix removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveAffixResponse'
+        '400':
+          description: Item is corrupted, mirrored, or affix is fractured
+        '404':
+          description: Item or affix not found
+        '409':
+          description: Concurrent modification conflict
+
+  /affix/reroll-values:
+    post:
+      summary: Reroll values for an affix on an item
+      description: |
+        Re-randomizes the rolled values for a specific affix on an item.
+        Fractured affixes CAN be rerolled (only removal is blocked).
+        Rejects if item is corrupted or mirrored.
+      operationId: rerollValues
+      tags:
+      - Modification
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RerollValuesRequest'
+      responses:
+        '200':
+          description: Values rerolled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RerollValuesResponse'
+        '400':
+          description: Item is corrupted or mirrored
+        '404':
+          description: Item or affix not found
+        '409':
+          description: Concurrent modification conflict
+
+  /affix/state/set:
+    post:
+      summary: Set item state flags
+      description: |
+        Mutates boolean state flags on an item's affix instance (corrupted, mirrored,
+        split, synthesized, identified). Some state transitions are irreversible
+        (cannot uncorrupt, unmirror, unsplit). Fracture targets a specific affix slot.
+      operationId: setItemState
+      tags:
+      - Modification
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetItemStateRequest'
+      responses:
+        '200':
+          description: State flags updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetItemStateResponse'
+        '400':
+          description: Invalid state transition (cannot reverse irreversible flags)
+        '404':
+          description: Item or affix slot not found
+        '409':
+          description: Concurrent modification conflict
+
+  /affix/influence/set:
+    post:
+      summary: Set influence types on an item
+      description: |
+        Updates the influence types on an item's affix instance. Influences unlock
+        exclusive affix pools during generation. Rejects if item is mirrored.
+      operationId: setInfluence
+      tags:
+      - Modification
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetInfluenceRequest'
+      responses:
+        '200':
+          description: Influences updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetInfluenceResponse'
+        '400':
+          description: Item is mirrored
+        '404':
+          description: Item not found
+        '409':
+          description: Concurrent modification conflict
+
+  # === Generation ===
+  /affix/generate/pool:
+    post:
+      summary: Generate a filtered affix pool
+      description: |
+        Returns a weighted pool of eligible affix definitions for a given item context.
+        Uses cached pre-computed pools with in-memory filtering for item-level,
+        mod group exclusion, and external weight modifiers.
+      operationId: generateAffixPool
+      tags:
+      - Generation
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateAffixPoolRequest'
+      responses:
+        '200':
+          description: Pool generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffixPoolResponse'
+
+  /affix/generate/set:
+    post:
+      summary: Generate a complete affix set for an item
+      description: |
+        Pure computation — generates a full set of affixes (implicits + explicits)
+        for an item based on its class, level, target rarity, and optional weight
+        modifiers. Does not persist state. Used by lib-loot before item creation.
+      operationId: generateAffixSet
+      tags:
+      - Generation
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateAffixSetRequest'
+      responses:
+        '200':
+          description: Affix set generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffixSetDataResponse'
+
+  /affix/generate/batch:
+    post:
+      summary: Generate affix sets for multiple items
+      description: |
+        Batch generation for loot drops at scale. Each item is generated independently.
+        Deduplicates batch generation events by source within a configurable window.
+      operationId: batchGenerateAffixSets
+      tags:
+      - Generation
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGenerateAffixSetsRequest'
+      responses:
+        '200':
+          description: Batch generation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchGenerateAffixSetsResponse'
+
+  # === Query & Computation ===
+  /affix/item/get:
+    post:
+      summary: Get enriched affix data for an item
+      description: |
+        Returns affix instance data enriched with definition details (display names,
+        tiers, categories, stat grant ranges). Respects identification state —
+        unidentified items return slot counts but withhold stat details.
+      operationId: getItemAffixes
+      tags:
+      - Query
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetItemAffixesRequest'
+      responses:
+        '200':
+          description: Enriched affix data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrichedAffixInstanceResponse'
+        '404':
+          description: No affix instance for this item
+
+  /affix/item/compute-stats:
+    post:
+      summary: Compute stats for a single item
+      description: |
+        Aggregates all stat contributions from an item's affixes: base template stats
+        + implicit values + explicit values + quality modifier + optional socket gem
+        contributions. Results are cached with short TTL.
+      operationId: computeItemStats
+      tags:
+      - Query
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComputeItemStatsRequest'
+      responses:
+        '200':
+          description: Stats computed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComputedItemStatsResponse'
+        '404':
+          description: No affix instance for this item
+
+  /affix/equipment/compute:
+    post:
+      summary: Compute aggregate equipment stats for an entity
+      description: |
+        Queries all equipment containers for an entity, computes stats for each
+        equipped item (including socketed gems), and aggregates per-stat totals.
+        Returns both aggregate totals and per-item breakdown. Cached with short TTL.
+      operationId: computeEquipmentStats
+      tags:
+      - Query
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComputeEquipmentStatsRequest'
+      responses:
+        '200':
+          description: Equipment stats computed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentStatsResponse'
+
+  /affix/item/compare:
+    post:
+      summary: Compare stats between two items
+      description: |
+        Computes stats for two items and returns a per-stat diff with deltas and
+        per-stat winner indicators. Used by NPC GOAP for equipment evaluation.
+      operationId: compareItems
+      tags:
+      - Query
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompareItemsRequest'
+      responses:
+        '200':
+          description: Comparison completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemComparisonResponse'
+        '404':
+          description: One or both items not found
+
+  /affix/item/estimate-value:
+    post:
+      summary: Estimate the value of an item based on its affixes
+      description: |
+        Scores an item's affix quality using tier percentile, roll percentile,
+        state bonuses, influence bonuses, and quality. Returns a normalized 0-1
+        score and suggested currency value. Used by NPC economic decisions.
+      operationId: estimateItemValue
+      tags:
+      - Query
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateItemValueRequest'
+      responses:
+        '200':
+          description: Value estimated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemValueEstimateResponse'
+        '404':
+          description: No affix instance for this item
+
+  # === Cleanup ===
+  /affix/cleanup-by-game-service:
+    post:
+      summary: Clean up all affix data for a game service
+      description: |
+        Resource cleanup callback for game service deletion via lib-resource.
+        Deletes all definitions, implicit mappings, instances, and cached data
+        for the specified game service.
+      operationId: cleanupByGameService
+      tags:
+      - Cleanup
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByGameServiceRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByGameServiceResponse'
+
+components:
+  schemas:
+    # === Shared Sub-Models ===
+    StatGrant:
+      type: object
+      additionalProperties: false
+      description: A single stat contribution from an affix definition
+      required:
+      - statCode
+      - minValue
+      - maxValue
+      properties:
+        statCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Stat identifier (e.g., "maximum_life", "fire_resistance")
+        minValue:
+          type: number
+          format: double
+          description: Minimum rolled value for this stat
+        maxValue:
+          type: number
+          format: double
+          description: Maximum rolled value for this stat
+
+    SpawnTagModifier:
+      type: object
+      additionalProperties: false
+      description: Per-tag weight multiplier for affix generation pool filtering
+      required:
+      - tag
+      - weightMultiplier
+      properties:
+        tag:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Item class tag (e.g., "amulet", "ring", "body_armour")
+        weightMultiplier:
+          type: integer
+          minimum: 0
+          description: Weight multiplier (0 = cannot appear, 1000 = normal, 1500 = more likely)
+
+    AffixSlotData:
+      type: object
+      additionalProperties: false
+      description: A single applied affix slot on an item instance
+      required:
+      - definitionId
+      - definitionCode
+      - modGroup
+      - rolledValues
+      - isFractured
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Applied affix definition ID
+        definitionCode:
+          type: string
+          description: Denormalized definition code for display
+        modGroup:
+          type: string
+          description: Denormalized mod group for exclusivity validation
+        rolledValues:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Rolled values for each stat grant in the definition
+        isFractured:
+          type: boolean
+          description: Whether this affix is permanently locked (cannot be removed)
+
+    AffixStates:
+      type: object
+      additionalProperties: false
+      description: Boolean state flags on an item's affix instance
+      required:
+      - isCorrupted
+      - isMirrored
+      - isSplit
+      - isIdentified
+      - isSynthesized
+      properties:
+        isCorrupted:
+          type: boolean
+          description: Item is corrupted — rejects apply/remove/reroll operations
+        isMirrored:
+          type: boolean
+          description: Item is mirrored — rejects all modification operations
+        isSplit:
+          type: boolean
+          description: Item is split — gates further split operations
+        isIdentified:
+          type: boolean
+          description: Whether affixes are visible in queries
+        isSynthesized:
+          type: boolean
+          description: Allows multiple implicit slots
+
+    WeightModifier:
+      type: object
+      additionalProperties: false
+      description: External weight modifier applied during affix generation
+      required:
+      - definitionId
+      - multiplier
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Target definition to modify weight for
+        multiplier:
+          type: number
+          format: double
+          minimum: 0
+          description: Weight multiplier (0 = exclude, 1.0 = unchanged, 2.0 = double)
+
+    AffixPoolEntry:
+      type: object
+      additionalProperties: false
+      description: A single entry in a generated affix pool with effective weight
+      required:
+      - definitionId
+      - definitionCode
+      - modGroup
+      - tier
+      - effectiveWeight
+      - statGrants
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Affix definition ID
+        definitionCode:
+          type: string
+          description: Human-readable definition code
+        modGroup:
+          type: string
+          description: Mod group for exclusivity checks
+        tier:
+          type: integer
+          description: Tier within mod group (1 = best)
+        effectiveWeight:
+          type: integer
+          description: Computed weight after tag modifiers and external modifiers
+        statGrants:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatGrant'
+          description: Stat grant ranges for this definition
+
+    StatValue:
+      type: object
+      additionalProperties: false
+      description: A single computed stat contribution
+      required:
+      - statCode
+      - value
+      properties:
+        statCode:
+          type: string
+          description: Stat identifier
+        value:
+          type: number
+          format: double
+          description: Computed value (after quality modifier if applicable)
+
+    StatDiff:
+      type: object
+      additionalProperties: false
+      description: Per-stat comparison between two items
+      required:
+      - statCode
+      - valueA
+      - valueB
+      - delta
+      properties:
+        statCode:
+          type: string
+          description: Stat identifier
+        valueA:
+          type: number
+          format: double
+          description: Value on item A
+        valueB:
+          type: number
+          format: double
+          description: Value on item B
+        delta:
+          type: number
+          format: double
+          description: Difference (valueA - valueB, positive means A is better)
+        winner:
+          type: string
+          nullable: true
+          description: '"A", "B", or null if equal'
+
+    ScoringFactor:
+      type: object
+      additionalProperties: false
+      description: Breakdown of a single factor in item value estimation
+      required:
+      - name
+      - score
+      - weight
+      properties:
+        name:
+          type: string
+          description: Factor name (e.g., "tierPercentile", "rollPercentile", "quality")
+        score:
+          type: number
+          format: double
+          description: Raw score for this factor (0-1 range)
+        weight:
+          type: number
+          format: double
+          description: Weight applied to this factor in the aggregate score
+
+    ItemBreakdown:
+      type: object
+      additionalProperties: false
+      description: Per-item stat breakdown within equipment computation
+      required:
+      - itemInstanceId
+      - stats
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatValue'
+          description: Stats contributed by this item
+
+    ModGroupSummary:
+      type: object
+      additionalProperties: false
+      description: Mod group summary with definition count
+      required:
+      - code
+      - definitionCount
+      properties:
+        code:
+          type: string
+          description: Mod group code
+        definitionCount:
+          type: integer
+          description: Number of definitions in this mod group
+
+    EnrichedAffixSlot:
+      type: object
+      additionalProperties: false
+      description: Affix slot enriched with definition display data
+      required:
+      - definitionId
+      - definitionCode
+      - modGroup
+      - isFractured
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Applied affix definition ID
+        definitionCode:
+          type: string
+          description: Definition code
+        modGroup:
+          type: string
+          description: Mod group code
+        displayName:
+          type: string
+          nullable: true
+          description: Human-readable display name from definition
+        tier:
+          type: integer
+          nullable: true
+          description: Tier within mod group (null if unidentified)
+        category:
+          type: string
+          nullable: true
+          description: Broad classification from definition
+        rolledValues:
+          type: array
+          nullable: true
+          items:
+            type: number
+            format: double
+          description: Rolled values (null if unidentified)
+        statGrants:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/StatGrant'
+          description: Stat grant ranges from definition (null if unidentified)
+        isFractured:
+          type: boolean
+          description: Whether this affix is permanently locked
+
+    AffixSetItemRequest:
+      type: object
+      additionalProperties: false
+      description: Parameters for generating an affix set for a single item in a batch
+      required:
+      - gameServiceId
+      - itemTemplateCode
+      - itemClass
+      - itemLevel
+      - targetRarity
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        itemTemplateCode:
+          type: string
+          description: Item template code for implicit mapping lookup
+        itemClass:
+          type: string
+          description: Item class for pool filtering
+        itemLevel:
+          type: integer
+          minimum: 1
+          description: Item level for tier gating
+        targetRarity:
+          type: string
+          description: Target effective rarity (e.g., "magic", "rare")
+        influences:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Influence types for exclusive pool access
+        weightModifiers:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/WeightModifier'
+          description: External weight modifiers for generation bias
+        valuePercentileTarget:
+          type: number
+          format: double
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Bias roll toward this percentile (0-1, null for uniform random)
+
+    ImplicitDefinitionRef:
+      type: object
+      additionalProperties: false
+      description: Reference to an implicit definition with optional value override ranges
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Implicit affix definition ID
+        minValueOverride:
+          type: number
+          format: double
+          nullable: true
+          description: Override minimum value for rolling (null uses definition default)
+        maxValueOverride:
+          type: number
+          format: double
+          nullable: true
+          description: Override maximum value for rolling (null uses definition default)
+
+    RolledSlot:
+      type: object
+      additionalProperties: false
+      description: Result of rolling implicit values for one slot
+      required:
+      - definitionId
+      - definitionCode
+      - rolledValues
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Implicit definition ID
+        definitionCode:
+          type: string
+          description: Implicit definition code
+        rolledValues:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Rolled values for each stat grant
+
+    SeedDefinitionEntry:
+      type: object
+      additionalProperties: false
+      description: A single definition entry for bulk seeding
+      required:
+      - code
+      - slotType
+      - modGroup
+      - tier
+      - statGrants
+      - spawnWeight
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Unique definition code within game service
+        slotType:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Slot type for this definition (e.g., "prefix", "suffix", "implicit")
+        modGroup:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Exclusivity group
+        tier:
+          type: integer
+          minimum: 1
+          description: Power tier within mod group (1 = best)
+        category:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Broad classification
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Generation tags for pool filtering
+        statGrants:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatGrant'
+          description: Stat contributions from this affix
+        spawnWeight:
+          type: integer
+          minimum: 0
+          description: Base weight for weighted random selection
+        spawnTagModifiers:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/SpawnTagModifier'
+          description: Per-tag weight multipliers
+        requiredItemLevel:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Minimum item level to spawn
+        requiredInfluences:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Required influence types (empty = no requirement)
+        validItemClasses:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Item classes this definition can appear on
+        displayName:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Human-readable display name
+        displayOrder:
+          type: integer
+          default: 0
+          description: Sorting priority within slot type
+
+    SeedImplicitMappingEntry:
+      type: object
+      additionalProperties: false
+      description: A single implicit mapping entry for bulk seeding
+      required:
+      - itemTemplateCode
+      - implicitDefinitionIds
+      properties:
+        itemTemplateCode:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Item template code to map
+        implicitDefinitionIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Implicit affix definition IDs to map to this template
+
+    ChangedFlag:
+      type: object
+      additionalProperties: false
+      description: A single state flag change
+      required:
+      - flagName
+      - oldValue
+      - newValue
+      properties:
+        flagName:
+          type: string
+          description: Name of the state flag that changed
+        oldValue:
+          type: boolean
+          description: Previous value of the flag
+        newValue:
+          type: boolean
+          description: New value of the flag
+
+    # === Request Models ===
+    CreateDefinitionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a new affix definition
+      required:
+      - gameServiceId
+      - code
+      - slotType
+      - modGroup
+      - tier
+      - statGrants
+      - spawnWeight
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope for this definition
+        code:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Unique definition code within game service
+        slotType:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Slot type (e.g., "prefix", "suffix", "implicit", "enchant")
+        modGroup:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Exclusivity group (one affix per mod group per item)
+        tier:
+          type: integer
+          minimum: 1
+          description: Power tier within mod group (1 = best)
+        category:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Broad classification (e.g., "defense", "offense")
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Generation tags for pool filtering
+        statGrants:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatGrant'
+          description: Stat contributions from this affix (minimum 1)
+        spawnWeight:
+          type: integer
+          minimum: 0
+          description: Base weight for weighted random selection
+        spawnTagModifiers:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/SpawnTagModifier'
+          description: Per-tag weight multipliers
+        requiredItemLevel:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Minimum item level to spawn this definition
+        requiredInfluences:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Required influence types (empty = no requirement)
+        validItemClasses:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Item classes this definition can appear on
+        displayName:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Human-readable display name (e.g., "Blazing", "of the Godslayer")
+        displayOrder:
+          type: integer
+          default: 0
+          description: Sorting priority within slot type
+
+    GetDefinitionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a definition by ID or by gameServiceId + code
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Definition ID (takes precedence over code lookup)
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service scope (required for code lookup)
+        code:
+          type: string
+          nullable: true
+          description: Definition code (used with gameServiceId)
+
+    ListDefinitionsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list definitions with optional filters
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        slotType:
+          type: string
+          nullable: true
+          description: Filter by slot type
+        modGroup:
+          type: string
+          nullable: true
+          description: Filter by mod group
+        category:
+          type: string
+          nullable: true
+          description: Filter by category
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Filter by tags (any match)
+        tierMin:
+          type: integer
+          nullable: true
+          description: Filter by minimum tier
+        tierMax:
+          type: integer
+          nullable: true
+          description: Filter by maximum tier
+        requiredInfluence:
+          type: string
+          nullable: true
+          description: Filter by required influence type
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated definitions in results (excluded by default)
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Items per page
+
+    UpdateDefinitionRequest:
+      type: object
+      additionalProperties: false
+      description: Partial update request for a definition. Identity fields cannot be changed.
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition to update
+        tier:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Updated tier
+        category:
+          type: string
+          nullable: true
+          description: Updated category
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Updated tags
+        statGrants:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/StatGrant'
+          description: Updated stat grants
+        spawnWeight:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Updated spawn weight
+        spawnTagModifiers:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/SpawnTagModifier'
+          description: Updated tag modifiers
+        requiredItemLevel:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Updated required item level
+        requiredInfluences:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Updated required influences
+        validItemClasses:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Updated valid item classes
+        displayName:
+          type: string
+          nullable: true
+          description: Updated display name
+        displayOrder:
+          type: integer
+          nullable: true
+          description: Updated display order
+
+    DeprecateDefinitionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a definition (Category B — one-way, no delete)
+      required:
+      - definitionId
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Definition to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (recommended for audit trail)
+
+    SeedDefinitionsRequest:
+      type: object
+      additionalProperties: false
+      description: Bulk seed request for affix definitions
+      required:
+      - gameServiceId
+      - definitions
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedDefinitionEntry'
+          description: Definitions to seed (duplicates by code are skipped)
+
+    ListModGroupsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list mod groups for a game service
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Include deprecated definitions in mod group counts
+
+    CreateImplicitMappingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to map implicit affix definitions to an item template code
+      required:
+      - gameServiceId
+      - itemTemplateCode
+      - implicitDefinitionIds
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        itemTemplateCode:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Item template code to map
+        implicitDefinitionIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Implicit affix definition IDs (must be slotType "implicit")
+
+    GetImplicitMappingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get implicit mapping for a template code
+      required:
+      - gameServiceId
+      - itemTemplateCode
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        itemTemplateCode:
+          type: string
+          description: Item template code to look up
+
+    SeedImplicitMappingsRequest:
+      type: object
+      additionalProperties: false
+      description: Bulk seed request for implicit mappings
+      required:
+      - gameServiceId
+      - mappings
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        mappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedImplicitMappingEntry'
+          description: Mappings to seed (duplicates by template code are skipped)
+
+    RollImplicitsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to roll implicit values for an item template
+      required:
+      - gameServiceId
+      - itemTemplateCode
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        itemTemplateCode:
+          type: string
+          description: Item template code for implicit mapping lookup
+        overrides:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ImplicitDefinitionRef'
+          description: Optional value range overrides per definition
+
+    InitializeItemAffixesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to initialize affix state for an item instance
+      required:
+      - itemInstanceId
+      - gameServiceId
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance ID (from lib-item)
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        affixSetData:
+          $ref: '#/components/schemas/AffixSetDataResponse'
+          nullable: true
+          description: Pre-generated affix set to apply (null for empty initialization)
+
+    GetAffixInstanceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get raw affix instance data
+      required:
+      - itemInstanceId
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+
+    ApplyAffixRequest:
+      type: object
+      additionalProperties: false
+      description: Request to apply an affix definition to an item
+      required:
+      - itemInstanceId
+      - definitionId
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Target item instance
+        definitionId:
+          type: string
+          format: uuid
+          description: Affix definition to apply
+        valuePercentileTarget:
+          type: number
+          format: double
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Bias roll toward this percentile (0-1, null for uniform random)
+
+    RemoveAffixRequest:
+      type: object
+      additionalProperties: false
+      description: Request to remove an affix from an item
+      required:
+      - itemInstanceId
+      - definitionId
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Target item instance
+        definitionId:
+          type: string
+          format: uuid
+          description: Affix definition to remove (identifies slot by mod group match)
+
+    RerollValuesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to reroll values for an affix on an item
+      required:
+      - itemInstanceId
+      - definitionId
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Target item instance
+        definitionId:
+          type: string
+          format: uuid
+          description: Affix definition whose values to reroll
+
+    SetItemStateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to set state flags on an item's affix instance
+      required:
+      - itemInstanceId
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Target item instance
+        isCorrupted:
+          type: boolean
+          nullable: true
+          description: Set corrupted flag (irreversible once true)
+        isMirrored:
+          type: boolean
+          nullable: true
+          description: Set mirrored flag (irreversible once true)
+        isSplit:
+          type: boolean
+          nullable: true
+          description: Set split flag (irreversible once true)
+        isIdentified:
+          type: boolean
+          nullable: true
+          description: Set identified flag
+        isSynthesized:
+          type: boolean
+          nullable: true
+          description: Set synthesized flag
+        fractureDefinitionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Fracture a specific affix slot by definition ID
+
+    SetInfluenceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to set influence types on an item
+      required:
+      - itemInstanceId
+      - influences
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Target item instance
+        influences:
+          type: array
+          items:
+            type: string
+          description: New influence types to set on the item
+
+    GenerateAffixPoolRequest:
+      type: object
+      additionalProperties: false
+      description: Request to generate a filtered affix pool for an item context
+      required:
+      - gameServiceId
+      - itemClass
+      - itemLevel
+      - slotType
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        itemClass:
+          type: string
+          description: Item class for pool filtering
+        itemLevel:
+          type: integer
+          minimum: 1
+          description: Item level for tier gating
+        slotType:
+          type: string
+          description: Target slot type
+        influences:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Influence types for exclusive pool access
+        existingModGroups:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Mod groups already on the item (excluded from pool)
+        weightModifiers:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/WeightModifier'
+          description: External weight modifiers for generation bias
+
+    GenerateAffixSetRequest:
+      type: object
+      additionalProperties: false
+      description: Request to generate a complete affix set for an item
+      required:
+      - gameServiceId
+      - itemTemplateCode
+      - itemClass
+      - itemLevel
+      - targetRarity
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        itemTemplateCode:
+          type: string
+          description: Item template code for implicit mapping lookup
+        itemClass:
+          type: string
+          description: Item class for pool filtering
+        itemLevel:
+          type: integer
+          minimum: 1
+          description: Item level for tier gating
+        targetRarity:
+          type: string
+          description: Target effective rarity (e.g., "magic", "rare")
+        influences:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Influence types for exclusive pool access
+        weightModifiers:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/WeightModifier'
+          description: External weight modifiers for generation bias
+        valuePercentileTarget:
+          type: number
+          format: double
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Bias all rolls toward this percentile (0-1, null for uniform)
+
+    BatchGenerateAffixSetsRequest:
+      type: object
+      additionalProperties: false
+      description: Batch generation request for multiple items
+      required:
+      - items
+      - sourceId
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixSetItemRequest'
+          description: Items to generate affix sets for
+        sourceId:
+          type: string
+          format: uuid
+          description: Source identifier for event deduplication (e.g., loot table ID)
+
+    GetItemAffixesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get enriched affix data for an item
+      required:
+      - itemInstanceId
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+
+    ComputeItemStatsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to compute stats for a single item
+      required:
+      - itemInstanceId
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+
+    ComputeEquipmentStatsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to compute aggregate equipment stats for an entity
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity ID (character, NPC, etc.)
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of entity
+
+    CompareItemsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to compare stats between two items
+      required:
+      - itemInstanceIdA
+      - itemInstanceIdB
+      properties:
+        itemInstanceIdA:
+          type: string
+          format: uuid
+          description: First item to compare
+        itemInstanceIdB:
+          type: string
+          format: uuid
+          description: Second item to compare
+
+    EstimateItemValueRequest:
+      type: object
+      additionalProperties: false
+      description: Request to estimate an item's value based on affixes
+      required:
+      - itemInstanceId
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+
+    CleanupByGameServiceRequest:
+      type: object
+      additionalProperties: false
+      description: Resource cleanup request for game service deletion
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to clean up all affix data for
+
+    # === Response Models ===
+    AffixDefinitionResponse:
+      type: object
+      additionalProperties: false
+      description: Full affix definition response
+      required:
+      - definitionId
+      - gameServiceId
+      - code
+      - slotType
+      - modGroup
+      - tier
+      - statGrants
+      - spawnWeight
+      - requiredItemLevel
+      - displayOrder
+      - isDeprecated
+      - createdAt
+      properties:
+        definitionId:
+          type: string
+          format: uuid
+          description: Unique definition identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        code:
+          type: string
+          description: Unique code within game service
+        slotType:
+          type: string
+          description: Slot type (e.g., "prefix", "suffix", "implicit")
+        modGroup:
+          type: string
+          description: Exclusivity group
+        tier:
+          type: integer
+          description: Power tier within mod group (1 = best)
+        category:
+          type: string
+          nullable: true
+          description: Broad classification
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Generation tags
+        statGrants:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatGrant'
+          description: Stat contributions
+        spawnWeight:
+          type: integer
+          description: Base weight for generation
+        spawnTagModifiers:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/SpawnTagModifier'
+          description: Per-tag weight multipliers
+        requiredItemLevel:
+          type: integer
+          description: Minimum item level to spawn
+        requiredInfluences:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Required influence types
+        validItemClasses:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Item classes this appears on
+        displayName:
+          type: string
+          nullable: true
+          description: Human-readable display name
+        displayOrder:
+          type: integer
+          description: Sorting priority
+        isDeprecated:
+          type: boolean
+          description: Whether this definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        createdAt:
+          type: string
+          format: date-time
+          description: When this definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this definition was last updated
+
+    ListDefinitionsResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of affix definitions
+      required:
+      - definitions
+      - totalCount
+      - page
+      - pageSize
+      - hasNextPage
+      properties:
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixDefinitionResponse'
+          description: Definitions on this page
+        totalCount:
+          type: integer
+          description: Total definitions matching filters
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Items per page
+        hasNextPage:
+          type: boolean
+          description: Whether more pages exist
+
+    SeedDefinitionsResponse:
+      type: object
+      additionalProperties: false
+      description: Result of bulk definition seeding
+      required:
+      - createdCount
+      - skippedCount
+      properties:
+        createdCount:
+          type: integer
+          description: Number of definitions created
+        skippedCount:
+          type: integer
+          description: Number of definitions skipped (already exist)
+
+    ListModGroupsResponse:
+      type: object
+      additionalProperties: false
+      description: List of mod groups with definition counts
+      required:
+      - modGroups
+      properties:
+        modGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModGroupSummary'
+          description: Mod group summaries
+
+    ImplicitMappingResponse:
+      type: object
+      additionalProperties: false
+      description: Implicit mapping for an item template
+      required:
+      - mappingId
+      - gameServiceId
+      - itemTemplateCode
+      - implicitDefinitionIds
+      properties:
+        mappingId:
+          type: string
+          format: uuid
+          description: Unique mapping identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        itemTemplateCode:
+          type: string
+          description: Item template code
+        implicitDefinitionIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Mapped implicit affix definition IDs
+
+    SeedImplicitMappingsResponse:
+      type: object
+      additionalProperties: false
+      description: Result of bulk implicit mapping seeding
+      required:
+      - createdCount
+      - skippedCount
+      properties:
+        createdCount:
+          type: integer
+          description: Number of mappings created
+        skippedCount:
+          type: integer
+          description: Number of mappings skipped (already exist)
+
+    RollImplicitsResponse:
+      type: object
+      additionalProperties: false
+      description: Rolled implicit values for an item template
+      required:
+      - rolledSlots
+      properties:
+        rolledSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/RolledSlot'
+          description: Rolled implicit slots with values
+
+    AffixInstanceResponse:
+      type: object
+      additionalProperties: false
+      description: Raw affix instance data for an item
+      required:
+      - itemInstanceId
+      - gameServiceId
+      - effectiveRarity
+      - itemLevel
+      - implicitSlots
+      - prefixSlots
+      - suffixSlots
+      - enchantSlots
+      - influences
+      - states
+      - quality
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        effectiveRarity:
+          type: string
+          description: Current effective rarity (game-configurable, e.g., "normal", "magic", "rare")
+        itemLevel:
+          type: integer
+          description: Item level (set at creation time)
+        implicitSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixSlotData'
+          description: Implicit affix slots
+        prefixSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixSlotData'
+          description: Prefix affix slots
+        suffixSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixSlotData'
+          description: Suffix affix slots
+        enchantSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixSlotData'
+          description: Enchant affix slots
+        influences:
+          type: array
+          items:
+            type: string
+          description: Active influence types
+        states:
+          $ref: '#/components/schemas/AffixStates'
+          description: Current state flags
+        quality:
+          type: integer
+          minimum: 0
+          maximum: 30
+          description: Item quality (0-30, affects stat computation)
+
+    ApplyAffixResponse:
+      type: object
+      additionalProperties: false
+      description: Result of applying an affix to an item
+      required:
+      - instance
+      properties:
+        instance:
+          $ref: '#/components/schemas/AffixInstanceResponse'
+          description: Updated affix instance
+
+    RemoveAffixResponse:
+      type: object
+      additionalProperties: false
+      description: Result of removing an affix from an item
+      required:
+      - instance
+      properties:
+        instance:
+          $ref: '#/components/schemas/AffixInstanceResponse'
+          description: Updated affix instance
+
+    RerollValuesResponse:
+      type: object
+      additionalProperties: false
+      description: Result of rerolling affix values
+      required:
+      - instance
+      - previousValues
+      - newValues
+      properties:
+        instance:
+          $ref: '#/components/schemas/AffixInstanceResponse'
+          description: Updated affix instance
+        previousValues:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Previous rolled values
+        newValues:
+          type: array
+          items:
+            type: number
+            format: double
+          description: New rolled values
+
+    SetItemStateResponse:
+      type: object
+      additionalProperties: false
+      description: Result of setting item state flags
+      required:
+      - instance
+      properties:
+        instance:
+          $ref: '#/components/schemas/AffixInstanceResponse'
+          description: Updated affix instance
+
+    SetInfluenceResponse:
+      type: object
+      additionalProperties: false
+      description: Result of setting influence types
+      required:
+      - instance
+      properties:
+        instance:
+          $ref: '#/components/schemas/AffixInstanceResponse'
+          description: Updated affix instance
+
+    AffixPoolResponse:
+      type: object
+      additionalProperties: false
+      description: Generated affix pool with effective weights
+      required:
+      - entries
+      - totalWeight
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixPoolEntry'
+          description: Pool entries with computed weights
+        totalWeight:
+          type: integer
+          description: Sum of all effective weights (for probability calculation)
+
+    AffixSetDataResponse:
+      type: object
+      additionalProperties: false
+      description: Generated affix set for an item (pre-creation data)
+      required:
+      - implicitSlots
+      - prefixSlots
+      - suffixSlots
+      - effectiveRarity
+      - itemLevel
+      properties:
+        implicitSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixSlotData'
+          description: Generated implicit slots
+        prefixSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixSlotData'
+          description: Generated prefix slots
+        suffixSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixSlotData'
+          description: Generated suffix slots
+        effectiveRarity:
+          type: string
+          description: Effective rarity based on affix count
+        itemLevel:
+          type: integer
+          description: Item level used for generation
+
+    BatchGenerateAffixSetsResponse:
+      type: object
+      additionalProperties: false
+      description: Results of batch affix set generation
+      required:
+      - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixSetDataResponse'
+          description: Generated affix sets (one per input item)
+
+    EnrichedAffixInstanceResponse:
+      type: object
+      additionalProperties: false
+      description: Affix instance data enriched with definition display details
+      required:
+      - itemInstanceId
+      - gameServiceId
+      - effectiveRarity
+      - itemLevel
+      - implicitSlots
+      - prefixSlots
+      - suffixSlots
+      - enchantSlots
+      - influences
+      - states
+      - quality
+      properties:
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance ID
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        effectiveRarity:
+          type: string
+          description: Current effective rarity
+        itemLevel:
+          type: integer
+          description: Item level
+        implicitSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnrichedAffixSlot'
+          description: Enriched implicit slots
+        prefixSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnrichedAffixSlot'
+          description: Enriched prefix slots
+        suffixSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnrichedAffixSlot'
+          description: Enriched suffix slots
+        enchantSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnrichedAffixSlot'
+          description: Enriched enchant slots
+        influences:
+          type: array
+          items:
+            type: string
+          description: Active influence types
+        states:
+          $ref: '#/components/schemas/AffixStates'
+          description: Current state flags
+        quality:
+          type: integer
+          description: Item quality
+
+    ComputedItemStatsResponse:
+      type: object
+      additionalProperties: false
+      description: Computed stats for a single item
+      required:
+      - stats
+      - qualityModifier
+      properties:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatValue'
+          description: Aggregated stat values (base + affixes + quality)
+        qualityModifier:
+          type: number
+          format: double
+          description: Quality multiplier applied (1 + quality/100)
+
+    EquipmentStatsResponse:
+      type: object
+      additionalProperties: false
+      description: Aggregate equipment stats for an entity
+      required:
+      - perStatTotals
+      - perItemBreakdown
+      properties:
+        perStatTotals:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatValue'
+          description: Summed stat values across all equipped items
+        perItemBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemBreakdown'
+          description: Per-item stat contributions
+
+    ItemComparisonResponse:
+      type: object
+      additionalProperties: false
+      description: Per-stat comparison between two items
+      required:
+      - statDiffs
+      properties:
+        statDiffs:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatDiff'
+          description: Per-stat differences between items A and B
+
+    ItemValueEstimateResponse:
+      type: object
+      additionalProperties: false
+      description: Estimated value of an item based on affix quality
+      required:
+      - normalizedScore
+      - suggestedCurrencyValue
+      - scoringFactors
+      properties:
+        normalizedScore:
+          type: number
+          format: double
+          description: Overall quality score (0.0 to 1.0)
+        suggestedCurrencyValue:
+          type: number
+          format: double
+          description: Suggested currency value based on score
+        scoringFactors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoringFactor'
+          description: Breakdown of factors contributing to the score
+
+    CleanupByGameServiceResponse:
+      type: object
+      additionalProperties: false
+      description: Empty response. HTTP 200 confirms cleanup completed.
+      properties: {}

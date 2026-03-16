@@ -1,0 +1,363 @@
+openapi: 3.0.4
+info:
+  title: Affix Service Events
+  description: |
+    Event subscription and publication declarations for Affix service.
+
+    **Data Flow**: Affix subscribes to item template lifecycle events for pool cache
+    management. Publishes definition lifecycle events, batch instance lifecycle events,
+    and domain-specific modification/state/generation events.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Item template lifecycle events for pool cache management
+    - topic: item.template.created
+      event: ItemTemplateCreatedEvent
+      handler: HandleItemTemplateCreated
+    - topic: item.template.updated
+      event: ItemTemplateUpdatedEvent
+      handler: HandleItemTemplateUpdated
+    # Seed capability changes for cross-node cache invalidation
+    # Complements ISeedEvolutionListener (which only fires on the processing node)
+    - topic: seed.capability.updated
+      event: SeedCapabilityUpdatedEvent
+      handler: HandleSeedCapabilityUpdated
+    # Account deletion cleanup obligation (FOUNDATION TENETS T28)
+    # Not required — affix data is keyed by itemInstanceId, not accountId.
+    # Cleanup flows through item destruction → IItemInstanceDestructionListener.
+  x-event-publications:
+    # Definition lifecycle events (auto-generated from x-lifecycle)
+    - topic: affix.definition.created
+      event: AffixDefinitionCreatedEvent
+      description: Published when a new affix definition is created
+    - topic: affix.definition.updated
+      event: AffixDefinitionUpdatedEvent
+      description: Published when an affix definition is updated (including deprecation via changedFields)
+    - topic: affix.definition.deleted
+      event: AffixDefinitionDeletedEvent
+      description: "Unused Category B infrastructure — definitions are never deleted directly. Publisher method exists in generated code but is called only by clean-deprecated sweep."
+
+    # Instance batch lifecycle events (auto-generated from x-lifecycle with batch: true)
+    - topic: affix.instance.batch-created
+      event: AffixInstanceBatchCreatedEvent
+      description: Batch event published when affix instances are initialized (accumulated by EventBatcher)
+    - topic: affix.instance.batch-modified
+      event: AffixInstanceBatchModifiedEvent
+      description: Batch event published when affix instances are modified (deduplicating, last-write-wins)
+    - topic: affix.instance.batch-destroyed
+      event: AffixInstanceBatchDestroyedEvent
+      description: Batch event published when affix instances are destroyed via IItemInstanceDestructionListener
+
+    # Custom domain events (non-lifecycle)
+    - topic: affix.modifier.applied
+      event: AffixModifierAppliedEvent
+      description: Published when an affix is applied to an item
+    - topic: affix.modifier.removed
+      event: AffixModifierRemovedEvent
+      description: Published when an affix is removed from an item
+    - topic: affix.modifier.rerolled
+      event: AffixModifierRerolledEvent
+      description: Published when affix values are rerolled on an item
+    - topic: affix.instance.state-changed
+      event: AffixInstanceStateChangedEvent
+      description: Published when item state flags change (corrupted, mirrored, etc.)
+    - topic: affix.influence.changed
+      event: AffixInfluenceChangedEvent
+      description: Published when influence types change on an item
+    - topic: affix.batch.generated
+      event: AffixBatchGeneratedEvent
+      description: Published when a batch generation completes (deduped by source within window)
+    - topic: affix.rarity.changed
+      event: AffixRarityChangedEvent
+      description: Published when an item's effective rarity transitions (e.g., normal to magic)
+
+# Lifecycle events auto-generated from this definition.
+# Affix uses topic_prefix for Pattern C namespacing (affix.definition.*, affix.instance.*).
+x-lifecycle:
+  topic_prefix: affix
+  AffixDefinition:
+    deprecation: true
+    instanceEntity: AffixInstance
+    model:
+      definitionId: { type: string, format: uuid, primary: true, required: true, description: "Unique definition identifier" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service scope" }
+      code: { type: string, required: true, description: "Unique code within game service" }
+      slotType: { type: string, required: true, description: "Slot type (prefix, suffix, implicit, enchant, or custom)" }
+      modGroup: { type: string, required: true, description: "Exclusivity group" }
+      tier: { type: integer, required: true, description: "Power tier within mod group (1 = best)" }
+      category: { type: string, nullable: true, description: "Broad classification" }
+      tags: { type: array, items: { type: string }, nullable: true, description: "Generation tags" }
+      statGrants: { type: array, items: { $ref: 'affix-api.yaml#/components/schemas/StatGrant' }, required: true, description: "Stat contributions" }
+      spawnWeight: { type: integer, required: true, description: "Base weight for generation" }
+      spawnTagModifiers: { type: array, items: { $ref: 'affix-api.yaml#/components/schemas/SpawnTagModifier' }, nullable: true, description: "Per-tag weight multipliers" }
+      requiredItemLevel: { type: integer, required: true, description: "Minimum item level to spawn" }
+      requiredInfluences: { type: array, items: { type: string }, nullable: true, description: "Required influence types" }
+      validItemClasses: { type: array, items: { type: string }, nullable: true, description: "Item classes this appears on" }
+      displayName: { type: string, nullable: true, description: "Human-readable display name" }
+      displayOrder: { type: integer, required: true, description: "Sorting priority" }
+    sensitive: []
+  AffixInstance:
+    batch: true
+    model:
+      itemInstanceId: { type: string, format: uuid, primary: true, required: true, description: "Item instance ID (foreign key to lib-item)" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service scope" }
+      effectiveRarity: { type: string, required: true, description: "Current effective rarity" }
+      itemLevel: { type: integer, required: true, description: "Item level (set at creation)" }
+      quality: { type: integer, required: true, description: "Item quality (0-30)" }
+    sensitive: []
+
+paths: {}
+
+components:
+  schemas:
+    # Custom (non-lifecycle) events
+    AffixModifierAppliedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when an affix is applied to an item
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - itemInstanceId
+        - definitionId
+        - definitionCode
+        - slotType
+        - modGroup
+        - rolledValues
+      properties:
+        eventName:
+          type: string
+          default: affix.modifier.applied
+          description: 'Event type identifier: affix.modifier.applied'
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item that received the affix
+        definitionId:
+          type: string
+          format: uuid
+          description: Applied affix definition
+        definitionCode:
+          type: string
+          description: Human-readable definition code
+        slotType:
+          type: string
+          description: Slot type the affix was applied to
+        modGroup:
+          type: string
+          description: Mod group of the applied affix
+        rolledValues:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Rolled values for each stat grant
+
+    AffixModifierRemovedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when an affix is removed from an item
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - itemInstanceId
+        - definitionId
+        - definitionCode
+        - slotType
+        - modGroup
+      properties:
+        eventName:
+          type: string
+          default: affix.modifier.removed
+          description: 'Event type identifier: affix.modifier.removed'
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item the affix was removed from
+        definitionId:
+          type: string
+          format: uuid
+          description: Removed affix definition
+        definitionCode:
+          type: string
+          description: Human-readable definition code
+        slotType:
+          type: string
+          description: Slot type the affix was in
+        modGroup:
+          type: string
+          description: Mod group of the removed affix
+
+    AffixModifierRerolledEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when affix values are rerolled on an item
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - itemInstanceId
+        - definitionId
+        - definitionCode
+        - previousValues
+        - newValues
+      properties:
+        eventName:
+          type: string
+          default: affix.modifier.rerolled
+          description: 'Event type identifier: affix.modifier.rerolled'
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item whose affix was rerolled
+        definitionId:
+          type: string
+          format: uuid
+          description: Rerolled affix definition
+        definitionCode:
+          type: string
+          description: Human-readable definition code
+        previousValues:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Values before reroll
+        newValues:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Values after reroll
+
+    AffixInstanceStateChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when item state flags change
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - itemInstanceId
+        - changedFlags
+      properties:
+        eventName:
+          type: string
+          default: affix.instance.state-changed
+          description: 'Event type identifier: affix.instance.state-changed'
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item whose state changed
+        changedFlags:
+          type: array
+          items:
+            $ref: 'affix-api.yaml#/components/schemas/ChangedFlag'
+          description: State flags that changed with old and new values
+
+    AffixInfluenceChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when influence types change on an item
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - itemInstanceId
+        - previousInfluences
+        - newInfluences
+      properties:
+        eventName:
+          type: string
+          default: affix.influence.changed
+          description: 'Event type identifier: affix.influence.changed'
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item whose influences changed
+        previousInfluences:
+          type: array
+          items:
+            type: string
+          description: Previous influence types
+        newInfluences:
+          type: array
+          items:
+            type: string
+          description: New influence types
+
+    AffixBatchGeneratedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a batch generation completes (deduped by source within window)
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sourceId
+        - batchSize
+        - gameServiceId
+      properties:
+        eventName:
+          type: string
+          default: affix.batch.generated
+          description: 'Event type identifier: affix.batch.generated'
+        sourceId:
+          type: string
+          format: uuid
+          description: Source identifier for deduplication
+        batchSize:
+          type: integer
+          description: Number of items in the batch
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+
+    AffixRarityChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when an item's effective rarity transitions
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - itemInstanceId
+        - previousRarity
+        - newRarity
+      properties:
+        eventName:
+          type: string
+          default: affix.rarity.changed
+          description: 'Event type identifier: affix.rarity.changed'
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item whose rarity changed
+        previousRarity:
+          type: string
+          description: Previous effective rarity
+        newRarity:
+          type: string
+          description: New effective rarity

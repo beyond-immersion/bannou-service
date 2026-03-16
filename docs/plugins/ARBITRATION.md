@@ -164,13 +164,23 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 **Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
 
 ### Phase 0: Faction Sovereignty (Prerequisite -- changes to lib-faction)
-- Add `authorityLevel` field to `faction-api.yaml` (enum: Influence, Delegated, Sovereign)
-- Extend `DesignateRealmBaseline` to set Sovereign automatically
-- Add delegation endpoint for sovereign-to-child authority grants
-- Add `QueryGovernanceData` endpoint (case type + location -> procedural template + params)
-- Extend `QueryApplicableNorms` to return authority source
-- Add procedural norm type to governance data model
-- Gate governance data behind `governance.arbitrate.*` seed capability + Sovereign/Delegated authority
+**Status**: Schema designed (#601). Implementation pending.
+
+Design decisions (resolved 2026-03-16):
+- `AuthorityLevel` enum (`Influence`, `Delegated`, `Sovereign`) on `FactionResponse` — required, defaults to `Influence`
+- Sovereignty is emergent (nullable concept): acquired via `DesignateRealmBaseline` (→ Sovereign) or delegation (→ Delegated); `authorityLevel` is NOT on `UpdateFactionRequest`
+- Delegation is per-case-type via opaque `domain` string (game-configurable)
+- `QueryGovernanceData` (`/faction/governance/query`) is a new endpoint, separate from `QueryApplicableNorms` — returns 404 when no sovereign has jurisdiction
+- Governance data model: `{ domain, templateCode, governanceParameters }` — parameters are opaque pass-through (T29 compliant)
+- 6 new governance endpoints: set, remove, list, query, delegate, revoke
+- `ApplicableNormResponse` gains `authorityLevel` field for authority-aware cost tagging
+- Enclave sovereignty is location-boundary-based
+
+Schema changes:
+- `faction-api.yaml`: `AuthorityLevel` enum, governance models, 6 new endpoints, enhanced `FactionResponse` and `ApplicableNormResponse`
+- `faction-events.yaml`: `authorityLevel` in x-lifecycle, 4 new governance events (`faction.governance.defined`, `faction.governance.deleted`, `faction.authority.delegated`, `faction.authority.revoked`)
+- `faction-configuration.yaml`: `MaxGovernanceEntriesPerFaction`, `GovernanceCacheTtlSeconds`
+- `state-stores.yaml`: `faction-governance-statestore` (MySQL)
 
 ### Phase 1: Obligation Multi-Channel Costs (Prerequisite -- changes to lib-obligation)
 - Tag obligation costs as `legal` vs. `social` vs. `personal` based on source authority level
@@ -266,9 +276,11 @@ Contract is the engine. Arbitration is the legal system built on that engine.
 
 ## Faction Sovereignty Dependency
 
-Arbitration is meaningful only when factions distinguish between legal authority (Sovereign/Delegated) and social influence. Without sovereignty, there is no principled way to determine who has jurisdiction, whose procedures apply, or what weight a ruling carries. The `authorityLevel` field on FactionModel (described in [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning)) must exist before arbitration can function.
+Arbitration is meaningful only when factions distinguish between legal authority (Sovereign/Delegated) and social influence. Without sovereignty, there is no principled way to determine who has jurisdiction, whose procedures apply, or what weight a ruling carries.
 
-Arbitration depends on a capability that does not yet exist in lib-faction: the `authorityLevel` field distinguishing Sovereign, Delegated, and Influence factions. This section documents the dependency and what it enables.
+**Status (2026-03-16)**: The sovereignty schema is designed (#601) — `AuthorityLevel` enum, governance data model, 6 governance endpoints, and enhanced `ApplicableNormResponse` with authority level. Schema changes to `faction-api.yaml` and `faction-events.yaml` are planned. Service code implementation is pending. See Phase 0 above for the full design summary.
+
+This section documents the dependency and what it enables.
 
 ### What Sovereignty Provides
 
@@ -290,15 +302,18 @@ When a case is filed, jurisdiction determination walks the authority hierarchy:
 
 ### What Must Change in lib-faction
 
+**Status (2026-03-16)**: Schema designed (#601), implementation pending. See Phase 0 above for the resolved design.
+
 The following changes to lib-faction are prerequisites for lib-arbitration (documented in [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning)):
 
-- **Schema change**: Add `authorityLevel` enum field (`Influence`, `Delegated`, `Sovereign`) to `faction-api.yaml`
-- **Model change**: Add field to `FactionModel`
-- **DesignateRealmBaseline enhancement**: Automatically sets `AuthorityLevel = Sovereign`
-- **New API**: Delegation endpoint for sovereign factions to grant Delegated authority to child factions
-- **QueryApplicableNorms enhancement**: Return authority source alongside norm data
-- **New governance data model**: Procedural norm type alongside cost norms -- `{ caseType, templateCode, governanceParameters }`, gated by `governance.arbitrate.*` seed capability and Sovereign/Delegated authority level
-- **New API**: `QueryGovernanceData` -- given a location and case type, resolve the jurisdictional faction and return its procedural template reference and governance parameters
+- **Schema change**: `AuthorityLevel` enum (`Influence`, `Delegated`, `Sovereign`) added to `faction-api.yaml` — required on `FactionResponse`, defaults to `Influence`
+- **Model change**: `authorityLevel` field on `FactionModel`; NOT on `UpdateFactionRequest` — sovereignty only mutated via `DesignateRealmBaseline` (→ Sovereign) or delegation endpoints (→ Delegated / → Influence)
+- **DesignateRealmBaseline enhancement**: Automatically sets `authorityLevel = Sovereign`
+- **New governance endpoints** (6 total): `/faction/governance/set`, `remove`, `list`, `query`, `delegate`, `revoke`
+- **Delegation**: Per-case-type via opaque `domain` string — sovereign can delegate specific case type jurisdictions to child factions
+- **QueryApplicableNorms enhancement**: `ApplicableNormResponse` gains `authorityLevel` field for authority-aware cost tagging
+- **New governance data model**: `{ domain, templateCode, governanceParameters }` — `governanceParameters` is opaque pass-through (T29 compliant)
+- **QueryGovernanceData** (`/faction/governance/query`): Given location + domain, resolves jurisdictional faction by walking sovereignty hierarchy. Returns 404 when no sovereign has jurisdiction. This is the critical integration endpoint for lib-arbitration case filing.
 
 ### What Must Change in lib-obligation
 
@@ -583,8 +598,8 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 
 ### Design Considerations (Requires Planning)
 
-1. **Faction sovereignty implementation**: The `authorityLevel` field, governance data model, delegation endpoint, and enhanced `QueryApplicableNorms` are all prerequisites that must be designed and implemented in lib-faction before lib-arbitration can be built. This is the single largest prerequisite.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/601 -->
+1. ~~**Faction sovereignty implementation**~~: **DESIGNED** (2026-03-16, #601) — Schema designed with `AuthorityLevel` enum, governance data model, 6 governance endpoints, and enhanced `ApplicableNormResponse`. Service code implementation pending. See Phase 0 and Faction Sovereignty Dependency sections above for the full resolved design.
+<!-- AUDIT:DESIGNED:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/601 -->
 
 2. **Contract template authoring**: Procedural templates (dissolution-standard, criminal-trial-standard, etc.) must be authored and registered in lib-contract at deployment time. Template design is a game design task, not a service engineering task -- but the template structure must support the milestone patterns described in this document.
 

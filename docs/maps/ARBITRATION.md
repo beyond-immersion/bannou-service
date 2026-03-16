@@ -78,7 +78,7 @@
 | lib-state (`IDistributedLockProvider`) | L0 | Hard | Case mutation, ruling issuance, jurisdiction resolution, arbiter assignment locks |
 | lib-messaging (`IMessageBus`) | L0 | Hard | Publishing 16 event topics |
 | lib-messaging (`IEventConsumer`) | L0 | Hard | Registering 6 consumed event handlers |
-| lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation |
+| lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation (NullTelemetryProvider fallback when telemetry disabled) |
 | lib-contract (`IContractClient`) | L1 | Hard | Creating arbitration contracts, milestone tracking, prebound API execution |
 | lib-resource (`IResourceClient`) | L1 | Hard | Reference tracking, cleanup callback registration (character, realm, faction, location) |
 | lib-character (`ICharacterClient`) | L2 | Hard | Validating character existence for party roles, custody assignment |
@@ -87,7 +87,7 @@
 | lib-relationship (`IRelationshipClient`) | L2 | Hard | Relationship status changes from rulings |
 | lib-currency (`ICurrencyClient`) | L2 | Hard | Monetary penalties (fines, reparations) |
 | lib-inventory (`IInventoryClient`) | L2 | Hard | Shared asset identification for division |
-| lib-seed (`ISeedClient`) | L2 | Hard | Seed bond dissolution, sovereignty capability checks |
+| lib-seed (`ISeedClient`) | L2 | Hard | Seed bond dissolution for ruling consequences involving seed-bound relationships |
 | lib-faction (`IFactionClient`) | L4 | Soft | Jurisdiction determination, sovereignty resolution, governance data queries. Functionally prerequisite but architecturally soft (L4→L4). All jurisdiction-dependent endpoints return error when absent. |
 | lib-escrow (`IEscrowClient`) | L4 | Soft | Asset division when rulings involve property. Unavailable: rulings limited to non-asset consequences. |
 | lib-obligation (`IObligationClient`) | L4 | Soft | Creating ongoing obligations from rulings (alimony, probation). Unavailable: one-time consequences only. |
@@ -189,10 +189,10 @@
 | EnforceRuling | POST /arbitration/ruling/enforce | generated | [] | case | arbitration.case.updated, arbitration.ruling.enforced, arbitration.case.closed |
 | ResolveJurisdiction | POST /arbitration/jurisdiction/resolve | generated | [] | juris-cache | - |
 | GetJurisdictionHierarchy | POST /arbitration/jurisdiction/get-hierarchy | generated | [] | - | - |
-| CleanupByCharacter | POST /arbitration/cleanup-by-character | generated | [] | case | arbitration.case.closed, arbitration.case.deleted |
-| CleanupByRealm | POST /arbitration/cleanup-by-realm | generated | [] | case | arbitration.case.closed, arbitration.case.deleted |
-| CleanupByFaction | POST /arbitration/cleanup-by-faction | generated | [] | case, juris-cache | arbitration.case.closed, arbitration.case.deleted |
-| CleanupByLocation | POST /arbitration/cleanup-by-location | generated | [] | case, juris-cache | arbitration.case.closed, arbitration.case.deleted |
+| CleanupByCharacter | POST /arbitration/cleanup-by-character | generated | [] | case | arbitration.case.closed |
+| CleanupByRealm | POST /arbitration/cleanup-by-realm | generated | [] | case | arbitration.case.closed |
+| CleanupByFaction | POST /arbitration/cleanup-by-faction | generated | [] | case, juris-cache | arbitration.case.closed |
+| CleanupByLocation | POST /arbitration/cleanup-by-location | generated | [] | case, juris-cache | arbitration.case.closed |
 
 ---
 
@@ -211,8 +211,10 @@ READ _cacheStore:juris:{locationId}:{caseType}                   -> jurisdiction
 IF jurisdictionResolution == null
   LOCK _lockStore:arb:lock:juris:{locationId}
     CALL _locationClient.GetLocationAsync(locationId)            -> 404 if null
-    CALL _factionClient.QueryGovernanceDataAsync(locationId, caseType) -> 400 if Faction unavailable
-    IF no governance data for case type                           -> 400
+    CALL _factionClient.QueryGovernanceDataAsync(locationId, domain: caseType) -> 400 if Faction unavailable
+    // QueryGovernanceData resolves jurisdiction by walking sovereignty hierarchy
+    // Returns { domain, templateCode, governanceParameters } or 404 if no sovereign has jurisdiction
+    IF no governance data for domain                              -> 400
     WRITE _cacheStore:juris:{locationId}:{caseType} <- JurisdictionResolutionModel (TTL: config.JurisdictionCacheTtlMinutes)
 
 // Create case
@@ -242,8 +244,7 @@ RETURN (200, GetCaseResponse)
 POST /arbitration/case/get-by-code | Roles: []
 
 ```
-QUERY _caseStore WHERE $.gameServiceId == gameServiceId AND $.caseCode == caseCode PAGED(1, 1)
-                                                                 -> 404 if empty
+READ _caseStore:case-code:{gameServiceId}:{caseCode}             -> 404 if null
 RETURN (200, GetCaseResponse)
 ```
 
@@ -416,7 +417,10 @@ POST /arbitration/arbiter/list-qualified | Roles: []
 ```
 READ _arbiterStore:qualified:{gameServiceId}:{caseType}
 IF null (cache miss)
-  CALL _factionClient.QueryQualifiedArbitersAsync(gameServiceId, caseType) -> 400 if Faction unavailable
+  // Resolve qualified arbiters from governance data for this domain
+  // No dedicated Faction endpoint — derive from governance records for the game service scope
+  CALL _factionClient.QueryGovernanceDataAsync(locationId, domain: caseType) -> 400 if Faction unavailable
+  // Extract arbiter designations from governanceParameters (template-defined arbiter roles)
   WRITE _arbiterStore:qualified:{gameServiceId}:{caseType} <- QualifiedArbiterListModel (TTL)
 
 RETURN (200, ListQualifiedArbitersResponse { arbiters })
@@ -546,9 +550,10 @@ LOCK _lockStore:arb:lock:juris:{locationId}
   IF cached -> RETURN (200, ...)
 
   CALL _locationClient.GetLocationAsync(locationId)              -> 404 if null
-  CALL _factionClient.QueryGovernanceDataAsync(locationId, caseType)
-  // Walk authority hierarchy: delegated -> sovereign -> realm baseline
+  CALL _factionClient.QueryGovernanceDataAsync(locationId, domain: caseType)
+  // QueryGovernanceData walks sovereignty hierarchy: delegated -> sovereign -> realm baseline
   // Enclave sovereignty: nested sovereign overrides within its boundary
+  // Returns { domain, templateCode, governanceParameters } or 404
   IF no governance data found at any level                       -> 404
 
   WRITE _cacheStore:juris:{locationId}:{caseType} <- JurisdictionResolutionModel (TTL: config.JurisdictionCacheTtlMinutes)
@@ -591,13 +596,19 @@ RETURN (200, CleanupResponse)
 POST /arbitration/cleanup-by-realm | Roles: []
 
 ```
-QUERY _caseStore WHERE $.locationId IN realm locations AND $.status NOT IN terminal states
+// Resource-managed cleanup
+QUERY _caseStore WHERE $.locationId IN realm locations
+  AND $.status NOT IN [Closed, Dismissed, Withdrawn]
 
 FOREACH case in activeCases
   TRY
-    LOCK + CALL _contractClient.TerminateContractAsync + WRITE status: Closed
-    PUBLISH arbitration.case.closed { closedReason: RealmDeleted }
-  CATCH -> LogWarning, continue
+    LOCK _lockStore:arb:lock:case:{case.caseId}
+      CALL _contractClient.TerminateContractAsync(case.contractId, "RealmDeleted")
+      WRITE _caseStore:case:{case.caseId} <- status: Closed, closedReason: RealmDeleted
+      WRITE _caseStore:case-code:{...} <- updated
+      WRITE _caseStore:case-contract:{...} <- updated
+    PUBLISH arbitration.case.closed { caseId, closedReason: RealmDeleted }
+  CATCH -> LogWarning, continue  // Per-item isolation
 
 RETURN (200, CleanupResponse)
 ```
@@ -606,16 +617,22 @@ RETURN (200, CleanupResponse)
 POST /arbitration/cleanup-by-faction | Roles: []
 
 ```
-QUERY _caseStore WHERE $.sovereignFactionId == factionId AND $.status NOT IN terminal states
+// Resource-managed cleanup
+QUERY _caseStore WHERE $.sovereignFactionId == factionId
+  AND $.status NOT IN [Closed, Dismissed, Withdrawn]
 
 FOREACH case in activeCases
   TRY
-    LOCK + CALL _contractClient.TerminateContractAsync + WRITE status: Closed, closedReason: JurisdictionVoid
-    PUBLISH arbitration.case.closed { closedReason: JurisdictionVoid }
-  CATCH -> LogWarning, continue
+    LOCK _lockStore:arb:lock:case:{case.caseId}
+      CALL _contractClient.TerminateContractAsync(case.contractId, "SovereignFactionDeleted")
+      WRITE _caseStore:case:{case.caseId} <- status: Closed, closedReason: JurisdictionVoid
+      WRITE _caseStore:case-code:{...} <- updated
+      WRITE _caseStore:case-contract:{...} <- updated
+    PUBLISH arbitration.case.closed { caseId, closedReason: JurisdictionVoid }
+  CATCH -> LogWarning, continue  // Per-item isolation
 
 // Invalidate jurisdiction cache entries referencing this faction
-DELETE _cacheStore entries for faction
+DELETE _cacheStore entries WHERE sovereignFactionId == factionId
 
 RETURN (200, CleanupResponse)
 ```
@@ -624,13 +641,19 @@ RETURN (200, CleanupResponse)
 POST /arbitration/cleanup-by-location | Roles: []
 
 ```
-QUERY _caseStore WHERE $.locationId == locationId AND $.status NOT IN terminal states
+// Resource-managed cleanup
+QUERY _caseStore WHERE $.locationId == locationId
+  AND $.status NOT IN [Closed, Dismissed, Withdrawn]
 
 FOREACH case in activeCases
   TRY
-    LOCK + CALL _contractClient.TerminateContractAsync + WRITE status: Closed, closedReason: JurisdictionVoid
-    PUBLISH arbitration.case.closed { closedReason: JurisdictionVoid }
-  CATCH -> LogWarning, continue
+    LOCK _lockStore:arb:lock:case:{case.caseId}
+      CALL _contractClient.TerminateContractAsync(case.contractId, "LocationDeleted")
+      WRITE _caseStore:case:{case.caseId} <- status: Closed, closedReason: JurisdictionVoid
+      WRITE _caseStore:case-code:{...} <- updated
+      WRITE _caseStore:case-contract:{...} <- updated
+    PUBLISH arbitration.case.closed { caseId, closedReason: JurisdictionVoid }
+  CATCH -> LogWarning, continue  // Per-item isolation
 
 DELETE _cacheStore:juris:{locationId}:*  // all case types
 

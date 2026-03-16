@@ -369,6 +369,49 @@ x-state-stores:
     purpose: Per-entity per-platform sync tracking
 
   # ============================================================================
+  # Affix Stores
+  # ============================================================================
+
+  affix-definitions:
+    backend: mysql
+    service: Affix
+    purpose: Affix definition templates (modifiers with tiers, stat grants, spawn weights)
+
+  affix-implicit-mappings:
+    backend: mysql
+    service: Affix
+    purpose: Implicit affix mappings from item template codes to definition sets
+
+  affix-instances:
+    backend: mysql
+    service: Affix
+    purpose: Per-item applied affix state (slots, rolled values, states, influences, quality)
+
+  affix-definition-cache:
+    backend: redis
+    prefix: "affix:def"
+    service: Affix
+    purpose: Definition hot cache with read-through from MySQL
+
+  affix-instance-cache:
+    backend: redis
+    prefix: "affix:inst"
+    service: Affix
+    purpose: Instance hot cache and computed stats cache with read-through from MySQL
+
+  affix-pool-cache:
+    backend: redis
+    prefix: "affix:pool"
+    service: Affix
+    purpose: Pre-computed affix generation pools with weights (cached by item class, slot type, level bucket)
+
+  affix-lock:
+    backend: redis
+    prefix: "affix:lock"
+    service: Affix
+    purpose: Distributed locks for definition mutation, item modification, and pool rebuild
+
+  # ============================================================================
   # Save-Load Stores
   # ============================================================================
 
@@ -445,6 +488,37 @@ x-state-stores:
     backend: mysql
     service: CharacterEncounter
     purpose: Encounter records and participant perspectives
+
+  # ============================================================================
+  # Character Lifecycle Stores
+  # ============================================================================
+
+  character-lifecycle-profiles:
+    backend: mysql
+    service: CharacterLifecycle
+    purpose: Primary lifecycle state for characters (age, stage, marriage, death, fulfillment)
+
+  character-lifecycle-heritage:
+    backend: mysql
+    service: CharacterLifecycle
+    purpose: Genetic profiles, heritable trait templates, lifecycle templates, hybrid templates
+
+  character-lifecycle-bloodlines:
+    backend: mysql
+    service: CharacterLifecycle
+    purpose: Bloodline definitions and membership tracking
+
+  character-lifecycle-cache:
+    backend: redis
+    prefix: "character-lifecycle:cache"
+    service: CharacterLifecycle
+    purpose: Cached lifecycle manifests (stage, age, phenotype, aptitudes, bloodlines) and realm population stats
+
+  character-lifecycle-lock:
+    backend: redis
+    prefix: "character-lifecycle:lock"
+    service: CharacterLifecycle
+    purpose: Distributed locks for aging, procreation, death, marriage, and background workers
 
   game-session-statestore:
     backend: mysql

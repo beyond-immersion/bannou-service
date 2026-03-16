@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Store**: character-history-statestore (MySQL)
+> **Implementation Map**: [docs/maps/CHARACTER-HISTORY.md](../maps/CHARACTER-HISTORY.md)
 > **Short**: Historical event participation and machine-readable backstory for behavior system consumption
 
 ---
@@ -22,7 +23,7 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 | lib-state (`IStateStoreFactory`) | MySQL persistence for participation records, indexes, and backstory |
 | lib-state (`IDistributedLockProvider`) | Distributed locks for DualIndexHelper and BackstoryStorageHelper write operations (per IMPLEMENTATION TENETS: multi-instance safety) |
 | lib-messaging (`IMessageBus`) | Publishing participation and backstory lifecycle events |
-| lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
+| lib-messaging (`IEventConsumer`) | Self-event subscription for BackstoryCache invalidation (backstory.created, backstory.updated, backstory.deleted, history.deleted) |
 | lib-resource (`IResourceClient`) | Hard dependency (L1): registers cleanup callbacks and compression callbacks on startup |
 | lib-resource (`IResourceClient`) | Calls `RegisterReferenceAsync`/`UnregisterReferenceAsync` for character reference tracking |
 | lib-character-history (`ICharacterHistoryClient`) | Used by `BackstoryCache` to load backstory data on cache miss |
@@ -33,9 +34,10 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-actor | Reads backstory via `ICharacterHistoryClient` (PersonalityCache) to inform NPC behavior decisions |
-| lib-analytics | Subscribes to `character-history.participation.recorded`, `character-history.backstory.created`, `character-history.backstory.updated` for historical analytics |
+| lib-actor | Reads backstory via `IVariableProviderFactory` (`BackstoryProviderFactory`) for `${backstory.*}` ABML expressions |
+| lib-analytics | Subscribes to `character-history.participation.batch-created`, `character-history.backstory.created`, `character-history.backstory.updated` for historical analytics |
 | lib-resource | Receives direct API calls for reference registration; calls `/character-history/delete-all` endpoint on cascade delete |
+| lib-storyline | Soft L4 dependency via `ICharacterHistoryClient` for `BackstoryAdd` mutations (graceful degradation if unavailable) |
 
 **Note**: lib-character (L2) does **not** call this service per SERVICE_HIERARCHY - L2 cannot depend on L4. The character service explicitly notes it cannot call CharacterHistory. Callers needing history data must call this service directly.
 
@@ -71,8 +73,9 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `character-history.participation.recorded` | `CharacterParticipationRecordedEvent` | New participation recorded |
-| `character-history.participation.deleted` | `CharacterParticipationDeletedEvent` | Participation removed |
+| `character-history.participation.batch-created` | `ParticipationBatchCreatedEvent` | Batch: accumulated participation recordings (via `EventBatcher`) |
+| `character-history.participation.batch-modified` | `ParticipationBatchModifiedEvent` | Batch: unused infrastructure (participations are immutable) |
+| `character-history.participation.batch-destroyed` | `ParticipationBatchDestroyedEvent` | Batch: accumulated participation deletions (via `EventBatcher`) |
 | `character-history.backstory.created` | `CharacterBackstoryCreatedEvent` | First backstory created for a character |
 | `character-history.backstory.updated` | `CharacterBackstoryUpdatedEvent` | Existing backstory modified |
 | `character-history.backstory.deleted` | `CharacterBackstoryDeletedEvent` | All backstory deleted |
@@ -92,9 +95,11 @@ This plugin does not consume external events. It does subscribe to its own publi
 | `MaxBackstoryElements` | `CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS` | 100 | Maximum backstory elements per character; returns BadRequest when exceeded |
 | `MaxCompressBackstoryPoints` | `CHARACTER_HISTORY_MAX_COMPRESS_BACKSTORY_POINTS` | 10 | Maximum backstory points to include in compression archive summaries |
 | `MaxCompressLifeEvents` | `CHARACTER_HISTORY_MAX_COMPRESS_LIFE_EVENTS` | 10 | Maximum life events to include in compression archive summaries |
+| `ParticipationEventBatchIntervalSeconds` | `CHARACTER_HISTORY_PARTICIPATION_EVENT_BATCH_INTERVAL_SECONDS` | 5 | Interval between participation batch event flushes |
+| `ParticipationEventBatchStartupDelaySeconds` | `CHARACTER_HISTORY_PARTICIPATION_EVENT_BATCH_STARTUP_DELAY_SECONDS` | 10 | Delay before first batch flush after startup |
 | `IndexLockTimeoutSeconds` | `CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | 15 | Distributed lock timeout for DualIndexHelper and BackstoryStorageHelper write operations |
 
-The generated `CharacterHistoryServiceConfiguration` is injected into `BackstoryCache` (for TTL), `CharacterHistoryService` (for element limits and compression summary limits).
+The generated `CharacterHistoryServiceConfiguration` is injected into `BackstoryCache` (for TTL), `CharacterHistoryService` (for element limits and compression summary limits), and `ParticipationEventBatcher` (via `EventBatcherWorker` for batch interval).
 
 ---
 
@@ -115,6 +120,8 @@ The generated `CharacterHistoryServiceConfiguration` is injected into `Backstory
 | `CharacterHistoryCompressionCallbacks` | (generated static class) | Compression callback registration with lib-resource |
 | `IBackstoryCache` | Singleton | TTL-based backstory caching for actor behavior execution |
 | `BackstoryProviderFactory` (`IVariableProviderFactory`) | Singleton | Factory for ABML expression evaluation (enables `${backstory.*}` paths) |
+| `ParticipationEventBatcher` | Singleton | Accumulates participation created/destroyed events for periodic batch flush via `EventBatcherWorker` |
+| `EventBatcherWorker` | Singleton (`IHostedService`) | Flushes `ParticipationEventBatcher` on configurable interval |
 | `CharacterHistoryTemplate` (`ResourceTemplateBase`) | Registered at startup (in plugin `OnRunningAsync`) | Compile-time path validation for ABML expressions referencing history data (namespace: `history`) |
 
 Service lifetime is **Scoped** (per-request).
@@ -258,7 +265,7 @@ None.
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Metadata stored as `object?`**~~: **Resolved** - Participation metadata is client-only opaque data. No Bannou plugin reads specific keys by convention. Schema descriptions updated per FOUNDATION TENETS.
+None.
 
 ---
 
@@ -266,9 +273,3 @@ None.
 
 ### Pending Design Review
 - **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for DeleteAll (blocked on lib-resource batch unregister endpoint; O(N) API calls for N participations)
-- ~~**2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas~~ **Resolved**: Metadata is client-only opaque data; descriptions updated to clarify no plugin reads specific keys
-
-### Active
-
-- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#647](https://github.com/beyond-immersion/bannou-service/issues/647).
-<!-- AUDIT:IN_PROGRESS:2026-03-15 -->

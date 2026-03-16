@@ -16,42 +16,7 @@ Machine-readable personality traits and combat preferences (L4 GameFeatures) for
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | MySQL persistence for personality and combat preference data |
-| lib-messaging (`IMessageBus`) | Publishing personality/combat lifecycle events and evolution events |
-| lib-messaging (`IEventConsumer`) | Event handler registration for cache invalidation (personality.evolved, combat-preferences.evolved) |
-| lib-resource (`IResourceClient`) | Calls `RegisterReferenceAsync`/`UnregisterReferenceAsync` for character reference tracking |
-
----
-
-## Dependents (What Relies On This Plugin)
-
-| Dependent | Relationship |
-|-----------|-------------|
-| lib-actor | Discovers `PersonalityProviderFactory` and `CombatPreferencesProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection for ABML expression evaluation. Providers use `IPersonalityDataCache` internally. |
-| lib-resource | Receives direct API calls for reference registration; calls `/cleanup-by-character` endpoint on cascade delete |
-
-**Note**: lib-character (L2) does NOT depend on lib-character-personality (L4) per SERVICE_HIERARCHY. The enrichment query params (`includePersonality`, `includeCombatPreferences`) are logged but ignored; callers should aggregate from L4 services directly.
-
----
-
-## State Storage
-
-**Store**: `character-personality-statestore` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `personality-{characterId}` | `PersonalityData` | Trait axes with float values, version, timestamps |
-| `combat-{characterId}` | `CombatPreferencesData` | Combat style, range, role, risk/retreat thresholds |
-
-Both types share the same state store, distinguished by key prefix.
-
----
-
-### Type Field Classification
+## Type Field Classification
 
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
@@ -64,29 +29,14 @@ Both types share the same state store, distinguished by key prefix.
 
 ---
 
-## Events
+## Dependents (What Relies On This Plugin)
 
-### Published Events
+| Dependent | Relationship |
+|-----------|-------------|
+| lib-actor | Discovers `PersonalityProviderFactory` and `CombatPreferencesProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection for ABML expression evaluation. Providers use `IPersonalityDataCache` internally. |
+| lib-resource | Receives direct API calls for reference registration; calls `/cleanup-by-character` endpoint on cascade delete |
 
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `personality.created` | `PersonalityCreatedEvent` | New personality created via Set |
-| `personality.updated` | `PersonalityUpdatedEvent` | Existing personality modified via Set |
-| `personality.evolved` | `PersonalityEvolvedEvent` | Experience causes probabilistic trait evolution |
-| `personality.deleted` | `PersonalityDeletedEvent` | Personality removed (via Delete or CleanupByCharacter) |
-| `combat-preferences.created` | `CombatPreferencesCreatedEvent` | New combat preferences created via Set |
-| `combat-preferences.updated` | `CombatPreferencesUpdatedEvent` | Existing combat preferences modified via Set |
-| `combat-preferences.evolved` | `CombatPreferencesEvolvedEvent` | Combat experience causes preference evolution |
-| `combat-preferences.deleted` | `CombatPreferencesDeletedEvent` | Combat preferences removed (via Delete or CleanupByCharacter) |
-
-### Consumed Events
-
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `personality.evolved` | `HandlePersonalityEvolvedAsync` | Invalidates `IPersonalityDataCache` for affected character (cache lives in this service) |
-| `combat-preferences.evolved` | `HandleCombatPreferencesEvolvedAsync` | Invalidates `IPersonalityDataCache` for affected character |
-
-**Note**: The service subscribes to its own events for internal cache invalidation. This ensures running actors using the `IVariableProviderFactory` instances get fresh data on their next behavior tick.
+**Note**: lib-character (L2) does NOT depend on lib-character-personality (L4) per SERVICE HIERARCHY. The enrichment query params (`includePersonality`, `includeCombatPreferences`) are logged but ignored; callers should aggregate from L4 services directly.
 
 ---
 
@@ -108,115 +58,6 @@ Both types share the same state store, distinguished by key prefix.
 | `CombatIntenseShiftMultiplier` | `CHARACTER_PERSONALITY_COMBAT_INTENSE_SHIFT_MULTIPLIER` | `1.5` | Multiplier for intense stat shifts (near-death) |
 | `CombatMildShiftMultiplier` | `CHARACTER_PERSONALITY_COMBAT_MILD_SHIFT_MULTIPLIER` | `0.5` | Multiplier for mild stat shifts (standard) |
 | `CombatMildestShiftMultiplier` | `CHARACTER_PERSONALITY_COMBAT_MILDEST_SHIFT_MULTIPLIER` | `0.3` | Multiplier for mildest stat shifts (minor) |
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<CharacterPersonalityService>` | Scoped | Structured logging |
-| `CharacterPersonalityServiceConfiguration` | Singleton | Evolution constants and batch limits |
-| `IStateStoreFactory` | Singleton | State store access |
-| `IMessageBus` | Scoped | Event publishing |
-| `IEventConsumer` | Scoped | Event handler registration (personality.evolved, combat-preferences.evolved) |
-| `IPersonalityDataCache` | Singleton | Internal cache for personality and combat preferences data with TTL |
-
-**Additional DI Registrations** (via Plugin):
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `PersonalityProviderFactory` | Singleton | `IVariableProviderFactory` for `${personality.*}` ABML expressions |
-| `CombatPreferencesProviderFactory` | Singleton | `IVariableProviderFactory` for `${combat.*}` ABML expressions |
-
-Service lifetime is **Scoped** (per-request).
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Personality CRUD
-
-- **Get** (`/character-personality/get`): Simple key lookup. Returns NotFound if no personality exists.
-- **Set** (`/character-personality/set`): Create-or-update with version tracking. Traits stored as `Dictionary<TraitAxis, float>` keyed by enum. Publishes created or updated event based on whether record existed.
-- **BatchGet** (`/character-personality/batch-get`): Sequential iteration (not parallel) with 100-character limit. Returns partial results with notFound IDs list.
-- **Delete** (`/character-personality/delete`): Simple removal with deletion event.
-
-### Personality Evolution (`/character-personality/evolve`)
-
-Probabilistic trait evolution based on experience type and intensity:
-
-1. **Evolution probability**: `P = BaseEvolutionProbability * intensity` (max 15% at full intensity)
-2. **Trait selection**: Experience type maps to 2-3 affected traits with signed direction weights
-3. **Shift magnitude**: `shift = (MinTraitShift + (MaxTraitShift - MinTraitShift) * intensity) * direction`
-4. **Clamping**: Result clamped to [-1.0, +1.0]
-
-**Experience Type Effects**:
-
-| Type | Affected Traits | Effect |
-|------|----------------|--------|
-| TRAUMA | Neuroticism+, Openness-, Extraversion- | Closes off, increases anxiety |
-| BETRAYAL | Agreeableness-, Honesty-, Loyalty+ | Damages trust, deepens bonds |
-| LOSS | Neuroticism+, Conscientiousness+ | Emotional sensitivity, duty |
-| VICTORY | Extraversion+, Aggression+, Neuroticism- | Confidence boost |
-| FRIENDSHIP | Agreeableness+, Extraversion+, Loyalty+ | Most beneficial |
-| REDEMPTION | Honesty+, Conscientiousness+, Neuroticism- | Personal growth |
-| CORRUPTION | Honesty-, Agreeableness-, Aggression+ | Moral decay |
-| ENLIGHTENMENT | Openness+, Conscientiousness+, Neuroticism- | Maximum positive |
-| SACRIFICE | Loyalty+, Conscientiousness+, Agreeableness+ | Heroic action |
-
-### Combat CRUD
-
-- **GetCombat** (`/character-personality/get-combat`): Returns combat preferences (style, range, role, risk/retreat thresholds).
-- **SetCombat** (`/character-personality/set-combat`): Create-or-update. Uses proper enum types internally (`CombatStyle`, `PreferredRange`, `GroupRole`).
-- **DeleteCombat** (`/character-personality/delete-combat`): Simple removal.
-
-### Resource Cleanup
-
-- **CleanupByCharacter** (`/character-personality/cleanup-by-character`): Called by lib-resource during cascading cleanup when a character is deleted. Removes BOTH personality traits AND combat preferences for the character. Returns `CleanupByCharacterResponse` indicating what was deleted. Does not return 404 if data doesn't exist—reports success with `personalityDeleted=false`/`combatPreferencesDeleted=false`.
-
-### Combat Evolution (`/character-personality/evolve-combat`)
-
-Same probability formula as personality evolution. Combat experience types trigger style/role transitions and float adjustments:
-
-| Type | Effects |
-|------|---------|
-| DECISIVE_VICTORY | RiskTolerance+, 30% DEFENSIVE->BALANCED, 20% BALANCED->AGGRESSIVE |
-| NARROW_VICTORY | RiskTolerance + shift*0.5 |
-| DEFEAT | RiskTolerance-, RetreatThreshold+, 30% AGGRESSIVE->BALANCED |
-| NEAR_DEATH | RetreatThreshold+1.5x, RiskTolerance-1.5x, 50% any->DEFENSIVE |
-| ALLY_SAVED | ProtectAllies=true, 40% SOLO->SUPPORT |
-| ALLY_LOST | 50% random: ProtectAllies=true OR false |
-| SUCCESSFUL_RETREAT | RetreatThreshold + shift*0.3 |
-| FAILED_RETREAT | 50%: fight harder OR more cautious |
-| AMBUSH_SUCCESS | 30% ->FLANKER, DEFENSIVE->TACTICAL |
-| AMBUSH_SURVIVED | RiskTolerance- |
-
-### Compression Support
-
-- **GetCompressData** (`/character-personality/get-compress-data`): Called by Resource service during hierarchical character compression. Returns `PersonalityCompressData` containing:
-  - `hasPersonality`: Whether personality traits exist
-  - `personality`: Full `PersonalityResponse` if exists
-  - `hasCombatPreferences`: Whether combat preferences exist
-  - `combatPreferences`: Full `CombatPreferencesResponse` if exists
-
-  Returns NotFound only if BOTH personality and combat preferences are absent.
-
-- **RestoreFromArchive** (`/character-personality/restore-from-archive`): Called by Resource service during decompression. Accepts Base64-encoded GZip JSON of `PersonalityCompressData`. Restores personality and combat preferences to state store if they don't already exist (idempotent).
-
-**Compression Callback Registration** (in OnRunningAsync):
-```csharp
-await resourceClient.DefineCompressCallbackAsync(
-    new DefineCompressCallbackRequest
-    {
-        ResourceType = "character",
-        SourceType = "character-personality",
-        CompressEndpoint = "/character-personality/get-compress-data",
-        CompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\"}",
-        DecompressEndpoint = "/character-personality/restore-from-archive",
-        DecompressPayloadTemplate = "{\"characterId\": \"{{resourceId}}\", \"data\": \"{{data}}\"}",
-        Priority = 10  // After character base data (priority 0)
-    }, ct);
-```
 
 ---
 
@@ -291,7 +132,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Inline key interpolation bypasses key builders**~~: **FIXED** (2026-03-11) - All 15 call sites in `CharacterPersonalityService.cs` were using `$"{PERSONALITY_KEY_PREFIX}{id}"` / `$"{COMBAT_KEY_PREFIX}{id}"` instead of calling `BuildPersonalityKey()` / `BuildCombatKey()`. Replaced all inline interpolations with builder calls per FOUNDATION TENETS. Also removed 8 dead topic constants (`PERSONALITY_CREATED_TOPIC`, etc.) that were superseded by generated publisher extension methods.
+1. ~~**RestoreFromArchive does not publish lifecycle events**~~: **FIXED** (2026-03-16) - Added `PublishPersonalityCreatedAsync` and `PublishCombatPreferencesCreatedAsync` calls after state store writes in `RestoreFromArchiveAsync`. Events match the pattern in `SetPersonalityAsync`/`SetCombatPreferencesAsync`. Cache invalidation now occurs via the self-subscription to `personality.evolved`/`combat-preferences.evolved` (note: cache listens to `*.evolved`, not `*.created` — the created event primarily benefits downstream consumers and analytics, not the local cache).
 
 ### Intentional Quirks
 
@@ -320,8 +161,6 @@ None. The service is feature-complete for its scope.
 3. **Combat style transitions are asymmetric**: Some styles (BERSERKER) have very few exit paths (only DEFEAT with 40% chance), while others (BALANCED) can transition in multiple directions. This may create style "traps" where characters get stuck in certain combat modes.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-02:https://github.com/beyond-immersion/bannou-service/issues/264 -->
 
-4. ~~**Cache TTL hardcoded**~~: **FIXED** (2026-02-06) - Added `CacheTtlMinutes` configuration property (default 5) to control cache TTL. `PersonalityDataCache` now injects `CharacterPersonalityServiceConfiguration` and uses the configured value.
-
 ---
 
 ## Work Tracking
@@ -336,5 +175,6 @@ See AUDIT markers in Potential Extensions and Design Considerations sections for
 
 ### Completed
 
-- **2026-02-06**: Cache TTL now configurable via `CacheTtlMinutes` (Design Considerations #4)
-- **2026-03-11**: Fixed inline key interpolation — all call sites now use `BuildPersonalityKey()`/`BuildCombatKey()` builders; removed 8 dead topic constants (Bugs #1)
+- **2026-03-16**: RestoreFromArchive now publishes `personality.created` and `combat-preferences.created` events per Foundation Tenets (Bugs #1)
+- **2026-02-06**: Cache TTL now configurable via `CacheTtlMinutes` — verified and processed (2026-03-16)
+- **2026-03-11**: Fixed inline key interpolation — verified and processed (2026-03-16)

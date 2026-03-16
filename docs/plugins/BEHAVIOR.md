@@ -14,22 +14,7 @@
 
 ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action Planning) runtime (L4 GameFeatures) for NPC behavior management. Provides three core subsystems: a multi-phase ABML compiler producing portable stack-based bytecode, an A*-based GOAP planner for action sequence generation from world state and goals, and a 5-stage cognition pipeline for NPC perception and intention formation. Compiled bytecode is interpreted by both the server-side ActorRunner (L2) and client SDKs. Supports streaming composition, variant-based model caching with fallback chains, and behavior bundling through the Asset service.
 
----
-
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for behavior metadata, bundle membership, GOAP metadata (via `BehaviorBundleManager`) |
-| lib-messaging (`IMessageBus`) | Publishing behavior lifecycle events, compilation failure events, GOAP plan events; error event publishing |
-| lib-asset (`IAssetClient`) | Storing and retrieving compiled bytecode via pre-signed URLs (soft L3 dependency — resolved via `GetService<T>()` with graceful degradation) |
-| `IHttpClientFactory` | HTTP client for asset upload/download operations |
-| `ITelemetryProvider` | Span instrumentation for async methods |
-| behavior-compiler SDK (`DocumentParser`) | YAML-to-AST parsing of ABML documents (from `sdks/behavior-compiler/`) |
-| behavior-compiler SDK (`BehaviorCompiler`) | Multi-phase ABML-to-bytecode compilation pipeline (from `sdks/behavior-compiler/`) |
-| behavior-compiler SDK (`GoapPlanner`) | A* search for GOAP planning (from `sdks/behavior-compiler/`) |
-| behavior-compiler SDK (Runtime types) | `BehaviorModel`, `BehaviorModelInterpreter`, `BehaviorModelType`, `IntentChannel`, `BehaviorOpcode` |
-| bannou-service (Cognition types) | `CognitionConstants`, `IMemoryStore`, `IActionHandler`, cognition pipeline infrastructure |
+The plugin is unusually self-contained for L4 — no L1 or L2 service client dependencies. It depends on in-process SDK libraries (`BehaviorCompiler`, `GoapPlanner`, `DocumentParser` from `sdks/behavior-compiler/`) and shared cognition infrastructure (`CognitionConstants`, `IMemoryStore`, `IActionHandler` from `bannou-service/`). lib-asset (L3) is the only inter-service dependency, used as a soft dependency for bytecode storage.
 
 ---
 
@@ -39,47 +24,6 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 |-----------|-------------|
 | lib-actor | Consumes shared behavior compiler types (from bannou-service) for NPC brain execution; uses GOAP planner for action selection. Does NOT use `IBehaviorClient` — compiler types are shared code, not service-to-service calls |
 | lib-puppetmaster | Subscribes to `behavior.updated` events for hot-reload of runtime-loaded behaviors; implements `IBehaviorDocumentProvider` which loads behaviors via lib-asset |
-
----
-
-## State Storage
-
-**Stores**: 1 state store (Redis) + 1 cross-service store
-
-| Store | Backend | Purpose | TTL | Owner |
-|-------|---------|---------|-----|-------|
-| `behavior-statestore` | Redis | Behavior metadata, bundle membership, GOAP metadata | N/A | lib-behavior |
-| `agent-memories` | Redis | Memory entries for cognition pipeline | N/A | lib-actor (used by lib-behavior's `ActorLocalMemoryStore`) |
-
-| Key Pattern | Store | Data Type | Purpose |
-|-------------|-------|-----------|---------|
-| `behavior-metadata:{behaviorId}` | behavior | Behavior metadata JSON | Compiled behavior definition metadata |
-| `bundle-membership:{bundleId}` | behavior | Bundle membership JSON | Bundle-to-behavior association index |
-| `goap-metadata:{behaviorId}` | behavior | GOAP metadata JSON | Cached GOAP goals/actions from compiled behavior (used by `GenerateGoapPlanAsync`) |
-| `memory:{entityId}:{memoryId}` | agent-memories | Memory JSON | Individual memory entries per agent |
-| `memory-index:{entityId}` | agent-memories | List of memory IDs | Memory index for per-entity retrieval |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `behavior.created` | `BehaviorCreatedEvent` | New behavior compiled and stored (lifecycle) |
-| `behavior.updated` | `BehaviorUpdatedEvent` | Behavior recompiled/updated (lifecycle) |
-| `behavior.deleted` | `BehaviorDeletedEvent` | Behavior deleted/invalidated (lifecycle) |
-| `behavior.bundle.created` | `BehaviorBundleCreatedEvent` | Bundle created (lifecycle) — published by `BehaviorBundleManager.AddToBundleAsync` when first behavior added to a new bundle |
-| `behavior.bundle.updated` | `BehaviorBundleUpdatedEvent` | Bundle updated (lifecycle) — published by `AddToBundleAsync`, `CreateAssetBundleAsync`, `RemoveBehaviorAsync` on membership changes |
-| `behavior.bundle.deleted` | `BehaviorBundleDeletedEvent` | Bundle deleted (lifecycle) — published by `RemoveBehaviorAsync` when last behavior removed from bundle |
-| `behavior.compilation-failed` | `BehaviorCompilationFailedEvent` | ABML compilation fails (monitoring/alerting) |
-| `behavior.goap-plan-generated` | `GoapPlanGeneratedEvent` | GOAP planner generates new plan |
-| `behavior.cinematic-extension` | `CinematicExtensionAvailableEvent` | Cinematic extension available for injection at continuation point - **schema-defined but not yet published by code** |
-
-### Consumed Events
-
-This plugin does not consume external events (confirmed by `x-event-subscriptions: []` in schema).
 
 ---
 
@@ -117,11 +61,6 @@ This plugin does not consume external events (confirmed by `x-event-subscription
 | `MemorySignificanceBonusWeight` | `BEHAVIOR_MEMORY_SIGNIFICANCE_BONUS_WEIGHT` | `0.1` | Memory relevance: significance bonus weight |
 | `CompilerMaxConstants` | `BEHAVIOR_COMPILER_MAX_CONSTANTS` | `256` | Maximum constants in behavior constant pool |
 | `CompilerMaxStrings` | `BEHAVIOR_COMPILER_MAX_STRINGS` | `65536` | Maximum strings in behavior string table |
-| `BundleMembershipKeyPrefix` | `BEHAVIOR_BUNDLE_MEMBERSHIP_KEY_PREFIX` | `bundle-membership:` | Key prefix for bundle membership entries |
-| `BehaviorMetadataKeyPrefix` | `BEHAVIOR_METADATA_KEY_PREFIX` | `behavior-metadata:` | Key prefix for behavior metadata entries |
-| `GoapMetadataKeyPrefix` | `BEHAVIOR_GOAP_METADATA_KEY_PREFIX` | `goap-metadata:` | Key prefix for GOAP metadata entries |
-| `MemoryKeyPrefix` | `BEHAVIOR_MEMORY_KEY_PREFIX` | `memory:` | Key prefix for memory entries |
-| `MemoryIndexKeyPrefix` | `BEHAVIOR_MEMORY_INDEX_KEY_PREFIX` | `memory-index:` | Key prefix for memory index entries |
 
 ---
 
@@ -524,10 +463,9 @@ Memory Relevance Scoring (Keyword-Based)
 
 ### Bugs (Fix Immediately)
 
-1. **State store key prefixes are configurable instead of const (Foundation Tenets)**: The configuration schema defines 5 key prefix properties (`BundleMembershipKeyPrefix`, `BehaviorMetadataKeyPrefix`, `GoapMetadataKeyPrefix`, `MemoryKeyPrefix`, `MemoryIndexKeyPrefix`) as runtime-configurable values. Per Foundation Tenets, state store key prefixes MUST be `private const string` fields — they are structural identifiers, not tunables. Changing a prefix at runtime orphans all existing stored data with no migration path. These should be hardcoded `const` strings in the service class with `Build*Key()` methods, not configuration properties. Remove from `behavior-configuration.yaml` and define as `private const string` fields per the canonical pattern.
-<!-- AUDIT:IN_PROGRESS:2026-03-16 -->
+1. ~~**State store key prefixes are configurable instead of const (Foundation Tenets)**~~: **FIXED** (2026-03-16) - Removed 5 key prefix properties from `behavior-configuration.yaml`. Added `private const string` fields and `internal static Build*Key()` methods to `BehaviorBundleManager` (3 prefixes: `BEHAVIOR_METADATA_PREFIX`, `BUNDLE_MEMBERSHIP_PREFIX`, `GOAP_METADATA_PREFIX`) and `ActorLocalMemoryStore` (2 prefixes: `MEMORY_PREFIX`, `MEMORY_INDEX_PREFIX`). Removed `BehaviorServiceConfiguration` from `BehaviorBundleManager` constructor (no remaining config usage). Key values unchanged — existing stored data is compatible.
 
-2. **ContentHash field in BehaviorCompilationFailedEvent never populated**: The `ContentHash` field is defined in the `BehaviorCompilationFailedEvent` schema but is never populated by the code that publishes the event (in `CompileAbmlBehaviorAsync`). This is either dead schema (remove the field) or a missing implementation (populate with the SHA256 hash of the input ABML content). Either way, an event field that is always null/default violates schema-first expectations — the schema says the field exists, but consumers will never receive data in it.
+2. ~~**ContentHash field in BehaviorCompilationFailedEvent never populated**~~: **FIXED** (2026-03-16) - Populated `ContentHash` with full 64-character lowercase hex SHA256 hash of the input ABML content (`body.AbmlContent`) in the compilation failure path of `CompileAbmlBehaviorAsync`. Enables future deduplication (PE #6) and analytics correlation of repeated compilation failures for the same source content.
 
 ### Intentional Quirks
 
@@ -1058,6 +996,8 @@ flows:
 
 - **2026-03-15**: Maintenance pass — processed 12 strikethrough FIXED items via code verification agent. Confirmed 10 of 12; restored 2 as active stubs (Behavior Stack DI registration and Document Merger DI registration are NOT present in BehaviorServicePlugin.cs despite prior FIXED claims). Deleted all confirmed items. Added 2 new bugs: configurable key prefixes (Foundation Tenets violation) and unpopulated ContentHash field. Verified all 14 linked GitHub issues — all remain OPEN.
 - **2026-03-15**: Audit pass — investigated Stub #4 (Behavior Stack) and Stub #5 (Document Merger). Both were false gaps: all four classes (`IntentStackMerger`, `BehaviorStackRegistry`, `SituationalTriggerManager`, `DocumentMerger`) have `[BannouHelperService]` attributes with non-null `InterfaceType`, making them auto-registered by PluginLoader. Reverted incorrectly-added manual registrations from the previous audit (would have violated `Plugins_ShouldNotManuallyRegisterAutoDiscoverableHelpers` structural test).
+- **2026-03-16**: Audit pass — fixed Bug #1 (configurable key prefixes). Removed 5 key prefix properties from `behavior-configuration.yaml`, regenerated config. Added `const` fields + `internal static Build*Key()` methods to `BehaviorBundleManager` (3 prefixes) and `ActorLocalMemoryStore` (2 prefixes). Removed `BehaviorServiceConfiguration` from `BehaviorBundleManager` constructor. Updated test constructor call. Build verified.
+- **2026-03-16**: Audit pass — fixed Bug #2 (ContentHash never populated). Added SHA256 hash computation of `body.AbmlContent` in the compilation failure path of `CompileAbmlBehaviorAsync`. Full 64-char lowercase hex format. Build verified.
 
 ### AUDIT Markers
 

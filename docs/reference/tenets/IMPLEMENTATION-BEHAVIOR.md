@@ -37,8 +37,7 @@ info:
 
 Running `make generate` produces:
 
-- `Generated/{Service}EventsController.cs` - Event subscription handlers (always regenerated)
-- `{Service}ServiceEvents.cs` - Handler registrations (generated once, then manual)
+- `{Service}ServiceEvents.cs` - Event consumer registration and handler stubs (generated once by `generate-event-subscriptions.sh`, then manual)
 
 ### Implementation Pattern
 

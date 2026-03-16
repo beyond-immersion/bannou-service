@@ -944,6 +944,15 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
             // Register character reference for restored personality
             await RegisterCharacterReferenceAsync(body.CharacterId.ToString(), body.CharacterId, cancellationToken);
 
+            // Publish created event for restored personality per FOUNDATION TENETS (Event-Driven Architecture)
+            await _messageBus.PublishPersonalityCreatedAsync(new PersonalityCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                CharacterId = body.CharacterId,
+                Version = data.Version
+            }, cancellationToken);
+
             _logger.LogInformation("Personality traits restored for character {CharacterId}", body.CharacterId);
         }
 
@@ -971,6 +980,15 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             // Register character reference for restored combat preferences
             await RegisterCharacterReferenceAsync($"combat-{body.CharacterId}", body.CharacterId, cancellationToken);
+
+            // Publish created event for restored combat preferences per FOUNDATION TENETS (Event-Driven Architecture)
+            await _messageBus.PublishCombatPreferencesCreatedAsync(new CombatPreferencesCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                CharacterId = body.CharacterId,
+                Version = data.Version
+            }, cancellationToken);
 
             _logger.LogInformation("Combat preferences restored for character {CharacterId}", body.CharacterId);
         }

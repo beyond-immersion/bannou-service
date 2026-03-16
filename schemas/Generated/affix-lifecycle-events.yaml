@@ -1,0 +1,430 @@
+openapi: 3.0.4
+info:
+  title: Affix Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for affix service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: affix-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    AffixDefinitionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to affix.definition.created when a affixdefinition is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - gameServiceId
+      - code
+      - slotType
+      - modGroup
+      - tier
+      - statGrants
+      - spawnWeight
+      - requiredItemLevel
+      - displayOrder
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: affix.definition.created
+          description: 'Event type identifier: affix.definition.created'
+        definitionId: &id001
+          type: string
+          format: uuid
+          description: "Unique definition identifier"
+        gameServiceId: &id002
+          type: string
+          format: uuid
+          description: "Game service scope"
+        code: &id003
+          type: string
+          description: "Unique code within game service"
+        slotType: &id004
+          type: string
+          description: "Slot type (prefix, suffix, implicit, enchant, or custom)"
+        modGroup: &id005
+          type: string
+          description: "Exclusivity group"
+        tier: &id006
+          type: integer
+          description: "Power tier within mod group (1 = best)"
+        category: &id007
+          type: string
+          nullable: true
+          description: "Broad classification"
+        tags: &id008
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Generation tags"
+        statGrants: &id009
+          type: array
+          items: {$ref: '../affix-api.yaml#/components/schemas/StatGrant'}
+          description: "Stat contributions"
+        spawnWeight: &id010
+          type: integer
+          description: "Base weight for generation"
+        spawnTagModifiers: &id011
+          type: array
+          items: {$ref: '../affix-api.yaml#/components/schemas/SpawnTagModifier'}
+          nullable: true
+          description: "Per-tag weight multipliers"
+        requiredItemLevel: &id012
+          type: integer
+          description: "Minimum item level to spawn"
+        requiredInfluences: &id013
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Required influence types"
+        validItemClasses: &id014
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Item classes this appears on"
+        displayName: &id015
+          type: string
+          nullable: true
+          description: "Human-readable display name"
+        displayOrder: &id016
+          type: integer
+          description: "Sorting priority"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the affix definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the affix definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this affix definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the affix definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+    AffixDefinitionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to affix.definition.updated when a affixdefinition is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - gameServiceId
+      - code
+      - slotType
+      - modGroup
+      - tier
+      - statGrants
+      - spawnWeight
+      - requiredItemLevel
+      - displayOrder
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: affix.definition.updated
+          description: 'Event type identifier: affix.definition.updated'
+        definitionId: *id001
+        gameServiceId: *id002
+        code: *id003
+        slotType: *id004
+        modGroup: *id005
+        tier: *id006
+        category: *id007
+        tags: *id008
+        statGrants: *id009
+        spawnWeight: *id010
+        spawnTagModifiers: *id011
+        requiredItemLevel: *id012
+        requiredInfluences: *id013
+        validItemClasses: *id014
+        displayName: *id015
+        displayOrder: *id016
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the affix definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the affix definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this affix definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the affix definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    AffixDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to affix.definition.deleted when a affixdefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - gameServiceId
+      - code
+      - slotType
+      - modGroup
+      - tier
+      - statGrants
+      - spawnWeight
+      - requiredItemLevel
+      - displayOrder
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: affix.definition.deleted
+          description: 'Event type identifier: affix.definition.deleted'
+        definitionId: *id001
+        gameServiceId: *id002
+        code: *id003
+        slotType: *id004
+        modGroup: *id005
+        tier: *id006
+        category: *id007
+        tags: *id008
+        statGrants: *id009
+        spawnWeight: *id010
+        spawnTagModifiers: *id011
+        requiredItemLevel: *id012
+        requiredInfluences: *id013
+        validItemClasses: *id014
+        displayName: *id015
+        displayOrder: *id016
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the affix definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the affix definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this affix definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the affix definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    AffixInstanceBatchEntry:
+      type: object
+      description: Single affix instance creation record within a batch event
+      additionalProperties: false
+      required: &id024
+      - itemInstanceId
+      - gameServiceId
+      - effectiveRarity
+      - itemLevel
+      - quality
+      - createdAt
+      - updatedAt
+      properties:
+        itemInstanceId: &id017
+          type: string
+          format: uuid
+          description: "Item instance ID (foreign key to lib-item)"
+        gameServiceId: &id018
+          type: string
+          format: uuid
+          description: "Game service scope"
+        effectiveRarity: &id019
+          type: string
+          description: "Current effective rarity"
+        itemLevel: &id020
+          type: integer
+          description: "Item level (set at creation)"
+        quality: &id021
+          type: integer
+          description: "Item quality (0-30)"
+        createdAt: &id022
+          type: string
+          format: date-time
+          description: Timestamp when the affix instance was created
+        updatedAt: &id023
+          type: string
+          format: date-time
+          description: Timestamp when the affix instance was last updated
+    AffixInstanceBatchModifiedEntry:
+      type: object
+      description: Single affix instance modification record within a batch event
+      additionalProperties: false
+      required:
+      - itemInstanceId
+      - gameServiceId
+      - effectiveRarity
+      - itemLevel
+      - quality
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        itemInstanceId: *id017
+        gameServiceId: *id018
+        effectiveRarity: *id019
+        itemLevel: *id020
+        quality: *id021
+        createdAt: *id022
+        updatedAt: *id023
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    AffixInstanceBatchDestroyedEntry:
+      type: object
+      description: Single affix instance destruction record within a batch event
+      additionalProperties: false
+      required: *id024
+      properties:
+        itemInstanceId: *id017
+        gameServiceId: *id018
+        effectiveRarity: *id019
+        itemLevel: *id020
+        quality: *id021
+        createdAt: *id022
+        updatedAt: *id023
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for destruction
+    AffixInstanceBatchCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated affix instance created records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: affix.instance.batch-created
+          description: 'Event type identifier: affix.instance.batch-created'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixInstanceBatchEntry'
+          description: Individual created records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started
+    AffixInstanceBatchModifiedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated affix instance modified records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: affix.instance.batch-modified
+          description: 'Event type identifier: affix.instance.batch-modified'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixInstanceBatchModifiedEntry'
+          description: Individual modified records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started
+    AffixInstanceBatchDestroyedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated affix instance destroyed records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: affix.instance.batch-destroyed
+          description: 'Event type identifier: affix.instance.batch-destroyed'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffixInstanceBatchDestroyedEntry'
+          description: Individual destroyed records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started
